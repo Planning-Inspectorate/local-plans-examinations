@@ -1,0 +1,61 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+        {{ govukPanel({
+            titleText: "Response submitted",
+            html: "Your reference number is:<br><strong>" + responseId + "</strong>"
+        }) }}
+
+        <p class="govuk-body">
+            Thank you for completing the questionnaire. Your response has been successfully submitted
+            and saved to our system.
+        </p>
+
+        <h2 class="govuk-heading-m">What happens next</h2>
+
+        <p class="govuk-body">
+            Your response will be reviewed as part of the examination process. You can reference
+            your submission using the reference number above if you need to contact us.
+        </p>
+
+        <div class="govuk-button-group">
+            {{ govukButton({
+                text: "Complete Another Questionnaire",
+                href: "/questionnaires",
+                classes: "govuk-button--secondary"
+            }) }}
+
+            {{ govukButton({
+                text: "Return to Home",
+                href: "/",
+                classes: "govuk-button--secondary"
+            }) }}
+        </div>
+
+        <details class="govuk-details" data-module="govuk-details">
+            <summary class="govuk-details__summary">
+                <span class="govuk-details__summary-text">
+                    Need help or have questions?
+                </span>
+            </summary>
+            <div class="govuk-details__text">
+                <p>If you have any questions about your submission or the examination process,
+                please contact us with your reference number: <strong>{{ responseId }}</strong></p>
+
+                <p>
+                    Email: examinations@planninginspectorate.gov.uk<br>
+                    Phone: 0303 444 5000
+                </p>
+            </div>
+        </details>
+    </div>
+</div>
+{% endblock %}

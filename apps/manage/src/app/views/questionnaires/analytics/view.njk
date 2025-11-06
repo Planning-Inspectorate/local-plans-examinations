@@ -1,0 +1,17 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageTitle %}{{ pageHeading }} - My Service{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <p class="govuk-body-l">Analytics dashboard for questionnaires.</p>
+        {% if analytics %}
+            <p class="govuk-body">Total responses: <strong>{{ analytics.totalResponses }}</strong></p>
+            <p class="govuk-body">Average message length: <strong>{{ analytics.averageMessageLength }}</strong></p>
+        {% else %}
+            <p class="govuk-body">No analytics data available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

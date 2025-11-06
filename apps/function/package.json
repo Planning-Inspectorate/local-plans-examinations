@@ -1,5 +1,5 @@
 {
-  "name": "service-name-function",
+  "name": "local-plans-examinations-function",
   "version": "1.0.0",
   "description": "Function app for handling integrations",
   "main": "src/functions/*.ts",
@@ -12,13 +12,13 @@
   "private": true,
   "dependencies": {
     "@azure/functions": "*",
-    "@pins/service-name-database": "^0.0.0",
-    "@pins/service-name-lib": "^0.0.0",
+    "@pins/local-plans-examinations-database": "^0.0.0",
+    "@pins/local-plans-examinations-lib": "^0.0.0",
     "dotenv": "*"
   },
   "imports": {
-    "#pins/service-name-lib/*": "./src/packages/service-name-lib/*",
-    "#pins/service-name-database": "./src/packages/service-name-database/src/index.ts",
-    "#pins/service-name-database/*": "./src/packages/service-name-database/*"
+    "#pins/local-plans-examinations-lib/*": "./src/packages/local-plans-examinations-lib/*",
+    "#pins/local-plans-examinations-database": "./src/packages/local-plans-examinations-database/src/index.ts",
+    "#pins/local-plans-examinations-database/*": "./src/packages/local-plans-examinations-database/*"
   }
 }

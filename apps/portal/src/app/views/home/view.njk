@@ -24,6 +24,10 @@
                     <p class="govuk-body">
                         You have visited this page {{ visitCount }} time{% if visitCount > 1 %}s{% endif %}.
                     </p>
+                    <p class="govuk-body">
+                        There {% if questionnaireCount == 1 %}is{% else %}are{% endif %} <strong>{{ questionnaireCount }}</strong> questionnaire{% if questionnaireCount != 1 %}s{% endif %} available.
+                        <a class="govuk-link" href="/questionnaires">Go to questionnaires</a>
+                    </p>
                 </div>
             </div>
         </div>

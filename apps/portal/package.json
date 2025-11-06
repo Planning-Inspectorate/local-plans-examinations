@@ -1,5 +1,5 @@
 {
-  "name": "service-name-portal",
+  "name": "local-plans-examinations-portal",
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
@@ -12,8 +12,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@pins/service-name-database": "^0.0.0",
-    "@pins/service-name-lib": "^0.0.0",
+    "@pins/local-plans-examinations-database": "^0.0.0",
+    "@pins/local-plans-examinations-lib": "^0.0.0",
     "body-parser": "*",
     "connect-redis": "*",
     "dotenv": "*",

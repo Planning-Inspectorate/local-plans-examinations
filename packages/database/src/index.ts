@@ -1,8 +1,11 @@
-import { PrismaClient } from '@pins/service-name-database/src/client/client.ts';
+import { PrismaClient } from './client/client.ts';
 import { PrismaMssql } from '@prisma/adapter-mssql';
-import type { Prisma } from '@pins/service-name-database/src/client/client.d.ts';
+import type { Prisma } from './client/client.ts';
 import type { Logger } from 'pino';
-import type { DatabaseConfig } from '@pins/service-name-lib/app/config-types.js';
+import type { DatabaseConfig } from '@pins/local-plans-examinations-lib/app/config-types.js';
+
+// Export types from the generated Prisma client
+export type { PrismaClient, HelloWorldQuestionnaire, HelloWorldResponse } from './client/client.ts';
 
 export function initDatabaseClient(
 	config: { database: DatabaseConfig; NODE_ENV: string },

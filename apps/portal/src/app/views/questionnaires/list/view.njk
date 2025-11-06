@@ -1,0 +1,44 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body-l">
+            Welcome to the Local Plans Examinations questionnaire system.
+            Please select a questionnaire below to get started.
+        </p>
+
+        {% if questionnaires and questionnaires.length > 0 %}
+            <div class="govuk-grid-row">
+                {% for questionnaire in questionnaires %}
+                    <div class="govuk-grid-column-full">
+                        <div class="govuk-summary-card">
+                            <div class="govuk-summary-card__title-wrapper">
+                                <h2 class="govuk-summary-card__title">{{ questionnaire.title }}</h2>
+                            </div>
+                            <div class="govuk-summary-card__content">
+                                <p class="govuk-body">{{ questionnaire.description }}</p>
+
+                                {{ govukButton({
+                                    text: "Start Questionnaire",
+                                    href: questionnaire.url,
+                                    classes: "govuk-button--start",
+                                    isStartButton: true
+                                }) }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="govuk-body">No questionnaires are currently available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 {
-  "name": "service-name-manage",
+  "name": "local-plans-examinations-manage",
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
@@ -14,8 +14,8 @@
   "dependencies": {
     "@azure/msal-node": "*",
     "@microsoft/microsoft-graph-client": "*",
-    "@pins/service-name-database": "^0.0.0",
-    "@pins/service-name-lib": "^0.0.0",
+    "@pins/local-plans-examinations-database": "^0.0.0",
+    "@pins/local-plans-examinations-lib": "^0.0.0",
     "accessible-autocomplete": "*",
     "body-parser": "*",
     "connect-redis": "*",

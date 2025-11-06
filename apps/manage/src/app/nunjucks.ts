@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import nunjucks from 'nunjucks';
 import { loadBuildConfig } from './config.ts';
+import { format } from 'date-fns';
 
 /**
  * Configure nunjucks with govuk and app folders for loading views
@@ -15,8 +16,7 @@ export function configureNunjucks(): nunjucks.Environment {
 	const govukFrontendRoot = path.resolve(require.resolve('govuk-frontend'), '../..');
 	const appDir = path.join(config.srcDir, 'app');
 
-	// configure nunjucks
-	return nunjucks.configure(
+	const env = nunjucks.configure(
 		// ensure nunjucks templates can use govuk-frontend components, and templates we've defined in `web/src/app`
 		[govukFrontendRoot, appDir],
 		{
@@ -28,4 +28,15 @@ export function configureNunjucks(): nunjucks.Environment {
 			lstripBlocks: true
 		}
 	);
+
+	env.addFilter('date', function (date, formatStr = 'd MMM yyyy') {
+		if (!date) return '';
+		try {
+			return format(new Date(date), formatStr);
+		} catch {
+			return '';
+		}
+	});
+
+	return env;
 }

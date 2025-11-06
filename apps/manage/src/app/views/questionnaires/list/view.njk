@@ -1,0 +1,70 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-xl">{{ pageHeading }}</h1>
+
+        <p class="govuk-body-l">
+            Manage questionnaires, view responses, and monitor analytics.
+        </p>
+
+        <div class="govuk-button-group govuk-!-margin-bottom-6">
+            {{ govukButton({
+                text: "View Analytics",
+                href: "/questionnaires/analytics",
+                classes: "govuk-button--secondary"
+            }) }}
+        </div>
+
+        {% if questionnaires and questionnaires.length > 0 %}
+            {% set tableRows = [] %}
+            {% for questionnaire in questionnaires %}
+                {% set tableRows = (tableRows.push([
+                    {
+                        text: questionnaire.title,
+                        classes: "govuk-!-font-weight-bold"
+                    },
+                    {
+                        html: govukTag({
+                            text: questionnaire.status,
+                            classes: "govuk-tag--green" if questionnaire.status == "Active" else "govuk-tag--grey"
+                        })
+                    },
+                    {
+                        text: questionnaire.responseCount
+                    },
+                    {
+                        text: questionnaire.createdAt | date('d MMM yyyy')
+                    },
+                    {
+                        html: '<div class="govuk-button-group">
+                                <a href="' + questionnaire.viewResponsesUrl + '" class="govuk-link govuk-link--no-visited-state">View responses</a>
+                            </div>'
+                    }
+                ]), tableRows) %}
+            {% endfor %}
+
+            {{ govukTable({
+                head: [
+                    { text: "Questionnaire" },
+                    { text: "Status" },
+                    { text: "Responses" },
+                    { text: "Created" },
+                    { text: "Actions" }
+                ],
+                rows: tableRows,
+                classes: "govuk-!-margin-bottom-6"
+            }) }}
+        {% else %}
+            <p class="govuk-body">No questionnaires found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

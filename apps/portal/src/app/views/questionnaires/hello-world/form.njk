@@ -1,0 +1,81 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+        {% if errors and errors.general %}
+            {{ govukErrorSummary({
+                titleText: "There is a problem",
+                errorList: [
+                    {
+                        text: errors.general,
+                        href: "#userName"
+                    }
+                ]
+            }) }}
+        {% endif %}
+
+        <h1 class="govuk-heading-xl">{{ pageTitle }}</h1>
+
+        <p class="govuk-body-l">
+            Welcome! Please tell us a bit about yourself by completing this simple form.
+        </p>
+
+        <form method="post" action="/questionnaires/hello-world" novalidate>
+
+            {{ govukInput({
+                label: {
+                    text: "What is your name?",
+                    classes: "govuk-label--m"
+                },
+                hint: {
+                    text: "Enter your full name"
+                },
+                id: "userName",
+                name: "userName",
+                value: formData.userName if formData else "",
+                errorMessage: {
+                    text: errors.userName
+                } if errors and errors.userName else false,
+                classes: "govuk-!-width-two-thirds"
+            }) }}
+
+            {{ govukTextarea({
+                label: {
+                    text: "What would you like to tell us?",
+                    classes: "govuk-label--m"
+                },
+                hint: {
+                    text: "Share your thoughts, feedback, or any message you'd like to send (maximum 500 characters)"
+                },
+                id: "userMessage",
+                name: "userMessage",
+                value: formData.userMessage if formData else "",
+                errorMessage: {
+                    text: errors.userMessage
+                } if errors and errors.userMessage else false,
+                rows: 5,
+                attributes: {
+                    maxlength: "500"
+                }
+            }) }}
+
+            <div class="govuk-button-group">
+                {{ govukButton({
+                    text: "Submit Response"
+                }) }}
+
+                <a class="govuk-link" href="/questionnaires">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

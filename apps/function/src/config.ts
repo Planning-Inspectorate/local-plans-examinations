@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import type { DatabaseConfig } from '@pins/service-name-lib/app/config-types.d.ts';
+import type { DatabaseConfig } from '@pins/local-plans-examinations-lib/app/config-types.d.ts';
 
 export interface Config {
 	example: {

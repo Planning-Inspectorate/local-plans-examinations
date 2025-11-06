@@ -1,0 +1,36 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block pageHeading %}
+  <h1 class="govuk-heading-xl">{{ pageHeading }}</h1>
+{% endblock %}
+
+{% block pageContent %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <p class="govuk-body-l">Responses for questionnaire: <strong>{{ questionnaire.title }}</strong></p>
+      {% if responses and responses.length > 0 %}
+        {% set tableRows = [] %}
+        {% for response in responses %}
+          {% set tableRows = (tableRows.push([
+            { text: response.userName },
+            { text: response.messagePreview },
+            { text: response.submittedAt | date('d MMM yyyy HH:mm') }
+          ]), tableRows) %}
+        {% endfor %}
+        {{ govukTable({
+          head: [
+            { text: "User" },
+            { text: "Message Preview" },
+            { text: "Submitted At" }
+          ],
+          rows: tableRows
+        }) }}
+      {% else %}
+        <p class="govuk-body">No responses found for this questionnaire.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+

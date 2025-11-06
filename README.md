@@ -1,33 +1,195 @@
-# Template Service
+# Local Plans Examinations
 
-A template repository for creating new services. This repository includes a basic structure and configuration files covering the common aspects of a service. This includes setup such as:
+A comprehensive questionnaire and examination management system for Local Planning Authorities, built with modern web technologies and following government digital service standards.
 
-- ESlint
-- Commitlint
-- Prettier
-- Husky
-- Docker
-- Prisma
+## Features
 
-Generally this repo can be copied/cloned for a new project, and a few find+replace runs will get things started:
+- **Public Portal**: Citizens can complete planning examination questionnaires
+- **Admin Management**: Local Planning Authority staff can create questionnaires and view responses
+- **Government Compliance**: Built with GOV.UK Design System and accessibility standards
+- **Modern Architecture**: Node.js, TypeScript, Express, Prisma, SQL Server
+- **Hello World Implementation**: Complete working questionnaire system ready for extension
 
-* Replace 'service-name' with the new service name in the codebase.
-* If required, replace `portal` with another app name, or remove it if not required
-* If required, replace `manage` with another app name, or remove it if not required
-* If not required, then remove the `apps/function` code
+## Technology Stack
 
-'Portal' app is given in the PINS/Public style. 'Manage' app is given in the back office/internal style, with Entra Auth.
+- **Runtime**: Node.js 22.x with TypeScript
+- **Framework**: Express.js 5.x 
+- **Database**: SQL Server + Prisma ORM
+- **Frontend**: Nunjucks + GOV.UK Design System
+- **Authentication**: Azure AD (Entra ID)
+- **Build Tools**: ESLint, Prettier, Husky
+- **Testing**: Node.js built-in test runner
+- **Infrastructure**: Docker, Azure
 
-## Getting started
+## Getting Started
 
-* install latest LTS Node
-* install Docker
-* `npm i`
-* `docker compose up` (to start a database)
-* copy `packages/database/.env.example` to `.env`
-* copy `apps/manage/.env.example` to `.env`
-* copy `apps/portal/.env.example` to `.env`
-* Get the `AUTH_*` env vars from a dev and add to `apps/manage/.env` (or set `AUTH_DISABLED=false`)
-* run `npm run db-migrate-dev` to setup the database
-* run `apps/manage>npm run dev` to start the manage app
-* run `apps/portal>npm run dev` to start the portal app
+### Prerequisites
+- Node.js 22.x or later (LTS recommended)
+- Docker and Docker Compose
+- Git
+
+### Installation & Setup
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Start Local Database**
+   ```bash
+   docker compose up -d
+   ```
+   This starts a SQL Server container with the following credentials:
+   - Host: `localhost:1433`
+   - Username: `sa`
+   - Password: `DockerDatabaseP@22word!`
+   - Database: `master` (Prisma will create the app database)
+
+3. **Configure Environment Variables**
+   
+   Create `.env` files in each app directory:
+   
+   **For `packages/database/.env`:**
+   ```env
+   SQL_CONNECTION_STRING_ADMIN="Server=localhost,1433;Database=local_plans_examinations;User Id=sa;Password=DockerDatabaseP@22word!;Encrypt=false;TrustServerCertificate=true;"
+   ```
+   
+   **For `apps/manage/.env`:**
+   ```env
+   # Database
+   SQL_CONNECTION_STRING="Server=localhost,1433;Database=local_plans_examinations;User Id=sa;Password=DockerDatabaseP@22word!;Encrypt=false;TrustServerCertificate=true;"
+   
+   # Session & Security
+   SESSION_SECRET="your-super-secret-session-key-change-this-in-production"
+   
+   # Development Settings
+   NODE_ENV="development"
+   PORT=8090
+   LOG_LEVEL="info"
+   
+   # Authentication (for development, you can disable auth)
+   AUTH_DISABLED=true
+   
+   # If you want to use real Azure AD authentication, get these from your Azure app registration:
+   # AUTH_CLIENT_ID="your-azure-ad-app-id"
+   # AUTH_CLIENT_SECRET="your-azure-ad-app-secret"
+   # AUTH_TENANT_ID="your-azure-ad-tenant-id"
+   # AUTH_GROUP_APPLICATION_ACCESS="your-azure-ad-group-id"
+   # APP_HOSTNAME="localhost:8090"
+   ```
+   
+   **For `apps/portal/.env`:**
+   ```env
+   # Database
+   SQL_CONNECTION_STRING="Server=localhost,1433;Database=local_plans_examinations;User Id=sa;Password=DockerDatabaseP@22word!;Encrypt=false;TrustServerCertificate=true;"
+   
+   # Session & Security  
+   SESSION_SECRET="your-super-secret-session-key-change-this-in-production"
+   
+   # Development Settings
+   NODE_ENV="development"
+   PORT=8080
+   LOG_LEVEL="info"
+   ```
+
+4. **Initialize Database**
+   ```bash
+   # Generate Prisma client
+   npm run db-generate
+   
+   # Run database migrations to create tables
+   npm run db-migrate-dev
+   
+   # Optional: Seed with sample data
+   npm run db-seed
+   ```
+
+5. **Start Applications**
+   
+   **Option A: Start both apps simultaneously**
+   ```bash
+   # Terminal 1 - Start manage app (admin interface)
+   cd apps/manage
+   npm run dev
+   # Access at: http://localhost:8090
+   
+   # Terminal 2 - Start portal app (public interface)  
+   cd apps/portal
+   npm run dev
+   # Access at: http://localhost:8080
+   ```
+   
+   **Option B: Start individual apps**
+   ```bash
+   # Just the public portal
+   cd apps/portal && npm run dev
+   
+   # Just the admin interface
+   cd apps/manage && npm run dev
+   ```
+
+### Testing the Hello World Questionnaire
+
+1. **Public Interface** (Portal - http://localhost:8080):
+   - Visit `/questionnaires` to see available questionnaires
+   - Complete the "Hello World Questionnaire" at `/questionnaire/hello-world`
+   - Submit your name and a message
+   - View the completion confirmation
+
+2. **Admin Interface** (Manage - http://localhost:8090):
+   - Visit `/questionnaires` to manage questionnaires
+   - View submitted responses and analytics at `/questionnaires/analytics`
+   - See response details at `/questionnaires/{id}/responses`
+
+### Development Commands
+
+```bash
+# Type checking
+npm run check-types
+
+# Linting
+npm run lint
+
+# Code formatting
+npm run format
+
+# Database operations
+npm run db-generate        # Generate Prisma client
+npm run db-migrate-dev     # Run migrations in development
+npm run db-seed           # Seed database with sample data
+
+# Testing
+npm run test              # Run all tests
+npm run test-coverage     # Run tests with coverage
+```
+
+## Project Structure
+
+```
+local-plans-examinations/
+├── apps/
+│   ├── portal/          # Public questionnaire interface
+│   ├── manage/          # Admin management interface  
+│   └── function/        # Azure Functions (background processing)
+├── packages/
+│   ├── database/        # Prisma schema and database client
+│   └── lib/            # Shared utilities and services
+├── docs/               # Project documentation
+└── infrastructure/     # Terraform deployment configuration
+```
+
+## Contributing
+
+1. Follow the existing code style and patterns
+2. Run `npm run check-types` and `npm run lint` before committing
+3. Write tests for new functionality
+4. Update documentation as needed
+
+## Architecture
+
+This project implements a hybrid architecture combining:
+- **Crown Developments UI patterns**: GOV.UK Design System, accessible forms
+- **Back Office data patterns**: Repository pattern, Prisma ORM, service containers
+- **Government compliance**: WCAG 2.1 AA accessibility, security best practices
+
+For detailed architecture information, see the `docs/` directory.

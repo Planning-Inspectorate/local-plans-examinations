@@ -1,9 +1,10 @@
 import { Router as createRouter } from 'express';
 import { createRoutesAndGuards as createAuthRoutesAndGuards } from './auth/router.ts';
-import { createMonitoringRoutes } from '@pins/service-name-lib/controllers/monitoring.ts';
+import { createMonitoringRoutes } from '@pins/local-plans-examinations-lib/controllers/monitoring.ts';
 import { createRoutes as createItemRoutes } from './views/items/index.ts';
+import { createQuestionnaireRoutes } from './views/questionnaires/index.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
-import { cacheNoCacheMiddleware } from '@pins/service-name-lib/middleware/cache.ts';
+import { cacheNoCacheMiddleware } from '@pins/local-plans-examinations-lib/middleware/cache.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
 
@@ -15,6 +16,8 @@ export function buildRouter(service: ManageService): IRouter {
 	const monitoringRoutes = createMonitoringRoutes(service);
 	const { router: authRoutes, guards: authGuards } = createAuthRoutesAndGuards(service);
 	const itemsRoutes = createItemRoutes(service);
+	const questionnaireRoutes = createQuestionnaireRoutes(service);
+	const errorRoutes = createErrorRoutes(service);
 
 	router.use('/', monitoringRoutes);
 
@@ -40,7 +43,8 @@ export function buildRouter(service: ManageService): IRouter {
 
 	router.get('/', (req, res) => res.redirect('/items'));
 	router.use('/items', itemsRoutes);
-	router.use('/error', createErrorRoutes(service));
+	router.use('/questionnaires', questionnaireRoutes);
+	router.use('/error', errorRoutes);
 
 	return router;
 }
