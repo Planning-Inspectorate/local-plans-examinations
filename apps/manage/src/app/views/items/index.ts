@@ -1,5 +1,5 @@
 import { Router as createRouter } from 'express';
-import { asyncHandler } from '@pins/service-name-lib/util/async-handler.ts';
+import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { buildListItems } from './list/controller.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';

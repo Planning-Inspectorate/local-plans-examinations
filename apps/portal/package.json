@@ -1,5 +1,5 @@
 {
-  "name": "service-name-portal",
+  "name": "local-plans-portal",
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
@@ -12,8 +12,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@pins/service-name-database": "^0.0.0",
-    "@pins/service-name-lib": "^0.0.0",
+    "@pins/local-plans-database": "^0.0.0",
+    "@pins/local-plans-lib": "^0.0.0",
     "body-parser": "*",
     "connect-redis": "*",
     "dotenv": "*",
