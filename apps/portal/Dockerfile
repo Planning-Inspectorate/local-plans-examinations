@@ -13,12 +13,12 @@ COPY package-lock.json .
 COPY packages ./packages
 COPY apps/portal ./apps/portal
 
-RUN npm ci --loglevel notice --workspace=service-name-portal --ignore-scripts
+RUN npm ci --loglevel notice --workspace=local-plans-portal --ignore-scripts
 
 ENV NODE_ENV=production
 ENV GIT_SHA=$GIT_SHA
 
-RUN npm run build --workspace=service-name-portal
+RUN npm run build --workspace=local-plans-portal
 RUN npm run db-generate
 
 # --------------------------------

@@ -1,6 +1,6 @@
-# Template Service
+# Local Plans
 
-A template repository for creating new services. This repository includes a basic structure and configuration files covering the common aspects of a service. This includes setup such as:
+A repository for local plan examination service. This repository includes a basic structure and configuration files covering the common aspects of a service. This includes setup such as:
 
 - ESlint
 - Commitlint
@@ -8,13 +8,6 @@ A template repository for creating new services. This repository includes a basi
 - Husky
 - Docker
 - Prisma
-
-Generally this repo can be copied/cloned for a new project, and a few find+replace runs will get things started:
-
-* Replace 'service-name' with the new service name in the codebase.
-* If required, replace `portal` with another app name, or remove it if not required
-* If required, replace `manage` with another app name, or remove it if not required
-* If not required, then remove the `apps/function` code
 
 'Portal' app is given in the PINS/Public style. 'Manage' app is given in the back office/internal style, with Entra Auth.
 

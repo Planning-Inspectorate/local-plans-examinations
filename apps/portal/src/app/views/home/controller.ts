@@ -1,5 +1,5 @@
 import type { PortalService } from '#service';
-import type { AsyncRequestHandler } from '@pins/service-name-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 
 /**
  * Example home page controller

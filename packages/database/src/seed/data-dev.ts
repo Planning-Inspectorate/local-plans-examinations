@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@pins/service-name-database/src/client/client.ts';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 
 export async function seedDev(dbClient: PrismaClient) {
 	// TODO: add seed data

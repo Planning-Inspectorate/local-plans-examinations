@@ -13,12 +13,12 @@ COPY package-lock.json .
 COPY packages ./packages
 COPY apps/manage ./apps/manage
 
-RUN npm ci --loglevel notice --workspace=service-name-manage --ignore-scripts
+RUN npm ci --loglevel notice --workspace=local-plans-manage --ignore-scripts
 
 ENV NODE_ENV=production
 ENV GIT_SHA=$GIT_SHA
 
-RUN npm run build --workspace=service-name-manage
+RUN npm run build --workspace=local-plans-manage
 RUN npm run db-generate
 
 # --------------------------------
