@@ -1,5 +1,5 @@
 {
-  "name": "service-name-manage",
+  "name": "local-plans-manage",
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
@@ -14,8 +14,8 @@
   "dependencies": {
     "@azure/msal-node": "*",
     "@microsoft/microsoft-graph-client": "*",
-    "@pins/service-name-database": "^0.0.0",
-    "@pins/service-name-lib": "^0.0.0",
+    "@pins/local-plans-database": "^0.0.0",
+    "@pins/local-plans-lib": "^0.0.0",
     "accessible-autocomplete": "*",
     "body-parser": "*",
     "connect-redis": "*",

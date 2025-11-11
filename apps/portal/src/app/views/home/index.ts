@@ -1,6 +1,6 @@
 import { Router as createRouter } from 'express';
 import { buildHomePage } from './controller.ts';
-import { asyncHandler } from '@pins/service-name-lib/util/async-handler.ts';
+import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 

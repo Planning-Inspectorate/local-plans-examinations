@@ -1,5 +1,5 @@
 import type { ManageService } from '#service';
-import type { AsyncRequestHandler } from '@pins/service-name-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 
 export function buildListItems(service: ManageService): AsyncRequestHandler {
 	const { db, logger } = service;
