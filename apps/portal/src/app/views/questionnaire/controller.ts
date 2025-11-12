@@ -7,13 +7,15 @@ import { getQuestions } from './questions.ts';
 import { createJourney, JOURNEY_ID } from './journey.ts';
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { QuestionnaireControllers, JourneyResponse, QuestionnaireAnswers } from './types.ts';
+import type { Request, Response } from 'express';
 
-export function buildQuestionnaireControllers(service: PortalService) {
+export function buildQuestionnaireControllers(service: PortalService): QuestionnaireControllers {
 	const { logger } = service;
 	const questions = getQuestions();
 
 	// Build the journey creation function
-	const getJourney = buildGetJourney((req: any, journeyResponse: any) => {
+	const getJourney = buildGetJourney((req: Request, journeyResponse: JourneyResponse) => {
 		try {
 			return createJourney(questions, journeyResponse, req);
 		} catch (error) {
@@ -37,9 +39,9 @@ export function buildQuestionnaireControllers(service: PortalService) {
 export function buildCheckAnswersController(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 
-	return async (req, res) => {
+	return async (req: Request, res: Response) => {
 		try {
-			const answers = res.locals.journeyResponse?.answers || {};
+			const answers: QuestionnaireAnswers = res.locals.journeyResponse?.answers || {};
 
 			// Log the answers to console
 			console.log('=== QUESTIONNAIRE ANSWERS ===');
@@ -61,9 +63,9 @@ export function buildCheckAnswersController(service: PortalService): AsyncReques
 export function buildQuestionnaireCompleteController(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 
-	return async (req, res) => {
+	return async (req: Request, res: Response) => {
 		try {
-			const answers = res.locals.journeyResponse?.answers || {};
+			const answers: QuestionnaireAnswers = res.locals.journeyResponse?.answers || {};
 
 			console.log('=== QUESTIONNAIRE SUBMITTED ===');
 			console.log(JSON.stringify(answers, null, 2));

@@ -1,12 +1,11 @@
 import { Journey } from '@planning-inspectorate/dynamic-forms/src/journey/journey.js';
 import { getQuestionnaireSections } from './sections.ts';
-import type { QuestionMap } from '@planning-inspectorate/dynamic-forms/src/questions.js';
-import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms/src/journey/journey-response.js';
+import type { QuestionMap, JourneyResponse } from './types.ts';
 import type { Request } from 'express';
 
 export const JOURNEY_ID = 'questionnaire';
 
-export function createJourney(questions: QuestionMap, response: JourneyResponse, req: Request) {
+export function createJourney(questions: QuestionMap, response: JourneyResponse, req: Request): Journey {
 	if (!req.baseUrl.endsWith('/' + JOURNEY_ID)) {
 		throw new Error(`not a valid request for the ${JOURNEY_ID} journey`);
 	}

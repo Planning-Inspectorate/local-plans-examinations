@@ -3,9 +3,10 @@ import { questionClasses } from '@planning-inspectorate/dynamic-forms/src/questi
 import { COMPONENT_TYPES } from '@planning-inspectorate/dynamic-forms';
 import RequiredValidator from '@planning-inspectorate/dynamic-forms/src/validator/required-validator.js';
 import StringValidator from '@planning-inspectorate/dynamic-forms/src/validator/string-validator.js';
+import type { QuestionConfiguration, QuestionMap } from './types.ts';
 
-export const getQuestions = () => {
-	const questionProps = {
+export const getQuestions = (): QuestionMap => {
+	const questionProps: QuestionConfiguration = {
 		fullName: {
 			type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 			title: 'Full Name',
