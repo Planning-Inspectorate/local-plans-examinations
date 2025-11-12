@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "main": "index.js",
+  "packageManager": "^npm@10.0.0",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -15,6 +16,7 @@
   "scripts": {
     "check-types": "npx tsc",
     "commitlint": "commitlint --from=$(git cherry origin/main | head -n 1 | cut -c 3-)",
+    "dev": "turbo run dev",
     "db-migrate-dev": "npm run migrate-dev --workspace @pins/local-plans-database",
     "db-migrate-prod": "npm run migrate-prod --workspace @pins/local-plans-database",
     "db-generate": "npm run generate --workspace @pins/local-plans-database",
@@ -67,6 +69,7 @@
     "prettier-plugin-prisma": "^5.0.0",
     "prisma": "^6.17.1",
     "sass": "^1.93.2",
+    "turbo": "^2.6.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.1"
   },
