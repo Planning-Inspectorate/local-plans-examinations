@@ -1,0 +1,13 @@
+{% extends "views/layouts/main.njk" %}
+
+{% if not title %}
+	{% set title %}
+		{{ question.pageTitle | default('GOV.UK') }} – Local Plans Service
+	{% endset %}
+{% endif %}
+
+{% block pageTitle %}{{ "Error: " + title if errors else title }}{% endblock %}
+
+{% block content %}
+	{% block dynQuestionContent %}{% endblock %}
+{% endblock %}

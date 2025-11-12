@@ -1,0 +1,71 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block content %}
+<div class="govuk-grid-row">
+	<div class="govuk-grid-column-two-thirds">
+		<h1 class="govuk-heading-xl">Check your answers</h1>
+
+		<h2 class="govuk-heading-m">Your responses</h2>
+
+		<dl class="govuk-summary-list">
+			{% if answers.fullName %}
+			<div class="govuk-summary-list__row">
+				<dt class="govuk-summary-list__key">Full name</dt>
+				<dd class="govuk-summary-list__value">{{ answers.fullName }}</dd>
+				<dd class="govuk-summary-list__actions">
+					<a class="govuk-link" href="/questionnaire/personal/full-name">Change<span class="govuk-visually-hidden"> full name</span></a>
+				</dd>
+			</div>
+			{% endif %}
+
+			{% if answers.email %}
+			<div class="govuk-summary-list__row">
+				<dt class="govuk-summary-list__key">Email address</dt>
+				<dd class="govuk-summary-list__value">{{ answers.email }}</dd>
+				<dd class="govuk-summary-list__actions">
+					<a class="govuk-link" href="/questionnaire/personal/email">Change<span class="govuk-visually-hidden"> email address</span></a>
+				</dd>
+			</div>
+			{% endif %}
+
+			{% if answers.rating %}
+			<div class="govuk-summary-list__row">
+				<dt class="govuk-summary-list__key">Overall rating</dt>
+				<dd class="govuk-summary-list__value">{{ answers.rating | title }}</dd>
+				<dd class="govuk-summary-list__actions">
+					<a class="govuk-link" href="/questionnaire/experience/rating">Change<span class="govuk-visually-hidden"> rating</span></a>
+				</dd>
+			</div>
+			{% endif %}
+
+			{% if answers.feedback %}
+			<div class="govuk-summary-list__row">
+				<dt class="govuk-summary-list__key">Feedback</dt>
+				<dd class="govuk-summary-list__value">{{ answers.feedback }}</dd>
+				<dd class="govuk-summary-list__actions">
+					<a class="govuk-link" href="/questionnaire/experience/feedback">Change<span class="govuk-visually-hidden"> feedback</span></a>
+				</dd>
+			</div>
+			{% endif %}
+		</dl>
+
+		<h2 class="govuk-heading-m">Debug information</h2>
+		<details class="govuk-details" data-module="govuk-details">
+			<summary class="govuk-details__summary">
+				<span class="govuk-details__summary-text">Raw answer data</span>
+			</summary>
+			<div class="govuk-details__text">
+				<pre>{{ answers | dump }}</pre>
+			</div>
+		</details>
+
+		<form action="/questionnaire/check-your-answers" method="post">
+			<button type="submit" class="govuk-button">Submit questionnaire</button>
+		</form>
+
+		<p class="govuk-body">
+			<a href="/questionnaire/personal/full-name" class="govuk-link">Go back to first question</a>
+		</p>
+	</div>
+</div>
+{% endblock %}
