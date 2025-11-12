@@ -10,18 +10,45 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import type { QuestionnaireControllers, JourneyResponse, QuestionnaireAnswers } from './types.ts';
 import type { Request, Response } from 'express';
 import { QUESTIONNAIRE_CONFIG } from './config.ts';
+import {
+	QuestionnaireErrorHandler,
+	JourneyError,
+	SessionError,
+	ValidationError,
+	validateAnswerData,
+	validateSessionData
+} from './error-handling.ts';
 
 export function buildQuestionnaireControllers(service: PortalService): QuestionnaireControllers {
-	const { logger } = service;
+	const errorHandler = new QuestionnaireErrorHandler(service);
 	const questions = getQuestions();
 
-	// Build the journey creation function
+	// Build the journey creation function with proper error handling
 	const getJourney = buildGetJourney((req: Request, journeyResponse: JourneyResponse) => {
 		try {
+			validateSessionData(req);
+
+			if (!journeyResponse) {
+				throw new SessionError('Journey response not available');
+			}
+
+			if (!req.baseUrl.endsWith('/' + JOURNEY_ID)) {
+				throw new JourneyError(`Invalid journey request for URL: ${req.baseUrl}`);
+			}
+
 			return createJourney(questions, journeyResponse, req);
 		} catch (error) {
-			logger.error({ error }, 'Error creating journey');
-			throw error;
+			if (error instanceof JourneyError || error instanceof SessionError) {
+				throw error; // Re-throw our custom errors
+			}
+
+			errorHandler.logError(error as Error, {
+				context: 'journey_creation',
+				baseUrl: req.baseUrl,
+				sessionId: req.sessionID
+			});
+
+			throw new JourneyError('Failed to initialize questionnaire. Please try again.');
 		}
 	});
 
@@ -38,51 +65,86 @@ export function buildQuestionnaireControllers(service: PortalService): Questionn
 }
 
 export function buildCheckAnswersController(service: PortalService): AsyncRequestHandler {
-	const { logger } = service;
+	const errorHandler = new QuestionnaireErrorHandler(service);
 
 	return async (req: Request, res: Response) => {
 		try {
-			const answers: QuestionnaireAnswers = res.locals.journeyResponse?.answers || {};
+			validateSessionData(req);
 
-			// Log the answers to console
+			// Try to get answers from journey response first, fallback to session
+			let answers: QuestionnaireAnswers = res.locals.journeyResponse?.answers || {};
+
+			// If no answers from journey response, try getting from session directly
+			if (!answers || Object.keys(answers).length === 0) {
+				const sessionAnswers = req.session.forms?.[QUESTIONNAIRE_CONFIG.JOURNEY_ID] || {};
+				if (Object.keys(sessionAnswers).length > 0) {
+					answers = sessionAnswers;
+				} else {
+					// Redirect to questionnaire start instead of showing error page - better UX
+					service.logger.info('No questionnaire data found, redirecting to start');
+					return res.redirect('/questionnaire');
+				}
+			}
+
+			validateAnswerData(answers);
+
+			// Log the answers to console (TODO: Remove console.log in production)
 			console.log('=== QUESTIONNAIRE ANSWERS ===');
 			console.log(JSON.stringify(answers, null, 2));
-			logger.info({ answers }, 'Check your answers page - displaying collected data');
+			service.logger.info({ answers }, 'Check your answers page - displaying collected data');
 
-			// For now, render a simple page showing the answers
 			return res.render(QUESTIONNAIRE_CONFIG.TEMPLATES.CHECK_ANSWERS, {
 				pageTitle: 'Check your answers',
 				answers: answers
 			});
 		} catch (error) {
-			logger.error({ error }, 'Error in check answers controller');
-			throw error;
+			errorHandler.handleError(error as Error, req, res, 'check_answers');
 		}
 	};
 }
 
 export function buildQuestionnaireCompleteController(service: PortalService): AsyncRequestHandler {
-	const { logger } = service;
+	const errorHandler = new QuestionnaireErrorHandler(service);
 
 	return async (req: Request, res: Response) => {
 		try {
-			const answers: QuestionnaireAnswers = res.locals.journeyResponse?.answers || {};
+			validateSessionData(req);
 
+			// Try to get answers from journey response first, fallback to session
+			let answers: QuestionnaireAnswers = res.locals.journeyResponse?.answers || {};
+
+			// If no answers from journey response, try getting from session directly
+			if (!answers || Object.keys(answers).length === 0) {
+				const sessionAnswers = req.session.forms?.[QUESTIONNAIRE_CONFIG.JOURNEY_ID] || {};
+				if (Object.keys(sessionAnswers).length > 0) {
+					answers = sessionAnswers;
+				} else {
+					throw new ValidationError('No questionnaire data found. Please complete the questionnaire first.');
+				}
+			}
+
+			validateAnswerData(answers);
+
+			// Log completion (TODO: Remove console.log in production)
 			console.log('=== QUESTIONNAIRE SUBMITTED ===');
 			console.log(JSON.stringify(answers, null, 2));
-			logger.info({ answers }, 'Questionnaire completed');
+			service.logger.info({ answers }, 'Questionnaire completed');
 
-			// Clear the session data
-			if (req.session.forms) {
-				delete req.session.forms[JOURNEY_ID];
+			// Safely clear the session data
+			try {
+				if (req.session.forms && req.session.forms[QUESTIONNAIRE_CONFIG.JOURNEY_ID]) {
+					delete req.session.forms[QUESTIONNAIRE_CONFIG.JOURNEY_ID];
+				}
+			} catch (sessionError) {
+				// Log but don't fail - session cleanup is not critical
+				service.logger.warn({ error: sessionError }, 'Failed to clear session data');
 			}
 
 			return res.render(QUESTIONNAIRE_CONFIG.TEMPLATES.SUCCESS, {
 				pageTitle: 'Questionnaire submitted'
 			});
 		} catch (error) {
-			logger.error({ error }, 'Error in questionnaire complete controller');
-			throw error;
+			errorHandler.handleError(error as Error, req, res, 'questionnaire_complete');
 		}
 	};
 }

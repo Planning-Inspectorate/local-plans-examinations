@@ -9,26 +9,54 @@ import {
 	buildQuestionnaireCompleteController
 } from './controller.ts';
 import type { PortalService } from '#service';
-import type { IRouter } from 'express';
+import type { IRouter, Request, Response, NextFunction } from 'express';
 import { QUESTIONNAIRE_CONFIG } from './config.ts';
+import { QuestionnaireErrorHandler, validateQuestionnaireRoute } from './error-handling.ts';
 
 export function createRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
+	const errorHandler = new QuestionnaireErrorHandler(service);
 
 	// Get the dynamic forms controllers
 	const { getJourney, getJourneyResponse, saveDataToSession } = buildQuestionnaireControllers(service);
 
 	// Start page - redirects to first question
-	router.get('/', (req, res) => {
-		// Redirect to the first question in the first section
-		res.redirect(`${req.baseUrl}${QUESTIONNAIRE_CONFIG.ROUTES.FIRST_QUESTION}`);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	router.get('/', (req, res, next) => {
+		try {
+			// Redirect to the first question in the first section
+			res.redirect(`${req.baseUrl}${QUESTIONNAIRE_CONFIG.ROUTES.FIRST_QUESTION}`);
+		} catch (error) {
+			errorHandler.handleError(error as Error, req, res, 'questionnaire_start');
+		}
 	});
 
 	// Question pages - section-based routing as per dynamic forms pattern
-	router.get('/:section/:question', getJourneyResponse, getJourney, asyncHandler(question));
+	router.get(
+		'/:section/:question',
+		(req: Request, res: Response, next: NextFunction) => {
+			try {
+				validateQuestionnaireRoute(req);
+				next();
+			} catch (error) {
+				errorHandler.handleError(error as Error, req, res, 'route_validation');
+			}
+		},
+		getJourneyResponse,
+		getJourney,
+		asyncHandler(question)
+	);
 
 	router.post(
 		'/:section/:question',
+		(req: Request, res: Response, next: NextFunction) => {
+			try {
+				validateQuestionnaireRoute(req);
+				next();
+			} catch (error) {
+				errorHandler.handleError(error as Error, req, res, 'route_validation');
+			}
+		},
 		getJourneyResponse,
 		getJourney,
 		validate,
