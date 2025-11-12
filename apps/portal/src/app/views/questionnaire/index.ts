@@ -10,6 +10,7 @@ import {
 } from './controller.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
+import { QUESTIONNAIRE_CONFIG } from './config.ts';
 
 export function createRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -20,7 +21,7 @@ export function createRoutes(service: PortalService): IRouter {
 	// Start page - redirects to first question
 	router.get('/', (req, res) => {
 		// Redirect to the first question in the first section
-		res.redirect(`${req.baseUrl}/personal/full-name`);
+		res.redirect(`${req.baseUrl}${QUESTIONNAIRE_CONFIG.ROUTES.FIRST_QUESTION}`);
 	});
 
 	// Question pages - section-based routing as per dynamic forms pattern
@@ -36,18 +37,23 @@ export function createRoutes(service: PortalService): IRouter {
 	);
 
 	// Check your answers page - using our custom controller
-	router.get('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(buildCheckAnswersController(service)));
+	router.get(
+		`/${QUESTIONNAIRE_CONFIG.ROUTES.CHECK_YOUR_ANSWERS}`,
+		getJourneyResponse,
+		getJourney,
+		asyncHandler(buildCheckAnswersController(service))
+	);
 
 	// Submit the questionnaire
 	router.post(
-		'/check-your-answers',
+		`/${QUESTIONNAIRE_CONFIG.ROUTES.CHECK_YOUR_ANSWERS}`,
 		getJourneyResponse,
 		getJourney,
 		asyncHandler(buildQuestionnaireCompleteController(service))
 	);
 
 	// Success page
-	router.get('/success', asyncHandler(buildQuestionnaireCompleteController(service)));
+	router.get(`/${QUESTIONNAIRE_CONFIG.ROUTES.SUCCESS}`, asyncHandler(buildQuestionnaireCompleteController(service)));
 
 	return router;
 }

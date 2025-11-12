@@ -4,6 +4,7 @@ import { COMPONENT_TYPES } from '@planning-inspectorate/dynamic-forms';
 import RequiredValidator from '@planning-inspectorate/dynamic-forms/src/validator/required-validator.js';
 import StringValidator from '@planning-inspectorate/dynamic-forms/src/validator/string-validator.js';
 import type { QuestionConfiguration, QuestionMap } from './types.ts';
+import { QUESTIONNAIRE_CONFIG } from './config.ts';
 
 export const getQuestions = (): QuestionMap => {
 	const questionProps: QuestionConfiguration = {
@@ -11,14 +12,14 @@ export const getQuestions = (): QuestionMap => {
 			type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 			title: 'Full Name',
 			question: 'What is your full name?',
-			fieldName: 'fullName',
-			url: 'full-name',
+			fieldName: QUESTIONNAIRE_CONFIG.QUESTIONS.FULL_NAME.fieldName,
+			url: QUESTIONNAIRE_CONFIG.QUESTIONS.FULL_NAME.url,
 			validators: [
-				new RequiredValidator('Enter your full name'),
+				new RequiredValidator(QUESTIONNAIRE_CONFIG.MESSAGES.REQUIRED.FULL_NAME),
 				new StringValidator({
 					maxLength: {
-						maxLength: 250,
-						maxLengthMessage: 'Full name must be 250 characters or less'
+						maxLength: QUESTIONNAIRE_CONFIG.VALIDATION.FULL_NAME_MAX_LENGTH,
+						maxLengthMessage: QUESTIONNAIRE_CONFIG.MESSAGES.VALIDATION.FULL_NAME_TOO_LONG
 					}
 				})
 			]
@@ -27,22 +28,22 @@ export const getQuestions = (): QuestionMap => {
 			type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 			title: 'Email Address',
 			question: 'What is your email address?',
-			fieldName: 'email',
-			url: 'email',
-			validators: [new RequiredValidator('Enter your email address')]
+			fieldName: QUESTIONNAIRE_CONFIG.QUESTIONS.EMAIL.fieldName,
+			url: QUESTIONNAIRE_CONFIG.QUESTIONS.EMAIL.url,
+			validators: [new RequiredValidator(QUESTIONNAIRE_CONFIG.MESSAGES.REQUIRED.EMAIL)]
 		},
 		feedback: {
 			type: COMPONENT_TYPES.TEXT_ENTRY,
 			title: 'Feedback',
 			question: 'Please provide your feedback about the local plans service',
-			fieldName: 'feedback',
-			url: 'feedback',
+			fieldName: QUESTIONNAIRE_CONFIG.QUESTIONS.FEEDBACK.fieldName,
+			url: QUESTIONNAIRE_CONFIG.QUESTIONS.FEEDBACK.url,
 			validators: [
-				new RequiredValidator('Enter your feedback'),
+				new RequiredValidator(QUESTIONNAIRE_CONFIG.MESSAGES.REQUIRED.FEEDBACK),
 				new StringValidator({
 					maxLength: {
-						maxLength: 2000,
-						maxLengthMessage: 'Feedback must be 2000 characters or less'
+						maxLength: QUESTIONNAIRE_CONFIG.VALIDATION.FEEDBACK_MAX_LENGTH,
+						maxLengthMessage: QUESTIONNAIRE_CONFIG.MESSAGES.VALIDATION.FEEDBACK_TOO_LONG
 					}
 				})
 			]
@@ -51,24 +52,18 @@ export const getQuestions = (): QuestionMap => {
 			type: COMPONENT_TYPES.RADIO,
 			title: 'Overall Rating',
 			question: 'How would you rate your experience with the local plans service?',
-			fieldName: 'rating',
-			url: 'rating',
-			validators: [new RequiredValidator('Select a rating')],
-			options: [
-				{ text: 'Excellent', value: 'excellent' },
-				{ text: 'Good', value: 'good' },
-				{ text: 'Average', value: 'average' },
-				{ text: 'Poor', value: 'poor' }
-			]
+			fieldName: QUESTIONNAIRE_CONFIG.QUESTIONS.RATING.fieldName,
+			url: QUESTIONNAIRE_CONFIG.QUESTIONS.RATING.url,
+			validators: [new RequiredValidator(QUESTIONNAIRE_CONFIG.MESSAGES.REQUIRED.RATING)],
+			options: QUESTIONNAIRE_CONFIG.OPTIONS.RATING
 		}
 	};
 
 	// Create empty method overrides for each question type used
-	// Using actual string values that match the COMPONENT_TYPES constants
 	const questionMethodOverrides = {
-		'single-line-input': {},
-		'text-entry': {},
-		radio: {}
+		[QUESTIONNAIRE_CONFIG.COMPONENT_TYPES.SINGLE_LINE_INPUT]: {},
+		[QUESTIONNAIRE_CONFIG.COMPONENT_TYPES.TEXT_ENTRY]: {},
+		[QUESTIONNAIRE_CONFIG.COMPONENT_TYPES.RADIO]: {}
 	};
 
 	return createQuestions(questionProps, questionClasses, questionMethodOverrides);

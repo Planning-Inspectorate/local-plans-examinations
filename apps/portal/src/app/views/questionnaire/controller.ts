@@ -9,6 +9,7 @@ import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { QuestionnaireControllers, JourneyResponse, QuestionnaireAnswers } from './types.ts';
 import type { Request, Response } from 'express';
+import { QUESTIONNAIRE_CONFIG } from './config.ts';
 
 export function buildQuestionnaireControllers(service: PortalService): QuestionnaireControllers {
 	const { logger } = service;
@@ -49,7 +50,7 @@ export function buildCheckAnswersController(service: PortalService): AsyncReques
 			logger.info({ answers }, 'Check your answers page - displaying collected data');
 
 			// For now, render a simple page showing the answers
-			return res.render('views/questionnaire/check-answers.njk', {
+			return res.render(QUESTIONNAIRE_CONFIG.TEMPLATES.CHECK_ANSWERS, {
 				pageTitle: 'Check your answers',
 				answers: answers
 			});
@@ -76,7 +77,7 @@ export function buildQuestionnaireCompleteController(service: PortalService): As
 				delete req.session.forms[JOURNEY_ID];
 			}
 
-			return res.render('views/questionnaire/success.njk', {
+			return res.render(QUESTIONNAIRE_CONFIG.TEMPLATES.SUCCESS, {
 				pageTitle: 'Questionnaire submitted'
 			});
 		} catch (error) {
