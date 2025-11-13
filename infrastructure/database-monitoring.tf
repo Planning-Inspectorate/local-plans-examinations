@@ -25,7 +25,7 @@ resource "azurerm_storage_account" "sql_server" {
   network_rules {
     # ip_rules                   = [""]   # value must be public IP addess. ip_rules OR virtual_network_subnet_ids must be set
     default_action             = "Deny"
-    virtual_network_subnet_ids = [azurerm_subnet.main.id]
+    virtual_network_subnet_ids = [azurerm_subnet.main.id, azurerm_subnet.apps.id]
     bypass                     = ["AzureServices"]
   }
 
