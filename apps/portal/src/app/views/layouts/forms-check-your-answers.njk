@@ -1,7 +1,39 @@
 {% extends "views/layouts/main.njk" %}
-
-{% block pageTitle %}Check your answers – Local Plans Service{% endblock %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
-	{% block dynQuestionContent %}{% endblock %}
+<div class="govuk-grid-row">
+	<div class="govuk-grid-column-two-thirds">
+		<h1 class="govuk-heading-xl">Check your answers before submitting</h1>
+
+		{% if sections %}
+			{% for section in sections %}
+				<h2 class="govuk-heading-m">{{ section.heading }}</h2>
+
+				{% if section.list.rows.length > 0 %}
+					{{ govukSummaryList({
+						rows: section.list.rows
+					}) }}
+				{% endif %}
+			{% endfor %}
+		{% endif %}
+
+		<h2 class="govuk-heading-m">Submit your questionnaire</h2>
+		<p class="govuk-body">By submitting this questionnaire you are confirming that, to the best of your knowledge, the answers you are providing are correct.</p>
+
+		<form action="/questionnaire/check-your-answers" method="post">
+			{{ govukButton({
+				text: "Submit questionnaire"
+			}) }}
+		</form>
+
+		<p class="govuk-body">
+			<a href="/questionnaire" class="govuk-link">Back to questionnaire start</a>
+		</p>
+
+		{% block dynTaskList %}{% endblock %}
+	</div>
+</div>
 {% endblock %}
+

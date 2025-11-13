@@ -1,62 +1,41 @@
+/**
+ * Questionnaire routing configuration
+ * Handles all HTTP routes for the questionnaire flow
+ * @module QuestionnaireRoutes
+ */
+
 import { Router as createRouter } from 'express';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { buildSave, question } from '@planning-inspectorate/dynamic-forms/src/controller.js';
 import validate from '@planning-inspectorate/dynamic-forms/src/validator/validator.js';
 import { validationErrorHandler } from '@planning-inspectorate/dynamic-forms/src/validator/validation-error-handler.js';
-import {
-	buildQuestionnaireControllers,
-	buildCheckAnswersController,
-	buildQuestionnaireCompleteController
-} from './controller.ts';
-import type { PortalService } from '#service';
-import type { IRouter, Request, Response, NextFunction } from 'express';
-import { QUESTIONNAIRE_CONFIG } from './config.ts';
-import { QuestionnaireErrorHandler, validateQuestionnaireRoute } from './error-handling.ts';
+import type { IRouter } from 'express';
+import { QUESTIONNAIRE_CONFIG, type PortalService } from './core/index.ts';
+import { buildQuestionnaireMiddleware, buildCheckAnswersController, buildCompletionController } from './controllers.ts';
 
+/**
+ * Creates and configures all questionnaire routes
+ * @param service - Portal service instance for logging and database operations
+ * @returns Express router with all questionnaire routes configured
+ */
 export function createRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
-	const errorHandler = new QuestionnaireErrorHandler(service);
 
-	// Get the dynamic forms controllers
-	const { getJourney, getJourneyResponse, saveDataToSession } = buildQuestionnaireControllers(service);
+	// Setup middleware
+	const { getJourney, getJourneyResponse, saveDataToSession } = buildQuestionnaireMiddleware(service);
 
-	// Start page - redirects to first question
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	router.get('/', (req, res, next) => {
-		try {
-			// Redirect to the first question in the first section
-			res.redirect(`${req.baseUrl}${QUESTIONNAIRE_CONFIG.ROUTES.FIRST_QUESTION}`);
-		} catch (error) {
-			errorHandler.handleError(error as Error, req, res, 'questionnaire_start');
-		}
+	// Start page
+	router.get('/', (req, res) => {
+		res.render(QUESTIONNAIRE_CONFIG.templates.start, {
+			pageTitle: 'Local Plans Questionnaire',
+			backLink: '/'
+		});
 	});
 
-	// Question pages - section-based routing as per dynamic forms pattern
-	router.get(
-		'/:section/:question',
-		(req: Request, res: Response, next: NextFunction) => {
-			try {
-				validateQuestionnaireRoute(req);
-				next();
-			} catch (error) {
-				errorHandler.handleError(error as Error, req, res, 'route_validation');
-			}
-		},
-		getJourneyResponse,
-		getJourney,
-		asyncHandler(question)
-	);
-
+	// Question pages
+	router.get('/:section/:question', getJourneyResponse, getJourney, asyncHandler(question));
 	router.post(
 		'/:section/:question',
-		(req: Request, res: Response, next: NextFunction) => {
-			try {
-				validateQuestionnaireRoute(req);
-				next();
-			} catch (error) {
-				errorHandler.handleError(error as Error, req, res, 'route_validation');
-			}
-		},
 		getJourneyResponse,
 		getJourney,
 		validate,
@@ -64,24 +43,22 @@ export function createRoutes(service: PortalService): IRouter {
 		buildSave(saveDataToSession)
 	);
 
-	// Check your answers page - using our custom controller
+	// Check your answers
 	router.get(
-		`/${QUESTIONNAIRE_CONFIG.ROUTES.CHECK_YOUR_ANSWERS}`,
+		`/${QUESTIONNAIRE_CONFIG.routing.checkAnswers}`,
 		getJourneyResponse,
 		getJourney,
 		asyncHandler(buildCheckAnswersController(service))
 	);
-
-	// Submit the questionnaire
 	router.post(
-		`/${QUESTIONNAIRE_CONFIG.ROUTES.CHECK_YOUR_ANSWERS}`,
+		`/${QUESTIONNAIRE_CONFIG.routing.checkAnswers}`,
 		getJourneyResponse,
 		getJourney,
-		asyncHandler(buildQuestionnaireCompleteController(service))
+		asyncHandler(buildCompletionController(service))
 	);
 
 	// Success page
-	router.get(`/${QUESTIONNAIRE_CONFIG.ROUTES.SUCCESS}`, asyncHandler(buildQuestionnaireCompleteController(service)));
+	router.get(`/${QUESTIONNAIRE_CONFIG.routing.success}`, asyncHandler(buildCompletionController(service)));
 
 	return router;
 }
