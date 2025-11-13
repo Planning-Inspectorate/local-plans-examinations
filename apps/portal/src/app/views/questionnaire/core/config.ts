@@ -17,7 +17,7 @@ export const QUESTIONNAIRE_CONFIG = {
 	templates: {
 		start: 'views/questionnaire/templates/form-start.njk',
 		checkAnswers: 'views/layouts/forms-check-your-answers.njk',
-		success: 'views/questionnaire/templates/form-success.njk',
+		success: 'views/questionnaire/templates/form-confirmation.njk',
 		formQuestion: 'views/layouts/forms-question.njk'
 	},
 
