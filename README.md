@@ -12,7 +12,8 @@ A repository for local plan examination service. This repository includes a basi
 'Portal' app is given in the PINS/Public style. 'Manage' app is given in the back office/internal style, with Entra Auth.
 
 ## Getting started
-
+There is a bash script `setup.sh` that should completely setup the dev environment, if you're on Linux/WSL.
+From the root directory run `bash setup.sh`. Manual setup instructions are below:
 * install latest LTS Node
 * install Docker
 * `npm i`
