@@ -25,7 +25,11 @@
     "lint": "npx eslint .",
     "prepare": "node .husky/install.mjs",
     "test": "node --test",
-    "test-coverage": "node --test --experimental-test-coverage"
+    "test-coverage": "node --test --experimental-test-coverage",
+    "cy:portal": "CYPRESS_BASE_URL=http://localhost:8080 cypress run --spec 'cypress/e2e/portal/**/*'",
+    "cy:manage": "CYPRESS_BASE_URL=http://localhost:8090 cypress run --spec 'cypress/e2e/manage/**/*'",
+    "cy:open:portal": "CYPRESS_BASE_URL=http://localhost:8080 cypress open",
+    "cy:open:manage": "CYPRESS_BASE_URL=http://localhost:8090 cypress open"
   },
   "dependencies": {
     "@azure/functions": "^4.8.0",
@@ -58,6 +62,7 @@
     "@types/node": "^24.8.1",
     "@types/nunjucks": "^3.2.6",
     "cookie-parser": "^1.4.7",
+    "cypress": "^15.6.0",
     "eslint": "^9.37.0",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
