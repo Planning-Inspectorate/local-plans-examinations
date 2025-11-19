@@ -19,13 +19,17 @@ export const createQuestionnaireRoutes = (service: PortalService) => {
 	const router = createRouter({ mergeParams: true });
 
 	const questions = createQuestionnaireQuestions();
+
 	const { startJourney, viewSuccessPage, questionnaireService } = createQuestionnaireControllers(service);
 
 	const getJourney = buildGetJourney((req: any, journeyResponse: any) =>
 		createQuestionnaireJourney(questions, journeyResponse, req)
 	);
+
 	const getJourneyResponse = buildGetJourneyResponseFromSession(QUESTIONNAIRE_CONFIG.id);
+
 	const saveDataToSession = buildSaveDataToSession();
+
 	const saveController = createSaveController(questionnaireService);
 
 	router.get('/', startJourney);
