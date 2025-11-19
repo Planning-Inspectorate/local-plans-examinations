@@ -21,7 +21,7 @@ export const createQuestionnaireRoutes = (service: PortalService) => {
 	const questions = createQuestionnaireQuestions();
 	const { startJourney, viewSuccessPage, questionnaireService } = createQuestionnaireControllers(service);
 
-	const getJourney = buildGetJourney((req, journeyResponse) =>
+	const getJourney = buildGetJourney((req: any, journeyResponse: any) =>
 		createQuestionnaireJourney(questions, journeyResponse, req)
 	);
 	const getJourneyResponse = buildGetJourneyResponseFromSession(QUESTIONNAIRE_CONFIG.id);
@@ -38,7 +38,7 @@ export const createQuestionnaireRoutes = (service: PortalService) => {
 		validationErrorHandler,
 		buildSave(saveDataToSession)
 	);
-	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res, '', {}));
+	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res, ''));
 	router.post('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(saveController));
 	router.get('/success', viewSuccessPage);
 
