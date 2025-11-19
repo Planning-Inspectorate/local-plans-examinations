@@ -31,6 +31,14 @@ const QUESTION_DEFINITIONS = {
 			})
 		]
 	},
+	wantToProvideEmail: {
+		type: COMPONENT_TYPES.BOOLEAN,
+		title: 'Email Contact',
+		question: 'Would you like to provide your email address for updates?',
+		fieldName: 'wantToProvideEmail',
+		url: 'want-email',
+		validators: [new RequiredValidator('Select yes or no')]
+	},
 	email: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		title: 'Email Address',

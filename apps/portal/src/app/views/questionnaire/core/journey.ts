@@ -3,6 +3,10 @@ import { createQuestionnaireSections } from './sections.ts';
 import { QUESTIONNAIRE_CONFIG } from './config.ts';
 import type { Request } from 'express';
 
+// Import utilities for conditional questioning
+export { questionHasAnswer } from '@planning-inspectorate/dynamic-forms/src/components/utils/question-has-answer.js';
+export { BOOLEAN_OPTIONS } from '@planning-inspectorate/dynamic-forms/src/components/boolean/question.js';
+
 const validateJourneyRequest = (req: Request): void => {
 	if (!req.baseUrl.endsWith(`/${QUESTIONNAIRE_CONFIG.id}`)) {
 		throw new Error(`Invalid journey request for ${QUESTIONNAIRE_CONFIG.id}`);

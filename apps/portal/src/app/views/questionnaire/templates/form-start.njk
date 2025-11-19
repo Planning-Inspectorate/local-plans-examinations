@@ -1,38 +1,53 @@
-{% extends "views/layouts/main.njk" %}
-
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% extends "views/layouts/main.njk" %}
 
 {% block content %}
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l">Local Plans Questionnaire</h1>
-        
-        <p class="govuk-body">
-            Help us improve our local plans service by completing this short questionnaire.
-        </p>
-        
-        <p class="govuk-body">
-            The questionnaire should take around 5 minutes to complete and covers:
-        </p>
-        
-        <ul class="govuk-list govuk-list--bullet">
-            <li>Your personal information</li>
-            <li>Your experience with our service</li>
-        </ul>
-        
-        <div class="govuk-warning-text">
-            <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-            <strong class="govuk-warning-text__text">
-                <span class="govuk-warning-text__assistive">Warning</span>
-                Your answers will be used to improve our services and may be shared with relevant teams.
-            </strong>
-        </div>
-        
+	<div class="govuk-grid-column-two-thirds">
+		<h1 class="govuk-heading-xl">Give feedback on the local plans service</h1>
+
+		<p class="govuk-body-l">Help us improve our local plans service by sharing your experience and feedback.</p>
+
+		<p class="govuk-body">Use this service to tell us about your experience with the local plans examination process.</p>
+
+		<p class="govuk-body">It takes around 5 minutes to complete.</p>
+
+		<h2 class="govuk-heading-m">Before you start</h2>
+
+		<p class="govuk-body">You'll be asked about:</p>
+
+		<ul class="govuk-list govuk-list--bullet">
+			<li>your personal details</li>
+			<li>your experience with the local plans service</li>
+			<li>your overall rating and feedback</li>
+		</ul>
+
+		<p class="govuk-body">You'll need to provide:</p>
+
+		<ul class="govuk-list govuk-list--bullet">
+			<li>your full name</li>
+			<li>your email address</li>
+		</ul>
+
+		<div class="govuk-inset-text">
+			Your responses will help us improve our services. We may share your feedback with relevant teams within the Planning Inspectorate to make improvements.
+		</div>
+
+		<details class="govuk-details" data-module="govuk-details">
+			<summary class="govuk-details__summary">
+				<span class="govuk-details__summary-text">How we use your information</span>
+			</summary>
+			<div class="govuk-details__text">
+				<p class="govuk-body">The information you provide will be used to help us improve our local plans services.</p>
+				<p class="govuk-body">Your personal data will be processed in accordance with the Planning Inspectorate's privacy policy.</p>
+				<p class="govuk-body">We will not share your personal information with third parties without your consent, except where required by law.</p>
+			</div>
+		</details>
         {{ govukButton({
-            text: "Start questionnaire",
+            text: "Start now",
             href: "/questionnaire/personal/full-name",
             isStartButton: true
         }) }}
-    </div>
+	</div>
 </div>
 {% endblock %}
