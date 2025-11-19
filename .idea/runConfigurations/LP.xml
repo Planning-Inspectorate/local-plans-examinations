@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="LP" type="CompoundRunConfigurationType">
+    <toRun name="manage" type="js.build_tools.npm" />
+    <toRun name="portal" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>
