@@ -1,7 +1,7 @@
 import { Router as createRouter } from 'express';
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import { createRoutes as appRoutes } from './views/home/index.ts';
-import { createRoutes as questionnaireRoutes } from './views/questionnaire/index.ts';
+import { createQuestionnaireRoutes as questionnaireRoutes } from './views/questionnaire/index.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import type { PortalService } from '#service';

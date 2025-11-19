@@ -1,39 +1,35 @@
-/**
- * Questionnaire routing configuration
- * Handles all HTTP routes for the questionnaire flow
- * @module QuestionnaireRoutes
- */
-
 import { Router as createRouter } from 'express';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { buildSave, question } from '@planning-inspectorate/dynamic-forms/src/controller.js';
+import { buildGetJourney } from '@planning-inspectorate/dynamic-forms/src/middleware/build-get-journey.js';
+import { buildSave, list, question } from '@planning-inspectorate/dynamic-forms/src/controller.js';
 import validate from '@planning-inspectorate/dynamic-forms/src/validator/validator.js';
 import { validationErrorHandler } from '@planning-inspectorate/dynamic-forms/src/validator/validation-error-handler.js';
-import type { IRouter } from 'express';
-import { QUESTIONNAIRE_CONFIG, type PortalService } from './core/index.ts';
-import { buildQuestionnaireMiddleware, buildCheckAnswersController, buildCompletionController } from './controllers.ts';
+import {
+	buildGetJourneyResponseFromSession,
+	buildSaveDataToSession
+} from '@planning-inspectorate/dynamic-forms/src/lib/session-answer-store.js';
+import { createQuestionnaireJourney } from './core/journey.ts';
+import { createQuestionnaireQuestions } from './core/questions.ts';
+import { createQuestionnaireControllers } from './controller.ts';
+import { createSaveController } from './save.ts';
+import { QUESTIONNAIRE_CONFIG } from './core/config.ts';
+import type { PortalService } from '#service';
 
-/**
- * Creates and configures all questionnaire routes
- * @param service - Portal service instance for logging and database operations
- * @returns Express router with all questionnaire routes configured
- */
-export function createRoutes(service: PortalService): IRouter {
+export const createQuestionnaireRoutes = (service: PortalService) => {
 	const router = createRouter({ mergeParams: true });
 
-	// Setup middleware
-	const { getJourney, getJourneyResponse, saveDataToSession } = buildQuestionnaireMiddleware(service);
+	const questions = createQuestionnaireQuestions();
+	const { startJourney, viewSuccessPage, questionnaireService } = createQuestionnaireControllers(service);
 
-	// Start page
-	router.get('/', (req, res) => {
-		res.render(QUESTIONNAIRE_CONFIG.templates.start, {
-			pageTitle: 'Local Plans Questionnaire',
-			backLink: '/'
-		});
-	});
+	const getJourney = buildGetJourney((req, journeyResponse) =>
+		createQuestionnaireJourney(questions, journeyResponse, req)
+	);
+	const getJourneyResponse = buildGetJourneyResponseFromSession(QUESTIONNAIRE_CONFIG.id);
+	const saveDataToSession = buildSaveDataToSession();
+	const saveController = createSaveController(questionnaireService);
 
-	// Question pages
-	router.get('/:section/:question', getJourneyResponse, getJourney, asyncHandler(question));
+	router.get('/', startJourney);
+	router.get('/:section/:question', getJourneyResponse, getJourney, question);
 	router.post(
 		'/:section/:question',
 		getJourneyResponse,
@@ -42,23 +38,9 @@ export function createRoutes(service: PortalService): IRouter {
 		validationErrorHandler,
 		buildSave(saveDataToSession)
 	);
-
-	// Check your answers
-	router.get(
-		`/${QUESTIONNAIRE_CONFIG.routing.checkAnswers}`,
-		getJourneyResponse,
-		getJourney,
-		asyncHandler(buildCheckAnswersController(service))
-	);
-	router.post(
-		`/${QUESTIONNAIRE_CONFIG.routing.checkAnswers}`,
-		getJourneyResponse,
-		getJourney,
-		asyncHandler(buildCompletionController(service))
-	);
-
-	// Success page
-	router.get(`/${QUESTIONNAIRE_CONFIG.routing.success}`, asyncHandler(buildCompletionController(service)));
+	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res, '', {}));
+	router.post('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(saveController));
+	router.get('/success', viewSuccessPage);
 
 	return router;
-}
+};
