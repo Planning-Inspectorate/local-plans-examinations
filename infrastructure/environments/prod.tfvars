@@ -58,6 +58,12 @@ front_door_config = {
   use_tooling = false
 }
 
+monitoring_config = {
+  app_insights_web_test_enabled        = true
+  manage_app_insights_web_test_enabled = true
+  log_daily_cap                        = 0.5
+}
+
 sql_config = {
   admin = {
     login_username = "pins-local-plans-sql-prod"

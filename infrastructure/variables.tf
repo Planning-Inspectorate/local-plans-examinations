@@ -86,6 +86,15 @@ variable "health_check_eviction_time_in_min" {
   default     = 10
 }
 
+variable "monitoring_config" {
+  description = "Config for monitoring"
+  type = object({
+    app_insights_web_test_enabled        = bool
+    manage_app_insights_web_test_enabled = bool
+    log_daily_cap                        = number
+  })
+}
+
 variable "sql_config" {
   description = "Config for SQL Server and DB"
   type = object({
