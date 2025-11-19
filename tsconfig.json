@@ -14,6 +14,9 @@
 		"noEmit": true,
 		"strict": true,
 		"target": "esnext",
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"paths": {
+			"@pins/local-plans-lib/*": ["packages/lib/*"]
+		}
 	}
 }
