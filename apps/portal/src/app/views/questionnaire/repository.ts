@@ -2,15 +2,47 @@ import type { PrismaClient } from '@pins/local-plans-database/src/client/client.
 import type { Logger } from 'pino';
 import type { QuestionnaireAnswers } from './types/types.ts';
 
+/**
+ * Repository class for questionnaire data persistence using Prisma ORM
+ *
+ * Handles all database operations related to questionnaire submissions,
+ * providing a clean interface between the service layer and database.
+ */
 export class PrismaQuestionnaireRepository {
 	private readonly db: PrismaClient;
 	private readonly logger: Logger;
 
+	/**
+	 * Creates a new PrismaQuestionnaireRepository instance
+	 *
+	 * @param {PrismaClient} db - Prisma database client
+	 * @param {Logger} logger - Pino logger instance
+	 */
 	constructor(db: PrismaClient, logger: Logger) {
 		this.db = db;
 		this.logger = logger;
 	}
 
+	/**
+	 * Saves questionnaire answers to the database
+	 *
+	 * Creates a new questionnaire record with the provided answers,
+	 * automatically generating ID and timestamps.
+	 *
+	 * @param {QuestionnaireAnswers} data - User's questionnaire responses
+	 * @returns {Promise<{id: string, createdAt: Date}>} Database result with generated ID and timestamp
+	 *
+	 * @example
+	 * ```typescript
+	 * const result = await repository.save({
+	 *   fullName: 'John Doe',
+	 *   email: 'john@example.com',
+	 *   rating: 'excellent',
+	 *   feedback: 'Great service!'
+	 * });
+	 * console.log(result.id); // Generated CUID
+	 * ```
+	 */
 	async save(data: QuestionnaireAnswers): Promise<{ id: string; createdAt: Date }> {
 		const result = await this.db.questionnaire.create({
 			data: {

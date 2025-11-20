@@ -1,55 +1,71 @@
 import type { Handler } from 'express';
+import { APP_CONSTANTS, UI_CONSTANTS } from '../app/constants.ts';
 
 /**
- * Add configuration values to locals.
+ * Middleware class for adding configuration values to Express response locals
+ *
+ * Provides template variables for consistent UI rendering across all pages,
+ * including navigation state, styling, and footer links.
+ */
+class LocalsConfigurationMiddleware {
+	/**
+	 * Creates Express middleware that adds configuration to res.locals
+	 *
+	 * @returns {Handler} Express middleware function
+	 *
+	 * @example
+	 * ```typescript
+	 * app.use(LocalsConfigurationMiddleware.create());
+	 * ```
+	 */
+	static create(): Handler {
+		return (req, res, next) => {
+			// Add configuration object to template locals
+			res.locals.config = {
+				styleFile: UI_CONSTANTS.STYLE_FILE,
+				cspNonce: res.locals.cspNonce,
+				headerTitle: APP_CONSTANTS.APP_NAME,
+				footerLinks: UI_CONSTANTS.FOOTER_LINKS,
+				primaryNavigationLinks: this.buildNavigationLinks(req.path)
+			};
+			next();
+		};
+	}
+
+	/**
+	 * Builds navigation links with current page highlighting
+	 *
+	 * @param {string} currentPath - Current request path for highlighting active nav item
+	 * @returns {Array} Navigation links with 'current' property set for active item
+	 *
+	 * @private
+	 */
+	private static buildNavigationLinks(currentPath: string) {
+		return UI_CONSTANTS.NAVIGATION.map((link) => ({
+			...link,
+			current: link.href === currentPath
+		}));
+	}
+}
+
+/**
+ * Express middleware that adds configuration values to response locals
+ *
+ * Makes application configuration available to all Nunjucks templates,
+ * including navigation state, styling information, and footer links.
+ *
+ * @returns {Handler} Express middleware function
+ *
+ * @example
+ * ```typescript
+ * // In app setup
+ * app.use(addLocalsConfiguration());
+ *
+ * // In templates
+ * {{ config.headerTitle }}
+ * {{ config.styleFile }}
+ * ```
  */
 export function addLocalsConfiguration(): Handler {
-	return (req, res, next) => {
-		const path = req.path;
-
-		const links = [
-			{
-				text: 'Home',
-				href: '/'
-			},
-			{
-				text: 'Another Page',
-				href: '/another-page'
-			}
-		];
-
-		res.locals.config = {
-			styleFile: 'style-9ac0aae2.css',
-			cspNonce: res.locals.cspNonce,
-			headerTitle: 'A New Service',
-			footerLinks: [
-				{
-					text: 'Terms and conditions',
-					href: '/terms-and-conditions'
-				},
-				{
-					text: 'Accessibility statement',
-					href: '/accessibility-statement'
-				},
-				{
-					text: 'Privacy',
-					href: 'https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice'
-				},
-				{
-					text: 'Cookies',
-					href: '/cookies'
-				},
-				{
-					text: 'Contact',
-					href: '/contact'
-				}
-			],
-			primaryNavigationLinks: links.map((l) => {
-				const link = { current: false, ...l };
-				link.current = link.href === path;
-				return link;
-			})
-		};
-		next();
-	};
+	return LocalsConfigurationMiddleware.create();
 }
