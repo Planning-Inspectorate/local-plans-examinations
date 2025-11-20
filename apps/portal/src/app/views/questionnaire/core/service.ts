@@ -3,36 +3,28 @@
  */
 import type { PortalService } from '#service';
 import type { QuestionnaireAnswers, QuestionnaireSubmission } from '../types/types.ts';
+import type { PrismaQuestionnaireRepository } from '../repository.ts';
 
 export class QuestionnaireService {
 	private readonly portalService: PortalService;
+	private repository: PrismaQuestionnaireRepository;
 
-	constructor(portalService: PortalService) {
+	constructor(portalService: PortalService, repository: PrismaQuestionnaireRepository) {
 		this.portalService = portalService;
-	}
-
-	async generateReference(): Promise<string> {
-		const timestamp = Date.now();
-		const random = Math.random().toString(36).substr(2, 5).toUpperCase();
-		const reference = `Q-${timestamp}-${random}`;
-
-		this.portalService.logger.info({ reference }, 'Generated questionnaire reference');
-		return reference;
+		this.repository = repository;
 	}
 
 	async saveSubmission(answers: QuestionnaireAnswers): Promise<QuestionnaireSubmission> {
-		const reference = await this.generateReference();
+		const result = await this.repository.save(answers);
+
 		const submission: QuestionnaireSubmission = {
-			id: `placeholder-${Date.now()}`,
-			reference,
+			id: result.id,
+			reference: result.id, // Use CUID as reference
 			answers,
-			submittedAt: new Date()
+			submittedAt: result.createdAt
 		};
 
-		// TODO: Replace with actual Prisma implementation
-		this.portalService.logger.info({ submission }, 'Saving questionnaire submission');
-		console.log('TODO: Save to database:', submission);
-
+		this.portalService.logger.info(`Questionnaire saved to database - submissionId: ${submission.id}`);
 		return submission;
 	}
 
@@ -42,7 +34,7 @@ export class QuestionnaireService {
 			{ reference: submission.reference, email: submission.answers.email },
 			'Sending questionnaire notification'
 		);
-		console.log('TODO: Send email notification:', submission.reference);
+		this.portalService.logger.info(`TODO: Send email notification - reference: ${submission.reference}`);
 	}
 
 	storeSubmissionInSession(req: any, submission: QuestionnaireSubmission): void {

@@ -30,7 +30,7 @@ export const createQuestionnaireRoutes = (service: PortalService) => {
 
 	const saveDataToSession = buildSaveDataToSession();
 
-	const saveController = createSaveController(questionnaireService);
+	const saveController = createSaveController(questionnaireService, service);
 
 	router.get('/', startJourney);
 	router.get('/:section/:question', getJourneyResponse, getJourney, question);

@@ -2,9 +2,11 @@ import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import { QuestionnaireService } from './core/service.ts';
 import { QUESTIONNAIRE_CONFIG } from './core/config.ts';
+import { PrismaQuestionnaireRepository } from './repository.ts';
 
 export const createQuestionnaireControllers = (portalService: PortalService) => {
-	const questionnaireService = new QuestionnaireService(portalService);
+	const repository = new PrismaQuestionnaireRepository(portalService.db, portalService.logger);
+	const questionnaireService = new QuestionnaireService(portalService, repository);
 
 	const startJourney = (req: Request, res: Response) => {
 		portalService.logger.info('Displaying questionnaire start page');
@@ -16,21 +18,22 @@ export const createQuestionnaireControllers = (portalService: PortalService) => 
 	const viewSuccessPage = (req: Request, res: Response) => {
 		const { reference, submitted, error } = questionnaireService.getSubmissionFromSession(req);
 
-		console.log('Success page - Session data:', { reference, submitted, error });
-		console.log('Success page - Full session:', req.session.questionnaires);
+		portalService.logger.info(
+			`Displaying questionnaire success page - reference: ${reference}, submitted: ${submitted}, hasError: ${!!error}`
+		);
 
 		if (error) {
-			console.log('Error found, redirecting to check-your-answers');
+			portalService.logger.warn(`Error found in submission: ${error}, redirecting to check answers`);
 			questionnaireService.clearSubmissionFromSession(req);
 			return res.redirect('/questionnaire/check-your-answers');
 		}
 
 		if (!submitted || !reference) {
-			console.log('No submission data found, redirecting to start');
+			portalService.logger.warn('No submission data found, redirecting to start');
 			return res.redirect('/questionnaire');
 		}
 
-		console.log('Rendering success page with reference:', reference);
+		portalService.logger.info(`Rendering success page with reference: ${reference}`);
 		questionnaireService.clearSubmissionFromSession(req);
 
 		res.render(QUESTIONNAIRE_CONFIG.templates.success, {

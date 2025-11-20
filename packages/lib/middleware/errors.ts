@@ -7,19 +7,19 @@ import type { ErrorRequestHandler, Request, Response } from 'express';
  */
 export function buildDefaultErrorHandlerMiddleware(logger: Logger): ErrorRequestHandler {
 	return (error, req, res, next) => {
-		const wrappedError = wrapPrismaErrors(error);
-		const message = wrappedError.message || 'unknown error';
-		logger.error(error, message); // log the original error to include full details
-
 		if (res.headersSent) {
 			next(error);
 			return;
 		}
 
-		// make sure we don't use an invalid code
+		// Handle Prisma and other errors
+		const wrappedError = wrapPrismaErrors(error);
+		const message = wrappedError.message || 'unknown error';
+		logger.error(`Unhandled error: ${message}`);
+
 		const code = error.statusCode && error.statusCode > 399 ? error.statusCode : 500;
 		res.status(code);
-		res.render(`views/layouts/error`, {
+		res.render('views/layouts/error', {
 			pageTitle: 'Sorry, there was an error',
 			messages: [message, 'Try again later']
 		});
