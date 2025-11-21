@@ -1,19 +1,22 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { createQuestionnaireControllers } from '../questionnaire/controller.ts';
 
 /**
  * Controller class for handling home page requests
  *
- * Manages the main landing page functionality including database health checks
- * and visit tracking for demonstration purposes.
+ * Manages the main landing page functionality including database health checks,
+ * visit tracking, and questionnaire statistics display.
  */
 class HomeController {
 	private readonly db: PortalService['db'];
 	private readonly logger: PortalService['logger'];
+	private readonly questionnaireService: any;
 
-	constructor(db: PortalService['db'], logger: PortalService['logger']) {
+	constructor(db: PortalService['db'], logger: PortalService['logger'], questionnaireService: any) {
 		this.db = db;
 		this.logger = logger;
+		this.questionnaireService = questionnaireService;
 	}
 
 	/**
@@ -26,9 +29,10 @@ class HomeController {
 	handleHomePage = async (req: any, res: any) => {
 		const connected = await this.checkDatabaseConnection();
 		const visitCount = this.updateVisitCount(req);
+		const totalSubmissions = await this.getTotalSubmissions();
 
-		const viewModel = { connected, visitCount };
-		this.logger.info({ viewModel }, 'home page');
+		const viewModel = { connected, visitCount, totalSubmissions };
+		this.logger.info({ viewModel }, 'Home Page View Model');
 
 		return res.render('views/home/view.njk', {
 			pageTitle: 'Local Plans Examination Service',
@@ -53,6 +57,21 @@ class HomeController {
 	}
 
 	/**
+	 * Gets total number of questionnaire submissions
+	 *
+	 * @returns {Promise<number>} Total questionnaire submissions count
+	 * @private
+	 */
+	private async getTotalSubmissions(): Promise<number> {
+		try {
+			return await this.questionnaireService.getTotalSubmissions();
+		} catch (error) {
+			this.logger.error({ error }, 'Failed to get total submissions');
+			return 0; // Return 0 if database query fails
+		}
+	}
+
+	/**
 	 * Updates and returns the visit count stored in session
 	 *
 	 * @param {any} req - Express request object with session
@@ -72,6 +91,7 @@ class HomeController {
  * @returns {AsyncRequestHandler} Express async request handler for home page
  */
 export function buildHomePage(service: PortalService): AsyncRequestHandler {
-	const controller = new HomeController(service.db, service.logger);
+	const { questionnaireService } = createQuestionnaireControllers(service);
+	const controller = new HomeController(service.db, service.logger, questionnaireService);
 	return controller.handleHomePage;
 }

@@ -59,4 +59,25 @@ export class PrismaQuestionnaireRepository {
 		this.logger.info(`Questionnaire saved to database - id: ${result.id}`);
 		return result;
 	}
+
+	/**
+	 * Counts total number of questionnaire submissions
+	 *
+	 * @returns {Promise<number>} Total count of questionnaire submissions
+	 *
+	 * @example
+	 * ```typescript
+	 * const totalSubmissions = await repository.count();
+	 * console.log(`Total submissions: ${totalSubmissions}`);
+	 * ```
+	 */
+	async count(): Promise<number> {
+		const count = await this.db.questionnaire.count({
+			where: {
+				isDeleted: false // Only count non-deleted submissions
+			}
+		});
+		this.logger.debug(`Questionnaire count query returned: ${count}`);
+		return count;
+	}
 }

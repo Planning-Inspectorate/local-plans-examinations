@@ -153,4 +153,24 @@ export class QuestionnaireService {
 			submittedAt: result.createdAt
 		};
 	}
+
+	/**
+	 * Gets total count of questionnaire submissions
+	 *
+	 * Useful for displaying statistics on home pages, dashboards,
+	 * and admin interfaces across both portal and manage apps.
+	 *
+	 * @returns {Promise<number>} Total number of questionnaire submissions
+	 *
+	 * @example
+	 * ```typescript
+	 * const totalSubmissions = await questionnaireService.getTotalSubmissions();
+	 * // Display on home page: "123 people have submitted feedback"
+	 * ```
+	 */
+	async getTotalSubmissions(): Promise<number> {
+		const count = await this.repository.count();
+		this.logger.info(`Retrieved total questionnaire submissions: ${count}`);
+		return count;
+	}
 }

@@ -24,6 +24,12 @@
                     <p class="govuk-body">
                         You have visited this page {{ visitCount }} time{% if visitCount > 1 %}s{% endif %}.
                     </p>
+                    
+                    {% if totalSubmissions > 0 %}
+                    <p class="govuk-body">
+                        <strong>{{ totalSubmissions }}</strong> people have already shared their feedback with us.
+                    </p>
+                    {% endif %}
 
                     <h3 class="govuk-heading-m">Quick actions</h3>
                     <p class="govuk-body">

@@ -113,4 +113,26 @@ describe('QuestionnaireService', () => {
 		assert.strictEqual(logCall[0].email, 'test@example.com');
 		assert.strictEqual(logCall[1], 'Sending notification');
 	});
+
+	it('should get total submissions count', async () => {
+		const mockLogger = {
+			info: mock.fn(),
+			error: mock.fn(),
+			debug: mock.fn(),
+			warn: mock.fn()
+		};
+
+		const mockRepository = {
+			count: mock.fn(async () => 42)
+		};
+
+		const service = new QuestionnaireService(mockLogger, mockRepository as any);
+
+		const count = await service.getTotalSubmissions();
+
+		assert.strictEqual(mockRepository.count.mock.callCount(), 1);
+		assert.strictEqual(count, 42);
+		assert.strictEqual(mockLogger.info.mock.callCount(), 1);
+		assert.ok(mockLogger.info.mock.calls[0].arguments[0].includes('Retrieved total questionnaire submissions: 42'));
+	});
 });
