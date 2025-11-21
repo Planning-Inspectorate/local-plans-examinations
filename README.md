@@ -24,3 +24,10 @@ A repository for local plan examination service. This repository includes a basi
 * run `npm run db-migrate-dev` to setup the database
 * run `apps/manage>npm run dev` to start the manage app
 * run `apps/portal>npm run dev` to start the portal app
+
+## Testing
+
+* `npm test` - run all tests across workspaces
+* `npm run test-coverage` - run tests with coverage report
+* `node --test apps/portal/src/**/*.test.ts` - run portal tests only
+* `node --test apps/manage/src/**/*.test.ts` - run manage tests only
