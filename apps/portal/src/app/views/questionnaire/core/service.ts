@@ -1,6 +1,6 @@
 import type { PortalService } from '#service';
 import type { QuestionnaireAnswers, QuestionnaireSubmission } from '../types/types.ts';
-import type { PrismaQuestionnaireRepository } from '../repository.ts';
+import type { QuestionnaireService as QuestionnaireDataService } from '../data/service.ts';
 
 /**
  * Session data structure for questionnaire submissions
@@ -92,17 +92,17 @@ export class SessionManager {
  */
 export class QuestionnaireService {
 	private readonly logger: PortalService['logger'];
-	private readonly repository: PrismaQuestionnaireRepository;
+	private readonly dataService: QuestionnaireDataService;
 
 	/**
 	 * Creates a new QuestionnaireService instance
 	 *
 	 * @param {PortalService['logger']} logger - Logger instance for service operations
-	 * @param {PrismaQuestionnaireRepository} repository - Repository for data persistence
+	 * @param {QuestionnaireDataService} dataService - Data service for persistence
 	 */
-	constructor(logger: PortalService['logger'], repository: PrismaQuestionnaireRepository) {
+	constructor(logger: PortalService['logger'], dataService: QuestionnaireDataService) {
 		this.logger = logger;
-		this.repository = repository;
+		this.dataService = dataService;
 	}
 
 	/**
@@ -112,7 +112,7 @@ export class QuestionnaireService {
 	 * @returns {Promise<QuestionnaireSubmission>} Saved submission with generated ID and reference
 	 */
 	async saveSubmission(answers: QuestionnaireAnswers): Promise<QuestionnaireSubmission> {
-		const result = await this.repository.save(answers);
+		const result = await this.dataService.saveSubmission(answers);
 		const submission = this.createSubmission(result, answers);
 		this.logger.info(`Questionnaire saved - ID: ${submission.id}`);
 		return submission;
@@ -169,7 +169,7 @@ export class QuestionnaireService {
 	 * ```
 	 */
 	async getTotalSubmissions(): Promise<number> {
-		const count = await this.repository.count();
+		const count = await this.dataService.getTotalSubmissions();
 		this.logger.info(`Retrieved total questionnaire submissions: ${count}`);
 		return count;
 	}

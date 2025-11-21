@@ -1,6 +1,7 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { createQuestionnaireControllers } from '../questionnaire/controller.ts';
+import { DatabaseService } from '@pins/local-plans-lib/database';
+import { QuestionnaireService as QuestionnaireDataService } from '../questionnaire/data/service.ts';
 
 /**
  * Controller class for handling home page requests
@@ -91,7 +92,8 @@ class HomeController {
  * @returns {AsyncRequestHandler} Express async request handler for home page
  */
 export function buildHomePage(service: PortalService): AsyncRequestHandler {
-	const { questionnaireService } = createQuestionnaireControllers(service);
-	const controller = new HomeController(service.db, service.logger, questionnaireService);
+	const databaseService = new DatabaseService(service.db, service.logger);
+	const questionnaireDataService = new QuestionnaireDataService(databaseService, service.logger);
+	const controller = new HomeController(service.db, service.logger, questionnaireDataService);
 	return controller.handleHomePage;
 }
