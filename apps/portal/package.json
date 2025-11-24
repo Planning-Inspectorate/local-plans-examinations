@@ -29,6 +29,7 @@
     "redis": "*"
   },
   "devDependencies": {
+    "cypress": "^15.7.0",
     "nodemon": "*",
     "sass": "*"
   },
