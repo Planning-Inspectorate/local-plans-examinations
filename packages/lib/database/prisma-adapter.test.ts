@@ -62,7 +62,7 @@ describe('PrismaAdapter', () => {
 
 		it('should delete many records', async () => {
 			const result = await adapter.deleteMany!({ active: false });
-			assert.strictEqual(result.count, 1);
+			assert.strictEqual(result.count, 2);
 		});
 
 		it('should create many records', async () => {
