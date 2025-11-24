@@ -1,133 +1,152 @@
-import { describe, it, mock } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { createQuestionnaireControllers } from '../controller.ts';
 import { SessionManager, QuestionnaireService } from '../core/service.ts';
-import { PrismaQuestionnaireRepository } from '../repository.ts';
+import { DatabaseService } from '@pins/local-plans-lib/database';
+import { QuestionnaireService as QuestionnaireDataService } from '../data/service.ts';
+import {
+	createTestAnswers,
+	createTestSubmission,
+	createMockLogger,
+	createMockPortalService,
+	SessionDataBuilder,
+	AssertionHelpers
+} from './test-helpers.ts';
 
+/**
+ * Questionnaire Integration Tests
+ * Tests component interactions and end-to-end flows
+ */
 describe('Questionnaire Integration', () => {
-	it('should handle complete submission flow', async () => {
-		const mockDb = {
-			questionnaire: {
-				create: mock.fn(async () => ({
-					id: 'integration-test-id',
-					createdAt: new Date('2024-01-01')
-				}))
-			}
-		};
+	describe('Complete Submission Flow', () => {
+		it('should handle end-to-end submission with all layers', async () => {
+			const mockLogger = createMockLogger();
+			const mockAdapter = {
+				create: async () => ({ id: 'integration-test-id', createdAt: new Date('2024-01-01') }),
+				count: async () => 1
+			};
+			const mockDatabaseService = {
+				createAdapter: () => mockAdapter
+			};
 
-		const mockLogger = {
-			info: mock.fn(),
-			error: mock.fn(),
-			debug: mock.fn(),
-			warn: mock.fn()
-		};
+			const dataService = new QuestionnaireDataService(mockDatabaseService as DatabaseService, mockLogger);
+			const businessService = new QuestionnaireService(mockLogger, dataService);
 
-		const repository = new PrismaQuestionnaireRepository(mockDb as any, mockLogger);
-		const service = new QuestionnaireService(mockLogger, repository);
+			const answers = createTestAnswers({
+				fullName: 'Integration Test User',
+				email: 'integration@test.com',
+				rating: 'excellent',
+				feedback: 'Integration test feedback'
+			});
 
-		const answers = {
-			fullName: 'Integration Test User',
-			email: 'integration@test.com',
-			rating: 'excellent',
-			feedback: 'Integration test feedback'
-		};
+			const submission = await businessService.saveSubmission(answers);
 
-		const submission = await service.saveSubmission(answers);
+			assert.strictEqual(submission.id, 'integration-test-id');
+			assert.strictEqual(submission.reference, 'integration-test-id');
+			assert.deepStrictEqual(submission.answers, answers);
+			AssertionHelpers.assertMockCalled(mockLogger.info, 1); // Service log
+		});
 
-		assert.strictEqual(submission.id, 'integration-test-id');
-		assert.strictEqual(submission.reference, 'integration-test-id');
-		assert.deepStrictEqual(submission.answers, answers);
-		assert.strictEqual(mockDb.questionnaire.create.mock.callCount(), 1);
-		assert.strictEqual(mockLogger.info.mock.callCount(), 2); // Repository + Service logs
+		it('should handle notification flow after submission', async () => {
+			const mockLogger = createMockLogger();
+			const mockDataService = {
+				saveSubmission: async () => ({ id: 'notify-test-id', createdAt: new Date() }),
+				getTotalSubmissions: async () => 1
+			};
+
+			const service = new QuestionnaireService(mockLogger, mockDataService as any);
+			const submission = await service.saveSubmission(createTestAnswers());
+
+			// Test notification (currently just logs)
+			await service.sendNotification(submission);
+
+			AssertionHelpers.assertMockCalled(mockLogger.info, 2); // Save + notification logs
+		});
 	});
 
-	it('should handle session management in controller flow', () => {
-		const mockReq = { session: {} };
-		const submission = {
-			id: 'session-test-id',
-			reference: 'session-ref',
-			answers: { fullName: 'Session Test' },
-			submittedAt: new Date()
-		};
+	describe('Session Management Integration', () => {
+		it('should handle complete session lifecycle', () => {
+			const mockReq = { session: {} };
+			const submission = createTestSubmission({
+				id: 'session-test-id',
+				reference: 'session-ref'
+			});
 
-		// Store submission
-		SessionManager.store(mockReq, submission);
-		let sessionData = SessionManager.get(mockReq);
-		assert.strictEqual(sessionData.reference, 'session-ref');
-		assert.strictEqual(sessionData.submitted, true);
+			// Store submission
+			SessionManager.store(mockReq, submission);
+			let sessionData = SessionManager.get(mockReq);
+			assert.strictEqual(sessionData.reference, 'session-ref');
+			assert.strictEqual(sessionData.submitted, true);
 
-		// Clear session
-		SessionManager.clear(mockReq);
-		sessionData = SessionManager.get(mockReq);
-		assert.strictEqual(sessionData.reference, undefined);
-		assert.strictEqual(sessionData.submitted, undefined);
+			// Clear session
+			SessionManager.clear(mockReq);
+			sessionData = SessionManager.get(mockReq);
+			assert.strictEqual(sessionData.reference, undefined);
+			assert.strictEqual(sessionData.submitted, undefined);
+		});
+
+		it('should handle error scenarios in session management', () => {
+			const mockReq = { session: {} };
+
+			// Test error storage and retrieval
+			SessionManager.setError(mockReq, 'Integration test error');
+			const sessionData = SessionManager.get(mockReq);
+			assert.strictEqual(sessionData.error, 'Integration test error');
+
+			// Test clearing errors
+			SessionManager.clear(mockReq);
+			const clearedData = SessionManager.get(mockReq);
+			assert.strictEqual(clearedData.error, undefined);
+		});
 	});
 
-	it('should integrate controller with service dependencies', () => {
-		const mockService = {
-			logger: {
-				info: mock.fn(),
-				error: mock.fn(),
-				debug: mock.fn(),
-				warn: mock.fn()
-			},
-			db: {
-				questionnaire: {
-					create: mock.fn()
+	describe('Controller Integration', () => {
+		it('should integrate controller factory with all dependencies', () => {
+			const mockService = createMockPortalService();
+			const controllers = createQuestionnaireControllers(mockService as any);
+
+			// Test controller creation and dependency injection
+			assert.ok(typeof controllers.startJourney === 'function');
+			assert.ok(typeof controllers.viewSuccessPage === 'function');
+			assert.ok(controllers.questionnaireService instanceof QuestionnaireService);
+		});
+	});
+
+	describe('Error Handling Integration', () => {
+		it('should propagate errors through service layers', async () => {
+			const mockLogger = createMockLogger();
+			const error = new Error('Integration database error');
+			const mockAdapter = {
+				create: async () => {
+					throw error;
 				}
-			}
-		};
+			};
+			const mockDatabaseService = {
+				createAdapter: () => mockAdapter
+			};
 
-		const controllers = createQuestionnaireControllers(mockService as any);
+			const dataService = new QuestionnaireDataService(mockDatabaseService as DatabaseService, mockLogger);
+			const businessService = new QuestionnaireService(mockLogger, dataService);
 
-		// Test controller creation and dependency injection
-		assert.ok(typeof controllers.startJourney === 'function');
-		assert.ok(typeof controllers.viewSuccessPage === 'function');
-		assert.ok(controllers.questionnaireService instanceof QuestionnaireService);
+			await assert.rejects(() => businessService.saveSubmission(createTestAnswers()), error);
+		});
 
-		// Test start journey renders correctly
-		let renderCalled = false;
-		let renderData: any;
-		const mockRes = {
-			render: (template: string, data: any) => {
-				renderCalled = true;
-				renderData = data;
-			}
-		};
+		it('should handle count operation errors', async () => {
+			const mockLogger = createMockLogger();
+			const error = new Error('Count operation failed');
+			const mockAdapter = {
+				count: async () => {
+					throw error;
+				}
+			};
+			const mockDatabaseService = {
+				createAdapter: () => mockAdapter
+			};
 
-		controllers.startJourney({} as any, mockRes as any);
-		assert.strictEqual(renderCalled, true);
-		assert.strictEqual(renderData.pageTitle, 'Local Plans Questionnaire');
-		assert.strictEqual(mockService.logger.info.mock.callCount(), 1);
-	});
+			const dataService = new QuestionnaireDataService(mockDatabaseService as DatabaseService, mockLogger);
+			const businessService = new QuestionnaireService(mockLogger, dataService);
 
-	it('should handle error scenarios in service layer', async () => {
-		const mockDb = {
-			questionnaire: {
-				create: mock.fn(async () => {
-					throw new Error('Database error');
-				})
-			}
-		};
-
-		const mockLogger = {
-			info: mock.fn(),
-			error: mock.fn(),
-			debug: mock.fn(),
-			warn: mock.fn()
-		};
-
-		const repository = new PrismaQuestionnaireRepository(mockDb as any, mockLogger);
-		const service = new QuestionnaireService(mockLogger, repository);
-
-		const answers = { fullName: 'Error Test' };
-
-		try {
-			await service.saveSubmission(answers);
-			assert.fail('Should have thrown error');
-		} catch (error) {
-			assert.ok(error instanceof Error);
-			assert.strictEqual(error.message, 'Database error');
-		}
+			await assert.rejects(() => businessService.getTotalSubmissions(), error);
+		});
 	});
 });

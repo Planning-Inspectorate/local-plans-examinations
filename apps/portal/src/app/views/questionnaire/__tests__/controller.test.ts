@@ -1,178 +1,104 @@
-import { describe, it, mock } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { createQuestionnaireControllers } from '../controller.ts';
-import { SessionManager } from '../core/service.ts';
+import {
+	createMockPortalService,
+	createMockRequest,
+	createMockResponse,
+	SessionDataBuilder,
+	AssertionHelpers
+} from './test-helpers.ts';
 
+/**
+ * Questionnaire Controllers unit tests
+ * Tests controller behavior in isolation
+ */
 describe('Questionnaire Controllers', () => {
-	it('should handle start journey with logging', () => {
-		const mockLogger = {
-			info: mock.fn(),
-			error: mock.fn(),
-			debug: mock.fn(),
-			warn: mock.fn()
-		};
+	let mockService: ReturnType<typeof createMockPortalService>;
+	let controllers: ReturnType<typeof createQuestionnaireControllers>;
 
-		const mockService = {
-			logger: mockLogger,
-			db: {}
-		};
+	const setupControllers = (serviceOverrides = {}) => {
+		mockService = createMockPortalService(serviceOverrides);
+		controllers = createQuestionnaireControllers(mockService as any);
+	};
 
-		let renderTemplate = '';
-		let renderData: any = {};
-		const mockReq = {};
-		const mockRes = {
-			render: (template: string, data: any) => {
-				renderTemplate = template;
-				renderData = data;
-			}
-		};
+	describe('startJourney()', () => {
+		it('should render start page with correct template and data', () => {
+			setupControllers();
+			const mockReq = createMockRequest();
+			const mockRes = createMockResponse();
 
-		const controllers = createQuestionnaireControllers(mockService as any);
-		controllers.startJourney(mockReq as any, mockRes as any);
+			controllers.startJourney(mockReq as any, mockRes as any);
 
-		assert.ok(renderTemplate.includes('form-start.njk'));
-		assert.strictEqual(renderData.pageTitle, 'Local Plans Questionnaire');
-		assert.strictEqual(mockLogger.info.mock.callCount(), 1);
-		assert.strictEqual(mockLogger.info.mock.calls[0].arguments[0], 'Displaying questionnaire start page');
+			AssertionHelpers.assertTemplateRendered(mockRes, 'form-start.njk', {
+				pageTitle: 'Local Plans Questionnaire'
+			});
+			AssertionHelpers.assertMockCalled(mockService.logger.info, 1, ['Displaying questionnaire start page']);
+		});
 	});
 
-	it('should handle success page with valid session', () => {
-		const mockLogger = {
-			info: mock.fn(),
-			error: mock.fn(),
-			debug: mock.fn(),
-			warn: mock.fn()
-		};
+	describe('viewSuccessPage()', () => {
+		it('should render success page with valid session', () => {
+			setupControllers();
+			const sessionData = SessionDataBuilder.withSubmission('test-ref-123');
+			const mockReq = createMockRequest(sessionData);
+			const mockRes = createMockResponse();
 
-		const mockService = {
-			logger: mockLogger,
-			db: {}
-		};
+			controllers.viewSuccessPage(mockReq as any, mockRes as any);
 
-		const mockReq = {
-			session: {
-				questionnaires: {
-					lastReference: 'test-ref-123',
-					submitted: true
-				}
-			}
-		};
+			AssertionHelpers.assertTemplateRendered(mockRes, 'form-success.njk', {
+				pageTitle: 'Questionnaire submitted successfully',
+				reference: 'test-ref-123'
+			});
+			AssertionHelpers.assertMockCalled(mockService.logger.info, 2); // Session check + render
+		});
 
-		let renderTemplate = '';
-		let renderData: any = {};
-		const mockRes = {
-			render: (template: string, data: any) => {
-				renderTemplate = template;
-				renderData = data;
-			},
-			redirect: mock.fn()
-		};
+		it('should redirect when no submission data in session', () => {
+			setupControllers();
+			const mockReq = createMockRequest(SessionDataBuilder.empty());
+			const mockRes = createMockResponse();
 
-		const controllers = createQuestionnaireControllers(mockService as any);
-		controllers.viewSuccessPage(mockReq as any, mockRes as any);
+			controllers.viewSuccessPage(mockReq as any, mockRes as any);
 
-		assert.ok(renderTemplate.includes('form-success.njk'));
-		assert.strictEqual(renderData.pageTitle, 'Questionnaire submitted successfully');
-		assert.strictEqual(renderData.reference, 'test-ref-123');
-		assert.strictEqual(mockLogger.info.mock.callCount(), 2); // Session check + render
+			AssertionHelpers.assertRedirect(mockRes, '/questionnaire');
+			AssertionHelpers.assertMockCalled(mockService.logger.warn, 1);
+			assert.ok(mockService.logger.warn.mock.calls[0].arguments[0].includes('No submission data'));
+		});
+
+		it('should handle session error and redirect to check answers', () => {
+			setupControllers();
+			const sessionData = SessionDataBuilder.withError('Database connection failed');
+			const mockReq = createMockRequest(sessionData);
+			const mockRes = createMockResponse();
+
+			controllers.viewSuccessPage(mockReq as any, mockRes as any);
+
+			AssertionHelpers.assertRedirect(mockRes, '/questionnaire/check-your-answers');
+			AssertionHelpers.assertMockCalled(mockService.logger.warn, 1);
+			assert.ok(mockService.logger.warn.mock.calls[0].arguments[0].includes('Session error'));
+		});
+
+		it('should clear session after successful render', () => {
+			setupControllers();
+			const sessionData = SessionDataBuilder.withSubmission('test-ref');
+			const mockReq = createMockRequest(sessionData);
+			const mockRes = createMockResponse();
+
+			controllers.viewSuccessPage(mockReq as any, mockRes as any);
+
+			// Session should be cleared after successful render
+			assert.strictEqual(mockReq.session.questionnaires.lastReference, undefined);
+			assert.strictEqual(mockReq.session.questionnaires.submitted, undefined);
+		});
 	});
 
-	it('should redirect when no submission data in session', () => {
-		const mockLogger = {
-			info: mock.fn(),
-			error: mock.fn(),
-			debug: mock.fn(),
-			warn: mock.fn()
-		};
+	describe('Factory Function', () => {
+		it('should create controllers with proper dependencies', () => {
+			setupControllers();
 
-		const mockService = {
-			logger: mockLogger,
-			db: {}
-		};
-
-		const mockReq = {
-			session: {}
-		};
-
-		const mockRes = {
-			render: mock.fn(),
-			redirect: mock.fn()
-		};
-
-		const controllers = createQuestionnaireControllers(mockService as any);
-		controllers.viewSuccessPage(mockReq as any, mockRes as any);
-
-		assert.strictEqual(mockRes.redirect.mock.callCount(), 1);
-		assert.strictEqual(mockRes.redirect.mock.calls[0].arguments[0], '/questionnaire');
-		assert.strictEqual(mockLogger.warn.mock.callCount(), 1);
-		assert.ok(mockLogger.warn.mock.calls[0].arguments[0].includes('No submission data'));
-	});
-
-	it('should handle session error and redirect to check answers', () => {
-		const mockLogger = {
-			info: mock.fn(),
-			error: mock.fn(),
-			debug: mock.fn(),
-			warn: mock.fn()
-		};
-
-		const mockService = {
-			logger: mockLogger,
-			db: {}
-		};
-
-		const mockReq = {
-			session: {
-				questionnaires: {
-					error: 'Database connection failed'
-				}
-			}
-		};
-
-		const mockRes = {
-			render: mock.fn(),
-			redirect: mock.fn()
-		};
-
-		const controllers = createQuestionnaireControllers(mockService as any);
-		controllers.viewSuccessPage(mockReq as any, mockRes as any);
-
-		assert.strictEqual(mockRes.redirect.mock.callCount(), 1);
-		assert.strictEqual(mockRes.redirect.mock.calls[0].arguments[0], '/questionnaire/check-your-answers');
-		assert.strictEqual(mockLogger.warn.mock.callCount(), 1);
-		assert.ok(mockLogger.warn.mock.calls[0].arguments[0].includes('Session error'));
-	});
-
-	it('should clear session after successful render', () => {
-		const mockService = {
-			logger: {
-				info: mock.fn(),
-				error: mock.fn(),
-				debug: mock.fn(),
-				warn: mock.fn()
-			},
-			db: {}
-		};
-
-		const mockReq = {
-			session: {
-				questionnaires: {
-					lastReference: 'test-ref',
-					submitted: true
-				}
-			}
-		};
-
-		const mockRes = {
-			render: mock.fn(),
-			redirect: mock.fn()
-		};
-
-		const controllers = createQuestionnaireControllers(mockService as any);
-		controllers.viewSuccessPage(mockReq as any, mockRes as any);
-
-		// Session should be cleared after successful render
-		assert.strictEqual(mockReq.session.questionnaires.lastReference, undefined);
-		assert.strictEqual(mockReq.session.questionnaires.submitted, undefined);
+			assert.ok(typeof controllers.startJourney === 'function');
+			assert.ok(typeof controllers.viewSuccessPage === 'function');
+			assert.ok(controllers.questionnaireService);
+		});
 	});
 });
