@@ -8,8 +8,15 @@ import type { PortalService } from '#service';
 /**
  * Controller class for handling questionnaire form submission
  *
- * Manages the final submission process including validation, saving to database,
- * sending notifications, and handling errors gracefully.
+ * Orchestrates the final submission process including request validation,
+ * data persistence, notification sending, session management, and graceful
+ * error handling. Implements comprehensive error recovery and user feedback.
+ *
+ * @example
+ * ```typescript
+ * const controller = new SaveController(service, logger);
+ * router.post('/check-your-answers', asyncHandler(controller.handle));
+ * ```
  */
 class SaveController {
 	private readonly service: QuestionnaireService;
@@ -18,8 +25,11 @@ class SaveController {
 	/**
 	 * Creates a new SaveController instance
 	 *
-	 * @param {QuestionnaireService} service - Service for questionnaire business logic
-	 * @param {PortalService['logger']} logger - Logger for request tracking
+	 * Initializes the controller with required dependencies for handling
+	 * questionnaire submission requests and managing the complete save process.
+	 *
+	 * @param {QuestionnaireService} service - Service instance for questionnaire business logic operations
+	 * @param {PortalService['logger']} logger - Pino logger instance for request tracking and error logging
 	 */
 	constructor(service: QuestionnaireService, logger: PortalService['logger']) {
 		this.service = service;
@@ -29,12 +39,19 @@ class SaveController {
 	/**
 	 * Main handler for questionnaire submission requests
 	 *
-	 * Orchestrates the complete submission process including validation,
-	 * saving, notification, and session management.
+	 * Orchestrates the complete submission process including data extraction,
+	 * validation, database persistence, notification sending, session management,
+	 * and error handling with appropriate user feedback and recovery.
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
-	 * @returns {Promise<void>}
+	 * @param {Request} req - Express request object containing session and form data
+	 * @param {Response} res - Express response object with journey data in locals
+	 * @returns {Promise<void>} Promise that resolves after processing submission
+	 *
+	 * @example
+	 * ```typescript
+	 * // Route handler
+	 * router.post('/check-your-answers', asyncHandler(saveController.handle));
+	 * ```
 	 */
 	handle = async (req: Request, res: Response) => {
 		try {
@@ -54,8 +71,13 @@ class SaveController {
 	/**
 	 * Extracts questionnaire data from response locals
 	 *
-	 * @param {Response} res - Express response object with locals
-	 * @returns {Object} Extracted answers and journey data
+	 * Retrieves user answers and journey state from Express response locals
+	 * where dynamic forms middleware stores the processed form data.
+	 *
+	 * @param {Response} res - Express response object containing journey data in locals
+	 * @returns {Object} Extracted data object
+	 * @returns {QuestionnaireAnswers} returns.answers - User's form responses
+	 * @returns {any} returns.journey - Dynamic forms journey instance
 	 * @private
 	 */
 	private extractRequestData(res: Response) {
@@ -68,9 +90,16 @@ class SaveController {
 	/**
 	 * Validates questionnaire submission requirements
 	 *
-	 * @param {QuestionnaireAnswers} answers - User's questionnaire responses
-	 * @param {any} journey - Dynamic forms journey object
-	 * @returns {Object} Validation result with status and redirect info
+	 * Checks that the journey is complete and answers are present before
+	 * allowing submission to proceed. Provides appropriate redirect targets
+	 * for different failure scenarios.
+	 *
+	 * @param {QuestionnaireAnswers} answers - User's questionnaire responses to validate
+	 * @param {any} journey - Dynamic forms journey object with completion status
+	 * @returns {Object} Validation result object
+	 * @returns {boolean} returns.isValid - Whether validation passed
+	 * @returns {string} [returns.redirectTo] - URL to redirect to if validation failed
+	 * @returns {string} [returns.message] - Error message for logging if validation failed
 	 * @private
 	 */
 	private validateRequest(answers: QuestionnaireAnswers, journey: any) {
@@ -86,10 +115,13 @@ class SaveController {
 	/**
 	 * Handles validation errors by logging and redirecting
 	 *
-	 * @param {Response} res - Express response object
-	 * @param {string} redirectTo - URL to redirect to
-	 * @param {string} message - Error message to log
-	 * @returns {Response} Redirect response
+	 * Logs validation failure details and redirects user to appropriate
+	 * page to recover from the error state.
+	 *
+	 * @param {Response} res - Express response object for sending redirect
+	 * @param {string} redirectTo - Target URL for user recovery
+	 * @param {string} message - Descriptive error message for logging
+	 * @returns {Response} Express redirect response
 	 * @private
 	 */
 	private handleValidationError(res: Response, redirectTo: string, message: string) {
@@ -100,13 +132,14 @@ class SaveController {
 	/**
 	 * Processes valid questionnaire submission
 	 *
-	 * Saves to database, sends notifications, manages session state,
-	 * and redirects to success page.
+	 * Executes the complete submission workflow: saves data to database,
+	 * sends notifications, stores success state in session, clears form data,
+	 * and redirects user to success confirmation page.
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
-	 * @param {QuestionnaireAnswers} answers - Validated questionnaire responses
-	 * @returns {Promise<void>}
+	 * @param {Request} req - Express request object containing user session
+	 * @param {Response} res - Express response object for redirect
+	 * @param {QuestionnaireAnswers} answers - Validated questionnaire responses ready for persistence
+	 * @returns {Promise<void>} Promise that resolves after successful processing
 	 * @private
 	 */
 	private async processSubmission(req: Request, res: Response, answers: QuestionnaireAnswers) {
@@ -124,12 +157,13 @@ class SaveController {
 	/**
 	 * Handles submission errors gracefully
 	 *
-	 * Logs error details, stores error message in session,
-	 * and redirects back to check answers page.
+	 * Provides comprehensive error handling by logging error details,
+	 * storing user-friendly error message in session for display,
+	 * and redirecting back to check answers page for recovery.
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
-	 * @param {unknown} error - Error that occurred during submission
+	 * @param {Request} req - Express request object containing user session
+	 * @param {Response} res - Express response object for redirect
+	 * @param {unknown} error - Error that occurred during submission process
 	 * @private
 	 */
 	private handleSubmissionError(req: Request, res: Response, error: unknown) {
@@ -143,14 +177,19 @@ class SaveController {
 /**
  * Factory function that creates a questionnaire save controller
  *
- * @param {QuestionnaireService} service - Questionnaire service instance
- * @param {PortalService} portalService - Portal service for logger access
- * @returns {Function} Express request handler for questionnaire submission
+ * Creates and configures a save controller instance with proper dependency
+ * injection, returning the bound handler method ready for Express routing.
+ *
+ * @param {QuestionnaireService} service - Questionnaire service instance for business logic
+ * @param {PortalService} portalService - Portal service containing logger and other dependencies
+ * @returns {Function} Express async request handler for questionnaire submission processing
  *
  * @example
  * ```typescript
  * const saveHandler = createSaveController(questionnaireService, portalService);
- * router.post('/check-your-answers', saveHandler);
+ * router.post('/check-your-answers', asyncHandler(saveHandler));
+ *
+ * // Handler processes: validation → save → notify → redirect
  * ```
  */
 export const createSaveController = (service: QuestionnaireService, portalService: PortalService) => {

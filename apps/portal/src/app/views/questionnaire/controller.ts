@@ -9,7 +9,15 @@ import { QuestionnaireService as QuestionnaireDataService } from './data/service
  * Controller class for handling questionnaire page requests
  *
  * Manages questionnaire start page and success page functionality,
- * including session state validation and error handling.
+ * including session state validation and error handling. Follows MVC
+ * pattern with clear separation of concerns and dependency injection.
+ *
+ * @example
+ * ```typescript
+ * const controller = new QuestionnaireController(service, logger);
+ * router.get('/', controller.startJourney);
+ * router.get('/success', controller.viewSuccessPage);
+ * ```
  */
 class QuestionnaireController {
 	private readonly service: QuestionnaireService;
@@ -18,8 +26,11 @@ class QuestionnaireController {
 	/**
 	 * Creates a new QuestionnaireController instance
 	 *
-	 * @param {QuestionnaireService} service - Service for questionnaire operations
-	 * @param {PortalService['logger']} logger - Logger for request tracking
+	 * Initializes controller with required dependencies for handling
+	 * questionnaire page requests and managing user sessions.
+	 *
+	 * @param {QuestionnaireService} service - Service for questionnaire business logic operations
+	 * @param {PortalService['logger']} logger - Pino logger instance for request tracking and debugging
 	 */
 	constructor(service: QuestionnaireService, logger: PortalService['logger']) {
 		this.service = service;
@@ -29,11 +40,17 @@ class QuestionnaireController {
 	/**
 	 * Handles questionnaire start page requests
 	 *
-	 * Renders the questionnaire landing page where users begin
-	 * the form completion process.
+	 * Renders the questionnaire landing page where users begin the form
+	 * completion process. Provides entry point to the dynamic forms journey.
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
+	 * @param {Request} req - Express request object containing user session and headers
+	 * @param {Response} res - Express response object for rendering templates
+	 *
+	 * @example
+	 * ```typescript
+	 * // Route: GET /questionnaire
+	 * router.get('/', controller.startJourney);
+	 * ```
 	 */
 	startJourney = (req: Request, res: Response) => {
 		this.logger.info('Displaying questionnaire start page');
@@ -45,11 +62,18 @@ class QuestionnaireController {
 	/**
 	 * Handles questionnaire success page requests
 	 *
-	 * Validates session state and displays success confirmation
-	 * or redirects to appropriate page based on submission status.
+	 * Validates session state and displays success confirmation page with
+	 * submission reference, or redirects to appropriate page based on
+	 * submission status. Implements proper error handling for edge cases.
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
+	 * @param {Request} req - Express request object containing user session data
+	 * @param {Response} res - Express response object for rendering or redirecting
+	 *
+	 * @example
+	 * ```typescript
+	 * // Route: GET /questionnaire/success
+	 * router.get('/success', controller.viewSuccessPage);
+	 * ```
 	 */
 	viewSuccessPage = (req: Request, res: Response) => {
 		const session = SessionManager.get(req);
@@ -64,10 +88,13 @@ class QuestionnaireController {
 	/**
 	 * Handles session errors by clearing session and redirecting
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
-	 * @param {string} error - Error message from session
-	 * @returns {Response} Redirect response
+	 * Clears corrupted session data and redirects user back to check answers
+	 * page to recover from error state gracefully.
+	 *
+	 * @param {Request} req - Express request object with session to clear
+	 * @param {Response} res - Express response object for redirect
+	 * @param {string} error - Error message from session for logging
+	 * @returns {Response} Redirect response to check answers page
 	 * @private
 	 */
 	private handleSessionError(req: Request, res: Response, error: string) {
@@ -79,8 +106,11 @@ class QuestionnaireController {
 	/**
 	 * Handles missing session data by redirecting to start
 	 *
-	 * @param {Response} res - Express response object
-	 * @returns {Response} Redirect response
+	 * Redirects users who access success page without completing
+	 * the questionnaire back to the start page.
+	 *
+	 * @param {Response} res - Express response object for redirect
+	 * @returns {Response} Redirect response to questionnaire start page
 	 * @private
 	 */
 	private handleMissingSession(res: Response) {
@@ -91,9 +121,12 @@ class QuestionnaireController {
 	/**
 	 * Renders the success page with submission reference
 	 *
-	 * @param {Request} req - Express request object
-	 * @param {Response} res - Express response object
-	 * @param {string} reference - Submission reference number
+	 * Displays the success confirmation page with the user's submission
+	 * reference number and clears session data after successful display.
+	 *
+	 * @param {Request} req - Express request object with session to clear
+	 * @param {Response} res - Express response object for template rendering
+	 * @param {string} reference - Unique submission reference number to display
 	 * @private
 	 */
 	private renderSuccessPage(req: Request, res: Response, reference: string) {
@@ -107,19 +140,26 @@ class QuestionnaireController {
 }
 
 /**
- * Factory function that creates questionnaire controllers
+ * Factory function that creates questionnaire controllers with dependencies
  *
- * Sets up the questionnaire service with repository and creates
- * controller instances with proper dependency injection.
+ * Sets up the complete questionnaire service layer with database service,
+ * data service, and business logic service, then creates controller instances
+ * with proper dependency injection following SOLID principles.
  *
- * @param {PortalService} portalService - Portal service for dependency injection
+ * @param {PortalService} portalService - Portal service containing database client and logger
  * @returns {Object} Object containing controller methods and service instance
+ * @returns {Function} returns.startJourney - Handler for questionnaire start page
+ * @returns {Function} returns.viewSuccessPage - Handler for questionnaire success page
+ * @returns {QuestionnaireService} returns.questionnaireService - Service instance for business logic
  *
  * @example
  * ```typescript
  * const controllers = createQuestionnaireControllers(portalService);
  * router.get('/', controllers.startJourney);
  * router.get('/success', controllers.viewSuccessPage);
+ *
+ * // Access service for other operations
+ * const count = await controllers.questionnaireService.getTotalSubmissions();
  * ```
  */
 export const createQuestionnaireControllers = (portalService: PortalService) => {
