@@ -56,7 +56,7 @@ export class QuestionnaireService {
 			rating: answers.rating,
 			feedback: answers.feedback
 		};
-		return this.repository.create(dbData);
+		return this.repository.create(dbData as any);
 	}
 
 	/**

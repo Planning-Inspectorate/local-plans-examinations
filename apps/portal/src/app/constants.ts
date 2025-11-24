@@ -39,7 +39,7 @@ export const APP_CONSTANTS = {
 	/** Default configuration values */
 	DEFAULTS: {
 		/** Default HTTP port */
-		HTTP_PORT: 8080,
+		HTTP_PORT: 8080 as number,
 		/** Default log level */
 		LOG_LEVEL: 'info',
 		/** Default Node environment */

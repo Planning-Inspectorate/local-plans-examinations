@@ -59,7 +59,7 @@ class SaveController {
 			const validation = this.validateRequest(answers, journey);
 
 			if (!validation.isValid) {
-				return this.handleValidationError(res, validation.redirectTo, validation.message);
+				return this.handleValidationError(res, validation.redirectTo!, validation.message!);
 			}
 
 			await this.processSubmission(req, res, answers!);
@@ -126,7 +126,7 @@ class SaveController {
 	 */
 	private handleValidationError(res: Response, redirectTo: string, message: string) {
 		this.logger.warn(`${message}, redirecting to ${redirectTo}`);
-		return res.redirect(redirectTo);
+		return res.redirect(redirectTo!);
 	}
 
 	/**

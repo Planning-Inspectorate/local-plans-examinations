@@ -123,9 +123,9 @@ export const createMockRepository = (overrides: any = {}) => {
 	// Apply overrides while preserving mock functions
 	Object.keys(overrides).forEach((key) => {
 		if (typeof overrides[key] === 'function') {
-			baseMocks[key] = mock.fn(overrides[key]);
+			(baseMocks as any)[key] = mock.fn(overrides[key]);
 		} else {
-			baseMocks[key] = overrides[key];
+			(baseMocks as any)[key] = overrides[key];
 		}
 	});
 
