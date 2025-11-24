@@ -1,0 +1,35 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block pageTitle %}
+    {{ pageHeading }} - {{ config.headerTitle }}
+{% endblock %}
+
+{% block pageContent %}
+    {% set tableRows = [] %}
+    {% for submission in submissions %}
+        {% set tableRows = (tableRows.push([
+            { text: submission.createdAt | date('d MM yy') },
+            { text: submission.fullName },
+            { text: submission.email or questionnaireConfig.emailNotProvided },
+            { html: '<a href="' + questionnaireConfig.questionnaireRoute + '/' + submission.id + '" class="govuk-link">View</a>' }
+        ]), tableRows) %}
+    {% endfor %}
+
+    {{ govukTable({
+        head: [
+            { text: "Submitted" },
+            { text: "Full Name" },
+            { text: "Email" },
+            { text: "Action" }
+        ],
+        rows: tableRows
+    }) }}
+
+    <br />
+
+    <p class="govuk-body-l">Total submissions: <strong>{{ totalCount }}</strong></p>
+
+{% endblock %}
