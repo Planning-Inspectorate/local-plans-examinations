@@ -40,6 +40,9 @@ export class QuestionnaireService {
 	 * @returns {Promise<Array>} All questionnaire submissions
 	 */
 	async getAllSubmissions(): Promise<Array<any>> {
+		if (!this.repository.findMany) {
+			throw new Error('findMany method not available on repository');
+		}
 		const submissions = await this.repository.findMany(QUESTIONNAIRE_CONFIG.filters.active);
 		this.logger.debug(`Database query: retrieved ${submissions.length} questionnaire submissions`);
 		return submissions;
@@ -52,7 +55,10 @@ export class QuestionnaireService {
 	 * @returns {Promise<any>} Single questionnaire submission
 	 */
 	async getSubmissionById(id: string): Promise<any> {
-		const submission = await this.repository.findById!(id);
+		if (!this.repository.findById) {
+			throw new Error('findById method not available on repository');
+		}
+		const submission = await this.repository.findById(id);
 		this.logger.debug(`Database query: retrieved questionnaire submission ${id}`);
 		return submission;
 	}
