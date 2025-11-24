@@ -110,6 +110,27 @@ export class PrismaAdapter<T = Record<string, unknown>> implements DatabaseAdapt
 	}
 
 	/**
+	 * Finds multiple records matching the given criteria
+	 *
+	 * Retrieves all records that match the provided filter criteria.
+	 * If no criteria provided, returns all records.
+	 *
+	 * @param {Record<string, unknown>} [where={}] - Optional filter criteria
+	 * @returns {Promise<T[]>} Promise resolving to array of matching records
+	 *
+	 * @example
+	 * ```typescript
+	 * const activeUsers = await adapter.findMany({ isDeleted: false });
+	 * ```
+	 */
+	async findMany(where: Record<string, unknown> = {}): Promise<T[]> {
+		const table = this.getTable();
+		const results = await table.findMany({ where });
+		this.logger.debug(`${this.tableName} findMany: ${results.length} records`);
+		return results;
+	}
+
+	/**
 	 * Updates an existing record by its unique identifier
 	 *
 	 * Updates the record with the provided partial data and automatically
@@ -160,6 +181,87 @@ export class PrismaAdapter<T = Record<string, unknown>> implements DatabaseAdapt
 		});
 		this.logger.info(`Deleted ${this.tableName} - id: ${id}`);
 		return result;
+	}
+
+	/**
+	 * Finds the first record matching the given criteria
+	 *
+	 * @param {Record<string, unknown>} where - Filter criteria
+	 * @returns {Promise<T | null>} Promise resolving to the first matching record or null
+	 */
+	async findFirst(where: Record<string, unknown>): Promise<T | null> {
+		const table = this.getTable();
+		return table.findFirst({ where });
+	}
+
+	/**
+	 * Updates multiple records matching the given criteria
+	 *
+	 * @param {Record<string, unknown>} where - Filter criteria for records to update
+	 * @param {Partial<T>} data - The partial data to update records with
+	 * @returns {Promise<{ count: number }>} Promise resolving to count of updated records
+	 */
+	async updateMany(where: Record<string, unknown>, data: Partial<T>): Promise<{ count: number }> {
+		const table = this.getTable();
+		const result = await table.updateMany({ where, data: { ...data, updatedAt: new Date() } });
+		this.logger.info(`Updated ${result.count} ${this.tableName} records`);
+		return result;
+	}
+
+	/**
+	 * Deletes multiple records matching the given criteria
+	 *
+	 * @param {Record<string, unknown>} where - Filter criteria for records to delete
+	 * @returns {Promise<{ count: number }>} Promise resolving to count of deleted records
+	 */
+	async deleteMany(where: Record<string, unknown>): Promise<{ count: number }> {
+		const table = this.getTable();
+		const result = await table.updateMany({
+			where,
+			data: { isDeleted: true, deletedAt: new Date() }
+		});
+		this.logger.info(`Deleted ${result.count} ${this.tableName} records`);
+		return result;
+	}
+
+	/**
+	 * Creates multiple records in a single operation
+	 *
+	 * @param {T[]} data - Array of data objects to create
+	 * @returns {Promise<{ count: number }>} Promise resolving to count of created records
+	 */
+	async createMany(data: T[]): Promise<{ count: number }> {
+		const table = this.getTable();
+		const result = await table.createMany({ data });
+		this.logger.info(`Created ${result.count} ${this.tableName} records`);
+		return result;
+	}
+
+	/**
+	 * Creates or updates a record based on unique criteria
+	 *
+	 * @param {Record<string, unknown>} where - Unique criteria to find existing record
+	 * @param {T} create - Data to create if record doesn't exist
+	 * @param {Partial<T>} update - Data to update if record exists
+	 * @returns {Promise<T>} Promise resolving to the created or updated record
+	 */
+	async upsert(where: Record<string, unknown>, create: T, update: Partial<T>): Promise<T> {
+		const table = this.getTable();
+		const result = await table.upsert({ where, create, update: { ...update, updatedAt: new Date() } });
+		this.logger.info(`Upserted ${this.tableName} - id: ${result.id}`);
+		return result;
+	}
+
+	/**
+	 * Checks if a record exists matching the given criteria
+	 *
+	 * @param {Record<string, unknown>} where - Filter criteria
+	 * @returns {Promise<boolean>} Promise resolving to true if record exists
+	 */
+	async exists(where: Record<string, unknown>): Promise<boolean> {
+		const table = this.getTable();
+		const result = await table.findFirst({ where, select: { id: true } });
+		return result !== null;
 	}
 
 	/**
