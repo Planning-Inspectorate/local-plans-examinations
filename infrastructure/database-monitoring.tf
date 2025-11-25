@@ -22,12 +22,12 @@ resource "azurerm_storage_account" "sql_server" {
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
 
-  network_rules {
-    # ip_rules                   = [""]   # value must be public IP addess. ip_rules OR virtual_network_subnet_ids must be set
-    default_action             = "Deny"
-    virtual_network_subnet_ids = [azurerm_subnet.main.id]
-    bypass                     = ["AzureServices"]
-  }
+  # network_rules {
+  #   default_action             = "Deny"
+  #   ip_rules                   = ["127.0.0.1"]
+  #   virtual_network_subnet_ids = [azurerm_subnet.back_office_ingress.id]
+  #   bypass                     = ["AzureServices"]
+  # }
 
   identity {
     type = "SystemAssigned"
