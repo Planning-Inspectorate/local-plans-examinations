@@ -1,9 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { createQuestionnaireControllers } from '../controller.ts';
-import { SessionManager, QuestionnaireService } from '../core/service.ts';
+import { createQuestionnaireControllers } from './controller.ts';
+import { SessionManager, QuestionnaireService } from './core/service.ts';
 import { DatabaseService } from '@pins/local-plans-lib/database';
-import { QuestionnaireService as QuestionnaireDataService } from '../data/service.ts';
+import { QuestionnaireService as QuestionnaireDataService } from './data/service.ts';
 import {
 	createTestAnswers,
 	createTestSubmission,

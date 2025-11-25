@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { createSaveController } from '../save.ts';
-import { QuestionnaireService } from '../core/service.ts';
+import { createSaveController } from './save.ts';
+import { QuestionnaireService } from './core/service.ts';
 import {
 	createTestAnswers,
 	createTestSubmission,

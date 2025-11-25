@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { createQuestionnaireControllers } from '../controller.ts';
+import { createQuestionnaireControllers } from './controller.ts';
 import {
 	createMockPortalService,
 	createMockRequest,

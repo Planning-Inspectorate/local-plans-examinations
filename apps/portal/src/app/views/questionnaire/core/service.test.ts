@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { SessionManager, QuestionnaireService } from '../core/service.ts';
+import { SessionManager, QuestionnaireService } from './service.ts';
 import {
 	createTestSubmission,
 	createTestAnswers,
@@ -9,7 +9,7 @@ import {
 	createMockRepository,
 	SessionDataBuilder,
 	AssertionHelpers
-} from './test-helpers.ts';
+} from '../test-helpers.ts';
 
 /**
  * SessionManager unit tests

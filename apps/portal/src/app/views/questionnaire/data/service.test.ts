@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { QuestionnaireService } from '../data/service.ts';
+import { QuestionnaireService } from './service.ts';
 import { DatabaseService } from '@pins/local-plans-lib/database';
-import { createTestAnswers, createMockLogger, AssertionHelpers } from './test-helpers.ts';
+import { createTestAnswers, createMockLogger, AssertionHelpers } from '../test-helpers.ts';
 
 /**
  * QuestionnaireService (Data Layer) unit tests
