@@ -42,7 +42,7 @@ describe('Questionnaire Integration', () => {
 			assert.strictEqual(submission.id, 'integration-test-id');
 			assert.strictEqual(submission.reference, 'integration-test-id');
 			assert.deepStrictEqual(submission.answers, answers);
-			AssertionHelpers.assertMockCalled(mockLogger.info, 1); // Service log
+			AssertionHelpers.assertMockCalled(mockLogger.info, 2); // Data service + business service logs
 		});
 
 		it('should handle notification flow after submission', async () => {
