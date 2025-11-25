@@ -18,7 +18,7 @@ export function configureNunjucks(): nunjucks.Environment {
 	const appDir = path.join(config.srcDir, 'app');
 
 	// configure nunjucks
-	return nunjucks.configure(
+	const env = nunjucks.configure(
 		// ensure nunjucks templates can use govuk-frontend components, dynamic-forms templates, and templates we've defined in `web/src/app`
 		[govukFrontendRoot, dynamicFormsRoot, appDir],
 		{
@@ -30,4 +30,29 @@ export function configureNunjucks(): nunjucks.Environment {
 			lstripBlocks: true
 		}
 	);
+
+	// Add date filter
+	env.addFilter('date', (date: Date | string, format: string) => {
+		const d = new Date(date);
+		if (format === 'd MMMM yyyy, HH:mm') {
+			return d.toLocaleDateString('en-GB', {
+				day: 'numeric',
+				month: 'long',
+				year: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit',
+				hour12: false
+			});
+		}
+		if (format === 'd MM yy') {
+			return d.toLocaleDateString('en-GB', {
+				day: '2-digit',
+				month: 'short',
+				year: '2-digit'
+			});
+		}
+		return d.toISOString();
+	});
+
+	return env;
 }
