@@ -3,12 +3,14 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 
 {% block pageTitle %}
     Item List - {{ config.headerTitle }}
 {% endblock %}
 
 {% block pageContent %}
+
     {% set tableRows = [] %}
 
     {% for item in items %}
@@ -26,15 +28,43 @@
         ]), tableRows) %}
     {% endfor %}
 
-    {{ govukTable({
-        head: [
-            {
-                text: "Task"
-            },
-            {
-                text: "Status"
-            }
-        ],
-        rows: tableRows
-    }) }}
+    {{
+        govukTable({
+            head: [
+                {
+                    text: "Task"
+                },
+                {
+                    text: "Status"
+                }
+            ],
+            rows: tableRows
+        })
+    }}
+
+    {{
+        govukWarningText({
+            text: "There are " ~ questionnaireCount ~ " questionnaire submissions.",
+            iconFallbackText: "Information"
+        })
+    }}
+
+    {{
+        govukButton({
+            text: "View questionnaire",
+            href: "//localhost:8080/questionnaire",
+            classes: "govuk-button--primary"
+        })
+    }}
+
+    {{
+        govukButton({
+            text: "View questionnaire submissions",
+            href: "/questionnaire",
+            classes: "govuk-button--secondary"
+        })
+    }}
+
+
+
 {% endblock %}
