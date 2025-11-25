@@ -16,7 +16,7 @@
  */
 
 import { mock } from 'node:test';
-import type { QuestionnaireAnswers, QuestionnaireSubmission } from '../data/types.ts';
+import type { QuestionnaireAnswers, QuestionnaireSubmission } from './data/types.ts';
 
 /**
  * Mock factory for creating Pino logger instances
