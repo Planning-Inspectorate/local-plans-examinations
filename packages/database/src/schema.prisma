@@ -22,4 +22,24 @@ datasource db {
 // while we don't rely on that for security, it adds an extra layer
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
-// TODO: add models here!
+/// Questionnaire responses from portal users
+model Questionnaire {
+  /// Unique identifier for the questionnaire response
+  id        String   @id @default(cuid())
+  /// Full name of the respondent
+  fullName  String
+  /// Email address (optional based on user preference)
+  email     String?
+  /// Overall rating of the service
+  rating    String
+  /// Detailed feedback about the service
+  feedback  String
+  /// When the response was submitted
+  createdAt DateTime @default(now())
+  /// When the response was last updated
+  updatedAt DateTime @updatedAt
+  /// Soft delete flag for audit trail
+  isDeleted Boolean  @default(false)
+
+  @@map("questionnaires")
+}

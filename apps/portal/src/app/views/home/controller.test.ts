@@ -17,7 +17,10 @@ describe('home page', () => {
 			session: {}
 		};
 		const mockDb = {
-			$queryRaw: mock.fn()
+			$queryRaw: mock.fn(),
+			questionnaire: {
+				count: mock.fn(async () => 42)
+			}
 		};
 		const homePage = buildHomePage({ db: mockDb, logger: mockLogger() });
 		await assert.doesNotReject(() => homePage(mockReq, mockRes));
@@ -26,6 +29,7 @@ describe('home page', () => {
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[0], 'views/home/view.njk');
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[1].connected, true);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[1].visitCount, 1);
+		assert.strictEqual(mockRes.render.mock.calls[0].arguments[1].totalSubmissions, 42);
 	});
 	it('should increment visit count in session', async () => {
 		const nunjucks = configureNunjucks();
@@ -37,7 +41,10 @@ describe('home page', () => {
 			session: { visits: 10 }
 		};
 		const mockDb = {
-			$queryRaw: mock.fn()
+			$queryRaw: mock.fn(),
+			questionnaire: {
+				count: mock.fn(async () => 123)
+			}
 		};
 		const homePage = buildHomePage({ db: mockDb, logger: mockLogger() });
 		await assert.doesNotReject(() => homePage(mockReq, mockRes));
@@ -45,5 +52,6 @@ describe('home page', () => {
 		assert.strictEqual(mockRes.render.mock.callCount(), 1);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments.length, 2);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[1].visitCount, 11);
+		assert.strictEqual(mockRes.render.mock.calls[0].arguments[1].totalSubmissions, 123);
 	});
 });

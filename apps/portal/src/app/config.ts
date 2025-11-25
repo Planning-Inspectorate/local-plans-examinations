@@ -2,14 +2,32 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
+import { APP_CONSTANTS } from './constants.ts';
 
+/**
+ * Portal application configuration type extending base configuration
+ *
+ * @typedef {BaseConfig} Config
+ */
 export type Config = BaseConfig;
 
-// cache the config
+/** Cached configuration instance to avoid repeated environment parsing */
 let config: Config | undefined;
 
 /**
- * Load configuration from the environment
+ * Loads and validates configuration from environment variables
+ *
+ * Parses .env file and validates required environment variables,
+ * providing sensible defaults from APP_CONSTANTS where appropriate.
+ *
+ * @returns {Config} Complete application configuration object
+ * @throws {Error} When required environment variables are missing or invalid
+ *
+ * @example
+ * ```typescript
+ * const config = loadConfig();
+ * console.log(`Server will run on port ${config.httpPort}`);
+ * ```
  */
 export function loadConfig(): Config {
 	if (config) {
@@ -36,7 +54,7 @@ export function loadConfig(): Config {
 		throw new Error('SESSION_SECRET is required');
 	}
 
-	let httpPort = 8080;
+	let httpPort = APP_CONSTANTS.DEFAULTS.HTTP_PORT;
 	if (PORT) {
 		const port = parseInt(PORT);
 		if (isNaN(port)) {
@@ -47,15 +65,15 @@ export function loadConfig(): Config {
 
 	config = {
 		cacheControl: {
-			maxAge: CACHE_CONTROL_MAX_AGE || '1d'
+			maxAge: CACHE_CONTROL_MAX_AGE || APP_CONSTANTS.DEFAULTS.CACHE_MAX_AGE
 		},
 		database: {
 			connectionString: SQL_CONNECTION_STRING
 		},
 		gitSha: GIT_SHA,
 		// the log level to use
-		logLevel: LOG_LEVEL || 'info',
-		NODE_ENV: NODE_ENV || 'development',
+		logLevel: LOG_LEVEL || APP_CONSTANTS.DEFAULTS.LOG_LEVEL,
+		NODE_ENV: NODE_ENV || APP_CONSTANTS.DEFAULTS.NODE_ENV,
 		// the HTTP port to listen on
 		httpPort: httpPort,
 		// the src directory
@@ -72,20 +90,38 @@ export function loadConfig(): Config {
 	return config;
 }
 
+/**
+ * Build-time configuration interface for file paths
+ *
+ * @interface BuildConfig
+ * @property {string} srcDir - Absolute path to the source directory
+ * @property {string} staticDir - Absolute path to the static assets directory
+ */
 export interface BuildConfig {
 	srcDir: string;
 	staticDir: string;
 }
 
 /**
- * Config required for the build script
+ * Loads build configuration with computed file paths
+ *
+ * Calculates source and static directory paths relative to the current file location.
+ * Used by both runtime configuration and build scripts.
+ *
+ * @returns {BuildConfig} Build configuration with resolved directory paths
+ *
+ * @example
+ * ```typescript
+ * const buildConfig = loadBuildConfig();
+ * console.log(`Static files served from: ${buildConfig.staticDir}`);
+ * ```
  */
 export function loadBuildConfig(): BuildConfig {
-	// get the file path for the directory this file is in
+	// Get the directory path of the current file
 	const dirname = path.dirname(fileURLToPath(import.meta.url));
-	// get the file path for the src directory
+	// Calculate the src directory (parent of app directory)
 	const srcDir = path.join(dirname, '..');
-	// get the file path for the .static directory
+	// Calculate the static assets directory
 	const staticDir = path.join(srcDir, '.static');
 
 	return {
