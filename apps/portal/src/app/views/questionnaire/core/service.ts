@@ -156,7 +156,6 @@ export class SessionManager {
  * Orchestrates questionnaire operations including submissions, notifications,
  * and data persistence. Acts as the business logic layer coordinating between
  * controllers and data services while maintaining separation of concerns.
- * Follows SOLID principles with single responsibility for questionnaire operations.
  *
  * @example
  * ```typescript

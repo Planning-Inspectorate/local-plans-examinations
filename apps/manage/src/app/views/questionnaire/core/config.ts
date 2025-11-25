@@ -1,50 +1,47 @@
 /**
- * Configuration object for the questionnaire module in manage app
+ * Configuration constants for questionnaire management interface
  *
- * Centralizes all questionnaire-related configuration including
- * template paths, route segments, page titles, and display constants
- * to eliminate magic strings and numbers throughout the application.
- *
- * @constant {Object} QUESTIONNAIRE_CONFIG
+ * Contains template paths, page titles, routes, and display text
+ * used throughout the questionnaire management pages.
  */
 export const QUESTIONNAIRE_CONFIG = {
-	/** Page titles and headings */
+	/** Page titles for questionnaire management pages */
 	titles: {
-		/** Main questionnaire list page title */
+		/** List page heading */
 		list: 'Questionnaire Submissions',
-		/** Individual submission detail page title */
+		/** Detail page heading */
 		detail: 'Questionnaire Submission'
 	},
 
-	/** Template file paths for different questionnaire pages */
+	/** Nunjucks template paths */
 	templates: {
-		/** List view template */
+		/** Template for submissions list */
 		list: 'views/questionnaire/view.njk',
-		/** Detail view template */
+		/** Template for submission details */
 		detail: 'views/questionnaire/detail.njk'
 	},
 
-	/** Route paths and segments */
+	/** URL paths for navigation */
 	routes: {
-		/** Base questionnaire route */
+		/** Questionnaire section base URL */
 		base: '/questionnaire',
-		/** Items dashboard route */
+		/** Main dashboard URL */
 		items: '/items',
-		/** Detail route parameter */
+		/** URL parameter for submission ID */
 		detailParam: ':id'
 	},
 
-	/** Display constants */
+	/** Text constants for UI display */
 	display: {
-		/** Text shown when email is not provided */
+		/** Placeholder for missing email addresses */
 		emailNotProvided: 'Not Provided',
-		/** Back link text for detail page */
+		/** Navigation link text */
 		backLinkText: 'Back to questionnaire list'
 	},
 
-	/** Database query filters */
+	/** Prisma query filters */
 	filters: {
-		/** Filter for active (non-deleted) records */
+		/** Excludes soft-deleted submissions */
 		active: { isDeleted: false }
 	}
 } as const;

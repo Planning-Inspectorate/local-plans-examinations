@@ -22,7 +22,7 @@ class LocalsConfigurationMiddleware {
 		return (req, res, next) => {
 			// Add configuration object to template locals
 			res.locals.config = {
-				styleFile: UI_CONSTANTS.STYLE_FILE,
+				styleFile: 'style-9ac0aae2.css',
 				cspNonce: res.locals.cspNonce,
 				headerTitle: APP_CONSTANTS.APP_NAME,
 				footerLinks: UI_CONSTANTS.FOOTER_LINKS,

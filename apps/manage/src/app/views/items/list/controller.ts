@@ -1,6 +1,5 @@
 import type { ManageService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { DatabaseService } from '@pins/local-plans-lib/database';
 import { QuestionnaireService, QuestionnaireDataService } from '../../questionnaire/service.ts';
 
 export function buildListItems(service: ManageService): AsyncRequestHandler {
@@ -12,8 +11,7 @@ export function buildListItems(service: ManageService): AsyncRequestHandler {
 		await db.$queryRaw`SELECT 1`;
 
 		// Get questionnaire count
-		const databaseService = new DatabaseService(db, logger);
-		const questionnaireDataService = new QuestionnaireDataService(databaseService, logger);
+		const questionnaireDataService = new QuestionnaireDataService(db, logger);
 		const questionnaireService = new QuestionnaireService(logger, questionnaireDataService);
 		const questionnaireCount = await questionnaireService.getTotalSubmissions();
 

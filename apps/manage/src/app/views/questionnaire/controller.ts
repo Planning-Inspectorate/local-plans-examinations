@@ -1,16 +1,20 @@
 import type { ManageService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { DatabaseService } from '@pins/local-plans-lib/database';
 import { QuestionnaireService, QuestionnaireDataService } from './service.ts';
 import { QUESTIONNAIRE_CONFIG } from './core/config.ts';
 
+/**
+ * Creates handler for questionnaire list page
+ *
+ * Displays all questionnaire submissions with count and filtering.
+ * Used by internal staff to view and manage user feedback.
+ */
 export function buildQuestionnaireList(service: ManageService): AsyncRequestHandler {
 	const { db, logger } = service;
 	return async (req, res) => {
 		logger.info('questionnaire list');
 
-		const databaseService = new DatabaseService(db, logger);
-		const questionnaireDataService = new QuestionnaireDataService(databaseService, logger);
+		const questionnaireDataService = new QuestionnaireDataService(db, logger);
 		const questionnaireService = new QuestionnaireService(logger, questionnaireDataService);
 		const totalCount = await questionnaireService.getTotalSubmissions();
 		const submissions = await questionnaireService.getAllSubmissions();
@@ -28,14 +32,19 @@ export function buildQuestionnaireList(service: ManageService): AsyncRequestHand
 	};
 }
 
+/**
+ * Creates handler for individual questionnaire submission detail page
+ *
+ * Shows complete submission details including user responses and metadata.
+ * Returns 404 if submission not found.
+ */
 export function buildQuestionnaireDetail(service: ManageService): AsyncRequestHandler {
 	const { db, logger } = service;
 	return async (req, res) => {
 		const { id } = req.params;
 		logger.info(`questionnaire detail: ${id}`);
 
-		const databaseService = new DatabaseService(db, logger);
-		const questionnaireDataService = new QuestionnaireDataService(databaseService, logger);
+		const questionnaireDataService = new QuestionnaireDataService(db, logger);
 		const questionnaireService = new QuestionnaireService(logger, questionnaireDataService);
 		const submission = await questionnaireService.getSubmissionById(id);
 

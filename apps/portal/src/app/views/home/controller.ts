@@ -1,6 +1,5 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { DatabaseService } from '@pins/local-plans-lib/database';
 import { QuestionnaireService as QuestionnaireDataService } from '../questionnaire/data/service.ts';
 
 /**
@@ -92,8 +91,7 @@ class HomeController {
  * @returns {AsyncRequestHandler} Express async request handler for home page
  */
 export function buildHomePage(service: PortalService): AsyncRequestHandler {
-	const databaseService = new DatabaseService(service.db, service.logger);
-	const questionnaireDataService = new QuestionnaireDataService(databaseService, service.logger);
+	const questionnaireDataService = new QuestionnaireDataService(service.db, service.logger);
 	const controller = new HomeController(service.db, service.logger, questionnaireDataService);
 	return controller.handleHomePage;
 }
