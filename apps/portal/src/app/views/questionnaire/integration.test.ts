@@ -2,7 +2,6 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { createQuestionnaireControllers } from './controller.ts';
 import { SessionManager, QuestionnaireService } from './core/service.ts';
-import { DatabaseService } from '@pins/local-plans-lib/database';
 import { QuestionnaireService as QuestionnaireDataService } from './data/service.ts';
 import {
 	createTestAnswers,
@@ -21,15 +20,14 @@ describe('Questionnaire Integration', () => {
 	describe('Complete Submission Flow', () => {
 		it('should handle end-to-end submission with all layers', async () => {
 			const mockLogger = createMockLogger();
-			const mockAdapter = {
-				create: async () => ({ id: 'integration-test-id', createdAt: new Date('2024-01-01') }),
-				count: async () => 1
-			};
-			const mockDatabaseService = {
-				createAdapter: () => mockAdapter
+			const mockPrisma = {
+				questionnaire: {
+					create: async () => ({ id: 'integration-test-id', createdAt: new Date('2024-01-01') }),
+					count: async () => 1
+				}
 			};
 
-			const dataService = new QuestionnaireDataService(mockDatabaseService as DatabaseService, mockLogger);
+			const dataService = new QuestionnaireDataService(mockPrisma, mockLogger);
 			const businessService = new QuestionnaireService(mockLogger, dataService);
 
 			const answers = createTestAnswers({
@@ -116,16 +114,15 @@ describe('Questionnaire Integration', () => {
 		it('should propagate errors through service layers', async () => {
 			const mockLogger = createMockLogger();
 			const error = new Error('Integration database error');
-			const mockAdapter = {
-				create: async () => {
-					throw error;
+			const mockPrisma = {
+				questionnaire: {
+					create: async () => {
+						throw error;
+					}
 				}
 			};
-			const mockDatabaseService = {
-				createAdapter: () => mockAdapter
-			};
 
-			const dataService = new QuestionnaireDataService(mockDatabaseService as DatabaseService, mockLogger);
+			const dataService = new QuestionnaireDataService(mockPrisma, mockLogger);
 			const businessService = new QuestionnaireService(mockLogger, dataService);
 
 			await assert.rejects(() => businessService.saveSubmission(createTestAnswers()), error);
@@ -134,16 +131,15 @@ describe('Questionnaire Integration', () => {
 		it('should handle count operation errors', async () => {
 			const mockLogger = createMockLogger();
 			const error = new Error('Count operation failed');
-			const mockAdapter = {
-				count: async () => {
-					throw error;
+			const mockPrisma = {
+				questionnaire: {
+					count: async () => {
+						throw error;
+					}
 				}
 			};
-			const mockDatabaseService = {
-				createAdapter: () => mockAdapter
-			};
 
-			const dataService = new QuestionnaireDataService(mockDatabaseService as DatabaseService, mockLogger);
+			const dataService = new QuestionnaireDataService(mockPrisma, mockLogger);
 			const businessService = new QuestionnaireService(mockLogger, dataService);
 
 			await assert.rejects(() => businessService.getTotalSubmissions(), error);

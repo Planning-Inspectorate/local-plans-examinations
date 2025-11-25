@@ -2,7 +2,6 @@ import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import { QuestionnaireService, SessionManager } from './core/service.ts';
 import { QUESTIONNAIRE_CONFIG } from './core/config.ts';
-import { DatabaseService } from '@pins/local-plans-lib/database';
 import { QuestionnaireService as QuestionnaireDataService } from './data/service.ts';
 
 /**
@@ -163,8 +162,7 @@ class QuestionnaireController {
  * ```
  */
 export const createQuestionnaireControllers = (portalService: PortalService) => {
-	const databaseService = new DatabaseService(portalService.db, portalService.logger);
-	const questionnaireDataService = new QuestionnaireDataService(databaseService, portalService.logger);
+	const questionnaireDataService = new QuestionnaireDataService(portalService.db, portalService.logger);
 	const questionnaireService = new QuestionnaireService(portalService.logger, questionnaireDataService);
 	const controller = new QuestionnaireController(questionnaireService, portalService.logger);
 

@@ -1,20 +1,15 @@
 /**
- * Legacy repository export for backward compatibility
+ * Repository pattern removed in favor of direct Prisma usage
  *
- * Re-exports the PrismaAdapter as PrismaQuestionnaireRepository to maintain
- * compatibility with existing code that expects repository pattern naming.
- * New code should use DatabaseService and adapters directly.
- *
- * @deprecated Use DatabaseService.createAdapter() instead for new implementations
+ * Database adapter abstraction has been removed. Use Prisma client directly
+ * in data services for cleaner, type-safe database operations.
  *
  * @example
  * ```typescript
- * // Legacy usage (deprecated)
- * import { PrismaQuestionnaireRepository } from './repository.ts';
+ * // Use Prisma directly instead of repository pattern
+ * import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
  *
- * // Preferred usage
- * import { DatabaseService } from '@pins/local-plans-lib/database';
- * const adapter = databaseService.createAdapter('questionnaire');
+ * const result = await prisma.questionnaire.create({ data });
  * ```
  */
-export { PrismaAdapter as PrismaQuestionnaireRepository } from '@pins/local-plans-lib/database';
+// Repository pattern removed - use Prisma client directly

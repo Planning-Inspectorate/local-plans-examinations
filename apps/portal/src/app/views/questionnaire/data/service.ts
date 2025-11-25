@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import type { DatabaseService, CreateResult } from '@pins/local-plans-lib/database';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import type { QuestionnaireAnswers } from './types.ts';
 
 /**
@@ -16,19 +16,19 @@ import type { QuestionnaireAnswers } from './types.ts';
  * ```
  */
 export class QuestionnaireService {
-	/** Database adapter for questionnaire operations */
-	private readonly repository;
+	/** Prisma client for database operations */
+	private readonly prisma: PrismaClient;
 	/** Logger instance for operation tracking */
 	private readonly logger: Logger;
 
 	/**
 	 * Creates a new QuestionnaireService instance
 	 *
-	 * @param {DatabaseService} databaseService - Database service factory for creating adapters
+	 * @param {PrismaClient} prisma - Prisma client for database operations
 	 * @param {Logger} logger - Logger for tracking data operations
 	 */
-	constructor(databaseService: DatabaseService, logger: Logger) {
-		this.repository = databaseService.createAdapter<QuestionnaireAnswers>('questionnaire');
+	constructor(prisma: PrismaClient, logger: Logger) {
+		this.prisma = prisma;
 		this.logger = logger;
 	}
 
@@ -39,7 +39,7 @@ export class QuestionnaireService {
 	 * Returns the creation result with generated ID and timestamp.
 	 *
 	 * @param {QuestionnaireAnswers} answers - User's questionnaire responses
-	 * @returns {Promise<CreateResult>} Promise resolving to creation result with id and timestamp
+	 * @returns {Promise<{id: string, createdAt: Date}>} Promise resolving to creation result with id and timestamp
 	 *
 	 * @example
 	 * ```typescript
@@ -48,7 +48,7 @@ export class QuestionnaireService {
 	 * console.log(`Saved with ID: ${result.id}`);
 	 * ```
 	 */
-	async saveSubmission(answers: QuestionnaireAnswers): Promise<CreateResult> {
+	async saveSubmission(answers: QuestionnaireAnswers): Promise<{ id: string; createdAt: Date }> {
 		// Map form data to database schema
 		const dbData = {
 			fullName: answers.fullName,
@@ -56,7 +56,12 @@ export class QuestionnaireService {
 			rating: answers.rating,
 			feedback: answers.feedback
 		};
-		return this.repository.create(dbData as any);
+		const result = await this.prisma.questionnaire.create({
+			data: dbData,
+			select: { id: true, createdAt: true }
+		});
+		this.logger.info(`Created questionnaire - id: ${result.id}`);
+		return result;
 	}
 
 	/**
@@ -74,6 +79,8 @@ export class QuestionnaireService {
 	 * ```
 	 */
 	async getTotalSubmissions(): Promise<number> {
-		return this.repository.count({ isDeleted: false });
+		const count = await this.prisma.questionnaire.count({ where: { isDeleted: false } });
+		this.logger.debug(`Questionnaire count: ${count}`);
+		return count;
 	}
 }

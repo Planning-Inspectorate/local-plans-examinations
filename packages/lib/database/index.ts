@@ -1,19 +1,15 @@
 /**
  * Database utilities package exports
  *
- * Provides clean, focused exports for database operations including
- * service factory, adapter implementations, interfaces, and result types.
- * Designed for enterprise-grade database access patterns with clear separation of concerns.
+ * Database adapter abstraction has been removed in favor of direct Prisma usage.
+ * Use Prisma client directly in data services for cleaner, type-safe database operations.
  *
  * @example
  * ```typescript
- * import { DatabaseService, type DatabaseAdapter } from '@pins/local-plans-lib/database';
+ * import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
  *
- * const databaseService = new DatabaseService(prismaClient, logger);
- * const adapter = databaseService.createAdapter('questionnaire');
+ * // Use Prisma directly instead of abstraction
+ * const result = await prisma.questionnaire.create({ data });
  * ```
  */
-export { DatabaseService } from './database-service.ts';
-export { PrismaAdapter } from './prisma-adapter.ts';
-export type { DatabaseAdapter } from './database-adapter.ts';
-export type { CreateResult, UpdateResult, DeleteResult } from './common.ts';
+// Database utilities removed - use Prisma client directly

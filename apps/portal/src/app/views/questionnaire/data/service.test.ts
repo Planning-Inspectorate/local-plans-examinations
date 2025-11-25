@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { QuestionnaireService } from './service.ts';
-import { DatabaseService } from '@pins/local-plans-lib/database';
 import { createTestAnswers, createMockLogger, AssertionHelpers } from '../test-helpers.ts';
 
 /**
@@ -10,21 +9,19 @@ import { createTestAnswers, createMockLogger, AssertionHelpers } from '../test-h
  */
 describe('QuestionnaireService (Data Layer)', () => {
 	let mockLogger: ReturnType<typeof createMockLogger>;
-	let mockDatabaseService: any;
-	let mockAdapter: any;
+	let mockPrisma: any;
 	let service: QuestionnaireService;
 
-	const setupService = (adapterOverrides = {}) => {
+	const setupService = (prismaOverrides = {}) => {
 		mockLogger = createMockLogger();
-		mockAdapter = {
-			create: async () => ({ id: 'data-test-id', createdAt: new Date('2024-01-01') }),
-			count: async () => 50,
-			...adapterOverrides
+		mockPrisma = {
+			questionnaire: {
+				create: async () => ({ id: 'data-test-id', createdAt: new Date('2024-01-01') }),
+				count: async () => 50,
+				...prismaOverrides
+			}
 		};
-		mockDatabaseService = {
-			createAdapter: () => mockAdapter
-		};
-		service = new QuestionnaireService(mockDatabaseService as DatabaseService, mockLogger);
+		service = new QuestionnaireService(mockPrisma, mockLogger);
 	};
 
 	describe('saveSubmission()', () => {
@@ -39,7 +36,7 @@ describe('QuestionnaireService (Data Layer)', () => {
 		});
 
 		it('should handle optional email field', async () => {
-			const createSpy = async (data: any) => {
+			const createSpy = async ({ data }: any) => {
 				assert.strictEqual(data.email, null);
 				return { id: 'test-id', createdAt: new Date() };
 			};
@@ -50,7 +47,7 @@ describe('QuestionnaireService (Data Layer)', () => {
 		});
 
 		it('should map all required fields correctly', async () => {
-			const createSpy = async (data: any) => {
+			const createSpy = async ({ data }: any) => {
 				assert.strictEqual(data.fullName, 'Test User');
 				assert.strictEqual(data.rating, 'excellent');
 				assert.strictEqual(data.feedback, 'Great service');
@@ -80,8 +77,8 @@ describe('QuestionnaireService (Data Layer)', () => {
 
 	describe('getTotalSubmissions()', () => {
 		it('should return count of non-deleted submissions', async () => {
-			const countSpy = async (filter: any) => {
-				assert.deepStrictEqual(filter, { isDeleted: false });
+			const countSpy = async ({ where }: any) => {
+				assert.deepStrictEqual(where, { isDeleted: false });
 				return 75;
 			};
 			setupService({ count: countSpy });
@@ -111,16 +108,21 @@ describe('QuestionnaireService (Data Layer)', () => {
 		});
 	});
 
-	describe('Database Adapter Integration', () => {
-		it('should create adapter with correct table name', () => {
-			mockDatabaseService = {
-				createAdapter: (tableName: string) => {
-					assert.strictEqual(tableName, 'questionnaire');
-					return mockAdapter;
+	describe('Prisma Integration', () => {
+		it('should use questionnaire table for operations', async () => {
+			let tableUsed = '';
+			mockPrisma = {
+				questionnaire: {
+					create: async () => {
+						tableUsed = 'questionnaire';
+						return { id: 'test', createdAt: new Date() };
+					}
 				}
 			};
+			service = new QuestionnaireService(mockPrisma, mockLogger);
 
-			new QuestionnaireService(mockDatabaseService as DatabaseService, mockLogger);
+			await service.saveSubmission(createTestAnswers());
+			assert.strictEqual(tableUsed, 'questionnaire');
 		});
 	});
 });
