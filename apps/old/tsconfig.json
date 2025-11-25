@@ -1,0 +1,12 @@
+{
+	"extends": "../../tsconfig.json",
+	"exclude": ["src/.static"],
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"#service": ["./src/app/service.ts"],
+			"#util/*": ["./src/util/*"],
+			"@pins/local-plans-lib/*": ["../../packages/lib/*"]
+		}
+	}
+}
