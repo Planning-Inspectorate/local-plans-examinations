@@ -4,8 +4,8 @@ import type { CreateResult, UpdateResult, DeleteResult } from './common.ts';
  * Database-agnostic adapter interface for CRUD operations
  *
  * Provides a consistent interface for database operations across different
- * database implementations. Follows SOLID principles with Interface Segregation
- * and includes only essential operations following YAGNI principles.
+ * database implementations. Uses interface segregation to include only
+ * essential operations needed for database access.
  *
  * @template T - The data type for records in the database table
  *

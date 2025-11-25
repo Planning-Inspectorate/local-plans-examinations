@@ -7,9 +7,8 @@ import { PrismaAdapter } from './prisma-adapter.ts';
  * Database service factory for creating database adapters
  *
  * Provides a centralized factory for creating database adapters with proper
- * dependency injection. Follows SOLID principles with Single Responsibility
- * for adapter creation and Dependency Inversion by depending on abstractions.
- * Uses simple factory pattern following KISS principles.
+ * dependency injection. Handles adapter creation with clear separation of
+ * concerns and depends on abstractions rather than concrete implementations.
  *
  * @example
  * ```typescript
@@ -38,9 +37,9 @@ export class DatabaseService {
 	/**
 	 * Creates a database adapter for the specified table
 	 *
-	 * Factory method that creates database adapters on demand, following YAGNI
-	 * principles by only creating what's needed when needed. Provides DRY
-	 * reusable factory method for any database table.
+	 * Factory method that creates database adapters on demand, only creating
+	 * what's needed when needed. Provides reusable factory method for any
+	 * database table.
 	 *
 	 * @template T - The data type for records in the database table
 	 * @param {string} tableName - Name of the database table to create adapter for

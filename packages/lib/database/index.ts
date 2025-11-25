@@ -3,7 +3,7 @@
  *
  * Provides clean, focused exports for database operations including
  * service factory, adapter implementations, interfaces, and result types.
- * Designed for enterprise-grade database access patterns following SOLID principles.
+ * Designed for enterprise-grade database access patterns with clear separation of concerns.
  *
  * @example
  * ```typescript

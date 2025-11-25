@@ -7,8 +7,8 @@ import type { CreateResult, UpdateResult, DeleteResult } from './common.ts';
  * Prisma implementation of DatabaseAdapter interface
  *
  * Provides concrete implementation of database operations using Prisma ORM.
- * Follows SOLID principles with Single Responsibility for Prisma operations
- * and is DRY reusable for any Prisma table. Handles audit fields automatically
+ * Handles Prisma operations with clear responsibility separation and is
+ * reusable for any Prisma table. Handles audit fields automatically
  * and provides structured logging for all operations.
  *
  * @template T - The data type for records in the database table
@@ -165,8 +165,8 @@ export class PrismaAdapter<T = Record<string, unknown>> implements DatabaseAdapt
 	/**
 	 * Gets the Prisma table accessor for the configured table
 	 *
-	 * Provides centralized table access logic following DRY principles.
-	 * Uses simple accessor pattern following KISS principles.
+	 * Provides centralized table access logic with consistent interface.
+	 * Uses simple accessor pattern for clean database operations.
 	 *
 	 * @returns {any} Prisma table accessor for database operations
 	 * @private

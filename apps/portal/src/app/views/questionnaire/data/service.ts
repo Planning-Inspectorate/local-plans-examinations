@@ -6,8 +6,8 @@ import type { QuestionnaireAnswers } from './types.ts';
  * Questionnaire-specific data service layer
  *
  * Handles questionnaire data persistence operations with proper data mapping
- * between form fields and database schema. Follows SOLID principles with
- * Single Responsibility for questionnaire business logic and data operations.
+ * between form fields and database schema. Manages questionnaire business logic
+ * and data operations with clear separation of concerns.
  *
  * @example
  * ```typescript

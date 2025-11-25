@@ -144,7 +144,7 @@ class QuestionnaireController {
  *
  * Sets up the complete questionnaire service layer with database service,
  * data service, and business logic service, then creates controller instances
- * with proper dependency injection following SOLID principles.
+ * with proper dependency injection.
  *
  * @param {PortalService} portalService - Portal service containing database client and logger
  * @returns {Object} Object containing controller methods and service instance

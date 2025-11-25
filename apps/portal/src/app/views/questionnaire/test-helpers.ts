@@ -2,8 +2,8 @@
  * Test utilities and helpers for questionnaire module
  *
  * Provides reusable mock factories, test data builders, and assertion helpers
- * following DRY principles to eliminate test code duplication across all
- * questionnaire test files. Implements enterprise-grade testing patterns.
+ * to eliminate test code duplication across all questionnaire test files.
+ * Implements enterprise-grade testing patterns.
  *
  * @example
  * ```typescript
@@ -22,7 +22,7 @@ import type { QuestionnaireAnswers, QuestionnaireSubmission } from '../data/type
  * Mock factory for creating Pino logger instances
  *
  * Creates a mock logger with all standard Pino methods for testing.
- * Follows SOLID Single Responsibility principle by only creating logger mocks.
+ * Focused solely on creating logger mocks for test isolation.
  *
  * @returns {Object} Mock logger with info, error, debug, warn methods
  *
@@ -44,7 +44,7 @@ export const createMockLogger = () => ({
  * Mock factory for creating Express request objects
  *
  * Creates reusable request mocks with configurable session data.
- * Follows DRY principles by centralizing request mock creation.
+ * Centralizes request mock creation for consistent test setup.
  *
  * @param {any} [sessionData={}] - Optional session data to include in request
  * @returns {Object} Mock Express request object with session
@@ -64,7 +64,7 @@ export const createMockRequest = (sessionData: any = {}) => ({
  *
  * Creates reusable response mocks with spy functions for render and redirect.
  * Captures template names, data, and redirect URLs for assertion testing.
- * Follows DRY principles by providing consistent response mock structure.
+ * Provides consistent response mock structure across tests.
  *
  * @returns {Object} Mock Express response with render/redirect tracking
  * @returns {string} returns.renderTemplate - Last rendered template name
@@ -100,8 +100,8 @@ export const createMockResponse = () => {
  * Mock factory for creating database repository/adapter instances
  *
  * Creates mock repository with configurable return values for database operations.
- * Follows KISS principles with simple mock structure and preserves mock functions
- * when applying overrides. Used for testing data service layer in isolation.
+ * Simple mock structure that preserves mock functions when applying overrides.
+ * Used for testing data service layer in isolation.
  *
  * @param {any} [overrides={}] - Optional method overrides for custom behavior
  * @returns {Object} Mock repository with saveSubmission and getTotalSubmissions methods
@@ -136,8 +136,8 @@ export const createMockRepository = (overrides: any = {}) => {
  * Mock factory for creating portal service instances
  *
  * Creates centralized portal service mock with logger and database client.
- * Follows DRY principles by providing consistent service mock structure
- * across all controller and integration tests.
+ * Provides consistent service mock structure across all controller and
+ * integration tests.
  *
  * @param {any} [overrides={}] - Optional property overrides for custom behavior
  * @returns {Object} Mock portal service with logger and db properties
@@ -160,8 +160,8 @@ export const createMockPortalService = (overrides: any = {}) => ({
  * Test data builder for questionnaire answers
  *
  * Creates realistic questionnaire answer objects with sensible defaults.
- * Follows YAGNI principles by including only essential test data while
- * remaining extensible through the overrides parameter.
+ * Includes only essential test data while remaining extensible through
+ * the overrides parameter.
  *
  * @param {Partial<QuestionnaireAnswers>} [overrides={}] - Optional property overrides
  * @returns {QuestionnaireAnswers} Complete questionnaire answers object
@@ -187,8 +187,8 @@ export const createTestAnswers = (overrides: Partial<QuestionnaireAnswers> = {})
  * Test data builder for questionnaire submissions
  *
  * Creates complete questionnaire submission objects with metadata.
- * Follows DRY principles by providing reusable submission builder
- * that includes answers, timestamps, and reference information.
+ * Provides reusable submission builder that includes answers, timestamps,
+ * and reference information.
  *
  * @param {Partial<QuestionnaireSubmission>} [overrides={}] - Optional property overrides
  * @returns {QuestionnaireSubmission} Complete questionnaire submission object
@@ -214,8 +214,8 @@ export const createTestSubmission = (overrides: Partial<QuestionnaireSubmission>
  * Session data builder for different test scenarios
  *
  * Provides simple builders for common session states used in questionnaire testing.
- * Follows KISS principles with straightforward methods for typical session scenarios
- * including empty sessions, successful submissions, and error states.
+ * Straightforward methods for typical session scenarios including empty sessions,
+ * successful submissions, and error states.
  *
  * @example
  * ```typescript
@@ -264,8 +264,8 @@ export const SessionDataBuilder = {
  * Assertion helpers for common test patterns
  *
  * Provides reusable assertion patterns to eliminate code duplication across tests.
- * Follows DRY principles by centralizing common assertion logic with clear error
- * messages for debugging test failures.
+ * Centralizes common assertion logic with clear error messages for debugging
+ * test failures.
  *
  * @example
  * ```typescript
