@@ -50,17 +50,13 @@ export const APP_CONSTANTS = {
 } as const;
 
 /**
- * User interface constants including styling and navigation
+ * User interface constants for navigation and footer links
  *
  * @constant {Object} UI_CONSTANTS
- * @property {string} STYLE_FILE - CSS file name with hash for cache busting
  * @property {Array} NAVIGATION - Primary navigation menu items
  * @property {Array} FOOTER_LINKS - Footer navigation links
  */
 export const UI_CONSTANTS = {
-	/** CSS file name with cache-busting hash */
-	STYLE_FILE: 'style-9ac0aae2.css',
-
 	/** Primary navigation menu items */
 	NAVIGATION: [
 		{ text: 'Home', href: APP_CONSTANTS.ROUTES.HOME },
