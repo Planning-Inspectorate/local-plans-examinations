@@ -2,20 +2,25 @@
 
 import { mock } from 'node:test';
 import * as assert from 'node:assert';
-import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger';
+import type { Request, Response } from 'express';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import type { QuestionnaireAnswers, QuestionnaireSubmission } from './data/types.ts';
 
-export const createMockRequest = (sessionData: any = {}) => ({
+export const createMockRequest = (sessionData: Record<string, unknown> = {}): Partial<Request> => ({
 	session: sessionData
 });
 
 // Mock response with render/redirect tracking
-export const createMockResponse = () => {
+export const createMockResponse = (): Partial<Response> & {
+	renderTemplate: string;
+	renderData: Record<string, unknown>;
+	redirectUrl: string;
+} => {
 	const response = {
 		renderTemplate: '',
-		renderData: {} as any,
+		renderData: {} as Record<string, unknown>,
 		redirectUrl: '',
-		render: mock.fn((template: string, data: any) => {
+		render: mock.fn((template: string, data: Record<string, unknown>) => {
 			response.renderTemplate = template;
 			response.renderData = data;
 		}),
@@ -26,7 +31,7 @@ export const createMockResponse = () => {
 	return response;
 };
 
-export const createMockRepository = (overrides: any = {}) => {
+export const createMockRepository = (overrides: Record<string, unknown> = {}) => {
 	const baseMocks = {
 		saveSubmission: mock.fn(async () => ({ id: 'test-id', createdAt: new Date('2024-01-01') })),
 		getTotalSubmissions: mock.fn(async () => 42)
@@ -35,16 +40,16 @@ export const createMockRepository = (overrides: any = {}) => {
 	// Apply overrides while preserving mock functions
 	Object.keys(overrides).forEach((key) => {
 		if (typeof overrides[key] === 'function') {
-			(baseMocks as any)[key] = mock.fn(overrides[key]);
+			(baseMocks as Record<string, unknown>)[key] = mock.fn(overrides[key] as (...args: unknown[]) => unknown);
 		} else {
-			(baseMocks as any)[key] = overrides[key];
+			(baseMocks as Record<string, unknown>)[key] = overrides[key];
 		}
 	});
 
 	return baseMocks;
 };
 
-export const createMockPortalService = (overrides: any = {}) => ({
+export const createMockPortalService = (overrides: Record<string, unknown> = {}) => ({
 	logger: mockLogger(),
 	db: {},
 	...overrides
@@ -86,8 +91,8 @@ export const SessionDataBuilder = {
 
 // Assertion helpers
 export const AssertionHelpers = {
-	assertMockCalled: (mockFn: any, expectedCallCount: number, expectedArgs?: any[]) => {
-		assert(mockFn?.mock, 'Function is not a mock or mock not properly created');
+	assertMockCalled: (mockFn: ReturnType<typeof mock.fn>, expectedCallCount: number, expectedArgs?: unknown[]) => {
+		assert.ok(mockFn?.mock, 'Function is not a mock or mock not properly created');
 		assert.strictEqual(
 			mockFn.mock.callCount(),
 			expectedCallCount,
@@ -105,8 +110,12 @@ export const AssertionHelpers = {
 		}
 	},
 
-	assertTemplateRendered: (mockResponse: any, expectedTemplate: string, expectedData?: any) => {
-		assert(
+	assertTemplateRendered: (
+		mockResponse: ReturnType<typeof createMockResponse>,
+		expectedTemplate: string,
+		expectedData?: Record<string, unknown>
+	) => {
+		assert.ok(
 			mockResponse.renderTemplate.includes(expectedTemplate),
 			`Expected template to include ${expectedTemplate}, got ${mockResponse.renderTemplate}`
 		);
@@ -121,7 +130,7 @@ export const AssertionHelpers = {
 		}
 	},
 
-	assertRedirect: (mockResponse: any, expectedUrl: string) => {
+	assertRedirect: (mockResponse: ReturnType<typeof createMockResponse>, expectedUrl: string) => {
 		assert.strictEqual(
 			mockResponse.redirectUrl,
 			expectedUrl,
