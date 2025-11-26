@@ -1,19 +1,20 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { QuestionnaireService } from './service.ts';
-import { createTestAnswers, createMockLogger, AssertionHelpers } from '../test-helpers.ts';
+import { createTestAnswers, AssertionHelpers } from '../test-helpers.ts';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 
 /**
  * QuestionnaireService (Data Layer) unit tests
  * Tests data persistence operations in isolation
  */
 describe('QuestionnaireService (Data Layer)', () => {
-	let mockLogger: ReturnType<typeof createMockLogger>;
+	let mockLoggerInstance: ReturnType<typeof mockLogger>;
 	let mockPrisma: any;
 	let service: QuestionnaireService;
 
 	const setupService = (prismaOverrides = {}) => {
-		mockLogger = createMockLogger();
+		mockLoggerInstance = mockLogger();
 		mockPrisma = {
 			questionnaire: {
 				create: async () => ({ id: 'data-test-id', createdAt: new Date('2024-01-01') }),
@@ -21,7 +22,7 @@ describe('QuestionnaireService (Data Layer)', () => {
 				...prismaOverrides
 			}
 		};
-		service = new QuestionnaireService(mockPrisma, mockLogger);
+		service = new QuestionnaireService(mockPrisma, mockLoggerInstance);
 	};
 
 	describe('saveSubmission()', () => {
@@ -119,7 +120,7 @@ describe('QuestionnaireService (Data Layer)', () => {
 					}
 				}
 			};
-			service = new QuestionnaireService(mockPrisma, mockLogger);
+			service = new QuestionnaireService(mockPrisma, mockLoggerInstance);
 
 			await service.saveSubmission(createTestAnswers());
 			assert.strictEqual(tableUsed, 'questionnaire');

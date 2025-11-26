@@ -1,14 +1,8 @@
 // Test utilities and helpers for questionnaire module
 
 import { mock } from 'node:test';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import type { QuestionnaireAnswers, QuestionnaireSubmission } from './data/types.ts';
-
-export const createMockLogger = () => ({
-	info: mock.fn(),
-	error: mock.fn(),
-	debug: mock.fn(),
-	warn: mock.fn()
-});
 
 export const createMockRequest = (sessionData: any = {}) => ({
 	session: sessionData
@@ -50,7 +44,7 @@ export const createMockRepository = (overrides: any = {}) => {
 };
 
 export const createMockPortalService = (overrides: any = {}) => ({
-	logger: createMockLogger(),
+	logger: mockLogger(),
 	db: {},
 	...overrides
 });

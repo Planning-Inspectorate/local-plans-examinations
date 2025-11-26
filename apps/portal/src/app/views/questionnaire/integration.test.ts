@@ -6,11 +6,11 @@ import { QuestionnaireService as QuestionnaireDataService } from './data/service
 import {
 	createTestAnswers,
 	createTestSubmission,
-	createMockLogger,
 	createMockPortalService,
 	SessionDataBuilder,
 	AssertionHelpers
 } from './test-helpers.ts';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 
 /**
  * Questionnaire Integration Tests
@@ -19,7 +19,7 @@ import {
 describe('Questionnaire Integration', () => {
 	describe('Complete Submission Flow', () => {
 		it('should handle end-to-end submission with all layers', async () => {
-			const mockLogger = createMockLogger();
+			const mockLoggerInstance = mockLogger();
 			const mockPrisma = {
 				questionnaire: {
 					create: async () => ({ id: 'integration-test-id', createdAt: new Date('2024-01-01') }),
@@ -27,8 +27,8 @@ describe('Questionnaire Integration', () => {
 				}
 			};
 
-			const dataService = new QuestionnaireDataService(mockPrisma, mockLogger);
-			const businessService = new QuestionnaireService(mockLogger, dataService);
+			const dataService = new QuestionnaireDataService(mockPrisma, mockLoggerInstance);
+			const businessService = new QuestionnaireService(mockLoggerInstance, dataService);
 
 			const answers = createTestAnswers({
 				fullName: 'Integration Test User',
@@ -42,23 +42,23 @@ describe('Questionnaire Integration', () => {
 			assert.strictEqual(submission.id, 'integration-test-id');
 			assert.strictEqual(submission.reference, 'integration-test-id');
 			assert.deepStrictEqual(submission.answers, answers);
-			AssertionHelpers.assertMockCalled(mockLogger.info, 2); // Data service + business service logs
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.info, 2); // Data service + business service logs
 		});
 
 		it('should handle notification flow after submission', async () => {
-			const mockLogger = createMockLogger();
+			const mockLoggerInstance = mockLogger();
 			const mockDataService = {
 				saveSubmission: async () => ({ id: 'notify-test-id', createdAt: new Date() }),
 				getTotalSubmissions: async () => 1
 			};
 
-			const service = new QuestionnaireService(mockLogger, mockDataService as any);
+			const service = new QuestionnaireService(mockLoggerInstance, mockDataService as any);
 			const submission = await service.saveSubmission(createTestAnswers());
 
 			// Test notification (currently just logs)
 			await service.sendNotification(submission);
 
-			AssertionHelpers.assertMockCalled(mockLogger.info, 2); // Save + notification logs
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.info, 2); // Save + notification logs
 		});
 	});
 
@@ -112,7 +112,7 @@ describe('Questionnaire Integration', () => {
 
 	describe('Error Handling Integration', () => {
 		it('should propagate errors through service layers', async () => {
-			const mockLogger = createMockLogger();
+			const mockLoggerInstance = mockLogger();
 			const error = new Error('Integration database error');
 			const mockPrisma = {
 				questionnaire: {
@@ -122,14 +122,14 @@ describe('Questionnaire Integration', () => {
 				}
 			};
 
-			const dataService = new QuestionnaireDataService(mockPrisma, mockLogger);
-			const businessService = new QuestionnaireService(mockLogger, dataService);
+			const dataService = new QuestionnaireDataService(mockPrisma, mockLoggerInstance);
+			const businessService = new QuestionnaireService(mockLoggerInstance, dataService);
 
 			await assert.rejects(() => businessService.saveSubmission(createTestAnswers()), error);
 		});
 
 		it('should handle count operation errors', async () => {
-			const mockLogger = createMockLogger();
+			const mockLoggerInstance = mockLogger();
 			const error = new Error('Count operation failed');
 			const mockPrisma = {
 				questionnaire: {
@@ -139,8 +139,8 @@ describe('Questionnaire Integration', () => {
 				}
 			};
 
-			const dataService = new QuestionnaireDataService(mockPrisma, mockLogger);
-			const businessService = new QuestionnaireService(mockLogger, dataService);
+			const dataService = new QuestionnaireDataService(mockPrisma, mockLoggerInstance);
+			const businessService = new QuestionnaireService(mockLoggerInstance, dataService);
 
 			await assert.rejects(() => businessService.getTotalSubmissions(), error);
 		});

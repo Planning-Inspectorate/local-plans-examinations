@@ -5,11 +5,11 @@ import {
 	createTestSubmission,
 	createTestAnswers,
 	createMockRequest,
-	createMockLogger,
 	createMockRepository,
 	SessionDataBuilder,
 	AssertionHelpers
 } from '../test-helpers.ts';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 
 describe('SessionManager', () => {
 	describe('store()', () => {
@@ -105,14 +105,14 @@ describe('SessionManager', () => {
 });
 
 describe('QuestionnaireService', () => {
-	let mockLogger: ReturnType<typeof createMockLogger>;
+	let mockLoggerInstance: ReturnType<typeof mockLogger>;
 	let mockRepository: ReturnType<typeof createMockRepository>;
 	let service: QuestionnaireService;
 
 	const setupService = (repositoryOverrides = {}) => {
-		mockLogger = createMockLogger();
+		mockLoggerInstance = mockLogger();
 		mockRepository = createMockRepository(repositoryOverrides);
-		service = new QuestionnaireService(mockLogger, mockRepository as any);
+		service = new QuestionnaireService(mockLoggerInstance, mockRepository as any);
 	};
 
 	describe('saveSubmission()', () => {
@@ -128,7 +128,7 @@ describe('QuestionnaireService', () => {
 			assert.strictEqual(result.id, 'saved-id');
 			assert.strictEqual(result.reference, 'saved-id');
 			assert.deepStrictEqual(result.answers, answers);
-			AssertionHelpers.assertMockCalled(mockLogger.info, 1);
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.info, 1);
 		});
 
 		it('should handle repository errors', async () => {
@@ -150,8 +150,8 @@ describe('QuestionnaireService', () => {
 
 			await service.sendNotification(submission);
 
-			AssertionHelpers.assertMockCalled(mockLogger.info, 1);
-			const logCall = mockLogger.info.mock.calls[0].arguments;
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.info, 1);
+			const logCall = mockLoggerInstance.info.mock.calls[0].arguments;
 			assert.strictEqual(logCall[0].reference, submission.reference);
 			assert.strictEqual(logCall[0].email, 'notify@test.com');
 			assert.strictEqual(logCall[1], 'Sending notification');
@@ -166,7 +166,7 @@ describe('QuestionnaireService', () => {
 
 			assert.strictEqual(count, 123);
 			AssertionHelpers.assertMockCalled(mockRepository.getTotalSubmissions, 1);
-			AssertionHelpers.assertMockCalled(mockLogger.info, 1);
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.info, 1);
 		});
 
 		it('should handle zero count', async () => {

@@ -5,26 +5,26 @@ import { QuestionnaireService } from './core/service.ts';
 import {
 	createTestAnswers,
 	createTestSubmission,
-	createMockLogger,
 	createMockRequest,
 	createMockResponse,
 	AssertionHelpers
 } from './test-helpers.ts';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 
 describe('Save Controller', () => {
-	let mockLogger: ReturnType<typeof createMockLogger>;
+	let mockLoggerInstance: ReturnType<typeof mockLogger>;
 	let mockQuestionnaireService: any;
 	let mockPortalService: any;
 	let saveHandler: any;
 
 	const setupController = (serviceOverrides = {}) => {
-		mockLogger = createMockLogger();
+		mockLoggerInstance = mockLogger();
 		mockQuestionnaireService = {
 			saveSubmission: async () => createTestSubmission(),
 			sendNotification: async () => {},
 			...serviceOverrides
 		};
-		mockPortalService = { logger: mockLogger };
+		mockPortalService = { logger: mockLoggerInstance };
 		saveHandler = createSaveController(mockQuestionnaireService as QuestionnaireService, mockPortalService);
 	};
 
@@ -44,7 +44,7 @@ describe('Save Controller', () => {
 			await saveHandler(mockReq, mockRes);
 
 			AssertionHelpers.assertRedirect(mockRes, '/questionnaire/success');
-			AssertionHelpers.assertMockCalled(mockLogger.info, 2); // Processing + success logs
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.info, 2); // Processing + success logs
 		});
 
 		it('should store submission in session after save', async () => {
@@ -95,7 +95,7 @@ describe('Save Controller', () => {
 			await saveHandler(mockReq, mockRes);
 
 			AssertionHelpers.assertRedirect(mockRes, '/questionnaire/check-your-answers');
-			AssertionHelpers.assertMockCalled(mockLogger.warn, 1);
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.warn, 1);
 		});
 
 		it('should redirect when no answers provided', async () => {
@@ -111,7 +111,7 @@ describe('Save Controller', () => {
 			await saveHandler(mockReq, mockRes);
 
 			AssertionHelpers.assertRedirect(mockRes, '/questionnaire');
-			AssertionHelpers.assertMockCalled(mockLogger.warn, 1);
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.warn, 1);
 		});
 
 		it('should redirect when answers is null', async () => {
@@ -149,7 +149,7 @@ describe('Save Controller', () => {
 			await saveHandler(mockReq, mockRes);
 
 			AssertionHelpers.assertRedirect(mockRes, '/questionnaire/check-your-answers');
-			AssertionHelpers.assertMockCalled(mockLogger.error, 1);
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.error, 1);
 			assert.strictEqual(
 				mockReq.session.questionnaires.error,
 				'There was a problem submitting your questionnaire. Please try again.'
@@ -174,7 +174,7 @@ describe('Save Controller', () => {
 			await saveHandler(mockReq, mockRes);
 
 			AssertionHelpers.assertRedirect(mockRes, '/questionnaire/check-your-answers');
-			AssertionHelpers.assertMockCalled(mockLogger.error, 1);
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.error, 1);
 		});
 
 		it('should handle unknown error types', async () => {
@@ -193,8 +193,8 @@ describe('Save Controller', () => {
 
 			await saveHandler(mockReq, mockRes);
 
-			AssertionHelpers.assertMockCalled(mockLogger.error, 1);
-			assert.ok(mockLogger.error.mock.calls[0].arguments[0].includes('String error'));
+			AssertionHelpers.assertMockCalled(mockLoggerInstance.error, 1);
+			assert.ok(mockLoggerInstance.error.mock.calls[0].arguments[0].includes('String error'));
 		});
 	});
 
