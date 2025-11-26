@@ -11,10 +11,6 @@ import {
 	AssertionHelpers
 } from '../test-helpers.ts';
 
-/**
- * SessionManager unit tests
- * Tests session management functionality in isolation
- */
 describe('SessionManager', () => {
 	describe('store()', () => {
 		it('should store submission data in session', () => {
@@ -108,16 +104,11 @@ describe('SessionManager', () => {
 	});
 });
 
-/**
- * QuestionnaireService unit tests
- * Tests business logic in isolation with mocked dependencies
- */
 describe('QuestionnaireService', () => {
 	let mockLogger: ReturnType<typeof createMockLogger>;
 	let mockRepository: ReturnType<typeof createMockRepository>;
 	let service: QuestionnaireService;
 
-	// Setup common test dependencies
 	const setupService = (repositoryOverrides = {}) => {
 		mockLogger = createMockLogger();
 		mockRepository = createMockRepository(repositoryOverrides);

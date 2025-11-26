@@ -3,22 +3,7 @@ import path from 'node:path';
 import nunjucks from 'nunjucks';
 import { loadBuildConfig } from './config.ts';
 
-/**
- * Configures Nunjucks templating engine with required template paths
- *
- * Sets up Nunjucks with access to:
- * - GOV.UK Frontend components
- * - Dynamic Forms templates
- * - Application-specific templates
- *
- * @returns {nunjucks.Environment} Configured Nunjucks environment ready for rendering
- *
- * @example
- * ```typescript
- * const nunjucks = configureNunjucks();
- * const html = nunjucks.render('template.njk', { data: 'value' });
- * ```
- */
+// Configures Nunjucks with GOV.UK Frontend, Dynamic Forms, and app templates
 export function configureNunjucks(): nunjucks.Environment {
 	const config = loadBuildConfig();
 

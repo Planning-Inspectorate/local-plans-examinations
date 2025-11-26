@@ -7,25 +7,7 @@ import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.t
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 
-/**
- * Builds and configures the main application router with all route modules
- *
- * Sets up the following route groups:
- * - Monitoring routes (health checks, metrics)
- * - Home page routes
- * - Questionnaire routes (form handling)
- * - Error page routes
- *
- * @param {PortalService} service - Portal service instance for dependency injection
- * @returns {IRouter} Configured Express router with all application routes
- *
- * @example
- * ```typescript
- * const service = new PortalService(config);
- * const router = buildRouter(service);
- * app.use(router);
- * ```
- */
+// Configures main router with monitoring, home, questionnaire, and error routes
 export function buildRouter(service: PortalService): IRouter {
 	const router = createRouter();
 

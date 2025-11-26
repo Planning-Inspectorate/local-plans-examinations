@@ -11,10 +11,6 @@ import {
 	AssertionHelpers
 } from './test-helpers.ts';
 
-/**
- * Save Controller unit tests
- * Tests submission handling logic in isolation
- */
 describe('Save Controller', () => {
 	let mockLogger: ReturnType<typeof createMockLogger>;
 	let mockQuestionnaireService: any;

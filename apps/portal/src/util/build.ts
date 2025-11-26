@@ -3,9 +3,6 @@ import { createRequire } from 'node:module';
 import { loadBuildConfig } from '../app/config.ts';
 import { runBuild } from '@pins/local-plans-lib/util/build.ts';
 
-/**
- * Do all steps to run the build
- */
 async function run(): Promise<void> {
 	const require = createRequire(import.meta.url);
 	// resolves to <root>/node_modules/govuk-frontend/dist/govuk/all.bundle.js than maps to `<root>`

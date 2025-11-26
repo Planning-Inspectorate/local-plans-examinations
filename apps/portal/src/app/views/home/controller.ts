@@ -2,12 +2,7 @@ import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { QuestionnaireService as QuestionnaireDataService } from '../questionnaire/data/service.ts';
 
-/**
- * Controller class for handling home page requests
- *
- * Manages the main landing page functionality including database health checks,
- * visit tracking, and questionnaire statistics display.
- */
+// Home page controller with database health checks and visit tracking
 class HomeController {
 	private readonly db: PortalService['db'];
 	private readonly logger: PortalService['logger'];
@@ -19,13 +14,6 @@ class HomeController {
 		this.questionnaireService = questionnaireService;
 	}
 
-	/**
-	 * Handles home page requests
-	 *
-	 * @param {any} req - Express request object
-	 * @param {any} res - Express response object
-	 * @returns {Promise<void>} Rendered home page
-	 */
 	handleHomePage = async (req: any, res: any) => {
 		const connected = await this.checkDatabaseConnection();
 		const visitCount = this.updateVisitCount(req);
@@ -40,12 +28,6 @@ class HomeController {
 		});
 	};
 
-	/**
-	 * Checks database connectivity by executing a simple query
-	 *
-	 * @returns {Promise<boolean>} True if database is accessible, false otherwise
-	 * @private
-	 */
 	private async checkDatabaseConnection(): Promise<boolean> {
 		try {
 			await this.db.$queryRaw`SELECT 1`;
@@ -56,12 +38,6 @@ class HomeController {
 		}
 	}
 
-	/**
-	 * Gets total number of questionnaire submissions
-	 *
-	 * @returns {Promise<number>} Total questionnaire submissions count
-	 * @private
-	 */
 	private async getTotalSubmissions(): Promise<number> {
 		try {
 			return await this.questionnaireService.getTotalSubmissions();
@@ -71,25 +47,13 @@ class HomeController {
 		}
 	}
 
-	/**
-	 * Updates and returns the visit count stored in session
-	 *
-	 * @param {any} req - Express request object with session
-	 * @returns {number} Updated visit count
-	 * @private
-	 */
 	private updateVisitCount(req: any): number {
 		req.session.visits = (req.session.visits || 0) + 1;
 		return req.session.visits;
 	}
 }
 
-/**
- * Factory function that creates a home page request handler
- *
- * @param {PortalService} service - Portal service instance for dependency injection
- * @returns {AsyncRequestHandler} Express async request handler for home page
- */
+// Factory for creating home page handler with dependency injection
 export function buildHomePage(service: PortalService): AsyncRequestHandler {
 	const questionnaireDataService = new QuestionnaireDataService(service.db, service.logger);
 	const controller = new HomeController(service.db, service.logger, questionnaireDataService);

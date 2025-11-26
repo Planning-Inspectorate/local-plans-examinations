@@ -4,24 +4,14 @@ import { COMPONENT_TYPES } from '@planning-inspectorate/dynamic-forms';
 import RequiredValidator from '@planning-inspectorate/dynamic-forms/src/validator/required-validator.js';
 import StringValidator from '@planning-inspectorate/dynamic-forms/src/validator/string-validator.js';
 
-/**
- * Method overrides for dynamic form components
- *
- * Currently empty but allows for future customization of component behavior
- * without modifying the base dynamic-forms library.
- */
+// Method overrides for dynamic form components (empty for now)
 const METHOD_OVERRIDES = {
 	'single-line-input': {},
 	'text-entry': {},
 	radio: {}
 };
 
-/**
- * Rating options for the service experience question
- *
- * Provides a standard set of rating values from excellent to poor
- * for consistent user feedback collection.
- */
+// Rating options for service experience question
 const RATING_OPTIONS = [
 	{ text: 'Excellent', value: 'excellent' },
 	{ text: 'Good', value: 'good' },
@@ -29,12 +19,7 @@ const RATING_OPTIONS = [
 	{ text: 'Poor', value: 'poor' }
 ];
 
-/**
- * Question definitions for the questionnaire form
- *
- * Defines all questions including field types, validation rules,
- * and display properties for the dynamic forms system.
- */
+// Question definitions with validation rules for dynamic forms
 const QUESTION_DEFINITIONS = {
 	fullName: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -89,19 +74,6 @@ const QUESTION_DEFINITIONS = {
 	}
 };
 
-/**
- * Creates questionnaire questions using the dynamic forms library
- *
- * Transforms question definitions into dynamic form question objects
- * with proper validation, rendering, and behavior configuration.
- *
- * @returns {Record<string, any>} Question objects keyed by field name
- *
- * @example
- * ```typescript
- * const questions = createQuestionnaireQuestions();
- * // Use questions.fullName, questions.email, etc. in sections
- * ```
- */
+// Creates dynamic form questions with validation and rendering
 export const createQuestionnaireQuestions = () =>
 	createQuestions(QUESTION_DEFINITIONS, questionClasses, METHOD_OVERRIDES);

@@ -1,23 +1,8 @@
 import type { Handler } from 'express';
 import { APP_CONSTANTS, UI_CONSTANTS } from '../app/constants.ts';
 
-/**
- * Middleware class for adding configuration values to Express response locals
- *
- * Provides template variables for consistent UI rendering across all pages,
- * including navigation state, styling, and footer links.
- */
+// Adds configuration values to template locals
 class LocalsConfigurationMiddleware {
-	/**
-	 * Creates Express middleware that adds configuration to res.locals
-	 *
-	 * @returns {Handler} Express middleware function
-	 *
-	 * @example
-	 * ```typescript
-	 * app.use(LocalsConfigurationMiddleware.create());
-	 * ```
-	 */
 	static create(): Handler {
 		return (req, res, next) => {
 			// Add configuration object to template locals
@@ -32,14 +17,7 @@ class LocalsConfigurationMiddleware {
 		};
 	}
 
-	/**
-	 * Builds navigation links with current page highlighting
-	 *
-	 * @param {string} currentPath - Current request path for highlighting active nav item
-	 * @returns {Array} Navigation links with 'current' property set for active item
-	 *
-	 * @private
-	 */
+	// Marks current page in navigation
 	private static buildNavigationLinks(currentPath: string) {
 		return UI_CONSTANTS.NAVIGATION.map((link) => ({
 			...link,
@@ -48,24 +26,6 @@ class LocalsConfigurationMiddleware {
 	}
 }
 
-/**
- * Express middleware that adds configuration values to response locals
- *
- * Makes application configuration available to all Nunjucks templates,
- * including navigation state, styling information, and footer links.
- *
- * @returns {Handler} Express middleware function
- *
- * @example
- * ```typescript
- * // In app setup
- * app.use(addLocalsConfiguration());
- *
- * // In templates
- * {{ config.headerTitle }}
- * {{ config.styleFile }}
- * ```
- */
 export function addLocalsConfiguration(): Handler {
 	return LocalsConfigurationMiddleware.create();
 }

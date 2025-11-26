@@ -4,31 +4,12 @@ import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
 import { APP_CONSTANTS } from './constants.ts';
 
-/**
- * Portal application configuration type extending base configuration
- *
- * @typedef {BaseConfig} Config
- */
 export type Config = BaseConfig;
 
-/** Cached configuration instance to avoid repeated environment parsing */
+// Cached to avoid repeated environment parsing
 let config: Config | undefined;
 
-/**
- * Loads and validates configuration from environment variables
- *
- * Parses .env file and validates required environment variables,
- * providing sensible defaults from APP_CONSTANTS where appropriate.
- *
- * @returns {Config} Complete application configuration object
- * @throws {Error} When required environment variables are missing or invalid
- *
- * @example
- * ```typescript
- * const config = loadConfig();
- * console.log(`Server will run on port ${config.httpPort}`);
- * ```
- */
+// Validates required environment variables and provides defaults
 export function loadConfig(): Config {
 	if (config) {
 		return config;
@@ -90,32 +71,12 @@ export function loadConfig(): Config {
 	return config;
 }
 
-/**
- * Build-time configuration interface for file paths
- *
- * @interface BuildConfig
- * @property {string} srcDir - Absolute path to the source directory
- * @property {string} staticDir - Absolute path to the static assets directory
- */
 export interface BuildConfig {
 	srcDir: string;
 	staticDir: string;
 }
 
-/**
- * Loads build configuration with computed file paths
- *
- * Calculates source and static directory paths relative to the current file location.
- * Used by both runtime configuration and build scripts.
- *
- * @returns {BuildConfig} Build configuration with resolved directory paths
- *
- * @example
- * ```typescript
- * const buildConfig = loadBuildConfig();
- * console.log(`Static files served from: ${buildConfig.staticDir}`);
- * ```
- */
+// Calculates paths relative to current file for runtime and build scripts
 export function loadBuildConfig(): BuildConfig {
 	// Get the directory path of the current file
 	const dirname = path.dirname(fileURLToPath(import.meta.url));

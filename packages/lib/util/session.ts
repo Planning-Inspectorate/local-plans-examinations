@@ -31,9 +31,6 @@ export function initSessionMiddleware({ redis, secure, secret }: InitSessionOpti
 	});
 }
 
-/**
- * Add data to a session, by id and field
- */
 export function addSessionData(
 	req: Request,
 	id: string,
@@ -48,9 +45,6 @@ export function addSessionData(
 	Object.assign(fieldProps, data);
 }
 
-/**
- * Read a value from the session
- */
 export function readSessionData<T>(
 	req: Request,
 	id: string,
@@ -65,9 +59,6 @@ export function readSessionData<T>(
 	return fieldProps[field] || defaultValue;
 }
 
-/**
- * Clear a case updated flag from the session
- */
 export function clearSessionData(
 	req: Request,
 	id: string,
