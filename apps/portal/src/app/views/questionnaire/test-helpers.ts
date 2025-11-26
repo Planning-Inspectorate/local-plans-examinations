@@ -1,7 +1,8 @@
 // Test utilities and helpers for questionnaire module
 
 import { mock } from 'node:test';
-import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
+import * as assert from 'node:assert';
+import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger';
 import type { QuestionnaireAnswers, QuestionnaireSubmission } from './data/types.ts';
 
 export const createMockRequest = (sessionData: any = {}) => ({
@@ -83,41 +84,48 @@ export const SessionDataBuilder = {
 	})
 };
 
-// Assertion helpers for common test patterns
+// Assertion helpers
 export const AssertionHelpers = {
 	assertMockCalled: (mockFn: any, expectedCallCount: number, expectedArgs?: any[]) => {
-		if (!mockFn?.mock) {
-			throw new Error('Function is not a mock or mock not properly created');
-		}
-		if (mockFn.mock.callCount() !== expectedCallCount) {
-			throw new Error(`Expected ${expectedCallCount} calls, got ${mockFn.mock.callCount()}`);
-		}
+		assert(mockFn?.mock, 'Function is not a mock or mock not properly created');
+		assert.strictEqual(
+			mockFn.mock.callCount(),
+			expectedCallCount,
+			`Expected ${expectedCallCount} calls, got ${mockFn.mock.callCount()}`
+		);
 		if (expectedArgs && mockFn.mock.calls[0]?.arguments) {
 			const actualArgs = mockFn.mock.calls[0].arguments;
 			expectedArgs.forEach((expectedArg, index) => {
-				if (actualArgs[index] !== expectedArg) {
-					throw new Error(`Expected argument ${index} to be ${expectedArg}, got ${actualArgs[index]}`);
-				}
+				assert.strictEqual(
+					actualArgs[index],
+					expectedArg,
+					`Expected argument ${index} to be ${expectedArg}, got ${actualArgs[index]}`
+				);
 			});
 		}
 	},
 
 	assertTemplateRendered: (mockResponse: any, expectedTemplate: string, expectedData?: any) => {
-		if (!mockResponse.renderTemplate.includes(expectedTemplate)) {
-			throw new Error(`Expected template to include ${expectedTemplate}, got ${mockResponse.renderTemplate}`);
-		}
+		assert(
+			mockResponse.renderTemplate.includes(expectedTemplate),
+			`Expected template to include ${expectedTemplate}, got ${mockResponse.renderTemplate}`
+		);
 		if (expectedData) {
 			Object.keys(expectedData).forEach((key) => {
-				if (mockResponse.renderData[key] !== expectedData[key]) {
-					throw new Error(`Expected ${key} to be ${expectedData[key]}, got ${mockResponse.renderData[key]}`);
-				}
+				assert.strictEqual(
+					mockResponse.renderData[key],
+					expectedData[key],
+					`Expected ${key} to be ${expectedData[key]}, got ${mockResponse.renderData[key]}`
+				);
 			});
 		}
 	},
 
 	assertRedirect: (mockResponse: any, expectedUrl: string) => {
-		if (mockResponse.redirectUrl !== expectedUrl) {
-			throw new Error(`Expected redirect to ${expectedUrl}, got ${mockResponse.redirectUrl}`);
-		}
+		assert.strictEqual(
+			mockResponse.redirectUrl,
+			expectedUrl,
+			`Expected redirect to ${expectedUrl}, got ${mockResponse.redirectUrl}`
+		);
 	}
 };
