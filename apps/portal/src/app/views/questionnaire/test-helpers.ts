@@ -2,20 +2,16 @@
 
 import { mock } from 'node:test';
 import * as assert from 'node:assert';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import type { QuestionnaireAnswers, QuestionnaireSubmission } from './data/types.ts';
 
 export const createMockRequest = (sessionData: Record<string, unknown> = {}): Partial<Request> => ({
-	session: sessionData
+	session: sessionData as any
 });
 
 // Mock response with render/redirect tracking
-export const createMockResponse = (): Partial<Response> & {
-	renderTemplate: string;
-	renderData: Record<string, unknown>;
-	redirectUrl: string;
-} => {
+export const createMockResponse = () => {
 	const response = {
 		renderTemplate: '',
 		renderData: {} as Record<string, unknown>,
