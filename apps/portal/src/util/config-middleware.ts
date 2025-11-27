@@ -26,6 +26,4 @@ class LocalsConfigurationMiddleware {
 	}
 }
 
-export function addLocalsConfiguration(): Handler {
-	return LocalsConfigurationMiddleware.create();
-}
+export const addLocalsConfiguration = LocalsConfigurationMiddleware.create;
