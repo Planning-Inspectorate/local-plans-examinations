@@ -6,9 +6,7 @@ import type { IRouter } from 'express';
 export function createErrorRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
-	const firewallError = firewallErrorPage(service);
-
-	router.get('/firewall-error', firewallError);
+	router.get('/firewall-error', firewallErrorPage(service));
 
 	return router;
 }

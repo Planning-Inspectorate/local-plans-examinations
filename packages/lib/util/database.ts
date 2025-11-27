@@ -1,9 +1,7 @@
 import { Prisma } from '@pins/local-plans-database/src/client/client.ts';
 import type { Logger } from 'pino';
 
-/**
- * Where clause cannot include an undefined ID, so either return a valid where clause or none
- */
+// Prevents undefined ID in where clauses
 export function optionalWhere(id: string): undefined | { id: string } {
 	if (id) {
 		return { id };
@@ -18,9 +16,7 @@ interface WrapPrismaErrorOptions {
 	logParams: Record<string, any>;
 }
 
-/**
- * Wrap common Prisma errors so they aren't shown to the user
- */
+// Hides Prisma implementation details from users
 export function wrapPrismaError({ error, logger, message, logParams }: WrapPrismaErrorOptions) {
 	// don't show Prisma errors to the user
 	if (error instanceof Prisma.PrismaClientKnownRequestError) {

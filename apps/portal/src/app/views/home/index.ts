@@ -4,9 +4,10 @@ import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 
-export function createRoutes(service: PortalService): IRouter {
+export function createHomeRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
+	// Main home page route
 	const homePageController = buildHomePage(service);
 	router.get('/', asyncHandler(homePageController));
 

@@ -1,55 +1,29 @@
 import type { Handler } from 'express';
+import { APP_CONSTANTS, UI_CONSTANTS } from '../app/constants.ts';
 
-/**
- * Add configuration values to locals.
- */
-export function addLocalsConfiguration(): Handler {
-	return (req, res, next) => {
-		const path = req.path;
-
-		const links = [
-			{
-				text: 'Home',
-				href: '/'
-			},
-			{
-				text: 'Another Page',
-				href: '/another-page'
-			}
-		];
-
-		res.locals.config = {
-			styleFile: 'style-f6713a09.css',
-			cspNonce: res.locals.cspNonce,
-			headerTitle: 'A New Service',
-			footerLinks: [
-				{
-					text: 'Terms and conditions',
-					href: '/terms-and-conditions'
-				},
-				{
-					text: 'Accessibility statement',
-					href: '/accessibility-statement'
-				},
-				{
-					text: 'Privacy',
-					href: 'https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice'
-				},
-				{
-					text: 'Cookies',
-					href: '/cookies'
-				},
-				{
-					text: 'Contact',
-					href: '/contact'
-				}
-			],
-			primaryNavigationLinks: links.map((l) => {
-				const link = { current: false, ...l };
-				link.current = link.href === path;
-				return link;
-			})
+// Adds configuration values to template locals
+class LocalsConfigurationMiddleware {
+	static create(): Handler {
+		return (req, res, next) => {
+			// Add configuration object to template locals
+			res.locals.config = {
+				styleFile: 'style-9ac0aae2.css',
+				cspNonce: res.locals.cspNonce,
+				headerTitle: APP_CONSTANTS.APP_NAME,
+				footerLinks: UI_CONSTANTS.FOOTER_LINKS,
+				primaryNavigationLinks: this.buildNavigationLinks(req.path)
+			};
+			next();
 		};
-		next();
-	};
+	}
+
+	// Marks current page in navigation
+	private static buildNavigationLinks(currentPath: string) {
+		return UI_CONSTANTS.NAVIGATION.map((link) => ({
+			...link,
+			current: link.href === currentPath
+		}));
+	}
 }
+
+export const addLocalsConfiguration = LocalsConfigurationMiddleware.create;

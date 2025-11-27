@@ -5,11 +5,8 @@ import { createBaseApp } from '@pins/local-plans-lib/app/app.ts';
 import type { Express } from 'express';
 import type { PortalService } from '#service';
 
-/**
- * @param service
- */
 export function createApp(service: PortalService): Express {
 	const router = buildRouter(service);
-	// create an express app, and configure it for our usage
+	// Create an express app and configure it for portal usage
 	return createBaseApp({ service, configureNunjucks, router, middlewares: [addLocalsConfiguration()] });
 }

@@ -4,6 +4,14 @@
   "private": true,
   "main": "index.ts",
   "type": "module",
+  "exports": {
+    "./database": "./database/index.ts",
+    "./util/*": "./util/*",
+    "./app/*": "./app/*",
+    "./middleware/*": "./middleware/*",
+    "./controllers/*": "./controllers/*",
+    "./testing/*": "./testing/*"
+  },
   "scripts": {
     "test": "node --test"
   },

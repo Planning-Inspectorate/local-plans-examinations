@@ -2,15 +2,14 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
+import { APP_CONSTANTS } from './constants.ts';
 
 export type Config = BaseConfig;
 
-// cache the config
+// Cached to avoid repeated environment parsing
 let config: Config | undefined;
 
-/**
- * Load configuration from the environment
- */
+// Validates required environment variables and provides defaults
 export function loadConfig(): Config {
 	if (config) {
 		return config;
@@ -36,7 +35,7 @@ export function loadConfig(): Config {
 		throw new Error('SESSION_SECRET is required');
 	}
 
-	let httpPort = 8080;
+	let httpPort = APP_CONSTANTS.DEFAULTS.HTTP_PORT;
 	if (PORT) {
 		const port = parseInt(PORT);
 		if (isNaN(port)) {
@@ -47,15 +46,15 @@ export function loadConfig(): Config {
 
 	config = {
 		cacheControl: {
-			maxAge: CACHE_CONTROL_MAX_AGE || '1d'
+			maxAge: CACHE_CONTROL_MAX_AGE || APP_CONSTANTS.DEFAULTS.CACHE_MAX_AGE
 		},
 		database: {
 			connectionString: SQL_CONNECTION_STRING
 		},
 		gitSha: GIT_SHA,
 		// the log level to use
-		logLevel: LOG_LEVEL || 'info',
-		NODE_ENV: NODE_ENV || 'development',
+		logLevel: LOG_LEVEL || APP_CONSTANTS.DEFAULTS.LOG_LEVEL,
+		NODE_ENV: NODE_ENV || APP_CONSTANTS.DEFAULTS.NODE_ENV,
 		// the HTTP port to listen on
 		httpPort: httpPort,
 		// the src directory
@@ -77,15 +76,13 @@ export interface BuildConfig {
 	staticDir: string;
 }
 
-/**
- * Config required for the build script
- */
+// Calculates paths relative to current file for runtime and build scripts
 export function loadBuildConfig(): BuildConfig {
-	// get the file path for the directory this file is in
+	// Get the directory path of the current file
 	const dirname = path.dirname(fileURLToPath(import.meta.url));
-	// get the file path for the src directory
+	// Calculate the src directory (parent of app directory)
 	const srcDir = path.join(dirname, '..');
-	// get the file path for the .static directory
+	// Calculate the static assets directory
 	const staticDir = path.join(srcDir, '.static');
 
 	return {

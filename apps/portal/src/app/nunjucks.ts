@@ -3,22 +3,23 @@ import path from 'node:path';
 import nunjucks from 'nunjucks';
 import { loadBuildConfig } from './config.ts';
 
-/**
- * Configure nunjucks with govuk and app folders for loading views
- */
+// Configures Nunjucks with GOV.UK Frontend, Dynamic Forms, and app templates
 export function configureNunjucks(): nunjucks.Environment {
 	const config = loadBuildConfig();
 
-	// get the require function, see https://nodejs.org/api/module.html#modulecreaterequirefilename
+	// Create require function for resolving node_modules paths in ES modules
 	const require = createRequire(import.meta.url);
-	// get the path to the govuk-frontend folder, in node_modules, using the node require resolution
+	// Resolve GOV.UK Frontend template directory
 	const govukFrontendRoot = path.resolve(require.resolve('govuk-frontend'), '../..');
+	// Resolve Dynamic Forms template directory
+	const dynamicFormsRoot = path.resolve(require.resolve('@planning-inspectorate/dynamic-forms'), '..');
+	// Application template directory
 	const appDir = path.join(config.srcDir, 'app');
 
-	// configure nunjucks
+	// Configure Nunjucks with all required template search paths
 	return nunjucks.configure(
-		// ensure nunjucks templates can use govuk-frontend components, and templates we've defined in `web/src/app`
-		[govukFrontendRoot, appDir],
+		// Template search order: GOV.UK Frontend, Dynamic Forms, Application templates
+		[govukFrontendRoot, dynamicFormsRoot, appDir],
 		{
 			// output with dangerous characters are escaped automatically
 			autoescape: true,
