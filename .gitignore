@@ -66,6 +66,10 @@ dump.rdb
 # Dummy data
 dummy_user_data.json
 
+# Shared Run/Debug config files for Webstorm
+.idea
+!.idea/runConfigurations
+
 # Local .terraform directories
 **/.terraform/*
 **/.terraform
