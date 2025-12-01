@@ -1,8 +1,9 @@
 import { Router as createRouter } from 'express';
-import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
-import { createRoutes as appRoutes } from './views/home/index.ts';
-import { createErrorRoutes } from './views/static/error/index.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
+import { createErrorRoutes } from './views/static/error/index.ts';
+import { createHomeRoutes } from './views/home/index.ts';
+import { createQuestionnaireRoutes } from './views/questionnaire/index.ts';
+import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 
@@ -20,7 +21,8 @@ export function buildRouter(service: PortalService): IRouter {
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
 
-	router.use('/', appRoutes(service));
+	router.use('/', createHomeRoutes(service));
+	router.use('/questionnaire', createQuestionnaireRoutes(service));
 	router.use('/error', createErrorRoutes(service));
 
 	return router;

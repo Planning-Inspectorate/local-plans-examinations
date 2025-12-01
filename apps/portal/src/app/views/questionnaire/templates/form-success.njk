@@ -1,0 +1,31 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-panel govuk-panel--confirmation">
+            <h1 class="govuk-panel__title">Questionnaire submitted</h1>
+            <div class="govuk-panel__body">
+                {% if reference %}
+                    Your reference number<br><strong>{{ reference }}</strong>
+                {% else %}
+                    Thank you for your feedback
+                {% endif %}
+            </div>
+        </div>
+
+        <p class="govuk-body">
+            We have received your questionnaire submission.
+        </p>
+
+        <h2 class="govuk-heading-m">What happens next</h2>
+        <p class="govuk-body">
+            Your feedback will be reviewed and used to improve our services.
+        </p>
+
+        <p class="govuk-body">
+            <a href="/" class="govuk-link">Return to home page</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

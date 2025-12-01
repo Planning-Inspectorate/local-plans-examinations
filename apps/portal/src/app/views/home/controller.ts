@@ -1,32 +1,51 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { createQuestionnaireDataService } from '../questionnaire/data/service.ts';
 
-/**
- * Example home page controller
- */
-export function buildHomePage(service: PortalService): AsyncRequestHandler {
-	const { db, logger } = service;
-	return async (req, res) => {
-		let connected = false;
-		try {
-			// Check if the database is connected
-			await db.$queryRaw`SELECT 1`;
-			connected = true;
-		} catch (error) {
-			logger.error({ error }, 'Database connection failed');
-		}
+// Helper functions for home page functionality
+const checkDatabaseConnection = async (db: PortalService['db'], logger: PortalService['logger']): Promise<boolean> => {
+	try {
+		await db.$queryRaw`SELECT 1`;
+		return true;
+	} catch (error) {
+		logger.error({ error }, 'Database connection failed');
+		return false;
+	}
+};
 
-		req.session.visits = (req.session.visits || 0) + 1;
+const getTotalSubmissions = async (questionnaireService: any, logger: PortalService['logger']): Promise<number> => {
+	try {
+		return await questionnaireService.getTotalSubmissions();
+	} catch (error) {
+		logger.error({ error }, 'Failed to get total submissions');
+		return 0;
+	}
+};
 
-		const viewModel = {
-			connected,
-			visitCount: req.session.visits
-		};
+const updateVisitCount = (req: any): number => {
+	req.session.visits = (req.session.visits || 0) + 1;
+	return req.session.visits;
+};
 
-		logger.info({ viewModel }, 'home page');
+// Home page handler with database health checks and visit tracking
+const handleHomePage =
+	(db: PortalService['db'], logger: PortalService['logger'], questionnaireService: any) =>
+	async (req: any, res: any) => {
+		const connected = await checkDatabaseConnection(db, logger);
+		const visitCount = updateVisitCount(req);
+		const totalSubmissions = await getTotalSubmissions(questionnaireService, logger);
+
+		const viewModel = { connected, visitCount, totalSubmissions };
+		logger.info({ viewModel }, 'Home Page View Model');
+
 		return res.render('views/home/view.njk', {
-			pageTitle: 'This is the home page',
+			pageTitle: 'Local Plans Examination Service',
 			...viewModel
 		});
 	};
+
+// Factory for creating home page handler with dependency injection
+export function buildHomePage(service: PortalService): AsyncRequestHandler {
+	const questionnaireDataService = createQuestionnaireDataService(service.db, service.logger);
+	return handleHomePage(service.db, service.logger, questionnaireDataService);
 }

@@ -8,7 +8,9 @@
     "dev": "npm run build && nodemon --watch src --ext js,ts,scss,html,njk --exec \"npm run start\"",
     "build": "node src/util/build.ts",
     "start": "node src/server.ts",
-    "test": "node --test"
+    "test": "node --test src/**/*.test.ts",
+    "test:watch": "node --test --watch src/**/*.test.ts",
+    "test:coverage": "node --test --experimental-test-coverage src/**/*.test.ts"
   },
   "license": "MIT",
   "dependencies": {
