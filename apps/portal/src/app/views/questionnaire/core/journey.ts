@@ -3,10 +3,6 @@ import { createSections } from './sections.ts';
 import type { Request } from 'express';
 import type { QuestionnaireQuestions } from './service.ts';
 
-// Re-export utilities for conditional questioning logic
-export { questionHasAnswer } from '@planning-inspectorate/dynamic-forms/src/components/utils/question-has-answer.js';
-export { BOOLEAN_OPTIONS } from '@planning-inspectorate/dynamic-forms/src/components/boolean/question.js';
-
 /**
  * Unique identifier for the questionnaire journey.
  * Used across the application for session management and routing.
@@ -31,12 +27,16 @@ const validateJourneyRequest = (req: Request): void => {
  * Sets up sections, questions, templates, and navigation for the questionnaire.
  *
  * @param questions - Question definitions for the journey
- * @param response - Journey response data from session
+ * @param response - Journey response data from session (answers object, null, or undefined)
  * @param req - Express request object for URL generation
  * @returns Configured journey instance for the questionnaire
  * @throws When request validation fails
  */
-export const createJourney = (questions: QuestionnaireQuestions, response: unknown, req: Request) => {
+export const createJourney = (
+	questions: QuestionnaireQuestions,
+	response: Record<string, any> | null | undefined,
+	req: Request
+) => {
 	validateJourneyRequest(req);
 
 	return new Journey({

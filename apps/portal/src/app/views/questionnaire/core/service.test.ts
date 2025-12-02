@@ -1,55 +1,46 @@
-import { describe, it, mock, beforeEach } from 'node:test';
+import { describe, it, mock, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import type { Logger } from 'pino';
 import { createQuestionnaireService, sessionStore, sessionGet, sessionClear, sessionSetError } from './service.ts';
-import type { QuestionnaireAnswers } from './service.ts';
+import { createMockLogger, createMockRequest, TEST_DATA } from '../test-utils.ts';
 
 describe('QuestionnaireService', () => {
-	let mockLogger: any;
+	let mockLogger: Logger;
 	let mockDataService: any;
 
 	beforeEach(() => {
-		mockLogger = {
-			info: mock.fn(),
-			debug: mock.fn(),
-			error: mock.fn(),
-			warn: mock.fn()
-		};
-
+		mockLogger = createMockLogger() as unknown as Logger;
 		mockDataService = {
 			saveSubmission: mock.fn(),
 			getTotalSubmissions: mock.fn()
 		};
 	});
 
-	const testAnswers: QuestionnaireAnswers = {
-		fullName: 'John Doe',
-		email: 'john@example.com',
-		wantToProvideEmail: true,
-		rating: 'excellent',
-		feedback: 'Great service!'
-	};
+	afterEach(() => {
+		(mockLogger.info as any).mock.resetCalls();
+		(mockLogger.warn as any).mock.resetCalls();
+		(mockLogger.error as any).mock.resetCalls();
+		(mockLogger.debug as any).mock.resetCalls();
+		mockDataService.saveSubmission.mock.resetCalls();
+		mockDataService.getTotalSubmissions.mock.resetCalls();
+	});
 
 	describe('saveSubmission', () => {
 		it('should save submission and return formatted result', async () => {
-			const dbResult = {
-				id: 'test-id-123',
-				createdAt: new Date('2024-01-01T00:00:00Z')
-			};
-
-			mockDataService.saveSubmission.mock.mockImplementation(() => Promise.resolve(dbResult));
+			mockDataService.saveSubmission.mock.mockImplementation(() => Promise.resolve(TEST_DATA.dbResult));
 
 			const service = createQuestionnaireService(mockLogger, mockDataService);
-			const result = await service.saveSubmission(testAnswers);
+			const result = await service.saveSubmission(TEST_DATA.answers);
 
 			assert.deepStrictEqual(result, {
 				id: 'test-id-123',
 				reference: 'test-id-123',
-				answers: testAnswers,
-				submittedAt: dbResult.createdAt
+				answers: TEST_DATA.answers,
+				submittedAt: TEST_DATA.dbResult.createdAt
 			});
 
 			assert.strictEqual(mockDataService.saveSubmission.mock.callCount(), 1);
-			assert.ok(mockLogger.info.mock.callCount() >= 1);
+			assert.ok((mockLogger.info as any).mock.callCount() >= 1);
 		});
 
 		it('should propagate data service errors', async () => {
@@ -58,27 +49,20 @@ describe('QuestionnaireService', () => {
 
 			const service = createQuestionnaireService(mockLogger, mockDataService);
 
-			await assert.rejects(() => service.saveSubmission(testAnswers), serviceError);
+			await assert.rejects(() => service.saveSubmission(TEST_DATA.answers), serviceError);
 		});
 	});
 
 	describe('sendNotification', () => {
 		it('should log notification details', async () => {
-			const submission = {
-				id: 'test-id-123',
-				reference: 'test-ref-123',
-				answers: testAnswers,
-				submittedAt: new Date()
-			};
-
 			const service = createQuestionnaireService(mockLogger, mockDataService);
-			await service.sendNotification(submission);
+			await service.sendNotification(TEST_DATA.submission);
 
-			assert.ok(mockLogger.info.mock.callCount() >= 1);
-			const logCall = mockLogger.info.mock.calls[0];
+			assert.ok((mockLogger.info as any).mock.callCount() >= 1);
+			const logCall = (mockLogger.info as any).mock.calls[0];
 			assert.deepStrictEqual(logCall.arguments[0], {
-				reference: 'test-ref-123',
-				email: 'john@example.com'
+				reference: TEST_DATA.submission.reference,
+				email: TEST_DATA.submission.answers.email
 			});
 		});
 	});
@@ -93,18 +77,16 @@ describe('QuestionnaireService', () => {
 
 			assert.strictEqual(result, expectedCount);
 			assert.ok(mockDataService.getTotalSubmissions.mock.callCount() >= 1);
-			assert.ok(mockLogger.info.mock.callCount() >= 1);
+			assert.ok((mockLogger.info as any).mock.callCount() >= 1);
 		});
 	});
 });
 
 describe('Session Management', () => {
-	let mockRequest: any;
+	let mockRequest: ReturnType<typeof createMockRequest>;
 
 	beforeEach(() => {
-		mockRequest = {
-			session: {}
-		};
+		mockRequest = createMockRequest();
 	});
 
 	describe('sessionStore', () => {
@@ -162,9 +144,7 @@ describe('Session Management', () => {
 		});
 
 		it('should handle missing session gracefully', () => {
-			sessionClear(mockRequest);
-			// Should not throw error
-			assert.ok(true);
+			assert.doesNotThrow(() => sessionClear(mockRequest));
 		});
 	});
 

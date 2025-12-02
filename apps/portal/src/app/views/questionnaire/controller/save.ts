@@ -1,8 +1,11 @@
-import type { Request, Response } from 'express';
+import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { clearDataFromSession } from '@planning-inspectorate/dynamic-forms/src/lib/session-answer-store.js';
 import { SessionManager, JOURNEY_ID } from '../core/index.ts';
 import type { PortalService } from '#service';
-import type { QuestionnaireAnswers, QuestionnaireSubmission } from '../core/service.ts';
+import type { QuestionnaireAnswers } from '../core/service.ts';
+import type { QuestionnaireBusinessService } from '../core/types.ts';
+
+type QuestionnaireService = QuestionnaireBusinessService;
 
 /**
  * Extracts form data and journey information from the response locals.
@@ -11,7 +14,7 @@ import type { QuestionnaireAnswers, QuestionnaireSubmission } from '../core/serv
  * @param res - Express response object containing journey data in locals
  * @returns Object containing answers and journey information
  */
-const extractRequestData = (res: Response) => ({
+const extractRequestData = (res: any) => ({
 	answers: res.locals.journeyResponse?.answers as QuestionnaireAnswers | undefined,
 	journey: res.locals.journey
 });
@@ -51,19 +54,16 @@ const validateRequest = (answers: QuestionnaireAnswers | undefined, journey: { i
  * @param logger - Logger instance
  * @returns Redirect response
  */
-const handleValidationError = (res: Response, redirectTo: string, message: string, logger: PortalService['logger']) => {
+const handleValidationError = (res: any, redirectTo: string, message: string, logger: PortalService['logger']) => {
 	logger.warn(`${message}, redirecting to ${redirectTo}`);
 	return res.redirect(redirectTo);
 };
 
 const processSubmission = async (
-	req: Request,
-	res: Response,
+	req: any,
+	res: any,
 	answers: QuestionnaireAnswers,
-	service: {
-		saveSubmission(answers: QuestionnaireAnswers): Promise<QuestionnaireSubmission>;
-		sendNotification(submission: QuestionnaireSubmission): Promise<void>;
-	},
+	service: QuestionnaireService,
 	logger: PortalService['logger']
 ) => {
 	logger.info('Processing questionnaire submission');
@@ -85,7 +85,7 @@ const processSubmission = async (
  * @param error - The error that occurred during submission
  * @param logger - Logger instance
  */
-const handleSubmissionError = (req: Request, res: Response, error: unknown, logger: PortalService['logger']) => {
+const handleSubmissionError = (req: any, res: any, error: unknown, logger: PortalService['logger']) => {
 	const message = error instanceof Error ? error.message : String(error);
 	logger.error(`Submission error: ${message}`);
 	SessionManager.setError(req, 'There was a problem submitting your questionnaire. Please try again.');
@@ -101,14 +101,8 @@ const handleSubmissionError = (req: Request, res: Response, error: unknown, logg
  * @returns Express route handler function
  */
 const handleSave =
-	(
-		service: {
-			saveSubmission(answers: QuestionnaireAnswers): Promise<QuestionnaireSubmission>;
-			sendNotification(submission: QuestionnaireSubmission): Promise<void>;
-		},
-		logger: PortalService['logger']
-	) =>
-	async (req: Request, res: Response) => {
+	(service: QuestionnaireService, logger: PortalService['logger']): AsyncRequestHandler =>
+	async (req, res) => {
 		try {
 			const { answers, journey } = extractRequestData(res);
 			const validation = validateRequest(answers, journey);
@@ -132,11 +126,8 @@ const handleSave =
  * @returns Configured save controller handler
  */
 export const createSaveController = (
-	service: {
-		saveSubmission(answers: QuestionnaireAnswers): Promise<QuestionnaireSubmission>;
-		sendNotification(submission: QuestionnaireSubmission): Promise<void>;
-	},
+	service: QuestionnaireService,
 	portalService: PortalService
-) => {
+): AsyncRequestHandler => {
 	return handleSave(service, portalService.logger);
 };

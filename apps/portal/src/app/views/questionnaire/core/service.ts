@@ -1,51 +1,25 @@
 import type { PortalService } from '#service';
 import type { Request } from 'express';
-
-/**
- * Type definition for questionnaire form answers.
- */
-export type QuestionnaireAnswers = {
-	fullName: string;
-	email?: string;
-	wantToProvideEmail?: boolean;
-	rating: string;
-	feedback: string;
-};
+import type { QuestionDefinition } from '@planning-inspectorate/dynamic-forms/src/questions/create-questions.js';
+import type {
+	QuestionnaireAnswers,
+	QuestionnaireSubmission,
+	QuestionnaireDbResult,
+	QuestionnaireDataService,
+	QuestionnaireBusinessService,
+	QuestionnaireSessionData
+} from './types.ts';
 
 /**
  * Type definition for questionnaire questions configuration.
+ * Uses the dynamic-forms QuestionDefinition type.
  */
-export type QuestionnaireQuestions = Record<
-	string,
-	{
-		type: string;
-		title: string;
-		question: string;
-		fieldName: string;
-		url: string;
-		validators: unknown[];
-		options?: { text: string; value: string }[];
-	}
->;
+export type QuestionnaireQuestions = Record<string, QuestionDefinition>;
 
 /**
- * Type definition for questionnaire submission object.
+ * Re-export types for backward compatibility
  */
-export type QuestionnaireSubmission = {
-	id: string;
-	reference: string;
-	answers: QuestionnaireAnswers;
-	submittedAt: Date;
-};
-
-/**
- * Type definition for session data structure used to maintain questionnaire state.
- */
-type SessionData = {
-	reference?: string;
-	submitted?: boolean;
-	error?: string;
-};
+export type { QuestionnaireAnswers, QuestionnaireSubmission };
 
 /**
  * Session key used for storing questionnaire-related data in the user session.
@@ -83,7 +57,7 @@ export const sessionStore = (req: Request, submission: { reference: string }): v
  * @param req - Express request object with session
  * @returns Session data object with reference, submitted status, and error
  */
-export const sessionGet = (req: Request): SessionData => {
+export const sessionGet = (req: Request): QuestionnaireSessionData => {
 	const data = req.session[SESSION_KEY] || {};
 	return {
 		reference: data.lastReference,
@@ -94,7 +68,7 @@ export const sessionGet = (req: Request): SessionData => {
 
 /**
  * Clears questionnaire-related data from the session.
- * Removes submission status, reference, and any error messages.
+ * Removes submission status, reference, error messages, and form answers.
  *
  * @param req - Express request object with session
  */
@@ -103,6 +77,9 @@ export const sessionClear = (req: Request): void => {
 		delete req.session[SESSION_KEY].lastReference;
 		delete req.session[SESSION_KEY].submitted;
 		delete req.session[SESSION_KEY].error;
+	}
+	if (req.session.forms?.questionnaire) {
+		delete req.session.forms.questionnaire;
 	}
 };
 
@@ -119,7 +96,6 @@ export const sessionSetError = (req: Request, error: string): void => {
 
 /**
  * Legacy object export providing backward compatibility with class-based interface.
- * Maintains the same API as the original SessionManager class.
  */
 export const SessionManager = {
 	store: sessionStore,
@@ -136,10 +112,7 @@ export const SessionManager = {
  * @param answers - User's form answers
  * @returns Formatted submission object
  */
-const createSubmission = (
-	result: { id: string; createdAt: Date },
-	answers: QuestionnaireAnswers
-): QuestionnaireSubmission => ({
+const createSubmission = (result: QuestionnaireDbResult, answers: QuestionnaireAnswers): QuestionnaireSubmission => ({
 	id: result.id,
 	reference: result.id,
 	answers,
@@ -155,7 +128,7 @@ const createSubmission = (
  * @returns Promise resolving to formatted submission object
  */
 const saveSubmission = async (
-	dataService: { saveSubmission(answers: QuestionnaireAnswers): Promise<{ id: string; createdAt: Date }> },
+	dataService: QuestionnaireDataService,
 	logger: PortalService['logger'],
 	answers: QuestionnaireAnswers
 ): Promise<QuestionnaireSubmission> => {
@@ -189,7 +162,7 @@ const sendNotification = async (
  * @returns Promise resolving to total submission count
  */
 const getTotalSubmissions = async (
-	dataService: { getTotalSubmissions(): Promise<number> },
+	dataService: QuestionnaireDataService,
 	logger: PortalService['logger']
 ): Promise<number> => {
 	const count = await dataService.getTotalSubmissions();
@@ -207,11 +180,8 @@ const getTotalSubmissions = async (
  */
 export const createQuestionnaireService = (
 	logger: PortalService['logger'],
-	dataService: {
-		saveSubmission(answers: QuestionnaireAnswers): Promise<{ id: string; createdAt: Date }>;
-		getTotalSubmissions(): Promise<number>;
-	}
-) => ({
+	dataService: QuestionnaireDataService
+): QuestionnaireBusinessService => ({
 	saveSubmission: (answers: QuestionnaireAnswers) => saveSubmission(dataService, logger, answers),
 	sendNotification: (submission: QuestionnaireSubmission) => sendNotification(logger, submission),
 	getTotalSubmissions: () => getTotalSubmissions(dataService, logger)

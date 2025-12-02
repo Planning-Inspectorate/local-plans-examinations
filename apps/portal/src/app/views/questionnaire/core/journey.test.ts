@@ -1,62 +1,9 @@
-import { describe, it, mock } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { createJourney, JOURNEY_ID } from './journey.ts';
+import { MOCK_QUESTIONS, TEST_DATA, createMockRequest } from '../test-utils.ts';
 
 describe('Journey', () => {
-	const mockQuestions = {
-		fullName: {
-			type: 'single-line-input',
-			title: 'Full Name',
-			question: 'What is your full name?',
-			fieldName: 'fullName',
-			url: 'full-name',
-			validators: []
-		},
-		wantToProvideEmail: {
-			type: 'boolean',
-			title: 'Email',
-			question: 'Do you want to provide your email?',
-			fieldName: 'wantToProvideEmail',
-			url: 'want-email',
-			validators: []
-		},
-		email: {
-			type: 'single-line-input',
-			title: 'Email Address',
-			question: 'What is your email address?',
-			fieldName: 'email',
-			url: 'email',
-			validators: []
-		},
-		rating: {
-			type: 'radio',
-			title: 'Rating',
-			question: 'How would you rate our service?',
-			fieldName: 'rating',
-			url: 'rating',
-			validators: [],
-			options: [
-				{ text: '1 - Poor', value: '1' },
-				{ text: '5 - Excellent', value: '5' }
-			]
-		},
-		feedback: {
-			type: 'text-entry',
-			title: 'Feedback',
-			question: 'Please provide your feedback',
-			fieldName: 'feedback',
-			url: 'feedback',
-			validators: []
-		}
-	};
-
-	const mockResponse = {
-		answers: {
-			fullName: 'John Doe',
-			rating: 'excellent'
-		}
-	};
-
 	describe('JOURNEY_ID', () => {
 		it('should export correct journey identifier', () => {
 			assert.strictEqual(JOURNEY_ID, 'questionnaire');
@@ -65,11 +12,9 @@ describe('Journey', () => {
 
 	describe('createJourney', () => {
 		it('should create journey with correct configuration', () => {
-			const mockReq = {
-				baseUrl: '/questionnaire'
-			};
+			const mockReq = createMockRequest();
 
-			const journey = createJourney(mockQuestions, mockResponse, mockReq as any);
+			const journey = createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 
 			assert.ok(journey);
 			assert.strictEqual(journey.journeyId, 'questionnaire');
@@ -82,22 +27,19 @@ describe('Journey', () => {
 		});
 
 		it('should validate request URL correctly', () => {
-			const mockReq = {
-				baseUrl: '/questionnaire'
-			};
+			const mockReq = createMockRequest();
 
 			assert.doesNotThrow(() => {
-				createJourney(mockQuestions, mockResponse, mockReq as any);
+				createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 			});
 		});
 
 		it('should throw error for invalid request URL', () => {
-			const mockReq = {
-				baseUrl: '/invalid-path'
-			};
+			const mockReq = createMockRequest();
+			mockReq.baseUrl = '/invalid-path';
 
 			assert.throws(() => {
-				createJourney(mockQuestions, mockResponse, mockReq as any);
+				createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 			}, /Invalid journey request for 'questionnaire' journey/);
 		});
 
@@ -105,9 +47,10 @@ describe('Journey', () => {
 			const validUrls = ['/questionnaire', '/some/path/questionnaire', '/app/questionnaire'];
 
 			validUrls.forEach((url) => {
-				const mockReq = { baseUrl: url };
+				const mockReq = createMockRequest();
+				mockReq.baseUrl = url;
 				assert.doesNotThrow(() => {
-					createJourney(mockQuestions, mockResponse, mockReq as any);
+					createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 				}, `Should accept URL: ${url}`);
 			});
 		});
@@ -116,10 +59,11 @@ describe('Journey', () => {
 			const invalidUrls = ['/questionnaire/extra', '/questionnaires', '/question', '/other-path'];
 
 			invalidUrls.forEach((url) => {
-				const mockReq = { baseUrl: url };
+				const mockReq = createMockRequest();
+				mockReq.baseUrl = url;
 				assert.throws(
 					() => {
-						createJourney(mockQuestions, mockResponse, mockReq as any);
+						createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 					},
 					/Invalid journey request/,
 					`Should reject URL: ${url}`
@@ -128,11 +72,10 @@ describe('Journey', () => {
 		});
 
 		it('should create baseUrl function correctly', () => {
-			const mockReq = {
-				baseUrl: '/test/questionnaire'
-			};
+			const mockReq = createMockRequest();
+			mockReq.baseUrl = '/test/questionnaire';
 
-			const journey = createJourney(mockQuestions, mockResponse, mockReq as any);
+			const journey = createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 			const baseUrlFn = journey.makeBaseUrl;
 
 			assert.strictEqual(typeof baseUrlFn, 'function');
@@ -140,41 +83,51 @@ describe('Journey', () => {
 		});
 
 		it('should pass response data to journey', () => {
-			const mockReq = {
-				baseUrl: '/questionnaire'
-			};
+			const mockReq = createMockRequest();
 
 			const customResponse = {
 				answers: { fullName: 'Jane Doe' },
 				customData: 'test'
 			};
 
-			const journey = createJourney(mockQuestions, customResponse, mockReq as any);
+			const journey = createJourney(MOCK_QUESTIONS, customResponse, mockReq);
 			assert.strictEqual(journey.response, customResponse);
 		});
 
 		it('should handle empty questions object', () => {
-			const mockReq = {
-				baseUrl: '/questionnaire'
-			};
+			const mockReq = createMockRequest();
 
 			// Empty questions should throw because sections need valid questions
 			assert.throws(() => {
-				createJourney({}, mockResponse, mockReq as any);
-			}, /question is required/);
+				createJourney({}, TEST_DATA.mockResponse, mockReq);
+			});
 		});
 
 		it('should handle null/undefined response', () => {
-			const mockReq = {
-				baseUrl: '/questionnaire'
-			};
+			const mockReq = createMockRequest();
 
 			assert.doesNotThrow(() => {
-				createJourney(mockQuestions, null, mockReq as any);
+				createJourney(MOCK_QUESTIONS, null, mockReq);
 			});
 
 			assert.doesNotThrow(() => {
-				createJourney(mockQuestions, undefined, mockReq as any);
+				createJourney(MOCK_QUESTIONS, undefined, mockReq);
+			});
+		});
+
+		it('should require all expected questions to be defined', () => {
+			const mockReq = createMockRequest();
+
+			const expectedQuestions = ['fullName', 'wantToProvideEmail', 'email', 'rating', 'feedback'] as const;
+			expectedQuestions.forEach((questionKey) => {
+				assert.ok(
+					MOCK_QUESTIONS[questionKey as keyof typeof MOCK_QUESTIONS],
+					`Question ${questionKey} should be defined for journey creation`
+				);
+			});
+
+			assert.doesNotThrow(() => {
+				createJourney(MOCK_QUESTIONS, TEST_DATA.mockResponse, mockReq);
 			});
 		});
 	});

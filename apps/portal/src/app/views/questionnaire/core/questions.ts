@@ -3,6 +3,7 @@ import { questionClasses } from '@planning-inspectorate/dynamic-forms/src/questi
 import { COMPONENT_TYPES } from '@planning-inspectorate/dynamic-forms';
 import RequiredValidator from '@planning-inspectorate/dynamic-forms/src/validator/required-validator.js';
 import StringValidator from '@planning-inspectorate/dynamic-forms/src/validator/string-validator.js';
+import EmailValidator from '@planning-inspectorate/dynamic-forms/src/validator/email-validator.js';
 
 /**
  * Method overrides for dynamic form components.
@@ -57,7 +58,12 @@ const QUESTION_DEFINITIONS = {
 		question: 'What is your email address?',
 		fieldName: 'email',
 		url: 'email',
-		validators: [new RequiredValidator('Enter your email address')]
+		validators: [
+			new RequiredValidator('Enter your email address'),
+			new EmailValidator({
+				errorMessage: 'Enter an email address in the correct format, like name@example.com'
+			})
+		]
 	},
 	rating: {
 		type: COMPONENT_TYPES.RADIO,
