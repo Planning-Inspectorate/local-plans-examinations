@@ -1,6 +1,8 @@
+import type { Request } from 'express';
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { createQuestionnaireDataService } from '../questionnaire/data/service.ts';
+import type { QuestionnaireDataService } from '../../../types/test-types.ts';
 
 // Helper functions for home page functionality
 const checkDatabaseConnection = async (db: PortalService['db'], logger: PortalService['logger']): Promise<boolean> => {
@@ -13,7 +15,10 @@ const checkDatabaseConnection = async (db: PortalService['db'], logger: PortalSe
 	}
 };
 
-const getTotalSubmissions = async (questionnaireService: any, logger: PortalService['logger']): Promise<number> => {
+const getTotalSubmissions = async (
+	questionnaireService: QuestionnaireDataService,
+	logger: PortalService['logger']
+): Promise<number> => {
 	try {
 		return await questionnaireService.getTotalSubmissions();
 	} catch (error) {
@@ -22,15 +27,19 @@ const getTotalSubmissions = async (questionnaireService: any, logger: PortalServ
 	}
 };
 
-const updateVisitCount = (req: any): number => {
+const updateVisitCount = (req: Request): number => {
 	req.session.visits = (req.session.visits || 0) + 1;
 	return req.session.visits;
 };
 
 // Home page handler with database health checks and visit tracking
 const handleHomePage =
-	(db: PortalService['db'], logger: PortalService['logger'], questionnaireService: any) =>
-	async (req: any, res: any) => {
+	(
+		db: PortalService['db'],
+		logger: PortalService['logger'],
+		questionnaireService: QuestionnaireDataService
+	): AsyncRequestHandler =>
+	async (req, res) => {
 		const connected = await checkDatabaseConnection(db, logger);
 		const visitCount = updateVisitCount(req);
 		const totalSubmissions = await getTotalSubmissions(questionnaireService, logger);

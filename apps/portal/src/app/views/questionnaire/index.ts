@@ -24,10 +24,10 @@ const createDependencies = (service: PortalService) => {
 	const questions = createQuestions();
 	const controllers = createQuestionnaireControllers(service);
 	const getJourney = buildGetJourney((req: Request, journeyResponse: unknown) =>
-		createJourney(questions, journeyResponse, req)
+		createJourney(questions, journeyResponse as Record<string, any> | null | undefined, req)
 	);
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
-	const saveDataToSession = buildSaveDataToSession();
+	const saveDataToSession = buildSaveDataToSession({ reqParam: undefined });
 	const saveController = createSaveController(controllers.questionnaireService, service);
 
 	return {
@@ -80,7 +80,7 @@ const setupCheckAnswersRoutes = (
 	getJourney: (req: Request, res: Response, next: () => void) => void,
 	saveController: (req: Request, res: Response) => Promise<void>
 ) => {
-	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res, ''));
+	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res));
 	router.post('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(saveController));
 };
 

@@ -16,7 +16,7 @@ export const createSections = (questions: QuestionnaireQuestions) => [
 		.addQuestion(questions.fullName)
 		.addQuestion(questions.wantToProvideEmail)
 		.addQuestion(questions.email)
-		.withCondition((response) => questionHasAnswer(response, questions.wantToProvideEmail, BOOLEAN_OPTIONS.YES)),
+		.withCondition((response: any) => questionHasAnswer(response, questions.wantToProvideEmail, BOOLEAN_OPTIONS.YES)),
 
 	// Experience section for feedback and rating
 	new Section('Your Experience', 'experience').addQuestion(questions.rating).addQuestion(questions.feedback)
