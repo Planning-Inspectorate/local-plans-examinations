@@ -146,6 +146,16 @@ describe('Session Management', () => {
 		it('should handle missing session gracefully', () => {
 			assert.doesNotThrow(() => sessionClear(mockRequest));
 		});
+
+		it('should clear form session data if exists', () => {
+			mockRequest.session.forms = {
+				questionnaire: { fullName: 'John' }
+			};
+
+			sessionClear(mockRequest);
+
+			assert.strictEqual(mockRequest.session.forms.questionnaire, undefined);
+		});
 	});
 
 	describe('sessionSetError', () => {
@@ -153,6 +163,102 @@ describe('Session Management', () => {
 			sessionSetError(mockRequest, 'Test error message');
 
 			assert.strictEqual(mockRequest.session.questionnaires.error, 'Test error message');
+		});
+	});
+
+	describe('Session Edge Cases', () => {
+		it('should handle multiple submissions in same session', () => {
+			sessionStore(mockRequest, { reference: 'ref-1' });
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, 'ref-1');
+
+			sessionStore(mockRequest, { reference: 'ref-2' });
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, 'ref-2');
+
+			sessionStore(mockRequest, { reference: 'ref-3' });
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, 'ref-3');
+		});
+
+		it('should handle corrupted session data gracefully', () => {
+			mockRequest.session.questionnaires = 'corrupted-string' as any;
+
+			const result = sessionGet(mockRequest);
+			assert.strictEqual(result.reference, undefined);
+			assert.strictEqual(result.submitted, undefined);
+		});
+
+		it('should handle null session gracefully', () => {
+			mockRequest.session.questionnaires = null as any;
+
+			const result = sessionGet(mockRequest);
+			assert.strictEqual(result.reference, undefined);
+		});
+
+		it('should handle undefined session gracefully', () => {
+			delete mockRequest.session.questionnaires;
+
+			const result = sessionGet(mockRequest);
+			assert.strictEqual(result.reference, undefined);
+		});
+
+		it('should preserve other session data when storing', () => {
+			mockRequest.session.otherData = 'important';
+
+			sessionStore(mockRequest, { reference: 'ref-1' });
+
+			assert.strictEqual(mockRequest.session.otherData, 'important');
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, 'ref-1');
+		});
+
+		it('should preserve other session data when clearing', () => {
+			mockRequest.session.otherData = 'important';
+			mockRequest.session.questionnaires = {
+				lastReference: 'ref-1',
+				submitted: true
+			};
+
+			sessionClear(mockRequest);
+
+			assert.strictEqual(mockRequest.session.otherData, 'important');
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, undefined);
+		});
+
+		it('should throw error when session is corrupted string', () => {
+			mockRequest.session.questionnaires = 'corrupted' as any;
+
+			assert.throws(() => sessionSetError(mockRequest, 'Error message'), TypeError);
+		});
+
+		it('should handle clearing non-existent form session', () => {
+			delete mockRequest.session.forms;
+
+			assert.doesNotThrow(() => sessionClear(mockRequest));
+		});
+
+		it('should clear both questionnaires and forms session data', () => {
+			mockRequest.session.questionnaires = {
+				lastReference: 'ref-1',
+				submitted: true,
+				error: 'error'
+			};
+			mockRequest.session.forms = {
+				questionnaire: { fullName: 'John' }
+			};
+
+			sessionClear(mockRequest);
+
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, undefined);
+			assert.strictEqual(mockRequest.session.questionnaires.submitted, undefined);
+			assert.strictEqual(mockRequest.session.questionnaires.error, undefined);
+			assert.strictEqual(mockRequest.session.forms.questionnaire, undefined);
+		});
+
+		it('should handle rapid successive store operations', () => {
+			for (let i = 0; i < 100; i++) {
+				sessionStore(mockRequest, { reference: `ref-${i}` });
+			}
+
+			assert.strictEqual(mockRequest.session.questionnaires.lastReference, 'ref-99');
+			assert.strictEqual(mockRequest.session.questionnaires.submitted, true);
 		});
 	});
 });

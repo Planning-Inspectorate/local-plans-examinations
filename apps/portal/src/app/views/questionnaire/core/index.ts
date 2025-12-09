@@ -5,7 +5,7 @@
  */
 
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import { createQuestionnaireQuestions } from './questions.ts';
+import { createQuestionnaireQuestions } from '@pins/local-plans-questionnaire';
 import { createSections } from './sections.ts';
 import { createQuestionnaireService, SessionManager } from './service.ts';
 

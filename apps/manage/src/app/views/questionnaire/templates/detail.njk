@@ -1,0 +1,67 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block pageTitle %}
+    {{ pageHeading }} - {{ config.headerTitle }}
+{% endblock %}
+
+{% block pageContent %}
+    {{
+        govukSummaryList({
+            rows: [
+                {
+                    key: { text: "Submitted" },
+                    value: { text: submission.createdAt | date('d MMMM yyyy, HH:mm') }
+                },
+                {
+                    key: { text: "Full Name" },
+                    value: { text: submission.fullName },
+                    actions: {
+                        items: [
+                            { href: "/questionnaire/" + submission.id + "/edit/personal/full-name", text: "Edit", visuallyHiddenText: "full name" }
+                        ]
+                    }
+                },
+                {
+                    key: { text: "Email" },
+                    value: { text: submission.email or questionnaireConfig.emailNotProvided },
+                    actions: {
+                        items: [
+                            { href: "/questionnaire/" + submission.id + "/edit/personal/email", text: "Edit", visuallyHiddenText: "email" }
+                        ]
+                    }
+                },
+                {
+                    key: { text: "Rating" },
+                    value: { text: submission.rating },
+                    actions: {
+                        items: [
+                            { href: "/questionnaire/" + submission.id + "/edit/experience/rating", text: "Edit", visuallyHiddenText: "rating" }
+                        ]
+                    }
+                },
+                {
+                    key: { text: "Feedback" },
+                    value: { text: submission.feedback },
+                    actions: {
+                        items: [
+                            { href: "/questionnaire/" + submission.id + "/edit/experience/feedback", text: "Edit", visuallyHiddenText: "feedback" }
+                        ]
+                    }
+                }
+            ]
+        })
+    }}
+
+    <br />
+
+    {{
+        govukButton({
+            text: "Back",
+            href: "/questionnaire",
+            classes: "govuk-button--primary"
+        })
+    }}
+{% endblock %}

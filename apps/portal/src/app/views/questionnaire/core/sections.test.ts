@@ -41,11 +41,63 @@ describe('QuestionnaireSections', () => {
 			assert.ok(experienceSection.questions);
 		});
 
-		it('should handle conditional logic for email question', () => {
+		it('should configure conditional logic for email question', () => {
 			const sections = createSections(MOCK_QUESTIONS);
 			const personalSection = sections[0];
+			const emailQuestion = personalSection.questions.find((q: any) => q.fieldName === 'email');
 
-			assert.ok(personalSection);
+			assert.ok(emailQuestion, 'Email question should exist');
+			assert.ok(typeof emailQuestion.shouldDisplay === 'function', 'Email should have conditional display function');
+		});
+
+		it('should show email when wantToProvideEmail is yes', () => {
+			const sections = createSections(MOCK_QUESTIONS);
+			const personalSection = sections[0];
+			const emailQuestion = personalSection.questions.find((q: any) => q.fieldName === 'email');
+
+			const mockResponse = { answers: { wantToProvideEmail: 'yes' } };
+			const shouldDisplay = emailQuestion.shouldDisplay(mockResponse);
+			assert.strictEqual(shouldDisplay, true);
+		});
+
+		it('should hide email when wantToProvideEmail is no', () => {
+			const sections = createSections(MOCK_QUESTIONS);
+			const personalSection = sections[0];
+			const emailQuestion = personalSection.questions.find((q: any) => q.fieldName === 'email');
+
+			const mockResponse = { answers: { wantToProvideEmail: 'no' } };
+			const shouldDisplay = emailQuestion.shouldDisplay(mockResponse);
+			assert.strictEqual(shouldDisplay, false);
+		});
+
+		it('should hide email when wantToProvideEmail is not answered', () => {
+			const sections = createSections(MOCK_QUESTIONS);
+			const personalSection = sections[0];
+			const emailQuestion = personalSection.questions.find((q: any) => q.fieldName === 'email');
+
+			const mockResponse = { answers: {} };
+			const shouldDisplay = emailQuestion.shouldDisplay(mockResponse);
+			assert.strictEqual(shouldDisplay, false);
+		});
+
+		it('should always show fullName regardless of answers', () => {
+			const sections = createSections(MOCK_QUESTIONS);
+			const personalSection = sections[0];
+			const fullNameQuestion = personalSection.questions.find((q: any) => q.fieldName === 'fullName');
+
+			const mockResponse = { answers: {} };
+			const shouldDisplay = fullNameQuestion.shouldDisplay(mockResponse);
+			assert.strictEqual(shouldDisplay, true, 'fullName should always display');
+		});
+
+		it('should always show wantToProvideEmail regardless of answers', () => {
+			const sections = createSections(MOCK_QUESTIONS);
+			const personalSection = sections[0];
+			const wantEmailQuestion = personalSection.questions.find((q: any) => q.fieldName === 'wantToProvideEmail');
+
+			const mockResponse = { answers: {} };
+			const shouldDisplay = wantEmailQuestion.shouldDisplay(mockResponse);
+			assert.strictEqual(shouldDisplay, true, 'wantToProvideEmail should always display');
 		});
 
 		it('should handle empty questions object gracefully', () => {

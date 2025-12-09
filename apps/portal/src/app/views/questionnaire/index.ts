@@ -80,7 +80,20 @@ const setupCheckAnswersRoutes = (
 	getJourney: (req: Request, res: Response, next: () => void) => void,
 	saveController: (req: Request, res: Response) => Promise<void>
 ) => {
-	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res));
+	router.get(
+		'/check-your-answers',
+		getJourneyResponse,
+		getJourney,
+		(req, res, next) => {
+			const sessionData = req.session?.questionnaires || {};
+			if (sessionData.error) {
+				res.locals.errorMessage = sessionData.error;
+				delete sessionData.error;
+			}
+			if (next) next();
+		},
+		(req, res) => list(req, res)
+	);
 	router.post('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(saveController));
 };
 
