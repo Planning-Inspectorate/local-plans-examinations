@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { createQuestionnaireQuestions } from './questions.ts';
+import { createQuestionnaireQuestions } from '@pins/local-plans-questionnaire';
 
 describe('QuestionnaireQuestions', () => {
 	let questions: ReturnType<typeof createQuestionnaireQuestions>;

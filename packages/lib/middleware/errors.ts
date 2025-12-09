@@ -31,6 +31,10 @@ export function buildDefaultErrorHandlerMiddleware(logger: Logger): ErrorRequest
  * This is a fallback, controllers should handle Prisma validation errors directly so that error messages can be specific
  */
 export function wrapPrismaErrors(error: Error): Error {
+	if (error.name === 'ApplicationError') {
+		return error;
+	}
+
 	if (error instanceof Prisma.PrismaClientKnownRequestError) {
 		return new Error(`Request could not be handled (code: ${error.code})`);
 	}

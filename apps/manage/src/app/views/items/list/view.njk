@@ -1,11 +1,10 @@
 {% extends "views/layouts/main.njk" %}
 
-{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block pageTitle %}
-    Item List - {{ config.headerTitle }}
+    Local Plans Examination Service - {{ config.headerTitle }}
 {% endblock %}
 
 {% block pageContent %}
@@ -37,4 +36,9 @@
         ],
         rows: tableRows
     }) }}
+
+    <h2 class="govuk-heading-m">Quick actions</h2>
+    <p class="govuk-body">
+        <a href="/questionnaire" class="govuk-link">View questionnaire responses</a> to monitor user feedback and service satisfaction.
+    </p>
 {% endblock %}

@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { createQuestionnaireControllers } from './controller/controller.ts';
 import { createSaveController } from './controller/save.ts';
 import { createJourney } from './core/journey.ts';
-import { createQuestionnaireQuestions } from './core/questions.ts';
+import { createQuestionnaireQuestions } from '@pins/local-plans-questionnaire';
 import { createControllerTestSetup, TEST_DATA, resetAllTestMocks } from './test-utils.ts';
 
 describe('Questionnaire Integration Tests', () => {
