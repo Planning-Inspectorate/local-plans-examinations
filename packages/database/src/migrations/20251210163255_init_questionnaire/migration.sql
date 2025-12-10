@@ -2,9 +2,6 @@ BEGIN TRY
 
 BEGIN TRAN;
 
--- CreateSchema
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = N'dbo') EXEC sp_executesql N'CREATE SCHEMA [dbo];';
-
 -- CreateTable
 CREATE TABLE [dbo].[questionnaire] (
     [id] NVARCHAR(30) NOT NULL,
