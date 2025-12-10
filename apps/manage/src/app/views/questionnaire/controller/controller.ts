@@ -96,7 +96,7 @@ const createListController =
 const createDetailController =
 	(logger: ManageService['logger'], questionnaireService: any): AsyncRequestHandler =>
 	async (req, res) => {
-		const { id } = req.params as QuestionnaireDetailParams;
+		const { id } = req.params as unknown as QuestionnaireDetailParams;
 		logger.info(`Displaying questionnaire submission detail: ${id}`);
 
 		const submission = await questionnaireService.getSubmissionById(id);

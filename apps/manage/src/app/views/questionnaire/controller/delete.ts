@@ -54,7 +54,7 @@ export const createDeleteController = (service: ManageService): AsyncRequestHand
 			req.session.successMessage = 'Questionnaire submission deleted successfully';
 			res.redirect('/questionnaire');
 		} catch (error) {
-			service.logger.error(`Failed to delete submission ${id}:`, error);
+			service.logger.error(`Failed to delete submission ${id}: ${String(error)}`);
 			req.session.errorMessage = 'Failed to delete submission';
 			res.redirect(`/questionnaire/${id}`);
 		}

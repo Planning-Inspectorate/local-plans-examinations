@@ -44,26 +44,28 @@ export const createEditJourney = (submissionId: string, journeyResponse: Journey
 		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
 		journeyTitle: 'Edit Questionnaire Submission',
 		returnToListing: true,
-		listingUrl: `/questionnaire/${submissionId}`,
+
 		makeBaseUrl: () => `/questionnaire/${submissionId}/edit`,
 		response: journeyResponse,
 		baseUrl: `/questionnaire/${submissionId}/edit`
 	});
 
 	// Override getBackLink to always return detail page
-	journey.getBackLink = () => `/questionnaire/${submissionId}`;
+	(journey as any).getBackLink = () => `/questionnaire/${submissionId}`;
 
 	// Override question methods to add warning and redirect to detail page
-	journey.sections.forEach((section) => {
-		section.questions.forEach((question) => {
-			const originalPrepQuestion = question.prepQuestionForRendering.bind(question);
-			question.prepQuestionForRendering = function (sec, jour, customViewData, payload) {
-				const viewModel = originalPrepQuestion(sec, jour, customViewData, payload);
-				viewModel.warningText = 'Changes made will update the submission immediately and cannot be undone.';
-				return viewModel;
-			};
+	journey.sections.forEach((section: any) => {
+		section.questions.forEach((question: any) => {
+			const originalPrepQuestion = (question as any).prepQuestionForRendering?.bind(question);
+			if (originalPrepQuestion) {
+				(question as any).prepQuestionForRendering = function (sec: any, jour: any, customViewData: any, payload: any) {
+					const viewModel = originalPrepQuestion(sec, jour, customViewData, payload);
+					viewModel.warningText = 'Changes made will update the submission immediately and cannot be undone.';
+					return viewModel;
+				};
+			}
 			// Override handleNextQuestion to always redirect to detail page
-			question.handleNextQuestion = function (res) {
+			(question as any).handleNextQuestion = function (res: any) {
 				return res.redirect(`/questionnaire/${submissionId}`);
 			};
 		});

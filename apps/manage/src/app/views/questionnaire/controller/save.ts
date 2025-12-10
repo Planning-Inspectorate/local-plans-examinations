@@ -25,10 +25,10 @@ export const createSaveToDatabase = (service: ManageService) => {
 			await service.db.questionnaire.update({
 				where: { id: submissionId },
 				data: {
-					fullName: data.answers.fullName,
-					email: data.answers.email || null,
-					rating: data.answers.rating,
-					feedback: data.answers.feedback,
+					fullName: data.answers.fullName as string,
+					email: (data.answers.email as string) || null,
+					rating: data.answers.rating as string,
+					feedback: data.answers.feedback as string,
 					updatedAt: new Date()
 				}
 			});
@@ -39,7 +39,7 @@ export const createSaveToDatabase = (service: ManageService) => {
 				service.logger,
 				`Failed to update submission ${submissionId}`,
 				'Your changes could not be saved. Please try again.',
-				error
+				String(error)
 			);
 		}
 	};

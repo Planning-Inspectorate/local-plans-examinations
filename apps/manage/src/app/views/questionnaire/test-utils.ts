@@ -76,10 +76,10 @@ export const createMockResponse = (): Response => {
 		locals: {},
 		// Helper to reset response mocks
 		resetMocks: () => {
-			response.render.mock.resetCalls();
-			response.redirect.mock.resetCalls();
-			response.status.mock.resetCalls();
-			response.json.mock.resetCalls();
+			(response.render as any).mock?.resetCalls?.();
+			(response.redirect as any).mock?.resetCalls?.();
+			(response.status as any).mock?.resetCalls?.();
+			(response.json as any).mock?.resetCalls?.();
 		}
 	};
 
@@ -156,7 +156,7 @@ export const createControllerTestSetup = (): ControllerTestSetup => {
 			(manageService.dbClient.questionnaire.findUnique as any).mock?.resetCalls?.();
 			(manageService.dbClient.questionnaire.update as any).mock?.resetCalls?.();
 			// Reset response mocks
-			response.resetMocks();
+			(response as any).resetMocks();
 		}
 	};
 };
