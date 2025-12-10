@@ -41,7 +41,7 @@ export const loadSubmissionData = async (req: Request, service: ManageService): 
 			service.logger,
 			`Failed to load submission ${submissionId}`,
 			'This page is temporarily unavailable. Please try again later.',
-			error
+			String(error)
 		);
 	}
 };

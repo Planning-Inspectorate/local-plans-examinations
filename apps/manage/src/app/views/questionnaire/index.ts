@@ -8,7 +8,7 @@ import type { IRouter, Request, Response, NextFunction } from 'express';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { buildGetJourney } from '@planning-inspectorate/dynamic-forms/src/middleware/build-get-journey.js';
 import { buildGetJourneyResponseFromSession } from '@planning-inspectorate/dynamic-forms/src/lib/session-answer-store.js';
-import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms/src/journey/journey-response.js';
+
 import { question, buildSave } from '@planning-inspectorate/dynamic-forms/src/controller.js';
 import validate from '@planning-inspectorate/dynamic-forms/src/validator/validator.js';
 import { validationErrorHandler } from '@planning-inspectorate/dynamic-forms/src/validator/validation-error-handler.js';
@@ -60,7 +60,7 @@ export const createQuestionnaireRoutes = (service: ManageService): IRouter => {
 	router.use('/:id/edit', asyncHandler(prepareEditJourney));
 
 	// Edit routes with dynamic forms
-	const getJourney = buildGetJourney((req: Request, journeyResponse: JourneyResponse) => {
+	const getJourney = buildGetJourney((req: Request, journeyResponse: any) => {
 		const submissionId = req.params.id;
 		const hasSessionData = journeyResponse?.answers && Object.keys(journeyResponse.answers).length > 0;
 		if (!hasSessionData && req.submissionData) {

@@ -9,7 +9,7 @@ export interface QuestionnaireSubmission {
 	id: string;
 	createdAt: Date;
 	fullName: string;
-	email?: string;
+	email: string | null;
 	rating: string;
 	feedback: string;
 	isDeleted: boolean;

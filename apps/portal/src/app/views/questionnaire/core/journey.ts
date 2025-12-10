@@ -48,6 +48,7 @@ export const createJourney = (
 		journeyTitle: 'Local Plans Questionnaire',
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl,
+		baseUrl: req.baseUrl,
 		initialBackLink: '/questionnaire',
 		response
 	});

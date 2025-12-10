@@ -24,7 +24,7 @@ export function buildListItems(service: ManageService): AsyncRequestHandler {
 				logger,
 				'Database connection failed',
 				'This service is temporarily unavailable. Please try again later.',
-				error
+				String(error)
 			);
 		}
 	};

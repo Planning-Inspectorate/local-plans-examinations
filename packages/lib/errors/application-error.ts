@@ -20,8 +20,8 @@ export const createApplicationError = (
 	logger: Logger,
 	technicalMessage: string,
 	userMessage: string,
-	cause?: unknown
+	cause?: string
 ): ApplicationError => {
-	logger.error(technicalMessage, cause);
-	return new ApplicationError(userMessage, cause instanceof Error ? cause : undefined);
+	logger.error(`${technicalMessage}: ${String(cause)}`);
+	return new ApplicationError(userMessage);
 };
