@@ -13,8 +13,8 @@ export function addLocalsConfiguration(): Handler {
 				href: '/'
 			},
 			{
-				text: 'Questionnaire',
-				href: '/questionnaire'
+				text: 'Feedback',
+				href: '/feedback'
 			}
 		];
 

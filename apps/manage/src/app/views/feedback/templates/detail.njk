@@ -1,0 +1,89 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block pageTitle %}
+    {{ pageHeading }} - {{ config.headerTitle }}
+{% endblock %}
+
+{% block pageContent %}
+    {% if successMessage %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+            <div class="govuk-notification-banner__header">
+                <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Success</h2>
+            </div>
+            <div class="govuk-notification-banner__content">
+                <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if errorMessage %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+            <div role="alert">
+                <h2 class="govuk-error-summary__title">There is a problem</h2>
+                <div class="govuk-error-summary__body">
+                    <p>{{ errorMessage }}</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {{
+        govukSummaryList({
+            rows: [
+                {
+                    key: { text: "Submitted" },
+                    value: { text: submission.createdAt | date('d MMMM yyyy, HH:mm') }
+                },
+                {
+                    key: { text: "Full Name" },
+                    value: { text: submission.fullName },
+                    actions: {
+                        items: [
+                            { href: "/feedback/" + submission.id + "/edit/personal/full-name", text: "Edit", visuallyHiddenText: "full name" }
+                        ]
+                    }
+                },
+                {
+                    key: { text: "Email" },
+                    value: { text: submission.email or formConfig.emailNotProvided },
+                    actions: {
+                        items: [
+                            { href: "/feedback/" + submission.id + "/edit/personal/email", text: "Edit", visuallyHiddenText: "email" }
+                        ]
+                    }
+                },
+                {
+                    key: { text: "Rating" },
+                    value: { text: submission.rating },
+                    actions: {
+                        items: [
+                            { href: "/feedback/" + submission.id + "/edit/experience/rating", text: "Edit", visuallyHiddenText: "rating" }
+                        ]
+                    }
+                },
+                {
+                    key: { text: "Feedback" },
+                    value: { text: submission.feedback },
+                    actions: {
+                        items: [
+                            { href: "/feedback/" + submission.id + "/edit/experience/feedback", text: "Edit", visuallyHiddenText: "feedback" }
+                        ]
+                    }
+                }
+            ]
+        })
+    }}
+
+    <br />
+
+    {{
+        govukButton({
+            text: formConfig.backLinkText,
+            href: formConfig.backLinkHref,
+            classes: "govuk-button--primary"
+        })
+    }}
+{% endblock %}
