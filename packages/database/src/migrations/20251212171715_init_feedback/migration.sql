@@ -1,0 +1,29 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[feedback] (
+    [id] NVARCHAR(30) NOT NULL,
+    [fullName] NVARCHAR(250) NOT NULL,
+    [email] NVARCHAR(320),
+    [rating] NVARCHAR(50) NOT NULL,
+    [feedback] NVARCHAR(2000) NOT NULL,
+    [isDeleted] BIT NOT NULL CONSTRAINT [feedback_isDeleted_df] DEFAULT 0,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [feedback_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    [updatedAt] DATETIME2 NOT NULL,
+    CONSTRAINT [feedback_pkey] PRIMARY KEY CLUSTERED ([id])
+);
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

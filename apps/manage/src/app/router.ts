@@ -3,7 +3,7 @@ import { createRoutesAndGuards as createAuthRoutesAndGuards } from './auth/route
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import { createRoutes as createItemRoutes } from './views/items/index.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
-import { createQuestionnaireRoutes } from './views/questionnaire/index.ts';
+import { createManageForm } from '@pins/local-plans-lib';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
@@ -41,7 +41,8 @@ export function buildRouter(service: ManageService): IRouter {
 
 	router.get('/', (req, res) => res.redirect('/items'));
 	router.use('/items', itemsRoutes);
-	router.use('/questionnaire', createQuestionnaireRoutes(service));
+	const feedbackForm = createManageForm(service);
+	router.use('/feedback', feedbackForm.router);
 	router.use('/error', createErrorRoutes(service));
 
 	return router;
