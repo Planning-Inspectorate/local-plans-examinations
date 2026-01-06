@@ -1,5 +1,5 @@
 /**
- * Express type extensions for questionnaire module
+ * Express type extensions for feedback forms module
  */
 
 declare global {

@@ -7,7 +7,7 @@ export function addLocalsConfiguration(): Handler {
 	return (req, res, next) => {
 		res.locals.config = {
 			styleFile: 'style-51e77e12.css',
-			headerTitle: 'App 2 Service'
+			headerTitle: 'Local Plans Management'
 		};
 		next();
 	};
