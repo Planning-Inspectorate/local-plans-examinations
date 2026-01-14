@@ -87,5 +87,10 @@ if ! npm run db-migrate-dev; then
   exit 1
 fi
 
+if ! npm run db-generate; then
+  echo "failed to generate database"
+  exit 1
+fi
+
 echo -e "\e[32m✔\e[0m setup complete and database is running "
 exit 0
