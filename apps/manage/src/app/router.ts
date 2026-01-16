@@ -1,12 +1,13 @@
 import { Router as createRouter } from 'express';
 import { createRoutesAndGuards as createAuthRoutesAndGuards } from './auth/router.ts';
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
-import { createRoutes as createItemRoutes } from './views/items/index.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createQuestionnaireRoutes } from './views/questionnaire/index.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
+import { createQuizRoutes } from './views/quiz/index.ts';
+import { homePage } from './views/home/controller.ts';
 
 /**
  * Main app router
@@ -15,7 +16,6 @@ export function buildRouter(service: ManageService): IRouter {
 	const router = createRouter();
 	const monitoringRoutes = createMonitoringRoutes(service);
 	const { router: authRoutes, guards: authGuards } = createAuthRoutesAndGuards(service);
-	const itemsRoutes = createItemRoutes(service);
 
 	router.use('/', monitoringRoutes);
 
@@ -39,10 +39,10 @@ export function buildRouter(service: ManageService): IRouter {
 		service.logger.warn('auth disabled; auth routes and guards skipped');
 	}
 
-	router.get('/', (req, res) => res.redirect('/items'));
-	router.use('/items', itemsRoutes);
+	router.get('/', homePage);
 	router.use('/questionnaire', createQuestionnaireRoutes(service));
 	router.use('/error', createErrorRoutes(service));
+	router.use('/quiz', createQuizRoutes());
 
 	return router;
 }

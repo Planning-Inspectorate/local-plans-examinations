@@ -1,7 +1,7 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert';
 import { buildListItems } from './controller.ts';
-import { configureNunjucks } from '../../../nunjucks.ts';
+import { configureNunjucks } from '../../nunjucks.ts';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 
 describe('list items', () => {
