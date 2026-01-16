@@ -2,7 +2,6 @@ import type { Request } from 'express';
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { createQuestionnaireDataService } from '../questionnaire/data/service.ts';
-import type { QuestionnaireDataService } from '../../../types/test-types.ts';
 
 // Helper functions for home page functionality
 const checkDatabaseConnection = async (db: PortalService['db'], logger: PortalService['logger']): Promise<boolean> => {

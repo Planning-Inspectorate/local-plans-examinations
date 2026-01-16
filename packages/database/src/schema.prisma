@@ -33,3 +33,12 @@ model Questionnaire {
 
   @@map("questionnaire")
 }
+
+model Case {
+  id                      String   @id @default(cuid()) @db.NVarChar(30)
+  working                 Boolean
+  stillWorking            Boolean
+  finallyWorking          Boolean
+  description             String   @db.NVarChar(250)
+  estimatedSubmissionDate DateTime @db.Date
+}

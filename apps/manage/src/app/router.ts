@@ -6,7 +6,7 @@ import { createQuestionnaireRoutes } from './views/questionnaire/index.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
-import { createQuizRoutes } from './views/quiz/index.ts';
+import { createACaseRoutes } from './views/create-a-case/index.ts';
 import { homePage } from './views/home/controller.ts';
 
 /**
@@ -42,7 +42,7 @@ export function buildRouter(service: ManageService): IRouter {
 	router.get('/', homePage);
 	router.use('/questionnaire', createQuestionnaireRoutes(service));
 	router.use('/error', createErrorRoutes(service));
-	router.use('/quiz', createQuizRoutes());
+	router.use('/create-a-case', createACaseRoutes(service));
 
 	return router;
 }
