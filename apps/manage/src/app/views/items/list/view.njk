@@ -37,8 +37,14 @@
         rows: tableRows
     }) }}
 
+    {% if feedbackCount > 0 %}
+        <p class="govuk-body">
+            <strong>{{ feedbackCount }}</strong> {% if feedbackCount == 1 %}person has{% else %}people have{% endif %} already shared their feedback with us.
+        </p>
+    {% endif %}
+
     <h2 class="govuk-heading-m">Quick actions</h2>
     <p class="govuk-body">
-        <a href="/questionnaire" class="govuk-link">View questionnaire responses</a> to monitor user feedback and service satisfaction.
+        <a href="/feedback" class="govuk-link">View feedback responses</a> to monitor user feedback and service satisfaction.
     </p>
 {% endblock %}

@@ -7,7 +7,7 @@ import type { Mock } from 'node:test';
  * Type for mock database operations used in testing
  */
 export interface MockDatabase {
-	questionnaire: {
+	feedback: {
 		create: Mock<(...args: any[]) => any>;
 		count: Mock<(...args: any[]) => any>;
 		findMany?: Mock<(...args: any[]) => any>;
@@ -78,17 +78,17 @@ export interface MockPortalService {
 }
 
 /**
- * Type for questionnaire data service interface
+ * Type for feedback data service interface
  */
-export interface QuestionnaireDataService {
+export interface FeedbackDataService {
 	saveSubmission(answers: Record<string, any>): Promise<{ id: string; createdAt: Date }>;
 	getTotalSubmissions(): Promise<number>;
 }
 
 /**
- * Type for questionnaire business service interface
+ * Type for feedback business service interface
  */
-export interface QuestionnaireBusinessService {
+export interface FeedbackBusinessService {
 	saveSubmission(answers: Record<string, any>): Promise<{
 		id: string;
 		reference: string;

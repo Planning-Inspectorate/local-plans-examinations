@@ -1,8 +1,8 @@
 import type { Request } from 'express';
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { createQuestionnaireDataService } from '../questionnaire/data/service.ts';
-import type { QuestionnaireDataService } from '../../../types/test-types.ts';
+import { createPortalForm } from '@pins/local-plans-lib';
+import type { FormDataService } from '@pins/local-plans-lib';
 
 // Helper functions for home page functionality
 const checkDatabaseConnection = async (db: PortalService['db'], logger: PortalService['logger']): Promise<boolean> => {
@@ -15,12 +15,9 @@ const checkDatabaseConnection = async (db: PortalService['db'], logger: PortalSe
 	}
 };
 
-const getTotalSubmissions = async (
-	questionnaireService: QuestionnaireDataService,
-	logger: PortalService['logger']
-): Promise<number> => {
+const getTotalSubmissions = async (formService: FormDataService, logger: PortalService['logger']): Promise<number> => {
 	try {
-		return await questionnaireService.getTotalSubmissions();
+		return await formService.getTotalSubmissions();
 	} catch (error) {
 		logger.error({ error }, 'Failed to get total submissions');
 		return 0;
@@ -34,15 +31,11 @@ const updateVisitCount = (req: Request): number => {
 
 // Home page handler with database health checks and visit tracking
 const handleHomePage =
-	(
-		db: PortalService['db'],
-		logger: PortalService['logger'],
-		questionnaireService: QuestionnaireDataService
-	): AsyncRequestHandler =>
+	(db: PortalService['db'], logger: PortalService['logger'], formService: FormDataService): AsyncRequestHandler =>
 	async (req, res) => {
 		const connected = await checkDatabaseConnection(db, logger);
 		const visitCount = updateVisitCount(req);
-		const totalSubmissions = await getTotalSubmissions(questionnaireService, logger);
+		const totalSubmissions = await getTotalSubmissions(formService, logger);
 
 		const viewModel = { connected, visitCount, totalSubmissions };
 		logger.info({ viewModel }, 'Home Page View Model');
@@ -55,6 +48,6 @@ const handleHomePage =
 
 // Factory for creating home page handler with dependency injection
 export function buildHomePage(service: PortalService): AsyncRequestHandler {
-	const questionnaireDataService = createQuestionnaireDataService(service.db, service.logger);
-	return handleHomePage(service.db, service.logger, questionnaireDataService);
+	const { dataService } = createPortalForm(service);
+	return handleHomePage(service.db, service.logger, dataService);
 }

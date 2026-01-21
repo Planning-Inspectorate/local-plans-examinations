@@ -1,0 +1,61 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block pageTitle %}
+    {{ pageHeading }} - {{ config.headerTitle }}
+{% endblock %}
+
+{% block pageContent %}
+    {% if successMessage %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+            <div class="govuk-notification-banner__header">
+                <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Success</h2>
+            </div>
+            <div class="govuk-notification-banner__content">
+                <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if errorMessage %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+            <div role="alert">
+                <h2 class="govuk-error-summary__title">There is a problem</h2>
+                <div class="govuk-error-summary__body">
+                    <p>{{ errorMessage }}</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if totalCount > 0 %}
+        {% set tableRows = [] %}
+        {% for submission in submissions %}
+            {% set tableRows = (tableRows.push([
+                { text: submission.createdAt | date('d MMMM yyyy, HH:mm') },
+                { text: submission.fullName },
+                { text: submission.email or formConfig.emailNotProvided },
+                { html: '<a href="' + formConfig.formRoute + '/' + submission.id + '" class="govuk-link">View</a> | <a href="' + formConfig.formRoute + '/' + submission.id + '/delete" class="govuk-link govuk-link--destructive">Delete</a>' }
+            ]), tableRows) %}
+        {% endfor %}
+
+        {{ govukTable({
+            head: [
+                { text: "Submitted" },
+                { text: "Full Name" },
+                { text: "Email" },
+                { text: "Action" }
+            ],
+            rows: tableRows
+        }) }}
+
+        <br />
+
+        <p class="govuk-body-l">Total submissions: <strong>{{ totalCount }}</strong></p>
+    {% else %}
+        <h2 class="govuk-heading-m">No feedback submissions</h2>
+        <p class="govuk-body">No feedback has been submitted yet. When users submit feedback through the portal, their submissions will appear here.</p>
+    {% endif %}
+
+{% endblock %}

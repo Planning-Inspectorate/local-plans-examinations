@@ -11,8 +11,14 @@ export function buildListItems(service: ManageService): AsyncRequestHandler {
 			// check the DB connection is working
 			await db.$queryRaw`SELECT 1`;
 
+			// Get feedback count
+			const feedbackCount = await db.feedback.count({
+				where: { isDeleted: false }
+			});
+
 			return res.render('views/items/list/view.njk', {
 				pageHeading: 'Local Plans Examination Service',
+				feedbackCount,
 				items: [
 					{ task: 'Create new service', done: true },
 					{ task: 'Implement a new feature', done: false },
