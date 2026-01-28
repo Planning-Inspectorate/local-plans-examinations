@@ -7,7 +7,7 @@ locals {
   resource_suffix           = "${local.service_name}-${var.environment}"
   secondary_resource_suffix = "${local.service_name}-secondary-${var.environment}"
   environment               = var.environment == "training" ? "train" : var.environment
-  short_resource_suffix     = var.environment == "training" ? "${local.service_name}-${local.environment}" : local.resource_suffix
+  short_resource_suffix     = var.environment == "training" ? "local-plan-${local.environment}" : local.resource_suffix
 
   # all content types to compress, as a default, but has to be specified
   content_types_to_compress = [
