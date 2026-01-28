@@ -16,7 +16,7 @@ resource "azurerm_key_vault" "main" {
   # checkov:skip=CKV_AZURE_189: Consider moving to VPN; requires RBAC
   # checkov:skip=CKV_AZURE_109: Route traffic via a VNet; Private Endpoint consideration
   # checkov:skip=CKV2_AZURE_32: Private Endpoint relies on the VNet
-  name                        = "${local.org}-kv-${local.resource_suffix}"
+  name                        = "${local.org}-kv-${local.short_resource_suffix}"
   location                    = module.primary_region.location
   resource_group_name         = azurerm_resource_group.primary.name
   enabled_for_disk_encryption = true

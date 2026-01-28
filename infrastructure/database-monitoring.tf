@@ -1,4 +1,5 @@
 resource "azurerm_storage_account" "sql_server" {
+  #checkov:skip=CKV_AZURE_43: "Ensure Storage Accounts adhere to the naming rules"
   #TODO: Customer Managed Keys
   #checkov:skip=CKV2_AZURE_1: Customer Managed Keys not implemented yet
   #checkov:skip=CKV2_AZURE_18: Customer Managed Keys not implemented yet
@@ -12,7 +13,7 @@ resource "azurerm_storage_account" "sql_server" {
   #checkov:skip=CKV2_AZURE_38: "Ensure soft-delete is enabled on Azure storage account"
   #checkov:skip=CKV2_AZURE_40: "Ensure storage account is not configured with Shared Key authorization"
   #checkov:skip=CKV2_AZURE_41: "Ensure storage account is configured with SAS expiration policy"
-  name                             = "pinsstsqllocalplans${var.environment}"
+  name                             = "pinsstsqllocalplans${local.environment}"
   resource_group_name              = azurerm_resource_group.primary.name
   location                         = module.primary_region.location
   account_tier                     = "Standard"
