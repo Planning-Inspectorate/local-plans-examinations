@@ -17,11 +17,16 @@ export function buildSaveController(service: ManageService) {
 		// create a new case in a transaction to ensure reference generation is safe
 		await db.$transaction(async ($tx): Promise<void> => {
 			const data = {
-				working: answers.working === 'true',
-				stillWorking: answers.secondCheck === 'true',
-				finallyWorking: answers.finalCheck === 'true',
-				description: answers.developmentDescription,
-				estimatedSubmissionDate: answers.expectedDateOfSubmission
+				caseOfficer: answers.caseOfficer,
+				planTitle: answers.planTitle,
+				typeOfApplication: answers.planType,
+				lpaName: answers.leadLPA,
+				leadContactFirstName: answers.leadContactFirstName,
+				leadContactLastName: answers.leadContactLastName,
+				leadContactEmail: answers.leadContactEmail,
+				leadContactPhone: answers.leadContactPhone,
+				secondaryLPA: answers.secondaryLPA === 'yes',
+				anotherContact: answers.otherContact === 'yes'
 			};
 			logger.info('creating new case');
 			await $tx.case.create({ data });
@@ -30,10 +35,6 @@ export function buildSaveController(service: ManageService) {
 		clearDataFromSession({
 			req,
 			journeyId: JOURNEY_ID
-			// replaceWith: {
-			// 	id,
-			// 	reference
-			// }
 		});
 		console.log('successfully saved');
 		res.redirect(`${req.baseUrl}/success`);

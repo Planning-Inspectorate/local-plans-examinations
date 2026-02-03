@@ -1,4 +1,4 @@
-import { Router as createRouter } from 'express';
+import { Router, Router as createRouter } from 'express';
 import { getQuestions } from './questions.ts';
 import {
 	buildGetJourney,
@@ -16,13 +16,12 @@ import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { buildSaveController } from './save.ts';
 import { ManageService } from '#service';
 
-export function createACaseRoutes(service: ManageService) {
+export function createACaseRoutes(service: ManageService): Router {
 	const router = createRouter({ mergeParams: true });
 	const questions = getQuestions();
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(questions, journeyResponse, req));
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
 	const saveController = buildSaveController(service);
-
 	router.get('/', getJourneyResponse, getJourney, redirectToUnansweredQuestion());
 
 	router.get('/:section/:question', getJourneyResponse, getJourney, question);
@@ -39,6 +38,8 @@ export function createACaseRoutes(service: ManageService) {
 	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res, '', {}));
 
 	router.post('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(saveController));
+
+	router.get('/success', (req, res) => res.redirect('/'));
 
 	return router;
 }

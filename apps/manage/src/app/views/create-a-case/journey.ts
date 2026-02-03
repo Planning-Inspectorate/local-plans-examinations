@@ -8,12 +8,16 @@ export function createJourney(questions: any, journeyResponse: JourneyResponse, 
 	return new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
-			new Section('Section 1', 'questions')
-				.addQuestion(questions.isItWorking)
-				.addQuestion(questions.q2)
-				.addQuestion(questions.q3)
-				.addQuestion(questions.developmentDescription)
-				.addQuestion(questions.expectedDateOfSubmission)
+			new Section('Create a case', 'details')
+				.addQuestion(questions.caseOfficer)
+				.addQuestion(questions.planTitle)
+				.addQuestion(questions.typeOfApplication)
+				.addQuestion(questions.lpaName)
+				.addQuestion(questions.leadContactName)
+				.addQuestion(questions.leadContactEmail)
+				.addQuestion(questions.leadContactPhone)
+				.addQuestion(questions.secondaryLPA)
+				.addQuestion(questions.anotherContact)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',

@@ -8,6 +8,8 @@ import type { ManageService } from '#service';
 import type { IRouter } from 'express';
 import { createACaseRoutes } from './views/create-a-case/index.ts';
 import { homePage } from './views/home/controller.ts';
+import { manageCasesRoutes } from './views/cases/index.ts';
+import { caseDetailRoutes } from './views/case-detail/index.ts';
 
 /**
  * Main app router
@@ -43,6 +45,8 @@ export function buildRouter(service: ManageService): IRouter {
 	router.use('/questionnaire', createQuestionnaireRoutes(service));
 	router.use('/error', createErrorRoutes(service));
 	router.use('/create-a-case', createACaseRoutes(service));
+	router.use('/cases', manageCasesRoutes(service));
+	router.use('/cases/:id', caseDetailRoutes(service));
 
 	return router;
 }

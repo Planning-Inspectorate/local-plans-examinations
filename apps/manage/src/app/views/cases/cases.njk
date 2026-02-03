@@ -1,0 +1,24 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageTitle %}Cases{% endblock %}
+
+{% block content %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            <h1 class="govuk-heading-l">Cases</h1>
+                {% if cases %}
+                {% for case in cases %}
+                  <div class="govuk-grid-row">
+                    <h2 class="govuk-heading-m"><a href="/cases/{{ case.id }}" class="govuk-link">Plan title: {{ case.planTitle }}</a></h2>
+                    <p class="govuk-body">Officer: {{ case.caseOfficer }}</p>
+                    <p class="govuk-body">LPA: {{ case.lpaName }}</p>
+                  </div>
+                {% endfor %}
+                {% else %}
+                        <p class="govuk-body">No cases found.</p>
+                        <a href="/" class="govuk-link">Home</a>
+                {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

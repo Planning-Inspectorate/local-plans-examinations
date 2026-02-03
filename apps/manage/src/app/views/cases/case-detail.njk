@@ -1,0 +1,69 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageTitle %}Case Details{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Case Details</h1>
+      {% if caseDetail %}
+        <dl class="govuk-summary-list">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Plan title</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.planTitle }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/plan-title" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Case officer</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.caseOfficer }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/plan-type" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">LPA name</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.lpaName }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/lead-LPA" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Type of application</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.typeOfApplication }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/plan-type" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Lead contact first name</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.leadContactFirstName }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/lead-contact-name" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Lead contact last name</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.leadContactLastName }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/lead-contact-name" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Lead contact email</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.leadContactEmail }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/lead-contact-email" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Lead contact phone</dt>
+            <dd class="govuk-summary-list__value">{{ caseDetail.leadContactPhone }}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/lead-contact-phone" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Secondary LPA</dt>
+            <dd class="govuk-summary-list__value">{% if caseDetail.secondaryLPA %}Yes{% else %}No{% endif %}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/secondary-lpa" class="govuk-link">Edit</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Another contact</dt>
+            <dd class="govuk-summary-list__value">{% if caseDetail.anotherContact %}Yes{% else %}No{% endif %}</dd>
+            <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/another-contact" class="govuk-link">Edit</a></dd>
+          </div>
+        </dl>
+        <a href="/cases" class="govuk-link">Back to cases</a>
+      {% else %}
+        <p class="govuk-body">Case not found.</p>
+        <a href="/cases" class="govuk-link">Back to cases</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
