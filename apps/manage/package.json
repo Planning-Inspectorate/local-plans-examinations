@@ -17,7 +17,7 @@
     "@pins/local-plans-database": "^0.0.0",
     "@pins/local-plans-lib": "^0.0.0",
     "@pins/local-plans-questionnaire": "^0.0.0",
-    "@planning-inspectorate/dynamic-forms": "*",
+    "@planning-inspectorate/dynamic-forms": "github:Planning-Inspectorate/dynamic-forms#feat/type-defs-generated-by-index-file",
     "accessible-autocomplete": "*",
     "body-parser": "*",
     "connect-redis": "*",

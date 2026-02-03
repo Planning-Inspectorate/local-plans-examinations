@@ -4,7 +4,7 @@ import {
 	questionClasses,
 	RequiredValidator,
 	StringValidator,
-	DateValidator
+	EmailValidator
 } from '@planning-inspectorate/dynamic-forms';
 
 export function getQuestions() {
@@ -100,24 +100,27 @@ export function getQuestions() {
 				}
 			]
 		},
-		//TODO Export EmailValidator
 		leadContactEmail: {
 			type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 			title: 'Lead contact email address',
 			question: 'Lead contact email address',
 			fieldName: 'leadContactEmail',
-			url: 'lead-contact-email'
-			// validators: [
-			// 	new EmailValidator({options:{}, errorMessage:'Please enter valid email address', fieldName: 'leadContactEmail'}),
-			// ]
+			url: 'lead-contact-email',
+			validators: [
+				new EmailValidator({
+					options: {},
+					errorMessage: 'Please enter valid email address',
+					fieldName: 'leadContactEmail'
+				})
+			]
 		},
-		//TODO is there a validator for this
 		leadContactPhone: {
 			type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 			title: 'Lead contact phone number',
 			question: 'Lead contact phone number',
 			fieldName: 'leadContactPhone',
-			url: 'lead-contact-phone'
+			url: 'lead-contact-phone',
+			validators: [new RequiredValidator('Tell us your number!!')]
 		},
 		secondaryLPA: {
 			type: COMPONENT_TYPES.BOOLEAN,
@@ -134,64 +137,6 @@ export function getQuestions() {
 			fieldName: 'anotherContact',
 			url: 'another-contact',
 			validators: [new RequiredValidator('Please tell us if you want to add another contact.')]
-		},
-		// keyDates: {
-		// 	type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
-		// 	title: 'Lead contact name',
-		// 	question: 'Lead contact name',
-		// 	fieldName: 'leadContactName',
-		// 	url: 'lead-contact-name',
-		// 	inputFields: [
-		// 		{
-		// 			fieldName: 'firstName',
-		// 			label: 'First name'
-		// 		},
-		// 		{
-		// 			fieldName: 'lastName',
-		// 			label: 'Last name'
-		// 		}
-		// 	]
-		// },
-		q2: {
-			type: COMPONENT_TYPES.BOOLEAN,
-			title: 'Is it still working?',
-			question: 'Is it still working?',
-			fieldName: 'secondCheck',
-			url: 'second-check',
-			validators: [new RequiredValidator('Please select if this page is loading')]
-		},
-		q3: {
-			type: COMPONENT_TYPES.BOOLEAN,
-			title: 'Finally, is it working now?',
-			question: 'Finally, is it working now?',
-			fieldName: 'finalCheck',
-			url: 'final-check',
-			validators: [new RequiredValidator('Please select if this page is loading')]
-		},
-		developmentDescription: {
-			type: COMPONENT_TYPES.TEXT_ENTRY,
-			title: 'Development description',
-			question: 'What is the description of the development?',
-			hint: 'This will be published on the website.',
-			fieldName: 'developmentDescription',
-			url: 'development-description',
-			validators: [
-				new RequiredValidator('Enter description of the proposed development'),
-				new StringValidator({
-					maxLength: {
-						maxLength: 1000,
-						maxLengthMessage: 'Description of the proposed development must be 1000 characters or less'
-					}
-				})
-			]
-		},
-		expectedDateOfSubmission: {
-			type: COMPONENT_TYPES.DATE,
-			title: 'Expected date of submission',
-			question: 'What is the expected submission date for the application?',
-			fieldName: 'expectedDateOfSubmission',
-			url: 'expected-date-of-submission',
-			validators: [new DateValidator('expected submission date')]
 		}
 	};
 	return createQuestions(questions, questionClasses, {});

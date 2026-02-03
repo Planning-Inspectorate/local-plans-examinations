@@ -19,8 +19,8 @@ export function buildSaveController(service: ManageService) {
 			const data = {
 				caseOfficer: answers.caseOfficer,
 				planTitle: answers.planTitle,
-				typeOfApplication: answers.planType,
-				lpaName: answers.leadLPA,
+				typeOfApplication: answers.typeOfApplication,
+				lpaName: answers.lpaName,
 				leadContactFirstName: answers.leadContactFirstName,
 				leadContactLastName: answers.leadContactLastName,
 				leadContactEmail: answers.leadContactEmail,
