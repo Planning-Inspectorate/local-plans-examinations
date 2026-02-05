@@ -25,8 +25,8 @@ export function buildSaveController(service: ManageService) {
 				leadContactLastName: answers.leadContactLastName,
 				leadContactEmail: answers.leadContactEmail,
 				leadContactPhone: answers.leadContactPhone,
-				secondaryLPA: answers.secondaryLPA === 'yes',
-				anotherContact: answers.otherContact === 'yes'
+				secondaryLPA: answers.secondaryLPA,
+				anotherContact: answers.anotherContact
 			};
 			logger.info('creating new case');
 			await $tx.case.create({ data });

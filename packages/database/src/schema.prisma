@@ -35,15 +35,15 @@ model Questionnaire {
 }
 
 model Case {
-  id                   String  @id @default(cuid()) @db.NVarChar(30)
-  caseOfficer          String  @db.NVarChar(50)
-  planTitle            String  @db.NVarChar(100)
-  typeOfApplication    String  @db.NVarChar(5)
-  lpaName              String  @db.NVarChar(100)
-  leadContactFirstName String  @db.NVarChar(100)
-  leadContactLastName  String  @db.NVarChar(100)
-  leadContactEmail     String  @db.NVarChar(150)
-  leadContactPhone     String  @db.NVarChar(20)
-  secondaryLPA         Boolean
-  anotherContact       Boolean
+  id                   String @id @default(cuid()) @db.NVarChar(30)
+  caseOfficer          String @db.NVarChar(50)
+  planTitle            String @db.NVarChar(100)
+  typeOfApplication    String @db.NVarChar(5)
+  lpaName              String @db.NVarChar(100)
+  leadContactFirstName String @db.NVarChar(100)
+  leadContactLastName  String @db.NVarChar(100)
+  leadContactEmail     String @db.NVarChar(150)
+  leadContactPhone     String @db.NVarChar(20)
+  secondaryLPA         String @db.NVarChar(10)
+  anotherContact       String @db.NVarChar(10)
 }

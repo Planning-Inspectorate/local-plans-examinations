@@ -7,6 +7,7 @@ import {
 	EmailValidator
 } from '@planning-inspectorate/dynamic-forms';
 
+//TODO ask Ben about adding an optional DB field to a question to make it easier to map question to DB
 export function getQuestions() {
 	const questions = {
 		caseOfficer: {

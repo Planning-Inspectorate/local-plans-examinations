@@ -22,6 +22,7 @@ export function createACaseRoutes(service: ManageService): Router {
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(questions, journeyResponse, req));
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
 	const saveController = buildSaveController(service);
+
 	router.get('/', getJourneyResponse, getJourney, redirectToUnansweredQuestion());
 
 	router.get('/:section/:question', getJourneyResponse, getJourney, question);

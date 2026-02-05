@@ -50,12 +50,12 @@
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">Secondary LPA</dt>
-            <dd class="govuk-summary-list__value">{% if caseDetail.secondaryLPA %}Yes{% else %}No{% endif %}</dd>
+            <dd class="govuk-summary-list__value">{{ caseDetail.secondaryLPA }}</dd>
             <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/secondary-lpa" class="govuk-link">Edit</a></dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">Another contact</dt>
-            <dd class="govuk-summary-list__value">{% if caseDetail.anotherContact %}Yes{% else %}No{% endif %}</dd>
+            <dd class="govuk-summary-list__value">{{ caseDetail.anotherContact }}</dd>
             <dd class="govuk-summary-list__value"><a href="{{ caseDetail.id }}/details/another-contact" class="govuk-link">Edit</a></dd>
           </div>
         </dl>
