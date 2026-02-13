@@ -3,8 +3,8 @@ import { getQuestions } from './questions.ts';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
+	buildList,
 	buildSave,
-	list,
 	question,
 	redirectToUnansweredQuestion,
 	saveDataToSession,
@@ -36,7 +36,7 @@ export function createACaseRoutes(service: ManageService): Router {
 		buildSave(saveDataToSession)
 	);
 
-	router.get('/check-your-answers', getJourneyResponse, getJourney, (req, res) => list(req, res, '', {}));
+	router.get('/check-your-answers', getJourneyResponse, getJourney, buildList());
 
 	router.post('/check-your-answers', getJourneyResponse, getJourney, asyncHandler(saveController));
 

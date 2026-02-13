@@ -25,7 +25,7 @@ export function createJourney(questions: any, journeyResponse: JourneyResponse, 
 		journeyTitle: 'Create a case',
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl,
-		initialBackLink: '/create-a-case',
+		initialBackLink: '/',
 		response: journeyResponse
 	});
 }
