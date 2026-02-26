@@ -46,6 +46,8 @@ resource "azurerm_key_vault_secret" "manual_secrets" {
       value
     ]
   }
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.keyvault]
 }
 
 resource "azurerm_private_endpoint" "keyvault" {
