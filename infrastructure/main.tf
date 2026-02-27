@@ -13,6 +13,7 @@ resource "azurerm_resource_group" "secondary" {
 }
 
 resource "azurerm_key_vault" "main" {
+  #checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
   name                          = "${local.org}-kv-${local.short_resource_suffix}"
   location                      = module.primary_region.location
   resource_group_name           = azurerm_resource_group.primary.name
@@ -23,6 +24,11 @@ resource "azurerm_key_vault" "main" {
   rbac_authorization_enabled    = true
   public_network_access_enabled = false
   sku_name                      = "standard"
+
+  network_acls {
+    bypass         = "AzureServices"
+    default_action = "Deny"
+  }
 
   tags = local.tags
 }
@@ -46,6 +52,8 @@ resource "azurerm_key_vault_secret" "manual_secrets" {
       value
     ]
   }
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.keyvault]
 }
 
 resource "azurerm_private_endpoint" "keyvault" {
