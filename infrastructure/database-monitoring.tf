@@ -22,6 +22,7 @@ resource "azurerm_storage_account" "sql_server" {
   https_traffic_only_enabled       = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
+  public_network_access_enabled    = false
 
   # network_rules {
   #   default_action             = "Deny"
@@ -49,6 +50,27 @@ resource "azurerm_role_assignment" "sql_server_storage" {
   scope                = azurerm_storage_account.sql_server.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_mssql_server.primary.identity[0].principal_id
+}
+
+resource "azurerm_private_endpoint" "sqlserver" {
+  name                = "${local.org}-pe-${local.service_name}-sqlserver-${var.environment}"
+  location            = module.primary_region.location
+  resource_group_name = azurerm_resource_group.primary.name
+  subnet_id           = azurerm_subnet.main.id
+
+  private_service_connection {
+    name                           = "${local.org}-psc-${local.service_name}-sqlserver-${var.environment}"
+    private_connection_resource_id = azurerm_storage_account.sql_server.id
+    subresource_names              = ["blob"]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = "${local.org}-pdns-${local.service_name}-sqlserver-${var.environment}"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage.id]
+  }
+
+  tags = local.tags
 }
 
 # auditing policy
@@ -197,3 +219,32 @@ resource "azurerm_monitor_metric_alert" "sql_db_deadlock_alert" {
   tags = local.tags
 }
 
+# ### Front door setup to add private link to storage account ###
+# resource "azurerm_cdn_frontdoor_origin" "storage" {
+#   name                          = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
+#   cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.portal.id
+#   enabled                       = true
+#
+#   certificate_name_check_enabled = true
+#   provider                       = azurerm.front_door
+#
+#   host_name = replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", "")
+#
+#
+#   private_link {
+#     request_message        = "Access from Front Door Premium"
+#     target_type            = "blob"
+#     location               = module.primary_region.location
+#     private_link_target_id = azurerm_private_endpoint.sqlserver.id
+#   }
+# }
+#
+# resource "azurerm_storage_account_network_rules" "restrict" {
+#   storage_account_id = azurerm_storage_account.sql_server.id
+#   default_action     = "Deny"
+#   bypass             = ["AzureServices"]
+#
+# }
+#
+#
+# ###https://registry.terraform.io/providers/hashicorp/azurerm/4.62.1/docs/resources/cdn_frontdoor_origin#example-usage-with-private-link-service
