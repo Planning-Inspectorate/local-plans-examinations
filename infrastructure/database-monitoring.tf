@@ -24,12 +24,10 @@ resource "azurerm_storage_account" "sql_server" {
   cross_tenant_replication_enabled = false
   public_network_access_enabled    = false
 
-  # network_rules {
-  #   default_action             = "Deny"
-  #   ip_rules                   = ["127.0.0.1"]
-  #   virtual_network_subnet_ids = [azurerm_subnet.back_office_ingress.id]
-  #   bypass                     = ["AzureServices"]
-  # }
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
 
   identity {
     type = "SystemAssigned"
@@ -229,8 +227,6 @@ resource "azurerm_monitor_metric_alert" "sql_db_deadlock_alert" {
 #   provider                       = azurerm.front_door
 #
 #   host_name = replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", "")
-#
-#
 #   private_link {
 #     request_message        = "Access from Front Door Premium"
 #     target_type            = "blob"
@@ -238,13 +234,4 @@ resource "azurerm_monitor_metric_alert" "sql_db_deadlock_alert" {
 #     private_link_target_id = azurerm_private_endpoint.sqlserver.id
 #   }
 # }
-#
-# resource "azurerm_storage_account_network_rules" "restrict" {
-#   storage_account_id = azurerm_storage_account.sql_server.id
-#   default_action     = "Deny"
-#   bypass             = ["AzureServices"]
-#
-# }
-#
-#
 # ###https://registry.terraform.io/providers/hashicorp/azurerm/4.62.1/docs/resources/cdn_frontdoor_origin#example-usage-with-private-link-service
