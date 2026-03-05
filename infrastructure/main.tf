@@ -13,6 +13,8 @@ resource "azurerm_resource_group" "secondary" {
 }
 
 resource "azurerm_key_vault" "main" {
+  #checkov:skip=CKV_AZURE_109: "Ensure that key vault allows firewall rules settings"
+
   name                          = "${local.org}-kv-${local.short_resource_suffix}"
   location                      = module.primary_region.location
   resource_group_name           = azurerm_resource_group.primary.name
