@@ -13,18 +13,21 @@ resource "azurerm_resource_group" "secondary" {
 }
 
 resource "azurerm_key_vault" "main" {
-  # checkov:skip=CKV_AZURE_189: Consider moving to VPN; requires RBAC
-  # checkov:skip=CKV_AZURE_109: Route traffic via a VNet; Private Endpoint consideration
-  # checkov:skip=CKV2_AZURE_32: Private Endpoint relies on the VNet
-  name                        = "${local.org}-kv-${local.short_resource_suffix}"
-  location                    = module.primary_region.location
-  resource_group_name         = azurerm_resource_group.primary.name
-  enabled_for_disk_encryption = true
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  soft_delete_retention_days  = 7
-  purge_protection_enabled    = true
-  rbac_authorization_enabled  = true
-  sku_name                    = "standard"
+  name                          = "${local.org}-kv-${local.short_resource_suffix}"
+  location                      = module.primary_region.location
+  resource_group_name           = azurerm_resource_group.primary.name
+  enabled_for_disk_encryption   = true
+  tenant_id                     = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days    = 7
+  purge_protection_enabled      = true
+  rbac_authorization_enabled    = true
+  public_network_access_enabled = false
+  sku_name                      = "standard"
+
+  network_acls {
+    bypass         = "AzureServices"
+    default_action = "Deny"
+  }
 
   tags = local.tags
 }
@@ -48,5 +51,25 @@ resource "azurerm_key_vault_secret" "manual_secrets" {
       value
     ]
   }
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.keyvault]
 }
 
+resource "azurerm_private_endpoint" "keyvault" {
+  name                = "${local.org}-pe-keyvault-${local.resource_suffix}"
+  location            = module.primary_region.location
+  resource_group_name = azurerm_resource_group.primary.name
+  subnet_id           = azurerm_subnet.main.id
+
+  private_dns_zone_group {
+    name                 = "${local.org}-pdns-${local.service_name}-keyvault-${var.environment}"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.keyvault.id]
+  }
+
+  private_service_connection {
+    name                           = "${local.org}-psc-keyvault-${local.resource_suffix}"
+    private_connection_resource_id = azurerm_key_vault.main.id
+    subresource_names              = ["vault"]
+    is_manual_connection           = false
+  }
+}
