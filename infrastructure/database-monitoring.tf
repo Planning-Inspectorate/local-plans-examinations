@@ -231,7 +231,7 @@ resource "azurerm_cdn_frontdoor_origin" "storage" {
     request_message        = "Access from Front Door Premium"
     target_type            = "blob"
     location               = module.primary_region.location
-    private_link_target_id = azurerm_private_endpoint.sqlserver.id
+    private_link_target_id = azurerm_storage_account.sql_server.id
   }
 }
 # ###https://registry.terraform.io/providers/hashicorp/azurerm/4.62.1/docs/resources/cdn_frontdoor_origin#example-usage-with-private-link-service
