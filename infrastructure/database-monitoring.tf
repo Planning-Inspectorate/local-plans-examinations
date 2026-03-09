@@ -218,20 +218,21 @@ resource "azurerm_monitor_metric_alert" "sql_db_deadlock_alert" {
 }
 
 # ### Front door setup to add private link to storage account ###
-# resource "azurerm_cdn_frontdoor_origin" "storage" {
-#   name                          = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
-#   cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.portal.id
-#   enabled                       = true
-#
-#   certificate_name_check_enabled = true
-#   provider                       = azurerm.front_door
-#
-#   host_name = replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", "")
-#   private_link {
-#     request_message        = "Access from Front Door Premium"
-#     target_type            = "blob"
-#     location               = module.primary_region.location
-#     private_link_target_id = azurerm_private_endpoint.sqlserver.id
-#   }
-# }
+resource "azurerm_cdn_frontdoor_origin" "storage" {
+  name                          = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
+  cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.portal.id
+  enabled                       = true
+
+  certificate_name_check_enabled = true
+  provider                       = azurerm.front_door
+
+  host_name = replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", "")
+
+  private_link {
+    request_message        = "Access from Front Door Premium"
+    target_type            = "blob"
+    location               = module.primary_region.location
+    private_link_target_id = azurerm_private_endpoint.sqlserver.id
+  }
+}
 # ###https://registry.terraform.io/providers/hashicorp/azurerm/4.62.1/docs/resources/cdn_frontdoor_origin#example-usage-with-private-link-service
