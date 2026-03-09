@@ -226,7 +226,9 @@ resource "azurerm_cdn_frontdoor_origin" "storage" {
   certificate_name_check_enabled = true
   provider                       = azurerm.front_door
 
-  host_name = replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", "")
+  host_name = azurerm_storage_account.sql_server.primary_blob_endpoint
+
+  # host_name = replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", "")
 
   private_link {
     request_message        = "Access from Front Door Premium"
