@@ -219,14 +219,13 @@ resource "azurerm_monitor_metric_alert" "sql_db_deadlock_alert" {
 
 # ### Front door setup to add private link to storage account ###
 resource "azurerm_cdn_frontdoor_origin" "storage" {
-  name                          = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
-  cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.portal.id
-  enabled                       = true
-
+  name                           = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
+  cdn_frontdoor_origin_group_id  = azurerm_cdn_frontdoor_origin_group.portal.id
+  enabled                        = true
   certificate_name_check_enabled = true
   provider                       = azurerm.front_door
-
-  host_name = trim(replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", ""), "/")
+  host_name                      = trim(replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", ""), "/")
+  origin_host_header             = trim(replace(azurerm_storage_account.sql_server.primary_blob_endpoint, "https://", ""), "/")
 
   private_link {
     request_message        = "Access from Front Door Premium"
