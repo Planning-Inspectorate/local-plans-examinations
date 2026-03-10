@@ -16,6 +16,13 @@ resource "azurerm_cdn_frontdoor_origin_group" "portal" {
     sample_size                        = 16
     successful_samples_required        = 3
   }
+
+  private_link {
+    request_message        = "Access from Front Door Premium"
+    target_type            = "blob"
+    location               = module.primary_region.location
+    private_link_target_id = azurerm_storage_account.sql_server.id
+  }
 }
 
 resource "azurerm_cdn_frontdoor_origin" "portal" {
