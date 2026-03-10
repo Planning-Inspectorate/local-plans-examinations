@@ -22,7 +22,7 @@ resource "azurerm_storage_account" "sql_server" {
   https_traffic_only_enabled       = true
   allow_nested_items_to_be_public  = false
   cross_tenant_replication_enabled = false
-  public_network_access_enabled    = false
+  # public_network_access_enabled    = false
 
   network_rules {
     default_action = "Deny"
