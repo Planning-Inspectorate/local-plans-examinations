@@ -219,25 +219,25 @@ resource "azurerm_monitor_metric_alert" "sql_db_deadlock_alert" {
 
 # ### Front door setup to add private link to storage account ###
 
-resource "azurerm_cdn_frontdoor_origin_group" "storage" {
-  name                     = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
-  cdn_frontdoor_profile_id = data.azurerm_cdn_frontdoor_profile.shared.id
-  session_affinity_enabled = true
-  provider                 = azurerm.front_door
-
-  health_probe {
-    interval_in_seconds = 240
-    path                = "/"
-    protocol            = "Https"
-    request_type        = "HEAD"
-  }
-
-  load_balancing {
-    additional_latency_in_milliseconds = 0
-    sample_size                        = 16
-    successful_samples_required        = 3
-  }
-}
+# resource "azurerm_cdn_frontdoor_origin_group" "storage" {
+#   name                     = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
+#   cdn_frontdoor_profile_id = data.azurerm_cdn_frontdoor_profile.shared.id
+#   session_affinity_enabled = true
+#   provider                 = azurerm.front_door
+#
+#   health_probe {
+#     interval_in_seconds = 240
+#     path                = "/"
+#     protocol            = "Https"
+#     request_type        = "HEAD"
+#   }
+#
+#   load_balancing {
+#     additional_latency_in_milliseconds = 0
+#     sample_size                        = 16
+#     successful_samples_required        = 3
+#   }
+# }
 
 # resource "azurerm_cdn_frontdoor_origin" "storage" {
 #   name                           = "${local.org}-fd-${local.service_name}-storage-${var.environment}"
