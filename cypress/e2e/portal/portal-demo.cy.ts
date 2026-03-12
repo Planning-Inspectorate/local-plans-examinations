@@ -1,7 +1,10 @@
+import { PortalHomePage } from 'cypress/pageObjects/portal/home-page.ts';
+
+const homePage = new PortalHomePage();
 describe('Portal Demo Tests', () => {
 	it('should load the portal homepage', () => {
 		cy.visit('/');
-		cy.get('.govuk-heading-l').contains('This is the home page');
-		cy.get('[data-cy="db-connection"]').contains('Successfully connected to the database.');
+		homePage.verifyHeading('Local Plans Examination Service');
+		homePage.verifyDbConnection('Successfully connected to the database.');
 	});
 });
