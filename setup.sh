@@ -8,14 +8,14 @@ if ! docker -v > /dev/null 2>&1 || ! node -v > /dev/null 2>&1 || ! npm -v > /dev
   echo "please check you have docker compose, node, and npm installed"
   exit 1
 fi
-echo -e "\e[32m✔\e[0m check complete"
+echo -e "\033[32m✔\033[0m check complete"
 
 echo "installing packages..."
 if ! npm i; then
   echo "failed to install packages"
   exit 1
 fi
-echo -e "\e[32m✔\e[0m packages installed"
+echo -e "\033[32m✔\033[0m packages installed"
 
 if ! docker compose up -d; then
   echo "failed to launch db"
@@ -28,12 +28,18 @@ if ! cp apps/manage/.env.example apps/manage/.env; then
   exit 1
 fi
 
-if ! sed -i "s|SQL_CONNECTION_STRING=<populate-SQL-connection-string>|SQL_CONNECTION_STRING=\"sqlserver://localhost:1433;database=${DB_NAME};user=${DB_USER};password=${DB_PASS};trustServerCertificate=true\"|g" apps/manage/.env; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  portable_sed() { sed -i '' "$@"; }
+else
+  portable_sed() { sed -i "$@"; }
+fi
+
+if ! portable_sed "s|SQL_CONNECTION_STRING=<populate-SQL-connection-string>|SQL_CONNECTION_STRING=\"sqlserver://localhost:1433;database=${DB_NAME};user=${DB_USER};password=${DB_PASS};trustServerCertificate=true\"|g" apps/manage/.env; then
   echo "failed to set SQL connection string for 'manage' app"
   exit 1
 fi
 
-if ! sed -i 's/AUTH_DISABLED=false/AUTH_DISABLED=true/g' apps/manage/.env; then
+if ! portable_sed "s/AUTH_DISABLED=false/AUTH_DISABLED=true/g" apps/manage/.env; then
     echo "failed to set AUTH_DISABLED to true for 'manage' app"
     exit 1
 fi
@@ -43,12 +49,12 @@ if ! cp apps/portal/.env.example apps/portal/.env; then
   exit 1
 fi
 
-if ! sed -i "s|SQL_CONNECTION_STRING=<populate-SQL-connection-string>|SQL_CONNECTION_STRING=\"sqlserver://localhost:1433;database=${DB_NAME};user=${DB_USER};password=${DB_PASS};trustServerCertificate=true\"|g" apps/portal/.env; then
+if ! portable_sed "s|SQL_CONNECTION_STRING=<populate-SQL-connection-string>|SQL_CONNECTION_STRING=\"sqlserver://localhost:1433;database=${DB_NAME};user=${DB_USER};password=${DB_PASS};trustServerCertificate=true\"|g" apps/portal/.env; then
   echo "failed to set SQL connection string for 'portal' app"
   exit 1
 fi
 
-if ! sed -i 's/AUTH_DISABLED=false/AUTH_DISABLED=true/g' apps/portal/.env; then
+if ! portable_sed "s/AUTH_DISABLED=false/AUTH_DISABLED=true/g" apps/portal/.env; then
     echo "failed to set AUTH_DISABLED to true, for 'portal' app"
     exit 1
 fi
@@ -58,14 +64,14 @@ if ! cp packages/database/.env.example packages/database/.env; then
   exit 1
 fi
 
-echo -e "\e[32m✔\e[0m .env files created"
+echo -e "\033[32m✔\e[0m .env files created"
 
 echo "waiting for database..."
 attempts=0
 max_attempts=5
 
 while [ $attempts -lt $max_attempts ]; do
-  if docker exec local-plans-mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U "${DB_USER}" -P "${DB_PASS}" -Q "SELECT 1" > /dev/null 2>&1; then
+  if docker exec local-plans-mssql bash -c "/opt/mssql-tools18/bin/sqlcmd -S localhost -U '${DB_USER}' -P '${DB_PASS}' -C -Q 'SELECT 1' 2>/dev/null || /opt/mssql-tools/bin/sqlcmd -S localhost -U '${DB_USER}' -P '${DB_PASS}' -Q 'SELECT 1' 2>/dev/null" > /dev/null 2>&1; then
     echo "database is ready!"
     break
   fi
@@ -92,5 +98,5 @@ if ! npm run db-generate; then
   exit 1
 fi
 
-echo -e "\e[32m✔\e[0m setup complete and database is running "
+echo -e "\033[32m✔\033[0m setup complete and database is running "
 exit 0
