@@ -1,11 +1,3 @@
-declare module 'notifications-node-client' {
-	export class NotifyClient {
-		constructor(apiKey: string);
-		sendEmail(templateId: string, emailAddress: string, options: object): Promise<unknown>;
-		getNotificationById(notificationId: string): Promise<{ data: unknown }>;
-	}
-}
-
 export interface GovNotifyOptions {
 	personalisation: Record<string, string>;
 	reference?: string;
@@ -25,6 +17,7 @@ export interface NotifyConfig {
 }
 
 export interface CaseAssignmentPersonalisation {
+	[key: string]: string;
 	reference: string;
 	caseName: string;
 	frontOfficeLink: string;
@@ -32,6 +25,7 @@ export interface CaseAssignmentPersonalisation {
 }
 
 export interface CaseUpdatePersonalisation {
+	[key: string]: string;
 	reference: string;
 	caseName: string;
 	updateDescription: string;
@@ -39,6 +33,7 @@ export interface CaseUpdatePersonalisation {
 }
 
 export interface AuthCodePersonalisation {
+	[key: string]: string;
 	authCode: string;
 	expiryMinutes: string;
 }
