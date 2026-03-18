@@ -24,6 +24,19 @@ describe('GovNotifyClient', () => {
 			});
 			assert.strictEqual(logger.error.mock.callCount(), 1);
 		});
+		it('logs errors from Notify API response body', async (ctx) => {
+			const logger = mockLogger();
+			const client = new GovNotifyClient(logger, 'key', {} as any);
+			ctx.mock.method(client.notifyClient, 'sendEmail', () => {
+				const error: any = new Error('Notify API error');
+				error.response = { data: { errors: ['Error 1', 'Error 2'] } };
+				throw error;
+			});
+			await assert.rejects(() => client.sendEmail('tpl', 'a@b.com', { personalisation: {} }), {
+				message: 'email failed to dispatch: Notify API error'
+			});
+			assert.strictEqual(logger.error.mock.callCount(), 2);
+		});
 	});
 	describe('sendCaseAssignment', () => {
 		it('calls sendEmail with correct args', async (ctx) => {
