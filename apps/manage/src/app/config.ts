@@ -17,6 +17,16 @@ export interface Config extends BaseConfig {
 		redirectUri: string;
 		signoutUrl: string;
 	};
+	govNotify: {
+		disabled: boolean;
+		apiKey: string;
+		webHookToken: string;
+		templateIds: {
+			caseAssignment: string;
+			caseUpdate: string;
+		};
+	};
+	notifyCallbackEnabled: boolean;
 }
 
 export type ENVIRONMENT_NAMES = Readonly<{ PROD: string; DEV: string; TEST: string; TRAINING: string }>;
@@ -59,7 +69,13 @@ export function loadConfig(): Config {
 		NODE_ENV,
 		REDIS_CONNECTION_STRING,
 		SESSION_SECRET,
-		SQL_CONNECTION_STRING
+		SQL_CONNECTION_STRING,
+		GOV_NOTIFY_DISABLED,
+		GOV_NOTIFY_API_KEY,
+		GOV_NOTIFY_WEBHOOK_TOKEN,
+		GOV_NOTIFY_CASE_ASSIGNMENT_TEMPLATE_ID,
+		GOV_NOTIFY_CASE_UPDATE_TEMPLATE_ID,
+		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -92,6 +108,18 @@ export function loadConfig(): Config {
 			if (v === undefined || v === '') {
 				throw new Error(k + ' must be a non-empty string');
 			}
+		}
+	}
+
+	const notifyDisabled = GOV_NOTIFY_DISABLED === 'true';
+	if (!notifyDisabled) {
+		for (const [k, v] of Object.entries({
+			GOV_NOTIFY_API_KEY,
+			GOV_NOTIFY_WEBHOOK_TOKEN,
+			GOV_NOTIFY_CASE_ASSIGNMENT_TEMPLATE_ID,
+			GOV_NOTIFY_CASE_UPDATE_TEMPLATE_ID
+		})) {
+			if (!v) throw new Error(`${k} must be a non-empty string`);
 		}
 	}
 
@@ -130,7 +158,17 @@ export function loadConfig(): Config {
 			secret: SESSION_SECRET
 		},
 		// the static directory to serve assets from (images, css, etc..)
-		staticDir: buildConfig.staticDir
+		staticDir: buildConfig.staticDir,
+		govNotify: {
+			disabled: notifyDisabled,
+			apiKey: GOV_NOTIFY_API_KEY || '',
+			webHookToken: GOV_NOTIFY_WEBHOOK_TOKEN || '',
+			templateIds: {
+				caseAssignment: GOV_NOTIFY_CASE_ASSIGNMENT_TEMPLATE_ID || '',
+				caseUpdate: GOV_NOTIFY_CASE_UPDATE_TEMPLATE_ID || ''
+			}
+		},
+		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
 	};
 
 	return config;
