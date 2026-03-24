@@ -1,8 +1,8 @@
-import { describe, it, mock } from 'node:test';
-import assert from 'node:assert';
-import { buildListItems } from './controller.ts';
-import { configureNunjucks } from '../../../nunjucks.ts';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
+import assert from 'node:assert';
+import { describe, it, mock } from 'node:test';
+import { configureNunjucks } from '../../../nunjucks.ts';
+import { buildListItems } from './controller.ts';
 
 describe('list items', () => {
 	it('should render without error', async () => {

@@ -1,10 +1,10 @@
 // @ts-nocheck
 
-import { describe, it, mock } from 'node:test';
-import assert from 'node:assert';
-import { buildHomePage } from './controller.ts';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
+import assert from 'node:assert';
+import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
+import { buildHomePage } from './controller.ts';
 
 describe('home page', () => {
 	it('should render without error', async () => {
