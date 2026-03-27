@@ -24,8 +24,17 @@ resource "azurerm_key_vault" "main" {
   public_network_access_enabled = false
   sku_name                      = "standard"
 
+  network_acls {
+    default_action             = "Deny"
+    bypass                     = "AzureServices"
+    ip_rules                   = []
+    virtual_network_subnet_ids = []
+  }
+
   tags = local.tags
 }
+
+
 
 # secrets to be manually populated
 resource "azurerm_key_vault_secret" "manual_secrets" {
