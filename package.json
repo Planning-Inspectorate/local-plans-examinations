@@ -34,10 +34,10 @@
   "dependencies": {
     "@azure/functions": "^4.11.2",
     "@azure/identity": "^4.13.0",
-    "@azure/msal-node": "^5.1.0",
-    "@planning-inspectorate/dynamic-forms": "^3.3.4",
-    "@prisma/adapter-mssql": "^7.5.0",
-    "@prisma/client": "^7.5.0",
+    "@azure/msal-node": "^5.0.6",
+    "@planning-inspectorate/dynamic-forms": "^3.8.3",
+    "@prisma/adapter-mssql": "^7.3.0",
+    "@prisma/client": "^7.3.0",
     "accessible-autocomplete": "^3.0.1",
     "body-parser": "^2.2.1",
     "connect-redis": "^9.0.0",
@@ -52,15 +52,15 @@
     "nunjucks": "^3.2.4",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.2",
-    "redis": "^5.11.0"
+    "redis": "^5.10.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
     "@microsoft/microsoft-graph-types": "^2.43.1",
     "@types/express": "^5.0.5",
     "@types/express-session": "^1.18.2",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.4.0",
     "@types/nunjucks": "^3.2.6",
     "cookie-parser": "^1.4.7",
     "eslint": "^9.39.2",
@@ -70,7 +70,7 @@
     "nodemon": "^3.1.11",
     "prettier": "^3.8.1",
     "prettier-plugin-prisma": "^5.0.0",
-    "prisma": "^7.5.0",
+    "prisma": "^7.3.0",
     "sass": "^1.97.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2"

@@ -20,3 +20,11 @@ datasource db {
 // this is because these IDs may be used in URLs and it makes them harder to guess
 // while we don't rely on that for security, it adds an extra layer
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
+
+model Case {
+  id        Int      @id @default(autoincrement())
+  reference String   @unique
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+}
