@@ -1,0 +1,48 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <form action="" method="post" novalidate>
+            <input type="hidden" name="_csrf" value="{{ _csrf }}">
+            {{ govukRadios({
+                name: "hasCaseReferenceNumber",
+                fieldset: {
+                    legend: {
+                        text: questionText,
+                        isPageHeading: true,
+                        classes: "govuk-fieldset__legend--l"
+                    }
+                },
+                hint: {
+                    text: hintText
+                },
+                errorMessage: errors.hasCaseReferenceNumber and {
+                    text: errors.hasCaseReferenceNumber.msg
+                },
+                items: [
+                    {
+                        value: 'yes',
+                        text: 'Yes',
+                        checked: hasReferenceNumberValue == 'yes'
+                    },
+                    {
+                        value: 'no',
+                        text: 'No',
+                        checked: hasReferenceNumberValue == 'no'
+                    }
+                ]
+            }) }}
+
+            {{ govukButton({
+                text: "Continue",
+                type: "submit",
+                attributes: { "data-cy":"button-save-and-continue"}
+            }) }}
+        </form>
+    </div>
+</div>
+{% endblock %}

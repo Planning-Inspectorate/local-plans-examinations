@@ -5,6 +5,7 @@ import { createHomeRoutes } from './views/home/index.ts';
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
+import { createLoginRoutes } from './views/login/index.ts';
 
 /**
  * Main app router
@@ -19,6 +20,8 @@ export function buildRouter(service: PortalService): IRouter {
 	// don't cache responses, note no-cache allows some caching, but with revalidation
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
+
+	router.use('/login', createLoginRoutes(service));
 
 	router.use('/', createHomeRoutes(service));
 	router.use('/error', createErrorRoutes(service));
