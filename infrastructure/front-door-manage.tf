@@ -169,6 +169,17 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
         rule_id = "200003"
       }
     }
+
+    override {
+      rule_group_name = "SQLI"
+      rule {
+        # SQL Injection Attack: SQL Operator Detected
+        # msal-node v5.1.1 triggers this rule for auth redirect URLS
+        action  = "Log"
+        enabled = true
+        rule_id = "942120"
+      }
+    }
   }
 
   managed_rule {
