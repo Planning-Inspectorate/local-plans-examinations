@@ -1,8 +1,10 @@
 import { type IRouter, Router as createRouter } from 'express';
 import {
 	buildEnterCredentialsPage,
+	buildEnterOtpPage,
 	buildHasCaseReferenceNumberPage,
 	buildNoAccessPage,
+	buildSubmitCredentialsPage,
 	buildSubmitHasCaseReferenceNumber
 } from './controller.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
@@ -13,12 +15,16 @@ export function createLoginRoutes(service: PortalService): IRouter {
 	const hasCaseReferencePage = buildHasCaseReferenceNumberPage();
 	const submitHasCaseReferenceNumberPage = buildSubmitHasCaseReferenceNumber(service);
 	const signInPage = buildEnterCredentialsPage();
+	const submitEmailAndCaseReference = buildSubmitCredentialsPage(service);
+	const enterOTP = buildEnterOtpPage();
 	const noAccessPage = buildNoAccessPage();
 
 	router.get('/has-case-reference', asyncHandler(hasCaseReferencePage));
 	router.post('/has-case-reference', asyncHandler(submitHasCaseReferenceNumberPage));
-	router.get('/no-access', asyncHandler(noAccessPage));
 	router.get('/sign-in', asyncHandler(signInPage));
+	router.post('/sign-in', asyncHandler(submitEmailAndCaseReference));
+	router.get('/enter-code', asyncHandler(enterOTP));
+	router.get('/no-access', asyncHandler(noAccessPage));
 
 	return router;
 }

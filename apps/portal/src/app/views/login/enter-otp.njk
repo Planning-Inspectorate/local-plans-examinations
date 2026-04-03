@@ -1,0 +1,54 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block pageContent %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            {% if showNewCodeMessage %}
+                {{ govukNotificationBanner({
+                    text: "We've sent a code to your email address.",
+                    type: 'success'
+                }) }}
+            {% endif %}
+            <form action="" method="post" novalidate>
+                <input type="hidden" name="_csrf" value="{{ _csrf }}">
+
+                {{ govukInput({
+                    id: "otpCode",
+                    name: "otpCode",
+                    label: {
+                        text: questionText,
+                        classes: "govuk-label--l",
+                        isPageHeading: true
+                    },
+                    classes: "govuk-input--width-5",
+                    errorMessage: errors.otpCode and {
+                        text: errors.otpCode.msg
+                    }
+                }) }}
+
+                {{ govukButton({
+                    text: "Continue",
+                    type: "submit",
+                    attributes: { "data-cy":"button-save-and-continue"}
+                }) }}
+            </form>
+        </div>
+    </div>
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            <h2 class="govuk-heading-m">If you're having problems</h2>
+            <p class="govuk-body"><a href="/sign-in" class="govuk-link govuk-link--no-visited-state">Change the email address</a> if you entered it incorrectly.</p>
+            <p class="govuk-body">Check if the email has gone to your spam or junk folder. If it's not there, we can <a href="/login/request-new-code" class="govuk-link govuk-link--no-visited-state">send a new code</a>.</p>
+
+            {{ govukDetails({
+                summaryText: "If you're still having problems",
+                html: '<p class="govuk-body">You can contact our customer support team.</p><p class="govuk-body">Telephone: 0303 444 5000<br>Monday to Friday, 9am to midday (except public holidays)<br><a href="https://www.gov.uk/call-charges" class="govuk-link govuk-link--no-visited-state">Find out more about call charges.</a></p>'
+            }) }}
+        </div>
+    </div>
+{% endblock %}

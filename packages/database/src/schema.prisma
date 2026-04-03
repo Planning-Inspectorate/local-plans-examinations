@@ -28,3 +28,14 @@ model Case {
   email     String
   createdAt DateTime @default(now())
 }
+
+model OneTimePassword {
+  email         String
+  caseReference String
+  hashedOtp     String
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  attempts      Int      @default(0)
+
+  @@id([email, caseReference])
+}

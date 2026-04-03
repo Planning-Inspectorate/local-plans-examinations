@@ -2,6 +2,8 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import type { PortalService } from '#service';
 import { BOOLEAN_OPTIONS, expressValidationErrorsToGovUkErrorList } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import { clearSessionData, readSessionData } from '@pins/local-plans-lib/util/session.ts';
 
 export function buildHasCaseReferenceNumberPage(viewData = {}): AsyncRequestHandler {
 	return async (req, res) => {
@@ -53,6 +55,83 @@ export function buildEnterCredentialsPage(viewData = {}): AsyncRequestHandler {
 			caseNumberHintText:
 				'You can find this in the email inviting you to sign in to this service. For example, ref/0000001',
 			backLinkUrl: `${req.baseUrl}/has-case-reference`,
+			...viewData
+		});
+	};
+}
+
+export function buildSubmitCredentialsPage(service: PortalService): AsyncRequestHandler {
+	const { logger, db } = service;
+	return async (req: Request, res: Response) => {
+		// check credentials exist
+		const { email, caseReference } = req.body;
+		if (!email) {
+			logger.info(`Email address now provided - ${email}`);
+			req.body.errors = {
+				email: { msg: 'Enter your email address' }
+			};
+			buildEnterCredentialsPage();
+		}
+		if (!caseReference) {
+			logger.info(`Case number not provided - ${caseReference}`);
+			req.body.errors = {
+				caseReference: { msg: 'Enter your case number' }
+			};
+		}
+
+		//generate OTP
+		const OTP_LENGTH = 8;
+		const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		const bytes = new Uint8Array(OTP_LENGTH);
+		crypto.getRandomValues(bytes);
+		const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+
+		const SALT_ROUNDS = 10;
+		const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
+		const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+
+		// upsert OTP record
+		try {
+			await db.oneTimePassword.upsert({
+				where: { email_caseReference: { email, caseReference } },
+				update: { hashedOtp },
+				create: { email, caseReference, hashedOtp, attempts: 0, expiresAt }
+			});
+			// go to OTP page
+			req.session.email = email;
+			req.session.caseReference = caseReference.toUpperCase();
+
+			return res.redirect(`${req.baseUrl}/enter-code`);
+		} catch (error) {
+			logger.error(error);
+			req.body.errors = {
+				otpError: { msg: 'There was an error creating the OTP, apologies, please start again' }
+			};
+			req.body.errorSummary = expressValidationErrorsToGovUkErrorList(req.body.errors);
+
+			return res.render('views/login/enter-credentials-page.njk', {
+				pageTitle: 'Sign-in',
+				emailQuestionText: 'Email address',
+				caseNumberQuestionText: 'Case number',
+				caseNumberHintText:
+					'You can find this in the email inviting you to sign in to this service. For example, ref/0000001',
+				backLinkUrl: `${req.baseUrl}/has-case-reference`,
+				errors: req.body.errors,
+				errorSummary: req.body.errorSummary
+			});
+		}
+	};
+}
+
+export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
+	return async (req, res) => {
+		const showNewCodeMessage = readSessionData(req, req.session.caseReference as string, 'showNewCodeMessage', false);
+		clearSessionData(req, req.session.caseReference as string, 'showNewCodeMessage');
+
+		return res.render('views/login/enter-otp.njk', {
+			questionText: 'Enter the code we sent to your email address',
+			backLinkUrl: `${req.baseUrl}/sign-in`,
+			showNewCodeMessage,
 			...viewData
 		});
 	};
