@@ -74,6 +74,15 @@ interface AssetOptions {
 	govUkRoot: string;
 }
 
+async function pathExists(pathToCheck: string): Promise<boolean> {
+	try {
+		await fs.access(pathToCheck);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /**
  * Copy govuk assets into the .static folder
  *
@@ -98,7 +107,9 @@ async function copyAssets({ staticDir, govUkRoot }: AssetOptions): Promise<void>
 	await copyFolder(fonts, staticFonts);
 	await copyFile(js, staticJs);
 	await copyFile(manifest, staticManifest);
-	await copyFolder(rebrand, staticRebrand);
+	if (await pathExists(rebrand)) {
+		await copyFolder(rebrand, staticRebrand);
+	}
 }
 
 interface AutocompleteOptions {
