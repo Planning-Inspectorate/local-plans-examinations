@@ -1,28 +1,16 @@
-{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "ui/header/pins-header.njk" import pinsHeader %}
 
-<header role="banner">
-	<div class="pins-header">
-		<div class="govuk-header__container pins-header__container govuk-width-container">
-			<div class="govuk-header__logo">
-				<span class="govuk-header__logotype">
-					<a href="https://www.gov.uk/government/organisations/planning-inspectorate">{% include "views/layouts/components/core/pins-dual-logo.njk" %}</a>
-				</span>
-			</div>
-			<div class="govuk-header__content">
-				<span class="govuk-header__local-plans">{{ config.headerTitle }}</span>
-			</div>
-		</div>
+{{ pinsHeader({isExternal: true}) }}
+
+{% if config.inBeta %}
+	<div class="govuk-width-container">
+		{% include "views/layouts/components/core/banner.njk" %}
 	</div>
+{% endif %}
 
-	{% if config.isLive %}
-		<div class="govuk-width-container">
-			{% include "views/layouts/components/core/banner.njk" %}
-		</div>
-
-			{{ govukServiceNavigation({
-				classes: 'pins-navigation',
-				navigation: config.primaryNavigationLinks
-			}) }}
-	{% endif %}
-</header>
+{{ govukServiceNavigation({
+	classes: 'pins-service-navigation',
+	serviceName: config.headerTitle,
+	navigation: config.primaryNavigationLinks
+}) }}

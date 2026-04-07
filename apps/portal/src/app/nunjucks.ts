@@ -15,12 +15,14 @@ export function configureNunjucks(): nunjucks.Environment {
 	const dynamicFormsRoot = path.resolve(require.resolve('@planning-inspectorate/dynamic-forms'), '..');
 	// get the path to the govuk-frontend folder, in node_modules, using the node require resolution
 	const govukFrontendRoot = path.resolve(require.resolve('govuk-frontend'), '../..');
+	// get the path to the @pins/service-name-lib folder, in node_modules, using the node require resolution
+	const libUi = path.resolve(require.resolve('@pins/local-plans-lib'), '..');
 	const appDir = path.join(config.srcDir, 'app');
 
 	// configure nunjucks
 	const env = nunjucks.configure(
 		// ensure nunjucks templates can use govuk-frontend components, and templates we've defined in `web/src/app`
-		[govukFrontendRoot, dynamicFormsRoot, appDir],
+		[govukFrontendRoot, dynamicFormsRoot, libUi, appDir],
 		{
 			// output with dangerous characters are escaped automatically
 			autoescape: true,
