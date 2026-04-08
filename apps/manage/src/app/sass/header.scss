@@ -1,8 +1,6 @@
 @use 'sass:map' as map;
-@use 'node_modules/govuk-frontend/dist/govuk/settings/_colours-organisations.scss' as org-colors with (
-	$govuk-new-organisation-colours: true
-);
-@use 'node_modules/govuk-frontend/dist/govuk/settings/_colours-applied.scss' as colors;
+@use 'node_modules/govuk-frontend/dist/govuk/settings/_colours-organisations.scss' as org-colors;
+@use 'node_modules/govuk-frontend/dist/govuk/helpers/_colour.scss' as colors;
 @use 'node_modules/govuk-frontend/dist/govuk/helpers/media-queries' as mixins;
 @use 'node_modules/govuk-frontend/dist/govuk/settings/media-queries' as settings;
 
