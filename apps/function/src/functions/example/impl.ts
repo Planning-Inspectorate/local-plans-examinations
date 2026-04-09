@@ -19,7 +19,7 @@ export function buildExampleFunction(service: FunctionService): TimerHandler {
 				context.log('Error during example function run:', error);
 				message = error.message;
 			}
-			throw new Error('Error during example function run:' + message);
+			throw new Error('Error during example function run:' + message, { cause: error });
 		}
 	};
 }
