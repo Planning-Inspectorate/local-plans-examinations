@@ -1,7 +1,8 @@
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 
-export async function seedStaticData(dbClient: PrismaClient) {
-	// TODO: add static seed data
+export async function seedDev(dbClient: PrismaClient) {
+	// TODO: add seed data
 	await dbClient.$queryRaw`SELECT 1`;
+
 	console.log('static data seed complete');
 }
