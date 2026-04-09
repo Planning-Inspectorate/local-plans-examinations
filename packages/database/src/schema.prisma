@@ -39,3 +39,17 @@ model OneTimePassword {
 
   @@id([email, caseReference])
 }
+
+model NotifyEmail {
+  id              String    @id @default(uuid()) @db.UniqueIdentifier
+  notifyId        String    @db.NVarChar(100)
+  reference       String?   @db.NVarChar(1000)
+  createdDate     DateTime? @db.DateTime2
+  completedDate   DateTime? @db.DateTime2
+  status          String    @db.NVarChar(100)
+  templateId      String?   @db.NVarChar(100)
+  templateVersion Int?
+  body            String?   @db.NVarChar(Max)
+  subject         String?   @db.NVarChar(Max)
+  email           String?   @db.NVarChar(100)
+}
