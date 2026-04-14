@@ -4,6 +4,7 @@ import { BOOLEAN_OPTIONS, expressValidationErrorsToGovUkErrorList } from '@plann
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { clearSessionData, readSessionData } from '@pins/local-plans-lib/util/session.ts';
+import { sendAuthCodeNotification } from '../auth/send-code.ts';
 
 export function buildHasCaseReferenceNumberPage(viewData = {}): AsyncRequestHandler {
 	return async (req, res) => {
@@ -90,16 +91,35 @@ export function buildSubmitCredentialsPage(service: PortalService): AsyncRequest
 		const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
 		const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
 
-		// upsert OTP record
 		try {
-			await db.oneTimePassword.upsert({
-				where: { email_caseReference: { email, caseReference } },
-				update: { hashedOtp },
-				create: { email, caseReference, hashedOtp, attempts: 0, expiresAt }
+			// upsert OTP record
+			const MAX_ATTEMPTS = 3;
+			const current_attempts = await db.oneTimePassword.findUnique({
+				where: { email_caseReference: { email, caseReference } }
 			});
+			if (current_attempts === null || current_attempts.attempts < MAX_ATTEMPTS) {
+				await db.oneTimePassword.upsert({
+					where: { email_caseReference: { email, caseReference } },
+					update: { hashedOtp, attempts: { increment: 1 } },
+					create: { email, caseReference, hashedOtp, attempts: 0, expiresAt }
+				});
+			} else if (current_attempts.attempts >= MAX_ATTEMPTS) {
+				req.body.errors = {
+					email: { msg: 'You have requested too many passwords' },
+					caseReference: { msg: 'You have requested too many passwords' }
+				};
+				await buildEnterCredentialsPage({
+					errors: req.body.errors,
+					errorSummary: expressValidationErrorsToGovUkErrorList(req.body.errors)
+				})(req, res);
+				return;
+			}
+
 			// go to OTP page
 			req.session.email = email;
 			req.session.caseReference = caseReference.toUpperCase();
+
+			await sendAuthCodeNotification(service, email, { authCode: otp, expiryMinutes: '30' });
 
 			return res.redirect(`${req.baseUrl}/enter-code`);
 		} catch (error) {
