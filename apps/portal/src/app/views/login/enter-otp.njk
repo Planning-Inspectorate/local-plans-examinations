@@ -18,16 +18,16 @@
                 <input type="hidden" name="_csrf" value="{{ _csrf }}">
 
                 {{ govukInput({
-                    id: "otpCode",
-                    name: "otpCode",
+                    id: "otp",
+                    name: "otp",
                     label: {
                         text: questionText,
                         classes: "govuk-label--l",
                         isPageHeading: true
                     },
                     classes: "govuk-input--width-5",
-                    errorMessage: errors.otpCode and {
-                        text: errors.otpCode.msg
+                    errorMessage: errors.otp and {
+                        text: errors.otp.msg
                     }
                 }) }}
 

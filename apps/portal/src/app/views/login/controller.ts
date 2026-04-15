@@ -86,6 +86,7 @@ export function buildSubmitCredentialsPage(service: PortalService): AsyncRequest
 		const bytes = new Uint8Array(OTP_LENGTH);
 		crypto.getRandomValues(bytes);
 		const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+		logger.info(`OTP ${otp}`);
 
 		const SALT_ROUNDS = 10;
 		const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
@@ -154,6 +155,33 @@ export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 			showNewCodeMessage,
 			...viewData
 		});
+	};
+}
+
+export function buildSubmitOtpPage(service: PortalService) {
+	return async (req: Request, res: Response) => {
+		const { db, logger } = service;
+
+		const email = req.session.email;
+		const caseReference = req.session.caseReference;
+
+		if (!email || !caseReference) {
+			return res.redirect(`${req.baseUrl}/has-case-reference`);
+		}
+
+		const otpRecord = await db.oneTimePassword.findUnique({
+			where: { email_caseReference: { email, caseReference } }
+		});
+
+		if (!otpRecord) return res.redirect(`${req.baseUrl}/has-case-reference`);
+
+		const { otp } = req.body;
+
+		const otpCodesMatch = await bcrypt.compare(otp.trim().toUpperCase(), otpRecord?.hashedOtp);
+		if (!otpCodesMatch) {
+			logger.error('codes do not match');
+			res.redirect(`${req.baseUrl}/enter-code`);
+		} else res.redirect(`/`);
 	};
 }
 
