@@ -185,6 +185,40 @@ export function buildSubmitOtpPage(service: PortalService) {
 	};
 }
 
+export function buildVerifyToken(service: PortalService) {
+	return async (req: Request, res: Response) => {
+		const { logger, db } = service;
+		const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+		if (!token) {
+			logger.error('token not found');
+			res.redirect(`/`);
+		}
+		logger.info(`token = ${token}`);
+		const tokenRecord = await db.emailActionToken.findUnique({ where: { token } });
+		if (!tokenRecord) throw new Error('token not found');
+		else if (tokenRecord.usedAt) throw new Error('token has already been used');
+		else {
+			await db.emailActionToken.update({
+				where: { token },
+				data: { usedAt: new Date(Date.now()) }
+			});
+			logger.info(`token updated: ${tokenRecord}`);
+
+			//generate OTP
+			const OTP_LENGTH = 8;
+			const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			const bytes = new Uint8Array(OTP_LENGTH);
+			crypto.getRandomValues(bytes);
+			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+			logger.info(`OTP ${otp}`);
+
+			// send OTP to user
+			await sendAuthCodeNotification(service, tokenRecord.userEmail, { authCode: otp, expiryMinutes: '20' });
+			res.redirect(`${req.baseUrl}/enter-code`);
+		}
+	};
+}
+
 export function buildNoAccessPage(): AsyncRequestHandler {
 	return async (req, res) => {
 		return res.render('views/login/no-access.njk', {
