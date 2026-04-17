@@ -20,23 +20,6 @@
                         text: errors.email.msg
                     }
                 }) }}
-
-                {{ govukInput({
-                    id: "caseReference",
-                    name: "caseReference",
-                    label: {
-                        text: caseNumberQuestionText,
-                        classes: "govuk-label--m",
-                        isPageHeading: true
-                    },
-                    hint: {
-                        text: caseNumberHintText
-                    },
-                    errorMessage: errors.caseReference and {
-                        text: errors.caseReference.msg
-                    }
-                }) }}
-
                 {{ govukButton({
                     text: "Continue",
                     type: "submit",

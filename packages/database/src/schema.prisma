@@ -30,14 +30,11 @@ model Case {
 }
 
 model OneTimePassword {
-  email         String
-  caseReference String
-  hashedOtp     String
-  createdAt     DateTime @default(now())
-  expiresAt     DateTime
-  attempts      Int      @default(0)
-
-  @@id([email, caseReference])
+  email     String   @id
+  hashedOtp String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  attempts  Int      @default(0)
 }
 
 model NotifyEmail {
@@ -52,13 +49,4 @@ model NotifyEmail {
   body            String?   @db.NVarChar(Max)
   subject         String?   @db.NVarChar(Max)
   email           String?   @db.NVarChar(100)
-}
-
-model EmailActionToken {
-  id        String    @id @default(uuid()) @db.UniqueIdentifier
-  token     String    @unique @db.NVarChar(64)
-  userEmail String    @db.NVarChar(255)
-  expiresAt DateTime  @db.DateTime2
-  usedAt    DateTime? @db.DateTime2
-  createdAt DateTime  @default(now()) @db.DateTime2
 }

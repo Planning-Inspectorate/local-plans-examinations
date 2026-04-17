@@ -2,7 +2,6 @@ import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { CaseCreateInput } from '@pins/local-plans-database/src/client/models/Case.ts';
-import crypto from 'crypto';
 
 /**
  * The structure of data for the journey answers
@@ -39,27 +38,19 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			service.logger.warn('Notify client not configured');
 		} else {
 			try {
-				const token = crypto.randomBytes(32).toString('hex');
 				const portalUrl = process.env.PORTAL_URL;
 				const templateID = process.env.TEMPLATE_ID;
 				if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
 				if (!templateID) throw new Error('TEMPLATE_ID environment variable is not set');
-				const magicLink = `${portalUrl}/login/verify/${token}`;
+				const portalLoginURL = `${portalUrl}/login`;
 				await service.notifyClient.sendEmail(templateID, answers.email.trim(), {
 					personalisation: {
-						magic_link: magicLink
+						portalLoginURL
 					}
 				});
-				service.logger.info({ email: answers.email }, 'Notification email sent');
-				await service.db.emailActionToken.create({
-					data: {
-						token,
-						userEmail: answers.email,
-						expiresAt: new Date(Date.now() + 20 * 60 * 1000)
-					}
-				});
+				service.logger.info({ email: answers.email }, 'create a case - email sent');
 			} catch (error) {
-				service.logger.error({ error, email: answers.email }, 'Failed to send notification email');
+				service.logger.error({ error, email: answers.email }, 'Failed to send create a case email');
 			}
 		}
 		res.render('views/layouts/success.njk', { reference: answers.reference });
