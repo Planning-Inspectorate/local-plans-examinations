@@ -104,6 +104,3 @@ packages/database/src/client
 
 # Azure Function
 local.settings.json
-
-# Report 
-cypress/reports/

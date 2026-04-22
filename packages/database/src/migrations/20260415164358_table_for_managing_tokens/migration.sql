@@ -1,0 +1,28 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[EmailActionToken] (
+    [id] UNIQUEIDENTIFIER NOT NULL,
+    [token] NVARCHAR(64) NOT NULL,
+    [userEmail] NVARCHAR(255) NOT NULL,
+    [expiresAt] DATETIME2 NOT NULL,
+    [usedAt] DATETIME2,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [EmailActionToken_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [EmailActionToken_pkey] PRIMARY KEY CLUSTERED ([id]),
+    CONSTRAINT [EmailActionToken_token_key] UNIQUE NONCLUSTERED ([token])
+);
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

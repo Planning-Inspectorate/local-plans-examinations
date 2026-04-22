@@ -15,8 +15,8 @@
   "license": "MIT",
   "dependencies": {
     "@pins/local-plans-database": "^0.0.0",
-    "@pins/local-plans-lib": "^0.0.0",
     "@planning-inspectorate/dynamic-forms": "*",
+    "@pins/local-plans-lib": "^0.0.0",
     "body-parser": "*",
     "connect-redis": "*",
     "dotenv": "*",
@@ -28,7 +28,8 @@
     "nunjucks": "*",
     "pino": "*",
     "pino-pretty": "*",
-    "redis": "*"
+    "redis": "*",
+    "express-rate-limit": "^8.3.2"
   },
   "devDependencies": {
     "cypress": "^15.8.1",

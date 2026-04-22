@@ -5,6 +5,7 @@
 		"allowImportingTsExtensions": true,
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
 		"checkJs": false,
 		"erasableSyntaxOnly": true,
 		"esModuleInterop": true,
@@ -13,10 +14,6 @@
 		"noEmit": true,
 		"strict": true,
 		"target": "esnext",
-		"skipLibCheck": true,
-		"types": ["cypress", "@cypress/grep"],
-		"paths": {
-			"*": ["./*"]
-		}
+		"skipLibCheck": true
 	}
 }

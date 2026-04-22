@@ -6,9 +6,5 @@
 	)
 );
 @use './components/pins-table.scss';
-@use 'node_modules/@pins/local-plans-lib/ui/header/pins-header';
-@use 'node_modules/@pins/local-plans-lib/ui/footer/pins-footer';
-
-.show-line-breaks {
-	white-space: pre;
-}
+@use './components/pins-header.scss';
+@use './components/pins-navigation.scss';

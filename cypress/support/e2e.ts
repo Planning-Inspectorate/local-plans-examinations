@@ -14,35 +14,4 @@
 // ***********************************************************
 
 // Import commands.js using ES2015 syntax:
-import './commands.ts';
-import 'cypress-mochawesome-reporter/register.ts';
-
-let grepTags: string[] = [];
-
-/**
- * Helper to normalize Cypress.env value to string[]
- */
-function getTags(value: string | string[] | undefined): string[] {
-	if (Array.isArray(value)) return value;
-	if (typeof value === 'string') return value.split(',');
-	return [];
-}
-
-before(function () {
-	const envTags = Cypress.env('grepTags');
-	grepTags = getTags(envTags);
-});
-
-beforeEach(function () {
-	const runnable = (this as any).currentTest;
-	if (!runnable) return;
-
-	const testTags: string[] = runnable._testConfig?.unverifiedTestConfig?.tags || [];
-
-	if (grepTags.length === 0) return;
-
-	const hasMatch = testTags.some((tag) => grepTags.includes(tag));
-	if (!hasMatch) {
-		runnable.pending = true;
-	}
-});
+import './commands';

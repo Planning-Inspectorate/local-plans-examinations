@@ -9,11 +9,11 @@ import { runBuild } from '@pins/local-plans-lib/util/build.ts';
 async function run(): Promise<void> {
 	const require = createRequire(import.meta.url);
 	// resolves to <root>/node_modules/govuk-frontend/dist/govuk/all.bundle.js than maps to `<root>`
-	const repoRoot = path.resolve(require.resolve('govuk-frontend'), '../../../../..');
+	const govUkRoot = path.resolve(require.resolve('govuk-frontend'), '../../../../..');
 
 	const config = loadBuildConfig();
 	const localsFile = path.join(config.srcDir, 'util', 'config-middleware.ts');
-	await runBuild({ staticDir: config.staticDir, srcDir: config.srcDir, repoRoot, localsFile });
+	await runBuild({ staticDir: config.staticDir, srcDir: config.srcDir, govUkRoot, localsFile });
 }
 
 // run the build, and write any errors to console

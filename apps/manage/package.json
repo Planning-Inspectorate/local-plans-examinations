@@ -14,9 +14,9 @@
   "dependencies": {
     "@azure/msal-node": "*",
     "@microsoft/microsoft-graph-client": "*",
+    "@planning-inspectorate/dynamic-forms": "*",
     "@pins/local-plans-database": "^0.0.0",
     "@pins/local-plans-lib": "^0.0.0",
-    "@planning-inspectorate/dynamic-forms": "*",
     "accessible-autocomplete": "*",
     "body-parser": "*",
     "connect-redis": "*",
