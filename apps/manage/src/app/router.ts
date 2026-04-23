@@ -3,9 +3,11 @@ import { createRoutesAndGuards as createAuthRoutesAndGuards } from './auth/route
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import { createRoutes as createItemRoutes } from './views/items/index.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
+import { createNotifyRoutes } from './notify/router.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
+import { createACaseRoutes } from './views/create-a-case/index.ts';
 
 /**
  * Main app router
@@ -40,7 +42,14 @@ export function buildRouter(service: ManageService): IRouter {
 
 	router.get('/', (req, res) => res.redirect('/items'));
 	router.use('/items', itemsRoutes);
+
+	if (service.notifyCallbackEnabled) {
+		service.logger.info('registering notify callback routes');
+		router.use('/notify', createNotifyRoutes(service));
+	}
+
 	router.use('/error', createErrorRoutes(service));
+	router.use('/create-a-case', createACaseRoutes(service));
 
 	return router;
 }
