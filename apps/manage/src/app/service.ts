@@ -1,18 +1,16 @@
 import { BaseService } from '@pins/local-plans-lib/app/base-service.ts';
+import { initGovNotify } from '@pins/local-plans-lib/govnotify/index.ts';
+import type { GovNotifyClient } from '@pins/local-plans-lib/govnotify/index.ts';
 import type { Config } from './config.ts';
 
-/**
- * This class encapsulates all the services and clients for the application
- */
 export class ManageService extends BaseService {
-	/**
-	 * @private
-	 */
 	#config: Config;
+	readonly notifyClient: GovNotifyClient | null;
 
 	constructor(config: Config) {
 		super(config);
 		this.#config = config;
+		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
 
 	get authConfig(): Config['auth'] {
@@ -21,5 +19,13 @@ export class ManageService extends BaseService {
 
 	get authDisabled(): boolean {
 		return this.#config.auth.disabled;
+	}
+
+	get webHookToken(): string {
+		return this.#config.govNotify.webHookToken;
+	}
+
+	get notifyCallbackEnabled(): boolean {
+		return this.#config.notifyCallbackEnabled;
 	}
 }
