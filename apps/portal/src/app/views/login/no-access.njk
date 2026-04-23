@@ -1,0 +1,21 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            <h2 class="govuk-heading-l">{{ pageTitle }}</h2>
+            <p class="govuk-body">If you think you should have access, you can contact us by the following options:</p>
+            <p class="govuk-body">Email: <a class="govuk-link" href="mailto:NIEnquiries@planninginspectorate.gov.uk">NIEnquiries@planninginspectorate.gov.uk</a></p>
+            <p class="govuk-body">If you are contacting us about a specific project, put the project name in the subject line. At busy times we may not be able to respond immediately.</p>
+            <p class="govuk-body">Telephone customer services: <a class="govuk-link" href="tel:+443034445000">0303 444 5000</a></p>
+            <p class="govuk-body">
+                Open Monday to Friday: 9am to 4pm.
+                <br>
+                Closed on weekends and bank holidays.
+            </p>
+            <p class="govuk-body">Further information about contacting the Planning Inspectorate customer services can be viewed on <a href="https://www.gov.uk/government/organisations/planning-inspectorate" class="govuk-link govuk-link--no-visited-state">GOV.UK</a>.</p>
+        </div>
+    </div>
+{% endblock %}
