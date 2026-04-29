@@ -1,5 +1,8 @@
 import { defineConfig } from 'cypress';
 import * as dotenv from 'dotenv';
+import { setupNodeEvents as customTasks } from './cypress/support/tasks.ts';
+import webpack from '@cypress/webpack-preprocessor';
+import path from 'path';
 
 dotenv.config();
 
@@ -23,15 +26,50 @@ export default defineConfig({
 	e2e: {
 		baseUrl,
 		screenshotsFolder: 'cypress/reports/screenshots',
+
 		async setupNodeEvents(on, config) {
+			on(
+				'file:preprocessor',
+				webpack({
+					webpackOptions: {
+						resolve: {
+							alias: {
+								cypress: path.resolve(__dirname, 'cypress')
+							},
+							extensions: ['.ts', '.js']
+						},
+						module: {
+							rules: [
+								{
+									test: /\.ts$/,
+									exclude: /node_modules/,
+									use: [
+										{
+											loader: 'ts-loader',
+											options: {
+												transpileOnly: true // faster + avoids type-check issues in CI
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				})
+			);
+
 			const mochawesome: any = await import('cypress-mochawesome-reporter/plugin');
 			mochawesome.default(on);
+
+			customTasks(on, config);
 
 			return config;
 		}
 	},
 
 	env: {
+		adminUsername: process.env.ADMIN_EMAIL,
+		adminPassword: process.env.ADMIN_PASSWORD,
 		grepFilterSpecs: true,
 		grepOmitFiltered: true
 	},

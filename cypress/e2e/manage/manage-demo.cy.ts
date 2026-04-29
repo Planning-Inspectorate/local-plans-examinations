@@ -4,7 +4,7 @@ const manageHomePage = new ManageHomePage();
 
 describe('Manage Demo Tests', () => {
 	it('should load the manage homepage', { tags: ['smoke'] }, () => {
-		cy.visit('/');
+		cy.authVisit('/');
 		manageHomePage.verifyMainHeading('Some Service Name');
 	});
 });

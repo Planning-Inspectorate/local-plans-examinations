@@ -1,5 +1,5 @@
 export class ManageHomePage {
-	mainHeading = '[[data-cy="main-heading"]';
+	mainHeading = '.govuk-heading-xl';
 
 	verifyMainHeading(text: string) {
 		cy.get(this.mainHeading).contains(text);
