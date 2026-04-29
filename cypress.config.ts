@@ -17,8 +17,9 @@ export default defineConfig({
 	reporter: 'cypress-mochawesome-reporter',
 	reporterOptions: {
 		reportDir: 'cypress/reports',
-		charts: true,
-		reportPageTitle: 'Cypress Test Report',
+		overwrite: false,
+		html: false,
+		json: true,
 		embeddedScreenshots: true,
 		inlineAssets: true
 	},
