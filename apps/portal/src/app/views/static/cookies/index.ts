@@ -1,35 +1,50 @@
 import { Router as createRouter } from 'express';
-import type { IRouter, Request, Response } from 'express';
+import type { CookieOptions, IRouter, Request, Response } from 'express';
 
-const COOKIE_NAME = 'cookie_consent';
-const COOKIE_DURATION_DAYS = 365;
+type CookieConsentValue = 'accept' | 'reject';
+
+interface CookieConsentRequest extends Request {
+	cookies: Record<string, string | undefined>;
+}
+
+interface CookiePreferencesBody {
+	analytics?: string;
+}
+
+const COOKIE_NAME: string = 'cookie_consent';
+const COOKIE_DURATION_DAYS: number = 365;
 
 /**
  * Get cookie consent value from request
  */
-function getCookieConsent(req: Request): string | null {
-	return req.cookies[COOKIE_NAME] || null;
+function getCookieConsent(req: CookieConsentRequest): CookieConsentValue | null {
+	const value = req.cookies[COOKIE_NAME];
+	if (value === 'accept' || value === 'reject') {
+		return value;
+	}
+	return null;
 }
 
 /**
  * Set cookie consent cookie
  */
-function setCookieConsent(res: Response, value: string): void {
-	const maxAge = COOKIE_DURATION_DAYS * 24 * 60 * 60 * 1000;
-	res.cookie(COOKIE_NAME, value, {
+function setCookieConsent(res: Response, value: CookieConsentValue): void {
+	const maxAge: number = COOKIE_DURATION_DAYS * 24 * 60 * 60 * 1000;
+	const options: CookieOptions = {
 		maxAge,
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'strict',
 		path: '/'
-	});
+	};
+	res.cookie(COOKIE_NAME, value, options);
 }
 
 /**
  * GET /cookies - Display cookie policy and preferences
  */
-function getCookiesPage(req: Request, res: Response): void {
-	const cookieConsent = getCookieConsent(req);
+function getCookiesPage(req: CookieConsentRequest, res: Response): void {
+	const cookieConsent: CookieConsentValue | null = getCookieConsent(req);
 
 	res.render('views/static/cookies/cookies.njk', {
 		cookieConsent,
@@ -40,7 +55,7 @@ function getCookiesPage(req: Request, res: Response): void {
 /**
  * POST /cookies - Save cookie preferences
  */
-function postCookiesPage(req: Request, res: Response): void {
+function postCookiesPage(req: Request<object, unknown, CookiePreferencesBody>, res: Response): void {
 	const { analytics } = req.body;
 
 	if (analytics === 'accept' || analytics === 'reject') {
