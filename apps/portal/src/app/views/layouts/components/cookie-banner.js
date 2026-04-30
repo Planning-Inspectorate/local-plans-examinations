@@ -88,6 +88,10 @@ function showConfirmation(choice) {
 
 /**
  * Handle cookie consent choice
+ *
+ * @note Google Analytics is not yet integrated. Once GA is added, this is where
+ * the GA script should be conditionally loaded on acceptance — ensuring non-essential
+ * cookies are blocked until the user has given explicit consent (pre-consent blocking).
  */
 function handleCookieChoice(choice) {
 	setCookie(COOKIE_NAME, choice, COOKIE_DURATION_DAYS);
