@@ -23,6 +23,10 @@
 	{% include "views/layouts/components/core/header.njk" %}
 {% endblock %}
 
+{% block bodyStart %}
+	{% include "views/layouts/components/cookie-banner.njk" %}
+{% endblock %}
+
 {% block beforeContent %}
 	<script {% if cspNonce %}nonce={{ cspNonce }}{% endif %}>
 		document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');
@@ -81,4 +85,5 @@
 		import { initAll } from '/assets/js/govuk-frontend.min.js'
 		initAll()
 	</script>
+	<script {% if cspNonce %}nonce={{ cspNonce }}{% endif %} src="/assets/js/cookie-banner.js"></script>
 {% endblock %}
