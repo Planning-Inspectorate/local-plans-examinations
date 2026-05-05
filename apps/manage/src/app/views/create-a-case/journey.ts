@@ -8,9 +8,12 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 		journeyId: JOURNEY_ID,
 		sections: [
 			new Section('Create a case', 'case-details')
-				.addQuestion(questions.caseName)
-				.addQuestion(questions.referenceNumber)
-				.addQuestion(questions.email)
+				.addQuestion(questions.caseOfficer)
+				.addQuestion(questions.planTitle)
+				.addQuestion(questions.planType)
+				.addQuestion(questions.lpa)
+				.addQuestion(questions.anotherLpa)
+				.addQuestion(questions.contactDetails)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
