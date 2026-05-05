@@ -66,15 +66,54 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 	contactDetails: {
 		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
 		inputFields: [
-			{ name: 'firstName', label: 'First name' },
-			{ name: 'lastName', label: 'Last name' },
-			{ name: 'email', label: 'Email address' },
+			{ name: 'firstName', label: 'First name', validators: [new RequiredValidator()] },
+			{ name: 'lastName', label: 'Last name', validators: [new RequiredValidator()] },
+			{ name: 'email', label: 'Email address', validators: [new RequiredValidator()] },
 			{ name: 'phone', label: 'Phone number (optional)' }
 		],
 		question: 'What are the main contact details for the Local Planning Authority?',
 		fieldName: 'contactDetails',
 		url: 'contact-details',
-		title: 'Contact Details',
+		title: 'Contact Details'
+	},
+	anotherContact: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you want to add another contact?',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		fieldName: 'anotherContact',
+		url: 'another-contact',
+		title: 'Another Contact',
+		validators: [new RequiredValidator()]
+	},
+	additionalContactDetails: {
+		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
+		inputFields: [
+			{ name: 'firstName', label: 'First name', validators: [new RequiredValidator()] },
+			{ name: 'lastName', label: 'Last name', validators: [new RequiredValidator()] },
+			{ name: 'email', label: 'Email address', validators: [new RequiredValidator()] },
+			{ name: 'phone', label: 'Phone number (optional)' }
+		],
+		question: 'Additional contact details',
+		fieldName: 'additionalContactDetails',
+		url: 'additional-contact-details',
+		title: 'Additional Contact Details'
+	},
+	keyStageDates: {
+		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.DATE_TIME,
+				name: 'date1',
+				label: 'Date the Notice of Intention to Commence Plan Making was published'
+			}
+		],
+		question: 'Enter dates for key stages of the local plan',
+		fieldName: 'keyStageDates',
+		url: 'key-stage-dates',
+		title: 'Key Stage Dates',
 		validators: [new RequiredValidator()]
 	}
 };

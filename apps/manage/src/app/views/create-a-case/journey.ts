@@ -14,6 +14,8 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.lpa)
 				.addQuestion(questions.anotherLpa)
 				.addQuestion(questions.contactDetails)
+				.addQuestion(questions.anotherContact)
+				.addQuestion(questions.additionalContactDetails)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
