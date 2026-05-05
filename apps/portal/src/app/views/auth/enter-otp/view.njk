@@ -1,0 +1,54 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+
+{% set backLinkUrl = "/auth/sign-in" %}
+
+{% block pageContent %}
+	<div class="govuk-grid-row">
+		<div class="govuk-grid-column-two-thirds">
+			<form method="post" novalidate>
+				{{ govukInput({
+					label: {
+						text: pageTitle,
+						classes: "govuk-label--l",
+						isPageHeading: true
+					},
+					hint: {
+						text: "Enter the code which was emailed to " + emailAddress
+					},
+					id: "otp",
+					name: "otp",
+					classes: "govuk-input--width-10",
+					inputmode: "numeric",
+					spellcheck: false,
+					autocomplete: "one-time-code",
+					errorMessage: errors.otp if errors
+				}) }}
+
+				{{ govukButton({
+					text: "Continue"
+				}) }}
+			</form>
+
+			<p class="govuk-body">
+				It may take a few minutes to arrive, if you don&apos;t receive the email:
+			</p>
+			<ul class="govuk-list govuk-list--bullet">
+				<li>Check the email address is correct.</li>
+				<li>Check your spam or junk folder.</li>
+			</ul>
+			<p class="govuk-body">
+				If everything looks correct, but you still haven&apos;t received the email we can
+				<a href="/auth/request-new-code" class="govuk-link">request a new code</a>.
+			</p>
+
+			{{ govukDetails({
+				summaryText: "If you're still having problems",
+				html: '<p class="govuk-body">Contact us at <a href="mailto:localplans@planninginspectorate.gov.uk" class="govuk-link">localplans@planninginspectorate.gov.uk</a> for further assistance.</p>'
+			}) }}
+		</div>
+	</div>
+{% endblock %}
