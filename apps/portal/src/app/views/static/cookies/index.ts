@@ -12,7 +12,7 @@ interface CookiePreferencesBody {
 }
 
 const COOKIE_NAME: string = 'cookie_consent';
-const COOKIE_DURATION_DAYS: number = 365;
+const COOKIE_DURATION_YEARS: number = 1;
 
 /**
  * Get cookie consent value from request
@@ -29,9 +29,10 @@ function getCookieConsent(req: CookieConsentRequest): CookieConsentValue | null 
  * Set cookie consent cookie
  */
 function setCookieConsent(res: Response, value: CookieConsentValue): void {
-	const maxAge: number = COOKIE_DURATION_DAYS * 24 * 60 * 60 * 1000;
+	const expires: Date = new Date();
+	expires.setFullYear(expires.getFullYear() + COOKIE_DURATION_YEARS);
 	const options: CookieOptions = {
-		maxAge,
+		expires,
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'strict',
