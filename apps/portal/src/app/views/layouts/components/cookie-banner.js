@@ -5,14 +5,13 @@
  */
 
 const COOKIE_NAME = 'cookie_consent';
-const COOKIE_DURATION_DAYS = 365;
 
 /**
  * Set a cookie with the given name, value and expiry
  */
-function setCookie(name, value, days) {
+function setCookie(name, value) {
 	const date = new Date();
-	date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+	date.setFullYear(date.getFullYear() + 1);
 	const expires = `expires=${date.toUTCString()}`;
 	document.cookie = `${name}=${value};${expires};path=/;SameSite=Strict`;
 }
@@ -94,7 +93,7 @@ function showConfirmation(choice) {
  * cookies are blocked until the user has given explicit consent (pre-consent blocking).
  */
 function handleCookieChoice(choice) {
-	setCookie(COOKIE_NAME, choice, COOKIE_DURATION_DAYS);
+	setCookie(COOKIE_NAME, choice);
 	showConfirmation(choice);
 }
 
