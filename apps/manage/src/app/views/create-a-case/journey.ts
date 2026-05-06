@@ -1,4 +1,6 @@
 import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
+import { whenQuestionHasAnswer } from '@planning-inspectorate/dynamic-forms/src/components/utils/question-has-answer.js';
+import { BOOLEAN_OPTIONS } from '@planning-inspectorate/dynamic-forms/src/components/boolean/question.js';
 import type { Request } from 'express';
 
 export const JOURNEY_ID = 'create-a-case';
@@ -26,10 +28,13 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.planType)
 				.addQuestion(questions.lpa)
 				.addQuestion(questions.anotherLpa)
+				.addQuestion(questions.secondaryLpa)
+				.withCondition(whenQuestionHasAnswer(questions.anotherLpa, BOOLEAN_OPTIONS.YES))
 				.addQuestion(questions.contactDetails)
 				.addQuestion(questions.anotherContact)
 				.addQuestion(questions.additionalContactDetails)
-				.addQuestion(questions.keyStageDates)
+				.withCondition(whenQuestionHasAnswer(questions.anotherContact, BOOLEAN_OPTIONS.YES))
+			// .addQuestion(questions.keyStageDates)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',

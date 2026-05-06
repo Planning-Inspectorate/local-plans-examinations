@@ -68,6 +68,21 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		title: 'Another Local Planning Authority',
 		validators: [new RequiredValidator()]
 	},
+	secondaryLpa: {
+		type: COMPONENT_TYPES.SELECT,
+		options: [
+			{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+			{ value: 'lpa-2', text: 'Local Planning Authority 2' },
+			{ value: 'lpa-3', text: 'Local Planning Authority 3' },
+			{ value: 'lpa-4', text: 'Local Planning Authority 4' }
+		],
+		question: 'Select the Local Planning Authority for this plan',
+		fieldName: 'secondaryLpa',
+		url: 'select-second-lpa',
+		title: 'Secondary Local Planning Authority',
+		validators: [new RequiredValidator()],
+		disableAccessibleAutocomplete: true
+	},
 	contactDetails: {
 		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
 		inputFields: [
