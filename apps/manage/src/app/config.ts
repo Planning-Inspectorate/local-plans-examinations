@@ -23,9 +23,11 @@ export interface Config extends BaseConfig {
 		webHookToken: string;
 		templateIds: {
 			authCode?: string;
+			loginInvite?: string;
 		};
 	};
 	notifyCallbackEnabled: boolean;
+	portalUrl: string;
 }
 
 export type ENVIRONMENT_NAMES = Readonly<{ PROD: string; DEV: string; TEST: string; TRAINING: string }>;
@@ -66,12 +68,14 @@ export function loadConfig(): Config {
 		LOG_LEVEL,
 		PORT,
 		NODE_ENV,
+		PORTAL_URL,
 		REDIS_CONNECTION_STRING,
 		SESSION_SECRET,
 		SQL_CONNECTION_STRING,
 		GOV_NOTIFY_DISABLED,
 		GOV_NOTIFY_API_KEY,
 		GOV_NOTIFY_WEBHOOK_TOKEN,
+		GOV_NOTIFY_LOGIN_INVITE_TEMPLATE_ID,
 		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED
 	} = process.env;
 
@@ -158,9 +162,12 @@ export function loadConfig(): Config {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',
 			webHookToken: GOV_NOTIFY_WEBHOOK_TOKEN || '',
-			templateIds: {}
+			templateIds: {
+				loginInvite: GOV_NOTIFY_LOGIN_INVITE_TEMPLATE_ID || ''
+			}
 		},
-		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
+		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true',
+		portalUrl: PORTAL_URL || 'http://localhost:8080'
 	};
 
 	return config;

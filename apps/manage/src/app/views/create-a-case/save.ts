@@ -33,24 +33,18 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		});
 		service.logger.info(answers, 'case created');
 
-		// Send email to LPA using Gov Notify
+		// Send login invite email to LPA via Gov Notify
 		if (!service.notifyClient) {
-			service.logger.warn('Notify client not configured');
+			service.logger.warn('Notify client not configured — skipping login invite email');
 		} else {
 			try {
-				const portalUrl = process.env.PORTAL_URL;
-				const templateID = process.env.TEMPLATE_ID;
-				if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-				if (!templateID) throw new Error('TEMPLATE_ID environment variable is not set');
-				const portalLoginURL = `${portalUrl}/login`;
-				await service.notifyClient.sendEmail(templateID, answers.email.trim(), {
-					personalisation: {
-						portalLoginURL
-					}
+				const portalLoginURL = `${service.portalUrl}/login`;
+				await service.notifyClient.sendLoginInvite(answers.email.trim(), {
+					portalLoginURL
 				});
-				service.logger.info({ email: answers.email }, 'create a case - email sent');
+				service.logger.info({ email: answers.email }, 'login invite email sent to LPA');
 			} catch (error) {
-				service.logger.error({ error, email: answers.email }, 'Failed to send create a case email');
+				service.logger.error({ error, email: answers.email }, 'Failed to send login invite email');
 			}
 		}
 		res.render('views/layouts/success.njk', { reference: answers.reference });

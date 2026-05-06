@@ -1,6 +1,6 @@
 import { NotifyClient } from 'notifications-node-client';
 import type { Logger } from 'pino';
-import type { GovNotifyOptions, TemplateIds, AuthCodePersonalisation } from './types.ts';
+import type { GovNotifyOptions, TemplateIds, AuthCodePersonalisation, LoginInvitePersonalisation } from './types.ts';
 
 export class GovNotifyClient {
 	readonly notifyClient: NotifyClient;
@@ -15,6 +15,10 @@ export class GovNotifyClient {
 
 	async sendAuthCode(email: string, personalisation: AuthCodePersonalisation): Promise<void> {
 		await this.sendEmail(this.#templateIds.authCode!, email, { personalisation });
+	}
+
+	async sendLoginInvite(email: string, personalisation: LoginInvitePersonalisation): Promise<void> {
+		await this.sendEmail(this.#templateIds.loginInvite!, email, { personalisation });
 	}
 
 	async sendEmail(templateId: string, emailAddress: string, options: GovNotifyOptions): Promise<void> {

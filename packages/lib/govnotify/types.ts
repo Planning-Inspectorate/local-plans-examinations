@@ -5,6 +5,7 @@ export interface GovNotifyOptions {
 
 export interface TemplateIds {
 	authCode: string;
+	loginInvite: string;
 }
 
 export interface NotifyConfig {
@@ -18,4 +19,9 @@ export interface AuthCodePersonalisation {
 	[key: string]: string;
 	authCode: string;
 	expiryMinutes: string;
+}
+
+export interface LoginInvitePersonalisation {
+	[key: string]: string;
+	portalLoginURL: string;
 }

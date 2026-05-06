@@ -28,4 +28,8 @@ export class ManageService extends BaseService {
 	get notifyCallbackEnabled(): boolean {
 		return this.#config.notifyCallbackEnabled;
 	}
+
+	get portalUrl(): string {
+		return this.#config.portalUrl;
+	}
 }
