@@ -43,7 +43,12 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 	},
 	lpa: {
 		type: COMPONENT_TYPES.SELECT,
-		options: [{ value: 'lpa-1', text: 'Local Planning Authority 1' }],
+		options: [
+			{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+			{ value: 'lpa-2', text: 'Local Planning Authority 2' },
+			{ value: 'lpa-3', text: 'Local Planning Authority 3' },
+			{ value: 'lpa-4', text: 'Local Planning Authority 4' }
+		],
 		question: 'Select the Local Planning Authority for this plan',
 		fieldName: 'lpa',
 		url: 'select-lpa',
