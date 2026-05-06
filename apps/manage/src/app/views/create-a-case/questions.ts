@@ -86,10 +86,10 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 	contactDetails: {
 		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
 		inputFields: [
-			{ name: 'firstName', label: 'First name', validators: [new RequiredValidator()] },
-			{ name: 'lastName', label: 'Last name', validators: [new RequiredValidator()] },
-			{ name: 'email', label: 'Email address', validators: [new RequiredValidator()] },
-			{ name: 'phone', label: 'Phone number (optional)' }
+			{ fieldName: 'firstName', label: 'First name', validators: [new RequiredValidator()] },
+			{ fieldName: 'lastName', label: 'Last name', validators: [new RequiredValidator()] },
+			{ fieldName: 'email', label: 'Email address', validators: [new RequiredValidator()] },
+			{ fieldName: 'phone', label: 'Phone number (optional)' }
 		],
 		question: 'What are the main contact details for the Local Planning Authority?',
 		fieldName: 'contactDetails',
@@ -111,10 +111,10 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 	additionalContactDetails: {
 		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
 		inputFields: [
-			{ name: 'firstName', label: 'First name', validators: [new RequiredValidator()] },
-			{ name: 'lastName', label: 'Last name', validators: [new RequiredValidator()] },
-			{ name: 'email', label: 'Email address', validators: [new RequiredValidator()] },
-			{ name: 'phone', label: 'Phone number (optional)' }
+			{ fieldName: 'firstName2', label: 'First name', validators: [new RequiredValidator()] },
+			{ fieldName: 'lastName2', label: 'Last name', validators: [new RequiredValidator()] },
+			{ fieldName: 'email2', label: 'Email address', validators: [new RequiredValidator()] },
+			{ fieldName: 'phone2', label: 'Phone number (optional)' }
 		],
 		question: 'Additional contact details',
 		fieldName: 'additionalContactDetails',
