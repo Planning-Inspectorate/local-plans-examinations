@@ -5,6 +5,12 @@ import {
 	questionClasses
 } from '@planning-inspectorate/dynamic-forms';
 import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
+import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
+
+const allQuestionClasses = {
+	...questionClasses,
+	...CUSTOM_COMPONENT_CLASSES
+};
 
 const createACaseQuestions: Record<string, QuestionProps> = {
 	caseOfficer: {
@@ -84,12 +90,33 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		disableAccessibleAutocomplete: true
 	},
 	contactDetails: {
-		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
 		inputFields: [
-			{ fieldName: 'firstName', label: 'First name', validators: [new RequiredValidator()] },
-			{ fieldName: 'lastName', label: 'Last name', validators: [new RequiredValidator()] },
-			{ fieldName: 'email', label: 'Email address', validators: [new RequiredValidator()] },
-			{ fieldName: 'phone', label: 'Phone number (optional)' }
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'firstName',
+				label: 'First name',
+				validators: [new RequiredValidator()]
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'lastName',
+				label: 'Last name',
+				validators: [new RequiredValidator()]
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'email',
+				label: 'Email address',
+				validators: [new RequiredValidator()]
+			},
+			{ type: COMPONENT_TYPES.SINGLE_LINE_INPUT, fieldName: 'phone', label: 'Phone number (optional)' },
+			{
+				type: COMPONENT_TYPES.RADIO,
+				fieldName: 'lpaContact',
+				legend: 'Select the organisation for this contact',
+				options: []
+			}
 		],
 		question: 'What are the main contact details for the Local Planning Authority?',
 		fieldName: 'contactDetails',
@@ -121,14 +148,21 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		url: 'additional-contact-details',
 		title: 'Additional Contact Details'
 	},
+	checkContactDetails: {
+		type: COMPONENT_TYPES.MANAGE_LIST,
+		title: 'Check contact details',
+		titleSingular: 'Contact',
+		showManageListQuestions: true,
+		fieldName: 'contactDetails',
+		url: 'check-contact-details',
+		question: 'Check contact details',
+		showAnswersInSummary: true
+	},
 	keyStageDates: {
-		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
+		type: COMPONENT_TYPES.DATE_TIME,
 		inputFields: [
-			{
-				type: COMPONENT_TYPES.DATE_TIME,
-				name: 'date1',
-				label: 'Date the Notice of Intention to Commence Plan Making was published'
-			}
+			{ fieldName: 'date1', label: 'Date the Notice of Intention to Commence Plan Making was published' },
+			{ fieldName: 'date2', label: 'Gateway 1 estimated date' }
 		],
 		question: 'Enter dates for key stages of the local plan',
 		fieldName: 'keyStageDates',
@@ -138,4 +172,4 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 	}
 };
 
-export const questions = createQuestions(createACaseQuestions, questionClasses, {}, {});
+export const questions = createQuestions(createACaseQuestions, allQuestionClasses, {}, {});
