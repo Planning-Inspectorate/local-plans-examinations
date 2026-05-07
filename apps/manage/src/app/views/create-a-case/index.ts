@@ -1,5 +1,6 @@
 import type { ManageService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
+import rateLimit from 'express-rate-limit';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -19,6 +20,11 @@ import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
+	const checkYourAnswersRateLimiter = rateLimit({
+		windowMs: 15 * 60 * 1000,
+		max: 100
+	});
+
 	// read answers from the session
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
@@ -31,7 +37,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.post('/:section/:question', getJourneyResponse, getJourney, validate, validationErrorHandler, saveToSession);
 
 	router.get('/check-your-answers', getJourneyResponse, getJourney, buildList());
-	router.post('/check-your-answers', getJourneyResponse, getJourney, saveToDatabase);
+	router.post('/check-your-answers', getJourneyResponse, getJourney, checkYourAnswersRateLimiter, saveToDatabase);
 
 	return router;
 }
