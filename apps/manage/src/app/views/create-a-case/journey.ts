@@ -50,12 +50,15 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.anotherLpa)
 				.addQuestion(questions.secondaryLpa)
 				.withCondition(whenQuestionHasAnswer(questions.anotherLpa, BOOLEAN_OPTIONS.YES))
-				.addQuestion(questions.contactDetails)
-				.addQuestion(questions.anotherContact)
-				.addQuestion(questions.additionalContactDetails)
-				.withCondition(whenQuestionHasAnswer(questions.anotherContact, BOOLEAN_OPTIONS.YES))
-				.addQuestion(questions.checkContactDetails, new ManageListSection())
-			// .addQuestion(questions.keyStageDates)
+				//.addQuestion(questions.contactDetails)
+				//.addQuestion(questions.anotherContact)
+				//.addQuestion(questions.additionalContactDetails)
+				//.withCondition(whenQuestionHasAnswer(questions.anotherContact, BOOLEAN_OPTIONS.YES))
+				.addQuestion(
+					questions.checkContactDetails,
+					Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
+				)
+				.addQuestion(questions.keyStageDates)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',

@@ -30,5 +30,21 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.get('/check-your-answers', getJourneyResponse, getJourney, buildList());
 	router.post('/check-your-answers', getJourneyResponse, getJourney, saveToDatabase);
 
+	router.get(
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		getJourneyResponse,
+		getJourney,
+		question
+	);
+
+	router.post(
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		getJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		buildSave(saveDataToSession)
+	);
+
 	return router;
 }
