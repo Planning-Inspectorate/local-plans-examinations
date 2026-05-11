@@ -1,0 +1,14 @@
+[
+	{
+		"type": "text",
+		"name": "firstName",
+		"label": "First Name",
+		"required": true
+	},
+	{
+		"type": "select",
+		"name": "country",
+		"label": "Country",
+		"options": ["UK", "USA"]
+	}
+]

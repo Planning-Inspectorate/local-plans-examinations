@@ -1,0 +1,81 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageContent %}
+
+  {# {% if pageCaptions%} {{pageCaptions}} #}
+  <h2 class="govuk-heading-l">
+    {{ pageTitle }}
+  </h2>
+
+  <p class="govuk-body">
+    {{ message }}
+  </p>
+
+  <form method="post" action="/questionnaire">
+
+    {% for field in fields %}
+
+
+
+      {% set showField = true %}
+
+      {% if field.showIf %}
+
+        {% set showField = true %}
+      {% endif %}
+
+      {% if showField %}
+
+        <div class="govuk-form-group">
+
+          <label class="govuk-label" for="{{ field.name }}">
+            {{ field.label }}
+          </label>
+
+
+          {% if field.type == "text" %}
+
+            <input
+              class="govuk-input"
+              type="text"
+              id="{{ field.name }}"
+              name="{{ field.name }}"
+            />
+
+
+          {% elif field.type == "select" %}
+
+            <select
+              class="govuk-select"
+              id="{{ field.name }}"
+              name="{{ field.name }}"
+            >
+              <option value="">Select an option</option>
+
+              {% for option in field.options %}
+                <option value="{{ option }}">
+                  {{ option }}
+                </option>
+              {% endfor %}
+
+            </select>
+
+          {% endif %}
+
+        </div>
+
+      {% endif %}
+
+    {% endfor %}
+
+    <button class="govuk-button" type="submit">
+      Submit
+    </button>
+
+  </form>
+
+  <p class="govuk-body">
+    <a href="/" class="govuk-link">Back to home</a>
+  </p>
+
+{% endblock %}

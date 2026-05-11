@@ -10,9 +10,16 @@
 	<meta name="referrer" content="origin">
 {% endblock %}
 
+{% block pageCaption %}
+    {% if pageCaption%} 
+        {{pageCaption}}
+    {% endif %}
+{% endblock %} 
+
 {% block pageTitle %}
 	{% set suffix = serviceName | default(config.headerTitle) %}
-	{% if pageTitle %}
+    {# {% if pageCaptions%} {{pageCaptions}} #}
+    {% if pageTitle %}
 		{{ pageTitle }} – {{ suffix }}
 	{% else %}
 		{{ suffix }}
@@ -51,6 +58,27 @@
             </div>
         {% endif %}
     {% endblock %}
+    {% block notification_banner%}
+        {% if notificationBannerHeading and notificationBannerText and notificationBannerLink %}
+            {{ govukNotificationBanner({
+            html: html
+            }) }}
+        {% endif %}
+    {% endblock %}
+
+{% set html %}
+  <p class="govuk-notification-banner__heading">
+    Action needed: {{ currentStage }} submission incomplete
+  </p>
+  <p class="govuk-body">
+    PINS has reviewed your submission and found issues with some documents. You must upload corrected files before your plan can progress.
+  </p>
+  <a class="govuk-notification-banner__link" href="#">Review and correct your documents</a>
+{% endset %}
+
+ 
+
+
 {% endblock %}
 
 {% block before_content %}{% endblock %}

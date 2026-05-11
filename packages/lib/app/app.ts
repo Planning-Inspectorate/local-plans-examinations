@@ -20,7 +20,7 @@ interface BaseAppOptions {
 export function createBaseApp({
 	service,
 	router,
-	middlewares,
+	//middlewares,
 	configureNunjucks,
 	cspDirectives = cspDirectiveDefaults
 }: BaseAppOptions): Express {
@@ -56,7 +56,7 @@ export function createBaseApp({
 		app.set('view engine', 'njk');
 	}
 
-	app.use(...middlewares);
+	//app.use(...middlewares);
 
 	// register the router, which will define any subpaths
 	// any paths not defined will return 404 by default
