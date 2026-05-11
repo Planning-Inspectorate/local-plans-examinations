@@ -25,7 +25,7 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		question: 'Who is the case officer?',
 		fieldName: 'caseOfficer',
 		url: 'case-officer',
-		title: 'Case Officer',
+		title: 'Case officer',
 		validators: [new RequiredValidator('Select a case officer')],
 		disableAccessibleAutocomplete: true
 	},
@@ -34,7 +34,7 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		question: 'What is the plan title?',
 		fieldName: 'planTitle',
 		url: 'plan-title',
-		title: 'Plan Title',
+		title: 'Plan title',
 		validators: [new RequiredValidator('Input a plan title')]
 	},
 	planType: {
@@ -46,7 +46,7 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		question: 'What is the plan type?',
 		fieldName: 'planType',
 		url: 'plan-type',
-		title: 'Plan Type',
+		title: 'Plan type',
 		validators: [new RequiredValidator('Select a plan type')]
 	},
 	lpa: {
@@ -140,7 +140,7 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		question: 'What are the main contact details for the Local Planning Authority?',
 		fieldName: 'contactDetails',
 		url: 'contact-details',
-		title: 'Contact Details'
+		title: 'Contact details'
 	},
 	anotherContact: {
 		type: COMPONENT_TYPES.RADIO,
@@ -151,7 +151,7 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		],
 		fieldName: 'anotherContact',
 		url: 'another-contact',
-		title: 'Another Contact',
+		title: 'Another contact',
 		validators: [new RequiredValidator('Select if you want to add another contact')]
 	},
 	additionalContactDetails: {
@@ -165,33 +165,35 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		question: 'Additional contact details',
 		fieldName: 'additionalContactDetails',
 		url: 'additional-contact-details',
-		title: 'Additional Contact Details'
+		title: 'Additional contact details'
 	},
 	checkContactDetails: {
 		type: COMPONENT_TYPES.MANAGE_LIST,
-		title: 'Check contact details',
+		title: 'Contact details',
 		titleSingular: 'Contact',
 		showManageListQuestions: true,
 		fieldName: 'contactDetails',
 		url: 'check-contact-details',
-		question: 'Check contact details',
-		showAnswersInSummary: true
+		showAnswersInSummary: true,
+		question: 'Check contact details'
 	},
 	keyStageDates: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
 		inputFields: [
 			{
 				type: COMPONENT_TYPES.DATE,
-				fieldName: 'date1',
+				fieldName: 'intentionToCommenceDate',
 				label: 'Date the Notice of Intention to Commence Plan Making was published'
 			},
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'date2', label: 'Gateway 1 estimated date' }
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 estimated date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 estimated date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 estimated date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'submissionDate', label: 'Submission for examination date' }
 		],
 		question: 'Enter dates for key stages of the local plan',
 		fieldName: 'keyStageDates',
 		url: 'key-stage-dates',
-		title: 'Key Stage Dates',
-		validators: [new RequiredValidator()]
+		title: 'Dates'
 	}
 };
 

@@ -172,19 +172,32 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	 * @param {import('express').Request} req
 	 * @param {JourneyResponse} journeyResponse - current journey response, modified with the new answers
 	 * @returns {Promise<{ answers: Record<string, unknown> }>}
-	 */  
+	 */
 	async getDataToSave(req: any) {
 		/** @type {Record<string, unknown>} */
-		const answers = {};
+		const answers: Record<string, unknown> = {};
 
 		for (const inputField of this.inputFields) {
 			let value = req.body[inputField.fieldName];
-			if (typeof value === 'string') {
-				value = value.trim();
+
+			if (inputField.type === 'date') {
+				const day = req.body[`${inputField.fieldName}-day`];
+				const month = req.body[`${inputField.fieldName}-month`];
+				const year = req.body[`${inputField.fieldName}-year`];
+
+				if (day && month && year) {
+					value = `${day}/${month}/${year}`;
+				}
+			} else {
+				value = req.body[inputField.fieldName];
+				if (typeof value === 'string') {
+					value = value.trim();
+				}
+				if (inputField.type === 'boolean') {
+					value = yesNoToBoolean(value);
+				}
 			}
-			if (inputField.type === 'boolean') {
-				value = yesNoToBoolean(value);
-			}
+
 			answers[inputField.fieldName] = value;
 		}
 

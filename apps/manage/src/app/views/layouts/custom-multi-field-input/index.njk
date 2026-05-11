@@ -90,7 +90,13 @@
                         {% elseif inputField.type == 'date' %}
                             {{ govukDateInput({
                                 id: inputField.fieldName,
-                                name: inputField.fieldName,
+                                namePrefix: inputField.fieldName,
+                                fieldset: {
+                                    legend: {
+                                        text: inputField.label,
+                                        classes: "govuk-label govuk-!-font-weight-bold"
+                                    }
+                                },
                                 errorMessage: errors[inputField.fieldName] and {
                                     text: errors[inputField.fieldName].msg
                                 },
