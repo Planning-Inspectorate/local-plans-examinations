@@ -9,8 +9,24 @@ import type { CaseCreateInput } from '@pins/local-plans-database/src/client/mode
  */
 export interface CreateCaseAnswers {
 	email: string;
-	name: string;
 	reference: string;
+	caseOfficer: string;
+	planTitle: string;
+	planType: string;
+	lpa: string[];
+	contactDetails: Array<{
+		firstName: string;
+		lastName: string;
+		email: string;
+		phoneNumber?: string;
+	}>;
+	keyStageDates?: Array<{
+		intentionToCommence?: Date;
+		gateway1Date?: Date;
+		gateway2Date?: Date;
+		gateway3Date?: Date;
+		submissionForExamDate?: Date;
+	}>;
 }
 
 /**
@@ -27,6 +43,9 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		if (typeof answers !== 'object') {
 			throw new Error('answers should be an object');
 		}
+
+		answers.reference = `PLAN/${Math.floor(Math.random() * 1000000)}`;
+		answers.email = answers.contactDetails.at(0)!.email;
 
 		await service.db.case.create({
 			data: mapToDatabase(answers)
@@ -61,6 +80,11 @@ export function mapToDatabase(answers: CreateCaseAnswers): CaseCreateInput {
 	return {
 		reference: answers.reference,
 		email: answers.email,
-		name: answers.name
+		caseOfficer: answers.caseOfficer,
+		planTitle: answers.planTitle,
+		planType: answers.planType,
+		lpa: JSON.stringify(answers.lpa || []),
+		contactDetails: JSON.stringify(answers.contactDetails || []),
+		keyStageDates: JSON.stringify(answers.keyStageDates || [])
 	};
 }

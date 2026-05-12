@@ -22,10 +22,16 @@ datasource db {
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
 model Case {
-  id        Int      @id @default(autoincrement())
-  reference String   @unique
-  name      String
-  email     String
+  id             Int    @id @default(autoincrement())
+  reference      String @unique
+  email          String
+  caseOfficer    String
+  planTitle      String
+  planType       String
+  lpa            String
+  contactDetails String
+  keyStageDates  String
+
   createdAt DateTime @default(now())
 }
 
