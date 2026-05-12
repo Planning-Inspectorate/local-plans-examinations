@@ -65,33 +65,15 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		validators: [new RequiredValidator('Select a Local Planning Authority')],
 		disableAccessibleAutocomplete: true
 	},
-	anotherLpa: {
-		type: COMPONENT_TYPES.RADIO,
-		question: 'Is there another Local Planning Authority involved in this plan?',
-		options: [
-			{ value: 'yes', text: 'Yes' },
-			{ value: 'no', text: 'No' }
-		],
-		fieldName: 'anotherLpa',
-		url: 'another-lpa',
-		title: 'Another Local Planning Authority',
-		validators: [new RequiredValidator('Please select if another Local Planning Authority is involved')]
-	},
-	secondaryLpa: {
-		type: COMPONENT_TYPES.SELECT,
-		options: [
-			{ value: '', text: '' },
-			{ value: 'lpa-1', text: 'Local Planning Authority 1' },
-			{ value: 'lpa-2', text: 'Local Planning Authority 2' },
-			{ value: 'lpa-3', text: 'Local Planning Authority 3' },
-			{ value: 'lpa-4', text: 'Local Planning Authority 4' }
-		],
-		question: 'Select the Local Planning Authority for this plan',
-		fieldName: 'secondaryLpa',
-		url: 'select-second-lpa',
-		title: 'Secondary Local Planning Authority',
-		validators: [new RequiredValidator('Select a Local Planning Authority')],
-		disableAccessibleAutocomplete: true
+	checkLpas: {
+		type: COMPONENT_TYPES.MANAGE_LIST,
+		title: 'Local Planning Authorities',
+		titleSingular: 'Local Planning Authority',
+		showManageListQuestions: true,
+		fieldName: 'checkLpas',
+		url: 'check-lpas',
+		showAnswersInSummary: true,
+		question: 'Check Local Planning Authorities'
 	},
 	contactDetails: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
@@ -141,31 +123,6 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		fieldName: 'contactDetails',
 		url: 'contact-details',
 		title: 'Contact details'
-	},
-	anotherContact: {
-		type: COMPONENT_TYPES.RADIO,
-		question: 'Do you want to add another contact?',
-		options: [
-			{ value: 'yes', text: 'Yes' },
-			{ value: 'no', text: 'No' }
-		],
-		fieldName: 'anotherContact',
-		url: 'another-contact',
-		title: 'Another contact',
-		validators: [new RequiredValidator('Select if you want to add another contact')]
-	},
-	additionalContactDetails: {
-		type: COMPONENT_TYPES.MULTI_FIELD_INPUT,
-		inputFields: [
-			{ fieldName: 'firstName2', label: 'First name', validators: [new RequiredValidator()] },
-			{ fieldName: 'lastName2', label: 'Last name', validators: [new RequiredValidator()] },
-			{ fieldName: 'email2', label: 'Email address', validators: [new RequiredValidator()] },
-			{ fieldName: 'phone2', label: 'Phone number (optional)' }
-		],
-		question: 'Additional contact details',
-		fieldName: 'additionalContactDetails',
-		url: 'additional-contact-details',
-		title: 'Additional contact details'
 	},
 	checkContactDetails: {
 		type: COMPONENT_TYPES.MANAGE_LIST,

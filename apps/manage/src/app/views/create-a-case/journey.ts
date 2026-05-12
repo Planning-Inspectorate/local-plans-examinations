@@ -1,24 +1,18 @@
 import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
-import { whenQuestionHasAnswer } from '@planning-inspectorate/dynamic-forms/src/components/utils/question-has-answer.js';
-import { BOOLEAN_OPTIONS } from '@planning-inspectorate/dynamic-forms/src/components/boolean/question.js';
 import type { Request } from 'express';
 import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/manage-list-section.js';
 
 export const JOURNEY_ID = 'create-a-case';
 
 export function createJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	const lpaHistory = [];
+	const lpaAnswers = response.answers.checkLpas || [];
+	const lpaHistory: string[] = [];
 
-	if (response.answers.lpa) {
-		const lpaText = questions.lpa.options.find((opt: any) => opt.value === response.answers.lpa)?.text;
-		if (lpaText) lpaHistory.push(lpaText);
-	}
-
-	if (response.answers.anotherLpa === 'yes' && response.answers.secondaryLpa) {
-		const lpaText = questions.secondaryLpa.options.find(
-			(opt: any) => opt.value === response.answers.secondaryLpa
-		)?.text;
-		if (lpaText) lpaHistory.push(lpaText);
+	if (Array.isArray(lpaAnswers)) {
+		lpaAnswers.forEach((lpaAnswer: any) => {
+			const lpaText = questions.lpa.options.find((opt: any) => opt.value === lpaAnswer.lpa)?.text;
+			if (lpaText) lpaHistory.push(lpaText);
+		});
 	}
 
 	req.session.lpaHistory = lpaHistory;
@@ -46,14 +40,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.caseOfficer)
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
-				.addQuestion(questions.lpa)
-				.addQuestion(questions.anotherLpa)
-				.addQuestion(questions.secondaryLpa)
-				.withCondition(whenQuestionHasAnswer(questions.anotherLpa, BOOLEAN_OPTIONS.YES))
-				//.addQuestion(questions.contactDetails)
-				//.addQuestion(questions.anotherContact)
-				//.addQuestion(questions.additionalContactDetails)
-				//.withCondition(whenQuestionHasAnswer(questions.anotherContact, BOOLEAN_OPTIONS.YES))
+				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa)))
 				.addQuestion(
 					questions.checkContactDetails,
 					Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
