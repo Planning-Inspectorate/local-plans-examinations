@@ -1,0 +1,59 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-half">
+      {% if cases and cases.length > 0 %}
+        <h1 class="govuk-heading-l">All cases ({{ cases.length }})</h1>
+      {% else %}
+        <h1 class="govuk-heading-l">All cases</h1>
+      {% endif %}
+    </div>
+  </div>
+  {{ govukButton({
+    text: "Create a case",
+    classes: "govuk-button--secondary",
+    href: "/create-a-case"
+  }) }}
+
+  {% if not cases or cases.length == 0 %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        <p class="govuk-body">No cases have been created yet.</p>
+      </div>
+    </div>
+  {% else %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full project">
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--invisible">
+
+        {% set rows = [] %}
+        {% for case in cases %}
+          {% set row = [
+            { html: '<a href="/cases/' + case.caseRef + '" class="govuk-link">' + case.caseRef + '</a>' },
+            { text: case.planTitle or '-' },
+            { html: 'Local Plan' if case.planType == 'local-plan' else (case.planType or '-') },
+            { text: case.caseOfficer or '-' },
+            { text: case.gateway or '-' },
+            { html: '<strong class="govuk-tag govuk-tag--blue">' + case.status + '</strong>' }
+          ] %}
+          {% set _ = rows.push(row) %}
+        {% endfor %}
+
+        {{ govukTable({
+          head: [
+            { text: "Case reference" },
+            { text: "Plan title" },
+            { text: "Plan type" },
+            { text: "Case officer" },
+            { text: "Gateway" },
+            { text: "Status" }
+          ],
+          rows: rows
+        }) }}
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
