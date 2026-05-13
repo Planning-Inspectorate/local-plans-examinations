@@ -1,6 +1,6 @@
 import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
 import escape from 'escape-html';
-import { nl2br } from '@planning-inspectorate/dynamic-forms/src/lib/utils.js';
+import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 
 /**
