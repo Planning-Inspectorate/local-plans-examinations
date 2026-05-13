@@ -102,7 +102,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	 * @param {Record<string, string>} [options.inputAttributes] html attributes to add to the input
 	 * @param {(InputField|RadioField|HiddenField|BooleanFieldInput)[]} options.inputFields input fields (BooleanFieldInput options are optional, will be set to default Yes/No if not provided)
 	 */
-	constructor({ label = '', inputAttributes = {}, inputFields = [], ...params }) {
+	constructor({ inputAttributes = {}, inputFields = [], ...params }) {
 		super({
 			...params,
 			viewFolder: 'views/layouts/custom-multi-field-input',
@@ -110,7 +110,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 			question: params.question,
 			fieldName: params.fieldName
 		});
-		this.label = label;
+		// this.label = label;
 		this.inputAttributes = inputAttributes;
 
 		if (!inputFields) {

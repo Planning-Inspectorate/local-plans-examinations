@@ -7,6 +7,7 @@ import {
 import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
+import ManageListValidator from '../validators/manage-list-validator.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -66,14 +67,20 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		disableAccessibleAutocomplete: true
 	},
 	checkLpas: {
-		type: COMPONENT_TYPES.MANAGE_LIST,
+		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
 		title: 'Local Planning Authorities',
 		titleSingular: 'Local Planning Authority',
 		showManageListQuestions: true,
 		fieldName: 'checkLpas',
 		url: 'check-lpas',
 		showAnswersInSummary: true,
-		question: 'Check Local Planning Authorities'
+		question: 'Check Local Planning Authorities',
+		validators: [
+			new ManageListValidator({
+				minimumAnswers: 1,
+				errorMessages: { minimumAnswers: 'You must add at least one Local Planning Authority' }
+			})
+		]
 	},
 	contactDetails: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
@@ -125,14 +132,20 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		title: 'Contact details'
 	},
 	checkContactDetails: {
-		type: COMPONENT_TYPES.MANAGE_LIST,
+		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
 		title: 'Contact details',
 		titleSingular: 'Contact',
 		showManageListQuestions: true,
 		fieldName: 'contactDetails',
 		url: 'check-contact-details',
 		showAnswersInSummary: true,
-		question: 'Check contact details'
+		question: 'Check contact details',
+		validators: [
+			new ManageListValidator({
+				minimumAnswers: 1,
+				errorMessages: { minimumAnswers: 'You must add at least one contact' }
+			})
+		]
 	},
 	keyStageDates: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
