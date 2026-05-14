@@ -5,9 +5,11 @@
 
 {% block content %}
 	{{ govukPanel({
-		titleText: "Case created",
-		html: "Case created with reference<br><strong>" + reference + "</strong>"
+		titleText: "New case has been created",
+		html: "The case reference number<br><strong>" + reference + "</strong>"
 	}) }}
-	<a href="/">Go to the back office homepage</a>
+	<p class="govuk-body">
+		<a href="/" class="govuk-link">Go to the back office homepage</a>
+	</p>
 
 {% endblock %}
