@@ -36,16 +36,16 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 	return new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
-			new Section('Create a case', 'case-details')
+			new Section('Overview', 'case-details')
 				.addQuestion(questions.caseOfficer)
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
-				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa)))
-				.addQuestion(
-					questions.checkContactDetails,
-					Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
-				)
-				.addQuestion(questions.keyStageDates)
+				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa))),
+			new Section('Contacts', 'contact-details').addQuestion(
+				questions.checkContactDetails,
+				Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
+			),
+			new Section('Dates', 'dates').addQuestion(questions.keyStageDates)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
