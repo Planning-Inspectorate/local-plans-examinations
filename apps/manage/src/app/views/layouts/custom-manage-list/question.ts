@@ -1,21 +1,18 @@
 import ManageListQuestion from '@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js';
 import nunjucks from 'nunjucks';
+import type { Journey } from '@planning-inspectorate/dynamic-forms/src/journey/journey.js';
+import type { Section } from '@planning-inspectorate/dynamic-forms/src/section.js';
+import type { QuestionViewModel } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import type { QuestionParameters } from '@planning-inspectorate/dynamic-forms';
+import type { ManageListQuestionParameters } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js';
 
-/** @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question.js').Question} Question */
-/** @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question-types.d.ts').QuestionParameters} QuestionParameters */
-/** @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question.js').QuestionViewModel} QuestionViewModel */
-/** @typedef {import('@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js').ManageListQuestionParameters} ManageListQuestionParameters */
-/** @typedef {import('@planning-inspectorate/dynamic-forms/src/section.js').Section} Section */
-/** @typedef {import('@planning-inspectorate/dynamic-forms/src/journey/journey.js').Journey} Journey */
-/**
- * @typedef {QuestionParameters & ManageListQuestionParameters & {
- *  maximumAnswers?: number;
- *  emptyListText?: string;
- * 	isAllowedEmpty?: boolean;
- * 	confirmRemoveButtonText?: string;
- * 	removalPrompt?: string;
- * }} CustomManageListQuestionParameters
- */
+interface CustomManageListQuestionParameters extends QuestionParameters, ManageListQuestionParameters {
+	maximumAnswers?: number;
+	emptyListText?: string;
+	isAllowedEmpty?: boolean;
+	confirmRemoveButtonText?: string;
+	removalPrompt?: string;
+}
 
 export default class CustomManageListQuestion extends ManageListQuestion {
 	/** @type {boolean} */
@@ -32,9 +29,9 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	removalPrompt;
 
 	/**
-	 * @param {CustomManageListQuestionParameters} params
+	 * @param params
 	 */
-	constructor(params: any) {
+	constructor(params: CustomManageListQuestionParameters) {
 		super(params);
 		this.viewFolder = 'views/layouts/custom-manage-list';
 		this.#showAnswersInSummary = true;
@@ -46,9 +43,9 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 			params.removalPrompt || `Are you sure you want to remove this ${params.titleSingular.toLowerCase()}?`;
 	}
 	/**
-	 * @param {QuestionViewModel} viewModel
+	 * @param viewModel
 	 */
-	addCustomDataToViewModel(viewModel: any) {
+	addCustomDataToViewModel(viewModel: QuestionViewModel) {
 		super.addCustomDataToViewModel(viewModel);
 
 		const hasMoreThanOneAnswer =
@@ -62,9 +59,9 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 
 	/**
 	 * returns the formatted answers values to be used to build task list elements
-	 * @param {String} sectionSegment
-	 * @param {Journey} journey
-	 * @param {Array<Object>} answer
+	 * @param  sectionSegment
+	 * @param journey
+	 * @param answer
 	 * @returns {Array<{
 	 *   key: string;
 	 *   value: string | Object;
@@ -75,7 +72,7 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	 *   };
 	 * }>}
 	 */
-	formatAnswerForSummary(sectionSegment: any, journey: any, answer: any) {
+	formatAnswerForSummary(sectionSegment: string, journey: any, answer: Array<object>) {
 		let formattedAnswer = this.notStartedText;
 		if (answer && Array.isArray(answer) && answer.length > 0) {
 			if (this.#showAnswersInSummary) {
@@ -100,12 +97,16 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	/**
 	 * check for validation errors
 	 * @param {import('express').Request} req
-	 * @param {Section} section
-	 * @param {Journey} journey
-	 * @param {ManageListQuestion} manageListQuestion
-	 * @returns {QuestionViewModel|undefined} returns the view model for displaying the error or undefined if there are no errors
+	 * @param section
+	 * @param journey
+	 * @param manageListQuestion
 	 */
-	checkForValidationErrors(req: any, section: any, journey: any, manageListQuestion: any) {
+	checkForValidationErrors(
+		req: any,
+		section: Section,
+		journey: Journey,
+		manageListQuestion: any
+	): QuestionViewModel | undefined {
 		const { body = {}, originalUrl } = req;
 		const { errors = {}, errorSummary = [] } = body;
 

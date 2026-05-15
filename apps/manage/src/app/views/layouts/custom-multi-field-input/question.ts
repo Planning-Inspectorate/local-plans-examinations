@@ -2,13 +2,7 @@ import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/que
 import escape from 'escape-html';
 import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
-
-/**
- * @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question.js').QuestionViewModel} QuestionViewModel
- * @typedef {import('@planning-inspectorate/dynamic-forms/src/journey/journey.js').Journey} Journey
- * @typedef {import('@planning-inspectorate/dynamic-forms/src/journey/journey-response.js').JourneyResponse} JourneyResponse
- * @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question-types').QuestionParameters} QuestionParameters
- */
+import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
 
 /**
  * @typedef {Object} Affix
@@ -97,7 +91,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * @param {Object} options
-	 * @param {QuestionParameters} options.params
+	 * @param options.params
 	 * @param {string|undefined} [options.label] if defined this show as a label for the input and the question will just be a standard h1
 	 * @param {Record<string, string>} [options.inputAttributes] html attributes to add to the input
 	 * @param {(InputField|RadioField|HiddenField|BooleanFieldInput)[]} options.inputFields input fields (BooleanFieldInput options are optional, will be set to default Yes/No if not provided)
@@ -133,8 +127,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * Process answers for the view model
-	 * @param {Record<string, string>} answers
-	 * @returns
+	 * @param answers
 	 */
 	answerForViewModel(answers: Record<string, string>) {
 		return this.inputFields.map((inputField: any) => {
@@ -160,21 +153,19 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	}
 
 	/**
-	 * @param {QuestionViewModel} viewModel
+	 * @param viewModel
 	 */
-	addCustomDataToViewModel(viewModel: any) {
-		//viewModel.question.label = this.label;
+	addCustomDataToViewModel(viewModel: QuestionViewModel) {
+		// viewModel.question.label = this.label;
 		viewModel.question.attributes = this.inputAttributes;
 	}
 
 	/**
 	 * Get the data to save from the request, returns an object of answers
 	 * @param {import('express').Request} req
-	 * @param {JourneyResponse} journeyResponse - current journey response, modified with the new answers
 	 * @returns {Promise<{ answers: Record<string, unknown> }>}
 	 */
 	async getDataToSave(req: any) {
-		/** @type {Record<string, unknown>} */
 		const answers: Record<string, unknown> = {};
 
 		for (const inputField of this.inputFields) {
@@ -206,8 +197,8 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * returns the formatted answers values to be used to build task list elements
-	 * @param {Journey} journey
-	 * @param {String} sectionSegment
+	 * @param journey
+	 * @param sectionSegment
 	 * @returns {Array<{
 	 *   key: string;
 	 *   value: string | Object;
@@ -218,7 +209,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	 *   };
 	 * }>}
 	 */
-	formatAnswerForSummary(sectionSegment: any, journey: any) {
+	formatAnswerForSummary(sectionSegment: string, journey: any) {
 		const summaryDetails = this.inputFields.reduce((acc: any, field: any) => {
 			let answer;
 			if (field.type === 'boolean' || field.type === 'radio') {
@@ -245,21 +236,20 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * checks whether any answers have been provided for input field questions
-	 * @param {Journey} journey
+	 * @param journey
 	 * @returns {boolean}
 	 */
-	#allQuestionsUnanswered(journey: any) {
+	#allQuestionsUnanswered(journey: Journey): boolean {
 		return this.inputFields.every((field: any) => journey.response.answers[field.fieldName] === undefined);
 	}
 
 	/**
 	 * returns formatted value/answer if formatting is provided (defaults to value provided)
-	 * @param {string} valueToFormat
-	 * @param {function} [formatTextFunction]
+	 * @param valueToFormat
+	 * @param formatTextFunction
 	 * @returns {string}
-	 *
 	 */
-	#formatValue(valueToFormat: any, formatTextFunction: any) {
+	#formatValue(valueToFormat: string, formatTextFunction: any): string {
 		if (typeof formatTextFunction === 'function' && valueToFormat) {
 			return formatTextFunction(valueToFormat);
 		}
