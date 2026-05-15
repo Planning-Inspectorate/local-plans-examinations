@@ -1,13 +1,9 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import fs from 'node:fs'; //added assume ok?ß
-import { StageLabel } from '../../types.ts';
+import fs from 'node:fs'; //added assume ok?
+import { StageLabel, StatusColour } from '../../types.ts';
 import type { Plan } from '../../types.ts';
-import { StatusColour } from '../../types.ts';
 
-/**
- * Example home page controller
- */
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
