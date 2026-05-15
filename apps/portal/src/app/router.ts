@@ -2,6 +2,7 @@ import { Router as createRouter } from 'express';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createHomeRoutes } from './views/home/index.ts';
+import { createLandingPageRoutes } from './views/landingPage/index.ts';
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
@@ -22,7 +23,7 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use(cacheNoCacheMiddleware);
 
 	router.use('/login', createLoginRoutes(service));
-
+	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/', createHomeRoutes(service));
 	router.use('/error', createErrorRoutes(service));
 
