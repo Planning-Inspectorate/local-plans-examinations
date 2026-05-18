@@ -15,18 +15,12 @@ interface CustomManageListQuestionParameters extends QuestionParameters, ManageL
 }
 
 export default class CustomManageListQuestion extends ManageListQuestion {
-	/** @type {boolean} */
-	#showAnswersInSummary;
-	/** @type {number|null} */
-	maximumAnswers;
-	/** @type {string} */
-	emptyListText;
-	/** @type {boolean} */
-	isAllowedEmpty;
-	/** @type {string} */
-	confirmRemoveButtonText;
-	/** @type {string} */
-	removalPrompt;
+	#showAnswersInSummary: boolean;
+	maximumAnswers: number | null;
+	emptyListText: string;
+	isAllowedEmpty: boolean;
+	confirmRemoveButtonText: string;
+	removalPrompt: string;
 
 	/**
 	 * @param params
@@ -59,7 +53,7 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 
 	/**
 	 * returns the formatted answers values to be used to build task list elements
-	 * @param  sectionSegment
+	 * @param sectionSegment
 	 * @param journey
 	 * @param answer
 	 * @returns {Array<{
@@ -72,7 +66,7 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	 *   };
 	 * }>}
 	 */
-	formatAnswerForSummary(sectionSegment: string, journey: any, answer: Array<object>) {
+	formatAnswerForSummary(sectionSegment: string, journey: any, answer: { id: string; [k: string]: string }) {
 		let formattedAnswer = this.notStartedText;
 		if (answer && Array.isArray(answer) && answer.length > 0) {
 			if (this.#showAnswersInSummary) {
@@ -128,10 +122,9 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 
 	/**
 	 * Format the answers to each of the manage list questions
-	 * @param {{id: string, [k: string]: string}} answer
-	 * @returns {{question: string, answer: string}[]}
+	 * @param answer
 	 */
-	#formatItemAnswers(answer: any) {
+	#formatItemAnswers(answer: { id: string; [k: string]: string }): { question: string; answer: string }[] {
 		if (this.section.questions.length === 0) {
 			return [];
 		}

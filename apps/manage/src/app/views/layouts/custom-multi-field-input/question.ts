@@ -4,68 +4,53 @@ import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
 
-/**
- * @typedef {Object} Affix
- * @property {string} text
- * @property {string} [classes] optional property, used to add classes to the suffix/prefix
- */
+interface BaseField {
+	fieldName: string;
+	formatJoinString?: string;
+	formatPrefix?: string;
+	formatTextFunction?: (value: string) => string;
+}
 
-/**
- * @typedef {Object} BaseField
- * @property {string} fieldName
- * @property {string} [formatJoinString] optional property, used by formatAnswerForSummary (e.g. task list display), effective default to line break
- * @property {string} [formatPrefix] optional property, used by formatAnswerForSummary (e.g. task list display), to prefix answer
- * @property {function} [formatTextFunction] optional property, used to format the answer for display and value in question
- */
+interface Affix {
+	text: string;
+	classes?: string;
+}
 
-/**
- * @typedef {BaseField & {
- *   type: 'single-line-input',
- *   label: string,
- *   attributes?: Record<string, string>,
- * 	 autocomplete?: string,
- *   suffix?: Affix,
- *   prefix?: Affix
- * }} InputField
- */
+interface InputField extends BaseField {
+	type: 'single-line-input';
+	label: string;
+	attributes?: Record<string, string>;
+	autocomplete?: string;
+	suffix?: Affix;
+	prefix?: Affix;
+}
 
-/**
- * @typedef {BaseField & {
- *   type: 'radio',
- *   label?: string,
- * 	 legend?: string,
- *   options: Array<{ text: string, value: string, attributes?: Record<string, string> }>
- * }} RadioField
- */
+interface RadioField extends BaseField {
+	type: 'radio';
+	label?: string;
+	legend?: string;
+	options: Array<{ text: string; value: string; attributes?: Record<string, string> }>;
+}
 
-/**
- * @typedef {BaseField & {
- *   type: 'hidden',
- *   value: string
- * }} HiddenField
- */
+interface HiddenField extends BaseField {
+	type: 'hidden';
+	value: string;
+}
 
-/**
- * Boolean field as provided to the constructor/config.
- * `options` is optional because the constructor will default it.
- *
- * @typedef {BaseField & {
- *   type: 'boolean',
- *   question: string,
- *   hint?: string,
- *   options?: Array<{ text: string, value: string }>,
- * }} BooleanFieldInput
- */
-/**
- * Boolean field after constructor normalisation.
- * `options` is guaranteed to be present.
- *
- * @typedef {BaseField & {
- *   type: 'boolean',
- *   question: string,
- *   hint?: string,
- *   options: Array<{ text: string, value: string }>,
- * }} BooleanField
+interface BooleanFieldInput extends BaseField {
+	type: 'boolean';
+	question: string;
+	hint?: string;
+	options?: Array<{ text: string; value: string }>;
+}
+
+interface DateField extends BaseField {
+	type: 'date';
+	day: string;
+	month: string;
+	year: string;
+	attributes?: Record<string, string>;
+}
 
 /**
  * @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question-props.d.ts').CommonQuestionProps} CommonQuestionProps
@@ -84,10 +69,8 @@ export const HIDDEN_TYPE = 'hidden';
  * @class
  */
 export default class CustomMultiFieldInputQuestion extends Question {
-	/** @type {Record<string, string>} */
-	inputAttributes;
-	/** @type {(InputField|RadioField|HiddenField|BooleanField)[]} */
-	inputFields;
+	inputAttributes: Record<string, string>;
+	inputFields: (InputField | RadioField | HiddenField | BooleanFieldInput | DateField)[];
 
 	/**
 	 * @param {Object} options
@@ -163,9 +146,8 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	/**
 	 * Get the data to save from the request, returns an object of answers
 	 * @param {import('express').Request} req
-	 * @returns {Promise<{ answers: Record<string, unknown> }>}
 	 */
-	async getDataToSave(req: any) {
+	async getDataToSave(req: any): Promise<{ answers: Record<string, unknown> }> {
 		const answers: Record<string, unknown> = {};
 
 		for (const inputField of this.inputFields) {
@@ -237,7 +219,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	/**
 	 * checks whether any answers have been provided for input field questions
 	 * @param journey
-	 * @returns {boolean}
 	 */
 	#allQuestionsUnanswered(journey: Journey): boolean {
 		return this.inputFields.every((field: any) => journey.response.answers[field.fieldName] === undefined);
@@ -247,7 +228,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	 * returns formatted value/answer if formatting is provided (defaults to value provided)
 	 * @param valueToFormat
 	 * @param formatTextFunction
-	 * @returns {string}
 	 */
 	#formatValue(valueToFormat: string, formatTextFunction: any): string {
 		if (typeof formatTextFunction === 'function' && valueToFormat) {

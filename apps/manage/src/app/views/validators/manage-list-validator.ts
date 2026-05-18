@@ -3,10 +3,10 @@ import { body } from 'express-validator';
 
 export default class CustomManageListValidator extends BaseValidator {
 	/**
-	 * @param {{minimumAnswers?: number, errorMessages?: {minimumAnswers?: string}}} opts
+	 * @param opts
 	 */
-	minimumAnswers: any;
-	errorMessages: any;
+	minimumAnswers: number;
+	errorMessages: { minimumAnswers: string };
 
 	constructor(opts: { minimumAnswers?: number; errorMessages?: { minimumAnswers?: string } }) {
 		super();
