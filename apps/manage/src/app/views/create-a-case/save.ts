@@ -31,7 +31,6 @@ export interface CreateCaseAnswers {
 
 /**
  * Returns a controller/handler to save the journey answers to the database
- * @param service
  */
 export function buildSaveController(service: ManageService): RequestHandler {
 	return async (req, res) => {

@@ -22,9 +22,6 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	confirmRemoveButtonText: string;
 	removalPrompt: string;
 
-	/**
-	 * @param params
-	 */
 	constructor(params: CustomManageListQuestionParameters) {
 		super(params);
 		this.viewFolder = 'views/layouts/custom-manage-list';
@@ -36,9 +33,7 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 		this.removalPrompt =
 			params.removalPrompt || `Are you sure you want to remove this ${params.titleSingular.toLowerCase()}?`;
 	}
-	/**
-	 * @param viewModel
-	 */
+
 	addCustomDataToViewModel(viewModel: QuestionViewModel) {
 		super.addCustomDataToViewModel(viewModel);
 
@@ -53,18 +48,6 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 
 	/**
 	 * returns the formatted answers values to be used to build task list elements
-	 * @param sectionSegment
-	 * @param journey
-	 * @param answer
-	 * @returns {Array<{
-	 *   key: string;
-	 *   value: string | Object;
-	 *   action: {
-	 *     href: string;
-	 *     text: string;
-	 *     visuallyHiddenText: string;
-	 *   };
-	 * }>}
 	 */
 	formatAnswerForSummary(sectionSegment: string, journey: any, answer: { id: string; [k: string]: string }) {
 		let formattedAnswer = this.notStartedText;
@@ -88,13 +71,6 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 		];
 	}
 
-	/**
-	 * check for validation errors
-	 * @param {import('express').Request} req
-	 * @param section
-	 * @param journey
-	 * @param manageListQuestion
-	 */
 	checkForValidationErrors(
 		req: any,
 		section: Section,
@@ -122,7 +98,6 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 
 	/**
 	 * Format the answers to each of the manage list questions
-	 * @param answer
 	 */
 	#formatItemAnswers(answer: { id: string; [k: string]: string }): { question: string; answer: string }[] {
 		if (this.section.questions.length === 0) {

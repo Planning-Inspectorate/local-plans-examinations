@@ -3,6 +3,7 @@ import escape from 'escape-html';
 import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
+import type { Request } from 'express';
 
 interface BaseField {
 	fieldName: string;
@@ -52,33 +53,12 @@ interface DateField extends BaseField {
 	attributes?: Record<string, string>;
 }
 
-/**
- * @typedef {import('@planning-inspectorate/dynamic-forms/src/questions/question-props.d.ts').CommonQuestionProps} CommonQuestionProps
- * @typedef {Omit<CommonQuestionProps, 'type'> & {
- *   type: 'custom-multi-field-input';
- *   label?: string;
- *   inputAttributes?: Record<string, string>;
- *   inputFields: (InputField|RadioField|HiddenField|BooleanFieldInput)[];
- * }} CustomMultiFieldInputQuestionProps
- */
-
-/** @type {'hidden'} */
 export const HIDDEN_TYPE = 'hidden';
 
-/**
- * @class
- */
 export default class CustomMultiFieldInputQuestion extends Question {
 	inputAttributes: Record<string, string>;
 	inputFields: (InputField | RadioField | HiddenField | BooleanFieldInput | DateField)[];
 
-	/**
-	 * @param {Object} options
-	 * @param options.params
-	 * @param {string|undefined} [options.label] if defined this show as a label for the input and the question will just be a standard h1
-	 * @param {Record<string, string>} [options.inputAttributes] html attributes to add to the input
-	 * @param {(InputField|RadioField|HiddenField|BooleanFieldInput)[]} options.inputFields input fields (BooleanFieldInput options are optional, will be set to default Yes/No if not provided)
-	 */
 	constructor({ inputAttributes = {}, inputFields = [], ...params }) {
 		super({
 			...params,
@@ -110,7 +90,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * Process answers for the view model
-	 * @param answers
 	 */
 	answerForViewModel(answers: Record<string, string>) {
 		return this.inputFields.map((inputField: any) => {
@@ -135,9 +114,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 		});
 	}
 
-	/**
-	 * @param viewModel
-	 */
 	addCustomDataToViewModel(viewModel: QuestionViewModel) {
 		// viewModel.question.label = this.label;
 		viewModel.question.attributes = this.inputAttributes;
@@ -145,9 +121,8 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * Get the data to save from the request, returns an object of answers
-	 * @param {import('express').Request} req
 	 */
-	async getDataToSave(req: any): Promise<{ answers: Record<string, unknown> }> {
+	async getDataToSave(req: Request): Promise<{ answers: Record<string, unknown> }> {
 		const answers: Record<string, unknown> = {};
 
 		for (const inputField of this.inputFields) {
@@ -179,17 +154,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * returns the formatted answers values to be used to build task list elements
-	 * @param journey
-	 * @param sectionSegment
-	 * @returns {Array<{
-	 *   key: string;
-	 *   value: string | Object;
-	 *   action: {
-	 *     href: string;
-	 *     text: string;
-	 *     visuallyHiddenText: string;
-	 *   };
-	 * }>}
 	 */
 	formatAnswerForSummary(sectionSegment: string, journey: any) {
 		const summaryDetails = this.inputFields.reduce((acc: any, field: any) => {
@@ -218,7 +182,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * checks whether any answers have been provided for input field questions
-	 * @param journey
 	 */
 	#allQuestionsUnanswered(journey: Journey): boolean {
 		return this.inputFields.every((field: any) => journey.response.answers[field.fieldName] === undefined);
@@ -226,8 +189,6 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 	/**
 	 * returns formatted value/answer if formatting is provided (defaults to value provided)
-	 * @param valueToFormat
-	 * @param formatTextFunction
 	 */
 	#formatValue(valueToFormat: string, formatTextFunction: any): string {
 		if (typeof formatTextFunction === 'function' && valueToFormat) {

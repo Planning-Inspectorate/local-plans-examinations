@@ -24,7 +24,6 @@ export default class MultiFieldInputValidator extends BaseValidator {
 
 	/**
 	 * Validates response body against individual field validators.
-	 * @returns array of ValidationChain objects
 	 */
 	validate(): ValidationChain[] {
 		const rules: ValidationChain[] = [];
@@ -40,9 +39,6 @@ export default class MultiFieldInputValidator extends BaseValidator {
 
 	/**
 	 * Runs validation for a given set of validators and pushes the resulting ValidationChains to the rules array.
-	 * @param validators
-	 * @param field
-	 * @param rules
 	 */
 	private runValidation(validators: any[], field: Field, rules: ValidationChain[]) {
 		for (const validator of validators) {

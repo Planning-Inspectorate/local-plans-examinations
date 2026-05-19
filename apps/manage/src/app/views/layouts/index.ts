@@ -3,15 +3,11 @@ import CustomManageListQuestion from './custom-manage-list/question.ts';
 
 /**
  * Typed wrapper around Object.freeze() to preserve inference for object literals.
- * @template {Record<string, any>} T
- * @param {T} obj
- * @returns {Readonly<T>}
  */
-const freeze = (obj: any) => Object.freeze(obj);
+const freeze = (obj: any): Readonly<any> => Object.freeze(obj);
 
 /**
  * Derive the union type of allowed components from the object.
- * @typedef {typeof CUSTOM_COMPONENTS[keyof typeof CUSTOM_COMPONENTS]} CustomQuestionTypes
  */
 export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_MULTI_FIELD_INPUT: 'custom-multi-field-input',

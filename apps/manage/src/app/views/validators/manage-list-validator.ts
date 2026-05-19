@@ -2,9 +2,6 @@ import BaseValidator from '@planning-inspectorate/dynamic-forms/src/validator/ba
 import { body } from 'express-validator';
 
 export default class CustomManageListValidator extends BaseValidator {
-	/**
-	 * @param opts
-	 */
 	minimumAnswers: number;
 	errorMessages: { minimumAnswers: string };
 
