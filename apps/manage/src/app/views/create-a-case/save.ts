@@ -1,7 +1,8 @@
 import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
-import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { CaseCreateInput } from '@pins/local-plans-database/src/client/models/Case.ts';
+import { JOURNEY_ID } from './journey.ts';
 
 /**
  * The structure of data for the journey answers
@@ -78,6 +79,8 @@ export function buildSaveController(service: ManageService): RequestHandler {
 				}
 			});
 		}
+
+		clearDataFromSession({ req, journeyId: JOURNEY_ID });
 		res.render('views/layouts/success.njk', { reference: answers.reference });
 	};
 }
