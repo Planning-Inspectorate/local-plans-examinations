@@ -46,6 +46,8 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		answers.reference = `PLAN/${Math.floor(Math.random() * 1000000)}`;
 		answers.email = answers.contactDetails.at(0)!.email;
 
+		const allEmails = answers.contactDetails.map((contact) => contact.email);
+
 		await service.db.case.create({
 			data: mapToDatabase(answers)
 		});
@@ -55,21 +57,26 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		if (!service.notifyClient) {
 			service.logger.warn('Notify client not configured');
 		} else {
-			try {
-				const portalUrl = process.env.PORTAL_URL;
-				const templateID = process.env.TEMPLATE_ID;
-				if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-				if (!templateID) throw new Error('TEMPLATE_ID environment variable is not set');
-				const portalLoginURL = `${portalUrl}/login`;
-				await service.notifyClient.sendEmail(templateID, answers.email.trim(), {
-					personalisation: {
-						portalLoginURL
-					}
-				});
-				service.logger.info({ email: answers.email }, 'create a case - email sent');
-			} catch (error) {
-				service.logger.error({ error, email: answers.email }, 'Failed to send create a case email');
-			}
+			allEmails.forEach(async (email) => {
+				try {
+					const portalUrl = process.env.PORTAL_URL;
+					const templateID = process.env.TEMPLATE_ID;
+					if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
+					if (!templateID) throw new Error('TEMPLATE_ID environment variable is not set');
+					const portalLoginURL = `${portalUrl}/login`;
+					const caseReference = answers.reference;
+
+					await service.notifyClient?.sendEmail(templateID, email.trim(), {
+						personalisation: {
+							portalLoginURL,
+							caseReference
+						}
+					});
+					service.logger.info({ email: email }, 'create a case - email sent');
+				} catch (error) {
+					service.logger.error({ error, email: email }, 'Failed to send create a case email');
+				}
+			});
 		}
 		res.render('views/layouts/success.njk', { reference: answers.reference });
 	};
