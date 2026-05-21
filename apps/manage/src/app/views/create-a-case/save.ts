@@ -1,7 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import type { CaseCreateInput } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { JOURNEY_ID } from './journey.ts';
 
 /**
@@ -14,20 +13,21 @@ export interface CreateCaseAnswers {
 	caseOfficer: string;
 	planTitle: string;
 	planType: string;
-	lpa: string[];
-	contactDetails: Array<{
+	checkLpas: {
+		lpa: string;
+	}[];
+	contactDetails: {
 		firstName: string;
 		lastName: string;
 		email: string;
-		phoneNumber?: string;
-	}>;
-	keyStageDates?: Array<{
-		intentionToCommence?: Date;
-		gateway1Date?: Date;
-		gateway2Date?: Date;
-		gateway3Date?: Date;
-		submissionForExamDate?: Date;
-	}>;
+		phone?: string;
+		lpaContact: string;
+	}[];
+	intentionToCommenceDate?: string;
+	gateway1Date?: string;
+	gateway2Date?: string;
+	gateway3Date?: string;
+	submissionDate?: string;
 }
 
 /**
@@ -49,9 +49,66 @@ export function buildSaveController(service: ManageService): RequestHandler {
 
 		const allEmails = answers.contactDetails.map((contact) => contact.email);
 
-		await service.db.case.create({
-			data: mapToDatabase(answers)
+		const uniqueLpaCodes = [
+			...new Set([
+				...answers.checkLpas.map((lpa) => lpa.lpa),
+				...answers.contactDetails.map((contact) => contact.lpaContact)
+			])
+		];
+
+		await Promise.all(
+			uniqueLpaCodes.map((lpaCode) =>
+				service.db.lPA.upsert({
+					where: { lpaCode },
+					update: {},
+					create: { lpaCode }
+				})
+			)
+		);
+
+		const createdCase = await service.db.case.create({
+			data: {
+				reference: answers.reference,
+				email: answers.email,
+				caseOfficer: answers.caseOfficer,
+				planTitle: answers.planTitle,
+				planType: answers.planType,
+				...(answers.intentionToCommenceDate && {
+					intentionToCommenceDate: new Date(answers.intentionToCommenceDate)
+				}),
+				...(answers.gateway1Date && {
+					gateway1Date: new Date(answers.gateway1Date)
+				}),
+				...(answers.gateway2Date && {
+					gateway2Date: new Date(answers.gateway2Date)
+				}),
+				...(answers.gateway3Date && {
+					gateway3Date: new Date(answers.gateway3Date)
+				}),
+				...(answers.submissionDate && {
+					submissionDate: new Date(answers.submissionDate)
+				}),
+				lpas: {
+					connect: uniqueLpaCodes.map((lpaCode) => ({ lpaCode }))
+				}
+			}
 		});
+
+		await Promise.all(
+			answers.contactDetails.map((contact) =>
+				service.db.contact.create({
+					data: {
+						caseId: createdCase.id,
+						firstName: contact.firstName,
+						lastName: contact.lastName,
+						email: contact.email,
+						phoneNumber: contact.phone || '',
+						lpaCode: contact.lpaContact
+					}
+				})
+			)
+		);
+
 		service.logger.info(answers, 'case created');
 
 		// Send email to LPA using Gov Notify
@@ -82,18 +139,5 @@ export function buildSaveController(service: ManageService): RequestHandler {
 
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
 		res.render('views/layouts/success.njk', { reference: answers.reference });
-	};
-}
-
-export function mapToDatabase(answers: CreateCaseAnswers): CaseCreateInput {
-	return {
-		reference: answers.reference,
-		email: answers.email,
-		caseOfficer: answers.caseOfficer,
-		planTitle: answers.planTitle,
-		planType: answers.planType,
-		lpa: JSON.stringify(answers.lpa || []),
-		contactDetails: JSON.stringify(answers.contactDetails || []),
-		keyStageDates: JSON.stringify(answers.keyStageDates || [])
 	};
 }

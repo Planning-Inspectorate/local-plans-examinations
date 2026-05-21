@@ -22,17 +22,38 @@ datasource db {
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
 model Case {
-  id             Int    @id @default(autoincrement())
-  reference      String @unique
-  email          String
-  caseOfficer    String
-  planTitle      String
-  planType       String
-  lpa            String
-  contactDetails String
-  keyStageDates  String
+  id                      Int       @id @default(autoincrement())
+  reference               String    @unique
+  email                   String
+  caseOfficer             String
+  planTitle               String
+  planType                String
+  lpas                    LPA[]
+  contacts                Contact[]
+  intentionToCommenceDate DateTime?
+  gateway1Date            DateTime?
+  gateway2Date            DateTime?
+  gateway3Date            DateTime?
+  submissionDate          DateTime?
+  createdAt               DateTime  @default(now())
+}
 
-  createdAt DateTime @default(now())
+model LPA {
+  lpaCode  String    @id
+  case     Case[]
+  contacts Contact[]
+}
+
+model Contact {
+  id          Int    @id @default(autoincrement())
+  case        Case   @relation(fields: [caseId], references: [id])
+  caseId      Int
+  firstName   String
+  lastName    String
+  email       String
+  phoneNumber String
+  lpa         LPA    @relation(fields: [lpaCode], references: [lpaCode])
+  lpaCode     String
 }
 
 model OneTimePassword {
