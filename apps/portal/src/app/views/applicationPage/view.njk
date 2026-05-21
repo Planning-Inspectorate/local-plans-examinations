@@ -1,31 +1,79 @@
 {% extends "views/layouts/main.njk" %}
 
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
-
-{% block pageHeading %}{% endblock %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/tabs/macro.njk" import govukTabs %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block pageContent %}
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div class="govuk-grid-row">
-                <div class="govuk-grid-column-full">
-                    <h2 class="govuk-heading-l">
-                        {{ pageTitle }}
-                    </h2>
-                </div>
-                <div class="govuk-grid-column-full">
-                    <p class="govuk-body" data-cy="db-connection">
-                       {% if connected %}
-                           Successfully connected to the database.
-                       {% else %}
-                            <span class="govuk-error-text">Failed to connect to the database.</span>
-                       {% endif %}
-                    </p>
-                    <p class="govuk-body">
-                        You have visited this page {{ visitCount }} time{% if visitCount > 1 %}s{% endif %}.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+
+  {{ govukSummaryList({
+    caption: "Dates and amounts",
+    classes: "govuk-summary-list--no-border",
+    rows: [
+        {
+        key: { text: "Plan name" },
+        value: { text: planTitle }
+      },
+      {
+        key: { text: "Target date" },
+        value: { text: targetDate }
+      },
+      {
+        key: { text: "Local planning authority" },
+        value: { text: leadLPA }
+      },
+      {
+        key: { text: "Linked local planning authorities" },
+        value: { text: linkedLPA }
+      }
+    ]
+  })}}
+
+  <p class="govuk-body">
+    <a href="#" class="govuk-link">Save and come back later</a>
+  </p>
+
+  {{ govukTaskList({
+    items: [
+      {
+        title: { text: "Application incomplete" },
+        hint: { text: "You have completed 0 of 2 sections." }
+      }
+    ]
+  })}}
+
+  {% for section in DocsStructured %}
+
+    {{ govukTable({
+        firstCellIsHeader: false,
+        head: [
+            {
+                html: "<h2 class='govuk-heading-m govuk-!-margin-bottom-0'>" + section.heading + "</h2>"
+            },
+            {
+                text: ""
+            },
+            {
+                html: govukTag({
+                    text: section.tag.label,
+                    classes: section.tag.class
+                }),
+                classes: "govuk-!-text-align-right"
+            }
+        ]
+    })}}
+
+    {{ govukSummaryList({
+      rows: section.rows
+    })}}
+
+  {% endfor %}
+
 {% endblock %}
+
+

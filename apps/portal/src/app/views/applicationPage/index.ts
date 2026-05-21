@@ -8,7 +8,7 @@ export function createApplicationPageRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
 	const applicationPageController = buildApplicationPage(service);
-	router.get('/', asyncHandler(applicationPageController));
+	router.get('/:refNum/:stage', asyncHandler(applicationPageController));
 
 	return router;
 }

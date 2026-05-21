@@ -1,11 +1,11 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import fs from 'node:fs'; //added assume ok?
-import { StageLabel, StatusColour } from '../../types.ts';
+import { StageLabel, StatusTag } from '../../types.ts';
 import type { Plan, StatusType } from '../../types.ts';
 
 //takes status and mapping of label and class returns tags
-function statusTag(status: StatusType, tagMap: typeof StatusColour) {
+function statusTag(status: StatusType, tagMap: typeof StatusTag) {
 	const s = tagMap?.[status];
 	return `<strong class=" ${s?.class ?? ''}">
         ${s?.label ?? 'Unknown'}
@@ -95,8 +95,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 
-		const planTag = statusTag(plan.status, StatusColour);
+		const planTag = statusTag(plan.status, StatusTag);
 		const currentStage = StageLabel[plan.stage];
+		const applicationLink = `/applicationPage/${req.params['refNum']}/${plan.stage}`;
 
 		//button logic
 		let button = null;
@@ -120,24 +121,29 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const dates = plan.dates.split('|');
 		let tagG2, tagG3, tagE;
 		let dateTextG2, dateTextG3, dateTextE;
+		let hrefG2, hrefG3, hrefE;
+		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		console.log(plan.stage, tagG2, tagG3, tagE);
 		switch (plan.stage) {
-			case 0:
+			case 1:
+				hrefG2 = applicationLink;
 				tagG2 = planTag;
 				break;
-			case 1:
+			case 2:
 				dateTextG2 = 'Completed on:';
+				hrefG2 = applicationLink;
 				tagG2 = 'Completed';
 				tagG3 = planTag;
 				break;
-			case 2: // logic for if all complete
+			case 3: // logic for if all complete
 				if (plan.status == 5) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed on: ';
+					hrefE = applicationLink;
 					tagE = planTag;
 					tagG2 = tagG3 = 'Completed';
 				}
@@ -157,7 +163,10 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			tagE,
 			tabTextG2,
 			tabTextG3,
-			tabTextE
+			tabTextE,
+			hrefG2,
+			hrefG3,
+			hrefE
 		};
 
 		return res.render('views/planPage/view.njk', {
@@ -171,7 +180,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			notificationBanner,
 			backLinkUrl: '/landingPage',
 			backLinkText: 'Back to my plans',
-
+			applicationLink,
 			...viewModel
 		});
 	};

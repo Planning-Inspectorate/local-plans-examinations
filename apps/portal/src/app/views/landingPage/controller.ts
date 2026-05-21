@@ -1,7 +1,7 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import fs from 'node:fs'; //added assume ok?
-import { StageLabel, StatusColour } from '../../types.ts';
+import { StageLabel, StatusTag } from '../../types.ts';
 import type { Plan } from '../../types.ts';
 
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
@@ -36,7 +36,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			{ text: StageLabel[plan.stage] },
 			{
 				html: (() => {
-					const s = StatusColour[plan.status];
+					const s = StatusTag[plan.status];
 					return `<strong class=" ${s?.class ?? ''}">
 					${s?.label ?? 'Unknown'}
 					</strong>`;

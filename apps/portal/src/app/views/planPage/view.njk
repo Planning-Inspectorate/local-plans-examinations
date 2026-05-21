@@ -59,9 +59,9 @@
   ]
   }) }}
   {% if button %}
-    <button class="govuk-button" type="submit">
-        {{ button }}
-    </button>
+    <a href="{{ applicationLink }}" class="govuk-button">
+      {{ button }}
+    </a>
   {% endif %}
 
   <h2 class="govuk-heading-m">
@@ -89,7 +89,7 @@
         hint: {
           text: dateTextG2 + dateG2
         },
-        href: "#",
+        href: hrefG2,
         status: {
           html: tagG2
         }
@@ -101,7 +101,7 @@
         hint: {
           text: dateTextG3 + dateG3
         },
-        href: "#",
+        href: hrefG3,
         status: {
           html: tagG3
         }
@@ -113,7 +113,7 @@
         hint: {
           text: dateTextE + dateE
         },
-        href: "#",
+        href: hrefE,
         status: {
           html: tagE
         }
