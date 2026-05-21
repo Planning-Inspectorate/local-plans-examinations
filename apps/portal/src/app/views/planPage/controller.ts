@@ -124,15 +124,15 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		console.log(plan.stage, tagG2, tagG3, tagE);
 		switch (plan.stage) {
-			case 0:
+			case 1:
 				tagG2 = planTag;
 				break;
-			case 1:
+			case 2:
 				dateTextG2 = 'Completed on:';
 				tagG2 = 'Completed';
 				tagG3 = planTag;
 				break;
-			case 2: // logic for if all complete
+			case 3: // logic for if all complete
 				if (plan.status == 5) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
