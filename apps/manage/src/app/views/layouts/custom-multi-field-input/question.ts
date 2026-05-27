@@ -107,6 +107,37 @@ export default class CustomMultiFieldInputQuestion extends Question {
 				};
 			}
 
+			if (inputField.type === 'date') {
+				const dateValue = answers[inputField.fieldName];
+				const items = [
+					{ name: 'day', value: '', classes: 'govuk-input--width-2' },
+					{ name: 'month', value: '', classes: 'govuk-input--width-2' },
+					{ name: 'year', value: '', classes: 'govuk-input--width-4' }
+				];
+
+				if (dateValue) {
+					let day = '',
+						month = '',
+						year = '';
+
+					if (typeof dateValue === 'string') {
+						const parts = dateValue.split('/');
+						day = parts[0];
+						month = parts[1];
+						year = parts[2];
+					}
+
+					if (day) items[0].value = day;
+					if (month) items[1].value = month;
+					if (year) items[2].value = year;
+				}
+
+				return {
+					...inputField,
+					items: items
+				};
+			}
+
 			return {
 				...inputField,
 				value: this.#formatValue(answers[inputField.fieldName], inputField.formatTextFunction)

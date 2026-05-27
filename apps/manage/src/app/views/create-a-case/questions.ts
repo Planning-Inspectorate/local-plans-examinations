@@ -153,7 +153,8 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 			{
 				type: COMPONENT_TYPES.DATE,
 				fieldName: 'intentionToCommenceDate',
-				label: 'Date the Notice of Intention to Commence Plan Making was published'
+				label: 'Date the Notice of Intention to Commence Plan Making was published',
+				hint: 'For example, 27 3 2007'
 			},
 			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 estimated date' },
 			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 estimated date' },

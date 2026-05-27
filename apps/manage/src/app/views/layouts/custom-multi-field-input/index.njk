@@ -91,6 +91,9 @@
                             {{ govukDateInput({
                                 id: inputField.fieldName,
                                 namePrefix: inputField.fieldName,
+                                hint: {
+                                    text: inputField.hint
+                                },
                                 fieldset: {
                                     legend: {
                                         text: inputField.label,
