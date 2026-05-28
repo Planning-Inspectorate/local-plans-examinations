@@ -1,0 +1,15 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+
+{% block content %}
+	{{ govukPanel({
+		titleText: "New case has been created",
+		html: "The case reference number<br><strong>" + reference + "</strong>"
+	}) }}
+	<p class="govuk-body">
+		<a href="/" class="govuk-link">Go to the back office homepage</a>
+	</p>
+
+{% endblock %}
