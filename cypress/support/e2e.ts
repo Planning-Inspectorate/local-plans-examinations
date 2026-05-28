@@ -15,7 +15,7 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands.ts';
-import 'cypress-mochawesome-reporter/register.ts';
+import 'cypress-mochawesome-reporter/register';
 
 let grepTags: string[] = [];
 
