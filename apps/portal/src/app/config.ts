@@ -3,7 +3,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
 
-export type Config = BaseConfig;
+export type Config = BaseConfig & {
+	govNotify: {
+		disabled: boolean;
+		apiKey: string;
+		templateIds: {
+			authCode: string;
+		};
+	};
+};
 
 // cache the config
 let config: Config | undefined;
@@ -27,13 +35,23 @@ export function loadConfig(): Config {
 		NODE_ENV,
 		REDIS_CONNECTION_STRING,
 		SESSION_SECRET,
-		SQL_CONNECTION_STRING
+		SQL_CONNECTION_STRING,
+		GOV_NOTIFY_DISABLED,
+		GOV_NOTIFY_API_KEY,
+		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
 
 	if (!SESSION_SECRET) {
 		throw new Error('SESSION_SECRET is required');
+	}
+
+	const notifyDisabled = GOV_NOTIFY_DISABLED === 'true';
+	if (!notifyDisabled) {
+		if (!GOV_NOTIFY_API_KEY) throw new Error('GOV_NOTIFY_API_KEY must be a non-empty string');
+		if (!GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID)
+			throw new Error('GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID must be a non-empty string');
 	}
 
 	let httpPort = 8080;
@@ -66,7 +84,14 @@ export function loadConfig(): Config {
 			secret: SESSION_SECRET
 		},
 		// the static directory to serve assets from (images, css, etc..)
-		staticDir: buildConfig.staticDir
+		staticDir: buildConfig.staticDir,
+		govNotify: {
+			disabled: notifyDisabled,
+			apiKey: GOV_NOTIFY_API_KEY || '',
+			templateIds: {
+				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || ''
+			}
+		}
 	};
 
 	return config;
