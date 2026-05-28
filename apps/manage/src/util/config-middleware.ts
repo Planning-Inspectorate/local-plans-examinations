@@ -7,7 +7,7 @@ export function addLocalsConfiguration(): Handler {
 	return (req, res, next) => {
 		res.locals.config = {
 			styleFile: 'style-ddef3dad.css',
-			headerTitle: 'App 2 Service'
+			headerTitle: 'Plans Examination back office'
 		};
 		next();
 	};
