@@ -3,7 +3,6 @@ import escape from 'escape-html';
 import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
-import type { Request } from 'express';
 
 interface BaseField {
 	fieldName: string;
@@ -58,8 +57,9 @@ export const HIDDEN_TYPE = 'hidden';
 export default class CustomMultiFieldInputQuestion extends Question {
 	inputAttributes: Record<string, string>;
 	inputFields: (InputField | RadioField | HiddenField | BooleanFieldInput | DateField)[];
+	label: string;
 
-	constructor({ inputAttributes = {}, inputFields = [], ...params }) {
+	constructor({ label = '', inputAttributes = {}, inputFields = [], ...params }) {
 		super({
 			...params,
 			viewFolder: 'views/layouts/custom-multi-field-input',
@@ -67,10 +67,10 @@ export default class CustomMultiFieldInputQuestion extends Question {
 			question: params.question,
 			fieldName: params.fieldName
 		});
-		// this.label = label;
+		this.label = label;
 		this.inputAttributes = inputAttributes;
 
-		if (!inputFields) {
+		if (!inputFields || inputFields.length === 0) {
 			throw new Error('inputFields are mandatory');
 		}
 
@@ -146,14 +146,14 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	}
 
 	addCustomDataToViewModel(viewModel: QuestionViewModel) {
-		// viewModel.question.label = this.label;
+		viewModel.question.label = this.label;
 		viewModel.question.attributes = this.inputAttributes;
 	}
 
 	/**
 	 * Get the data to save from the request, returns an object of answers
 	 */
-	async getDataToSave(req: Request): Promise<{ answers: Record<string, unknown> }> {
+	async getDataToSave(req: any): Promise<{ answers: Record<string, unknown> }> {
 		const answers: Record<string, unknown> = {};
 
 		for (const inputField of this.inputFields) {
