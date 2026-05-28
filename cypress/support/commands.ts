@@ -35,3 +35,21 @@
 //     }
 //   }
 // }
+import { Cookie } from 'playwright-core';
+
+Cypress.Commands.add('authVisit', (endpoint: string) => {
+	cy.session('auth-session', () => {
+		cy.task<Cookie[]>('authenticate').then((cookies) => {
+			cookies.forEach((cookie) => {
+				cy.setCookie(cookie.name, cookie.value, {
+					domain: cookie.domain,
+					expiry: cookie.expires,
+					secure: cookie.secure,
+					httpOnly: cookie.httpOnly
+				});
+			});
+		});
+	});
+
+	cy.visit(endpoint);
+});
