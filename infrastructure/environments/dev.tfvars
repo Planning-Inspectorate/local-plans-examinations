@@ -37,6 +37,9 @@ auth_config_portal = {
   auth_enabled   = true
   auth_client_id = "c991933d-41b2-4d4c-8220-1c9e1ffdbf92"
   application_id = "b2f22368-72f5-468e-ab2b-113bf5316452"
+  allowed_groups = [
+    "713b5e9c-5efa-4b8a-8ac9-a46e40ee75a2"
+  ]
 }
 
 common_config = {

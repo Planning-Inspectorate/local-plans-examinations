@@ -1,6 +1,6 @@
 module "app_portal" {
   #checkov:skip=CKV_TF_1: Use of commit hash are not required for our Terraform modules
-  source = "github.com/Planning-Inspectorate/infrastructure-modules.git//modules/node-app-service?ref=1.54"
+  source = "github.com/Planning-Inspectorate/infrastructure-modules.git//modules/node-app-service?ref=7e055699e2c3cb7375a77d8bb6d5a1757be851cd"
 
   resource_group_name = azurerm_resource_group.primary.name
   location            = module.primary_region.location
@@ -50,6 +50,7 @@ module "app_portal" {
     allowed_applications = var.auth_config_portal.application_id
     allowed_audiences    = "https://${var.web_domains.portal}/.auth/login/aad/callback"
     excluded_paths       = []
+    allowed_groups       = var.auth_config_portal.allowed_groups
   }
 
   app_settings = {
@@ -74,6 +75,7 @@ module "app_portal" {
     #Auth
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = local.key_vault_refs["microsoft-provider-authentication-secret"]
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS         = data.azurerm_client_config.current.tenant_id
+    WEBSITE_AUTH_DISABLE_IDENTITY_FLOW       = "true"
 
     # sessions
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]

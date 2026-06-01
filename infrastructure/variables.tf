@@ -50,6 +50,7 @@ variable "auth_config_portal" {
     auth_enabled   = bool
     auth_client_id = string
     application_id = string
+    allowed_groups = list(string)
   })
 }
 
