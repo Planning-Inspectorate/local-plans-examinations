@@ -9,12 +9,16 @@ export function addLocalsConfiguration(): Handler {
 
 		const links = [
 			{
-				text: 'Home',
-				href: '/'
+				text: 'Guidance',
+				href: '/guidance'
 			},
 			{
-				text: 'Questionnaire',
-				href: '/questionnaire'
+				text: 'Account settings',
+				href: '/accountSettings'
+			},
+			{
+				text: 'Manage users',
+				href: '/manageUsers'
 			}
 		];
 
