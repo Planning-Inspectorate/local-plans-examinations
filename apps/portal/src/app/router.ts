@@ -21,7 +21,6 @@ export function buildRouter(service: PortalService): IRouter {
 	// don't cache responses, note no-cache allows some caching, but with revalidation
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
-
 	router.use('/login', createLoginRoutes(service));
 	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/', createHomeRoutes(service));
