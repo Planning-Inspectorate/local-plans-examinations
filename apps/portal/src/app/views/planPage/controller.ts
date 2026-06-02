@@ -1,7 +1,7 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import fs from 'node:fs'; //added assume ok?
-import { StageLabel, StatusTag } from '../../types.ts';
+import { StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, StatusType } from '../../types.ts';
 
 //takes status and mapping of label and class returns tags
@@ -69,44 +69,24 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const planRef = String(req.params['refNum']).replace('-', '/');
 		const rawPlans = JSON.parse(fs.readFileSync('src/app/testData.json', 'utf-8'));
 
-		//filters and validates plans
-		//---------currently just removes inccorect or incomplete records ----------
-		const validPlans: Plan[] = rawPlans.filter((rawPlan: unknown): rawPlan is Plan => {
-			if (typeof rawPlan !== 'object' || rawPlan === null) return false;
-			const recordPlan = rawPlan as Record<string, unknown>;
-			return (
-				typeof recordPlan.refNum === 'string' &&
-				typeof recordPlan.leadLPA === 'string' &&
-				typeof recordPlan.title === 'string' &&
-				typeof recordPlan.stage === 'number' &&
-				typeof recordPlan.status === 'number' &&
-				recordPlan.stage >= 0 &&
-				recordPlan.stage <= 3 &&
-				recordPlan.status >= 0 &&
-				recordPlan.status <= 5
-			);
-		});
-
-		//checks if plan exists logs error if fail
-		const plan = validPlans.find((p) => p.refNum == planRef);
-		if (!plan) {
+		//checks if plan exists and is valid, logs error if fail
+		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
+		if (!validPlan(plan)) {
 			logger.warn({ planRef }, 'Plan not found');
 			res.status(404).send('Plan not found');
 			return;
 		}
 
-		const planTag = statusTag(plan.status, StatusTag);
+		const planStatusTag = statusTag(plan.status, StatusTag);
 		const currentStage = StageLabel[plan.stage];
-		const applicationLink = `/applicationPage/${req.params['refNum']}/${plan.stage}`;
+		const applicationLinkNoStage = `/applicationPage/${req.params['refNum']}/`;
+		const currentApplicationLink = `/applicationPage/${req.params['refNum']}/${plan.stage}`;
 
 		//button logic
 		let button = null;
 		if (plan.status == 0) {
 			//Ready to start
 			button = 'Start ' + currentStage + ' submission';
-		} else if (plan.status == 3) {
-			//Action needed
-			button = 'Continue ' + currentStage + ' submission';
 		}
 
 		//notification banner logic
@@ -125,26 +105,28 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
-		console.log(plan.stage, tagG2, tagG3, tagE);
 		switch (plan.stage) {
 			case 1:
-				hrefG2 = applicationLink;
-				tagG2 = planTag;
+				hrefG2 = currentApplicationLink;
+				tagG2 = planStatusTag;
 				break;
 			case 2:
 				dateTextG2 = 'Completed on:';
-				hrefG2 = applicationLink;
+				hrefG2 = applicationLinkNoStage + `1`;
+				hrefG3 = currentApplicationLink;
 				tagG2 = 'Completed';
-				tagG3 = planTag;
+				tagG3 = planStatusTag;
 				break;
 			case 3: // logic for if all complete
+				hrefG2 = applicationLinkNoStage + `1`;
+				hrefG3 = applicationLinkNoStage + `2`;
+				hrefE = currentApplicationLink;
 				if (plan.status == 5) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed on: ';
-					hrefE = applicationLink;
-					tagE = planTag;
+					tagE = planStatusTag;
 					tagG2 = tagG3 = 'Completed';
 				}
 				break;
@@ -172,15 +154,16 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		return res.render('views/planPage/view.njk', {
 			pageCaption: planRef,
 			pageTitle: plan.title,
-			currentStage: currentStage,
-			status: planTag,
+			currentStage,
+			planStatusTag,
+			status: plan.status,
 			leadLPA: plan.leadLPA,
 			linkedLPA: plan.linkedLPA,
 			button,
 			notificationBanner,
 			backLinkUrl: '/landingPage',
 			backLinkText: 'Back to my plans',
-			applicationLink,
+			currentApplicationLink,
 			...viewModel
 		});
 	};

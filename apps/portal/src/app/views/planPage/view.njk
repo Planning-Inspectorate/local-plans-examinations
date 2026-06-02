@@ -37,7 +37,7 @@
         text: "Current stage"
       },
       value: {
-        html: currentStage + " " + status
+        html: currentStage + " " + planStatusTag
       }
     },
     {
@@ -59,7 +59,7 @@
   ]
   }) }}
   {% if button %}
-    <a href="{{ applicationLink }}" class="govuk-button">
+    <a href="{{ currentApplicationLink }}" class="govuk-button">
       {{ button }}
     </a>
   {% endif %}

@@ -9,7 +9,7 @@ const app = createApp(service);
 // Trust proxy, because our application is behind Front Door
 // required for secure session cookies
 // see https://expressjs.com/en/resources/middleware/session.html#cookiesecure
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // set the HTTP port to use from loaded config
 app.set('http-port', config.httpPort);
