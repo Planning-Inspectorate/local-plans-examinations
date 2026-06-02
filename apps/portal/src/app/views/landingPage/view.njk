@@ -1,31 +1,152 @@
 {% extends "views/layouts/main.njk" %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/tabs/macro.njk" import govukTabs %}
 
+
+{% set notificationBannerTemplate %}
+  <p class="govuk-notification-banner__heading">
+    Action needed: {{ currentStage }} submission incomplete
+  </p>
+  <p class="govuk-body">
+    PINS has reviewed your submission and found issues with some documents. You must upload corrected files before your plan can progress.
+  </p>
+  <a class="govuk-notification-banner__link" href="#">Review and correct your documents</a>
+{% endset %}
 
 
 {% block pageContent %}
 
-  {{ govukTable({
-    captionClasses: "govuk-table__caption--l",
-    firstCellIsHeader: true,
-    head: [
-      {
-        text: "Reference Number"
+  
+
+
+  {% if notificationBanner %}
+    {{ govukNotificationBanner({
+      html: notificationBannerTemplate
+    }) }}
+  {% endif %}
+
+  {{ govukSummaryList({
+  classes: "govuk-summary-list--no-border",
+  rows: [
+    {
+      key: {
+        text: "Current stage"
       },
-      {
-        text: "Lead Local Planning Authority"
-      },
-      {
-        text: "Plan Title"
-      },
-      {
-        text: "Current Stage"
-      },
-      {
-        text: "Status"
+      value: {
+        html: currentStage + " " + planStatusTag
       }
-    ],
-    rows: plans
+    },
+    {
+      key: {
+        text: "Local planning authority"
+      },
+      value: {
+        text: leadLPA
+      }
+    },
+    {
+      key: {
+        text: "Linked local planning authorities"
+      },
+      value: {
+        text: linkedLPA
+      }
+    }
+  ]
   }) }}
+  {% if button %}
+    <a href="{{ currentApplicationLink }}" class="govuk-button">
+      {{ button }}
+    </a>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">
+    Plan progress
+  </h2>
+
+  {{ govukTaskList({
+    items: [
+      {
+        title: {
+          text: "Gateway 1 - self-assessment"
+        },
+        hint: {
+          text: "Completed outside this service on " +  dateG1
+        },
+        href: "#",
+        status: {
+          text: "Completed"
+        }
+      },
+      {
+        title: {
+          text: "Gateway 2 - advisory check"
+        },
+        hint: {
+          text: dateTextG2 + dateG2
+        },
+        href: hrefG2,
+        status: {
+          html: tagG2
+        }
+      },
+      {
+        title: {
+          text: "Gateway 3 - readiness check"
+        },
+        hint: {
+          text: dateTextG3 + dateG3
+        },
+        href: hrefG3,
+        status: {
+          html: tagG3
+        }
+      },
+      {
+        title: {
+          text: "Examination"
+        },
+        hint: {
+          text: dateTextE + dateE
+        },
+        href: hrefE,
+        status: {
+          html: tagE
+        }
+      }
+    ]
+  }) }}
+
+  {{ govukTabs({
+    items: [
+      {
+        label: "Gateway 2",
+        id: "gateway-2",
+        panel: {
+          html: tabTextG2
+        }
+      },
+      {
+        label: "Gateway 3",
+        id: "gateway-3",
+        panel: {
+          html: tabTextG3
+        }
+      },
+      {
+        label: "Examination",
+        id: "examination",
+        panel: {
+          html: tabTextE
+        }
+      }
+    ]
+  }) }}
+
+
 
 {% endblock %}
