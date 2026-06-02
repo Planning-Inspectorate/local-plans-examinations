@@ -1,5 +1,6 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 
 {% block pageContent %}
@@ -37,6 +38,9 @@
       text: "Case History"
     }
   ]
+}) }}
+{{ govukSummaryList({
+  rows: rows
 }) }}
 {% endblock %}
 
