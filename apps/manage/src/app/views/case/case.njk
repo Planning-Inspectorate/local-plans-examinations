@@ -1,5 +1,6 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 
 {% block pageContent %}
@@ -41,6 +42,9 @@
     "id": "service-navigation",
     "data-cy": "service-navigation"
   }
+}) }}
+{{ govukSummaryList({
+  rows: rows
 }) }}
 {% endblock %}
 

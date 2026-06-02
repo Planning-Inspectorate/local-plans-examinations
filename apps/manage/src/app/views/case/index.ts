@@ -8,5 +8,15 @@ export function createCaseRoutes(service: ManageService): IRouter {
 	const casePage = buildCasePage(service);
 
 	router.get('/:reference', asyncHandler(casePage));
+
+	router.get(
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		// validateIdFormat,
+		getJourneyResponse,
+		getQuestionJourney,
+		// addSuccessBannerFromMessage,
+		asyncHandler(question)
+	);
+
 	return router;
 }
