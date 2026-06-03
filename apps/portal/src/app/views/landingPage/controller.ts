@@ -18,7 +18,6 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 				const planRef =
 					typeof rawplan === 'object' && rawplan !== null && 'refNum' in rawplan ? rawplan.refNum : 'Invalid ref';
 				logger.warn({ planRef }, 'Invalid plan');
-				//res.status(404).send("Invalid plan");
 			}
 		}
 
