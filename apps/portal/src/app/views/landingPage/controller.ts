@@ -1,15 +1,13 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import fs from 'node:fs'; //added assume ok?
-import { StageLabel, StatusTag } from '../../types.ts';
+import { StageLabel, StatusTag, buildTestPlans, validPlan } from '../../types.ts';
 import type { Plan } from '../../types.ts';
-import { validPlan } from '../../types.ts';
 
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
 		const councilLocation = 'Southampton City Council'; //TO BE CHANGED
-		const rawPlans = JSON.parse(fs.readFileSync('src/app/testData.json', 'utf-8'));
+		const rawPlans = buildTestPlans();
 
 		//alidates plans, raises error if invalid
 		const validPlans: Plan[] = [];
@@ -17,9 +15,10 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			if (validPlan(rawplan)) {
 				validPlans.push(rawplan);
 			} else {
-				logger.warn({ planRef: rawplan.refNum }, 'Plan not found');
-				res.status(404).send('Plan not found');
-				return;
+				const planRef =
+					typeof rawplan === 'object' && rawplan !== null && 'refNum' in rawplan ? rawplan.refNum : 'Invalid ref';
+				logger.warn({ planRef }, 'Invalid plan');
+				//res.status(404).send("Invalid plan");
 			}
 		}
 
@@ -32,9 +31,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			{
 				html: (() => {
 					const s = StatusTag[plan.status];
-					return `<strong class=" ${s?.class ?? ''}">
-					${s?.label ?? 'Unknown'}
-					</strong>`;
+					return `<strong class="${s.class}">${s.label}</strong>`;
 				})()
 			}
 		]);

@@ -1,8 +1,15 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { Plan, DocType, StageType } from '../../types.ts';
-import { StageLabel, docTitleLabel, StateLabel, DocTypeLabel, StateTag, validPlan } from '../../types.ts';
-import fs from 'node:fs'; //added assume ok?
+import {
+	StageLabel,
+	docTitleLabel,
+	StateLabel,
+	DocTypeLabel,
+	StateTag,
+	validPlan,
+	buildTestPlans
+} from '../../types.ts';
 
 //const docListTemplate =
 
@@ -12,7 +19,7 @@ export function buildApplicationPage(service: PortalService): AsyncRequestHandle
 		//logic for finding correct plan from url
 		const rawPlanRef = String(req.params['refNum']);
 		const planRef = rawPlanRef.replace('-', '/');
-		const rawPlans = JSON.parse(fs.readFileSync('src/app/testData.json', 'utf-8'));
+		const rawPlans = buildTestPlans();
 
 		//checks if plan exists and is valid, logs error if fail
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
@@ -36,6 +43,7 @@ export function buildApplicationPage(service: PortalService): AsyncRequestHandle
 		//contains logic for display
 		for (const doctype of doctypesForG2) {
 			const filteredDoctype = plan.documents.filter((doc) => doc.type === doctype);
+
 			DocsStructured.push({
 				heading: String(count) + '. ' + DocTypeLabel[doctype],
 				tag: StateTag[plan.sections[doctype]],

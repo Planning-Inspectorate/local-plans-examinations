@@ -43,7 +43,7 @@
                 <div class="govuk-grid-column-two-thirds">
                     {{
                     govukErrorSummary({
-                        titleText: "There is a problem",
+                        titleText: errorSummaryTitle or "There is a problem",
                         errorList: errorSummary
                     })
                 }}

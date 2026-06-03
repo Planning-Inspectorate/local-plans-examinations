@@ -6,7 +6,6 @@ import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildApplicationPage } from './controller.ts';
 import { JSDOM } from 'jsdom';
-import fs from 'node:fs';
 
 describe('application page', () => {
 	it('should render without error', async () => {
@@ -188,7 +187,6 @@ describe('application page', () => {
 		);
 
 		const expectedTags = ['Not started', 'Not started', 'Not started'];
-		console.log('expected:', expectedTags);
 
 		assert.deepStrictEqual(tableHeaders, expectedHeaders, `Expected ${expectedHeaders} but got "${tableHeaders}"`);
 		assert.deepStrictEqual(tags, expectedTags, `Expected ${expectedTags} but got "${tags}"`);

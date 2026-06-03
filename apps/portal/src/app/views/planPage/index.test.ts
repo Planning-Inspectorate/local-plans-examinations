@@ -6,7 +6,6 @@ import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildPlanPage } from './controller.ts';
 import { JSDOM } from 'jsdom';
-import fs from 'node:fs';
 
 describe('plan page', () => {
 	it('should render without error', async () => {
@@ -385,14 +384,6 @@ describe('plan page', () => {
 
 	it('should return 404 when plan is not found', async () => {
 		const warn = mock.fn();
-
-		mock.method(fs, 'readFileSync', () =>
-			JSON.stringify([
-				{
-					refNum: 'PLAN/001'
-				}
-			])
-		);
 
 		const mockReq = {
 			session: {},
