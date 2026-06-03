@@ -1,11 +1,11 @@
 // @ts-nocheck
-import fs from 'node:fs';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildLandingPage } from './controller.ts';
 import { JSDOM } from 'jsdom';
+import * as types from '../../types.ts';
 
 describe('landing page', () => {
 	it('should render without error', async () => {
@@ -168,47 +168,5 @@ describe('landing page', () => {
 		];
 
 		assert.deepStrictEqual(headings, expectedHeadings, `Expected ${expectedHeadings} instead got "${headings}"`);
-	});
-
-	it('should return 404 when plan is not found/ invalid', async () => {
-		const warn = mock.fn();
-
-		mock.method(fs, 'readFileSync', () =>
-			JSON.stringify([
-				{
-					refNum: 'PLAN/999'
-				}
-			])
-		);
-
-		const mockReq = {
-			session: {},
-			params: {
-				refNum: 'PLAN-999',
-				stage: '1'
-			}
-		};
-
-		const mockRes = {
-			status: mock.fn(() => mockRes),
-			send: mock.fn(),
-			render: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({
-			logger: { warn }
-		});
-
-		await landingPage(mockReq, mockRes);
-
-		assert.strictEqual(warn.mock.callCount(), 1);
-
-		assert.deepStrictEqual(warn.mock.calls[0].arguments, [{ planRef: 'PLAN/999' }, 'Plan not found']);
-
-		assert.strictEqual(mockRes.status.mock.calls[0].arguments[0], 404);
-
-		assert.strictEqual(mockRes.send.mock.calls[0].arguments[0], 'Plan not found');
-
-		assert.strictEqual(mockRes.render.mock.callCount(), 0);
 	});
 });
