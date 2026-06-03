@@ -1,7 +1,6 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import fs from 'node:fs'; //added assume ok?
-import { StageLabel, StatusTag, validPlan } from '../../types.ts';
+import { StageLabel, StatusTag, validPlan, buildTestPlans } from '../../types.ts';
 import type { Plan, StatusType } from '../../types.ts';
 
 //takes status and mapping of label and class returns tags
@@ -67,7 +66,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	return async (req, res) => {
 		//logic for finding correct plag
 		const planRef = String(req.params['refNum']).replace('-', '/');
-		const rawPlans = JSON.parse(fs.readFileSync('src/app/testData.json', 'utf-8'));
+		const rawPlans = buildTestPlans();
 
 		//checks if plan exists and is valid, logs error if fail
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);

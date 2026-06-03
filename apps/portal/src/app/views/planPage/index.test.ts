@@ -6,7 +6,6 @@ import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildPlanPage } from './controller.ts';
 import { JSDOM } from 'jsdom';
-import fs from 'node:fs';
 
 describe('plan page', () => {
 	it('should render without error', async () => {
