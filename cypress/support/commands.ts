@@ -1,37 +1,35 @@
 /// <reference types="cypress" />
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+
+type DateParts = {
+	day: string | number;
+	month: string | number;
+	year: string | number;
+};
+
+declare global {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace Cypress {
+		interface Chainable {
+			clearAndWrite(value: string | number): Chainable;
+			getByData(selector: string): Chainable;
+			fillDate(fieldName: string, date: DateParts): Chainable;
+		}
+	}
+}
+
+Cypress.Commands.add('getByData', (selector) => cy.get(`[data-cy="${selector}"]`));
+
+Cypress.Commands.add('clearAndWrite', { prevSubject: 'element' }, (subject, value) => {
+	const input = cy.wrap(subject).should('be.visible').clear();
+	const text = String(value);
+
+	return text ? input.type(text) : input;
+});
+
+Cypress.Commands.add('fillDate', (fieldName, date) => {
+	cy.get(`[name="${fieldName}-day"]`).clearAndWrite(date.day);
+	cy.get(`[name="${fieldName}-month"]`).clearAndWrite(date.month);
+	cy.get(`[name="${fieldName}-year"]`).clearAndWrite(date.year);
+});
+
+export {};

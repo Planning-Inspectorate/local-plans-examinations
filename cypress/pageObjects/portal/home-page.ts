@@ -1,12 +1,17 @@
-export class PortalHomePage {
-	heading = '.govuk-heading-l';
-	dbConnectionMessage = '[data-cy="db-connection"]';
+import { BasePage } from '../base-page.ts';
 
-	verifyHeading(text: string) {
-		cy.get(this.heading).contains(text);
+export class PortalHomePage extends BasePage {
+	constructor() {
+		super('/');
+	}
+
+	get dbConnectionMessage() {
+		return cy.getByData('db-connection');
 	}
 
 	verifyDbConnection(text: string) {
-		cy.get(this.dbConnectionMessage).contains(text);
+		this.dbConnectionMessage.should('be.visible').and('contain.text', text);
 	}
 }
+
+export const portalHomePage = new PortalHomePage();

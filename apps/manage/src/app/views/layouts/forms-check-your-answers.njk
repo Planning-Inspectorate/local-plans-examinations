@@ -5,9 +5,40 @@
 {% block content %}
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
-            <h1 class="govuk-heading-l">Check your answers</h1>
+            <h1 class="govuk-heading-l" data-cy="check-your-answers-heading">Check your answers</h1>
         </div>
     </div>
 
-    {% block dynTaskList %}{% endblock %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            {% for section in summaryListData.sections %}
+                {% if section.list.rows.length %}
+                    {{ govukSummaryList({
+                        card: {
+                            title: {
+                                text: section.heading
+                            },
+                            attributes: {id: section.heading | lower}
+                        },
+                        rows: section.list.rows
+                    }) }}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if journeyComplete %}
+        <form method="POST">
+            {{ govukButton({
+                text: "Submit case",
+                attributes: { "data-cy": "submit-case" }
+            }) }}
+        </form>
+
+    {% else %}
+        <strong class="govuk-tag govuk-tag--grey" data-cy="cannot-submit-yet">
+            Cannot submit yet
+        </strong>
+    {% endif %}
+
 {% endblock %}
