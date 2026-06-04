@@ -36,9 +36,9 @@
     "cy:open:manage": "cross-env TEST_TARGET=manage npx cypress open"
   },
   "dependencies": {
-    "@azure/functions": "^4.14.0",
+    "@azure/functions": "^4.16.0",
     "@azure/identity": "^4.13.0",
-    "@azure/msal-node": "^5.1.5",
+    "@azure/msal-node": "^5.2.2",
     "@planning-inspectorate/dynamic-forms": "^3.3.4",
     "@prisma/adapter-mssql": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -49,7 +49,7 @@
     "connect-redis": "^9.0.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.5.2",
     "express-session": "^1.19.0",
@@ -62,15 +62,15 @@
     "redis": "^5.11.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.3",
-    "@commitlint/config-conventional": "^20.5.3",
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
     "@cypress/grep": "^6.0.0",
     "@eslint/js": "^10.0.1",
     "@microsoft/microsoft-graph-types": "^2.43.1",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.5",
     "@types/express-session": "^1.19.0",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "@types/nunjucks": "^3.2.6",
     "cookie-parser": "^1.4.7",
     "cross-env": "^10.1.0",
@@ -85,7 +85,7 @@
     "prettier": "^3.8.3",
     "prettier-plugin-prisma": "^5.0.0",
     "prisma": "^7.8.0",
-    "sass": "^1.97.3",
+    "sass": "^1.100.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.2"
   },
