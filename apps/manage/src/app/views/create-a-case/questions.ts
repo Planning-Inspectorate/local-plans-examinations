@@ -131,6 +131,10 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 					{
 						fieldName: 'email',
 						validators: [new RequiredValidator('Input an email address')]
+					},
+					{
+						fieldName: 'lpaContact',
+						validators: [new RequiredValidator('Select the organisation for this contact')]
 					}
 				]
 			})
