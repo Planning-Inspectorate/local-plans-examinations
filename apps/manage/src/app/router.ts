@@ -8,6 +8,8 @@ import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.t
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
 import { createACaseRoutes } from './views/create-a-case/index.ts';
+import { clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
+import { JOURNEY_ID } from './views/create-a-case/journey.ts';
 
 /**
  * Main app router
@@ -40,7 +42,11 @@ export function buildRouter(service: ManageService): IRouter {
 		service.logger.warn('auth disabled; auth routes and guards skipped');
 	}
 
-	router.get('/', (req, res) => res.redirect('/items'));
+	router.get('/', (req, res) => {
+		clearDataFromSession({ req, journeyId: JOURNEY_ID });
+		res.redirect('/items');
+	});
+
 	router.use('/items', itemsRoutes);
 
 	if (service.notifyCallbackEnabled) {

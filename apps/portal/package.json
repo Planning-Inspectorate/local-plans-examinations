@@ -15,8 +15,8 @@
   "license": "MIT",
   "dependencies": {
     "@pins/local-plans-database": "^0.0.0",
-    "@planning-inspectorate/dynamic-forms": "*",
     "@pins/local-plans-lib": "^0.0.0",
+    "@planning-inspectorate/dynamic-forms": "*",
     "body-parser": "*",
     "connect-redis": "*",
     "dotenv": "*",
@@ -25,13 +25,14 @@
     "express-validator": "*",
     "govuk-frontend": "*",
     "helmet": "*",
+    "jsdom": "^29.1.1",
     "nunjucks": "*",
     "pino": "*",
     "pino-pretty": "*",
     "redis": "*"
   },
   "devDependencies": {
-    "cypress": "^15.8.1",
+    "cypress": "^15.16.0",
     "nodemon": "*",
     "sass": "*"
   },
