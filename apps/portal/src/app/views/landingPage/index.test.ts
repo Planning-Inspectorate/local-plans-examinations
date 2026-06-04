@@ -7,21 +7,18 @@ import { buildLandingPage } from './controller.ts';
 import { JSDOM } from 'jsdom';
 import * as types from '../../types.ts';
 
+function initialiseTest() {
+	const nunjucks = configureNunjucks();
+	const mockRes = { render: mock.fn((view, data) => nunjucks.render(view, data)) };
+	const mockReq = { session: {} };
+	const mockDb = { $queryRaw: mock.fn() };
+	const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+	return { landingPage, mockRes, mockReq, nunjucks };
+}
+
 describe('landing page', () => {
 	it('should render without error', async () => {
-		const nunjucks = configureNunjucks();
-		// mock response that calls nunjucks to render a result
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		assert.strictEqual(mockRes.render.mock.callCount(), 1);
@@ -30,19 +27,7 @@ describe('landing page', () => {
 	});
 
 	it('should render title and caption correctly', async () => {
-		const nunjucks = configureNunjucks();
-		// mock response that calls nunjucks to render a result
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
@@ -56,108 +41,61 @@ describe('landing page', () => {
 	});
 
 	it('should render correct status tags', async () => {
-		const nunjucks = configureNunjucks();
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 		const html = nunjucks.render(view, data);
-		const dom = new JSDOM(html);
-
-		const tags = [...dom.window.document.querySelectorAll('.govuk-tag')];
 
 		const targetTags = [
-			{
-				className: 'govuk-tag--green',
-				text: 'Ready to Start'
-			},
-			{
-				className: 'govuk-tag--blue',
-				text: 'In Progress'
-			},
-			{
-				className: 'govuk-tag--yellow',
-				text: 'With PINS'
-			},
-			{
-				className: 'govuk-tag--red',
-				text: 'Action needed'
-			},
-			{
-				className: 'govuk-tag--grey',
-				text: 'Invalid'
-			}
+			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to Start' },
+			{ className: 'govuk-tag govuk-tag--blue', text: 'In Progress' },
+			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
+			{ className: 'govuk-tag govuk-tag--red', text: 'Action needed' },
+			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },
+			{ className: 'govuk-body', text: 'Completed' }
 		];
 
-		for (const targetTag of targetTags) {
+		for (const plan of data.plans) {
+			const rawTagClass = plan[4].html.match(/"([^"]+)"/)?.[1]; // 4 for last cell - where tag should be
+			const rawTagText = plan[4].html.match(/>([^<]+)</)?.[1];
+			console.log({ className: rawTagClass, text: rawTagText });
+
 			assert.ok(
-				tags.some((tag) => tag.className.includes(targetTag.className) && tag.textContent.trim() === targetTag.text),
-				`Expected ${targetTag.className} tag with text "${targetTag.text}"`
+				targetTags.some((tag) => tag.className === rawTagClass && tag.text === rawTagText),
+				`Expected one of ${targetTags} but got "${(rawTagClass, rawTagText)}"`
 			);
+
+			assert.ok(html.includes(`<strong class="${rawTagClass}">${rawTagText}</strong>`));
 		}
 	});
 
 	it('should render correct links', async () => {
-		const nunjucks = configureNunjucks();
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 		const html = nunjucks.render(view, data);
-		const dom = new JSDOM(html);
 
-		const links = [...dom.window.document.querySelectorAll('a.govuk-link')];
+		for (const plan of data.plans) {
+			const expectedRefNum = plan[0].html.match(/>([^<]+)</)?.[1]; // 0 for first cell - where link should be
+			const expectedHref = '/planPage/' + expectedRefNum.replace('/', '-');
 
-		for (const link of links) {
-			const processedPlanRef = '/planPage/' + link.textContent.trim().replace('/', '-');
-			const href = link.getAttribute('href');
-			assert.strictEqual(href, processedPlanRef, `Expected ${processedPlanRef} instead got "${href}"`);
+			assert.ok(html.includes(`<a class="govuk-link" href="${expectedHref}">${expectedRefNum}</a>`));
 		}
 	});
 
 	it('should render correct table headings', async () => {
-		const nunjucks = configureNunjucks();
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-		const landingPage = buildLandingPage({
-			db: mockDb,
-			logger: mockLogger()
-		});
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
-		await landingPage(mockReq, mockRes);
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 
 		const html = nunjucks.render(view, data);
-		const dom = new JSDOM(html);
 
-		const headings = [...dom.window.document.querySelectorAll('thead th')].map((heading) => heading.textContent.trim());
+		const headings = [...html.matchAll(/<th scope="col" class="govuk-table__header">([^<]+)<\/th>/g)].map(
+			(match) => match[1]
+		);
 
 		const expectedHeadings = [
 			'Reference Number',
