@@ -25,7 +25,6 @@
     "express-validator": "*",
     "govuk-frontend": "*",
     "helmet": "*",
-    "jsdom": "^29.1.1",
     "nunjucks": "*",
     "pino": "*",
     "pino-pretty": "*",

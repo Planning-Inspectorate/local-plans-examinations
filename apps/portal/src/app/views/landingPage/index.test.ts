@@ -4,7 +4,6 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildLandingPage } from './controller.ts';
-import { JSDOM } from 'jsdom';
 import * as types from '../../types.ts';
 
 function initialiseTest() {
@@ -90,7 +89,6 @@ describe('landing page', () => {
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
-
 		const html = nunjucks.render(view, data);
 
 		const headings = [...html.matchAll(/<th scope="col" class="govuk-table__header">([^<]+)<\/th>/g)].map(
