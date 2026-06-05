@@ -7,7 +7,8 @@ import {
 	planTitlePage,
 	planTypePage,
 	selectLocalPlanningAuthorityPage,
-	type CreateCaseData
+	type CreateCaseData,
+	type SelectAnswer
 } from '../../pageObjects/manage/create-case/index.ts';
 import { manageHomePage } from '../../pageObjects/manage/home-page.ts';
 
@@ -19,7 +20,7 @@ export const completeCaseDetails = (data: CreateCaseData) => {
 	planTypePage.selectPlanType(data.planType.value);
 };
 
-export const addLocalPlanningAuthority = (lpa: string) => {
+export const addLocalPlanningAuthority = (lpa: SelectAnswer) => {
 	localPlanningAuthoritiesPage.verifyLoaded();
 	localPlanningAuthoritiesPage.addLocalPlanningAuthority();
 	selectLocalPlanningAuthorityPage.verifyLoaded();
@@ -42,7 +43,7 @@ export const completeCreateCaseFlow = (data: CreateCaseData) => {
 	caseOfficerPage.verifyLoaded();
 	completeCaseDetails(data);
 
-	for (const lpa of Object.keys(data.lpa)) {
+	for (const lpa of Object.values(data.lpa)) {
 		addLocalPlanningAuthority(lpa);
 	}
 
