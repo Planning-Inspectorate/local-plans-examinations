@@ -1,4 +1,5 @@
 import { BasePage } from '../../base-page.ts';
+import type { SelectAnswer } from './types.ts';
 
 const pathPattern = /^\/create-a-case\/case-details\/check-lpas\/add\/[^/]+\/select-lpa$/;
 const defaultNewItemId = 'cypress-lpa';
@@ -25,8 +26,8 @@ export class SelectLocalPlanningAuthorityPage extends BasePage {
 		this.verifySaveAndContinueVisible();
 	}
 
-	selectLocalPlanningAuthority(lpa: string) {
-		this.localPlanningAuthoritySelect.should('be.visible').select(lpa);
+	selectLocalPlanningAuthority(lpa: SelectAnswer) {
+		this.localPlanningAuthoritySelect.should('be.visible').select(lpa.value);
 		this.saveAndContinue();
 	}
 }
