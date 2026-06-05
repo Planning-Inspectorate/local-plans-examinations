@@ -1,6 +1,7 @@
 import { defineConfig } from 'cypress';
 import * as dotenv from 'dotenv';
 import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
+import { exec } from 'node:child_process';
 
 dotenv.config();
 
@@ -39,6 +40,34 @@ export default defineConfig({
 			const mochawesome: any = await import('cypress-mochawesome-reporter/plugin');
 			mochawesome.default(on);
 			cypressGrepPlugin(config);
+			on('task', {
+				seedDb: () => {
+					return new Promise((resolve, reject) => {
+						exec('node packages/database/src/seed/seed-cy.ts', { cwd: process.cwd() }, (err, stdout, stderr) => {
+							if (err) {
+								console.error('db-seed error:', stderr || err);
+								return reject(err);
+							}
+							console.log('db-seed output:', stdout);
+							resolve(null);
+						});
+					});
+				}
+			});
+			on('task', {
+				clearDb: () => {
+					return new Promise((resolve, reject) => {
+						exec('node packages/database/src/seed/clear-db.ts', { cwd: process.cwd() }, (err, stdout, stderr) => {
+							if (err) {
+								console.error('clear-db error:', stderr || err);
+								return reject(err);
+							}
+							console.log('clear-db output:', stdout);
+							resolve(null);
+						});
+					});
+				}
+			});
 
 			return config;
 		}
