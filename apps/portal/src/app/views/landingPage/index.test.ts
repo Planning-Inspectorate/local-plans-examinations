@@ -58,14 +58,16 @@ describe('landing page', () => {
 		for (const plan of data.plans) {
 			const rawTagClass = plan[4].html.match(/"([^"]+)"/)?.[1]; // 4 for last cell - where tag should be
 			const rawTagText = plan[4].html.match(/>([^<]+)</)?.[1];
-			console.log({ className: rawTagClass, text: rawTagText });
 
 			assert.ok(
 				targetTags.some((tag) => tag.className === rawTagClass && tag.text === rawTagText),
-				`Expected one of ${targetTags} but got "${(rawTagClass, rawTagText)}"`
+				`Expected one of ${targetTags} but got ${rawTagClass}, ${rawTagText}`
 			);
 
-			assert.ok(html.includes(`<strong class="${rawTagClass}">${rawTagText}</strong>`));
+			assert.ok(
+				html.includes(`<strong class="${rawTagClass}">${rawTagText}</strong>`),
+				`expected <strong class="${rawTagClass}">${rawTagText}</strong>`
+			);
 		}
 	});
 
@@ -80,6 +82,7 @@ describe('landing page', () => {
 			const expectedRefNum = plan[0].html.match(/>([^<]+)</)?.[1]; // 0 for first cell - where link should be
 			const expectedHref = '/planPage/' + expectedRefNum.replace('/', '-');
 
+			assert.ok(expectedRefNum.includes('PLAN'));
 			assert.ok(html.includes(`<a class="govuk-link" href="${expectedHref}">${expectedRefNum}</a>`));
 		}
 	});
