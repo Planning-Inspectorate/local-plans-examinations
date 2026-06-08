@@ -9,6 +9,10 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 		const councilLocation = 'Southampton City Council'; //TO BE CHANGED
 		const rawPlans = buildTestPlans();
 
+		if (!rawPlans.length) {
+			logger.warn('No plans found');
+		}
+
 		//validates plans, raises error if invalid
 		const validPlans: Plan[] = [];
 		for (const rawplan of rawPlans) {
