@@ -385,3 +385,33 @@ export function buildTestPlans(): unknown[] {
 	}
 	return testPlans;
 }
+
+export const testPlan: unknown[] = [
+	{
+		refNum: 'PLAN/001',
+		leadLPA: 'Southampton',
+		linkedLPA: 'Romsey Town Council',
+		title: 'East plan',
+		stage: 1,
+		status: 0,
+		dates: '7 May 2026|21 July 2026|August 2026|September 2026',
+		sections: [0, 0, 0],
+		documents: [
+			{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
+			{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
+		]
+	}
+];

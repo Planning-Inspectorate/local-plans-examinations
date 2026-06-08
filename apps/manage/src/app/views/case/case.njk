@@ -1,0 +1,46 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+
+
+{% block pageContent %}
+<span class="govuk-caption-l">{{ currentCase.reference }}</span>
+<h1 class="govuk-heading-l">{{ currentCase.planTitle }}</h1>
+{{ govukServiceNavigation({
+  navigation: [
+    {
+      href: "#",
+      text: "Overview",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Timetable"
+    },
+    {
+      href: "#",
+      text: "Gateway 1"
+    },
+    {
+      href:"#",
+      text: "Gateway 2"
+    },
+    {
+      href:"#",
+      text: "Gateway 3"
+    },
+    {
+      href:"#",
+      text: "Examination"
+    },
+    {
+      href:"#",
+      text: "Case History"
+    }
+  ],
+  attributes: {
+    "id": "service-navigation",
+    "data-cy": "service-navigation"
+  }
+}) }}
+{% endblock %}
+
