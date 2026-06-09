@@ -156,7 +156,7 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 
 //mock data factories
 
-const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): ApplicationDoc => ({
+export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): ApplicationDoc => ({
 	title: 0, //title of document, mapped, valid between 0->14, (3/6/2026)
 	type: 0, // which type (Procedural documents,Consultation documents,Submit) doc is, mapped, valid 0->2, (3/6/2026)
 	file: null, // will be for file when implemented
@@ -165,7 +165,7 @@ const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): Applicatio
 	...overrides
 });
 
-const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
+export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	refNum: '', //Reference Number
 	leadLPA: '', //Lead Local Planning Authority
 	linkedLPA: '', //Linked Local Planning Authority
