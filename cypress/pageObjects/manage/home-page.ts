@@ -2,19 +2,19 @@ import { BasePage } from '../base-page.ts';
 
 export class ManageHomePage extends BasePage {
 	constructor() {
-		super('/items');
+		super('/');
 	}
 
-	get createBasicCaseLink() {
-		return cy.getByData('create-basic-case');
+	get createCaseLink() {
+		return cy.getByData('create-a-case');
 	}
 
 	startCreateCase() {
-		this.createBasicCaseLink.should('be.visible').click();
+		this.createCaseLink.should('be.visible').click();
 	}
 
-	verifyCreateBasicCaseLink(text: string) {
-		this.createBasicCaseLink.should('be.visible').and('contain.text', text);
+	verifyCreateCaseLink(text: string) {
+		this.createCaseLink.should('be.visible').and('contain.text', text);
 	}
 }
 
