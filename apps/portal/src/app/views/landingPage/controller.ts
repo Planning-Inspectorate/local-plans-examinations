@@ -1,35 +1,14 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { StageLabel, StatusTag, buildTestPlans, validPlan, testPlan } from '../../types.ts';
+import { StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan } from '../../types.ts';
 
-// test set to false when running from database - used for testing
-// getPlans used for passing in test data
-export function buildLandingPage(
-	service: PortalService,
-	test: boolean = true,
-	getPlans?: typeof buildTestPlans
-): AsyncRequestHandler {
+export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
 		const councilLocation = 'Southampton City Council'; //TO BE CHANGED
 
-		//logic for data source: database, test (on localhost), test (actual)
-		let rawPlans: unknown[];
-		if (!test && getPlans === undefined) {
-			//used for database - to be changed
-			rawPlans = testPlan;
-		} else if (test && getPlans === undefined) {
-			//used for running on local for demo
-			rawPlans = buildTestPlans();
-		} else if (test && getPlans !== undefined) {
-			//used for running on tests
-			rawPlans = getPlans();
-		} else {
-			// error state
-			logger.error('test data provided without test flag');
-			return;
-		}
+		const rawPlans = await service.getPlans();
 
 		let mappedPlans;
 		let noPlansFlag = false;
@@ -60,7 +39,7 @@ export function buildLandingPage(
 				{
 					html: (() => {
 						const s = StatusTag[plan.status];
-						return `<strong class="${s.class}">${s.label}</strong>`;
+						return `<strong class="${s.class}" style="display:inline; box-decoration-break:clone; -webkit-box-decoration-break:clone;">${s.label}</strong>`;
 					})()
 				}
 			]);

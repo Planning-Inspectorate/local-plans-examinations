@@ -32,6 +32,11 @@ export function createLpaOptions(response: JourneyResponse, questions: Record<st
 			}
 		}
 	}
+
+	questions.lpa.options = questions.lpa.options.map((opt: any) => ({
+		...opt,
+		disabled: lpaHistory.includes(opt.text)
+	}));
 }
 
 export function createJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {

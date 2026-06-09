@@ -14,12 +14,13 @@ export type CreateCaseData = {
 	caseOfficer: SelectAnswer;
 	planTitle: string;
 	planType: SelectAnswer;
-	lpa: SelectAnswer;
+	lpa: SelectAnswer[];
 	contact: {
 		firstName: string;
 		lastName: string;
 		email: string;
 		phone: string;
+		lpaContact: SelectAnswer;
 	};
 	dates: {
 		intentionToCommenceDate: DateAnswer;

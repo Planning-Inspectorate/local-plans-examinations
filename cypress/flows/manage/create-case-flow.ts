@@ -42,7 +42,11 @@ export const completeCreateCaseFlow = (data: CreateCaseData) => {
 
 	caseOfficerPage.verifyLoaded();
 	completeCaseDetails(data);
-	addLocalPlanningAuthority(data.lpa);
+
+	for (const lpa of Object.values(data.lpa)) {
+		addLocalPlanningAuthority(lpa);
+	}
+
 	localPlanningAuthoritiesPage.saveAndContinue();
 	addContactDetails(data.contact);
 	contactDetailsListPage.saveAndContinue();

@@ -9,14 +9,24 @@
 		"label": "Local Plan"
 	},
 	"lpa": {
-		"value": "lpa-1",
-		"label": "Local Planning Authority 1"
+		"lpa-1": {
+			"value": "Local Planning Authority 1",
+			"label": "lpaContact"
+		},
+		"lpa-2": {
+			"value": "Local Planning Authority 2",
+			"label": "lpaContact-2"
+		}
 	},
 	"contact": {
 		"firstName": "Cypress",
 		"lastName": "Tester",
 		"email": "cypress.case.creation@example.com",
-		"phone": "02079460000"
+		"phone": "02079460000",
+		"lpaContact": {
+			"value": "lpaContact",
+			"label": "Local Planning Authority 1"
+		}
 	},
 	"dates": {
 		"intentionToCommenceDate": {
