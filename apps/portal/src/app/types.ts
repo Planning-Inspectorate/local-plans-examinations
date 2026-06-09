@@ -1,10 +1,10 @@
 //types
 
 export const validStageTypes = [0, 1, 2, 3] as const;
-export type StageType = (typeof validStageTypes)[number];
+export type Stage = (typeof validStageTypes)[number];
 
 export const validStatusTypes = [0, 1, 2, 3, 4, 5] as const;
-export type StatusType = (typeof validStatusTypes)[number];
+export type Status = (typeof validStatusTypes)[number];
 
 export const validStates = [0, 1, 2] as const;
 export type State = (typeof validStates)[number];
@@ -17,14 +17,14 @@ export type DocTitle = (typeof validDocTitles)[number];
 
 //labels
 
-export const StageLabel: Record<StageType, string> = {
+export const StageLabel: Record<Stage, string> = {
 	0: 'Gateway 1',
 	1: 'Gateway 2',
 	2: 'Gateway 3',
 	3: 'Examination'
 };
 
-export const StatusLabel: Record<StatusType, string> = {
+export const StatusLabel: Record<Status, string> = {
 	0: 'Ready to start',
 	1: 'In progress',
 	2: 'With PINS',
@@ -33,7 +33,7 @@ export const StatusLabel: Record<StatusType, string> = {
 	5: 'Completed'
 };
 
-export const StateLabel: Record<DocType, string> = {
+export const StateLabel: Record<State, string> = {
 	0: 'Not started',
 	1: 'In progress',
 	2: 'Completed on'
@@ -98,8 +98,8 @@ export interface Plan {
 	leadLPA: string; //Lead Local Planning Authority
 	linkedLPA: string; //Linked Local Planning Authority
 	title: string; //Plan Title
-	stage: StageType; //Current Stage
-	status: StatusType; //Status
+	stage: Stage; //Current Stage
+	status: Status; //Status
 	dates: string; //dates of gateways as listy thing but not actual list (to be split) e.g. "7 May 2026|21 July 2026|August 2026|September 2026"
 	sections: State[]; // track which state each gateway is array of state e.g. [0,0,0]
 	documents: ApplicationDoc[]; // holds interfaces of each doc needed
@@ -121,7 +121,7 @@ function validApplicationDoc(rawApplicationDoc: unknown): rawApplicationDoc is A
 		validType(applicationDoc.type) &&
 		applicationDoc.file === null &&
 		validState(applicationDoc.state) &&
-		(applicationDoc.dateCompleted === null || applicationDoc.dateCompleted === 'string')
+		(applicationDoc.dateCompleted === null || typeof applicationDoc.dateCompleted === 'string')
 	);
 }
 
@@ -130,9 +130,9 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 
 	const plan = rawPlan as Record<string, unknown>;
 
-	const validStage = (stage: unknown): stage is StageType => validStageTypes.includes(stage as StageType);
+	const validStage = (stage: unknown): stage is Stage => validStageTypes.includes(stage as Stage);
 
-	const validStatus = (status: unknown): status is StatusType => validStatusTypes.includes(status as StatusType);
+	const validStatus = (status: unknown): status is Status => validStatusTypes.includes(status as Status);
 
 	const validState = (state: unknown): state is State => validStates.includes(state as State);
 
@@ -156,7 +156,7 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 
 //mock data factories
 
-export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): ApplicationDoc => ({
+const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): ApplicationDoc => ({
 	title: 0, //title of document, mapped, valid between 0->14, (3/6/2026)
 	type: 0, // which type (Procedural documents,Consultation documents,Submit) doc is, mapped, valid 0->2, (3/6/2026)
 	file: null, // will be for file when implemented
@@ -165,7 +165,7 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 	...overrides
 });
 
-export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
+const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	refNum: '', //Reference Number
 	leadLPA: '', //Lead Local Planning Authority
 	linkedLPA: '', //Linked Local Planning Authority
@@ -178,212 +178,136 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	...overrides
 });
 
-export function buildTestPlans(): unknown[] {
-	// unknown so validation still runs
-	const testData: Plan[] = [
-		{
-			refNum: 'PLAN/001',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'East plan',
-			stage: 1,
-			status: 0,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: [
-				{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-			]
-		},
-		{
-			refNum: 'PLAN/002',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'West plan',
-			stage: 1,
-			status: 1,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: [
-				{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-			]
-		},
-		{
-			refNum: 'PLAN/003',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'West plan',
-			stage: 2,
-			status: 2,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: [
-				{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-			]
-		},
-		{
-			refNum: 'PLAN/004',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'West plan',
-			stage: 3,
-			status: 3,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: [
-				{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-			]
-		},
-		{
-			refNum: 'PLAN/005',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'West plan',
-			stage: 3,
-			status: 4,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: [
-				{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-			]
-		},
-		{
-			refNum: 'PLAN/006',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'West plan',
-			stage: 3,
-			status: 5,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: [
-				{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-				{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-			]
-		},
-		{
-			refNum: 'PLAN/007',
-			leadLPA: 'Southampton',
-			linkedLPA: 'Romsey Town Council',
-			title: 'West plan',
-			stage: 3,
-			status: 5,
-			dates: '7 May 2026|21 July 2026|August 2026|September 2026',
-			sections: [0, 0, 0],
-			documents: []
-		}
-	];
-
-	const testPlans = [];
-	for (const testPlan of testData) {
-		const testApplicationDocs = [];
-		for (const testApplicationDoc of testPlan.documents) {
-			testApplicationDocs.push(
-				mockApplicationDoc({
-					title: testApplicationDoc.title,
-					type: testApplicationDoc.type,
-					file: testApplicationDoc.file,
-					state: testApplicationDoc.state,
-					dateCompleted: testApplicationDoc.dateCompleted
-				})
-			);
-		}
-		testPlans.push(
-			mockPlan({
-				refNum: testPlan.refNum,
-				leadLPA: testPlan.leadLPA,
-				linkedLPA: testPlan.linkedLPA,
-				title: testPlan.title,
-				stage: testPlan.stage,
-				status: testPlan.status,
-				dates: testPlan.dates,
-				documents: testApplicationDocs
+export function buildBlankApplicationDocs(applicationDocTypes: number[]): ApplicationDoc[] {
+	const testApplicationDocs = [];
+	for (const titles of validDocTitles) {
+		// currently 14 possible doc
+		testApplicationDocs.push(
+			mockApplicationDoc({
+				title: titles,
+				type: applicationDocTypes[titles] as DocType
 			})
 		);
 	}
+	return testApplicationDocs;
+}
+
+export function buildApplicationDocs(applicationDocs: unknown[]): ApplicationDoc[] {
+	const applicationDocTypes = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]; //set 9/6/2026
+
+	let testApplicationDocs = [];
+
+	if (applicationDocs.length > 0) {
+		for (const titles of validDocTitles) {
+			// currently 14 possible doc
+			const doc = applicationDocs.find(
+				(doc): doc is ApplicationDoc => validApplicationDoc(doc) && doc.title === titles
+			);
+			if (doc) {
+				testApplicationDocs.push(
+					mockApplicationDoc({
+						...doc
+					})
+				);
+			} else {
+				testApplicationDocs.push(
+					mockApplicationDoc({
+						title: titles,
+						type: applicationDocTypes[titles] as DocType
+					})
+				);
+			}
+		}
+	} else {
+		testApplicationDocs = buildBlankApplicationDocs(applicationDocTypes);
+	}
+	return testApplicationDocs;
+}
+
+export function buildPlans(plans: unknown[]): unknown[] {
+	const testPlans = [];
+
+	for (const plan of plans) {
+		if (plan !== null && typeof plan === 'object') {
+			const docs = 'documents' in plan && Array.isArray(plan.documents) ? plan.documents : [];
+			testPlans.push(
+				mockPlan({
+					...plan,
+					documents: buildApplicationDocs(docs)
+				})
+			);
+		}
+	}
 	return testPlans;
+}
+
+export function buildTestPlans(): unknown[] {
+	// unknown so validation still runs
+
+	const testData: unknown[] = [
+		{
+			refNum: 'PLAN/001',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'East Borough Local Plan',
+			dates: '7 May 2026|21 July 2026|August 2026|September 2026'
+		},
+		{
+			refNum: 'PLAN/002',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'West Local Plan',
+			status: 1,
+			dates: '7 May 2026|21 July 2026|August 2026|September 2026'
+		},
+		{
+			refNum: 'PLAN/003',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'Southside Local Plan',
+			stage: 2,
+			status: 2,
+			dates: '7 May 2026|21 July 2026|August 2026|September 2026'
+		},
+		{
+			refNum: 'PLAN/004',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'North District Local Plan',
+			stage: 3,
+			status: 3,
+			dates: '7 May 2026|21 July 2026|August 2026|September 2026'
+		},
+		{
+			refNum: 'PLAN/005',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'Seaside Local Plan',
+			stage: 3,
+			status: 4,
+			dates: '7 May 2026|21 July 2026|August 2026|September 2026'
+		},
+		{
+			refNum: 'PLAN/006',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'Central City Local Plan',
+			stage: 3,
+			status: 5,
+			dates: '7 May 2026|21 July 2026|August 2026|September 2026'
+		},
+		{
+			refNum: 'PLAN/007',
+			leadLPA: '',
+			linkedLPA: '',
+			title: 'Error Plan',
+			stage: 999,
+			status: 999,
+			dates: '',
+			documents: []
+		}
+	];
+	return buildPlans(testData);
 }
 
 export const testPlan: unknown[] = [
