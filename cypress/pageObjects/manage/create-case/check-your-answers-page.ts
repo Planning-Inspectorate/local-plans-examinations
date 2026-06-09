@@ -46,6 +46,8 @@ export class CheckYourAnswersPage extends BasePage {
 	}
 
 	expectedSummaryRows(data: CreateCaseData): SummaryRowExpectation[] {
+		const lpaArray = Object.values(data.lpa);
+
 		return [
 			{
 				key: 'Case officer',
@@ -64,12 +66,18 @@ export class CheckYourAnswersPage extends BasePage {
 			},
 			{
 				key: 'Local Planning Authorities',
-				values: [data.lpa.label],
+				values: lpaArray.map((l) => l.value),
 				changeHref: '/create-a-case/case-details/check-lpas'
 			},
 			{
 				key: 'Contact details',
-				values: [data.contact.firstName, data.contact.lastName, data.contact.email, data.contact.phone, data.lpa.label],
+				values: [
+					data.contact.firstName,
+					data.contact.lastName,
+					data.contact.email,
+					data.contact.phone,
+					data.contact.lpaContact.label
+				],
 				changeHref: '/create-a-case/contact-details/check-contact-details'
 			},
 			{

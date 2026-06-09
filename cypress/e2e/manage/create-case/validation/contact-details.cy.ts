@@ -9,7 +9,8 @@ describe('Create a case - contact details', () => {
 		contactDetailsPage.visitForNewItemAndSubmitForValidation(
 			'Input a first name',
 			'Input a last name',
-			'Input an email address'
+			'Input an email address',
+			'Select the organisation for this contact'
 		);
 	});
 });
