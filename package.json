@@ -18,6 +18,7 @@
     "db-migrate-dev": "npm run migrate-dev --workspace @pins/local-plans-database",
     "db-migrate-prod": "npm run migrate-prod --workspace @pins/local-plans-database",
     "db-generate": "npm run generate --workspace @pins/local-plans-database",
+    "db-clear": "node packages/database/src/seed/clear-db.ts",
     "db-seed": "npm run seed --workspace @pins/local-plans-database",
     "db-seed-prod": "npm run seed:prod --workspace @pins/local-plans-database",
     "format": "prettier --write .",

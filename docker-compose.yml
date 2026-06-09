@@ -14,4 +14,8 @@ services:
     hostname: mssql
     volumes:
       - ./packages/database/src/configuration/mssql.conf:/var/opt/mssql/mssql.conf
-      - ./tmp/mssql-data:/var/opt/mssql/data
+      - ${MSSQL_DATA_MOUNT:-./tmp/mssql-data}:/var/opt/mssql/data
+
+volumes:
+  mssql-data:
+    name: ${MSSQL_DATA_VOLUME:-local-plans-mssql-data}
