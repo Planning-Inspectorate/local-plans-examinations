@@ -21,6 +21,10 @@ export class ContactDetailsPage extends BasePage {
 		return cy.getByData('contact-phone');
 	}
 
+	lpaContactOption(value: string) {
+		return cy.get(`#${value}`);
+	}
+
 	visitForNewItem(itemId = defaultNewItemId) {
 		this.visit(`/create-a-case/contact-details/check-contact-details/add/${itemId}/contact-details`);
 	}
@@ -46,6 +50,7 @@ export class ContactDetailsPage extends BasePage {
 		this.lastNameInput.clearAndWrite(contact.lastName);
 		this.emailInput.clearAndWrite(contact.email);
 		this.phoneInput.clearAndWrite(contact.phone);
+		this.lpaContactOption(contact.lpaContact.value).should('exist').check();
 		this.saveAndContinue();
 	}
 }
