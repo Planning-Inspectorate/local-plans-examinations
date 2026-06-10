@@ -15,6 +15,16 @@ import { questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 
+function setAsEditingFromCya(req: any, _: any, next: any) {
+	req.session.editingFromCheckAnswers = true;
+	next();
+}
+
+function redirectAfterCyaEdit(req: any, res: any, next: any) {
+	const returnToCya = req.session.editingFromCheckAnswers === true;
+	buildSave(saveDataToSession, returnToCya)(req, res, next);
+}
+
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
@@ -23,7 +33,8 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
 
-	router.get('/check-your-answers', getJourneyResponse, getJourney, buildList());
+	router.get('/check-your-answers', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
+
 	router.post('/check-your-answers', getJourneyResponse, getJourney, saveToDatabase);
 
 	router.get(
@@ -39,7 +50,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(saveDataToSession)
+		redirectAfterCyaEdit
 	);
 
 	return router;
