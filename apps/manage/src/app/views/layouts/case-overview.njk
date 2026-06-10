@@ -6,6 +6,9 @@
 {% block pageContent %}
 <span class="govuk-caption-l">{{ currentCase.reference }}</span>
 <h1 class="govuk-heading-l">{{ currentCase.planTitle }}</h1>
+<h1 class="govuk-heading-l">{{ test }}</h1>
+
+
 {{ govukServiceNavigation({
   navigation: [
     {
@@ -46,5 +49,18 @@
 {{ govukSummaryList({
   rows: rows
 }) }}
+
+<div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            {% for section in summaryListData.sections %}
+                {% if section.list.rows.length %}
+                    {{ govukSummaryList({
+
+                        rows: section.list.rows
+                    }) }}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
 {% endblock %}
 
