@@ -39,7 +39,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 				{
 					html: (() => {
 						const s = StatusTag[plan.status];
-						return `<strong class="${s.class}" style="display:inline; box-decoration-break:clone; -webkit-box-decoration-break:clone;">${s.label}</strong>`;
+						return `<strong class="${s.class}">${s.label}</strong>`;
 					})()
 				}
 			]);

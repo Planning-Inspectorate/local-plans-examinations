@@ -4,7 +4,7 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildLandingPage } from './controller.ts';
-import { buildTestPlans, mockPlan, mockApplicationDoc } from '../../types.ts';
+import { buildTestPlans, mockPlan, testPlan, mockApplicationDoc } from '../../types.ts';
 
 function initialiseTest(plans?: unknown[]) {
 	const nunjucks = configureNunjucks();
@@ -47,14 +47,10 @@ describe('landing page', () => {
 	});
 
 	it('should render plan data from service', async () => {
-		const plans = [
-			mockPlan({ refNum: 'PLAN/001', leadLPA: 'Southampton', title: 'East plan', documents: [mockApplicationDoc()] })
-		];
-		const { landingPage, mockRes, mockReq } = initialiseTest(plans);
+		const { landingPage, mockRes, mockReq } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
-
 		const refNum = data.plans[0][0].html.match(/>([^<]+)</)?.[1];
 
 		assert.deepStrictEqual(refNum, 'PLAN/001', `Expected PLAN/001 instead got ${refNum}`);
@@ -152,8 +148,8 @@ describe('landing page', () => {
 		const html = nunjucks.render(view, data);
 
 		const targetTags = [
-			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to Start' },
-			{ className: 'govuk-tag govuk-tag--blue', text: 'In Progress' },
+			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to start' },
+			{ className: 'govuk-tag govuk-tag--blue', text: 'In progress' },
 			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
 			{ className: 'govuk-tag govuk-tag--red', text: 'Action needed' },
 			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },

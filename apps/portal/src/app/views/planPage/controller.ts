@@ -1,65 +1,13 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { StageLabel, StatusTag, validPlan, buildTestPlans } from '../../types.ts';
-import type { Plan, StatusType } from '../../types.ts';
+import type { Plan, Status } from '../../types.ts';
 
 //takes status and mapping of label and class returns tags
-function statusTag(status: StatusType, tagMap: typeof StatusTag) {
+function statusTag(status: Status, tagMap: typeof StatusTag) {
 	const s = tagMap?.[status];
-	return `<strong class=" ${s?.class ?? ''}">
-        ${s?.label ?? 'Unknown'}
-    </strong>`;
+	return `<strong class="${s?.class ?? ''}">${s?.label ?? 'Unknown'}</strong>`;
 }
-
-//templates for for tabs
-const tabTextG2 = `
-    <p class="govuk-body">
-        Gateway 2 is an advisory check. An assessor reviews your plan and provides observations to help resolve potential soundness issues early and progress towards meeting the prescribed requirements.
-    </p>
-    <p class="govuk-heading-s">
-        What you need for gateway 2
-    </p>
-    <ul class="govuk-list govuk-list--bullet">
-        <li>Gateway 2 covering letter</li>
-        <li>Local plan timetable</li>
-        <li>Project initiation document (PID)</li>
-        <li>Statement of Compliance (draft)</li>
-        <li>Statement of Soundness (draft)</li>
-        <li>Notice of Intention to commence preparation of your local plan</li>
-        <li>Scoping consultation documents</li>
-        <li>Consultation summary of feedback to scoping consultation</li>
-        <li>Gateway 1 - Self Assessment of Readiness</li>
-        <li>Consultation on proposed local plan content and evidence documents</li>
-        <li>Consultation summary responses for proposed local plan content and evidence documents</li>
-    </ul>
-`;
-
-const tabTextG3 = `
-    <p class="govuk-body">
-        Gateway 3 tests whether your proposed local plan has met the prescribed requirements and is ready to proceed to examination.
-    </p>
-    <p class="govuk-body">
-        Available after Gateway 2 is approved.
-    </p>
-    <p class="govuk-heading-s">
-        What you need for gateway 3
-    </p>
-    <ul class="govuk-list govuk-list--bullet">
-        <li>Submission version of the plan</li>
-        <li>Final compliance statement</li>
-        <li>Final soundness statement</li>
-        <li>Updated evidence base</li>
-    </ul>
-`;
-
-const tabTextE = `
-    <p class="govuk-body">
-        Examination is carried out by an independent inspector who assesses the plan against the tests of soundness set out in national policy.
-    </p>
-    <p class="govuk-body">
-        Available after Gateway 3 is approved.
-    </p>
-`;
 
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
@@ -142,9 +90,6 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			tagG2,
 			tagG3,
 			tagE,
-			tabTextG2,
-			tabTextG3,
-			tabTextE,
 			hrefG2,
 			hrefG3,
 			hrefE
