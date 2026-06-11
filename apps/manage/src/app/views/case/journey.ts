@@ -14,7 +14,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.caseOfficer)
 				.addQuestion(questions.lpa)
 		],
-		taskListUrl: '/',
+		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Manage case',

@@ -2,25 +2,41 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import type { ManageService } from '#service';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './journey.ts';
+import type { Request, Response } from 'express';
 
 export function updateCaseField(service: ManageService) {
-	return async ({ req, res }) => {
+	return async ({ req, res }: { req: Request; res: Response }) => {
 		const { db, logger } = service;
 		const { reference } = req.params;
+		if (typeof reference !== 'string') throw new Error('reference must be a string');
 
 		const journeyResponse = res.locals?.journeyResponse?.answers || {};
 		console.log('REQUAY', req.body);
-		console.log('I AM THE ONE AND ONLY', journeyResponse);
 		logger.info(`Updating case ${reference} with ${JSON.stringify(journeyResponse)}`);
+		// todo handle errors
+
+		const { planTitle, planType, caseOfficer, lpa } = processInputForDB(req.body);
+		const data = {
+			planTitle,
+			planType,
+			caseOfficer,
+			lpas: lpa ? { connectOrCreate: { where: { lpaCode: lpa }, create: { lpaCode: lpa } } } : undefined
+		};
 
 		await db.case.update({
 			where: { reference },
-			data: {
-				...req.body
-			}
+			data
 		});
 	};
 }
+
+export function processInputForDB(input: Record<string, string>): Record<string, string> {
+	// trim all inputs
+	for (const key in input) input[key] = input[key].trim();
+	return input;
+}
+
+//TODO delete this
 
 // export function buildCasePage(service: ManageService): AsyncRequestHandler {
 // 	return async (req: Request, res: Response) => {
@@ -89,11 +105,15 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 				return res.status(404).render('views/errors/404.njk');
 			}
 
+			// make planTitle and reference available in the template
+			res.locals.planTitle = currentCase.planTitle;
+			res.locals.reference = currentCase.reference;
+
 			res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, '', currentCase);
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);
 		}
-		//TODO
+		//TODO it being undefined
 		next();
 	};
 }

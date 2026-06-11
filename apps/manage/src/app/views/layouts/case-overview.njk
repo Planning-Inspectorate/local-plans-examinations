@@ -4,11 +4,14 @@
 
 
 {% block pageContent %}
-<span class="govuk-caption-l">{{ currentCase.reference }}</span>
-<h1 class="govuk-heading-l">{{ currentCase.planTitle }}</h1>
-<h1 class="govuk-heading-l">{{ test }}</h1>
-
-
+  <span class="govuk-caption-l">{{ reference }}</span>
+  <h1 class="govuk-heading-l">{{ planTitle }}</h1>
+  
+  {% for section in summaryListData.sections %}
+    {% if loop.first and section.list.rows.length %}
+      <h1 class="govuk-heading-l">{{ section.list.rows[0].value.text }}</h1>
+    {% endif %}
+  {% endfor %}
 {{ govukServiceNavigation({
   navigation: [
     {
@@ -46,16 +49,12 @@
     "data-cy": "service-navigation"
   }
 }) }}
-{{ govukSummaryList({
-  rows: rows
-}) }}
 
 <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
             {% for section in summaryListData.sections %}
                 {% if section.list.rows.length %}
                     {{ govukSummaryList({
-
                         rows: section.list.rows
                     }) }}
                 {% endif %}

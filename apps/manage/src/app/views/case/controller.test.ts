@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
-import { buildCasePage } from './controller.ts';
 import type { ManageService } from '#service';
+import { processInputForDB } from './controller.ts';
 
 function createHarness(
 	findUniqueImpl: (args: unknown) => Promise<unknown>,
@@ -184,5 +184,21 @@ describe('buildCasePage', () => {
 		assert.match(ctx.errorCalls[0] ?? '', /Unable to fetch case PLAN\/123456/);
 		assert.deepEqual(ctx.statusCalls, [500]);
 		assert.deepEqual(ctx.renderCalls, [['views/errors/500.njk', undefined]]);
+	});
+});
+
+describe('processing input for DB', () => {
+	it('all input is trimmed', async () => {
+		const whiteSpaceInput = {
+			caseTitle: '  title  ',
+			caseOfficer: '  officer  ',
+			planType: '  plan type  '
+		};
+		const expectedOutput = {
+			caseTitle: 'title',
+			caseOfficer: 'officer',
+			planType: 'plan type'
+		};
+		assert.deepEqual(processInputForDB(whiteSpaceInput), expectedOutput);
 	});
 });
