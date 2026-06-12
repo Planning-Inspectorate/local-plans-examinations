@@ -9,6 +9,7 @@
     "migrate-dev": "npx prisma migrate dev",
     "migrate-prod": "npx prisma migrate deploy",
     "generate": "npx prisma generate",
+    "reset": "npx prisma migrate reset --force",
     "seed": "npx prisma db seed"
   },
   "license": "MIT",

@@ -36,6 +36,8 @@ model Case {
   gateway3Date            DateTime?
   submissionDate          DateTime?
   createdAt               DateTime  @default(now())
+
+  gateways Gateway[]
 }
 
 model LPA {
@@ -76,4 +78,44 @@ model NotifyEmail {
   body            String?   @db.NVarChar(Max)
   subject         String?   @db.NVarChar(Max)
   email           String?   @db.NVarChar(100)
+}
+
+model Gateway {
+  id           String @id @db.NVarChar(2)
+  displayName  String @db.NVarChar(100)
+  folderName   String @db.NVarChar(100)
+  displayOrder Int
+
+  categories DocumentCategory[]
+  cases      Case[]
+}
+
+model DocumentCategory {
+  id String @id @db.NVarChar(4)
+
+  gatewayId String  @db.NVarChar(2)
+  gateway   Gateway @relation(fields: [gatewayId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  displayName  String @db.NVarChar(200) // Procedural, Consultation
+  folderName   String @db.NVarChar(200)
+  displayOrder Int?
+
+  documentSets DocumentSet[]
+
+  @@unique([gatewayId, displayName])
+  @@index([gatewayId])
+}
+
+model DocumentSet {
+  id String @id @db.NVarChar(20)
+
+  documentCategoryId String           @db.NVarChar(4)
+  documentCategory   DocumentCategory @relation(fields: [documentCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  displayName  String @db.NVarChar(200) // Covering Letter, Initiation Document
+  folderName   String @db.NVarChar(200)
+  displayOrder Int?
+
+  @@unique([documentCategoryId, displayName])
+  @@index([documentCategoryId])
 }
