@@ -14,7 +14,7 @@ const allQuestionClasses = {
 
 export const JOURNEY_ID = 'edit-case-overview';
 
-const createACaseQuestions: Record<string, QuestionProps> = {
+const caseOverviewQuestions: Record<string, QuestionProps> = {
 	planTitle: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		question: 'What is the plan title?',
@@ -65,7 +65,87 @@ const createACaseQuestions: Record<string, QuestionProps> = {
 		title: 'Case officer',
 		validators: [new RequiredValidator('Select a case officer')],
 		disableAccessibleAutocomplete: true
+	},
+	programmeOfficer: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the programme officer?',
+		fieldName: 'programmeOfficer',
+		url: 'programme-officer',
+		title: 'Programme officer',
+		validators: [new RequiredValidator('Input a programme officer')]
+	},
+	examinationWebsite: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'What is the examination website?',
+		fieldName: 'examinationWebsite',
+		url: 'examination-website',
+		title: 'Examination website',
+		validators: [new RequiredValidator('Input an examination website')]
+	},
+	assessorGateway2: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the Assessor Gateway 2?',
+		fieldName: 'assessorGateway2',
+		url: 'assessor-gateway-2',
+		title: 'Assessor Gateway 2',
+		validators: [new RequiredValidator('Input Assessor Gateway 2')]
+	},
+	assessorGateway3: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the Assessor Gateway 3?',
+		fieldName: 'assessorGateway3',
+		url: 'assessor-gateway-3',
+		title: 'Assessor Gateway 3',
+		validators: [new RequiredValidator('Input Assessor Gateway 3')]
+	},
+	examiningInspector1: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the Examining Inspector 1?',
+		fieldName: 'examiningInspector1',
+		url: 'examining-inspector-1',
+		title: 'Examining Inspector 1',
+		validators: [new RequiredValidator('Input Examining Inspector 1')]
+	},
+	examiningInspector2: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the Examining Inspector 2?',
+		fieldName: 'examiningInspector2',
+		url: 'examining-inspector-2',
+		title: 'Examining Inspector 2',
+		validators: [new RequiredValidator('Input Examining Inspector 2')]
+	},
+	examiningInspector3: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the Examining Inspector 3?',
+		fieldName: 'examiningInspector3',
+		url: 'examining-inspector-3',
+		title: 'Examining Inspector 3',
+		validators: [new RequiredValidator('Input Examining Inspector 3')]
+	},
+	qaInspector1: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the QA Inspector 1?',
+		fieldName: 'qaInspector1',
+		url: 'qa-inspector-1',
+		title: 'QA Inspector 1',
+		validators: [new RequiredValidator('Input QA Inspector 1')]
+	},
+	qaInspector2: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the QA Inspector 2?',
+		fieldName: 'qaInspector2',
+		url: 'qa-inspector-2',
+		title: 'QA Inspector 2',
+		validators: [new RequiredValidator('Input QA Inspector 2')]
+	},
+	qaInspector3: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the QA Inspector 3?',
+		fieldName: 'qaInspector3',
+		url: 'qa-inspector-3',
+		title: 'QA Inspector 3',
+		validators: [new RequiredValidator('Input QA Inspector 3')]
 	}
 };
 
-export const questions = createQuestions(createACaseQuestions, allQuestionClasses, {}, { continueButtonText: 'Save' });
+export const questions = createQuestions(caseOverviewQuestions, allQuestionClasses, {}, { continueButtonText: 'Save' });

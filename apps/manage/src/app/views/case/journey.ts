@@ -11,8 +11,19 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 			new Section('Overview', 'case-details')
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
-				.addQuestion(questions.caseOfficer)
 				.addQuestion(questions.lpa)
+				.addQuestion(questions.caseOfficer),
+			new Section('Contacts', 'contacts')
+				.addQuestion(questions.programmeOfficer)
+				.addQuestion(questions.examinationWebsite)
+				.addQuestion(questions.assessorGateway2)
+				.addQuestion(questions.assessorGateway3)
+				.addQuestion(questions.examiningInspector1)
+				.addQuestion(questions.examiningInspector2)
+				.addQuestion(questions.examiningInspector3)
+				.addQuestion(questions.qaInspector1)
+				.addQuestion(questions.qaInspector2)
+				.addQuestion(questions.qaInspector3)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',

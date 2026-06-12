@@ -11,7 +11,6 @@ export function updateCaseField(service: ManageService) {
 		if (typeof reference !== 'string') throw new Error('reference must be a string');
 
 		const journeyResponse = res.locals?.journeyResponse?.answers || {};
-		console.log('REQUAY', req.body);
 		logger.info(`Updating case ${reference} with ${JSON.stringify(journeyResponse)}`);
 		// todo handle errors
 
@@ -105,10 +104,9 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 				return res.status(404).render('views/errors/404.njk');
 			}
 
-			// make planTitle and reference available in the template
+			// make planTitle and reference easily accessible in the template
 			res.locals.planTitle = currentCase.planTitle;
 			res.locals.reference = currentCase.reference;
-
 			res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, '', currentCase);
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);

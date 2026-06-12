@@ -6,13 +6,14 @@
 {% block pageContent %}
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
-  
+
   {% for section in summaryListData.sections %}
     {% if loop.first and section.list.rows.length %}
       <h1 class="govuk-heading-l">{{ section.list.rows[0].value.text }}</h1>
     {% endif %}
   {% endfor %}
 {{ govukServiceNavigation({
+  attributes: { "id": "service-navigation", "data-cy": "service-navigation" },
   navigation: [
     {
       href: "#",
@@ -50,11 +51,12 @@
   }
 }) }}
 
-<div class="govuk-grid-row">
+<div class="govuk-grid-row govuk-!-margin-top-6">
         <div class="govuk-grid-column-full">
             {% for section in summaryListData.sections %}
                 {% if section.list.rows.length %}
-                    {{ govukSummaryList({
+                  <h2 class="govuk-heading-m">{{ section.heading }}</h2>
+                  {{ govukSummaryList({
                         rows: section.list.rows
                     }) }}
                 {% endif %}
