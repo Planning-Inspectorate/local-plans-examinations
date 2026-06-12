@@ -1,19 +1,26 @@
 import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
+import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/manage-list-section.js';
+import { createLpaOptions } from '../create-a-case/journey.ts';
 
 export const JOURNEY_ID = 'edit-case-overview';
 
 //TODO use question library
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	createLpaOptions(response, questions, req);
 	return new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
 			new Section('Overview', 'case-details')
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
-				.addQuestion(questions.lpa)
+				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa)))
 				.addQuestion(questions.caseOfficer),
 			new Section('Contacts', 'contacts')
+				.addQuestion(
+					questions.checkContactDetails,
+					Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
+				)
 				.addQuestion(questions.programmeOfficer)
 				.addQuestion(questions.examinationWebsite)
 				.addQuestion(questions.assessorGateway2)
@@ -30,7 +37,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Manage case',
 		returnToListing: false,
-		makeBaseUrl: () => req.baseUrl,
+		makeBaseUrl: () => req.baseUrl + '/overview',
 		initialBackLink: '/',
 		response
 	});

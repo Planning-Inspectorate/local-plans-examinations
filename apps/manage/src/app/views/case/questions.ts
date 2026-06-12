@@ -5,7 +5,9 @@ import {
 	questionClasses
 } from '@planning-inspectorate/dynamic-forms';
 import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
-import { CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
+import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
+import ManageListValidator from '../validators/manage-list-validator.ts';
+import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -51,6 +53,22 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		validators: [new RequiredValidator('Select a Local Planning Authority')],
 		disableAccessibleAutocomplete: true
 	},
+	checkLpas: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
+		title: 'Local Planning Authorities',
+		titleSingular: 'Local Planning Authority',
+		showManageListQuestions: true,
+		fieldName: 'checkLpas',
+		url: 'check-lpas',
+		showAnswersInSummary: true,
+		question: 'Check Local Planning Authorities',
+		validators: [
+			new ManageListValidator({
+				minimumAnswers: 1,
+				errorMessages: { minimumAnswers: 'You must add at least one Local Planning Authority' }
+			})
+		]
+	},
 	caseOfficer: {
 		type: COMPONENT_TYPES.SELECT,
 		options: [
@@ -65,6 +83,79 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		title: 'Case officer',
 		validators: [new RequiredValidator('Select a case officer')],
 		disableAccessibleAutocomplete: true
+	},
+	contactDetails: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'firstName',
+				label: 'First name',
+				attributes: { 'data-cy': 'contact-first-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'lastName',
+				label: 'Last name',
+				attributes: { 'data-cy': 'contact-last-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'email',
+				label: 'Email address',
+				attributes: { 'data-cy': 'contact-email' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'phone',
+				label: 'Phone number (optional)',
+				attributes: { 'data-cy': 'contact-phone' }
+			},
+			{
+				type: COMPONENT_TYPES.RADIO,
+				fieldName: 'lpaContact',
+				legend: 'Select the organisation for this contact',
+				options: []
+			}
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'firstName',
+						validators: [new RequiredValidator('Input a first name')]
+					},
+					{
+						fieldName: 'lastName',
+						validators: [new RequiredValidator('Input a last name')]
+					},
+					{
+						fieldName: 'email',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
+		question: 'What are the main contact details for the Local Planning Authority?',
+		fieldName: 'contactDetails',
+		url: 'contact-details',
+		title: 'Contact details'
+	},
+	checkContactDetails: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
+		title: 'Contact details',
+		titleSingular: 'Contact',
+		showManageListQuestions: true,
+		fieldName: 'contactDetails',
+		url: 'check-contact-details',
+		showAnswersInSummary: true,
+		question: 'Check contact details',
+		validators: [
+			new ManageListValidator({
+				minimumAnswers: 1,
+				errorMessages: { minimumAnswers: 'You must add at least one contact' }
+			})
+		]
 	},
 	programmeOfficer: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,

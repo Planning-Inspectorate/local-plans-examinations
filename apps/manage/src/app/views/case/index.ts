@@ -7,22 +7,26 @@ import { createOverviewJourney } from './journey.ts';
 
 export function caseRouter(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
-	const getJourney = buildGetJourney((req, journeyResponse) => createOverviewJourney(req, journeyResponse, questions));
+	const getOverviewJourney = buildGetJourney((req, journeyResponse) =>
+		createOverviewJourney(req, journeyResponse, questions)
+	);
 	const getJourneyResponse = buildGetJourneyMiddleware(service);
 	const updateCase = updateCaseField(service);
 
-	router.get('/', getJourneyResponse, getJourney, buildList());
+	/**
+	 * Case overview
+	 */
+	router.get('/overview', getJourneyResponse, getOverviewJourney, buildList());
 	router.get(
-		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/overview/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		getJourney,
+		getOverviewJourney,
 		question
 	);
-
 	router.post(
-		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/overview/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		getJourney,
+		getOverviewJourney,
 		buildSave(updateCase, true)
 	);
 

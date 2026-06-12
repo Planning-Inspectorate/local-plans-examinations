@@ -35,7 +35,7 @@
         {% set rows = [] %}
         {% for case in cases %}
           {% set row = [
-            { html: '<a href="/case/' + case.reference | urlencode + '" class="govuk-link">' + case.reference | escape + '</a>' },
+            { html: '<a href="/case/' + case.reference | urlencode + '/overview"' + '" class="govuk-link">' + case.reference | escape + '</a>' },
             { text: case.planTitle or '-' },
             { text: 'Local Plan' if case.planType == 'local-plan' else (case.planType or '-') },
             { text: case.caseOfficer or '-' },
