@@ -86,8 +86,9 @@ model Gateway {
   folderName   String @db.NVarChar(100)
   displayOrder Int
 
-  categories DocumentCategory[]
-  cases      Case[]
+  categories  DocumentCategory[]
+  documentSet DocumentSet[]
+  cases       Case[]
 }
 
 model DocumentCategory {
@@ -108,6 +109,9 @@ model DocumentCategory {
 
 model DocumentSet {
   id String @id @db.NVarChar(20)
+
+  gatewayId String  @db.NVarChar(2)
+  gateway   Gateway @relation(fields: [gatewayId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   documentCategoryId String           @db.NVarChar(4)
   documentCategory   DocumentCategory @relation(fields: [documentCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
