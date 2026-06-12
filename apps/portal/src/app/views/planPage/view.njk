@@ -86,7 +86,7 @@
         text: "Current stage"
       },
       value: {
-        html: currentStage + planStatusTag
+        html: currentStage + " " + planStatusTag
       }
     },
     {
@@ -169,6 +169,8 @@
       }
     ]
   }) }}
+
+  <h2 class = govuk-heading-m>Assessment information</h2>
 
   {{ govukTabs({
     items: [

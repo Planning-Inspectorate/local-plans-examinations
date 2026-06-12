@@ -1,12 +1,12 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { StageLabel, StatusTag, validPlan, buildTestPlans } from '../../types.ts';
+import { StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
 
 //takes status and mapping of label and class returns tags
 function statusTag(status: Status, tagMap: typeof StatusTag) {
 	const s = tagMap?.[status];
-	return `<strong class="${s?.class ?? ''}">${s?.label ?? 'Unknown'}</strong>`;
+	return `<strong class="${s?.class ?? ''}">${s?.label}</strong>`;
 }
 
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
@@ -14,8 +14,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	return async (req, res) => {
 		//logic for finding correct plag
 		const planRef = String(req.params['refNum']).replace('-', '/');
-		const rawPlans = buildTestPlans();
-
+		const rawPlans = await service.getPlans();
 		//checks if plan exists and is valid, logs error if fail
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
@@ -37,7 +36,6 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		}
 
 		//notification banner logic
-		//assume used when stage fails?
 		let notificationBanner = null;
 		if (plan.status == 3) {
 			//action needed

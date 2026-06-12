@@ -166,19 +166,20 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 });
 
 export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
-	refNum: '', //Reference Number
-	leadLPA: '', //Lead Local Planning Authority
-	linkedLPA: '', //Linked Local Planning Authority
-	title: '', //Plan Title
+	refNum: 'PLAN/001', //Reference Number
+	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
+	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
+	title: 'East Borough Local Plan', //Plan Title
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
-	dates: '', //dates of gateways as listy thing but not actual list (to be split) e.g. "7 May 2026|21 July 2026|August 2026|September 2026"
+	dates: '7 May 2026|21 July 2026|August 2026|September 2026', //dates of gateways as listy thing but not actual list (to be split) e.g. "7 May 2026|21 July 2026|August 2026|September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
-	documents: [], // holds interfaces of each doc needed
+	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed
 	...overrides
 });
 
-export function buildBlankApplicationDocs(applicationDocTypes: number[]): ApplicationDoc[] {
+export function buildBlankApplicationDocs(): ApplicationDoc[] {
+	const applicationDocTypes = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]; //set 9/6/2026
 	const testApplicationDocs = [];
 	for (const titles of validDocTitles) {
 		// currently 14 possible doc
@@ -219,23 +220,26 @@ export function buildApplicationDocs(applicationDocs: unknown[]): ApplicationDoc
 			}
 		}
 	} else {
-		testApplicationDocs = buildBlankApplicationDocs(applicationDocTypes);
+		testApplicationDocs = buildBlankApplicationDocs();
 	}
 	return testApplicationDocs;
 }
 
+export function buildPlan(plan: unknown): unknown {
+	if (plan !== null && typeof plan === 'object') {
+		const docs = 'documents' in plan && Array.isArray(plan.documents) ? plan.documents : [];
+		return mockPlan({
+			...plan,
+			documents: buildApplicationDocs(docs)
+		});
+	}
+}
+
 export function buildPlans(plans: unknown[]): unknown[] {
 	const testPlans = [];
-
 	for (const plan of plans) {
 		if (plan !== null && typeof plan === 'object') {
-			const docs = 'documents' in plan && Array.isArray(plan.documents) ? plan.documents : [];
-			testPlans.push(
-				mockPlan({
-					...plan,
-					documents: buildApplicationDocs(docs)
-				})
-			);
+			testPlans.push(buildPlan(plan));
 		}
 	}
 	return testPlans;
