@@ -1,7 +1,7 @@
 import { BasePage } from '../../base-page.ts';
 import type { CreateCaseData } from './types.ts';
 
-const pathPattern = /^\/create-a-case\/contact-details\/check-contact-details\/add\/[^/]+\/contact-details$/;
+const pathPattern = /^\/create-a-case\/contact-details\/check-contact-details\/(add|edit)\/[^/]+\/contact-details$/;
 const defaultNewItemId = 'cypress-contact';
 
 export class ContactDetailsPage extends BasePage {
@@ -23,6 +23,14 @@ export class ContactDetailsPage extends BasePage {
 
 	lpaContactOption(value: string) {
 		return cy.get(`#${value}`);
+	}
+
+	selectLpaContact(value: string) {
+		this.lpaContactOption(value).then(($option) => {
+			if ($option.is('input[type="radio"], input[type="checkbox"]')) {
+				cy.wrap($option).check({ force: true });
+			}
+		});
 	}
 
 	visitForNewItem(itemId = defaultNewItemId) {
@@ -50,7 +58,7 @@ export class ContactDetailsPage extends BasePage {
 		this.lastNameInput.clearAndWrite(contact.lastName);
 		this.emailInput.clearAndWrite(contact.email);
 		this.phoneInput.clearAndWrite(contact.phone);
-		this.lpaContactOption(contact.lpaContact.value).should('exist').check();
+		this.selectLpaContact(contact.lpaContact.value);
 		this.saveAndContinue();
 	}
 }
