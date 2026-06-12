@@ -49,7 +49,7 @@ export class ContactDetailsListPage extends BasePage {
 	}
 
 	verifyContactListed(contact: CreateCaseData['contact']) {
-		this.verifySummaryContains(contact.email);
+		this.verifySummaryContains(contact.firstName, contact.lastName, contact.email, contact.phone);
 	}
 
 	verifyContactNotListed(contact: CreateCaseData['contact']) {
