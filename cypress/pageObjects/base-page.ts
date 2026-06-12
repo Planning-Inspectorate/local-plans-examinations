@@ -97,12 +97,20 @@ export class BasePage {
 		this.saveAndContinueButton.should('be.visible');
 	}
 
-	verifySummaryContains(text: string) {
-		this.manageListSummary.should('be.visible').and('contain.text', text);
+	verifySummaryContains(...expectedText: string[]) {
+		const manageListSummary = this.manageListSummary.should('be.visible');
+
+		expectedText.forEach((text) => {
+			manageListSummary.should('contain.text', text);
+		});
 	}
 
-	verifySummaryDoesNotContain(text: string) {
-		this.manageListSummary.should('be.visible').and('not.contain.text', text);
+	verifySummaryDoesNotContain(...expectedText: string[]) {
+		const manageListSummary = this.manageListSummary.should('be.visible');
+
+		expectedText.forEach((text) => {
+			manageListSummary.should('not.contain.text', text);
+		});
 	}
 
 	verifyRemoveListItemHidden(index = 1) {
