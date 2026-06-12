@@ -25,6 +25,7 @@ CREATE TABLE [dbo].[DocumentCategory] (
 -- CreateTable
 CREATE TABLE [dbo].[DocumentSet] (
     [id] NVARCHAR(20) NOT NULL,
+    [gatewayId] NVARCHAR(2) NOT NULL,
     [documentCategoryId] NVARCHAR(4) NOT NULL,
     [displayName] NVARCHAR(200) NOT NULL,
     [folderName] NVARCHAR(200) NOT NULL,
@@ -51,6 +52,9 @@ CREATE NONCLUSTERED INDEX [_CaseToGateway_B_index] ON [dbo].[_CaseToGateway]([B]
 
 -- AddForeignKey
 ALTER TABLE [dbo].[DocumentCategory] ADD CONSTRAINT [DocumentCategory_gatewayId_fkey] FOREIGN KEY ([gatewayId]) REFERENCES [dbo].[Gateway]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[DocumentSet] ADD CONSTRAINT [DocumentSet_gatewayId_fkey] FOREIGN KEY ([gatewayId]) REFERENCES [dbo].[Gateway]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[DocumentSet] ADD CONSTRAINT [DocumentSet_documentCategoryId_fkey] FOREIGN KEY ([documentCategoryId]) REFERENCES [dbo].[DocumentCategory]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
