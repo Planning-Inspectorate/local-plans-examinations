@@ -17,6 +17,55 @@
   <a class="govuk-notification-banner__link" href="#">Review and correct your documents</a>
 {% endset %}
 
+{% set G2TabTemplate %}
+  <p class="govuk-body">
+              Gateway 2 is an advisory check. An assessor reviews your plan and provides observations to help resolve potential soundness issues early and progress towards meeting the prescribed requirements.
+          </p>
+          <p class="govuk-heading-s">
+              What you need for gateway 2
+          </p>
+          <ul class="govuk-list govuk-list--bullet">
+              <li>Gateway 2 covering letter</li>
+              <li>Local plan timetable</li>
+              <li>Project initiation document (PID)</li>
+              <li>Statement of Compliance (draft)</li>
+              <li>Statement of Soundness (draft)</li>
+              <li>Notice of Intention to commence preparation of your local plan</li>
+              <li>Scoping consultation documents</li>
+              <li>Consultation summary of feedback to scoping consultation</li>
+              <li>Gateway 1 - Self Assessment of Readiness</li>
+              <li>Consultation on proposed local plan content and evidence documents</li>
+              <li>Consultation summary responses for proposed local plan content and evidence documents</li>
+          </ul>
+{% endset %}
+
+{% set G3TabTemplate %}
+  <p class="govuk-body">
+        Gateway 3 tests whether your proposed local plan has met the prescribed requirements and is ready to proceed to examination.
+    </p>
+    <p class="govuk-body">
+        Available after Gateway 2 is approved.
+    </p>
+    <p class="govuk-heading-s">
+        What you need for gateway 3
+    </p>
+    <ul class="govuk-list govuk-list--bullet">
+        <li>Submission version of the plan</li>
+        <li>Final compliance statement</li>
+        <li>Final soundness statement</li>
+        <li>Updated evidence base</li>
+    </ul>
+{% endset %}
+
+{% set ETabTemplate %}
+  <p class="govuk-body">
+        Examination is carried out by an independent inspector who assesses the plan against the tests of soundness set out in national policy.
+    </p>
+    <p class="govuk-body">
+        Available after Gateway 3 is approved.
+    </p>
+{% endset %}
+
 
 {% block pageContent %}
 
@@ -121,27 +170,29 @@
     ]
   }) }}
 
+  <h2 class = govuk-heading-m>Assessment information</h2>
+
   {{ govukTabs({
     items: [
       {
         label: "Gateway 2",
         id: "gateway-2",
         panel: {
-          html: tabTextG2
+          html: G2TabTemplate
         }
       },
       {
         label: "Gateway 3",
         id: "gateway-3",
         panel: {
-          html: tabTextG3
+          html: G3TabTemplate
         }
       },
       {
         label: "Examination",
         id: "examination",
         panel: {
-          html: tabTextE
+          html: ETabTemplate
         }
       }
     ]

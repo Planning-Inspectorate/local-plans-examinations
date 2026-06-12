@@ -1,0 +1,25 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[Contact] ADD CONSTRAINT [Contact_lpaCode_fkey] FOREIGN KEY ([lpaCode]) REFERENCES [dbo].[LPA]([lpaCode]) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[_CaseToContact] ADD CONSTRAINT [_CaseToContact_A_fkey] FOREIGN KEY ([A]) REFERENCES [dbo].[Case]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE [dbo].[_CaseToContact] ADD CONSTRAINT [_CaseToContact_B_fkey] FOREIGN KEY ([B]) REFERENCES [dbo].[Contact]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

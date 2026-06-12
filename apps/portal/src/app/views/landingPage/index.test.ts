@@ -4,24 +4,24 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildLandingPage } from './controller.ts';
-import { JSDOM } from 'jsdom';
-import * as types from '../../types.ts';
+import { buildTestPlans, mockPlan, testPlan, mockApplicationDoc } from '../../types.ts';
+
+function initialiseTest(plans?: unknown[]) {
+	const nunjucks = configureNunjucks();
+	const mockRes = { render: mock.fn((view, data) => nunjucks.render(view, data)) };
+	const mockReq = { session: {} };
+	const logger = mockLogger();
+	const mockService = {
+		logger,
+		getPlans: mock.fn(async () => plans ?? buildTestPlans())
+	};
+	const landingPage = buildLandingPage(mockService);
+	return { landingPage, mockRes, mockReq, nunjucks, logger };
+}
 
 describe('landing page', () => {
 	it('should render without error', async () => {
-		const nunjucks = configureNunjucks();
-		// mock response that calls nunjucks to render a result
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+		const { landingPage, mockRes, mockReq } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		assert.strictEqual(mockRes.render.mock.callCount(), 1);
@@ -30,134 +30,60 @@ describe('landing page', () => {
 	});
 
 	it('should render title and caption correctly', async () => {
-		const nunjucks = configureNunjucks();
-		// mock response that calls nunjucks to render a result
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+		const { landingPage, mockRes, mockReq } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 
-		assert.strictEqual(data.pageTitle, 'My plans', `Expected ${data.pageTitle} instead got "${'My plans'}"`);
+		const expectedTitle = 'My plans';
+		const expectedCaption = 'Southampton City Council';
+
+		assert.strictEqual(data.pageTitle, expectedTitle, `Expected ${expectedTitle} instead got ${data.pageTitle}`);
 		assert.strictEqual(
 			data.pageCaption,
-			'Southampton City Council',
-			`Expected ${data.pageCaption} instead got "${'Southampton City Council'}"`
+			expectedCaption,
+			`Expected ${expectedCaption} instead got ${data.pageCaption}`
 		);
 	});
 
-	it('should render correct status tags', async () => {
-		const nunjucks = configureNunjucks();
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+	it('should render plan data from service', async () => {
+		const { landingPage, mockRes, mockReq } = initialiseTest();
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
-		const html = nunjucks.render(view, data);
-		const dom = new JSDOM(html);
+		const refNum = data.plans[0][0].html.match(/>([^<]+)</)?.[1];
 
-		const tags = [...dom.window.document.querySelectorAll('.govuk-tag')];
-
-		const targetTags = [
-			{
-				className: 'govuk-tag--green',
-				text: 'Ready to Start'
-			},
-			{
-				className: 'govuk-tag--blue',
-				text: 'In Progress'
-			},
-			{
-				className: 'govuk-tag--yellow',
-				text: 'With PINS'
-			},
-			{
-				className: 'govuk-tag--red',
-				text: 'Action needed'
-			},
-			{
-				className: 'govuk-tag--grey',
-				text: 'Invalid'
-			}
-		];
-
-		for (const targetTag of targetTags) {
-			assert.ok(
-				tags.some((tag) => tag.className.includes(targetTag.className) && tag.textContent.trim() === targetTag.text),
-				`Expected ${targetTag.className} tag with text "${targetTag.text}"`
-			);
-		}
+		assert.deepStrictEqual(refNum, 'PLAN/001', `Expected PLAN/001 instead got ${refNum}`);
 	});
 
-	it('should render correct links', async () => {
-		const nunjucks = configureNunjucks();
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-
-		const landingPage = buildLandingPage({ db: mockDb, logger: mockLogger() });
+	it('should warn if no plans found and display No plans to display', async () => {
+		const { landingPage, mockRes, mockReq, nunjucks, logger } = initialiseTest([]);
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 		const html = nunjucks.render(view, data);
-		const dom = new JSDOM(html);
 
-		const links = [...dom.window.document.querySelectorAll('a.govuk-link')];
+		const loggerMessage = logger.warn.mock.calls[0].arguments;
+		const errorMessage = 'No plans to display';
 
-		for (const link of links) {
-			const processedPlanRef = '/planPage/' + link.textContent.trim().replace('/', '-');
-			const href = link.getAttribute('href');
-			assert.strictEqual(href, processedPlanRef, `Expected ${processedPlanRef} instead got "${href}"`);
-		}
+		assert.deepStrictEqual(
+			loggerMessage,
+			['No plans found'],
+			`Expected ["No plans found"] instead got ${loggerMessage}`
+		);
+		assert.ok(html.includes(errorMessage), `expected ${errorMessage}`);
 	});
 
 	it('should render correct table headings', async () => {
-		const nunjucks = configureNunjucks();
-		const mockRes = {
-			render: mock.fn((view, data) => nunjucks.render(view, data))
-		};
-		const mockReq = {
-			session: {}
-		};
-		const mockDb = {
-			$queryRaw: mock.fn()
-		};
-		const landingPage = buildLandingPage({
-			db: mockDb,
-			logger: mockLogger()
-		});
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
-		await landingPage(mockReq, mockRes);
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
-
 		const html = nunjucks.render(view, data);
-		const dom = new JSDOM(html);
 
-		const headings = [...dom.window.document.querySelectorAll('thead th')].map((heading) => heading.textContent.trim());
+		const headings = [...html.matchAll(/<th scope="col" class="govuk-table__header">([^<]+)<\/th>/g)].map(
+			(match) => match[1]
+		);
 
 		const expectedHeadings = [
 			'Reference Number',
@@ -168,5 +94,81 @@ describe('landing page', () => {
 		];
 
 		assert.deepStrictEqual(headings, expectedHeadings, `Expected ${expectedHeadings} instead got "${headings}"`);
+	});
+
+	it('should filter out incorrect plans and log error', async () => {
+		const invalidPlan = {
+			refNum: 'PLAN/BAD',
+			leadLPA: 'Test',
+			title: 'Bad plan',
+			stage: 1,
+			status: 0,
+			dates: '',
+			sections: [0, 0, 0],
+			documents: []
+		};
+		const validTestPlan = mockPlan({
+			refNum: 'PLAN/GOOD',
+			leadLPA: 'Southampton',
+			title: 'Good plan',
+			documents: [mockApplicationDoc()]
+		});
+		const { landingPage, mockRes, mockReq, nunjucks, logger } = initialiseTest([invalidPlan, validTestPlan]);
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const html = nunjucks.render(view, data);
+
+		assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [{ planRef: 'PLAN/BAD' }, 'Invalid plan']);
+		assert.ok(!html.includes('PLAN/BAD'), 'expected invalid plan to be filtered out');
+		assert.ok(html.includes('PLAN/GOOD'), 'expected valid plan to be rendered');
+	});
+
+	it('should render correct links', async () => {
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const html = nunjucks.render(view, data);
+
+		for (const plan of data.plans) {
+			const expectedRefNum = plan[0].html.match(/>([^<]+)</)?.[1]; // 0 for first cell - where link should be
+			const expectedHref = '/planPage/' + expectedRefNum.replace('/', '-');
+
+			assert.ok(expectedRefNum.includes('PLAN'), `expected ref to contain PLAN`);
+			assert.ok(html.includes(`<a class="govuk-link" href="${expectedHref}">${expectedRefNum}</a>`));
+		}
+	});
+
+	it('should render correct status tags', async () => {
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const html = nunjucks.render(view, data);
+
+		const targetTags = [
+			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to start' },
+			{ className: 'govuk-tag govuk-tag--blue', text: 'In progress' },
+			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
+			{ className: 'govuk-tag govuk-tag--red', text: 'Action needed' },
+			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },
+			{ className: 'govuk-body', text: 'Completed' }
+		];
+
+		for (const plan of data.plans) {
+			const rawTagClass = plan[4].html.match(/"([^"]+)"/)?.[1]; // 4 for last cell - where tag should be
+			const rawTagText = plan[4].html.match(/>([^<]+)</)?.[1];
+
+			assert.ok(
+				targetTags.some((tag) => tag.className === rawTagClass && tag.text === rawTagText),
+				`Expected one of ${targetTags} but got ${rawTagClass}, ${rawTagText}`
+			);
+
+			assert.ok(
+				html.includes(`<strong class="${rawTagClass}">${rawTagText}</strong>`),
+				`expected <strong class="${rawTagClass}">${rawTagText}</strong>`
+			);
+		}
 	});
 });

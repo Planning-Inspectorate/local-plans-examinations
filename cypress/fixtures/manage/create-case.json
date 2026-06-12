@@ -1,0 +1,63 @@
+{
+	"caseOfficer": {
+		"value": "officer-1",
+		"label": "Case Officer 1"
+	},
+	"planTitle": "Cypress Borough Local Plan",
+	"planType": {
+		"value": "local-plan",
+		"label": "Local Plan"
+	},
+	"lpa": {
+		"lpa-1": {
+			"value": "Local Planning Authority 1",
+			"label": "lpaContact"
+		},
+		"lpa-2": {
+			"value": "Local Planning Authority 2",
+			"label": "lpaContact-2"
+		}
+	},
+	"contact": {
+		"firstName": "Cypress",
+		"lastName": "Tester",
+		"email": "cypress.case.creation@example.com",
+		"phone": "02079460000",
+		"lpaContact": {
+			"value": "lpaContact",
+			"label": "Local Planning Authority 1"
+		}
+	},
+	"dates": {
+		"intentionToCommenceDate": {
+			"day": "1",
+			"month": "2",
+			"year": "2026",
+			"display": "1/2/2026"
+		},
+		"gateway1Date": {
+			"day": "3",
+			"month": "3",
+			"year": "2026",
+			"display": "3/3/2026"
+		},
+		"gateway2Date": {
+			"day": "4",
+			"month": "4",
+			"year": "2026",
+			"display": "4/4/2026"
+		},
+		"gateway3Date": {
+			"day": "5",
+			"month": "5",
+			"year": "2026",
+			"display": "5/5/2026"
+		},
+		"submissionDate": {
+			"day": "6",
+			"month": "6",
+			"year": "2026",
+			"display": "6/6/2026"
+		}
+	}
+}

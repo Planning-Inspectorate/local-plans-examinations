@@ -5,27 +5,36 @@
 
 {% block pageContent %}
 
-  {{ govukTable({
-    captionClasses: "govuk-table__caption--l",
-    firstCellIsHeader: true,
-    head: [
-      {
-        text: "Reference Number"
-      },
-      {
-        text: "Lead Local Planning Authority"
-      },
-      {
-        text: "Plan Title"
-      },
-      {
-        text: "Current Stage"
-      },
-      {
-        text: "Status"
-      }
-    ],
-    rows: plans
-  }) }}
+  {% if noPlansFlag %}
+
+    <h2 class="govuk-heading-m">No plans to display</h2>
+
+  {% else %}
+
+    {{ govukTable({
+      classes: "govuk-table--responsive",
+      captionClasses: "govuk-table__caption--l",
+      firstCellIsHeader: true,
+      head: [
+        {
+          text: "Reference Number"
+        },
+        {
+          text: "Lead Local Planning Authority"
+        },
+        {
+          text: "Plan Title"
+        },
+        {
+          text: "Current Stage"
+        },
+        {
+          text: "Status"
+        }
+      ],
+      rows: plans
+    })}}
+
+  {% endif %}
 
 {% endblock %}
