@@ -387,8 +387,7 @@ describe('plan page', () => {
 
 			const expectedTags = ['Completed', statusTag(plans[i].status, StatusTag), 'Cannot start yet'];
 			const tags = [data.tagG2, data.tagG3, data.tagE];
-			console.log(expectedTags);
-			console.log(tags);
+
 			for (let j = 0; j < expectedTags.length; j++) {
 				assert.strictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
 			}
