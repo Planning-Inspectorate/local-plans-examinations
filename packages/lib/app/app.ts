@@ -1,6 +1,7 @@
 import { buildLogRequestsMiddleware } from '../middleware/log-requests.ts';
 import { initSessionMiddleware } from '../util/session.ts';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import { initContentSecurityPolicyMiddlewares } from '../middleware/csp-middleware.ts';
 import { buildDefaultErrorHandlerMiddleware, notFoundHandler } from '../middleware/errors.ts';
@@ -29,6 +30,9 @@ export function createBaseApp({
 
 	const logRequests = buildLogRequestsMiddleware(service.logger);
 	app.use(logRequests);
+
+	// configure cookie-parser, to populate req.cookies
+	app.use(cookieParser());
 
 	// configure body-parser, to populate req.body
 	// see https://expressjs.com/en/resources/middleware/body-parser.html

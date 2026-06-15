@@ -49,6 +49,14 @@ export class BasePage {
 		return cy.getByData('manage-list-summary');
 	}
 
+	listItemRemoveLink(index = 1) {
+		return cy.getByData(`remove-list-item-${index}`);
+	}
+
+	listItemChangeLink(index = 1) {
+		return cy.getByData(`change-list-item-${index}`);
+	}
+
 	get errorSummary() {
 		return cy.get('.govuk-error-summary');
 	}
@@ -77,12 +85,36 @@ export class BasePage {
 		this.addListItemButton.should('be.visible').click();
 	}
 
+	removeListItem(index = 1) {
+		this.listItemRemoveLink(index).should('be.visible').click();
+	}
+
+	changeListItem(index = 1) {
+		this.listItemChangeLink(index).should('be.visible').click();
+	}
+
 	verifySaveAndContinueVisible() {
 		this.saveAndContinueButton.should('be.visible');
 	}
 
-	verifySummaryContains(text: string) {
-		this.manageListSummary.should('be.visible').and('contain.text', text);
+	verifySummaryContains(...expectedText: string[]) {
+		const manageListSummary = this.manageListSummary.should('be.visible');
+
+		expectedText.forEach((text) => {
+			manageListSummary.should('contain.text', text);
+		});
+	}
+
+	verifySummaryDoesNotContain(...expectedText: string[]) {
+		const manageListSummary = this.manageListSummary.should('be.visible');
+
+		expectedText.forEach((text) => {
+			manageListSummary.should('not.contain.text', text);
+		});
+	}
+
+	verifyRemoveListItemHidden(index = 1) {
+		this.listItemRemoveLink(index).should('not.exist');
 	}
 
 	verifyErrorSummaryContains(message: string) {

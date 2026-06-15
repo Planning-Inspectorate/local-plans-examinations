@@ -1,7 +1,7 @@
 import { BasePage } from '../../base-page.ts';
 import type { SelectAnswer } from './types.ts';
 
-const pathPattern = /^\/create-a-case\/case-details\/check-lpas\/add\/[^/]+\/select-lpa$/;
+const pathPattern = /^\/create-a-case\/case-details\/check-lpas\/(add|edit)\/[^/]+\/select-lpa$/;
 const defaultNewItemId = 'cypress-lpa';
 
 export class SelectLocalPlanningAuthorityPage extends BasePage {

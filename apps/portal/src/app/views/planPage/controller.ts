@@ -15,6 +15,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		//logic for finding correct plag
 		const planRef = String(req.params['refNum']).replace('-', '/');
 		const rawPlans = await service.getPlans();
+
 		//checks if plan exists and is valid, logs error if fail
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
