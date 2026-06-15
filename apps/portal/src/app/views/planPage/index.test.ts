@@ -136,7 +136,7 @@ describe('plan page', () => {
 		const expectedLinkLPA = 'Romsey Town Council';
 
 		assert.strictEqual(data.currentStage, expectedStage, `expected ${expectedStage} but got ${data.currentStage}`);
-		assert.ok(html.includes('Gateway 2'), `expected ${expectedStage}`);
+		assert.ok(html.includes(expectedStage), `expected ${expectedStage}`);
 		assert.strictEqual(data.leadLPA, expectedLPA, `expected ${expectedLPA} but got ${data.leadLPA}`);
 		assert.ok(html.includes(expectedLPA), `expected ${expectedLPA}`);
 		assert.strictEqual(data.linkedLPA, expectedLinkLPA, `expected ${expectedLinkLPA} but got ${data.linkedLPA}`);
@@ -387,8 +387,7 @@ describe('plan page', () => {
 
 			const expectedTags = ['Completed', statusTag(plans[i].status, StatusTag), 'Cannot start yet'];
 			const tags = [data.tagG2, data.tagG3, data.tagE];
-			console.log(expectedTags);
-			console.log(tags);
+
 			for (let j = 0; j < expectedTags.length; j++) {
 				assert.strictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
 			}
