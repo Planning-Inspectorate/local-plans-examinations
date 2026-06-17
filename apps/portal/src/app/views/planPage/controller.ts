@@ -12,7 +12,7 @@ function statusTag(status: Status, tagMap: typeof StatusTag) {
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
-		//logic for finding correct plag
+		//logic for finding correct plan
 		const planRef = String(req.params['refNum']).replace('-', '/');
 		const rawPlans = await service.getPlans();
 
