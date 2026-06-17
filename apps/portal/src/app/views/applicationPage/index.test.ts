@@ -5,7 +5,7 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildApplicationPage } from './controller.ts';
-import { StatusTag, buildPlans, buildPlan, buildTestPlans } from '../../types.ts';
+import { StatusTag, buildPlans, buildPlan, buildTestPlans, buildApplicationDocs } from '../../types.ts';
 
 function initialiseTest(params: {}, plan?: unknown[]) {
 	const nunjucks = configureNunjucks();
@@ -36,7 +36,7 @@ function cleanHtml(html: string) {
 
 describe('application page', () => {
 	it('should render without error', async () => {
-		const param = { refNum: 'PLAN-001' };
+		const param = { refNum: 'PLAN-001', stage: 1 };
 
 		const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param);
 		await assert.doesNotReject(() => applicationPage(mockReq, mockRes));
@@ -87,8 +87,6 @@ describe('application page', () => {
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 		const html = nunjucks.render(view, data);
 
-		console.log(html, data);
-
 		const expectedPlanTitle = 'East Borough Local Plan';
 		const expectedPlanTitleHTML =
 			'<dt class="govuk-summary-list__key">Plan name</dt><dd class="govuk-summary-list__value">East Borough Local Plan</dd>';
@@ -131,7 +129,7 @@ describe('application page', () => {
 		);
 	});
 
-	it('should render a save and come back button)', async () => {
+	it('should render a save and come back button', async () => {
 		const param = { refNum: 'PLAN-001', stage: 1 };
 
 		const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param);
@@ -145,7 +143,179 @@ describe('application page', () => {
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedBackHTML)), `expected html to contain ${expectedBackHTML}`);
 	});
 
-	it('should render correct doc section headers for G2 (Procedural documents, 2. Consultation documents 3. Submit) and correct tag for each', async () => {
+	it('should render Application incomplete if all sections not complete', async () => {
+		const param = { refNum: 'PLAN-001', stage: 1 };
+
+		const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param);
+		await assert.doesNotReject(() => applicationPage(mockReq, mockRes));
+
+		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const html = nunjucks.render(view, data);
+
+		const expectedSectionTitle = 'Application incomplete';
+		const sectionTitle = data.sectionTracker[0].title.text;
+		const expectedSectionTitleHTML = '';
+
+		assert.strictEqual(expectedSectionTitle, sectionTitle, `expected ${expectedSectionTitle} but got ${sectionTitle}`);
+		assert.ok(
+			cleanHtml(html).includes(cleanHtml(expectedSectionTitleHTML)),
+			`expected html to contain ${expectedSectionTitleHTML}`
+		);
+	});
+
+	it('should render Application complete if all sections complete', async () => {
+		const param = { refNum: 'PLAN-001', stage: 1 };
+
+		const plan = {
+			documents: buildApplicationDocs([
+				{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 5, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 6, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 7, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 8, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 9, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 10, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
+				{ title: 14, type: 2, state: 2, dateCompleted: '16/06/2026' }
+			])
+		};
+
+		const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param, plan);
+		await assert.doesNotReject(() => applicationPage(mockReq, mockRes));
+
+		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const html = nunjucks.render(view, data);
+
+		const expectedSectionTitle = 'Application complete';
+		const sectionTitle = data.sectionTracker[0].title.text;
+		const expectedSectionTitleHTML = '';
+
+		assert.strictEqual(expectedSectionTitle, sectionTitle, `expected ${expectedSectionTitle} but got ${sectionTitle}`);
+		assert.ok(
+			cleanHtml(html).includes(cleanHtml(expectedSectionTitleHTML)),
+			`expected html to contain ${expectedSectionTitleHTML}`
+		);
+	});
+
+	it('should render the correct amount of sections complete for G2', async () => {
+		const param = { refNum: 'PLAN-001', stage: 1 };
+
+		const plans = [
+			{
+				documents: buildApplicationDocs([
+					{ title: 0, type: 0, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 1, type: 0, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 2, type: 0, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 3, type: 0, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 4, type: 0, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 5, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 6, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 7, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 8, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 9, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 10, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 11, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 12, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 13, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
+				])
+			},
+			{
+				documents: buildApplicationDocs([
+					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 5, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 6, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 7, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 8, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 9, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 10, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 11, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 12, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 13, type: 1, state: 0, dateCompleted: '16/06/2026' },
+					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
+				])
+			},
+			{
+				documents: buildApplicationDocs([
+					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 5, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 6, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 7, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 8, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 9, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 10, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
+				])
+			},
+			{
+				documents: buildApplicationDocs([
+					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 5, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 6, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 7, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 8, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 9, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 10, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
+				])
+			}
+		];
+
+		const expectedSectionHint = [
+			'You have completed 0 of 3 sections.',
+			'You have completed 1 of 3 sections.',
+			'You have completed 2 of 3 sections.',
+			'You have completed 3 of 3 sections.'
+		];
+
+		const expectedSectionHintHTML = ['', '', ''];
+
+		for (let i = 0; i < plans.length; i++) {
+			const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param, plans[i]);
+			await assert.doesNotReject(() => applicationPage(mockReq, mockRes));
+
+			const [view, data] = mockRes.render.mock.calls[0].arguments;
+			const html = nunjucks.render(view, data);
+
+			const sectionHint = data.sectionTracker[0].hint.text;
+
+			assert.strictEqual(
+				sectionHint,
+				expectedSectionHint[i],
+				`expected ${expectedSectionHint[i]} but got ${sectionHint}`
+			);
+			assert.ok(
+				cleanHtml(html).includes(cleanHtml(expectedSectionHintHTML[i])),
+				`expected html to contain ${expectedSectionHintHTML[i]}`
+			);
+		}
+	});
+
+	it('should render correct doc section headers for G2 (Procedural documents, 2. Consultation documents 3. Submit)', async () => {
 		const param = { refNum: 'PLAN-001', stage: 1 };
 
 		const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param);

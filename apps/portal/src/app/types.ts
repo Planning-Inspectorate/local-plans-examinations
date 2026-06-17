@@ -65,6 +65,12 @@ export const docTitleLabel: Record<DocTitle, string> = {
 	14: 'Accept declaration and submit' //Submit
 };
 
+export const stagesDocType: Partial<Record<Stage, DocTitle[]>> = {
+	1: [0, 1, 2],
+	2: [0, 1, 2],
+	3: [0, 1, 2]
+};
+
 //tags
 
 export const StatusTag = {
@@ -195,7 +201,7 @@ export function buildBlankApplicationDocs(): ApplicationDoc[] {
 
 export function buildApplicationDocs(applicationDocs: unknown[]): ApplicationDoc[] {
 	const applicationDocTypes = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]; //set 9/6/2026
-
+	console.log(applicationDocs, applicationDocs[0]);
 	let testApplicationDocs = [];
 
 	if (applicationDocs.length > 0) {

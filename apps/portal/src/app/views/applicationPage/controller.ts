@@ -1,7 +1,15 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { Plan, DocType, Stage } from '../../types.ts';
-import { StageLabel, docTitleLabel, StateLabel, DocTypeLabel, StateTag, validPlan } from '../../types.ts';
+import {
+	StageLabel,
+	docTitleLabel,
+	StateLabel,
+	DocTypeLabel,
+	StateTag,
+	validPlan,
+	stagesDocType
+} from '../../types.ts';
 
 //const docListTemplate =
 
@@ -25,6 +33,25 @@ export function buildApplicationPage(service: PortalService): AsyncRequestHandle
 		const stage = StageLabel[stageNum as Stage];
 		const pageTitle = stage + ' application';
 		const targetDate = plan.dates.split('|')[Number(stageNum)];
+
+		const sectionCompleted = [];
+		for (const DocType of stagesDocType[stageNum as Stage]!) {
+			const docsOfType = plan.documents.filter((doc) => doc.type === DocType);
+			sectionCompleted.push(docsOfType.every((doc) => doc.dateCompleted !== null));
+		}
+		const sectionTrackerTitle = sectionCompleted.every((sec) => sec === true)
+			? 'Application complete'
+			: 'Application incomplete';
+
+		const sectionTrackerHint = sectionCompleted.filter((sec) => sec === true).length;
+
+		const sectionTracker = [
+			{
+				title: { text: sectionTrackerTitle },
+				hint: { text: 'You have completed ' + sectionTrackerHint + ' of ' + sectionCompleted.length + ' sections.' }
+			}
+		];
+		console.log(sectionTracker, plan.documents);
 
 		//values for generating DocsStructured
 		const doctypesForG2: DocType[] = [0, 1, 2];
@@ -66,6 +93,7 @@ export function buildApplicationPage(service: PortalService): AsyncRequestHandle
 		}
 
 		const viewModel = {
+			sectionTracker,
 			DocsStructured,
 			visitCount: req.session.visits
 		};
