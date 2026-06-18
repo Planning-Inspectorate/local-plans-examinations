@@ -12,9 +12,10 @@ function statusTag(status: Status, tagMap: typeof StatusTag) {
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
-		//logic for finding correct plag
+		//logic for finding correct plan
 		const planRef = String(req.params['refNum']).replace('-', '/');
 		const rawPlans = await service.getPlans();
+
 		//checks if plan exists and is valid, logs error if fail
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
@@ -30,20 +31,19 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		//button logic
 		let button = null;
-		if (plan.status == 0) {
+		if (plan.status === 0) {
 			//Ready to start
 			button = 'Start ' + currentStage + ' submission';
 		}
 
 		//notification banner logic
 		let notificationBanner = null;
-		if (plan.status == 3) {
+		if (plan.status === 3) {
 			//action needed
 			notificationBanner = true;
 		}
 
 		//plan process tag logic
-		const dates = plan.dates.split('|');
 		let tagG2, tagG3, tagE;
 		let dateTextG2, dateTextG3, dateTextE;
 		let hrefG2, hrefG3, hrefE;
@@ -66,7 +66,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				hrefG2 = applicationLinkNoStage + `1`;
 				hrefG3 = applicationLinkNoStage + `2`;
 				hrefE = currentApplicationLink;
-				if (plan.status == 5) {
+				if (plan.status === 5) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
@@ -78,10 +78,10 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		}
 
 		const viewModel = {
-			dateG1: dates[0],
-			dateG2: dates[1],
-			dateG3: dates[2],
-			dateE: dates[3],
+			dateG1: plan.dates.G1,
+			dateG2: plan.dates.G2,
+			dateG3: plan.dates.G3,
+			dateE: plan.dates.E,
 			dateTextG2,
 			dateTextG3,
 			dateTextE,

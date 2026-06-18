@@ -1,0 +1,70 @@
+{% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
+
+{{ govukCookieBanner({
+	ariaLabel: "Cookie banner",
+	hidden: cookieConsent is defined,
+	messages: [
+		{
+			headingText: "Cookies on " + config.headerTitle,
+			html: '<p class="govuk-body">We use some essential cookies to make this service work.</p><p class="govuk-body">We&apos;d also like to use analytics cookies so we can understand how you use the service and make improvements.</p>',
+			actions: [
+				{
+					text: "Accept analytics cookies",
+					type: "button",
+					name: "cookies",
+					value: "accept",
+					attributes: {
+						"data-cookie-action": "accept"
+					}
+				},
+				{
+					text: "Reject analytics cookies",
+					type: "button",
+					name: "cookies",
+					value: "reject",
+					attributes: {
+						"data-cookie-action": "reject"
+					}
+				},
+				{
+					text: "View cookies",
+					href: "/cookies"
+				}
+			]
+		},
+		{
+			role: "alert",
+			hidden: true,
+			html: '<p class="govuk-body">You&apos;ve accepted analytics cookies. You can <a class="govuk-link" href="/cookies">change your cookie settings</a> at any time.</p>',
+			actions: [
+				{
+					text: "Hide cookie message",
+					type: "button",
+					attributes: {
+						"data-cookie-action": "hide"
+					}
+				}
+			],
+			attributes: {
+				"data-cookie-confirmation": "accept"
+			}
+		},
+		{
+			role: "alert",
+			hidden: true,
+			html: '<p class="govuk-body">You&apos;ve rejected analytics cookies. You can <a class="govuk-link" href="/cookies">change your cookie settings</a> at any time.</p>',
+			actions: [
+				{
+					text: "Hide cookie message",
+					type: "button",
+					attributes: {
+						"data-cookie-action": "hide"
+					}
+				}
+			],
+			attributes: {
+				"data-cookie-confirmation": "reject"
+			}
+		}
+	]
+}) }}
