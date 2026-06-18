@@ -1,49 +1,47 @@
 # E2E Testing using Cypress
 
 ## Initial local set-up 
-- install latest LTS Node
+- install Node 22
 - install Docker
 - npm i
-- docker compose up (to start a database)
+- docker compose up -d mssql (to start a database)
 - copy packages/database/.env.example to .env
 - copy apps/manage/.env.example to .env
 - copy apps/portal/.env.example to .env
 - Get the AUTH_* env vars from a dev and add to apps/manage/.env (or set AUTH_DISABLED=false)
+- npm run db-generate
 - run npm run db-migrate-dev to setup the database
 - run apps/manage>npm run dev to start the manage app
 - run apps/portal>npm run dev to start the portal app
 
 ## Running Cypress tests locally
-The Cypress tests run using a TEST_TARGET of manage or portal. If it is not specified cypress will default to a test target of portal as set up in ../cypress.config.ts
+Run the manage or portal app, and run the Docker container to begin testing locally
 
-To run cypress tests locally the local host and Docker container should be running.
+The Cypress tests run with a TEST_TARGET = (manage or portal), when no target is specified Cypress will default the test target to portal, specified in ../cypress.config.ts
+
 
 ### Cypress commands
-Run from Cypress directory 
+Run from root directory 
+- npm run cy:portal:smoke
+- npm run cy:portal:regression
+- npm run cy:portal:all
+- npm run cy:manage:smoke
+- npm run cy:manage:regression
+- npm run cy:manage:all
 
-The command format is (cypress : TEST_TARGET : category)
-
-- npm cy:portal:smoke
-- npm cy:portal:regression
-- npm cy:portal:all
-- npm cy:manage:smoke
-- npm cy:manage:regression
-- npm cy:manage:all
-
-### Open Cypress graphical interface
-The Cypress interface allows you to view and run tests with a graphical interface
-
-Commands:
-- npx cypress open - Will open the interface without  a TEST_TARGET, defaulting to portal
-- npm cy:open:manage - Will open the interface with TEST_TARGET of manage
+### Open Cypress graphical interface commands
+Run from root directory 
+- npm run cy:open:portal 
+- npm run cy:open:manage
 
 ## Running Cypress in the Azure pipeline
-The Cypress tests are integrated into the Microsoft Azure pipeline, using .yml files for configuration in the ../.azure/pipelines directory.
+The Cypress tests are integrated into the Microsoft Azure pipeline, configured using YAML in the ../.azure/pipelines directory.
 
-If a Pull Request contains a file in the manage or portal folder of cypress/ or apps/ directories then Cypress tests relevant to those directories will run.
+The E2E pipeline is configured in ../.azure/pipelines/e2e.yml
 
-### Azure environment
-TBC
+The Azure pipeline runs tests against the local portal or manage app (depending on changed file paths) with a local Docker database.
+
+Test execution is split across 2 shards.
 
 ## File structure
 
