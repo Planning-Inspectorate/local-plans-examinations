@@ -130,6 +130,26 @@ function validApplicationDoc(rawApplicationDoc: unknown): rawApplicationDoc is A
 		(applicationDoc.dateCompleted === null || typeof applicationDoc.dateCompleted === 'string')
 	);
 }
+function validPartialApplicationDoc(rawApplicationDoc: unknown): rawApplicationDoc is Partial<ApplicationDoc> {
+	if (typeof rawApplicationDoc !== 'object' || rawApplicationDoc === null) return false;
+
+	const applicationDoc = rawApplicationDoc as Record<string, unknown>;
+
+	const validTitle = (title: unknown): title is DocTitle => validDocTitles.includes(title as DocTitle);
+
+	const validType = (type: unknown): type is DocType => validDocTypes.includes(type as DocType);
+
+	const validState = (state: unknown): state is State => validStates.includes(state as State);
+
+	return (
+		(validTitle(applicationDoc.title) && validType(applicationDoc.type) && applicationDoc.file === null) ||
+		typeof applicationDoc.file === 'string' ||
+		(applicationDoc.file === undefined && validState(applicationDoc.state)) ||
+		(applicationDoc.state === undefined && applicationDoc.dateCompleted === null) ||
+		typeof applicationDoc.dateCompleted === 'string' ||
+		applicationDoc.dateCompleted === undefined
+	);
+}
 
 export function validPlan(rawPlan: unknown): rawPlan is Plan {
 	if (typeof rawPlan !== 'object' || rawPlan === null) return false;
@@ -199,34 +219,24 @@ export function buildBlankApplicationDocs(): ApplicationDoc[] {
 	return testApplicationDocs;
 }
 
-export function buildApplicationDocs(applicationDocs: unknown[]): ApplicationDoc[] {
-	const applicationDocTypes = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]; //set 9/6/2026
-	console.log(applicationDocs, applicationDocs[0]);
-	let testApplicationDocs = [];
+export function buildApplicationDocs(applicationDocs?: unknown[]): ApplicationDoc[] {
+	if (!applicationDocs || applicationDocs.length < 1) {
+		return buildBlankApplicationDocs();
+	}
 
-	if (applicationDocs.length > 0) {
-		for (const titles of validDocTitles) {
-			// currently 14 possible doc
-			const doc = applicationDocs.find(
-				(doc): doc is ApplicationDoc => validApplicationDoc(doc) && doc.title === titles
-			);
-			if (doc) {
+	const testApplicationDocs = [];
+
+	for (const doc of applicationDocs) {
+		if (doc !== null && typeof doc === 'object') {
+			const partialApplicationDoc = validPartialApplicationDoc(doc);
+			if (partialApplicationDoc) {
 				testApplicationDocs.push(
 					mockApplicationDoc({
 						...doc
 					})
 				);
-			} else {
-				testApplicationDocs.push(
-					mockApplicationDoc({
-						title: titles,
-						type: applicationDocTypes[titles] as DocType
-					})
-				);
 			}
 		}
-	} else {
-		testApplicationDocs = buildBlankApplicationDocs();
 	}
 	return testApplicationDocs;
 }

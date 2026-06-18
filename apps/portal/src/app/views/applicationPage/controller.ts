@@ -51,7 +51,6 @@ export function buildApplicationPage(service: PortalService): AsyncRequestHandle
 				hint: { text: 'You have completed ' + sectionTrackerHint + ' of ' + sectionCompleted.length + ' sections.' }
 			}
 		];
-		console.log(sectionTracker, plan.documents);
 
 		//values for generating DocsStructured
 		const doctypesForG2: DocType[] = [0, 1, 2];

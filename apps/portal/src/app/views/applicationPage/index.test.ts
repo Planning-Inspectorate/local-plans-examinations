@@ -167,7 +167,7 @@ describe('application page', () => {
 		const param = { refNum: 'PLAN-001', stage: 1 };
 
 		const plan = {
-			documents: buildApplicationDocs([
+			documents: [
 				{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
 				{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
 				{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
@@ -182,8 +182,8 @@ describe('application page', () => {
 				{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
 				{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
 				{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
-				{ title: 14, type: 2, state: 2, dateCompleted: '16/06/2026' }
-			])
+				{ title: 14, type: 2, state: 1, dateCompleted: '16/06/2026' }
+			]
 		};
 
 		const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param, plan);
@@ -208,64 +208,45 @@ describe('application page', () => {
 
 		const plans = [
 			{
-				documents: buildApplicationDocs([
-					{ title: 0, type: 0, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 1, type: 0, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 2, type: 0, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 3, type: 0, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 4, type: 0, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 5, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 6, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 7, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 8, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 9, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 10, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 11, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 12, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 13, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
-				])
+				documents: [
+					{ title: 0, type: 0, state: 0 },
+					{ title: 1, type: 0, state: 0 },
+					{ title: 2, type: 0, state: 0 },
+					{ title: 3, type: 0, state: 0 },
+					{ title: 4, type: 0, state: 0 },
+					{ title: 5, type: 1, state: 0 },
+					{ title: 6, type: 1, state: 0 },
+					{ title: 7, type: 1, state: 0 },
+					{ title: 8, type: 1, state: 0 },
+					{ title: 9, type: 1, state: 0 },
+					{ title: 10, type: 1, state: 0 },
+					{ title: 11, type: 1, state: 0 },
+					{ title: 12, type: 1, state: 0 },
+					{ title: 13, type: 1, state: 0 },
+					{ title: 14, type: 2, state: 0 }
+				]
 			},
 			{
-				documents: buildApplicationDocs([
+				documents: [
 					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 5, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 6, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 7, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 8, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 9, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 10, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 11, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 12, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 13, type: 1, state: 0, dateCompleted: '16/06/2026' },
-					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
-				])
+					{ title: 5, type: 1, state: 0 },
+					{ title: 6, type: 1, state: 0 },
+					{ title: 7, type: 1, state: 0 },
+					{ title: 8, type: 1, state: 0 },
+					{ title: 9, type: 1, state: 0 },
+					{ title: 10, type: 1, state: 0 },
+					{ title: 11, type: 1, state: 0 },
+					{ title: 12, type: 1, state: 0 },
+					{ title: 13, type: 1, state: 0 },
+					{ title: 14, type: 2, state: 0 }
+				]
 			},
 			{
-				documents: buildApplicationDocs([
-					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 5, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 6, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 7, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 8, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 9, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 10, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
-				])
-			},
-			{
-				documents: buildApplicationDocs([
+				documents: [
 					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
@@ -280,8 +261,27 @@ describe('application page', () => {
 					{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
 					{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
-					{ title: 14, type: 2, state: 0, dateCompleted: '16/06/2026' }
-				])
+					{ title: 14, type: 2, state: 0 }
+				]
+			},
+			{
+				documents: [
+					{ title: 0, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 1, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 2, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 3, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 4, type: 0, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 5, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 6, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 7, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 8, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 9, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 10, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 11, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 12, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 13, type: 1, state: 2, dateCompleted: '16/06/2026' },
+					{ title: 14, type: 2, state: 2, dateCompleted: '16/06/2026' }
+				]
 			}
 		];
 
@@ -292,7 +292,12 @@ describe('application page', () => {
 			'You have completed 3 of 3 sections.'
 		];
 
-		const expectedSectionHintHTML = ['', '', ''];
+		const expectedSectionHintHTML = [
+			'<div id="task-list-1-hint" class="govuk-task-list__hint">You have completed 0 of 3 sections.',
+			'<div id="task-list-1-hint" class="govuk-task-list__hint">You have completed 1 of 3 sections.',
+			'<div id="task-list-1-hint" class="govuk-task-list__hint">You have completed 2 of 3 sections.',
+			'<div id="task-list-1-hint" class="govuk-task-list__hint">You have completed 3 of 3 sections.'
+		];
 
 		for (let i = 0; i < plans.length; i++) {
 			const { applicationPage, mockRes, mockReq, nunjucks, logger } = initialiseTest(param, plans[i]);
@@ -300,7 +305,7 @@ describe('application page', () => {
 
 			const [view, data] = mockRes.render.mock.calls[0].arguments;
 			const html = nunjucks.render(view, data);
-
+			console.log(html);
 			const sectionHint = data.sectionTracker[0].hint.text;
 
 			assert.strictEqual(
