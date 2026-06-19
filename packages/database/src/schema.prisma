@@ -30,6 +30,16 @@ model Case {
   planType                String
   lpas                    LPA[]
   contacts                Contact[]
+  programmeOfficer        String?
+  examinationWebsite      String?
+  assessorGateway2        String?
+  assessorGateway3        String?
+  examiningInspector1     String?
+  examiningInspector2     String?
+  examiningInspector3     String?
+  qaInspector1            String?
+  qaInspector2            String?
+  qaInspector3            String?
   intentionToCommenceDate DateTime?
   gateway1Date            DateTime?
   gateway2Date            DateTime?
