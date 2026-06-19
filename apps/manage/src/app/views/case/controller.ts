@@ -11,26 +11,35 @@ export function updateCaseField(service: ManageService) {
 		if (typeof reference !== 'string') throw new Error('reference must be a string');
 
 		const journeyResponse = res.locals?.journeyResponse?.answers || {};
-		const currentLpaCode = Array.isArray(req.params.manageListItemId)
+
+		// can be an LPA code or a contact ID
+		const currentItemId = Array.isArray(req.params.manageListItemId)
 			? req.params.manageListItemId[0]
 			: (req.params.manageListItemId ?? '');
 		logger.info(`Updating case ${reference} with ${JSON.stringify(journeyResponse)}`);
 		// todo handle errors
-		const { planTitle, planType, caseOfficer, lpa, firstName, lastName, email, phone, lpaContact, lpaCode } =
-			processInputForDB(req.body);
+
 		const removeItem = req.params.manageListAction === 'remove';
 		if (removeItem) {
+			if (req.params.section === 'contacts') {
+				await db.contact.delete({
+					where: { id: currentItemId }
+				});
+				return;
+			}
 			await db.case.update({
 				where: { reference },
 				data: {
 					lpas: {
-						disconnect: { lpaCode: currentLpaCode }
+						disconnect: { lpaCode: currentItemId }
 					}
 				}
 			});
 			return;
 		}
 
+		const { planTitle, planType, caseOfficer, lpa, firstName, lastName, email, phone, lpaContact, lpaCode } =
+			processInputForDB(req.body);
 		const data = {
 			planTitle,
 			planType,
@@ -46,9 +55,8 @@ export function updateCaseField(service: ManageService) {
 								lpa: {
 									connectOrCreate: {
 										where: { lpaCode: lpaCode || lpaContact },
-										create: { lpaCode }
-									},
-									disconnect: [{ lpaCode: currentLpaCode }]
+										create: { lpaCode: lpaCode || lpaContact }
+									}
 								}
 							}
 						}
@@ -104,7 +112,8 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			}));
 			res.locals.journeyResponse.answers.contactDetails = currentCase.contacts.map((contact) => ({
 				...contact,
-				phone: contact.phoneNumber
+				phone: contact.phoneNumber,
+				lpaContact: contact.lpaCode
 			}));
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);

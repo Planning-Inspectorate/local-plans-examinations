@@ -1,11 +1,14 @@
 import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/manage-list-section.js';
+import { createLpaOptions } from '../create-a-case/journey.ts';
 
 export const JOURNEY_ID = 'edit-case-overview';
 
 //TODO use question library
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	createLpaOptions(response, questions);
+
 	return new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
