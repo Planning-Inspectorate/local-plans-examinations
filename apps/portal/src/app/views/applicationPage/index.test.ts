@@ -305,7 +305,6 @@ describe('application page', () => {
 
 			const [view, data] = mockRes.render.mock.calls[0].arguments;
 			const html = nunjucks.render(view, data);
-			console.log(html);
 			const sectionHint = data.sectionTracker[0].hint.text;
 
 			assert.strictEqual(
@@ -521,7 +520,7 @@ describe('application page', () => {
 
 		for (let i = 0; i < expectedDocStates.length; i++) {
 			for (let j = 0; j < expectedDocStates[i].length; j++) {
-				const docState = docStates[i][j].value.html.replace(/<[^>]*>/g, '');
+				const docState = docStates[i][j].value.html.match(/>(.*?)</)?.[1] ?? '';
 				assert.strictEqual(
 					expectedDocStates[i][j],
 					docState,
