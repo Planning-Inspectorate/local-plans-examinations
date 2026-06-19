@@ -32,8 +32,21 @@ export function buildApplicationPage(service: PortalService): AsyncRequestHandle
 		const stageNum = Number(req.params['stage']);
 		const stage = StageLabel[stageNum as Stage];
 		const pageTitle = stage + ' application';
-		const targetDate = plan.dates.split('|')[Number(stageNum)];
 
+		let targetDate;
+		switch (stageNum) {
+			case 1:
+				targetDate = plan.dates.G2;
+				break;
+			case 2:
+				targetDate = plan.dates.G3;
+				break;
+			case 3:
+				targetDate = plan.dates.E;
+				break;
+		}
+
+		//logic for section complete/ incompleted
 		const sectionCompleted = [];
 		for (const DocType of stagesDocType[stageNum as Stage]!) {
 			const docsOfType = plan.documents.filter((doc) => doc.type === DocType);
