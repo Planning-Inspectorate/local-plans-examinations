@@ -11,15 +11,54 @@ export function updateCaseField(service: ManageService) {
 		if (typeof reference !== 'string') throw new Error('reference must be a string');
 
 		const journeyResponse = res.locals?.journeyResponse?.answers || {};
+		const currentLpaCode = Array.isArray(req.params.manageListItemId)
+			? req.params.manageListItemId[0]
+			: (req.params.manageListItemId ?? '');
 		logger.info(`Updating case ${reference} with ${JSON.stringify(journeyResponse)}`);
 		// todo handle errors
+		const { planTitle, planType, caseOfficer, lpa, firstName, lastName, email, phone, lpaContact, lpaCode } =
+			processInputForDB(req.body);
+		const removeItem = req.params.manageListAction === 'remove';
+		if (removeItem) {
+			await db.case.update({
+				where: { reference },
+				data: {
+					lpas: {
+						disconnect: { lpaCode: currentLpaCode }
+					}
+				}
+			});
+			return;
+		}
 
-		const { planTitle, planType, caseOfficer, lpa } = processInputForDB(req.body);
 		const data = {
 			planTitle,
 			planType,
 			caseOfficer,
-			lpas: lpa ? { connectOrCreate: { where: { lpaCode: lpa }, create: { lpaCode: lpa } } } : undefined
+			contacts:
+				firstName || lastName || email || phone
+					? {
+							create: {
+								firstName,
+								lastName,
+								email,
+								phoneNumber: phone,
+								lpa: {
+									connectOrCreate: {
+										where: { lpaCode: lpaCode || lpaContact },
+										create: { lpaCode }
+									},
+									disconnect: [{ lpaCode: currentLpaCode }]
+								}
+							}
+						}
+					: undefined,
+			lpas: lpa
+				? {
+						connectOrCreate: { where: { lpaCode: lpa }, create: { lpaCode: lpa || lpaContact } },
+						disconnect: [{ lpaCode: req.params.manageListItemId }]
+					}
+				: undefined
 		};
 
 		await db.case.update({
@@ -30,58 +69,9 @@ export function updateCaseField(service: ManageService) {
 }
 
 export function processInputForDB(input: Record<string, string>): Record<string, string> {
-	// trim all inputs
 	for (const key in input) input[key] = input[key].trim();
 	return input;
 }
-
-//TODO delete this
-
-// export function buildCasePage(service: ManageService): AsyncRequestHandler {
-// 	return async (req: Request, res: Response) => {
-// 		const { db, logger } = service;
-// 		const rawReferenceString = Array.isArray(req.params.reference) ? req.params.reference[0] : req.params.reference;
-//
-// 		if (!rawReferenceString) {
-// 			return res.status(404).render('views/errors/404.njk');
-// 		}
-//
-// 		let reference: string;
-// 		try {
-// 			reference = decodeURIComponent(rawReferenceString);
-// 		} catch {
-// 			return res.status(404).render('views/errors/404.njk');
-// 		}
-//
-// 		try {
-// 			const currentCase = await db.case.findUnique({
-// 				where: { reference },
-// 				include: { lpas: true, contacts: true }
-// 			});
-//
-// 			if (!currentCase) {
-// 				return res.status(404).render('views/errors/404.njk');
-// 			}
-//
-// 			rows[0].value.text = currentCase.planTitle || '-';
-// 			rows[1].value.text = currentCase.planType || '-';
-// 			rows[3].value.text = currentCase.lpas.map((lpa) => lpa.lpaCode).join(', ') || '-';
-// 			rows[4].value.text = currentCase.caseOfficer || '-';
-//
-// 			return res.render('views/case/case.njk', {
-// 				backLinkUrl: '/',
-// 				backLinkText: 'Back to all cases',
-// 				pageTitle: currentCase.reference,
-// 				pageHeading: currentCase.planTitle,
-// 				pageCaption: currentCase.reference,
-// 				rows
-// 			});
-// 		} catch (error) {
-// 			logger.error(`Unable to fetch case ${reference} ${error}`);
-// 			return res.status(500).render('views/errors/500.njk');
-// 		}
-// 	};
-// }
 
 export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestHandler {
 	return async (req, res, next) => {
@@ -103,15 +93,23 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			if (!currentCase) {
 				return res.status(404).render('views/errors/404.njk');
 			}
-
 			// make planTitle and reference easily accessible in the template
 			res.locals.planTitle = currentCase.planTitle;
 			res.locals.reference = currentCase.reference;
+
 			res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, '', currentCase);
+			res.locals.journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
+				id: lpa.lpaCode,
+				lpa: lpa.lpaCode
+			}));
+			res.locals.journeyResponse.answers.contactDetails = currentCase.contacts.map((contact) => ({
+				...contact,
+				phone: contact.phoneNumber
+			}));
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);
 		}
-		//TODO it being undefined
+		//TODO handle it being undefined
 		next();
 	};
 }
