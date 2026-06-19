@@ -18,7 +18,7 @@ export function updateCaseField(service: ManageService) {
 			: (req.params.manageListItemId ?? '');
 		logger.info(`Updating case ${reference} with ${JSON.stringify(journeyResponse)}`);
 		// todo handle errors
-
+		// todo what happens when a user tries to remove an LPA while there are contacts from that LPA associated to the case
 		const removeItem = req.params.manageListAction === 'remove';
 		if (removeItem) {
 			if (req.params.section === 'contacts') {
@@ -38,12 +38,43 @@ export function updateCaseField(service: ManageService) {
 			return;
 		}
 
-		const { planTitle, planType, caseOfficer, lpa, firstName, lastName, email, phone, lpaContact, lpaCode } =
-			processInputForDB(req.body);
+		//todo refactor
+		const {
+			planTitle,
+			planType,
+			caseOfficer,
+			lpa,
+			firstName,
+			lastName,
+			email,
+			phone,
+			lpaContact,
+			lpaCode,
+			programmeOfficer,
+			examinationWebsite,
+			assessorGateway2,
+			assessorGateway3,
+			examiningInspector1,
+			examiningInspector2,
+			examiningInspector3,
+			qaInspector1,
+			qaInspector2,
+			qaInspector3
+		} = processInputForDB(req.body);
 		const data = {
 			planTitle,
 			planType,
 			caseOfficer,
+			programmeOfficer,
+			examinationWebsite,
+			assessorGateway2,
+			assessorGateway3,
+			examiningInspector1,
+			examiningInspector2,
+			examiningInspector3,
+			qaInspector1,
+			qaInspector2,
+			qaInspector3,
 			contacts:
 				firstName || lastName || email || phone
 					? {
