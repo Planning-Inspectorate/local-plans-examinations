@@ -1,8 +1,9 @@
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
-import dotenv from 'dotenv';
+import { loadEnvFile } from 'node:process';
 import path from 'path';
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// prettier-ignore
+try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
 
 async function run() {
 	const config = loadConfig();

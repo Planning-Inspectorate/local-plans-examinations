@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import { loadEnvFile } from 'node:process';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
@@ -51,7 +51,8 @@ export function loadConfig(): Config {
 		return config;
 	}
 	// load configuration from .env file into process.env
-	dotenv.config();
+	// prettier-ignore
+	try { loadEnvFile(); } catch {/* ignore errors*/}
 
 	// get values from the environment
 	const {
@@ -195,7 +196,8 @@ export function loadBuildConfig(): BuildConfig {
  */
 export function loadEnvironmentConfig(): string {
 	// load configuration from .env file into process.env
-	dotenv.config();
+	// prettier-ignore
+	try { loadEnvFile(); } catch {/* ignore errors*/}
 
 	// get values from the environment
 	const { ENVIRONMENT } = process.env;
