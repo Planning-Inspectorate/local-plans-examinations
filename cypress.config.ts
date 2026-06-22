@@ -1,9 +1,10 @@
 import { defineConfig } from 'cypress';
-import * as dotenv from 'dotenv';
+import { loadEnvFile } from 'node:process';
 import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 
-dotenv.config();
+// prettier-ignore
+try { loadEnvFile(); } catch {/* ignore errors*/}
 
 const target = process.env.TEST_TARGET || 'portal';
 const baseUrls: Record<string, string> = {

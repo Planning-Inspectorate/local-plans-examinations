@@ -19,7 +19,6 @@
     "@pins/local-plans-lib": "^0.0.0",
     "body-parser": "*",
     "connect-redis": "*",
-    "dotenv": "*",
     "express": "*",
     "express-session": "*",
     "express-validator": "*",

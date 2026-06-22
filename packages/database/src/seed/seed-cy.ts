@@ -1,13 +1,15 @@
 import path from 'path';
-import dotenv from 'dotenv';
+import { loadEnvFile } from 'node:process';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// prettier-ignore
+try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
 
 async function run() {
 	const config = loadConfig();
-	dotenv.config({ quiet: true });
+	// prettier-ignore
+	try { loadEnvFile(); } catch {/* ignore errors*/}
 
 	const dbClient = newDatabaseClient(config.db);
 	const lpaCodes = ['lpa-1', 'lpa-2'];
