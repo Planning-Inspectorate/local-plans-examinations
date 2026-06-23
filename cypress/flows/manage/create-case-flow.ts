@@ -9,8 +9,8 @@ import {
 	selectLocalPlanningAuthorityPage,
 	type CreateCaseData,
 	type SelectAnswer
-} from '../../pageObjects/manage/create-case/index.ts';
-import { manageHomePage } from '../../pageObjects/manage/home-page.ts';
+} from '../../page-objects/manage/create-case/index.ts';
+import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 
 export const completeCaseDetails = (data: CreateCaseData) => {
 	caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);

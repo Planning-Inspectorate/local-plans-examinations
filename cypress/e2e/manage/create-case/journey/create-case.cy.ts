@@ -3,7 +3,7 @@ import {
 	checkYourAnswersPage,
 	keyStageDatesPage,
 	type CreateCaseData
-} from '../../../../pageObjects/manage/create-case/index.ts';
+} from '../../../../page-objects/manage/create-case/index.ts';
 import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flow.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');

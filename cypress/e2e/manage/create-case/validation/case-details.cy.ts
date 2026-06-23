@@ -1,4 +1,4 @@
-import { caseOfficerPage, planTitlePage, planTypePage } from '../../../../pageObjects/manage/create-case/index.ts';
+import { caseOfficerPage, planTitlePage, planTypePage } from '../../../../page-objects/manage/create-case/index.ts';
 
 describe('Create a case - case details', () => {
 	it('shows validation when no case officer is selected', { tags: ['regression'] }, () => {

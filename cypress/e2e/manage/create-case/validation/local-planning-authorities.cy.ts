@@ -2,7 +2,7 @@ import {
 	localPlanningAuthoritiesPage,
 	selectLocalPlanningAuthorityPage,
 	type CreateCaseData
-} from '../../../../pageObjects/manage/create-case/index.ts';
+} from '../../../../page-objects/manage/create-case/index.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
 

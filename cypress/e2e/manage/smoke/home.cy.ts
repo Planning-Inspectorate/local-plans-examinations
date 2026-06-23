@@ -1,4 +1,4 @@
-import { manageHomePage } from '../../../pageObjects/manage/home-page.ts';
+import { manageHomePage } from '../../../page-objects/manage/home-page.ts';
 
 describe('Manage home', () => {
 	it('loads the manage service homepage', { tags: ['smoke'] }, () => {
