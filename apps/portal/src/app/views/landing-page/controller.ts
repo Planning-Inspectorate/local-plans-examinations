@@ -52,7 +52,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 		};
 
 		//headings
-		return res.render('views/landingPage/view.njk', {
+		return res.render('views/landing-page/view.njk', {
 			pageCaption: councilLocation,
 			pageTitle: 'My plans',
 			...viewModel
