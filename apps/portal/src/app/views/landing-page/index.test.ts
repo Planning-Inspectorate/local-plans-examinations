@@ -26,7 +26,7 @@ describe('landing page', () => {
 
 		assert.strictEqual(mockRes.render.mock.callCount(), 1);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments.length, 2);
-		assert.strictEqual(mockRes.render.mock.calls[0].arguments[0], 'views/landingPage/view.njk');
+		assert.strictEqual(mockRes.render.mock.calls[0].arguments[0], 'views/landing-page/view.njk');
 	});
 
 	it('should render title and caption correctly', async () => {
