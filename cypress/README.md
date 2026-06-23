@@ -62,7 +62,7 @@ Test execution is split across 2 shards.
 
         flows/
 
-        pageObjects/
+        page-objects/
             manage/
                 create-case/
 

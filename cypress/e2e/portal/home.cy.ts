@@ -1,4 +1,4 @@
-import { portalHomePage } from '../../pageObjects/portal/home-page.ts';
+import { portalHomePage } from '../../page-objects/portal/home-page.ts';
 
 describe('Portal home', () => {
 	it('loads the portal service homepage', { tags: ['smoke'] }, () => {
