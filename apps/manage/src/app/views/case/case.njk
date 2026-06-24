@@ -1,16 +1,16 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
+{% set overviewHref = "/case/" + currentCase.reference | urlencode + "?section=overview" %}
+{% set caseHistoryHref = "/case/" + currentCase.reference | urlencode + "?section=case-history" %}
 
 {% block pageContent %}
-<span class="govuk-caption-l">{{ currentCase.reference }}</span>
-<h1 class="govuk-heading-l">{{ currentCase.planTitle }}</h1>
 {{ govukServiceNavigation({
   navigation: [
     {
-      href: "#",
+      href: overviewHref,
       text: "Overview",
-      active: true
+      active: currentSection == "overview"
     },
     {
       href: "#",
@@ -33,8 +33,9 @@
       text: "Examination"
     },
     {
-      href:"#",
-      text: "Case History"
+      href: caseHistoryHref,
+      text: "Case History",
+      active: currentSection == "case-history"
     }
   ],
   attributes: {
@@ -42,5 +43,10 @@
     "data-cy": "service-navigation"
   }
 }) }}
+
+{% if currentSection == "case-history" %}
+  <h1 class="govuk-heading-m">Updates</h1>
+{% endif %}
+
 {% endblock %}
 

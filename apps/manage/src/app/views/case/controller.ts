@@ -6,6 +6,7 @@ export function buildCasePage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		const { db, logger } = service;
 		const rawReferenceString = Array.isArray(req.params.reference) ? req.params.reference[0] : req.params.reference;
+		const section = req.query.section || 'overview';
 
 		if (!rawReferenceString) {
 			return res.status(404).render('views/errors/404.njk');
@@ -32,7 +33,9 @@ export function buildCasePage(service: ManageService): AsyncRequestHandler {
 				backLinkText: 'Back to all cases',
 				pageTitle: currentCase.reference,
 				pageHeading: currentCase.planTitle,
-				pageCaption: currentCase.reference
+				pageCaption: currentCase.reference,
+				currentCase,
+				currentSection: section
 			});
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);
