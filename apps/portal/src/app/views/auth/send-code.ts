@@ -6,6 +6,8 @@ export async function sendAuthCodeNotification(
 	personalisation: {
 		authCode: string;
 		expiryMinutes: string;
+		caseReference: string;
+		signInUrl: string;
 	}
 ): Promise<void> {
 	if (!service.notifyClient) {
