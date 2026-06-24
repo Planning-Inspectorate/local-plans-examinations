@@ -46,7 +46,7 @@ export function buildRouter(service: ManageService): IRouter {
 	}
 
 	router.use('/', createLandingPageRoutes(service));
-	router.use('/case/:reference', caseRouter(service));
+	router.use('/case', caseRouter(service));
 	router.use('/error', createErrorRoutes(service));
 	router.use('/create-a-case', createACaseRoutes(service));
 
