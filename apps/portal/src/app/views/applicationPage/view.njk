@@ -1,0 +1,74 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/tabs/macro.njk" import govukTabs %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block pageContent %}
+
+  {{ govukSummaryList({
+    caption: "Dates and amounts",
+    classes: "govuk-summary-list--no-border",
+    rows: [
+        {
+        key: { text: "Plan name" },
+        value: { text: planTitle }
+      },
+      {
+        key: { text: "Target date" },
+        value: { text: targetDate }
+      },
+      {
+        key: { text: "Local planning authority" },
+        value: { text: leadLPA }
+      },
+      {
+        key: { text: "Linked local planning authorities" },
+        value: { text: linkedLPA }
+      }
+    ]
+  })}}
+
+  <p class="govuk-body">
+    <a href="{{ backLinkUrl }}" class="govuk-link">Save and come back later</a>
+  </p>
+
+  {{ govukTaskList({
+    items: sectionTracker
+  })}}
+
+  {% for section in DocsStructured %}
+
+    {{ govukTable({
+        firstCellIsHeader: false,
+        head: [
+            {
+                html: "<h2 class='govuk-heading-m govuk-!-margin-bottom-0'>" + section.heading + "</h2>"
+            },
+            {
+                text: ""
+            },
+            {
+                html: govukTag({
+                    text: section.tag.label,
+                    classes: section.tag.class
+                }),
+                classes: "govuk-!-text-align-right"
+            }
+        ]
+    })}}
+
+    {{ govukSummaryList({
+      rows: section.rows
+    })}}
+
+  {% endfor %}
+
+{% endblock %}
+
+
