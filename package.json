@@ -55,7 +55,7 @@
     "express-rate-limit": "^8.5.2",
     "express-session": "^1.19.0",
     "express-validator": "^7.3.2",
-    "govuk-frontend": "^6.1.0",
+    "govuk-frontend": "^6.2.0",
     "helmet": "^8.2.0",
     "nunjucks": "^3.2.4",
     "pino": "^10.3.1",
