@@ -152,8 +152,8 @@ describe('landing page', () => {
 		const html = nunjucks.render(view, data);
 
 		const targetTags = [
-			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to Start' },
-			{ className: 'govuk-tag govuk-tag--blue', text: 'In Progress' },
+			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to start' },
+			{ className: 'govuk-tag govuk-tag--blue', text: 'In progress' },
 			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
 			{ className: 'govuk-tag govuk-tag--red', text: 'Action needed' },
 			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },

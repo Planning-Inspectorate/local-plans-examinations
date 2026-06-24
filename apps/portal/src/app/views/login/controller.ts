@@ -2,7 +2,6 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { clearSessionData, readSessionData } from '@pins/local-plans-lib/util/session.ts';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
 
 const MAX_ATTEMPTS = 3;
@@ -11,10 +10,9 @@ export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
-			emailQuestionText: 'Email address',
-			caseNumberQuestionText: 'Case number',
-			caseNumberHintText:
-				'You can find this in the email inviting you to sign in to this service. For example, ref/0000001',
+			emailHintText:
+				"To access this service, you will need your CBOS reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+			emailQuestionText: 'What is your email address?',
 			backLinkUrl: `/`,
 			...viewData
 		});
@@ -30,10 +28,9 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			logger.info('Email address not provided');
 			return res.render('views/login/enter-email-page.njk', {
 				pageTitle: 'Sign-in',
-				emailQuestionText: 'Email address',
-				caseNumberQuestionText: 'Case number',
-				caseNumberHintText:
-					'You can find this in the email inviting you to sign in to this service. For example, ref/0000001',
+				emailHintText:
+					"To access this service, you will need your CBOS reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
 				errors: { email: { msg: 'Enter your email address' } },
 				errorSummaryTitle: 'You have not entered your email address',
@@ -42,6 +39,23 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 		}
 
 		const sanitisedEmail = email.trim().toLowerCase();
+
+		// Basic email format validation - must contain @ and a dot after @
+		const atIndex = sanitisedEmail.indexOf('@');
+		const dotIndex = sanitisedEmail.lastIndexOf('.');
+		if (atIndex < 1 || dotIndex <= atIndex + 1 || dotIndex === sanitisedEmail.length - 1) {
+			logger.info({ email: sanitisedEmail }, 'Invalid email format');
+			return res.render('views/login/enter-email-page.njk', {
+				pageTitle: 'Sign-in',
+				emailHintText:
+					"To access this service, you will need your reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+				emailQuestionText: 'What is your email address?',
+				backLinkUrl: `/`,
+				errors: { email: { msg: 'Enter the valid email address your reference number was sent to' } },
+				errorSummaryTitle: 'Enter a valid email address',
+				errorSummary: [{ text: 'Enter the valid email address your reference number was sent to', href: '#email' }]
+			});
+		}
 
 		try {
 			const emailIsAssociatedToACase = await db.case.findFirst({ where: { email: sanitisedEmail } });
@@ -58,7 +72,12 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				where: { email: sanitisedEmail }
 			});
 
-			if (otpRecord && otpRecord.locked_out_until && otpRecord.locked_out_until.getTime() > Date.now()) {
+			if (
+				process.env.NODE_ENV === 'production' &&
+				otpRecord &&
+				otpRecord.locked_out_until &&
+				otpRecord.locked_out_until.getTime() > Date.now()
+			) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt while locked out');
 				return res.render('views/login/enter-email-page.njk', {
 					errors: { email: { msg: 'You have been locked out for 24 hours due to too many failed attempts' } },
@@ -100,7 +119,19 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 			req.session.email = sanitisedEmail;
 
-			await sendAuthCodeNotification(service, sanitisedEmail, { authCode: otp, expiryMinutes: '20' });
+			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
+
+			// Send OTP email - don't block the redirect if it fails
+			sendAuthCodeNotification(service, sanitisedEmail, {
+				authCode: otp,
+				expiryMinutes: '20',
+				caseReference: emailIsAssociatedToACase.reference,
+				signInUrl
+			}).catch((error) => {
+				logger.error({ error, email: sanitisedEmail }, 'Failed to send OTP email');
+			});
+
+			logger.info({ email: sanitisedEmail, otp }, 'OTP generated for user');
 
 			return res.redirect(`${req.baseUrl}/enter-code`);
 		} catch (error) {
@@ -108,7 +139,9 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 			return res.render('views/login/enter-email-page.njk', {
 				pageTitle: 'Sign-in',
-				emailQuestionText: 'Email address',
+				emailHintText:
+					"To access this service, you will need your CBOS reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
 				errors: { email: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not sign you in',
@@ -120,12 +153,12 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 	return async (req, res) => {
-		const showNewCodeMessage = readSessionData(req, req.session.caseReference as string, 'showNewCodeMessage', false);
-		clearSessionData(req, req.session.caseReference as string, 'showNewCodeMessage');
+		const showNewCodeMessage = req.session.showNewCodeMessage || false;
+		delete req.session.showNewCodeMessage;
 
 		return res.render('views/login/enter-otp.njk', {
-			questionText: 'Enter the code we sent to your email address',
 			backLinkUrl: `${req.baseUrl}`,
+			userEmail: req.session.email,
 			showNewCodeMessage,
 			...viewData
 		});
@@ -146,7 +179,9 @@ export function buildSubmitOtpPage(service: PortalService) {
 			return res.render('views/login/enter-otp.njk', {
 				errors: { otp: { msg: 'Enter the code we sent to your email address' } },
 				errorSummaryTitle: 'You have not entered a code',
-				errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }]
+				errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
+				backLinkUrl: `${req.baseUrl}`,
+				userEmail: email
 			});
 		}
 
@@ -157,23 +192,31 @@ export function buildSubmitOtpPage(service: PortalService) {
 			// no OTP exists
 			if (!otpRecord) {
 				return res.render('views/login/enter-otp.njk', {
-					errors: { otp: { msg: 'We could not find a code for your email address. Go back and try again.' } },
+					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
 					errorSummaryTitle: 'We could not verify your code',
 					errorSummary: [
 						{ text: 'We could not find a code for your email address. Go back and try again.', href: '#otp' }
-					]
+					],
+					backLinkUrl: `${req.baseUrl}`,
+					userEmail: email
 				});
 			}
 
 			// user is locked out
-			if (otpRecord.locked_out_until && otpRecord.locked_out_until.getTime() > Date.now()) {
+			if (
+				process.env.NODE_ENV === 'production' &&
+				otpRecord.locked_out_until &&
+				otpRecord.locked_out_until.getTime() > Date.now()
+			) {
 				logger.info({ email }, 'User is locked out - too many failed attempts');
 				return res.render('views/login/enter-otp.njk', {
 					errors: { otp: { msg: 'You have been locked out for 24 hours due to too many failed attempts' } },
 					errorSummaryTitle: 'Your account is temporarily locked',
 					errorSummary: [
 						{ text: 'You have been locked out for 24 hours due to too many failed attempts', href: '#otp' }
-					]
+					],
+					backLinkUrl: `${req.baseUrl}`,
+					userEmail: email
 				});
 			}
 
@@ -190,7 +233,9 @@ export function buildSubmitOtpPage(service: PortalService) {
 				return res.render('views/login/enter-otp.njk', {
 					errors: { otp: { msg: 'Your code has expired. Go back to request a new one.' } },
 					errorSummaryTitle: 'Your code has expired',
-					errorSummary: [{ text: 'Your code has expired. Go back to request a new one.', href: '#otp' }]
+					errorSummary: [{ text: 'Your code has expired. Go back to request a new one.', href: '#otp' }],
+					backLinkUrl: `${req.baseUrl}`,
+					userEmail: email
 				});
 			}
 
@@ -210,13 +255,17 @@ export function buildSubmitOtpPage(service: PortalService) {
 					return res.render('views/login/enter-otp.njk', {
 						errors: { otp: { msg: 'Too many failed attempts. You are locked out for 24 hours.' } },
 						errorSummaryTitle: 'Your account is temporarily locked',
-						errorSummary: [{ text: 'Too many failed attempts. You are locked out for 24 hours.', href: '#otp' }]
+						errorSummary: [{ text: 'Too many failed attempts. You are locked out for 24 hours.', href: '#otp' }],
+						backLinkUrl: `${req.baseUrl}`,
+						userEmail: email
 					});
 				}
 				return res.render('views/login/enter-otp.njk', {
-					errors: { otp: { msg: 'The code you entered is incorrect' } },
+					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
 					errorSummaryTitle: 'The code you entered is incorrect',
-					errorSummary: [{ text: 'The code you entered is incorrect', href: '#otp' }]
+					errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
+					backLinkUrl: `${req.baseUrl}`,
+					userEmail: email
 				});
 			}
 
@@ -230,13 +279,81 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 
 			logger.info({ email }, 'OTP verification success');
-			return res.redirect(`/`);
+			return res.redirect(`/landingPage`);
 		} catch (error) {
 			logger.error({ error, email }, 'Error during OTP verification');
 			return res.render('views/login/enter-otp.njk', {
 				errors: { otp: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not verify your code',
-				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }]
+				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
+				backLinkUrl: `${req.baseUrl}`,
+				userEmail: email
+			});
+		}
+	};
+}
+
+export function buildRequestNewCode(service: PortalService): AsyncRequestHandler {
+	const { logger, db } = service;
+	return async (req: Request, res: Response) => {
+		const email = req.session.email;
+
+		if (!email) {
+			return res.redirect(`${req.baseUrl}`);
+		}
+
+		try {
+			// Delete the existing OTP record to invalidate it
+			await db.oneTimePassword.delete({
+				where: { email }
+			});
+
+			// Generate a new OTP
+			const OTP_LENGTH = 8;
+			const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			const bytes = new Uint8Array(OTP_LENGTH);
+			crypto.getRandomValues(bytes);
+			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+
+			const SALT_ROUNDS = 10;
+			const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
+			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+
+			// Create a new OTP record
+			await db.oneTimePassword.create({
+				data: {
+					email,
+					hashedOtp,
+					attempts: 0,
+					expiresAt
+				}
+			});
+
+			// Send the new OTP email
+			const caseRecord = await db.case.findFirst({ where: { email } });
+			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
+			await sendAuthCodeNotification(service, email, {
+				authCode: otp,
+				expiryMinutes: '20',
+				caseReference: caseRecord?.reference || '',
+				signInUrl
+			});
+
+			logger.info({ email }, 'New OTP requested and sent');
+
+			// Set session flag to show success message
+			req.session.caseReference = email;
+			req.session.showNewCodeMessage = true;
+
+			return res.redirect(`${req.baseUrl}/enter-code`);
+		} catch (error) {
+			logger.error({ error, email }, 'Error during new code request');
+			return res.render('views/login/enter-otp.njk', {
+				errors: { otp: { msg: 'Something went wrong. Please try again later.' } },
+				errorSummaryTitle: 'We could not send a new code',
+				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
+				backLinkUrl: `${req.baseUrl}`,
+				userEmail: email
 			});
 		}
 	};

@@ -107,3 +107,6 @@ local.settings.json
 
 # Report 
 cypress/reports/
+
+# VS Code workspace copies
+local-plans-examinationscopy.code-workspace

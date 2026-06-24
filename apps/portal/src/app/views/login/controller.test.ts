@@ -35,7 +35,9 @@ function createMockReq(body = {}, session = {}) {
 	return {
 		body,
 		session,
-		baseUrl: '/login'
+		baseUrl: '/login',
+		protocol: 'http',
+		get: (header) => (header === 'host' ? 'localhost:8080' : undefined)
 	};
 }
 
@@ -103,6 +105,8 @@ describe('buildSubmitEmailPage', () => {
 	});
 
 	it('should render lockout error when user is locked out', async () => {
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'production';
 		const service = createMockService();
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
@@ -122,6 +126,7 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 0);
+		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should reset lockout when lock time has expired', async () => {
@@ -186,7 +191,7 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 	});
 
-	it('should render generic error when notify fails', async () => {
+	it('should still redirect when notify fails (fire-and-forget)', async () => {
 		const service = createMockService();
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
@@ -201,11 +206,7 @@ describe('buildSubmitEmailPage', () => {
 
 		await handler(req, res);
 
-		const data = assertRender(res, 'views/login/enter-email-page.njk');
-		assert.match(data.errors.email.msg, /something went wrong/i);
-		assert.strictEqual(data.errorSummaryTitle, 'We could not sign you in');
-		// Two errors logged: one from sendAuthCodeNotification, one from controller catch block
-		assert.strictEqual(service.logger.error.mock.callCount(), 2);
+		assertRedirect(res, '/login/enter-code');
 	});
 });
 
@@ -247,7 +248,7 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
-		assert.match(data.errors.otp.msg, /could not find/i);
+		assert.match(data.errors.otp.msg, /Enter the code we sent to your email address/i);
 		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 0);
 	});
@@ -262,6 +263,8 @@ describe('buildSubmitOtpPage', () => {
 			locked_out_until: new Date(Date.now() + 60 * 60 * 1000)
 		}));
 
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'production';
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({ otp: 'ABCDEFGH' }, { email: 'test@example.com' });
 		const res = createMockRes();
@@ -272,6 +275,7 @@ describe('buildSubmitOtpPage', () => {
 		assert.match(data.errors.otp.msg, /locked out/i);
 		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 0);
+		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should render expiry error when OTP has expired', async () => {
@@ -319,7 +323,7 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		assert.strictEqual(res.render.mock.callCount(), 1);
 		const [, data] = res.render.mock.calls[0].arguments;
-		assert.match(data.errors.otp.msg, /incorrect/i);
+		assert.match(data.errors.otp.msg, /Enter the code we sent to your email address/i);
 		assert.strictEqual(data.errorSummaryTitle, 'The code you entered is incorrect');
 	});
 
@@ -342,6 +346,8 @@ describe('buildSubmitOtpPage', () => {
 			return {};
 		});
 
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'production';
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({ otp: 'WRONGCODE' }, { email: 'test@example.com' });
 		const res = createMockRes();
@@ -352,6 +358,7 @@ describe('buildSubmitOtpPage', () => {
 		const [, data] = res.render.mock.calls[0].arguments;
 		assert.match(data.errors.otp.msg, /locked out/i);
 		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
+		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should redirect to home on successful OTP verification', async () => {
@@ -374,7 +381,7 @@ describe('buildSubmitOtpPage', () => {
 
 		await handler(req, res);
 
-		assertRedirect(res, '/');
+		assertRedirect(res, '/landingPage');
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		const updateArgs = service.db.oneTimePassword.update.mock.calls[0].arguments[0];
 		assert.strictEqual(updateArgs.data.attempts, 0);

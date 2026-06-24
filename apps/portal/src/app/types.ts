@@ -68,8 +68,8 @@ export const docTitleLabel: Record<DocTitle, string> = {
 //tags
 
 export const StatusTag = {
-	0: { label: 'Ready to Start', class: 'govuk-tag govuk-tag--green' },
-	1: { label: 'In Progress', class: 'govuk-tag govuk-tag--blue' },
+	0: { label: 'Ready to start', class: 'govuk-tag govuk-tag--green' },
+	1: { label: 'In progress', class: 'govuk-tag govuk-tag--blue' },
 	2: { label: 'With PINS', class: 'govuk-tag govuk-tag--yellow' },
 	3: { label: 'Action needed', class: 'govuk-tag govuk-tag--red' },
 	4: { label: 'Invalid', class: 'govuk-tag govuk-tag--grey' },
@@ -78,7 +78,7 @@ export const StatusTag = {
 
 export const StateTag = {
 	0: { label: 'Not started', class: 'govuk-tag govuk-tag govuk-tag--grey' },
-	1: { label: 'In Progress', class: 'govuk-tag govuk-tag govuk-tag--blue' },
+	1: { label: 'In progress', class: 'govuk-tag govuk-tag govuk-tag--blue' },
 	2: { label: 'Completed on', class: 'govuk-body' }
 } as const;
 
