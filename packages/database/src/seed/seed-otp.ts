@@ -16,7 +16,7 @@ async function run() {
 	// Allow specifying a custom email via --email flag for testing Gov Notify flows
 	// Without this, the script always used the default test@planninginspectorate.gov.uk
 	// The --email flag lets you specify any email for seeding, which is useful for testing real Gov Notify flows with different recipients
-	const emailArg = process.argv.find(arg => arg.startsWith('--email='));
+	const emailArg = process.argv.find((arg) => arg.startsWith('--email='));
 	const email = emailArg ? emailArg.split('=')[1] : 'test@planninginspectorate.gov.uk';
 	const caseOnly = process.argv.includes('--case-only');
 	const dbClient = newDatabaseClient(config.db);
