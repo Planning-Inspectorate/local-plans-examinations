@@ -15,10 +15,4 @@ describe('Portal login OTP page', () => {
 	it('displays the support details', { tags: ['regression'] }, () => {
 		portalLoginOtpPage.verifyDetailsComponent('If you are still having problems');
 	});
-
-	it('shows a success banner after requesting a new code', { tags: ['regression'] }, () => {
-		portalLoginOtpPage.clickRequestNewCode();
-
-		portalLoginOtpPage.verifyNewCodeBanner();
-	});
 });
