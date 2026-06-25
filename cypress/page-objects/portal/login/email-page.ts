@@ -1,6 +1,6 @@
-import { BasePage } from '../base-page.ts';
+import { BasePage } from '../../base-page.ts';
 
-export class PortalLoginPage extends BasePage {
+export class PortalLoginEmailPage extends BasePage {
 	constructor() {
 		super('/login');
 	}
@@ -18,4 +18,4 @@ export class PortalLoginPage extends BasePage {
 	}
 }
 
-export const portalLoginPage = new PortalLoginPage();
+export const portalLoginEmailPage = new PortalLoginEmailPage();
