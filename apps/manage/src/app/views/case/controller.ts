@@ -21,7 +21,12 @@ export function buildCasePage(service: ManageService): AsyncRequestHandler {
 
 		try {
 			const currentCase = await db.case.findUnique({
-				where: { reference }
+				where: { reference },
+				include: {
+					caseHistories: {
+						orderBy: { date: 'desc' }
+					}
+				}
 			});
 
 			if (!currentCase) {

@@ -48,6 +48,17 @@
 {% if currentSection == "case-history" %}
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--invisible">
   <h1 class="govuk-heading-l">Case History</h1>
+
+  {% set rows = [] %}
+  {% for history in currentCase.caseHistories %}
+    {% set row = [
+      { text: history.date | date("YYYY-MM-DD HH:mm") },
+      { text: history.event },
+      { text: history.user or '-' }
+    ] %}
+    {% set _ = rows.push(row) %}
+  {% endfor %}
+
   {{ govukTable({
     head: [
       {
@@ -59,7 +70,9 @@
       {
         text: "User"
       }
-    ]})
+    ],
+    rows: rows
+    })
   }}
 {% endif %}
 
