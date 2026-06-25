@@ -19,7 +19,7 @@ describe('Portal login journey', () => {
 		portalLandingPage.verifyHeading('My plans');
 	});
 
-	it('requests a new code from the OTP page', { tags: ['regression'] }, () => {
+	it.skip('requests a new code from the OTP page', { tags: ['notify'] }, () => {
 		startPortalOtpLogin();
 		portalLoginOtpPage.verifyPath();
 

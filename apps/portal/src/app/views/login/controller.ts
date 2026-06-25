@@ -10,8 +10,7 @@ export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
-			emailHintText:
-				"To access this service, you will need your CBOS reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+			pageHeading: 'Sign-in',
 			emailQuestionText: 'What is your email address?',
 			backLinkUrl: `/`,
 			...viewData
@@ -28,8 +27,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			logger.info('Email address not provided');
 			return res.render('views/login/enter-email-page.njk', {
 				pageTitle: 'Sign-in',
-				emailHintText:
-					"To access this service, you will need your CBOS reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
 				errors: { email: { msg: 'Enter your email address' } },
@@ -47,8 +45,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			logger.info({ email: sanitisedEmail }, 'Invalid email format');
 			return res.render('views/login/enter-email-page.njk', {
 				pageTitle: 'Sign-in',
-				emailHintText:
-					"To access this service, you will need your reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
 				errors: { email: { msg: 'Enter the valid email address your reference number was sent to' } },
@@ -62,6 +59,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			if (!emailIsAssociatedToACase) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt with unrecognised email');
 				return res.render('views/login/enter-email-page.njk', {
+					pageTitle: 'Sign-in',
+					pageHeading: 'Sign-in',
+					emailQuestionText: 'What is your email address?',
+					backLinkUrl: `/`,
 					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
 					errorSummaryTitle: 'We did not recognise that email address',
 					errorSummary: [{ text: 'Enter an email address linked to a case on this service', href: '#email' }]
@@ -80,6 +81,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt while locked out');
 				return res.render('views/login/enter-email-page.njk', {
+					pageTitle: 'Sign-in',
+					pageHeading: 'Sign-in',
+					emailQuestionText: 'What is your email address?',
+					backLinkUrl: `/`,
 					errors: { email: { msg: 'You have been locked out for 24 hours due to too many failed attempts' } },
 					errorSummaryTitle: 'Your account is temporarily locked',
 					errorSummary: [
@@ -139,8 +144,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 			return res.render('views/login/enter-email-page.njk', {
 				pageTitle: 'Sign-in',
-				emailHintText:
-					"To access this service, you will need your CBOS reference number which has been sent to you by email address. If you don't have a reference number please contact the council.",
+				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
 				errors: { email: { msg: 'Something went wrong. Please try again later.' } },
@@ -157,6 +161,8 @@ export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 		delete req.session.showNewCodeMessage;
 
 		return res.render('views/login/enter-otp.njk', {
+			pageTitle: 'Enter your one-time password',
+			pageHeading: 'Enter your one-time password',
 			backLinkUrl: `${req.baseUrl}`,
 			userEmail: req.session.email,
 			showNewCodeMessage,
@@ -177,6 +183,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 		const { otp } = req.body;
 		if (!otp || typeof otp !== 'string' || otp.trim().length === 0) {
 			return res.render('views/login/enter-otp.njk', {
+				pageTitle: 'Enter your one-time password',
+				pageHeading: 'Enter your one-time password',
 				errors: { otp: { msg: 'Enter the code we sent to your email address' } },
 				errorSummaryTitle: 'You have not entered a code',
 				errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
@@ -192,6 +200,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 			// no OTP exists
 			if (!otpRecord) {
 				return res.render('views/login/enter-otp.njk', {
+					pageTitle: 'Enter your one-time password',
+					pageHeading: 'Enter your one-time password',
 					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
 					errorSummaryTitle: 'We could not verify your code',
 					errorSummary: [
@@ -210,6 +220,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 			) {
 				logger.info({ email }, 'User is locked out - too many failed attempts');
 				return res.render('views/login/enter-otp.njk', {
+					pageTitle: 'Enter your one-time password',
+					pageHeading: 'Enter your one-time password',
 					errors: { otp: { msg: 'You have been locked out for 24 hours due to too many failed attempts' } },
 					errorSummaryTitle: 'Your account is temporarily locked',
 					errorSummary: [
@@ -231,6 +243,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 			// OTP has expired
 			if (otpRecord.expiresAt.getTime() < Date.now()) {
 				return res.render('views/login/enter-otp.njk', {
+					pageTitle: 'Enter your one-time password',
+					pageHeading: 'Enter your one-time password',
 					errors: { otp: { msg: 'Your code has expired. Go back to request a new one.' } },
 					errorSummaryTitle: 'Your code has expired',
 					errorSummary: [{ text: 'Your code has expired. Go back to request a new one.', href: '#otp' }],
@@ -253,6 +267,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 						data: { locked_out_until: new Date(Date.now() + 24 * 60 * 60 * 1000) }
 					});
 					return res.render('views/login/enter-otp.njk', {
+						pageTitle: 'Enter your one-time password',
+						pageHeading: 'Enter your one-time password',
 						errors: { otp: { msg: 'Too many failed attempts. You are locked out for 24 hours.' } },
 						errorSummaryTitle: 'Your account is temporarily locked',
 						errorSummary: [{ text: 'Too many failed attempts. You are locked out for 24 hours.', href: '#otp' }],
@@ -261,6 +277,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 					});
 				}
 				return res.render('views/login/enter-otp.njk', {
+					pageTitle: 'Enter your one-time password',
+					pageHeading: 'Enter your one-time password',
 					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
 					errorSummaryTitle: 'The code you entered is incorrect',
 					errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
@@ -283,6 +301,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 		} catch (error) {
 			logger.error({ error, email }, 'Error during OTP verification');
 			return res.render('views/login/enter-otp.njk', {
+				pageTitle: 'Enter your one-time password',
+				pageHeading: 'Enter your one-time password',
 				errors: { otp: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not verify your code',
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
