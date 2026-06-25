@@ -6,11 +6,11 @@ export class PortalLoginPage extends BasePage {
 	}
 
 	get emailInput() {
-		return cy.get('#email');
+		return cy.getByData('email');
 	}
 
 	get hintText() {
-		return cy.get('.govuk-body');
+		return cy.getByData('email-hint');
 	}
 
 	enterEmail(email: string) {

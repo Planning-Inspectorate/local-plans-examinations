@@ -6,23 +6,23 @@ export class PortalOtpPage extends BasePage {
 	}
 
 	get otpInput() {
-		return cy.get('#otp');
+		return cy.getByData('otp');
 	}
 
 	get hintText() {
-		return cy.get('.govuk-hint');
+		return cy.getByData('otp-hint');
 	}
 
 	get requestNewCodeLink() {
-		return cy.get('a[href*="request-new-code"]');
+		return cy.getByData('request-new-code');
 	}
 
-	get detailsSummary() {
-		return cy.get('.govuk-details__summary');
+	get supportDetails() {
+		return cy.getByData('support-details');
 	}
 
 	get notificationBanner() {
-		return cy.get('.govuk-notification-banner');
+		return cy.getByData('new-code-banner');
 	}
 
 	enterOtp(code: string) {
@@ -42,7 +42,7 @@ export class PortalOtpPage extends BasePage {
 	}
 
 	verifyDetailsComponent(summaryText: string) {
-		this.detailsSummary.should('be.visible').and('contain.text', summaryText);
+		this.supportDetails.should('be.visible').and('contain.text', summaryText);
 	}
 }
 
