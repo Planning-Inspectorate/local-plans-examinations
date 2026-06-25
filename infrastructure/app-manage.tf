@@ -59,6 +59,7 @@ module "app_manage" {
 
     # database connection
     SQL_CONNECTION_STRING = local.key_vault_refs["sql-app-connection-string"]
+    GOV_NOTIFY_API_KEY    = local.key_vault_refs["localplans-gov-notify-api-key"]
 
     # retries
     RETRY_MAX_ATTEMPTS = "3"
