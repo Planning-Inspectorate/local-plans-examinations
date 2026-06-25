@@ -12,6 +12,7 @@
     "@azure/msal-node": "*",
     "@pins/local-plans-database": "*",
     "connect-redis": "*",
+    "cookie-parser": "*",
     "express-session": "*",
     "notifications-node-client": "*",
     "pino": "*",
