@@ -216,7 +216,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		try {
 			const currentCase = await db.case.findUnique({
 				where: { reference },
-				include: { lpas: true, contacts: true }
+				include: { lpas: true, contacts: true, caseHistories: {
+						orderBy: { date: 'desc' }
+					} }
 			});
 
 			if (!currentCase) {
