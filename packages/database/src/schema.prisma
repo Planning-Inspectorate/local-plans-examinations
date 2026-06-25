@@ -37,7 +37,8 @@ model Case {
   submissionDate          DateTime?
   createdAt               DateTime  @default(now())
 
-  gateways Gateway[]
+  gateways      Gateway[]
+  caseHistories CaseHistory[]
 }
 
 model LPA {
@@ -122,4 +123,12 @@ model DocumentSet {
 
   @@unique([documentCategoryId, displayName])
   @@index([documentCategoryId])
+}
+
+model CaseHistory {
+  id     String   @id @default(uuid()) @db.UniqueIdentifier
+  date   DateTime @default(now())
+  event  String   @db.NVarChar(200)
+  caseId String   @db.UniqueIdentifier
+  case   Case     @relation(fields: [caseId], references: [id])
 }

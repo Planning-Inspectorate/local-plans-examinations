@@ -1,5 +1,6 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% set overviewHref = "/case/" + currentCase.reference | urlencode + "?section=overview" %}
 {% set caseHistoryHref = "/case/" + currentCase.reference | urlencode + "?section=case-history" %}
@@ -45,7 +46,21 @@
 }) }}
 
 {% if currentSection == "case-history" %}
-  <h1 class="govuk-heading-m">Updates</h1>
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--invisible">
+  <h1 class="govuk-heading-l">Case History</h1>
+  {{ govukTable({
+    head: [
+      {
+        text: "Date"
+      },
+      {
+        text: "Event"
+      },
+      {
+        text: "User"
+      }
+    ]})
+  }}
 {% endif %}
 
 {% endblock %}
