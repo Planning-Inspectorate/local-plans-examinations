@@ -13,7 +13,10 @@
             {% if showNewCodeMessage %}
                 {{ govukNotificationBanner({
                     text: "We've sent a code to your email address.",
-                    type: 'success'
+                    type: 'success',
+                    attributes: {
+                        "data-cy": "new-code-banner"
+                    }
                 }) }}
             {% endif %}
 
@@ -29,9 +32,15 @@
                         isPageHeading: true
                     },
                     hint: {
-                        text: "Enter the code which was emailed to " + userEmail
+                        text: "Enter the code which was emailed to " + userEmail,
+                        attributes: {
+                            "data-cy": "otp-hint"
+                        }
                     },
                     classes: "govuk-input--width-10",
+                    attributes: {
+                        "data-cy": "otp"
+                    },
                     errorMessage: errors.otp and {
                         text: errors.otp.msg
                     }
@@ -53,11 +62,14 @@
                 <li>Check the email address is correct.</li>
                 <li>Check your spam or junk folder.</li>
             </ul>
-            <p class="govuk-body">If everything looks correct but you still have not received the email, you still haven't received the email we can <a href="{{ backLinkUrl }}/request-new-code" class="govuk-link govuk-link--no-visited-state">request a new code</a>.</p>
+            <p class="govuk-body">If everything looks correct but you still have not received the email, you still haven't received the email we can <a href="{{ backLinkUrl }}/request-new-code" class="govuk-link govuk-link--no-visited-state" data-cy="request-new-code">request a new code</a>.</p>
 
 
             {{ govukDetails({
                 summaryText: "If you are still having problems",
+                attributes: {
+                    "data-cy": "support-details"
+                },
                 html: '<p class="govuk-body">Contact our support team.</p><p class="govuk-body">Telephone: 0303 444 5000<br>Monday to Friday, 9am to midday (except public holidays)</p><p class="govuk-body"><a href="https://www.gov.uk/call-charges" class="govuk-link govuk-link--no-visited-state">Find out about call charges</a></p>'
             }) }}
         </div>
