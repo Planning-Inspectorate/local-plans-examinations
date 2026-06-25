@@ -5,7 +5,15 @@
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
-{% block pageHeading %}{% endblock %}
+{% block pageHeading %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
+                {{ pageHeading or pageTitle }}
+            </h1>
+        </div>
+    </div>
+{% endblock %}
 
 {% block pageContent %}
     <div class="govuk-grid-row">
@@ -26,13 +34,8 @@
                 {{ govukInput({
                     id: "otp",
                     name: "otp",
-                    label: {
-                        text: "Enter your One Time Password (OTP)",
-                        classes: "govuk-label--l",
-                        isPageHeading: true
-                    },
                     hint: {
-                        text: "Enter the code which was emailed to " + userEmail,
+                        text: "We sent a code to " + userEmail + ". It may take a few minutes to arrive.",
                         attributes: {
                             "data-cy": "otp-hint"
                         }

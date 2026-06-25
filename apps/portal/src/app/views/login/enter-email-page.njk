@@ -3,13 +3,9 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 
-{% block pageHeading %}{% endblock %}
-
 {% block pageContent %}
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
-            <p class="govuk-body govuk-!-margin-bottom-9" data-cy="email-hint">{{ emailHintText }}</p>
-
             <form action="" method="post" novalidate>
                 <input type="hidden" name="_csrf" value="{{ _csrf }}">
                 {{ govukInput({
@@ -17,8 +13,7 @@
                     name: "email",
                     label: {
                         text: emailQuestionText,
-                        classes: "govuk-label--l",
-                        isPageHeading: true
+                        classes: "govuk-label--l"
                     },
                     classes: "govuk-input--width-20",
                     attributes: {
