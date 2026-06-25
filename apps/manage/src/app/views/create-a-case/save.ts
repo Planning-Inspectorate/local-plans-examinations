@@ -87,6 +87,11 @@ export function buildSaveController(service: ManageService): RequestHandler {
 						phoneNumber: contact.phone || '',
 						lpaCode: contact.lpaContact
 					}))
+				},
+				caseHistories: {
+					create: {
+						event: `Case created for plan ${answers.planTitle}`
+					}
 				}
 			}
 		});
