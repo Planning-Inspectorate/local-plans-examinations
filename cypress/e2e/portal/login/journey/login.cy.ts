@@ -18,4 +18,13 @@ describe('Portal login journey', () => {
 		portalLandingPage.verifyLoaded();
 		portalLandingPage.verifyHeading('My plans');
 	});
+
+	it('requests a new code from the OTP page', { tags: ['regression'] }, () => {
+		startPortalOtpLogin();
+		portalLoginOtpPage.verifyPath();
+
+		portalLoginOtpPage.clickRequestNewCode();
+
+		portalLoginOtpPage.verifyNewCodeBanner();
+	});
 });
