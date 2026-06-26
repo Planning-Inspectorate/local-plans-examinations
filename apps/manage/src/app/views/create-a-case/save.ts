@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './journey.ts';
+import * as authSession from '../../auth/session.service.ts';
 
 /**
  * The structure of data for the journey answers
@@ -35,6 +36,9 @@ export interface CreateCaseAnswers {
  */
 export function buildSaveController(service: ManageService): RequestHandler {
 	return async (req, res) => {
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.username ?? 'Unknown';
+
 		if (!res.locals || !res.locals.journeyResponse) {
 			throw new Error('journey response required');
 		}
@@ -90,7 +94,8 @@ export function buildSaveController(service: ManageService): RequestHandler {
 				},
 				caseHistories: {
 					create: {
-						event: `Case created for plan ${answers.planTitle}`
+						event: `Case created for plan ${answers.planTitle}`,
+						username: currentUser
 					}
 				}
 			}

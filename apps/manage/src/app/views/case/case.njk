@@ -54,7 +54,7 @@
     {% set row = [
       { text: history.date | date("YYYY-MM-DD HH:mm") },
       { text: history.event },
-      { text: history.user or '-' }
+      { text: history.username }
     ] %}
     {% set _ = rows.push(row) %}
   {% endfor %}

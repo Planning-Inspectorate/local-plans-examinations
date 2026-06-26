@@ -126,9 +126,10 @@ model DocumentSet {
 }
 
 model CaseHistory {
-  id     String   @id @default(uuid()) @db.UniqueIdentifier
-  date   DateTime @default(now())
-  event  String   @db.NVarChar(200)
-  caseId String   @db.UniqueIdentifier
-  case   Case     @relation(fields: [caseId], references: [id])
+  id       String   @id @default(uuid()) @db.UniqueIdentifier
+  date     DateTime @default(now())
+  event    String   @db.NVarChar(200)
+  caseId   String   @db.UniqueIdentifier
+  username String   @db.NVarChar(100)
+  case     Case     @relation(fields: [caseId], references: [id])
 }
