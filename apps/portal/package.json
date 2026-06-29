@@ -20,6 +20,7 @@
     "body-parser": "*",
     "connect-redis": "*",
     "express": "*",
+    "express-rate-limit": "^8.5.2",
     "express-session": "*",
     "express-validator": "*",
     "govuk-frontend": "*",
