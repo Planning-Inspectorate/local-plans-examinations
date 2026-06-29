@@ -60,7 +60,7 @@ describe('landing page', () => {
 		assert.deepStrictEqual(refNum, 'PLAN/001', `Expected PLAN/001 instead got ${refNum}`);
 	});
 
-	it('should warn if no plans found and display No plans to display', async () => {
+	it('should warn if no plans found and display No plans available', async () => {
 		const { landingPage, mockRes, mockReq, nunjucks, logger } = initialiseTest([]);
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
@@ -68,7 +68,7 @@ describe('landing page', () => {
 		const html = nunjucks.render(view, data);
 
 		const loggerMessage = logger.warn.mock.calls[0].arguments;
-		const errorMessage = 'No plans to display';
+		const errorMessage = 'No plans available';
 
 		assert.deepStrictEqual(
 			loggerMessage,
@@ -90,10 +90,10 @@ describe('landing page', () => {
 		);
 
 		const expectedHeadings = [
-			'Reference Number',
-			'Lead Local Planning Authority',
-			'Plan Title',
-			'Current Stage',
+			'Reference number',
+			'Lead local planning authority',
+			'Plan title',
+			'Current stage',
 			'Status'
 		];
 
