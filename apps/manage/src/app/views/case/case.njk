@@ -1,10 +1,100 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
 
 
 {% block pageContent %}
-<span class="govuk-caption-l">{{ currentCase.reference }}</span>
-<h1 class="govuk-heading-l">{{ currentCase.planTitle }}</h1>
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-summary-list--wide-key">
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    Current stage
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    {{ currentStage }}
+                    {{ govukTag({
+                        text: status,
+                        classes: statusColor
+                    }) }}
+                </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    Local planning authority
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    {{ primaryLpa }}
+                </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    Linked local planning authorities
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    {% if linkedLpas.length > 0 %}
+                        {{ linkedLpas.join(', ') }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+
+        {{ govukButton({
+            text: 'Start gateway 2 submission',
+            href: '/case/' + currentCase.reference + '/gateway-2'
+        }) }}
+
+        <h2 class="govuk-heading-m">Plan progress</h2>
+
+        <dl class="govuk-summary-list govuk-summary-list--wide-key">
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    <a href="#" class="govuk-link" target="_blank">Gateway 1 - self assessment (opens in new tab)</a><br>
+                    <span class="govuk-body-s govuk-!-margin-top-1">Completed outside this service on 12 September 2025</span>
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    Completed
+                </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    <a href="#" class="govuk-link">Gateway 2 - advisory check</a><br>
+                    <span class="govuk-body-s govuk-!-margin-top-1">Target date: 25 April 2026</span>
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    {{ govukTag({
+                        text: 'Ready to start',
+                        classes: 'govuk-tag--green'
+                    }) }}
+                </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    Gateway 3 - readiness check<br>
+                    <span class="govuk-body-s govuk-!-margin-top-1">Target date: 12 June 2026</span>
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    Cannot start yet
+                </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">
+                    Examination<br>
+                    <span class="govuk-body-s govuk-!-margin-top-1">Target date: 8 August 2026</span>
+                </dt>
+                <dd class="govuk-summary-list__value">
+                    Cannot start yet
+                </dd>
+            </div>
+        </dl>
+    </div>
+</div>
+
 {{ govukServiceNavigation({
   navigation: [
     {

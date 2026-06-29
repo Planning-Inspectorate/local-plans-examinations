@@ -20,19 +20,62 @@ export function buildCasePage(service: ManageService): AsyncRequestHandler {
 
 		try {
 			const currentCase = await db.case.findUnique({
-				where: { reference }
+				where: { reference },
+				include: {
+					lpas: true
+				}
 			});
 
 			if (!currentCase) {
 				return res.status(404).render('views/errors/404.njk');
 			}
 
+			// Calculate current stage based on gateway dates
+			let currentStage = 'Gateway 2';
+			let status = 'In progress';
+			let statusColor = 'govuk-tag--blue';
+
+			// Mock logic for stage determination - will be replaced with real business logic
+			// Status tag colors: Ready to start (green), In progress (blue), With PINS (yellow), Action required (red), Invalid (grey), Completed (plain)
+			if (currentCase.submissionDate) {
+				currentStage = 'Examination';
+				status = 'Not started';
+				statusColor = '';
+			} else if (currentCase.gateway3Date) {
+				currentStage = 'Gateway 3';
+				status = 'Ready to start';
+				statusColor = 'govuk-tag--green';
+			} else if (currentCase.gateway2Date) {
+				currentStage = 'Gateway 2';
+				status = 'In progress';
+				statusColor = 'govuk-tag--blue';
+			} else if (currentCase.gateway1Date) {
+				currentStage = 'Gateway 1';
+				status = 'Completed';
+				statusColor = '';
+			}
+
+			// Additional status options for future implementation:
+			// With PINS: status = 'With PINS', statusColor = 'govuk-tag--yellow'
+			// Action required: status = 'Action required', statusColor = 'govuk-tag--red'
+			// Invalid: status = 'Invalid', statusColor = 'govuk-tag--grey'
+
+			// Extract LPA data
+			const primaryLpa = currentCase.lpas[0]?.lpaCode || 'Unknown LPA';
+			const linkedLpas = currentCase.lpas.slice(1).map((lpa) => lpa.lpaCode);
+
 			return res.render('views/case/case.njk', {
-				backLinkUrl: '/',
-				backLinkText: 'Back to all cases',
+				backLinkUrl: '/your-plans',
+				backLinkText: 'Back to my plans',
 				pageTitle: currentCase.reference,
 				pageHeading: currentCase.planTitle,
-				pageCaption: currentCase.reference
+				pageCaption: currentCase.reference,
+				currentCase,
+				currentStage,
+				status,
+				statusColor,
+				primaryLpa,
+				linkedLpas
 			});
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);
