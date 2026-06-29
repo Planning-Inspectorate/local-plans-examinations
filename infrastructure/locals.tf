@@ -70,6 +70,7 @@ locals {
       "session-secret-portal"          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.web_session_secret.versionless_id})"
       "session-secret-manage"          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.manage_session_secret.versionless_id})"
       "sql-app-connection-string"      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.sql_app_connection_string.versionless_id})"
+      "gov-notify-webhook-token"       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gov_notify_webhook_token.versionless_id})"
     }
   )
 
