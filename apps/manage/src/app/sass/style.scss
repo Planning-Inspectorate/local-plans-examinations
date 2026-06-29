@@ -1,4 +1,4 @@
-$font-family: arial, helvetica, sans-serif;
+$font-family: 'Helvetica Neue', 'HelveticaNeue', 'Helvetica', 'Arial', 'sans-serif';
 
 //Main gov styles
 @use 'node_modules/govuk-frontend/dist/govuk/index' with (
@@ -49,5 +49,15 @@ $font-family: arial, helvetica, sans-serif;
 
 	&:not(.govuk-summary-list--no-border) .govuk-summary-list__value {
 		text-align: right;
+	}
+
+	&:not(.govuk-summary-list--no-border) .govuk-summary-list__key {
+		font-weight: normal;
+		width: auto !important;
+		white-space: nowrap;
+	}
+
+	&:not(.govuk-summary-list--no-border) .govuk-summary-list__value {
+		flex-grow: 1;
 	}
 }
