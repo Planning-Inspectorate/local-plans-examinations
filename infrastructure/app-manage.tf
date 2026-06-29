@@ -58,8 +58,9 @@ module "app_manage" {
     LOG_LEVEL = var.apps_config.logging.level
 
     # database connection
-    SQL_CONNECTION_STRING = local.key_vault_refs["sql-app-connection-string"]
-    GOV_NOTIFY_API_KEY    = local.key_vault_refs["localplans-gov-notify-api-key"]
+    SQL_CONNECTION_STRING    = local.key_vault_refs["sql-app-connection-string"]
+    GOV_NOTIFY_API_KEY       = local.key_vault_refs["localplans-gov-notify-api-key"]
+    GOV_NOTIFY_WEBHOOK_TOKEN = local.key_vault_refs["gov-notify-webhook-token"]
 
     # retries
     RETRY_MAX_ATTEMPTS = "3"
@@ -104,6 +105,22 @@ resource "azurerm_key_vault_secret" "manage_session_secret" {
   name         = "${local.service_name}-manage-session-secret"
   value        = random_password.manage_session_secret.result
   content_type = "session-secret"
+
+  tags = local.tags
+}
+
+# gov-notify-webhook-token
+resource "random_password" "gov_notify_webhook_token" {
+  length  = 43
+  special = true
+}
+
+resource "azurerm_key_vault_secret" "gov_notify_webhook_token" {
+  #checkov:skip=CKV_AZURE_41: TODO: Secret rotation
+  key_vault_id = azurerm_key_vault.main.id
+  name         = "${local.service_name}-gov-notify-webhook-token"
+  value        = random_password.gov_notify_webhook_token.result
+  content_type = "plaintext"
 
   tags = local.tags
 }
