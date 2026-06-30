@@ -6,6 +6,7 @@ import type { Handler } from 'express';
 export function addLocalsConfiguration(): Handler {
 	return (req, res, next) => {
 		const path = req.path;
+		const cookieConsent = req.cookies?.cookie_consent;
 
 		const links = [
 			{
@@ -54,6 +55,11 @@ export function addLocalsConfiguration(): Handler {
 				return link;
 			})
 		};
+
+		if (cookieConsent === 'accept' || cookieConsent === 'reject') {
+			res.locals.cookieConsent = cookieConsent;
+		}
+
 		next();
 	};
 }
