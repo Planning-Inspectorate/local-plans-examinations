@@ -51,6 +51,10 @@ $font-family: 'Helvetica Neue', 'HelveticaNeue', 'Helvetica', 'Arial', 'sans-ser
 		text-align: right;
 	}
 
+	&:not(.govuk-summary-list--no-border) {
+		border-top: 1px solid #cecece;
+	}
+
 	&:not(.govuk-summary-list--no-border) .govuk-summary-list__key {
 		font-weight: normal;
 		width: auto !important;
