@@ -5,7 +5,7 @@ import { describe, it, mock } from 'node:test';
 describe('addLocalsConfiguration', () => {
 	it('adds accepted cookie consent to locals', () => {
 		const req = { path: '/', cookies: { cookie_consent: 'accept' } };
-		const res = { locals: {} };
+		const res = { locals: {} as { cookieConsent?: string } };
 		const next = mock.fn();
 
 		addLocalsConfiguration()(req as any, res as any, next);
@@ -16,7 +16,7 @@ describe('addLocalsConfiguration', () => {
 
 	it('adds rejected cookie consent to locals', () => {
 		const req = { path: '/', cookies: { cookie_consent: 'reject' } };
-		const res = { locals: {} };
+		const res = { locals: {} as { cookieConsent?: string } };
 
 		addLocalsConfiguration()(req as any, res as any, mock.fn());
 
@@ -25,7 +25,7 @@ describe('addLocalsConfiguration', () => {
 
 	it('ignores invalid cookie consent values', () => {
 		const req = { path: '/', cookies: { cookie_consent: 'maybe' } };
-		const res = { locals: {} };
+		const res = { locals: {} as { cookieConsent?: string } };
 
 		addLocalsConfiguration()(req as any, res as any, mock.fn());
 
