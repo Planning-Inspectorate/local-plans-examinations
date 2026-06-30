@@ -1,3 +1,28 @@
+//stage constants: which stage of the plan the case is in
+export const STAGE = {
+	Gateway1: 0,
+	Gateway2: 1,
+	Gateway3: 2,
+	Examination: 3
+} as const;
+
+//status constants: the status of the current stage
+export const STATUS = {
+	ReadyToStart: 0,
+	InProgress: 1,
+	WithPINS: 2,
+	ActionNeeded: 3,
+	Invalid: 4,
+	Completed: 5
+} as const;
+
+//state constants: the state of an individual document/section
+export const STATE = {
+	NotStarted: 0,
+	InProgress: 1,
+	Completed: 2
+} as const;
+
 //types
 
 export const validStageTypes = [0, 1, 2, 3] as const;

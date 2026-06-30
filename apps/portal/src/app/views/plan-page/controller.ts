@@ -1,6 +1,6 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { StageLabel, StatusTag, validPlan } from '../../types.ts';
+import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
 
 //takes status and mapping of label and class returns tags
@@ -31,15 +31,13 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		//button logic
 		let button = null;
-		if (plan.status === 0) {
-			//Ready to start
+		if (plan.status === STATUS.ReadyToStart) {
 			button = 'Start ' + currentStage + ' submission';
 		}
 
 		//notification banner logic
 		let notificationBanner = null;
-		if (plan.status === 3) {
-			//action needed
+		if (plan.status === STATUS.ActionNeeded) {
 			notificationBanner = true;
 		}
 
@@ -51,22 +49,22 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		switch (plan.stage) {
-			case 1:
+			case STAGE.Gateway2:
 				hrefG2 = currentApplicationLink;
 				tagG2 = planStatusTag;
 				break;
-			case 2:
+			case STAGE.Gateway3:
 				dateTextG2 = 'Completed on:';
-				hrefG2 = applicationLinkNoStage + `1`;
+				hrefG2 = applicationLinkNoStage + `${STAGE.Gateway2}`;
 				hrefG3 = currentApplicationLink;
 				tagG2 = 'Completed';
 				tagG3 = planStatusTag;
 				break;
-			case 3: // logic for if all complete
-				hrefG2 = applicationLinkNoStage + `1`;
-				hrefG3 = applicationLinkNoStage + `2`;
+			case STAGE.Examination:
+				hrefG2 = applicationLinkNoStage + `${STAGE.Gateway2}`;
+				hrefG3 = applicationLinkNoStage + `${STAGE.Gateway3}`;
 				hrefE = currentApplicationLink;
-				if (plan.status === 5) {
+				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
