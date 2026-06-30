@@ -17,8 +17,7 @@ export function updateCaseField(service: ManageService) {
 			? req.params.manageListItemId[0]
 			: (req.params.manageListItemId ?? '');
 		logger.info(`Updating case ${reference} with ${JSON.stringify(journeyResponse)}`);
-		// todo handle errors
-		// todo what happens when a user tries to remove an LPA while there are contacts from that LPA associated to the case
+
 		const removeItem = req.params.manageListAction === 'remove';
 		if (removeItem) {
 			if (req.params.section === 'contacts') {
@@ -99,6 +98,26 @@ export function updateCaseField(service: ManageService) {
 					}
 				: undefined
 		};
+		const editItem = req.params.manageListAction === 'edit';
+
+		if (editItem && req.params.section === 'contacts') {
+			await db.contact.update({
+				where: { id: currentItemId },
+				data: {
+					firstName,
+					lastName,
+					email,
+					phoneNumber: phone,
+					lpa: {
+						connectOrCreate: {
+							where: { lpaCode: lpaCode || lpaContact },
+							create: { lpaCode: lpaCode || lpaContact }
+						}
+					}
+				}
+			});
+			return;
+		}
 
 		await db.case.update({
 			where: { reference },
@@ -149,8 +168,7 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 		} catch (error) {
 			logger.error(`Unable to fetch case ${reference} ${error}`);
 		}
-		//TODO handle it being undefined
-		next();
+		if (next) next();
 	};
 }
 
