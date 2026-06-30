@@ -2,7 +2,7 @@
 
 {{ govukCookieBanner({
 	ariaLabel: "Cookie banner",
-	hidden: cookieConsent is defined,
+	hidden: cookieConsent === "accept" or cookieConsent === "reject",
 	messages: [
 		{
 			headingText: "Cookies on " + config.headerTitle,
