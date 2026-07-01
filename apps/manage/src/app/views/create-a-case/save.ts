@@ -1,13 +1,13 @@
 import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
-import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { clearDataFromSession, type JourneyResponse, type JourneyAnswers } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './journey.ts';
 
 /**
  * The structure of data for the journey answers
  * depends on the fieldName for each question
  */
-export interface CreateCaseAnswers {
+export interface CreateCaseAnswers extends JourneyAnswers {
 	email: string;
 	reference: string;
 	caseOfficer: string;
