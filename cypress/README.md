@@ -1,7 +1,7 @@
 # E2E Testing using Cypress
 
 ## Initial local set-up 
-- install Node 22
+- install Node 24
 - install Docker
 - npm i
 - docker compose up -d mssql (to start a database)
