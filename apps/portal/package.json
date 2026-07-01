@@ -17,6 +17,7 @@
     "@pins/local-plans-database": "^0.0.0",
     "@pins/local-plans-lib": "^0.0.0",
     "@planning-inspectorate/dynamic-forms": "*",
+    "bcrypt": "^6.0.0",
     "body-parser": "*",
     "connect-redis": "*",
     "express": "*",
