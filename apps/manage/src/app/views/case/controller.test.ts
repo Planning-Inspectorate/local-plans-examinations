@@ -57,12 +57,7 @@ describe('buildCasePage', () => {
 	it('renders case details when the case exists', async () => {
 		const currentCase = {
 			reference: 'PLAN/123456',
-			planTitle: 'Southshire Local Plan',
-			gateway1Date: new Date('2024-01-01'),
-			gateway2Date: new Date('2024-06-15'),
-			gateway3Date: null,
-			submissionDate: null,
-			lpas: [{ lpaCode: 'E123' }]
+			planTitle: 'Southshire Local Plan'
 		};
 		const ctx = createHarness(async () => currentCase);
 
@@ -70,35 +65,25 @@ describe('buildCasePage', () => {
 
 		assert.equal(ctx.getFindUniqueCallCount(), 1);
 		assert.deepEqual(ctx.getFindUniqueArgs(), {
-			where: { reference: 'PLAN/123456' },
-			include: { lpas: true }
+			where: { reference: 'PLAN/123456' }
 		});
 		assert.deepEqual(ctx.statusCalls, []);
 		assert.deepEqual(ctx.errorCalls, []);
 		assert.equal(ctx.renderCalls.length, 1);
 		assert.equal(ctx.renderCalls[0]?.[0], 'views/case/case.njk');
-		const renderData = ctx.renderCalls[0]?.[1] as Record<string, unknown>;
-		assert.equal(renderData.backLinkUrl, '/your-plans');
-		assert.equal(renderData.backLinkText, 'Back to my plans');
-		assert.equal(renderData.pageTitle, 'PLAN/123456');
-		assert.equal(renderData.pageHeading, 'Southshire Local Plan');
-		assert.equal(renderData.pageCaption, 'PLAN/123456');
-		assert.equal(renderData.currentStage, 'Gateway 2');
-		assert.equal(renderData.status, 'In progress');
-		assert.equal(renderData.statusColor, 'govuk-tag--blue');
-		assert.equal(renderData.primaryLpa, 'E123');
-		assert.deepEqual(renderData.linkedLpas, []);
+		assert.deepEqual(ctx.renderCalls[0]?.[1], {
+			backLinkUrl: '/',
+			backLinkText: 'Back to all cases',
+			pageTitle: 'PLAN/123456',
+			pageHeading: 'Southshire Local Plan',
+			pageCaption: 'PLAN/123456'
+		});
 	});
 
 	it('decodes the reference before fetching the case', async () => {
 		const currentCase = {
 			reference: 'PLAN/123456',
-			planTitle: 'Southshire Local Plan',
-			gateway1Date: new Date('2024-01-01'),
-			gateway2Date: null,
-			gateway3Date: null,
-			submissionDate: null,
-			lpas: [{ lpaCode: 'E123' }]
+			planTitle: 'Southshire Local Plan'
 		};
 		const ctx = createHarness(async () => currentCase, 'PLAN%2F123456');
 
@@ -106,28 +91,28 @@ describe('buildCasePage', () => {
 
 		assert.equal(ctx.getFindUniqueCallCount(), 1);
 		assert.deepEqual(ctx.getFindUniqueArgs(), {
-			where: { reference: 'PLAN/123456' },
-			include: { lpas: true }
+			where: { reference: 'PLAN/123456' }
 		});
 		assert.deepEqual(ctx.statusCalls, []);
 		assert.deepEqual(ctx.errorCalls, []);
-		const renderData = ctx.renderCalls[0]?.[1] as Record<string, unknown>;
-		assert.equal(renderData.backLinkUrl, '/your-plans');
-		assert.equal(renderData.backLinkText, 'Back to my plans');
-		assert.equal(renderData.currentStage, 'Gateway 1');
-		assert.equal(renderData.status, 'Completed');
-		assert.equal(renderData.statusColor, '');
+		assert.deepEqual(ctx.renderCalls, [
+			[
+				'views/case/case.njk',
+				{
+					backLinkUrl: '/',
+					backLinkText: 'Back to all cases',
+					pageTitle: 'PLAN/123456',
+					pageHeading: 'Southshire Local Plan',
+					pageCaption: 'PLAN/123456'
+				}
+			]
+		]);
 	});
 
 	it('uses the first reference when an array is provided', async () => {
 		const currentCase = {
 			reference: 'PLAN/123456',
-			planTitle: 'Southshire Local Plan',
-			gateway1Date: new Date('2024-01-01'),
-			gateway2Date: null,
-			gateway3Date: null,
-			submissionDate: null,
-			lpas: [{ lpaCode: 'E123' }]
+			planTitle: 'Southshire Local Plan'
 		};
 		const ctx = createHarness(async () => currentCase, ['PLAN%2F123456', 'IGNORED']);
 
@@ -135,17 +120,22 @@ describe('buildCasePage', () => {
 
 		assert.equal(ctx.getFindUniqueCallCount(), 1);
 		assert.deepEqual(ctx.getFindUniqueArgs(), {
-			where: { reference: 'PLAN/123456' },
-			include: { lpas: true }
+			where: { reference: 'PLAN/123456' }
 		});
 		assert.deepEqual(ctx.statusCalls, []);
 		assert.deepEqual(ctx.errorCalls, []);
-		const renderData = ctx.renderCalls[0]?.[1] as Record<string, unknown>;
-		assert.equal(renderData.backLinkUrl, '/your-plans');
-		assert.equal(renderData.backLinkText, 'Back to my plans');
-		assert.equal(renderData.currentStage, 'Gateway 1');
-		assert.equal(renderData.status, 'Completed');
-		assert.equal(renderData.statusColor, '');
+		assert.deepEqual(ctx.renderCalls, [
+			[
+				'views/case/case.njk',
+				{
+					backLinkUrl: '/',
+					backLinkText: 'Back to all cases',
+					pageTitle: 'PLAN/123456',
+					pageHeading: 'Southshire Local Plan',
+					pageCaption: 'PLAN/123456'
+				}
+			]
+		]);
 	});
 
 	it('renders 404 page when the case cannot be found', async () => {
@@ -154,10 +144,6 @@ describe('buildCasePage', () => {
 		await ctx.handler(ctx.req, ctx.res);
 
 		assert.equal(ctx.getFindUniqueCallCount(), 1);
-		assert.deepEqual(ctx.getFindUniqueArgs(), {
-			where: { reference: 'PLAN/123456' },
-			include: { lpas: true }
-		});
 		assert.deepEqual(ctx.statusCalls, [404]);
 		assert.deepEqual(ctx.errorCalls, []);
 		assert.deepEqual(ctx.renderCalls, [['views/errors/404.njk', undefined]]);
