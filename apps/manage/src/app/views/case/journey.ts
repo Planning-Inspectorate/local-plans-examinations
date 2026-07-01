@@ -5,7 +5,6 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 
 export const JOURNEY_ID = 'edit-case-overview';
 
-//TODO use question library
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions);
 
@@ -33,13 +32,12 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.qaInspector2)
 				.addQuestion(questions.qaInspector3)
 		],
-		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Manage case',
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl + '/overview',
-		initialBackLink: '/',
+		initialBackLink: req.baseUrl + '/overview',
 		response
 	});
 }
