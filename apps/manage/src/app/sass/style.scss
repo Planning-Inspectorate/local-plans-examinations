@@ -1,4 +1,4 @@
-$font-family: 'Helvetica Neue', 'HelveticaNeue', 'Helvetica', 'Arial', 'sans-serif';
+$font-family: arial, helvetica, sans-serif;
 
 //Main gov styles
 @use 'node_modules/govuk-frontend/dist/govuk/index' with (
@@ -26,42 +26,4 @@ $font-family: 'Helvetica Neue', 'HelveticaNeue', 'Helvetica', 'Arial', 'sans-ser
 
 .status-tag-width {
 	max-width: 250px !important;
-}
-
-.govuk-summary-list--wide-key {
-	.govuk-summary-list__row {
-		display: flex;
-		flex-wrap: nowrap;
-	}
-
-	.govuk-summary-list__key {
-		width: 50% !important;
-		padding-right: 20px;
-	}
-
-	.govuk-summary-list__value {
-		width: 50%;
-	}
-
-	&.govuk-summary-list--no-border .govuk-summary-list__value {
-		text-align: left;
-	}
-
-	&:not(.govuk-summary-list--no-border) .govuk-summary-list__value {
-		text-align: right;
-	}
-
-	&:not(.govuk-summary-list--no-border) {
-		border-top: 1px solid #cecece;
-	}
-
-	&:not(.govuk-summary-list--no-border) .govuk-summary-list__key {
-		font-weight: normal;
-		width: auto !important;
-		white-space: nowrap;
-	}
-
-	&:not(.govuk-summary-list--no-border) .govuk-summary-list__value {
-		flex-grow: 1;
-	}
 }

@@ -10,7 +10,6 @@ import type { IRouter } from 'express';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
 import { createACaseRoutes } from './views/create-a-case/index.ts';
 import { buildCasePage } from './views/case/controller.ts';
-import { createYourPlansRoutes } from './views/your-plans/index.ts';
 
 /**
  * Main app router
@@ -49,7 +48,6 @@ export function buildRouter(service: ManageService): IRouter {
 	}
 
 	router.use('/', createLandingPageRoutes(service));
-	router.use('/', createYourPlansRoutes(service));
 	router.get('/case/:reference', asyncHandler(casePage));
 	router.use('/error', createErrorRoutes(service));
 	router.use('/create-a-case', createACaseRoutes(service));
