@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "@azure/msal-node": "*",
+    "@azure/storage-blob": "^12.33.0",
     "@pins/local-plans-database": "*",
     "connect-redis": "*",
     "cookie-parser": "*",
