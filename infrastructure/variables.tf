@@ -80,6 +80,15 @@ variable "front_door_config" {
   })
 }
 
+variable "gov_notify" {
+  description = "IDs for Gov Notify template"
+  type = object({
+    templates = object({
+      auth_id = string
+    })
+  })
+}
+
 variable "health_check_eviction_time_in_min" {
   description = "The eviction time in minutes for the health check"
   type        = number
