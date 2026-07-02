@@ -49,8 +49,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 
 		const allEmails = answers.contactDetails.map((contact) => contact.email);
 
-		const uniqueLpaCodes = [...new Set([...answers.contactDetails.map((contact) => contact.lpaContact)])];
-
+		const uniqueLpaCodes = [...new Set(answers.checkLpas.map((lpa) => lpa.lpa))];
 		await service.db.case.create({
 			data: {
 				reference: answers.reference,
