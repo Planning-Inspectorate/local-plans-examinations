@@ -9,6 +9,8 @@ import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flo
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
 
 describe('Create a case', () => {
+	after(() => cy.task('clearDb'));
+
 	it('creates a case through the full journey', { tags: ['smoke', 'regression'] }, () => {
 		loadCreateCaseData().then((data) => {
 			completeCreateCaseFlow(data);
