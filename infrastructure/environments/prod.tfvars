@@ -57,6 +57,12 @@ front_door_config = {
   use_tooling = false
 }
 
+gov_notify = {
+  templates = {
+    auth_id = "e57674eb-7830-4b71-9300-76fdac5ad13b" # Check for correct value for PROD environment
+  }
+}
+
 monitoring_config = {
   app_insights_web_test_enabled        = true
   manage_app_insights_web_test_enabled = true
