@@ -64,7 +64,10 @@ module "app_portal" {
 
     # database connection
     SQL_CONNECTION_STRING = local.key_vault_refs["sql-app-connection-string"]
-    GOV_NOTIFY_API_KEY    = local.key_vault_refs["localplans-gov-notify-api-key"]
+
+    #Gov Notify
+    GOV_NOTIFY_API_KEY               = local.key_vault_refs["localplans-gov-notify-api-key"]
+    GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID = var.gov_notify.templates.auth_id
 
     # retries
     RETRY_MAX_ATTEMPTS = "3"
