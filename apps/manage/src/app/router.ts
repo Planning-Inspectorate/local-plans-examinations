@@ -4,12 +4,11 @@ import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monito
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createNotifyRoutes } from './notify/router.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
 import { createACaseRoutes } from './views/create-a-case/index.ts';
-import { buildCasePage } from './views/case/controller.ts';
+import { caseRouter } from './views/case/index.ts';
 
 /**
  * Main app router
@@ -18,7 +17,7 @@ export function buildRouter(service: ManageService): IRouter {
 	const router = createRouter();
 	const monitoringRoutes = createMonitoringRoutes(service);
 	const { router: authRoutes, guards: authGuards } = createAuthRoutesAndGuards(service);
-	const casePage = buildCasePage(service);
+	// const caseRoutes = caseRouter(service);
 
 	router.use('/', monitoringRoutes);
 
@@ -48,7 +47,7 @@ export function buildRouter(service: ManageService): IRouter {
 	}
 
 	router.use('/', createLandingPageRoutes(service));
-	router.get('/case/:reference', asyncHandler(casePage));
+	router.use('/case/:reference', caseRouter(service));
 	router.use('/error', createErrorRoutes(service));
 	router.use('/create-a-case', createACaseRoutes(service));
 

@@ -1,11 +1,14 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 
 {% block pageContent %}
-<span class="govuk-caption-l">{{ currentCase.reference }}</span>
-<h1 class="govuk-heading-l">{{ currentCase.planTitle }}</h1>
+  <span class="govuk-caption-l">{{ reference }}</span>
+  <h1 class="govuk-heading-l">{{ planTitle }}</h1>
+
 {{ govukServiceNavigation({
+  attributes: { "id": "service-navigation", "data-cy": "service-navigation" },
   navigation: [
     {
       href: "#",
@@ -42,5 +45,18 @@
     "data-cy": "service-navigation"
   }
 }) }}
+
+<div class="govuk-grid-row govuk-!-margin-top-6">
+        <div class="govuk-grid-column-full">
+            {% for section in summaryListData.sections %}
+                {% if section.list.rows.length %}
+                  <h2 class="govuk-heading-l">{{ section.heading }}</h2>
+                  {{ govukSummaryList({
+                        rows: section.list.rows
+                    }) }}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
 {% endblock %}
 
