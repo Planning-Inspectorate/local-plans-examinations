@@ -1,4 +1,4 @@
-import { caseOverviewPage } from '../../../../page-objects/manage/case-overview-page.ts';
+import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 describe('Case overview', () => {
@@ -29,14 +29,28 @@ describe('Case overview', () => {
 		manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
-		caseOverviewPage.verifyServiceNavigation(
-			'Overview',
-			'Timetable',
-			'Gateway 1',
-			'Gateway 2',
-			'Gateway 3',
-			'Examination',
-			'Case History'
+		caseOverviewPage.verifyExpectedServiceNavigation();
+		caseOverviewPage.verifyExpectedSectionHeadings();
+		caseOverviewPage.verifyExpectedSummaryRows();
+		caseOverviewPage.verifySummaryRowContains('Plan title', 'Cypress Test Plan');
+		caseOverviewPage.verifySummaryRowContains('Plan type', 'Local Plan');
+		caseOverviewPage.verifySummaryRowContains(
+			'Local Planning Authorities',
+			'Local Planning Authority 1',
+			'Local Planning Authority 2'
 		);
+		caseOverviewPage.verifySummaryRowContains('Case officer', 'Case Officer 1');
+		caseOverviewPage.verifySummaryRowContains(
+			'Contact details',
+			'Jane',
+			'Smith',
+			'jane@lpa.gov.uk',
+			'01234567890',
+			'Bob',
+			'Johnson',
+			'bob@lpa.gov.uk'
+		);
+		caseOverviewPage.verifySummaryRowContains('Programme officer', 'Not started');
+		caseOverviewPage.verifyExpectedActionLinkHrefs();
 	});
 });
