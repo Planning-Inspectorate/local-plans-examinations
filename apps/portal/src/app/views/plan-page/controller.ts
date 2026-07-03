@@ -8,11 +8,6 @@ function statusTag(status: Status) {
 	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
 }
 
-function renderTag(tag: { label: string; class: string } | string) {
-	if (typeof tag === 'string') return tag;
-	return tag?.class ? `<strong class="${tag.class}">${tag.label}</strong>` : tag.label;
-}
-
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
@@ -41,7 +36,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		let dateTextG2, dateTextG3, dateTextE;
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
-		tagG2 = tagG3 = tagE = renderTag({ label: 'Cannot start yet', class: '' });
+		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		switch (plan.stage) {
 			case STAGE.Gateway2:
@@ -52,7 +47,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				dateTextG2 = 'Completed on:';
 				hrefG2 = applicationLink(STAGE.Gateway2);
 				hrefG3 = currentApplicationLink;
-				tagG2 = renderTag({ label: 'Completed', class: '' });
+				tagG2 = 'Completed';
 				tagG3 = planStatus;
 				break;
 			case STAGE.Examination:
@@ -61,11 +56,11 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				hrefE = currentApplicationLink;
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
-					tagG2 = tagG3 = tagE = renderTag({ label: 'Completed', class: '' });
+					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed on: ';
 					tagE = planStatus;
-					tagG2 = tagG3 = renderTag({ label: 'Completed', class: '' });
+					tagG2 = tagG3 = 'Completed';
 				}
 				break;
 		}
