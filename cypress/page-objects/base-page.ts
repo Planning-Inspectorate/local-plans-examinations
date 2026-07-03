@@ -1,7 +1,7 @@
 export class BasePage {
-	private readonly path?: string;
+	private readonly path?: string | RegExp;
 
-	constructor(path?: string) {
+	constructor(path?: string | RegExp) {
 		this.path = path;
 	}
 
@@ -10,12 +10,21 @@ export class BasePage {
 			throw new Error(`${this.constructor.name} does not define a path`);
 		}
 
+		if (path instanceof RegExp) {
+			throw new Error(`${this.constructor.name} cannot visit a RegExp path`);
+		}
+
 		cy.visit(path);
 	}
 
 	verifyPath(path = this.path) {
 		if (!path) {
 			throw new Error(`${this.constructor.name} does not define a path`);
+		}
+
+		if (path instanceof RegExp) {
+			cy.location('pathname').should('match', path);
+			return;
 		}
 
 		cy.location('pathname').should('eq', path);

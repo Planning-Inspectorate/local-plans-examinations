@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
-import { clearDataFromSession, type JourneyResponse, type JourneyAnswers } from '@planning-inspectorate/dynamic-forms';
+import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import type { JourneyAnswers } from '@planning-inspectorate/dynamic-forms/src/journey/journey-types.d.ts';
 import { JOURNEY_ID } from './journey.ts';
 
 /**
