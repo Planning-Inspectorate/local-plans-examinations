@@ -172,7 +172,12 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 
 	const dateStages = ['G1', 'G2', 'G3', 'E'];
 	const validDates = (date: unknown) =>
-		date !== null && typeof date === 'object' && Object.keys(date).every((stage) => dateStages.includes(stage));
+		date !== null &&
+		typeof date === 'object' &&
+		Object.keys(date).every((stage) => dateStages.includes(stage)) &&
+		Object.values(date as Record<string, unknown>).every(
+			(value) => typeof value === 'string' && value.trim().length > 0
+		);
 
 	return (
 		typeof plan.refNum === 'string' &&
@@ -207,7 +212,7 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	title: 'East Borough Local Plan', //Plan Title
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
-	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: August 2026, E: September 2026"
+	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed
 	...overrides
@@ -260,11 +265,40 @@ export function buildApplicationDocs(applicationDocs: unknown[]): ApplicationDoc
 	return testApplicationDocs;
 }
 
+function transformDates(dates: unknown): { G1: string; G2: string; G3: string; E: string } {
+	// Handle pipe-separated string format from backend: "7 May 2026|21 July 2026|August 2026|September 2026"
+	if (typeof dates === 'string') {
+		const parts = dates.split('|');
+		return {
+			G1: parts[0] || '',
+			G2: parts[1] || '',
+			G3: parts[2] || '',
+			E: parts[3] || ''
+		};
+	}
+
+	// Handle object format: { G1: '7 May 2026', G2: '21 July 2026', ... }
+	if (dates !== null && typeof dates === 'object') {
+		const dateObj = dates as Record<string, unknown>;
+		return {
+			G1: typeof dateObj.G1 === 'string' ? dateObj.G1 : '',
+			G2: typeof dateObj.G2 === 'string' ? dateObj.G2 : '',
+			G3: typeof dateObj.G3 === 'string' ? dateObj.G3 : '',
+			E: typeof dateObj.E === 'string' ? dateObj.E : ''
+		};
+	}
+
+	// Fallback to empty dates
+	return { G1: '', G2: '', G3: '', E: '' };
+}
+
 export function buildPlan(plan: unknown): unknown {
 	if (plan !== null && typeof plan === 'object') {
 		const docs = 'documents' in plan && Array.isArray(plan.documents) ? plan.documents : [];
+		const dates = 'dates' in plan ? transformDates(plan.dates) : { G1: '', G2: '', G3: '', E: '' };
 		return mockPlan({
 			...plan,
+			dates,
 			documents: buildApplicationDocs(docs)
 		});
 	}
@@ -289,7 +323,7 @@ export function buildTestPlans(): unknown[] {
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'East Borough Local Plan',
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
 			refNum: 'PLAN/002',
@@ -297,7 +331,7 @@ export function buildTestPlans(): unknown[] {
 			linkedLPA: 'Romsey Town Council',
 			title: 'West Local Plan',
 			status: 1,
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
 			refNum: 'PLAN/003',
@@ -306,7 +340,7 @@ export function buildTestPlans(): unknown[] {
 			title: 'Southside Local Plan',
 			stage: 2,
 			status: 2,
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
 			refNum: 'PLAN/004',
@@ -315,7 +349,7 @@ export function buildTestPlans(): unknown[] {
 			title: 'North District Local Plan',
 			stage: 3,
 			status: 3,
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
 			refNum: 'PLAN/005',
@@ -324,7 +358,7 @@ export function buildTestPlans(): unknown[] {
 			title: 'Seaside Local Plan',
 			stage: 3,
 			status: 4,
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
 			refNum: 'PLAN/006',
@@ -333,7 +367,7 @@ export function buildTestPlans(): unknown[] {
 			title: 'Central City Local Plan',
 			stage: 3,
 			status: 5,
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
 			refNum: 'PLAN/007',
@@ -357,7 +391,7 @@ export const testPlan: unknown[] = [
 		title: 'East plan',
 		stage: 1,
 		status: 0,
-		dates: { G1: '7 May 2026', G2: '21 July 2026', G3: 'August 2026', E: 'September 2026' },
+		dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
 		sections: [0, 0, 0],
 		documents: [
 			{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
