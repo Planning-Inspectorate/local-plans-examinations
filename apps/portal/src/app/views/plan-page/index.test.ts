@@ -70,7 +70,12 @@ describe('plan page', () => {
 	});
 
 	it('should render notification banner if state = action needed', async () => {
-		const plan = { refNum: 'PLAN/004', stage: STAGE.Gateway2, status: STATUS.ActionNeeded };
+		const plan = {
+			refNum: 'PLAN/004',
+			stage: STAGE.Gateway2,
+			status: STATUS.ActionNeeded,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
 
 		const expectedBanClass = 'class="govuk-notification-banner__heading"';
@@ -83,11 +88,51 @@ describe('plan page', () => {
 
 	describe('should not render notification banner if not state = action needed', () => {
 		const testCases = [
-			{ refNum: 'PLAN-001', plan: { refNum: 'PLAN/001', stage: STAGE.Gateway2, status: STATUS.ReadyToStart } },
-			{ refNum: 'PLAN-002', plan: { refNum: 'PLAN/002', stage: STAGE.Gateway2, status: STATUS.InProgress } },
-			{ refNum: 'PLAN-003', plan: { refNum: 'PLAN/003', stage: STAGE.Gateway3, status: STATUS.WithPINS } },
-			{ refNum: 'PLAN-005', plan: { refNum: 'PLAN/005', stage: STAGE.Examination, status: STATUS.Invalid } },
-			{ refNum: 'PLAN-006', plan: { refNum: 'PLAN/006', stage: STAGE.Examination, status: STATUS.Completed } }
+			{
+				refNum: 'PLAN-001',
+				plan: {
+					refNum: 'PLAN/001',
+					stage: STAGE.Gateway2,
+					status: STATUS.ReadyToStart,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			},
+			{
+				refNum: 'PLAN-002',
+				plan: {
+					refNum: 'PLAN/002',
+					stage: STAGE.Gateway2,
+					status: STATUS.InProgress,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			},
+			{
+				refNum: 'PLAN-003',
+				plan: {
+					refNum: 'PLAN/003',
+					stage: STAGE.Gateway3,
+					status: STATUS.WithPINS,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			},
+			{
+				refNum: 'PLAN-005',
+				plan: {
+					refNum: 'PLAN/005',
+					stage: STAGE.Examination,
+					status: STATUS.Invalid,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			},
+			{
+				refNum: 'PLAN-006',
+				plan: {
+					refNum: 'PLAN/006',
+					stage: STAGE.Examination,
+					status: STATUS.Completed,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			}
 		];
 
 		for (const { refNum, plan } of testCases) {
@@ -237,7 +282,12 @@ describe('plan page', () => {
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
-				const plan = { refNum: refNum.replace('PLAN-', 'PLAN/'), stage: STAGE.Gateway2, status };
+				const plan = {
+					refNum: refNum.replace('PLAN-', 'PLAN/'),
+					stage: STAGE.Gateway2,
+					status,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				};
 				const { data } = await renderPlan({ refNum }, plan);
 
 				const expectedTags = [statusTag(status), 'Cannot start yet', 'Cannot start yet'];
@@ -251,7 +301,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task table links correctly for case 2 (G1, G2 complete)', async () => {
-		const plan = { refNum: 'PLAN/001', stage: STAGE.Gateway3, status: STATUS.ReadyToStart };
+		const plan = {
+			refNum: 'PLAN/001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		const expectedLinks = ['/applicationPage/PLAN-001/1', `/applicationPage/PLAN-001/2`, null];
@@ -266,7 +321,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task tag correctly for case 2 (G1, G2 complete)', async () => {
-		const plan = { refNum: 'PLAN/001', stage: STAGE.Gateway3, status: STATUS.ReadyToStart };
+		const plan = {
+			refNum: 'PLAN/001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		const expectedTags = [
@@ -295,7 +355,12 @@ describe('plan page', () => {
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
-				const plan = { refNum: refNum.replace('PLAN-', 'PLAN/'), stage: STAGE.Gateway3, status };
+				const plan = {
+					refNum: refNum.replace('PLAN-', 'PLAN/'),
+					stage: STAGE.Gateway3,
+					status,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				};
 				const { data } = await renderPlan({ refNum }, plan);
 
 				const expectedTags = ['Completed', statusTag(status), 'Cannot start yet'];
@@ -309,7 +374,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task table links correctly for case 3 (G1, G2, G3 complete)', async () => {
-		const plan = { refNum: 'PLAN/001', stage: STAGE.Examination, status: STATUS.ReadyToStart };
+		const plan = {
+			refNum: 'PLAN/001',
+			stage: STAGE.Examination,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		const expectedLinks = ['/applicationPage/PLAN-001/1', `/applicationPage/PLAN-001/2`, `/applicationPage/PLAN-001/3`];
@@ -324,7 +394,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task tag correctly for case 3 (G1, G2, G3 complete)', async () => {
-		const plan = { refNum: 'PLAN/001', stage: STAGE.Examination, status: STATUS.ReadyToStart };
+		const plan = {
+			refNum: 'PLAN/001',
+			stage: STAGE.Examination,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		const expectedTags = [
@@ -352,7 +427,12 @@ describe('plan page', () => {
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
-				const plan = { refNum: refNum.replace('PLAN-', 'PLAN/'), stage: STAGE.Examination, status };
+				const plan = {
+					refNum: refNum.replace('PLAN-', 'PLAN/'),
+					stage: STAGE.Examination,
+					status,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				};
 				const { data } = await renderPlan({ refNum }, plan);
 
 				const expectedTags = ['Completed', 'Completed', statusTag(status)];
@@ -366,7 +446,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task table links correctly for case 3 p2 (G1, G2, G3, E complete)', async () => {
-		const plan = { refNum: 'PLAN/001', stage: STAGE.Examination, status: STATUS.Completed };
+		const plan = {
+			refNum: 'PLAN/001',
+			stage: STAGE.Examination,
+			status: STATUS.Completed,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		const expectedLinks = ['/applicationPage/PLAN-001/1', '/applicationPage/PLAN-001/2', '/applicationPage/PLAN-001/3'];
@@ -381,7 +466,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task tag correctly for case 3 p2 (G1, G2, G3, E complete)', async () => {
-		const plan = { refNum: 'PLAN/001', stage: STAGE.Examination, status: STATUS.Completed };
+		const plan = {
+			refNum: 'PLAN/001',
+			stage: STAGE.Examination,
+			status: STATUS.Completed,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
 		const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		const expectedTags = ['Completed', 'Completed', 'Completed'];
