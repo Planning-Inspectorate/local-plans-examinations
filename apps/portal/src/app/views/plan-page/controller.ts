@@ -3,20 +3,22 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
 
-//takes status and mapping of label and class returns tags
-function statusTag(status: Status, tagMap: typeof StatusTag) {
-	const s = tagMap?.[status];
-	return `<strong class="${s?.class ?? ''}">${s?.label}</strong>`;
+function statusTag(status: Status) {
+	const s = StatusTag[status as keyof typeof StatusTag] as { label: string; class: string } | undefined;
+	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
+}
+
+function renderTag(tag: { label: string; class: string } | string) {
+	if (typeof tag === 'string') return tag;
+	return tag?.class ? `<strong class="${tag.class}">${tag.label}</strong>` : tag.label;
 }
 
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
-		//logic for finding correct plan
-		const planRef = String(req.params['refNum']).replace('-', '/');
+		// Route uses PLAN-001 but stored plans use PLAN/001
+		const planRef = String(req.params.refNum).replace('-', '/');
 		const rawPlans = await service.getPlans();
-
-		//checks if plan exists and is valid, logs error if fail
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
 			logger.warn({ planRef }, 'Plan not found');
@@ -24,53 +26,46 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 
-		const planStatusTag = statusTag(plan.status, StatusTag);
+		const planStatus = statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
-		const applicationLinkNoStage = `/applicationPage/${req.params['refNum']}/`;
-		const currentApplicationLink = `/applicationPage/${req.params['refNum']}/${plan.stage}`;
+		const applicationBase = `/applicationPage/${req.params.refNum}`;
+		const currentApplicationLink = `${applicationBase}/${plan.stage}`;
+		const applicationLink = (stage: number) => `${applicationBase}/${stage}`;
 
-		//button logic
-		let button = null;
-		if (plan.status === STATUS.ReadyToStart) {
-			button = 'Start ' + currentStage + ' submission';
-		}
+		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
 
-		//notification banner logic
-		let notificationBanner = null;
-		if (plan.status === STATUS.ActionNeeded) {
-			notificationBanner = true;
-		}
+		const notificationBanner = plan.status === STATUS.ActionNeeded;
 
-		//plan process tag logic
+		// Task list tags and links based on current stage
 		let tagG2, tagG3, tagE;
 		let dateTextG2, dateTextG3, dateTextE;
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
-		tagG2 = tagG3 = tagE = 'Cannot start yet';
+		tagG2 = tagG3 = tagE = renderTag({ label: 'Cannot start yet', class: '' });
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		switch (plan.stage) {
 			case STAGE.Gateway2:
 				hrefG2 = currentApplicationLink;
-				tagG2 = planStatusTag;
+				tagG2 = planStatus;
 				break;
 			case STAGE.Gateway3:
 				dateTextG2 = 'Completed on:';
-				hrefG2 = applicationLinkNoStage + `${STAGE.Gateway2}`;
+				hrefG2 = applicationLink(STAGE.Gateway2);
 				hrefG3 = currentApplicationLink;
-				tagG2 = 'Completed';
-				tagG3 = planStatusTag;
+				tagG2 = renderTag({ label: 'Completed', class: '' });
+				tagG3 = planStatus;
 				break;
 			case STAGE.Examination:
-				hrefG2 = applicationLinkNoStage + `${STAGE.Gateway2}`;
-				hrefG3 = applicationLinkNoStage + `${STAGE.Gateway3}`;
+				hrefG2 = applicationLink(STAGE.Gateway2);
+				hrefG3 = applicationLink(STAGE.Gateway3);
 				hrefE = currentApplicationLink;
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
-					tagG2 = tagG3 = tagE = 'Completed';
+					tagG2 = tagG3 = tagE = renderTag({ label: 'Completed', class: '' });
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed on: ';
-					tagE = planStatusTag;
-					tagG2 = tagG3 = 'Completed';
+					tagE = planStatus;
+					tagG2 = tagG3 = renderTag({ label: 'Completed', class: '' });
 				}
 				break;
 		}
@@ -95,7 +90,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			pageCaption: planRef,
 			pageTitle: plan.title,
 			currentStage,
-			planStatusTag,
+			planStatus,
 			status: plan.status,
 			leadLPA: plan.leadLPA,
 			linkedLPA: plan.linkedLPA,

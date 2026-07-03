@@ -55,10 +55,9 @@ function cleanHtml(html: string) {
 		.trim();
 }
 
-//takes status and mapping of label and class returns tags
-function statusTag(status: Status, tagMap: typeof StatusTag) {
-	const s = tagMap?.[status];
-	return `<strong class="${s?.class ?? ''}">${s?.label ?? 'Unknown'}</strong>`;
+function statusTag(status: Status) {
+	const s = StatusTag[status as keyof typeof StatusTag];
+	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
 }
 
 describe('plan page', () => {
@@ -98,7 +97,7 @@ describe('plan page', () => {
 				const expectedBanClass = 'class="govuk-notification-banner__heading"';
 				const expectedBanHeading = 'Action needed: Gateway 2 submission incomplete';
 
-				assert.strictEqual(data.notificationBanner, null);
+				assert.strictEqual(data.notificationBanner, false);
 				assert.ok(!html.includes(expectedBanClass), `expected html not to contain ${expectedBanClass}`);
 				assert.ok(!html.includes(expectedBanHeading), `expected html not to contain ${expectedBanHeading}`);
 			});
@@ -136,25 +135,16 @@ describe('plan page', () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
 
 		const expectedTags = [
-			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to start' },
-			{ className: 'govuk-tag govuk-tag--blue', text: 'In progress' },
-			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
-			{ className: 'govuk-tag govuk-tag--red', text: 'Action needed' },
-			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },
-			{ className: 'govuk-body', text: 'Completed' }
+			'<strong class="govuk-tag govuk-tag--green">Ready to start</strong>',
+			'<strong class="govuk-tag govuk-tag--blue">In progress</strong>',
+			'<strong class="govuk-tag govuk-tag--yellow">With PINS</strong>',
+			'<strong class="govuk-tag govuk-tag--red">Action needed</strong>',
+			'<strong class="govuk-tag govuk-tag--grey">Invalid</strong>',
+			'Completed'
 		];
 
-		const rawTagClass = data.planStatusTag.match(/"([^"]+)"/)?.[1].trim();
-		const rawTagText = data.planStatusTag.match(/>([^<]+)</)?.[1].trim();
-
-		assert.ok(
-			expectedTags.some((tag) => tag.className === rawTagClass && tag.text === rawTagText),
-			`Expected one of ${expectedTags} but got ${rawTagClass}, ${rawTagText}`
-		);
-		assert.ok(
-			html.includes(`<strong class="${rawTagClass}">${rawTagText}</strong>`),
-			`expected <strong class="${rawTagClass}">${rawTagText}</strong>`
-		);
+		assert.ok(expectedTags.includes(data.planStatus), `Expected one of ${expectedTags} but got ${data.planStatus}`);
+		assert.ok(html.includes(data.planStatus), `expected html to contain ${data.planStatus}`);
 	});
 
 	it('should render button with correct link if status == ready to start', async () => {
@@ -230,7 +220,7 @@ describe('plan page', () => {
 			'<div class="govuk-task-list__status" id="task-list-2-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>';
 
 		for (let i = 0; i < expectedTags.length; i++) {
-			assert.strictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
+			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
 		}
 
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
@@ -250,11 +240,11 @@ describe('plan page', () => {
 				const plan = { refNum: refNum.replace('PLAN-', 'PLAN/'), stage: STAGE.Gateway2, status };
 				const { data } = await renderPlan({ refNum }, plan);
 
-				const expectedTags = [statusTag(status, StatusTag), 'Cannot start yet', 'Cannot start yet'];
+				const expectedTags = [statusTag(status), 'Cannot start yet', 'Cannot start yet'];
 				const tags = [data.tagG2, data.tagG3, data.tagE];
 
 				for (let j = 0; j < expectedTags.length; j++) {
-					assert.strictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
+					assert.deepStrictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
 				}
 			});
 		}
@@ -288,7 +278,7 @@ describe('plan page', () => {
 		const expectedHTML = `<div class="govuk-task-list__status" id="task-list-3-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>`;
 
 		for (let i = 0; i < expectedTags.length; i++) {
-			assert.strictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
+			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
 		}
 
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
@@ -308,11 +298,11 @@ describe('plan page', () => {
 				const plan = { refNum: refNum.replace('PLAN-', 'PLAN/'), stage: STAGE.Gateway3, status };
 				const { data } = await renderPlan({ refNum }, plan);
 
-				const expectedTags = ['Completed', statusTag(status, StatusTag), 'Cannot start yet'];
+				const expectedTags = ['Completed', statusTag(status), 'Cannot start yet'];
 				const tags = [data.tagG2, data.tagG3, data.tagE];
 
 				for (let j = 0; j < expectedTags.length; j++) {
-					assert.strictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
+					assert.deepStrictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
 				}
 			});
 		}
@@ -346,7 +336,7 @@ describe('plan page', () => {
 		const expectedHTML = `<div class="govuk-task-list__status" id="task-list-4-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>`;
 
 		for (let i = 0; i < expectedTags.length; i++) {
-			assert.strictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
+			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
 		}
 
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
@@ -365,11 +355,11 @@ describe('plan page', () => {
 				const plan = { refNum: refNum.replace('PLAN-', 'PLAN/'), stage: STAGE.Examination, status };
 				const { data } = await renderPlan({ refNum }, plan);
 
-				const expectedTags = ['Completed', 'Completed', statusTag(status, StatusTag)];
+				const expectedTags = ['Completed', 'Completed', statusTag(status)];
 				const tags = [data.tagG2, data.tagG3, data.tagE];
 
 				for (let j = 0; j < expectedTags.length; j++) {
-					assert.strictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
+					assert.deepStrictEqual(expectedTags[j], tags[j], `expected ${expectedTags[j]} but got ${tags[j]}`);
 				}
 			});
 		}
@@ -398,7 +388,7 @@ describe('plan page', () => {
 		const tags = [data.tagG2, data.tagG3, data.tagE];
 
 		for (let i = 0; i < expectedTags.length; i++) {
-			assert.strictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
+			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
 		}
 	});
 
