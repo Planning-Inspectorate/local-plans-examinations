@@ -170,6 +170,7 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 	const validSections = (section: unknown): section is State[] =>
 		Array.isArray(section) && section.length === 3 && section.every(validState);
 
+	// TODO: need to check date format when we find out the format from BO
 	const dateStages = ['G1', 'G2', 'G3', 'E'];
 	const validDates = (date: unknown) =>
 		date !== null &&
