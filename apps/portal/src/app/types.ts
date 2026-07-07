@@ -53,7 +53,7 @@ export const StatusLabel: Record<Status, string> = {
 	0: 'Ready to start',
 	1: 'In progress',
 	2: 'With PINS',
-	3: 'Action needed',
+	3: 'Action required',
 	4: 'Invalid',
 	5: 'Completed'
 };
@@ -96,7 +96,7 @@ export const StatusTag = {
 	0: { label: 'Ready to start', class: 'govuk-tag govuk-tag--green' },
 	1: { label: 'In progress', class: 'govuk-tag govuk-tag--blue' },
 	2: { label: 'With PINS', class: 'govuk-tag govuk-tag--yellow' },
-	3: { label: 'Action needed', class: 'govuk-tag govuk-tag--red' },
+	3: { label: 'Action required', class: 'govuk-tag govuk-tag--red' },
 	4: { label: 'Invalid', class: 'govuk-tag govuk-tag--grey' },
 	5: { label: 'Completed', class: 'govuk-body' }
 } as const;

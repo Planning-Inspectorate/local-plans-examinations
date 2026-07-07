@@ -32,7 +32,9 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 
 			//maps tags to their classes and the text
 			mappedPlans = validPlans.map((plan) => [
-				{ html: `<a class="govuk-link" href="/planPage/${plan.refNum.replace('/', '-')}">${plan.refNum}</a>` },
+				{
+					html: `<a class="govuk-link" href="/manage-local-plans/${plan.refNum.replace('/', '-')}">${plan.refNum}</a>`
+				},
 				{ text: plan.leadLPA },
 				{ text: plan.title },
 				{ text: StageLabel[plan.stage] },
