@@ -79,7 +79,7 @@ describe('plan page', () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
 
 		const expectedBanClass = 'class="govuk-notification-banner__heading"';
-		const expectedBanHeading = 'Action needed: Gateway 2 submission incomplete';
+		const expectedBanHeading = 'Action required: Gateway 2 submission incomplete';
 
 		assert.strictEqual(data.notificationBanner, true);
 		assert.ok(html.includes(expectedBanClass), `expected html to contain ${expectedBanClass}`);
@@ -140,7 +140,7 @@ describe('plan page', () => {
 				const { data, html } = await renderPlan({ refNum }, plan);
 
 				const expectedBanClass = 'class="govuk-notification-banner__heading"';
-				const expectedBanHeading = 'Action needed: Gateway 2 submission incomplete';
+				const expectedBanHeading = 'Action required: Gateway 2 submission incomplete';
 
 				assert.strictEqual(data.notificationBanner, false);
 				assert.ok(!html.includes(expectedBanClass), `expected html not to contain ${expectedBanClass}`);
@@ -183,7 +183,7 @@ describe('plan page', () => {
 			'<strong class="govuk-tag govuk-tag--green">Ready to start</strong>',
 			'<strong class="govuk-tag govuk-tag--blue">In progress</strong>',
 			'<strong class="govuk-tag govuk-tag--yellow">With PINS</strong>',
-			'<strong class="govuk-tag govuk-tag--red">Action needed</strong>',
+			'<strong class="govuk-tag govuk-tag--red">Action required</strong>',
 			'<strong class="govuk-tag govuk-tag--grey">Invalid</strong>',
 			'Completed'
 		];

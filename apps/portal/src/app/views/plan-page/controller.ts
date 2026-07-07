@@ -91,7 +91,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			linkedLPA: plan.linkedLPA,
 			button,
 			notificationBanner,
-			backLinkUrl: '/your-plans',
+			backLinkUrl: '/manage-local-plans/your-plans',
 			backLinkText: 'Back to my plans',
 			currentApplicationLink,
 			...viewModel
