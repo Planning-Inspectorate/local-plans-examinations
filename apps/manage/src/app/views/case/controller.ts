@@ -14,6 +14,7 @@ const CONTACTS_SECTION = 'contacts';
 interface CaseFormInput {
 	planTitle?: string;
 	planType?: string;
+	planBand?: string;
 	caseOfficer?: string;
 	lpa?: string;
 	lpaCode?: string;
@@ -96,6 +97,7 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 	const {
 		planTitle,
 		planType,
+		planBand,
 		caseOfficer,
 		lpa,
 		firstName,
@@ -119,6 +121,7 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 	return {
 		planTitle,
 		planType,
+		planBand,
 		caseOfficer,
 		programmeOfficer,
 		examinationWebsite,

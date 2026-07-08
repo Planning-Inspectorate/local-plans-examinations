@@ -35,7 +35,7 @@ describe('Case overview', () => {
 		caseOverviewPage.verifySummaryRowContains('Plan title', 'Cypress Test Plan');
 		caseOverviewPage.verifySummaryRowContains('Plan type', 'Local Plan');
 		caseOverviewPage.verifySummaryRowContains(
-			'Local Planning Authorities',
+			'Local Planning Authority',
 			'Local Planning Authority 1',
 			'Local Planning Authority 2'
 		);
@@ -50,7 +50,7 @@ describe('Case overview', () => {
 			'Johnson',
 			'bob@lpa.gov.uk'
 		);
-		caseOverviewPage.verifySummaryRowContains('Programme officer', 'Not started');
+		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
 		caseOverviewPage.verifyExpectedActionLinkHrefs();
 	});
 });

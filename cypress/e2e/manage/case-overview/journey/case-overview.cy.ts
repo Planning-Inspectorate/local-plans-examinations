@@ -68,12 +68,12 @@ describe('Case overview updates', () => {
 	it('answers an empty overview question and updates the overview row', () => {
 		const programmeOfficer = 'Programme Officer 1';
 
-		caseOverviewPage.verifySummaryRowContains('Programme officer', 'Not started');
-		caseOverviewPage.openActionLinkFor('Programme officer');
+		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
+		caseOverviewPage.openActionLinkFor('Programme Officer');
 		caseOverviewProgrammeOfficerPage.verifyLoaded();
 		caseOverviewProgrammeOfficerPage.enterProgrammeOfficer(programmeOfficer);
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
-		caseOverviewPage.verifySummaryRowContains('Programme officer', programmeOfficer);
+		caseOverviewPage.verifySummaryRowContains('Programme Officer', programmeOfficer);
 	});
 });
