@@ -31,11 +31,11 @@
 	</script>
 	{% block backLink %}
 		{% if backLinkUrl and backLinkText %}
-			{{ govukBackLink({ text: backLinkText, href: backLinkUrl }) }}
+			{{ govukBackLink({ text: backLinkText, href: backLinkUrl, attributes: { "data-cy": "back-link" } }) }}
 		{% elseif backLinkUrl %}
-			{{ govukBackLink({ href: backLinkUrl }) }}
+			{{ govukBackLink({ href: backLinkUrl, attributes: { "data-cy": "back-link" } }) }}
 		{% elseif backLink %} {# used by the dynamic forms #}
-			{{ govukBackLink({ href: backLink }) }}
+			{{ govukBackLink({ href: backLink, attributes: { "data-cy": "back-link" } }) }}
 		{% endif %}
 	{% endblock %}
 	{% block error_summary %}

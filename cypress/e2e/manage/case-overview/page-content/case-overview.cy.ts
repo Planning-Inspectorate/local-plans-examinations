@@ -40,6 +40,7 @@ describe('Case overview', () => {
 			'Local Planning Authority 2'
 		);
 		caseOverviewPage.verifySummaryRowContains('Case officer', 'Case Officer 1');
+		caseOverviewPage.verifySummaryRowContains('Plan band', 'Not started');
 		caseOverviewPage.verifySummaryRowContains(
 			'Contact details',
 			'Jane',
@@ -52,5 +53,6 @@ describe('Case overview', () => {
 		);
 		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
 		caseOverviewPage.verifyExpectedActionLinkHrefs();
+		caseOverviewPage.verifyDeleteCaseButton();
 	});
 });

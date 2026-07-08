@@ -15,6 +15,7 @@ const summaryRows = [
 	'Plan type',
 	'Local Planning Authority',
 	'Case officer',
+	'Plan band',
 	'Contact details',
 	'Programme Officer',
 	'Examination website',
@@ -33,6 +34,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	['Plan type', /^\/case\/.+\/overview\/case-details\/plan-type$/],
 	['Local Planning Authority', /^\/case\/.+\/overview\/case-details\/check-lpas$/],
 	['Case officer', /^\/case\/.+\/overview\/case-details\/case-officer$/],
+	['Plan band', /^\/case\/.+\/overview\/case-details\/plan-band$/],
 	['Contact details', /^\/case\/.+\/overview\/contacts\/check-contact-details$/],
 	['Programme Officer', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
 	['Examination website', /^\/case\/.+\/overview\/contacts\/examination-website$/],
@@ -59,20 +61,8 @@ export class CaseOverviewPage extends BasePage {
 		return cy.contains('h2', text);
 	}
 
-	summaryRow(key: string) {
-		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
-	}
-
-	summaryRowValue(key: string) {
-		return this.summaryRow(key).find('.govuk-summary-list__value');
-	}
-
-	summaryRowActions(key: string) {
-		return this.summaryRow(key).find('.govuk-summary-list__actions');
-	}
-
 	overviewActionLinkFor(key: string) {
-		return this.summaryRowActions(key).find('a');
+		return this.summaryRowActionLink(key);
 	}
 
 	verifyLoaded(planTitle?: string) {
@@ -132,6 +122,10 @@ export class CaseOverviewPage extends BasePage {
 
 	openActionLinkFor(key: string) {
 		this.overviewActionLinkFor(key).should('be.visible').click();
+	}
+
+	verifyDeleteCaseButton() {
+		cy.contains('button.govuk-button', 'Delete case').should('be.visible');
 	}
 }
 

@@ -1,6 +1,7 @@
 import {
 	caseOverviewContactDetailsListPage,
 	caseOverviewPage,
+	caseOverviewPlanBandPage,
 	caseOverviewPlanTitlePage,
 	caseOverviewPlanTypePage,
 	caseOverviewProgrammeOfficerPage
@@ -75,5 +76,13 @@ describe('Case overview updates', () => {
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
 		caseOverviewPage.verifySummaryRowContains('Programme Officer', programmeOfficer);
+	});
+
+	it('returns to overview from the plan band back link', () => {
+		caseOverviewPage.openActionLinkFor('Plan band');
+		caseOverviewPlanBandPage.verifyLoaded();
+		caseOverviewPlanBandPage.goBack();
+
+		caseOverviewPage.verifyLoaded('Cypress Test Plan');
 	});
 });
