@@ -50,12 +50,32 @@ export class BasePage {
 		return cy.getByData('button-save-and-continue');
 	}
 
+	get backLink() {
+		return cy.getByData('back-link');
+	}
+
 	get addListItemButton() {
 		return cy.getByData('add-list-item');
 	}
 
 	get manageListSummary() {
 		return cy.getByData('manage-list-summary');
+	}
+
+	summaryRow(key: string) {
+		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
+	}
+
+	summaryRowValue(key: string) {
+		return this.summaryRow(key).find('.govuk-summary-list__value');
+	}
+
+	summaryRowActions(key: string) {
+		return this.summaryRow(key).find('.govuk-summary-list__actions');
+	}
+
+	summaryRowActionLink(key: string) {
+		return this.summaryRowActions(key).find('a');
 	}
 
 	listItemRemoveLink(index = 1) {
@@ -88,6 +108,10 @@ export class BasePage {
 
 	saveAndContinue() {
 		this.saveAndContinueButton.should('be.visible').click();
+	}
+
+	goBack() {
+		this.backLink.should('be.visible').click();
 	}
 
 	addListItem() {
