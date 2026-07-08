@@ -13,6 +13,10 @@ export class PlanDetailsPage extends BasePage {
 		return cy.getByData('plan-details-action');
 	}
 
+	get planProgress() {
+		return cy.get('section[aria-labelledby="plan-progress-heading"]');
+	}
+
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 	}
@@ -52,11 +56,11 @@ export class PlanDetailsPage extends BasePage {
 	}
 
 	verifyPlanProgressHeading() {
-		cy.contains('h2', 'Plan progress').should('be.visible');
+		this.planProgress.find('#plan-progress-heading').should('be.visible').and('contain.text', 'Plan progress');
 	}
 
 	progressRows() {
-		return cy.contains('h2', 'Plan progress').next('.govuk-task-list').find('.govuk-task-list__item');
+		return this.planProgress.find('.govuk-task-list__item');
 	}
 
 	verifyPlanProgressRowsInOrder(...stages: string[]) {
@@ -68,7 +72,7 @@ export class PlanDetailsPage extends BasePage {
 	}
 
 	progressRow(title: string) {
-		return cy.contains('.govuk-task-list__item', title);
+		return cy.contains('section[aria-labelledby="plan-progress-heading"] .govuk-task-list__item', title);
 	}
 
 	verifyProgressRow(title: string, hint: string, status: string) {
