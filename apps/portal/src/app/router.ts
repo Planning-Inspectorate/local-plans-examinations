@@ -8,6 +8,9 @@ import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monito
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
+import { createApplicationDeclarationRoutes } from './views/gateway-2-application/application-declaration/index.ts';
+import { createGateway2ApplicationRoutes } from './views/gateway-2-application/index.ts';
+import { createApplicationCompleteRoutes } from './views/gateway-2-application/application-complete/index.ts';
 
 /**
  * Main app router
@@ -27,6 +30,15 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use('/', createHomeRoutes(service));
 	router.use('/', createCookiesRoutes());
 	router.use('/error', createErrorRoutes(service));
+	router.use(
+		'/manage-local-plans/:reference/gateway-2-application/application-declaration',
+		createApplicationDeclarationRoutes(service)
+	);
+	router.use('/manage-local-plans/:reference/gateway-2-application', createGateway2ApplicationRoutes());
+	router.use(
+		'/manage-local-plans/:reference/gateway-2-application/application-complete',
+		createApplicationCompleteRoutes()
+	);
 
 	return router;
 }
