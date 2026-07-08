@@ -20,7 +20,7 @@ describe('Plan details journey', () => {
 
 			planDetailsPage.backLink.click();
 
-			cy.location('pathname').should('eq', '/manage-local-plans/your-plans');
+			portalLandingPage.verifyLoaded();
 			portalLandingPage.verifyHeading('My plans');
 		});
 	});

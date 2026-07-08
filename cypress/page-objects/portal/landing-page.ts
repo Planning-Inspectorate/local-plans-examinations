@@ -2,7 +2,7 @@ import { BasePage } from '../base-page.ts';
 
 export class PortalLandingPage extends BasePage {
 	constructor() {
-		super('/landingPage');
+		super('/manage-local-plans/your-plans');
 	}
 
 	openPlan(reference: string) {
