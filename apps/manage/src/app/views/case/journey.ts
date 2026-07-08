@@ -7,8 +7,9 @@ export const JOURNEY_ID = 'edit-case-overview';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions);
+	const overviewUrl = req.baseUrl + '/overview';
 
-	return new Journey({
+	const journey = new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
 			new Section('Overview', 'case-details')
@@ -38,7 +39,26 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		journeyTitle: 'Manage case',
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl + '/overview',
-		initialBackLink: req.baseUrl + '/overview',
+		initialBackLink: overviewUrl,
 		response
 	});
+
+	return useOverviewBackLinks(journey, overviewUrl);
+}
+
+function useOverviewBackLinks(journey: Journey, overviewUrl: string): Journey {
+	const getBackLink = journey.getBackLink.bind(journey);
+
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		const { params, manageListQuestion } = options;
+		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
+
+		if (!manageListQuestion && !isManageListStep) {
+			return overviewUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	return journey;
 }
