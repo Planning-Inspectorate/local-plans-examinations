@@ -1,0 +1,15 @@
+{
+	"reference": "PLAN/001",
+	"urlReference": "PLAN-001",
+	"title": "East Borough Local Plan",
+	"currentStage": "Gateway 2",
+	"status": "Ready to start",
+	"leadLpa": "Southampton City Council",
+	"linkedLpa": "Romsey Town Council",
+	"dates": {
+		"gateway1": "7 May 2026",
+		"gateway2": "21 July 2026",
+		"gateway3": "1 August 2026",
+		"examination": "1 September 2026"
+	}
+}

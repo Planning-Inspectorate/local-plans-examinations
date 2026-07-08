@@ -137,10 +137,12 @@ describe('landing page', () => {
 
 		for (const plan of data.plans) {
 			const expectedRefNum = plan[0].html.match(/>([^<]+)</)?.[1]; // 0 for first cell - where link should be
-			const expectedHref = '/planPage/' + expectedRefNum.replace('/', '-');
+			const expectedHref = '/manage-local-plans/' + expectedRefNum.replace('/', '-');
 
 			assert.ok(expectedRefNum.includes('PLAN'), `expected ref to contain PLAN`);
-			assert.ok(html.includes(`<a class="govuk-link" href="${expectedHref}">${expectedRefNum}</a>`));
+			assert.ok(
+				html.includes(`<a class="govuk-link" data-cy="plan-link" href="${expectedHref}">${expectedRefNum}</a>`)
+			);
 		}
 	});
 
@@ -155,7 +157,7 @@ describe('landing page', () => {
 			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to start' },
 			{ className: 'govuk-tag govuk-tag--blue', text: 'In progress' },
 			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
-			{ className: 'govuk-tag govuk-tag--red', text: 'Action needed' },
+			{ className: 'govuk-tag govuk-tag--red', text: 'Action required' },
 			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },
 			{ className: 'govuk-body', text: 'Completed' }
 		];

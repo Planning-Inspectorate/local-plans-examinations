@@ -392,7 +392,7 @@ describe('buildSubmitOtpPage', () => {
 
 		await handler(req, res);
 
-		assertRedirect(res, '/landingPage');
+		assertRedirect(res, '/manage-local-plans/your-plans');
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		const updateArgs = service.db.oneTimePassword.update.mock.calls[0].arguments[0];
 		assert.strictEqual(updateArgs.data.attempts, 0);

@@ -297,7 +297,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 
 			logger.info({ email }, 'OTP verification success');
-			return res.redirect(`/landingPage`);
+			return res.redirect('/manage-local-plans/your-plans');
 		} catch (error) {
 			logger.error({ error, email }, 'Error during OTP verification');
 			return res.render('views/login/enter-otp.njk', {

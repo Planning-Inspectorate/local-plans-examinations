@@ -4,6 +4,7 @@ import { createErrorRoutes } from './views/static/error/index.ts';
 import { createCookiesRoutes } from './views/static/cookies/index.ts';
 import { createHomeRoutes } from './views/home/index.ts';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
+import { createPlanPageRoutes } from './views/plan-page/index.ts';
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
@@ -27,6 +28,8 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use(cacheNoCacheMiddleware);
 	router.use('/login', createLoginRoutes(service));
 	router.use('/landingPage', createLandingPageRoutes(service));
+	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));
+	router.use('/manage-local-plans', createPlanPageRoutes(service));
 	router.use('/', createHomeRoutes(service));
 	router.use('/', createCookiesRoutes());
 	router.use('/error', createErrorRoutes(service));
