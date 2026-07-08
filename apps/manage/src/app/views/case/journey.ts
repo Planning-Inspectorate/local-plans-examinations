@@ -15,7 +15,8 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
 				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa)))
-				.addQuestion(questions.caseOfficer),
+				.addQuestion(questions.caseOfficer)
+				.addQuestion(questions.planBand),
 			new Section('Contacts', 'contacts')
 				.addQuestion(
 					questions.checkContactDetails,

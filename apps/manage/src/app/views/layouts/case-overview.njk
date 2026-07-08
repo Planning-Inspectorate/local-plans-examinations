@@ -1,14 +1,13 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
-
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block pageContent %}
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
 
 {{ govukServiceNavigation({
-  attributes: { "id": "service-navigation", "data-cy": "service-navigation" },
   navigation: [
     {
       href: "#",
@@ -58,5 +57,9 @@
             {% endfor %}
         </div>
     </div>
+  {{ govukButton({
+    text: "Delete",
+    classes: "govuk-button--warning"
+  }) }}
 {% endblock %}
 
