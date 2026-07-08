@@ -3,13 +3,14 @@ import type { Request } from 'express';
 import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/manage-list-section.js';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 
-export const JOURNEY_ID = 'edit-case-overview';
+export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
+export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions);
 
 	return new Journey({
-		journeyId: JOURNEY_ID,
+		journeyId: OVERVIEW_JOURNEY_ID,
 		sections: [
 			new Section('Overview', 'case-details')
 				.addQuestion(questions.planTitle)
@@ -38,6 +39,28 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl + '/overview',
 		initialBackLink: req.baseUrl + '/overview',
+		response
+	});
+}
+
+export function gateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	return new Journey({
+		journeyId: GATEWAY_1_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 1', 'gateway-1')
+				.addQuestion(questions.noticeOfIntentionPublishDate)
+				.addQuestion(questions.gateway1estimatedDate)
+				.addQuestion(questions.gateway1ActualDate)
+				.addQuestion(questions.slaSentDate)
+				.addQuestion(questions.slaReceivedDate)
+				.addQuestion(questions.dsaCheck)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Gateway 1',
+		returnToListing: false,
+		makeBaseUrl: () => req.baseUrl + '/gateway-1',
+		initialBackLink: req.baseUrl + '/gateway-1',
 		response
 	});
 }

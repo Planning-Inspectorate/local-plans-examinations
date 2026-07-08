@@ -1,11 +1,26 @@
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { JOURNEY_ID } from './journey.ts';
+import { GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
 import type { Request, Response } from 'express';
 import type { Prisma } from '@pins/local-plans-database/src/client/client.ts';
+import { getDateFieldNames } from './questions.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
+
+/** Maps the first URL segment of the case router to its journey ID. */
+const JOURNEY_ID_BY_SEGMENT: Record<string, string> = {
+	overview: OVERVIEW_JOURNEY_ID,
+	'gateway-1': GATEWAY_1_JOURNEY_ID
+};
+
+/** Derives the journey ID from the request path, e.g. '/gateway-1/...' -> 'gateway-1'. */
+function getJourneyId(req: Request): string {
+	const segment = req.path.split('/').filter(Boolean)[0] ?? '';
+	const journeyId = JOURNEY_ID_BY_SEGMENT[segment];
+	if (!journeyId) throw new Error(`no journey ID mapped for path '${segment}'`);
+	return journeyId;
+}
 
 /** The section within the case overview journey being edited. */
 const CONTACTS_SECTION = 'contacts';
@@ -32,6 +47,12 @@ interface CaseFormInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+	noticeOfIntention?: string;
+	estimatedGateway1Date?: string;
+	completedGateway1Date?: string;
+	slaSentDate?: string;
+	slaReceivedDate?: string;
+	dsaChecked?: string;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -52,19 +73,19 @@ export function updateCaseField(service: ManageService) {
 			return;
 		}
 
-		const input = processInputForDB(req.body as CaseFormInput);
+		const formData = trimStringValues(req.body as CaseFormInput);
 
 		if (action === 'edit' && section === CONTACTS_SECTION) {
 			await db.contact.update({
 				where: { id: currentItemId },
-				data: buildContactData(input)
+				data: buildContactData(formData)
 			});
 			return;
 		}
 
 		await db.case.update({
 			where: { reference },
-			data: buildCaseData(input, currentItemId)
+			data: buildCaseData(formData, currentItemId)
 		});
 	};
 }
@@ -92,7 +113,8 @@ async function removeItem({
 }
 
 /** Builds the `data` payload for a case update (scalar fields + contact/LPA nesting). */
-function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.CaseUpdateInput {
+function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.CaseUpdateInput {
+	// get scalar values
 	const {
 		planTitle,
 		planType,
@@ -111,8 +133,27 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 		examiningInspector3,
 		qaInspector1,
 		qaInspector2,
-		qaInspector3
-	} = input;
+		qaInspector3,
+		dsaChecked
+	} = formData;
+
+	// convert date fields into Date objects
+	const dateFieldNames = getDateFieldNames();
+	const dateParts = formData as Record<string, string | undefined>;
+	const dates = Object.fromEntries(
+		dateFieldNames.flatMap((fieldName): [string, Date][] => {
+			const day = Number(dateParts[fieldName + '_day']);
+			const month = Number(dateParts[fieldName + '_month']);
+			const year = Number(dateParts[fieldName + '_year']);
+
+			if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) {
+				return [];
+			}
+
+			const date = new Date(year, month - 1, day);
+			return Number.isNaN(date.getTime()) ? [] : [[fieldName, date]];
+		})
+	);
 
 	const hasContact = Boolean(firstName || lastName || email || phone);
 
@@ -130,7 +171,9 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 		qaInspector1,
 		qaInspector2,
 		qaInspector3,
-		contacts: hasContact ? { create: buildContactData(input) } : undefined,
+		...dates,
+		dsaChecked,
+		contacts: hasContact ? { create: buildContactData(formData) } : undefined,
 		lpas: lpa
 			? {
 					connectOrCreate: lpaConnectOrCreate(lpa),
@@ -141,8 +184,8 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 }
 
 /** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(input: CaseFormInput): Prisma.ContactCreateWithoutCasesInput {
-	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = input;
+function buildContactData(formData: CaseFormInput): Prisma.ContactCreateWithoutCasesInput {
+	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
 	return {
 		firstName,
 		lastName,
@@ -171,7 +214,7 @@ function getReference(req: Request): string {
 }
 
 /** * Trims every string value on the form input. * Returns a new object rather than mutating the request body. */
-export function processInputForDB<T extends object>(input: T): T {
+export function trimStringValues<T extends object>(input: T): T {
 	const trimmed = {} as T;
 	for (const key in input) {
 		const value = input[key];
@@ -206,7 +249,8 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			res.locals.planTitle = currentCase.planTitle;
 			res.locals.reference = currentCase.reference;
 
-			const journeyResponse = new JourneyResponse(JOURNEY_ID, '', currentCase);
+			const journeyId = getJourneyId(req);
+			const journeyResponse = new JourneyResponse(journeyId, '', currentCase);
 			journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
 				id: lpa.lpaCode,
 				lpa: lpa.lpaCode
@@ -221,6 +265,49 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			logger.error(`Unable to fetch case ${reference} ${error}`);
 		}
 
+		res.locals.navigation = createNavigationParameters(req.url, reference);
+
 		if (next) next();
 	};
+}
+
+function createNavigationParameters(path: string, reference: string) {
+	const baseUrl = `/case/${encodeURIComponent(reference)}`;
+	return [
+		{
+			href: `${baseUrl}/overview`,
+			text: 'Overview',
+			active: `${baseUrl}/overview`.includes(path)
+		},
+		{
+			href: '#',
+			text: 'Timetable',
+			active: '#'.includes(path)
+		},
+		{
+			href: `${baseUrl}/gateway-1`,
+			text: 'Gateway 1',
+			active: `${baseUrl}/gateway-1`.includes(path)
+		},
+		{
+			href: '#',
+			text: 'Gateway 2',
+			active: '#'.includes(path)
+		},
+		{
+			href: '#',
+			text: 'Gateway 3',
+			active: '#'.includes(path)
+		},
+		{
+			href: '#',
+			text: 'Examination',
+			active: '#'.includes(path)
+		},
+		{
+			href: '#',
+			text: 'Case History',
+			active: '#'.includes(path)
+		}
+	];
 }

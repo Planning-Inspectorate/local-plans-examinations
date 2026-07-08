@@ -46,8 +46,13 @@ model Case {
   gateway3Date            DateTime?
   submissionDate          DateTime?
   createdAt               DateTime  @default(now())
-
-  gateways Gateway[]
+  noticeOfIntention       DateTime?
+  estimatedGateway1Date   DateTime?
+  completedGateway1Date   DateTime?
+  slaSentDate             DateTime?
+  slaReceivedDate         DateTime?
+  dsaChecked              String?
+  gateways                Gateway[]
 }
 
 model LPA {

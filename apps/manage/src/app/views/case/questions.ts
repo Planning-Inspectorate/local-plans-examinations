@@ -14,8 +14,6 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-export const JOURNEY_ID = 'edit-case-overview';
-
 const caseOverviewQuestions: Record<string, QuestionProps> = {
 	planTitle: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -236,7 +234,74 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
 		validators: [new RequiredValidator('Input QA Inspector 3')]
+	},
+	noticeOfIntentionPublishDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Notice of Intention published?',
+		fieldName: 'noticeOfIntention',
+		url: 'notice-of-intention-publish-date',
+		title: 'Notice of Intention publish date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'notice-of-intention-publish-date' }
+	},
+	gateway1estimatedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the estimated Gateway 1 date?',
+		fieldName: 'estimatedGateway1Date',
+		url: 'estimated-gateway-1-date',
+		title: 'Estimated Gateway 1 date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'estimated-gateway-1-date' }
+	},
+	gateway1ActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was Gateway 1 completed?',
+		fieldName: 'completedGateway1Date',
+		url: 'completed-gateway-1-date',
+		title: 'Completed Gateway 1 date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'completed-gateway-1-date' }
+	},
+	slaSentDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the SLA sent?',
+		fieldName: 'slaSentDate',
+		url: 'sla-sent-date',
+		title: 'SLA sent date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'sla-sent-date' }
+	},
+	slaReceivedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the SLA received?',
+		fieldName: 'slaReceivedDate',
+		url: 'sla-received-date',
+		title: 'SLA received date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'sla-received-date' }
+	},
+	dsaCheck: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Is the DSA checked?',
+		fieldName: 'dsaChecked',
+		url: 'dsa-checked',
+		title: 'DSA checked',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
 	}
 };
 
 export const questions = createQuestions(caseOverviewQuestions, allQuestionClasses, {}, { continueButtonText: 'Save' });
+
+export function getDateFieldNames() {
+	const dateFieldNames: string[] = [];
+	for (const question in caseOverviewQuestions) {
+		if (caseOverviewQuestions[question].type === COMPONENT_TYPES.DATE) {
+			dateFieldNames.push(caseOverviewQuestions[question].fieldName);
+		}
+	}
+	return dateFieldNames;
+}

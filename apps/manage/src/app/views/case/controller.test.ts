@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import type { ManageService } from '#service';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
-import { updateCaseField, processInputForDB, buildGetJourneyMiddleware } from './controller.ts';
+import { updateCaseField, trimStringValues, buildGetJourneyMiddleware } from './controller.ts';
 
 /** * Builds a mock ManageService with mocked Prisma delegates and a mock logger. */
 function createMockService() {
@@ -262,7 +262,7 @@ describe('processInputForDB', () => {
 			caseOfficer: '  officer  ',
 			planType: '  plan type  '
 		};
-		assert.deepEqual(processInputForDB(input), {
+		assert.deepEqual(trimStringValues(input), {
 			caseTitle: 'title',
 			caseOfficer: 'officer',
 			planType: 'plan type'
@@ -271,7 +271,7 @@ describe('processInputForDB', () => {
 
 	it('returns a new object without mutating the input', () => {
 		const input = { planTitle: '  x  ' };
-		const output = processInputForDB(input);
+		const output = trimStringValues(input);
 		assert.notEqual(output, input);
 		assert.equal(input.planTitle, '  x  ');
 		assert.equal(output.planTitle, 'x');
@@ -279,7 +279,7 @@ describe('processInputForDB', () => {
 
 	it('leaves non-string values untouched', () => {
 		const input = { planTitle: '  x  ', count: 3, flag: true, missing: undefined };
-		assert.deepEqual(processInputForDB(input), {
+		assert.deepEqual(trimStringValues(input), {
 			planTitle: 'x',
 			count: 3,
 			flag: true,
@@ -310,7 +310,7 @@ describe('buildGetJourneyMiddleware', () => {
 			}
 		} as unknown as Response;
 
-		const req = { params: { reference } } as unknown as Request;
+		const req = { params: { reference }, path: '/overview' } as unknown as Request;
 		const next = mock.fn();
 
 		return {
