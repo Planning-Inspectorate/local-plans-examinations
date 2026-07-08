@@ -1,0 +1,83 @@
+import { BasePage } from '../../base-page.ts';
+
+export class PlanDetailsPage extends BasePage {
+	constructor() {
+		super();
+	}
+
+	get backLink() {
+		return cy.getByData('back-link');
+	}
+
+	get actionButton() {
+		return cy.getByData('plan-details-action');
+	}
+
+	verifyLoaded() {
+		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
+	}
+
+	verifyServiceNavigation(...links: string[]) {
+		links.forEach((link) => {
+			cy.contains('a', link).should('be.visible');
+		});
+	}
+
+	verifyBackLink(href: string) {
+		this.backLink.should('be.visible').and('contain.text', 'Back to my plans').and('have.attr', 'href', href);
+	}
+
+	verifyCaption(reference: string) {
+		this.pageHeading.find('.govuk-caption-xl').should('be.visible').and('contain.text', reference);
+	}
+
+	summaryRow(key: string) {
+		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
+	}
+
+	summaryRowValue(key: string) {
+		return this.summaryRow(key).find('.govuk-summary-list__value');
+	}
+
+	verifyMetadataValue(key: string, ...expectedText: string[]) {
+		const value = this.summaryRowValue(key).should('be.visible');
+
+		expectedText.forEach((text) => {
+			value.should('contain.text', text);
+		});
+	}
+
+	verifyActionButton(text: string, href: string) {
+		this.actionButton.should('be.visible').and('contain.text', text).and('have.attr', 'href', href);
+	}
+
+	verifyPlanProgressHeading() {
+		cy.contains('h2', 'Plan progress').should('be.visible');
+	}
+
+	progressRows() {
+		return cy.contains('h2', 'Plan progress').next('.govuk-task-list').find('.govuk-task-list__item');
+	}
+
+	verifyPlanProgressRowsInOrder(...stages: string[]) {
+		this.progressRows().should('have.length', stages.length);
+
+		stages.forEach((stage, index) => {
+			this.progressRows().eq(index).should('contain.text', stage);
+		});
+	}
+
+	progressRow(title: string) {
+		return cy.contains('.govuk-task-list__item', title);
+	}
+
+	verifyProgressRow(title: string, hint: string, status: string) {
+		const row = this.progressRow(title).should('be.visible');
+
+		row.should('contain.text', title);
+		row.should('contain.text', hint);
+		row.should('contain.text', status);
+	}
+}
+
+export const planDetailsPage = new PlanDetailsPage();
