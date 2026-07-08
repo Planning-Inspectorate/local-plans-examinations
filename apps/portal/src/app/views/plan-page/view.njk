@@ -113,62 +113,64 @@
     </a>
   {% endif %}
 
-  <h2 class="govuk-heading-m">
-    Plan progress
-  </h2>
+  <section aria-labelledby="plan-progress-heading">
+    <h2 class="govuk-heading-m" id="plan-progress-heading">
+      Plan progress
+    </h2>
 
-  {{ govukTaskList({
-    items: [
-      {
-        title: {
-          text: "Gateway 1 - self-assessment (opens in a new tab)"
+    {{ govukTaskList({
+      items: [
+        {
+          title: {
+            text: "Gateway 1 - self-assessment (opens in a new tab)"
+          },
+          hint: {
+            text: "Completed outside this service on " +  dateG1
+          },
+          href: "#",
+          status: {
+            text: "Completed"
+          }
         },
-        hint: {
-          text: "Completed outside this service on " +  dateG1
+        {
+          title: {
+            text: "Gateway 2 - advisory check"
+          },
+          hint: {
+            text: dateTextG2 + dateG2
+          },
+          href: hrefG2,
+          status: {
+            html: tagG2
+          }
         },
-        href: "#",
-        status: {
-          text: "Completed"
+        {
+          title: {
+            text: "Gateway 3 - readiness check"
+          },
+          hint: {
+            text: dateTextG3 + dateG3
+          },
+          href: hrefG3,
+          status: {
+            html: tagG3
+          }
+        },
+        {
+          title: {
+            text: "Examination"
+          },
+          hint: {
+            text: dateTextE + dateE
+          },
+          href: hrefE,
+          status: {
+            html: tagE
+          }
         }
-      },
-      {
-        title: {
-          text: "Gateway 2 - advisory check"
-        },
-        hint: {
-          text: dateTextG2 + dateG2
-        },
-        href: hrefG2,
-        status: {
-          html: tagG2
-        }
-      },
-      {
-        title: {
-          text: "Gateway 3 - readiness check"
-        },
-        hint: {
-          text: dateTextG3 + dateG3
-        },
-        href: hrefG3,
-        status: {
-          html: tagG3
-        }
-      },
-      {
-        title: {
-          text: "Examination"
-        },
-        hint: {
-          text: dateTextE + dateE
-        },
-        href: hrefE,
-        status: {
-          html: tagE
-        }
-      }
-    ]
-  }) }}
+      ]
+    }) }}
+  </section>
 
   <h2 class = "govuk-heading-m">Assessment information</h2>
 
