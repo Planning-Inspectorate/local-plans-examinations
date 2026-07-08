@@ -83,11 +83,8 @@ export class CheckYourAnswersPage extends BasePage {
 	}
 
 	verifySummaryRow({ key, values, changeHref }: SummaryRowExpectation) {
-		values.forEach((value) => {
-			this.summaryRowValue(key).should('contain.text', value);
-		});
-
-		this.changeLinkFor(key).should('have.attr', 'href', changeHref);
+		this.verifySummaryRowContains(key, ...values);
+		this.verifySummaryRowActionHref(key, changeHref, this.changeLinkFor(key));
 	}
 
 	verifyAnswers(data: CreateCaseData) {

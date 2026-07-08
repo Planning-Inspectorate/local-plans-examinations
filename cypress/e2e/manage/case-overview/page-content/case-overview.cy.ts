@@ -29,6 +29,7 @@ describe('Case overview', () => {
 		manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyBackLink('/');
 		caseOverviewPage.verifyExpectedServiceNavigation();
 		caseOverviewPage.verifyExpectedSectionHeadings();
 		caseOverviewPage.verifyExpectedSummaryRows();
