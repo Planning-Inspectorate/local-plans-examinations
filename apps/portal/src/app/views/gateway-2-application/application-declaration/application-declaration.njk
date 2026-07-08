@@ -1,0 +1,46 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        {{ govukInsetText({
+            text: "Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application. We will take your typed name as your signature."
+        }) }}
+
+        {% if submissionReference %}
+        <p class="govuk-body govuk-!-margin-top-4">
+            <strong>Submission reference:</strong> {{ submissionReference }}
+        </p>
+        {% endif %}
+
+        <form method="post" novalidate>
+            <p class="govuk-body">By submitting this application, I confirm that:</p>
+
+            {{ govukCheckboxes({
+                name: "declaration",
+                errorMessage: errors.declaration if errors,
+                items: [
+                    {
+                        value: "informationTrue",
+                        text: "To the best of your knowledge, the information given in this application and enclosed maps, plans and other documents are true.",
+                        checked: formValues.informationTrue if formValues
+                    },
+                    {
+                        value: "privacyNotice",
+                        checked: formValues.privacyNotice if formValues,
+                        html: 'I have read and agree to The Planning Inspectorate\'s <a href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices" class="govuk-link" target="_blank">privacy notice</a>'
+                    }
+                ]
+            }) }}
+
+            {{ govukButton({
+                text: "Confirm and submit",
+                preventDoubleClick: true
+            }) }}
+        </form>
+    </div>
+</div>
+{% endblock %}
