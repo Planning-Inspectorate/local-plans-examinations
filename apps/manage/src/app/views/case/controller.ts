@@ -216,9 +216,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		try {
 			const currentCase = await db.case.findUnique({
 				where: { reference },
-				include: { lpas: true, contacts: true, caseHistories: {
+				include: {
+					lpas: true,
+					contacts: true,
+					caseHistories: {
 						orderBy: { date: 'desc' }
-					} }
+					}
+				}
 			});
 
 			if (!currentCase) {
@@ -228,6 +232,8 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			// make planTitle and reference easily accessible in the template
 			res.locals.planTitle = currentCase.planTitle;
 			res.locals.reference = currentCase.reference;
+			res.locals.currentCase = currentCase;
+			res.locals.currentSection = req.query.section as string;
 
 			const journeyResponse = new JourneyResponse(journeyId, '', currentCase);
 			journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
@@ -244,6 +250,8 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			logger.error(`Unable to fetch case ${reference} ${error}`);
 		}
 
+		res.locals.navigation = createNavigationParameters(req.url, reference, res.locals.currentSection);
+
 		if (next) next();
 	};
 }
@@ -252,12 +260,12 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 export function addCaseNavigation(): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const reference = getReference(req);
-		res.locals.navigation = createNavigationParameters(req.url, reference);
+		res.locals.navigation = createNavigationParameters(req.url, reference, res.locals.currentSection);
 		if (next) next();
 	};
 }
 
-function createNavigationParameters(path: string, reference: string) {
+function createNavigationParameters(path: string, reference: string, currentSection?: string) {
 	const baseUrl = `/case/${encodeURIComponent(reference)}`;
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/overview` },
@@ -266,10 +274,17 @@ function createNavigationParameters(path: string, reference: string) {
 		{ text: 'Gateway 2', href: '#' },
 		{ text: 'Gateway 3', href: '#' },
 		{ text: 'Examination', href: '#' },
-		{ text: 'Case History', href: '#' }
+		{
+			text: 'Case History',
+			href: `${baseUrl}/overview?section=case-history`,
+			active: currentSection === 'case-history'
+		}
 	];
+
+	const pathWithoutQuery = path.split('?')[0];
+
 	return items.map((item) => ({
 		...item,
-		active: item.href.includes(path)
+		active: item.active ?? (currentSection !== 'case-history' && item.href !== '#' && item.href.includes(pathWithoutQuery))
 	}));
 }
