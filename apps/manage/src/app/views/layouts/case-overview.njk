@@ -1,7 +1,17 @@
 {% extends "views/layouts/main.njk" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block backLink %}
+  {{ govukBackLink({
+    href: "/",
+    attributes: {
+      "data-cy": "back-link"
+    }
+  }) }}
+{% endblock %}
 
 {% block pageContent %}
   <span class="govuk-caption-l">{{ reference }}</span>

@@ -78,6 +78,18 @@ export class BasePage {
 		return this.summaryRowActions(key).find('a');
 	}
 
+	verifySummaryRowContains(key: string, ...values: string[]) {
+		values.forEach((value) => {
+			this.summaryRowValue(key).should('contain.text', value);
+		});
+	}
+
+	verifySummaryRowActionHref(key: string, href: string | RegExp, link = this.summaryRowActionLink(key)) {
+		const assertion = typeof href === 'string' ? 'eq' : 'match';
+
+		link.should('be.visible').should('have.attr', 'href').and(assertion, href);
+	}
+
 	listItemRemoveLink(index = 1) {
 		return cy.getByData(`remove-list-item-${index}`);
 	}
@@ -96,6 +108,14 @@ export class BasePage {
 
 	verifyHeading(text: string) {
 		this.pageHeading.should('be.visible').and('contain.text', text);
+	}
+
+	verifyBackLink(href?: string) {
+		const backLink = this.backLink.should('be.visible');
+
+		if (href) {
+			backLink.should('have.attr', 'href', href);
+		}
 	}
 
 	verifyMainContains(...expectedText: string[]) {

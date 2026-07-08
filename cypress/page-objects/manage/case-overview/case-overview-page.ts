@@ -104,14 +104,8 @@ export class CaseOverviewPage extends BasePage {
 		this.verifySummaryRows(...summaryRows);
 	}
 
-	verifySummaryRowContains(key: string, ...values: string[]) {
-		values.forEach((value) => {
-			this.summaryRowValue(key).should('contain.text', value);
-		});
-	}
-
 	verifyActionLinkHref(key: string, pathPattern: RegExp) {
-		this.overviewActionLinkFor(key).should('be.visible').should('have.attr', 'href').and('match', pathPattern);
+		this.verifySummaryRowActionHref(key, pathPattern, this.overviewActionLinkFor(key));
 	}
 
 	verifyExpectedActionLinkHrefs() {
