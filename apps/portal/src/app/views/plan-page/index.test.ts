@@ -196,10 +196,10 @@ describe('plan page', () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
 
 		const expectedButton = 'Start Gateway 2 submission';
-		const expectedHTML = `<a href="/applicationPage/PLAN-001/1" class="govuk-button">`;
 
 		assert.strictEqual(data.button, expectedButton, `expected ${expectedButton} but got ${data.button}`);
-		assert.ok(html.trim().includes(expectedHTML), `expected html to contain ${expectedHTML}`);
+		assert.ok(html.includes('href="/applicationPage/PLAN-001/1"'), 'expected action link to point to Gateway 2');
+		assert.ok(html.includes('data-cy="plan-details-action"'), 'expected action link to have a stable selector');
 	});
 
 	describe('should not render button if status != ready to start', () => {

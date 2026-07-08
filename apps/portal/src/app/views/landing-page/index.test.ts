@@ -140,7 +140,9 @@ describe('landing page', () => {
 			const expectedHref = '/manage-local-plans/' + expectedRefNum.replace('/', '-');
 
 			assert.ok(expectedRefNum.includes('PLAN'), `expected ref to contain PLAN`);
-			assert.ok(html.includes(`<a class="govuk-link" href="${expectedHref}">${expectedRefNum}</a>`));
+			assert.ok(
+				html.includes(`<a class="govuk-link" data-cy="plan-link" href="${expectedHref}">${expectedRefNum}</a>`)
+			);
 		}
 	});
 
