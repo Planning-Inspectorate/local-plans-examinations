@@ -204,4 +204,13 @@ export class BasePage {
 		this.verifyLoaded();
 		this.submitAndVerifyValidationErrors(...messages);
 	}
+
+	get errorSummaryList() {
+		return cy.get('.govuk-error-summary__list');
+	}
+
+	verifyErrorSummary(title: string, linkText: string) {
+		this.errorSummary.should('be.visible').and('contain.text', title);
+		this.errorSummaryList.should('contain.text', linkText);
+	}
 }
