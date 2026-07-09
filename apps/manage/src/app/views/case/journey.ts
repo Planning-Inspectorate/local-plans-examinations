@@ -10,13 +10,8 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 	createLpaOptions(response, questions);
 	const overviewUrl = req.baseUrl + '/overview';
 
-<<<<<<< HEAD
-	return new Journey({
-		journeyId: OVERVIEW_JOURNEY_ID,
-=======
 	const journey = new Journey({
-		journeyId: JOURNEY_ID,
->>>>>>> origin/main
+		journeyId: OVERVIEW_JOURNEY_ID,
 		sections: [
 			new Section('Overview', 'case-details')
 				.addQuestion(questions.planTitle)

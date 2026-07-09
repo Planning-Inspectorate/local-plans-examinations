@@ -307,7 +307,6 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 	}
 };
 
-<<<<<<< HEAD
 export const questions = createQuestions(caseOverviewQuestions, allQuestionClasses, {}, { continueButtonText: 'Save' });
 
 export function getDateFieldNames() {
@@ -319,11 +318,3 @@ export function getDateFieldNames() {
 	}
 	return dateFieldNames;
 }
-=======
-export const questions = createQuestions(
-	caseOverviewQuestions,
-	allQuestionClasses,
-	{},
-	{ continueButtonText: 'Save and continue' }
-);
->>>>>>> origin/main
