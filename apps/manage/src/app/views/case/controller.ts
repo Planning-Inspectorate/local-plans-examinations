@@ -1,26 +1,10 @@
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
-import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
+import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response } from 'express';
 import type { Prisma } from '@pins/local-plans-database/src/client/client.ts';
-import { getDateFieldNames } from './questions.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
-
-/** Maps the first URL segment of the case router to its journey ID. */
-const JOURNEY_ID_BY_SEGMENT: Record<string, string> = {
-	overview: OVERVIEW_JOURNEY_ID,
-	'gateway-1': GATEWAY_1_JOURNEY_ID
-};
-
-/** Derives the journey ID from the request path, e.g. '/gateway-1/...' -> 'gateway-1'. */
-function getJourneyId(req: Request): string {
-	const segment = req.path.split('/').filter(Boolean)[0] ?? '';
-	const journeyId = JOURNEY_ID_BY_SEGMENT[segment];
-	if (!journeyId) throw new Error(`no journey ID mapped for path '${segment}'`);
-	return journeyId;
-}
 
 /** The section within the case overview journey being edited. */
 const CONTACTS_SECTION = 'contacts';
@@ -47,17 +31,17 @@ interface CaseFormInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
-	noticeOfIntention?: string;
-	estimatedGateway1Date?: string;
-	completedGateway1Date?: string;
-	slaSentDate?: string;
-	slaReceivedDate?: string;
+	noticeOfIntention?: Date;
+	estimatedGateway1Date?: Date;
+	completedGateway1Date?: Date;
+	slaSentDate?: Date;
+	slaReceivedDate?: Date;
 	dsaChecked?: string;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
-export function updateCaseField(service: ManageService) {
-	return async ({ req, res }: { req: Request; res: Response }): Promise<void> => {
+export function updateCaseField(service: ManageService): SaveDataFn {
+	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
 		const { db, logger } = service;
 
 		const reference = getReference(req);
@@ -73,7 +57,7 @@ export function updateCaseField(service: ManageService) {
 			return;
 		}
 
-		const formData = trimStringValues(req.body as CaseFormInput);
+		const formData = trimStringValues(data.answers as CaseFormInput);
 
 		if (action === 'edit' && section === CONTACTS_SECTION) {
 			await db.contact.update({
@@ -134,26 +118,13 @@ function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.C
 		qaInspector1,
 		qaInspector2,
 		qaInspector3,
+		noticeOfIntention,
+		estimatedGateway1Date,
+		completedGateway1Date,
+		slaSentDate,
+		slaReceivedDate,
 		dsaChecked
 	} = formData;
-
-	// convert date fields into Date objects
-	const dateFieldNames = getDateFieldNames();
-	const dateParts = formData as Record<string, string | undefined>;
-	const dates = Object.fromEntries(
-		dateFieldNames.flatMap((fieldName): [string, Date][] => {
-			const day = Number(dateParts[fieldName + '_day']);
-			const month = Number(dateParts[fieldName + '_month']);
-			const year = Number(dateParts[fieldName + '_year']);
-
-			if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) {
-				return [];
-			}
-
-			const date = new Date(year, month - 1, day);
-			return Number.isNaN(date.getTime()) ? [] : [[fieldName, date]];
-		})
-	);
 
 	const hasContact = Boolean(firstName || lastName || email || phone);
 
@@ -171,7 +142,11 @@ function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.C
 		qaInspector1,
 		qaInspector2,
 		qaInspector3,
-		...dates,
+		noticeOfIntention,
+		estimatedGateway1Date,
+		completedGateway1Date,
+		slaSentDate,
+		slaReceivedDate,
 		dsaChecked,
 		contacts: hasContact ? { create: buildContactData(formData) } : undefined,
 		lpas: lpa
@@ -223,7 +198,7 @@ export function trimStringValues<T extends object>(input: T): T {
 	return trimmed;
 }
 
-export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestHandler {
+export function buildGetJourneyMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const { db, logger } = service;
 
@@ -249,7 +224,6 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			res.locals.planTitle = currentCase.planTitle;
 			res.locals.reference = currentCase.reference;
 
-			const journeyId = getJourneyId(req);
 			const journeyResponse = new JourneyResponse(journeyId, '', currentCase);
 			journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
 				id: lpa.lpaCode,
@@ -265,49 +239,32 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			logger.error(`Unable to fetch case ${reference} ${error}`);
 		}
 
-		res.locals.navigation = createNavigationParameters(req.url, reference);
+		if (next) next();
+	};
+}
 
+/** Adds the case section navigation to locals for the case routes. */
+export function addCaseNavigation(): AsyncRequestHandler {
+	return async (req, res, next) => {
+		const reference = getReference(req);
+		res.locals.navigation = createNavigationParameters(req.url, reference);
 		if (next) next();
 	};
 }
 
 function createNavigationParameters(path: string, reference: string) {
 	const baseUrl = `/case/${encodeURIComponent(reference)}`;
-	return [
-		{
-			href: `${baseUrl}/overview`,
-			text: 'Overview',
-			active: `${baseUrl}/overview`.includes(path)
-		},
-		{
-			href: '#',
-			text: 'Timetable',
-			active: '#'.includes(path)
-		},
-		{
-			href: `${baseUrl}/gateway-1`,
-			text: 'Gateway 1',
-			active: `${baseUrl}/gateway-1`.includes(path)
-		},
-		{
-			href: '#',
-			text: 'Gateway 2',
-			active: '#'.includes(path)
-		},
-		{
-			href: '#',
-			text: 'Gateway 3',
-			active: '#'.includes(path)
-		},
-		{
-			href: '#',
-			text: 'Examination',
-			active: '#'.includes(path)
-		},
-		{
-			href: '#',
-			text: 'Case History',
-			active: '#'.includes(path)
-		}
+	const items = [
+		{ text: 'Overview', href: `${baseUrl}/overview` },
+		{ text: 'Timetable', href: '#' },
+		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
+		{ text: 'Gateway 2', href: '#' },
+		{ text: 'Gateway 3', href: '#' },
+		{ text: 'Examination', href: '#' },
+		{ text: 'Case History', href: '#' }
 	];
+	return items.map((item) => ({
+		...item,
+		active: item.href.includes(path)
+	}));
 }
