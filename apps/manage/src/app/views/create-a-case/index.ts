@@ -20,8 +20,14 @@ function setAsEditingFromCya(req: any, _: any, next: any) {
 	next();
 }
 
+export function shouldReturnToCya(req: { params?: Record<string, string | undefined> }, editingFromCya: boolean) {
+	const hasManageListItemParams =
+		req.params?.manageListAction || req.params?.manageListItemId || req.params?.manageListQuestion;
+	return editingFromCya && !hasManageListItemParams;
+}
+
 function redirectAfterCyaEdit(req: any, res: any, next: any) {
-	const returnToCya = req.session.editingFromCheckAnswers === true;
+	const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
