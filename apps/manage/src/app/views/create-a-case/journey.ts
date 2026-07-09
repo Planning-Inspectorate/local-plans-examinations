@@ -4,7 +4,7 @@ import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/comp
 
 export const JOURNEY_ID = 'create-a-case';
 
-export function createLpaOptions(response: JourneyResponse, questions: Record<string, any>) {
+export function createLpaOptions(response: JourneyResponse, questions: Record<string, any>, req: Request) {
 	const lpaAnswers = response.answers.checkLpas || [];
 	const lpaOptions: Array<{ value: string; text: string }> = [];
 	const lpaHistory: Array<{ value: string; text: string }> = [];
@@ -30,14 +30,20 @@ export function createLpaOptions(response: JourneyResponse, questions: Record<st
 		}
 	}
 
+	const lpaAnswersArray = Array.isArray(lpaAnswers) ? lpaAnswers : [lpaAnswers];
+	const isEditing = req.params?.manageListAction === 'edit';
+	const currentEditingLpa = isEditing
+		? lpaAnswersArray.find((item: any) => item.id === req.params.manageListItemId)?.lpa
+		: undefined;
+
 	questions.lpa.options = questions.lpa.options.map((opt: any) => ({
 		...opt,
-		disabled: lpaHistory.some((history) => history.value === opt.value)
+		disabled: lpaHistory.some((history) => history.value === opt.value && currentEditingLpa !== opt.value)
 	}));
 }
 
 export function createJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	createLpaOptions(response, questions);
+	createLpaOptions(response, questions, req);
 
 	return new Journey({
 		journeyId: JOURNEY_ID,
