@@ -16,6 +16,18 @@ export class SelectLocalPlanningAuthorityBasePage extends BasePage {
 		this.verifySaveAndContinueVisible();
 	}
 
+	localPlanningAuthorityOption(lpa: SelectAnswer) {
+		return this.localPlanningAuthoritySelect.find('option').contains(lpa.value);
+	}
+
+	verifyLocalPlanningAuthorityOptionDisabled(lpa: SelectAnswer) {
+		this.localPlanningAuthorityOption(lpa).should('be.disabled');
+	}
+
+	verifyLocalPlanningAuthorityOptionEnabled(lpa: SelectAnswer) {
+		this.localPlanningAuthorityOption(lpa).should('not.be.disabled');
+	}
+
 	verifyLoaded() {
 		this.verifyPath();
 		this.verifySelectLocalPlanningAuthorityForm();
