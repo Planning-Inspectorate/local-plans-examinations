@@ -4,18 +4,22 @@ import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/comp
 
 export const JOURNEY_ID = 'create-a-case';
 
-export function createLpaOptions(response: JourneyResponse, questions: Record<string, any>) {
+export function createLpaOptions(response: JourneyResponse, questions: Record<string, any>, req: Request) {
 	const lpaAnswers = response.answers.checkLpas || [];
 	const lpaOptions: Array<{ value: string; text: string }> = [];
+	const lpaHistory: Array<{ value: string; text: string }> = [];
 
 	if (Array.isArray(lpaAnswers)) {
 		lpaAnswers.forEach((lpaAnswer: any) => {
 			const matched = questions.lpa.options.find((opt: any) => opt.value === lpaAnswer.lpa);
 			if (matched) {
 				lpaOptions.push({ value: matched.value, text: matched.text });
+				lpaHistory.push({ value: matched.value, text: matched.text });
 			}
 		});
 	}
+
+	req.session.lpaHistory = lpaHistory;
 
 	if (lpaOptions.length > 0) {
 		const lpaField = questions.contactDetails.inputFields.find((f: any) => f.fieldName === 'lpaContact');
@@ -27,10 +31,15 @@ export function createLpaOptions(response: JourneyResponse, questions: Record<st
 			}
 		}
 	}
+
+	questions.lpa.options = questions.lpa.options.map((opt: any) => ({
+		...opt,
+		disabled: lpaHistory.some((history) => history.value === opt.value)
+	}));
 }
 
 export function createJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	createLpaOptions(response, questions);
+	createLpaOptions(response, questions, req);
 
 	return new Journey({
 		journeyId: JOURNEY_ID,
