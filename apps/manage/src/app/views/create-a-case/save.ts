@@ -122,6 +122,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		}
 
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
+		delete (req.session as { editingFromCheckAnswers?: boolean }).editingFromCheckAnswers;
 		res.render('views/layouts/success.njk', { reference: answers.reference });
 	};
 }
