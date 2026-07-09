@@ -1,7 +1,6 @@
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
-import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { JOURNEY_ID } from './journey.ts';
+import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response } from 'express';
 import type { Prisma } from '@pins/local-plans-database/src/client/client.ts';
 
@@ -33,11 +32,17 @@ interface CaseFormInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+	noticeOfIntention?: Date;
+	estimatedGateway1Date?: Date;
+	completedGateway1Date?: Date;
+	slaSentDate?: Date;
+	slaReceivedDate?: Date;
+	dsaChecked?: string;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
-export function updateCaseField(service: ManageService) {
-	return async ({ req, res }: { req: Request; res: Response }): Promise<void> => {
+export function updateCaseField(service: ManageService): SaveDataFn {
+	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
 		const { db, logger } = service;
 
 		const reference = getReference(req);
@@ -53,19 +58,19 @@ export function updateCaseField(service: ManageService) {
 			return;
 		}
 
-		const input = processInputForDB(req.body as CaseFormInput);
+		const formData = trimStringValues(data.answers as CaseFormInput);
 
 		if (action === 'edit' && section === CONTACTS_SECTION) {
 			await db.contact.update({
 				where: { id: currentItemId },
-				data: buildContactData(input)
+				data: buildContactData(formData)
 			});
 			return;
 		}
 
 		await db.case.update({
 			where: { reference },
-			data: buildCaseData(input, currentItemId)
+			data: buildCaseData(formData, currentItemId)
 		});
 	};
 }
@@ -93,7 +98,8 @@ async function removeItem({
 }
 
 /** Builds the `data` payload for a case update (scalar fields + contact/LPA nesting). */
-function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.CaseUpdateInput {
+function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.CaseUpdateInput {
+	// get scalar values
 	const {
 		planTitle,
 		planType,
@@ -113,8 +119,14 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 		examiningInspector3,
 		qaInspector1,
 		qaInspector2,
-		qaInspector3
-	} = input;
+		qaInspector3,
+		noticeOfIntention,
+		estimatedGateway1Date,
+		completedGateway1Date,
+		slaSentDate,
+		slaReceivedDate,
+		dsaChecked
+	} = formData;
 
 	const hasContact = Boolean(firstName || lastName || email || phone);
 
@@ -133,7 +145,13 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 		qaInspector1,
 		qaInspector2,
 		qaInspector3,
-		contacts: hasContact ? { create: buildContactData(input) } : undefined,
+		noticeOfIntention,
+		estimatedGateway1Date,
+		completedGateway1Date,
+		slaSentDate,
+		slaReceivedDate,
+		dsaChecked,
+		contacts: hasContact ? { create: buildContactData(formData) } : undefined,
 		lpas: lpa
 			? {
 					connectOrCreate: lpaConnectOrCreate(lpa),
@@ -144,8 +162,8 @@ function buildCaseData(input: CaseFormInput, currentItemId: string): Prisma.Case
 }
 
 /** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(input: CaseFormInput): Prisma.ContactCreateWithoutCasesInput {
-	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = input;
+function buildContactData(formData: CaseFormInput): Prisma.ContactCreateWithoutCasesInput {
+	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
 	return {
 		firstName,
 		lastName,
@@ -174,7 +192,7 @@ function getReference(req: Request): string {
 }
 
 /** * Trims every string value on the form input. * Returns a new object rather than mutating the request body. */
-export function processInputForDB<T extends object>(input: T): T {
+export function trimStringValues<T extends object>(input: T): T {
 	const trimmed = {} as T;
 	for (const key in input) {
 		const value = input[key];
@@ -183,7 +201,7 @@ export function processInputForDB<T extends object>(input: T): T {
 	return trimmed;
 }
 
-export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestHandler {
+export function buildGetJourneyMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const { db, logger } = service;
 
@@ -209,7 +227,7 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 			res.locals.planTitle = currentCase.planTitle;
 			res.locals.reference = currentCase.reference;
 
-			const journeyResponse = new JourneyResponse(JOURNEY_ID, '', currentCase);
+			const journeyResponse = new JourneyResponse(journeyId, '', currentCase);
 			journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
 				id: lpa.lpaCode,
 				lpa: lpa.lpaCode
@@ -226,4 +244,30 @@ export function buildGetJourneyMiddleware(service: ManageService): AsyncRequestH
 
 		if (next) next();
 	};
+}
+
+/** Adds the case section navigation to locals for the case routes. */
+export function addCaseNavigation(): AsyncRequestHandler {
+	return async (req, res, next) => {
+		const reference = getReference(req);
+		res.locals.navigation = createNavigationParameters(req.url, reference);
+		if (next) next();
+	};
+}
+
+function createNavigationParameters(path: string, reference: string) {
+	const baseUrl = `/case/${encodeURIComponent(reference)}`;
+	const items = [
+		{ text: 'Overview', href: `${baseUrl}/overview` },
+		{ text: 'Timetable', href: '#' },
+		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
+		{ text: 'Gateway 2', href: '#' },
+		{ text: 'Gateway 3', href: '#' },
+		{ text: 'Examination', href: '#' },
+		{ text: 'Case History', href: '#' }
+	];
+	return items.map((item) => ({
+		...item,
+		active: item.href.includes(path)
+	}));
 }

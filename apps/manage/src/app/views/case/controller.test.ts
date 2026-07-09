@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import type { ManageService } from '#service';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
-import { updateCaseField, processInputForDB, buildGetJourneyMiddleware } from './controller.ts';
+import { updateCaseField, trimStringValues, buildGetJourneyMiddleware } from './controller.ts';
+
+const JOURNEY_ID = 'edit-case-overview';
 
 /** * Builds a mock ManageService with mocked Prisma delegates and a mock logger. */
 function createMockService() {
@@ -24,6 +26,7 @@ function createMockService() {
 			case: { update: ReturnType<typeof mock.fn>; findUnique: ReturnType<typeof mock.fn> };
 			contact: { update: ReturnType<typeof mock.fn>; delete: ReturnType<typeof mock.fn> };
 		};
+		logger: { error: ReturnType<typeof mock.fn> } & ManageService['logger'];
 	};
 }
 
@@ -32,7 +35,7 @@ function createReq(overrides: {
 	params?: Record<string, unknown>;
 	body?: Record<string, unknown>;
 	answers?: Record<string, unknown>;
-}): { req: Request; res: Response } {
+}): { req: Request; res: Response; data: Record<string, any> } {
 	const req = {
 		params: { reference: 'PLAN/123456', ...(overrides.params ?? {}) },
 		body: overrides.body ?? {}
@@ -42,27 +45,48 @@ function createReq(overrides: {
 		locals: { journeyResponse: { answers: overrides.answers ?? {} } }
 	} as unknown as Response;
 
-	return { req, res };
+	// The handler reads form values from `data.answers`
+	const data = { answers: overrides.body ?? {} };
+
+	return { req, res, data };
+}
+
+/**
+ * Invokes a SaveDataFn with the minimal params the handler reads, while
+ * satisfying the full SaveParams type required by the signature.
+ */
+function invokeSave(
+	handler: ReturnType<typeof updateCaseField>,
+	{ req, res, data }: { req: Request; res: Response; data: Record<string, any> }
+) {
+	return handler({
+		req,
+		res,
+		data,
+		journeyId: JOURNEY_ID,
+		referenceId: '',
+		isManageListItem: false
+	} as Parameters<typeof handler>[0]);
 }
 
 describe('updateCaseField', () => {
 	it('throws when the reference param is not a string', async () => {
 		const service = createMockService();
 		const handler = updateCaseField(service);
-		const { req, res } = createReq({ params: { reference: undefined } });
+		const { req, res, data } = createReq({ params: { reference: undefined } });
 
-		await assert.rejects(() => handler({ req, res }), /reference must be a string/);
+		await assert.rejects(() => invokeSave(handler, { req, res, data }), /reference must be a string/);
 	});
 
 	describe('remove action', () => {
 		it('deletes a contact when the section is contacts', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: { section: 'contacts', manageListAction: 'remove', manageListItemId: 'contact-1' }
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
 			assert.equal(service.db.contact.delete.mock.callCount(), 1);
 			assert.deepEqual(service.db.contact.delete.mock.calls[0].arguments[0], {
@@ -74,11 +98,11 @@ describe('updateCaseField', () => {
 		it('disconnects an LPA from the case', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: { section: 'case-details', manageListAction: 'remove', manageListItemId: 'E60000001' }
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
 			assert.equal(service.db.case.update.mock.callCount(), 1);
 			assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
@@ -91,7 +115,7 @@ describe('updateCaseField', () => {
 		it('uses the first id when manageListItemId is an array', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: {
 					section: 'contacts',
 					manageListAction: 'remove',
@@ -99,7 +123,7 @@ describe('updateCaseField', () => {
 				}
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
 			assert.deepEqual(service.db.contact.delete.mock.calls[0].arguments[0], {
 				where: { id: 'contact-1' }
@@ -111,7 +135,7 @@ describe('updateCaseField', () => {
 		it('updates the contact and connects/creates its LPA', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: { section: 'contacts', manageListAction: 'edit', manageListItemId: 'contact-1' },
 				body: {
 					firstName: 'Jane',
@@ -122,7 +146,7 @@ describe('updateCaseField', () => {
 				}
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
 			assert.equal(service.db.contact.update.mock.callCount(), 1);
 			assert.deepEqual(service.db.contact.update.mock.calls[0].arguments[0], {
@@ -146,15 +170,15 @@ describe('updateCaseField', () => {
 		it('prefers lpaCode over lpaContact for the contact LPA', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: { section: 'contacts', manageListAction: 'edit', manageListItemId: 'contact-1' },
 				body: { firstName: 'Jane', lpaCode: 'E60000002', lpaContact: 'E60000001' }
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
-			const data = service.db.contact.update.mock.calls[0].arguments[0].data;
-			assert.deepEqual(data.lpa.connectOrCreate.where, { lpaCode: 'E60000002' });
+			const updateData = (service.db.contact.update.mock.calls[0].arguments[0] as any).data;
+			assert.deepEqual(updateData.lpa.connectOrCreate.where, { lpaCode: 'E60000002' });
 		});
 	});
 
@@ -162,7 +186,7 @@ describe('updateCaseField', () => {
 		it('updates scalar case fields', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: {},
 				body: {
 					planTitle: 'Southshire Local Plan',
@@ -174,10 +198,10 @@ describe('updateCaseField', () => {
 				}
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
 			assert.equal(service.db.case.update.mock.callCount(), 1);
-			const args = service.db.case.update.mock.calls[0].arguments[0];
+			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
 			assert.deepEqual(args.where, { reference: 'PLAN/123456' });
 			assert.equal(args.data.planTitle, 'Southshire Local Plan');
 			assert.equal(args.data.planType, 'Local Plan');
@@ -192,7 +216,7 @@ describe('updateCaseField', () => {
 		it('creates a nested contact when contact fields are present', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: {},
 				body: {
 					firstName: 'Jane',
@@ -203,10 +227,10 @@ describe('updateCaseField', () => {
 				}
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
-			const data = service.db.case.update.mock.calls[0].arguments[0].data;
-			assert.deepEqual(data.contacts.create, {
+			const caseData = (service.db.case.update.mock.calls[0].arguments[0] as any).data;
+			assert.deepEqual(caseData.contacts.create, {
 				firstName: 'Jane',
 				lastName: 'Smith',
 				email: 'jane@lpa.gov.uk',
@@ -223,34 +247,34 @@ describe('updateCaseField', () => {
 		it('connects/creates and disconnects an LPA when lpa is provided', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: { manageListItemId: 'E60000000' },
 				body: { lpa: 'E60000001' }
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
-			const data = service.db.case.update.mock.calls[0].arguments[0].data;
-			assert.deepEqual(data.lpas.connectOrCreate, {
+			const caseData = (service.db.case.update.mock.calls[0].arguments[0] as any).data;
+			assert.deepEqual(caseData.lpas.connectOrCreate, {
 				where: { lpaCode: 'E60000001' },
 				create: { lpaCode: 'E60000001' }
 			});
-			assert.deepEqual(data.lpas.disconnect, [{ lpaCode: 'E60000000' }]);
+			assert.deepEqual(caseData.lpas.disconnect, [{ lpaCode: 'E60000000' }]);
 		});
 
 		it('trims whitespace from body fields before saving', async () => {
 			const service = createMockService();
 			const handler = updateCaseField(service);
-			const { req, res } = createReq({
+			const { req, res, data } = createReq({
 				params: {},
 				body: { planTitle: '  Southshire Local Plan  ', caseOfficer: ' John Doe ' }
 			});
 
-			await handler({ req, res });
+			await invokeSave(handler, { req, res, data });
 
-			const data = service.db.case.update.mock.calls[0].arguments[0].data;
-			assert.equal(data.planTitle, 'Southshire Local Plan');
-			assert.equal(data.caseOfficer, 'John Doe');
+			const caseData = (service.db.case.update.mock.calls[0].arguments[0] as any).data;
+			assert.equal(caseData.planTitle, 'Southshire Local Plan');
+			assert.equal(caseData.caseOfficer, 'John Doe');
 		});
 	});
 });
@@ -262,7 +286,7 @@ describe('processInputForDB', () => {
 			caseOfficer: '  officer  ',
 			planType: '  plan type  '
 		};
-		assert.deepEqual(processInputForDB(input), {
+		assert.deepEqual(trimStringValues(input), {
 			caseTitle: 'title',
 			caseOfficer: 'officer',
 			planType: 'plan type'
@@ -271,7 +295,7 @@ describe('processInputForDB', () => {
 
 	it('returns a new object without mutating the input', () => {
 		const input = { planTitle: '  x  ' };
-		const output = processInputForDB(input);
+		const output = trimStringValues(input);
 		assert.notEqual(output, input);
 		assert.equal(input.planTitle, '  x  ');
 		assert.equal(output.planTitle, 'x');
@@ -279,7 +303,7 @@ describe('processInputForDB', () => {
 
 	it('leaves non-string values untouched', () => {
 		const input = { planTitle: '  x  ', count: 3, flag: true, missing: undefined };
-		assert.deepEqual(processInputForDB(input), {
+		assert.deepEqual(trimStringValues(input), {
 			planTitle: 'x',
 			count: 3,
 			flag: true,
@@ -310,12 +334,12 @@ describe('buildGetJourneyMiddleware', () => {
 			}
 		} as unknown as Response;
 
-		const req = { params: { reference } } as unknown as Request;
+		const req = { params: { reference }, path: '/overview' } as unknown as Request;
 		const next = mock.fn();
 
 		return {
 			service,
-			handler: buildGetJourneyMiddleware(service),
+			handler: buildGetJourneyMiddleware(service, JOURNEY_ID),
 			req,
 			res,
 			next,
@@ -379,7 +403,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
-		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0].where, {
+		assert.deepEqual((ctx.service.db.case.findUnique.mock.calls[0].arguments[0] as any).where, {
 			reference: 'PLAN/123456'
 		});
 		assert.equal(ctx.next.mock.callCount(), 1);
@@ -393,7 +417,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
-		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0].where, {
+		assert.deepEqual((ctx.service.db.case.findUnique.mock.calls[0].arguments[0] as any).where, {
 			reference: 'PLAN/123456'
 		});
 	});
@@ -428,7 +452,7 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.equal(ctx.service.logger.error.mock.callCount(), 1);
-		assert.match(ctx.service.logger.error.mock.calls[0].arguments[0], /Unable to fetch case PLAN\/123456/);
+		assert.match(ctx.service.logger.error.mock.calls[0].arguments[0] as string, /Unable to fetch case PLAN\/123456/);
 		assert.equal(ctx.next.mock.callCount(), 1);
 		assert.deepEqual(ctx.statusCalls, []);
 	});
