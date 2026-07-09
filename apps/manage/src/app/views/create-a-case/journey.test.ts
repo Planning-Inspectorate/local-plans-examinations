@@ -125,4 +125,48 @@ describe('createLpaOptions', () => {
 		assert.strictEqual(questions.contactDetails.inputFields[0].options.length, 2);
 		assert.strictEqual((response as any).answers.lpaContact, undefined);
 	});
+
+	it('should disable selected LPAs while keeping the current LPA enabled when editing', () => {
+		const response = {
+			answers: {
+				checkLpas: [
+					{ id: 'item-1', lpa: 'lpa-1' },
+					{ id: 'item-2', lpa: 'lpa-2' }
+				]
+			},
+			referenceId: '',
+			journeyId: '',
+			LPACode: ''
+		};
+
+		const buildLpaOptions = () =>
+			['lpa-1', 'lpa-2', 'lpa-3'].map((lpa, index) => ({
+				value: lpa,
+				text: `Local Authority ${index + 1}`
+			}));
+		const buildQuestions = () => ({
+			lpa: { options: buildLpaOptions() },
+			contactDetails: { inputFields: [{ fieldName: 'lpaContact', options: [] }] }
+		});
+		const expectDisabledOptions = (questions: ReturnType<typeof buildQuestions>, disabled: boolean[]) => {
+			assert.deepStrictEqual(
+				questions.lpa.options.map((option) => option.disabled ?? false),
+				disabled
+			);
+		};
+
+		const addQuestions = buildQuestions();
+		const addReq = { params: { manageListAction: 'add' } } as unknown as Request;
+
+		createLpaOptions(response, addQuestions, addReq);
+
+		expectDisabledOptions(addQuestions, [true, true, false]);
+
+		const editQuestions = buildQuestions();
+		const editReq = { params: { manageListAction: 'edit', manageListItemId: 'item-2' } } as unknown as Request;
+
+		createLpaOptions(response, editQuestions, editReq);
+
+		expectDisabledOptions(editQuestions, [true, false, false]);
+	});
 });
