@@ -28,6 +28,7 @@ model Case {
   caseOfficer             String
   planTitle               String
   planType                String
+  planBand                String?
   lpas                    LPA[]
   contacts                Contact[]
   programmeOfficer        String?

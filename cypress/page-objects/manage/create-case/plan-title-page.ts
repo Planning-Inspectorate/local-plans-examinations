@@ -1,24 +1,8 @@
-import { BasePage } from '../../base-page.ts';
+import { PlanTitleBasePage } from '../base/index.ts';
 
-export class PlanTitlePage extends BasePage {
+export class PlanTitlePage extends PlanTitleBasePage {
 	constructor() {
 		super('/create-a-case/case-details/plan-title');
-	}
-
-	get planTitleInput() {
-		return cy.getByData('plan-title-input');
-	}
-
-	verifyLoaded() {
-		this.verifyPath();
-		this.verifyHeading('What is the plan title?');
-		this.planTitleInput.should('be.visible');
-		this.verifySaveAndContinueVisible();
-	}
-
-	enterPlanTitle(title: string) {
-		this.planTitleInput.clearAndWrite(title);
-		this.saveAndContinue();
 	}
 }
 

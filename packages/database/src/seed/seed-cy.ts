@@ -33,9 +33,9 @@ async function run() {
 			data: {
 				reference: `PLAN/${Date.now()}`,
 				email: 'cypress@test.com',
-				caseOfficer: 'Terry Test',
+				caseOfficer: 'officer-1',
 				planTitle: 'Cypress Test Plan',
-				planType: 'Local Plan',
+				planType: 'local-plan',
 				intentionToCommenceDate: new Date(Date.now()),
 				gateway1Date: new Date(Date.now()),
 				gateway2Date: new Date(Date.now()),

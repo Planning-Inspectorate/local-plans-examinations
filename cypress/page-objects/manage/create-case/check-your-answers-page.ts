@@ -20,20 +20,8 @@ export class CheckYourAnswersPage extends BasePage {
 		return cy.getByData('cannot-submit-yet');
 	}
 
-	summaryRow(key: string) {
-		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
-	}
-
-	summaryRowValue(key: string) {
-		return this.summaryRow(key).find('.govuk-summary-list__value');
-	}
-
-	summaryRowActions(key: string) {
-		return this.summaryRow(key).find('.govuk-summary-list__actions');
-	}
-
 	changeLinkFor(key: string) {
-		return this.summaryRowActions(key).find('a').contains('Change');
+		return this.summaryRowActionLink(key).contains('Change');
 	}
 
 	openChangeLinkFor(key: string) {
@@ -95,11 +83,8 @@ export class CheckYourAnswersPage extends BasePage {
 	}
 
 	verifySummaryRow({ key, values, changeHref }: SummaryRowExpectation) {
-		values.forEach((value) => {
-			this.summaryRowValue(key).should('contain.text', value);
-		});
-
-		this.changeLinkFor(key).should('have.attr', 'href', changeHref);
+		this.verifySummaryRowContains(key, ...values);
+		this.verifySummaryRowActionHref(key, changeHref, this.changeLinkFor(key));
 	}
 
 	verifyAnswers(data: CreateCaseData) {

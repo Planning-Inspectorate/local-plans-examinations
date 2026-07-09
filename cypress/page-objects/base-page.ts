@@ -1,7 +1,7 @@
 export class BasePage {
-	private readonly path?: string;
+	private readonly path?: string | RegExp;
 
-	constructor(path?: string) {
+	constructor(path?: string | RegExp) {
 		this.path = path;
 	}
 
@@ -10,12 +10,21 @@ export class BasePage {
 			throw new Error(`${this.constructor.name} does not define a path`);
 		}
 
+		if (path instanceof RegExp) {
+			throw new Error(`${this.constructor.name} cannot visit a RegExp path`);
+		}
+
 		cy.visit(path);
 	}
 
 	verifyPath(path = this.path) {
 		if (!path) {
 			throw new Error(`${this.constructor.name} does not define a path`);
+		}
+
+		if (path instanceof RegExp) {
+			cy.location('pathname').should('match', path);
+			return;
 		}
 
 		cy.location('pathname').should('eq', path);
@@ -41,12 +50,44 @@ export class BasePage {
 		return cy.getByData('button-save-and-continue');
 	}
 
+	get backLink() {
+		return cy.getByData('back-link');
+	}
+
 	get addListItemButton() {
 		return cy.getByData('add-list-item');
 	}
 
 	get manageListSummary() {
 		return cy.getByData('manage-list-summary');
+	}
+
+	summaryRow(key: string) {
+		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
+	}
+
+	summaryRowValue(key: string) {
+		return this.summaryRow(key).find('.govuk-summary-list__value');
+	}
+
+	summaryRowActions(key: string) {
+		return this.summaryRow(key).find('.govuk-summary-list__actions');
+	}
+
+	summaryRowActionLink(key: string) {
+		return this.summaryRowActions(key).find('a');
+	}
+
+	verifySummaryRowContains(key: string, ...values: string[]) {
+		values.forEach((value) => {
+			this.summaryRowValue(key).should('contain.text', value);
+		});
+	}
+
+	verifySummaryRowActionHref(key: string, href: string | RegExp, link = this.summaryRowActionLink(key)) {
+		const assertion = typeof href === 'string' ? 'eq' : 'match';
+
+		link.should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 
 	listItemRemoveLink(index = 1) {
@@ -69,6 +110,14 @@ export class BasePage {
 		this.pageHeading.should('be.visible').and('contain.text', text);
 	}
 
+	verifyBackLink(href?: string) {
+		const backLink = this.backLink.should('be.visible');
+
+		if (href) {
+			backLink.should('have.attr', 'href', href);
+		}
+	}
+
 	verifyMainContains(...expectedText: string[]) {
 		const mainContent = this.mainContent.should('be.visible');
 
@@ -79,6 +128,10 @@ export class BasePage {
 
 	saveAndContinue() {
 		this.saveAndContinueButton.should('be.visible').click();
+	}
+
+	goBack() {
+		this.backLink.should('be.visible').click();
 	}
 
 	addListItem() {
@@ -150,5 +203,14 @@ export class BasePage {
 		this.visit();
 		this.verifyLoaded();
 		this.submitAndVerifyValidationErrors(...messages);
+	}
+
+	get errorSummaryList() {
+		return cy.get('.govuk-error-summary__list');
+	}
+
+	verifyErrorSummary(title: string, linkText: string) {
+		this.errorSummary.should('be.visible').and('contain.text', title);
+		this.errorSummaryList.should('contain.text', linkText);
 	}
 }

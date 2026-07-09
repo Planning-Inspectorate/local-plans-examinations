@@ -8,15 +8,22 @@ export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions);
+	const overviewUrl = req.baseUrl + '/overview';
 
+<<<<<<< HEAD
 	return new Journey({
 		journeyId: OVERVIEW_JOURNEY_ID,
+=======
+	const journey = new Journey({
+		journeyId: JOURNEY_ID,
+>>>>>>> origin/main
 		sections: [
 			new Section('Overview', 'case-details')
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
 				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa)))
-				.addQuestion(questions.caseOfficer),
+				.addQuestion(questions.caseOfficer)
+				.addQuestion(questions.planBand),
 			new Section('Contacts', 'contacts')
 				.addQuestion(
 					questions.checkContactDetails,
@@ -38,9 +45,28 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		journeyTitle: 'Manage case',
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl + '/overview',
-		initialBackLink: req.baseUrl + '/overview',
+		initialBackLink: overviewUrl,
 		response
 	});
+
+	return useOverviewBackLinks(journey, overviewUrl);
+}
+
+function useOverviewBackLinks(journey: Journey, overviewUrl: string): Journey {
+	const getBackLink = journey.getBackLink.bind(journey);
+
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		const { params, manageListQuestion } = options;
+		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
+
+		if (!manageListQuestion && !isManageListStep) {
+			return overviewUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	return journey;
 }
 
 export function gateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {

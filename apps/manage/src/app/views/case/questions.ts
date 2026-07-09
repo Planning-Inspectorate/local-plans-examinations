@@ -23,6 +23,19 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		title: 'Plan title',
 		validators: [new RequiredValidator('Input a plan title')]
 	},
+	planBand: {
+		type: COMPONENT_TYPES.RADIO,
+		options: [
+			{ value: '1', text: '1' },
+			{ value: '2', text: '2' },
+			{ value: '3', text: '3' }
+		],
+		question: 'What is the plan band?',
+		fieldName: 'planBand',
+		url: 'plan-band',
+		title: 'Plan band',
+		validators: [new RequiredValidator('Select a plan band')]
+	},
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
@@ -53,7 +66,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 	},
 	checkLpas: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
-		title: 'Local Planning Authorities',
+		title: 'Local Planning Authority',
 		titleSingular: 'Local Planning Authority',
 		showManageListQuestions: true,
 		fieldName: 'checkLpas',
@@ -160,7 +173,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		question: 'Who is the programme officer?',
 		fieldName: 'programmeOfficer',
 		url: 'programme-officer',
-		title: 'Programme officer',
+		title: 'Programme Officer',
 		validators: [new RequiredValidator('Input a programme officer')]
 	},
 	examinationWebsite: {
@@ -294,6 +307,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 	}
 };
 
+<<<<<<< HEAD
 export const questions = createQuestions(caseOverviewQuestions, allQuestionClasses, {}, { continueButtonText: 'Save' });
 
 export function getDateFieldNames() {
@@ -305,3 +319,11 @@ export function getDateFieldNames() {
 	}
 	return dateFieldNames;
 }
+=======
+export const questions = createQuestions(
+	caseOverviewQuestions,
+	allQuestionClasses,
+	{},
+	{ continueButtonText: 'Save and continue' }
+);
+>>>>>>> origin/main

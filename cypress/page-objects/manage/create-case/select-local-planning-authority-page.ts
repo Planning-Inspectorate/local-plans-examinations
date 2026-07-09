@@ -1,12 +1,10 @@
-import { BasePage } from '../../base-page.ts';
-import type { SelectAnswer } from './types.ts';
+import { SelectLocalPlanningAuthorityBasePage } from '../base/index.ts';
 
-const pathPattern = /^\/create-a-case\/case-details\/check-lpas\/(add|edit)\/[^/]+\/select-lpa$/;
 const defaultNewItemId = 'cypress-lpa';
 
-export class SelectLocalPlanningAuthorityPage extends BasePage {
-	get localPlanningAuthoritySelect() {
-		return cy.get('#lpa');
+export class SelectLocalPlanningAuthorityPage extends SelectLocalPlanningAuthorityBasePage {
+	constructor() {
+		super(/^\/create-a-case\/case-details\/check-lpas\/(add|edit)\/[^/]+\/select-lpa$/);
 	}
 
 	visitForNewItem(itemId = defaultNewItemId) {
@@ -17,18 +15,6 @@ export class SelectLocalPlanningAuthorityPage extends BasePage {
 		this.visitForNewItem();
 		this.verifyLoaded();
 		this.submitAndVerifyValidationErrors(...messages);
-	}
-
-	verifyLoaded() {
-		this.verifyPathMatches(pathPattern);
-		this.verifyHeading('Select the Local Planning Authority for this plan');
-		this.localPlanningAuthoritySelect.should('be.visible');
-		this.verifySaveAndContinueVisible();
-	}
-
-	selectLocalPlanningAuthority(lpa: SelectAnswer) {
-		this.localPlanningAuthoritySelect.should('be.visible').select(lpa.value);
-		this.saveAndContinue();
 	}
 }
 
