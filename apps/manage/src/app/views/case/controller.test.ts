@@ -334,7 +334,12 @@ describe('buildGetJourneyMiddleware', () => {
 			}
 		} as unknown as Response;
 
-		const req = { params: { reference }, path: '/overview' } as unknown as Request;
+		const req = {
+			params: { reference },
+			path: '/overview',
+			url: '/overview',
+			query: { section: 'overview' }
+		} as unknown as Request;
 		const next = mock.fn();
 
 		return {
@@ -371,7 +376,13 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 1);
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
 			where: { reference: 'PLAN/123456' },
-			include: { lpas: true, contacts: true }
+			include: {
+				lpas: true,
+				contacts: true,
+				caseHistories: {
+					orderBy: { date: 'desc' }
+				}
+			}
 		});
 		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
 		assert.equal(ctx.res.locals.reference, 'PLAN/123456');
