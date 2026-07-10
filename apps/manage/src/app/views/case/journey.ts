@@ -5,6 +5,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
+export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions);
@@ -44,28 +45,40 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		response
 	});
 
-	return useOverviewBackLinks(journey, overviewUrl);
+	return getBacklinks(journey, overviewUrl);
 }
 
-function useOverviewBackLinks(journey: Journey, overviewUrl: string): Journey {
-	const getBackLink = journey.getBackLink.bind(journey);
+export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway2Url = req.baseUrl + '/gateway-2';
+	const journey = new Journey({
+		journeyId: GATEWAY_2_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 2', 'gateway-2')
+				.addQuestion(questions.gateway2EstimatedDate)
+				.addQuestion(questions.gateway2ActualDate)
+				.addQuestion(questions.gateway2ValidDate)
+				.addQuestion(questions.gateway2AssessorsName)
+				.addQuestion(questions.assessorDateOfAppointment)
+				.addQuestion(questions.workshopDate)
+				.addQuestion(questions.workshopVenue)
+				.addQuestion(questions.reportIssuedDate)
+				.addQuestion(questions.reportPublishedDate)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Manage case',
+		returnToListing: false,
+		makeBaseUrl: () => gateway2Url,
+		initialBackLink: gateway2Url,
+		response
+	});
 
-	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
-		const { params, manageListQuestion } = options;
-		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
-
-		if (!manageListQuestion && !isManageListStep) {
-			return overviewUrl;
-		}
-
-		return getBackLink(options);
-	};
-
-	return journey;
+	return getBacklinks(journey, gateway2Url);
 }
 
-export function gateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	return new Journey({
+export function createGateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway1Url = req.baseUrl + '/gateway-1';
+	const journey = new Journey({
 		journeyId: GATEWAY_1_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 1', 'gateway-1')
@@ -81,7 +94,25 @@ export function gateway1Journey(req: Request, response: JourneyResponse, questio
 		journeyTitle: 'Gateway 1',
 		returnToListing: false,
 		makeBaseUrl: () => req.baseUrl + '/gateway-1',
-		initialBackLink: req.baseUrl + '/gateway-1',
+		initialBackLink: gateway1Url,
 		response
 	});
+	return getBacklinks(journey, gateway1Url);
+}
+
+function getBacklinks(journey: Journey, overviewUrl: string): Journey {
+	const getBackLink = journey.getBackLink.bind(journey);
+
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		const { params, manageListQuestion } = options;
+		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
+
+		if (!manageListQuestion && !isManageListStep) {
+			return overviewUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	return journey;
 }

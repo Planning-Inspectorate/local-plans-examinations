@@ -304,6 +304,94 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 			{ value: 'no', text: 'No' }
 		],
 		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2EstimatedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the estimated Gateway 2 date?',
+		fieldName: 'gateway2EstimatedDate',
+		url: 'gateway-2-estimated-date',
+		title: 'Gateway 2 estimated date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-estimated-date' }
+	},
+	gateway2ActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was Gateway 2 completed?',
+		fieldName: 'gateway2ActualDate',
+		url: 'gateway-2-actual-date',
+		title: 'Gateway 2 actual date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-actual-date' }
+	},
+	gateway2ValidDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the Gateway 2 valid date?',
+		fieldName: 'gateway2ValidDate',
+		url: 'gateway-2-valid-date',
+		title: 'Gateway 2 valid date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
+	},
+	gateway2AssessorsName: {
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Who is the Gateway 2 assessor?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'assessor-1', text: 'Assessor 1' },
+			{ value: 'assessor-2', text: 'Assessor 2' },
+			{ value: 'assessor-3', text: 'Assessor 3' },
+			{ value: 'assessor-4', text: 'Assessor 4' }
+		],
+		fieldName: 'gateway2Assessor',
+		url: 'gateway-2-assessor',
+		title: 'Gateway 2 assessor',
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
+	},
+	assessorDateOfAppointment: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Gateway 2 assessor appointed?',
+		fieldName: 'gateway2AssessorAppointed',
+		url: 'gateway-2-assessor-appointed',
+		title: 'Assessor date of appointment',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
+	},
+	workshopDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the Gateway 2 workshop?',
+		fieldName: 'gateway2WorkshopDate',
+		url: 'gateway-2-workshop-date',
+		title: 'Workshop date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' }
+	},
+	workshopVenue: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'What is the venue for the Gateway 2 workshop?',
+		fieldName: 'gateway2WorkshopVenue',
+		url: 'gateway-2-workshop-venue',
+		title: 'Workshop venue',
+		validators: [new RequiredValidator('Enter a venue name')],
+		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' }
+	},
+	reportIssuedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the report issued?',
+		fieldName: 'gateway2ReportIssuedDate',
+		url: 'gateway-2-report-issued-date',
+		title: 'Report issued date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-report-issued-date' }
+	},
+	reportPublishedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the report published by the LPA?',
+		fieldName: 'gateway2ReportPublishedDate',
+		url: 'gateway-2-report-published-date',
+		title: 'Report published by LPA date',
+		validators: [new RequiredValidator('Enter a date')],
+		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	}
 };
 

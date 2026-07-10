@@ -261,7 +261,7 @@ function createNavigationParameters(path: string, reference: string) {
 		{ text: 'Overview', href: `${baseUrl}/overview` },
 		{ text: 'Timetable', href: '#' },
 		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
-		{ text: 'Gateway 2', href: '#' },
+		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
 		{ text: 'Gateway 3', href: '#' },
 		{ text: 'Examination', href: '#' },
 		{ text: 'Case History', href: '#' }
