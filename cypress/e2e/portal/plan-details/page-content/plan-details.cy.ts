@@ -32,7 +32,10 @@ describe('Plan details page content', () => {
 	it('shows the Gateway 2 action and plan progress rows', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyActionButton('Start Gateway 2 submission', `/applicationPage/${plan.urlReference}/1`);
+			planDetailsPage.verifyActionButton(
+				'Start Gateway 2 submission',
+				`/manage-local-plans/${plan.urlReference}/gateway-2-application/application-declaration`
+			);
 			planDetailsPage.verifyPlanProgressHeading();
 			planDetailsPage.verifyPlanProgressRowsInOrder(
 				'Gateway 1 - self-assessment (opens in a new tab)',

@@ -7,7 +7,7 @@ const VIEW_PATH = 'views/gateway-2-application/application-complete/index.njk';
 
 function createReq(overrides: { params?: Record<string, string> } = {}) {
 	const req = {
-		params: { reference: 'PLAN-123456', ...overrides.params }
+		params: { reference: 'PLAN-001', ...overrides.params }
 	} as unknown as Request;
 
 	const renderCalls: Array<[string, unknown?]> = [];
@@ -32,9 +32,6 @@ describe('buildGetApplicationCompletePage', () => {
 		assert.equal(renderCalls.length, 1);
 		assert.equal(renderCalls[0][0], VIEW_PATH);
 		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.equal(model.pageTitle, 'Application complete');
-		assert.equal(model.pageHeading, 'Application complete');
-		assert.equal(model.pageCaption, 'Your application');
-		assert.equal(model.backLinkUrl, '/manage-local-plans/PLAN-123456');
+		assert.equal(model.returnToPlanUrl, '/manage-local-plans/PLAN-001');
 	});
 });

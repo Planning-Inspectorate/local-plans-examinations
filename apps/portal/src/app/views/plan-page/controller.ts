@@ -23,9 +23,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		const planStatus = statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
-		const applicationBase = `/applicationPage/${req.params.refNum}`;
-		const currentApplicationLink = `${applicationBase}/${plan.stage}`;
-		const applicationLink = (stage: number) => `${applicationBase}/${stage}`;
+		const applicationBase = `/manage-local-plans/${req.params.refNum}/gateway-2-application`;
+		const currentApplicationLink = `${applicationBase}/application-declaration`;
+		const applicationLink = () => applicationBase;
 
 		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
 
@@ -40,20 +40,20 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		switch (plan.stage) {
 			case STAGE.Gateway2:
-				hrefG2 = currentApplicationLink;
+				hrefG2 = applicationLink();
 				tagG2 = planStatus;
 				break;
 			case STAGE.Gateway3:
 				dateTextG2 = 'Completed on:';
-				hrefG2 = applicationLink(STAGE.Gateway2);
-				hrefG3 = currentApplicationLink;
+				hrefG2 = applicationLink();
+				hrefG3 = applicationLink();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
 				break;
 			case STAGE.Examination:
-				hrefG2 = applicationLink(STAGE.Gateway2);
-				hrefG3 = applicationLink(STAGE.Gateway3);
-				hrefE = currentApplicationLink;
+				hrefG2 = applicationLink();
+				hrefG3 = applicationLink();
+				hrefE = applicationLink();
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
