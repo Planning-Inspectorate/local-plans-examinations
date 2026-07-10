@@ -11,10 +11,7 @@ export function buildGetApplicationCompletePage(): AsyncRequestHandler {
 		const reference = req.params.reference;
 
 		return res.render(VIEW_PATH, {
-			pageTitle: 'Application complete',
-			pageHeading: 'Application complete',
-			pageCaption: 'Your application',
-			backLinkUrl: `/manage-local-plans/${reference}`
+			returnToPlanUrl: `/manage-local-plans/${reference}`
 		});
 	};
 }
