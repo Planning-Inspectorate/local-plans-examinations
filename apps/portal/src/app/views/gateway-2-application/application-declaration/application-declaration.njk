@@ -5,9 +5,9 @@
 
 {% block pageContent %}
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
         {{ govukInsetText({
-            text: "Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application. We will take your typed name as your signature."
+            text: "Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application."
         }) }}
 
         {% if submissionReference %}
@@ -31,7 +31,7 @@
                     {
                         value: "privacyNotice",
                         checked: formValues.privacyNotice if formValues,
-                        html: 'I have read and agree to The Planning Inspectorate\'s <a href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices" class="govuk-link" target="_blank">privacy notice</a>'
+                        html: 'I have read and agree to The Planning Inspectorate\'s <a href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices" class="govuk-link" target="_blank">privacy note</a>'
                     }
                 ]
             }) }}
