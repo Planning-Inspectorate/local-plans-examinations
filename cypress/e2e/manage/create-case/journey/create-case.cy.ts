@@ -2,7 +2,9 @@ import {
 	caseOfficerPage,
 	caseCreatedPage,
 	checkYourAnswersPage,
+	contactDetailsListPage,
 	keyStageDatesPage,
+	localPlanningAuthoritiesPage,
 	planTitlePage,
 	type CreateCaseData
 } from '../../../../page-objects/manage/create-case/index.ts';
@@ -10,6 +12,12 @@ import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flo
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
+
+const openChangeLinkFromCheckYourAnswers = (data: CreateCaseData, rowName: string) => {
+	completeCreateCaseFlow(data);
+	checkYourAnswersPage.verifyLoaded();
+	checkYourAnswersPage.openChangeLinkFor(rowName);
+};
 
 describe('Create a case', () => {
 	after(() => cy.task('clearDb'));
@@ -46,6 +54,55 @@ describe('Create a case', () => {
 			caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
 
 			planTitlePage.verifyLoaded();
+		});
+	});
+
+	it(
+		'allows Local Planning Authorities opened from check your answers to add another item',
+		{ tags: ['regression'] },
+		() => {
+			loadCreateCaseData().then((data) => {
+				const rowName = 'Local Planning Authorities';
+				const addedLpa = {
+					value: 'Local Planning Authority 3',
+					label: 'lpaContact-3'
+				};
+
+				openChangeLinkFromCheckYourAnswers(data, rowName);
+				localPlanningAuthoritiesPage.verifyLoaded();
+				localPlanningAuthoritiesPage.addLocalPlanningAuthority(addedLpa);
+				localPlanningAuthoritiesPage.verifyLocalPlanningAuthorityListed(addedLpa);
+				localPlanningAuthoritiesPage.saveAndContinue();
+				checkYourAnswersPage.verifyLoaded();
+				checkYourAnswersPage.verifySummaryRowContains(rowName, addedLpa.value);
+			});
+		}
+	);
+
+	it('allows contact details opened from check your answers to add another item', { tags: ['regression'] }, () => {
+		loadCreateCaseData().then((data) => {
+			const rowName = 'Contact details';
+			const addedContact: CreateCaseData['contact'] = {
+				...data.contact,
+				firstName: 'Additional',
+				lastName: 'Contact',
+				email: 'additional.contact@example.com',
+				phone: '02079460003'
+			};
+
+			openChangeLinkFromCheckYourAnswers(data, rowName);
+			contactDetailsListPage.verifyLoaded();
+			contactDetailsListPage.addContact(addedContact);
+			contactDetailsListPage.verifyContactListed(addedContact);
+			contactDetailsListPage.saveAndContinue();
+			checkYourAnswersPage.verifyLoaded();
+			checkYourAnswersPage.verifySummaryRowContains(
+				rowName,
+				addedContact.firstName,
+				addedContact.lastName,
+				addedContact.email,
+				addedContact.phone
+			);
 		});
 	});
 });
