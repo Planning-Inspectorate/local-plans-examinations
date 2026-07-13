@@ -21,12 +21,6 @@ export class PlanDetailsPage extends BasePage {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 	}
 
-	verifyServiceNavigation(...links: string[]) {
-		links.forEach((link) => {
-			cy.contains('a', link).should('be.visible');
-		});
-	}
-
 	verifyBackLink(href: string) {
 		this.backLink.should('be.visible').and('contain.text', 'Back to my plans').and('have.attr', 'href', href);
 	}

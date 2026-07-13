@@ -213,4 +213,9 @@ export class BasePage {
 		this.errorSummary.should('be.visible').and('contain.text', title);
 		this.errorSummaryList.should('contain.text', linkText);
 	}
+	verifyServiceNavigation(...links: string[]) {
+		links.forEach((link) => {
+			cy.contains('a', link).should('be.visible');
+		});
+	}
 }
