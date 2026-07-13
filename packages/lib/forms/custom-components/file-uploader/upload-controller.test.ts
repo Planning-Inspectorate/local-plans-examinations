@@ -12,6 +12,7 @@ describe('file uploader upload controller', () => {
 		const file = buildRequestFile();
 		const uploadedFile = buildUploadedFile({ id: 'stored-file-1', fileName: 'stored-cover-letter.pdf' });
 		const upload = mock.fn(async () => uploadedFile);
+		const onFilesChange = mock.fn();
 		const storage = buildStorage({ upload });
 		const controller = createFileUploaderUploadController({
 			fieldName: 'documents',
@@ -19,6 +20,7 @@ describe('file uploader upload controller', () => {
 			storage: async () => storage,
 			destination: async () => ({ folderPath: 'cases/case-1', metadata: { caseId: 1 } }),
 			redirect: '/case/gateway-2',
+			onFilesChange,
 			question: buildQuestionConfig()
 		});
 		const req = buildRequest({
@@ -45,6 +47,15 @@ describe('file uploader upload controller', () => {
 		assert.deepEqual(req.session.fileUploader.gatewayDocuments.uploadedFiles, [
 			buildUploadedFile({ id: 'existing-file-1', fileName: 'existing.pdf' }),
 			uploadedFile
+		]);
+		assert.equal(onFilesChange.mock.callCount(), 1);
+		assert.deepEqual(onFilesChange.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'gatewayDocuments',
+				fieldName: 'documents',
+				uploadedFiles: [buildUploadedFile({ id: 'existing-file-1', fileName: 'existing.pdf' }), uploadedFile]
+			}
 		]);
 		assert.equal(req.session.errors, undefined);
 		assert.equal(req.session.errorSummary, undefined);
@@ -78,11 +89,13 @@ describe('file uploader upload controller', () => {
 describe('file uploader delete controller', () => {
 	it('deletes the stored file and removes it from the session', async () => {
 		const deleteFile = mock.fn(async () => undefined);
+		const onFilesChange = mock.fn();
 		const storage = buildStorage({ delete: deleteFile });
 		const controller = createFileUploaderDeleteController({
 			fieldName: 'documents',
 			storage: async () => storage,
 			redirect: (req) => `/case/${req.params.caseId}`,
+			onFilesChange,
 			question: buildQuestionConfig()
 		});
 		const fileToDelete = buildUploadedFile({ id: 'file-to-delete' });
@@ -104,6 +117,15 @@ describe('file uploader delete controller', () => {
 		assert.equal(deleteFile.mock.callCount(), 1);
 		assert.deepEqual(deleteFile.mock.calls[0].arguments, [fileToDelete]);
 		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [fileToKeep]);
+		assert.equal(onFilesChange.mock.callCount(), 1);
+		assert.deepEqual(onFilesChange.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				uploadedFiles: [fileToKeep]
+			}
+		]);
 		assert.deepEqual(res.redirect.mock.calls[0].arguments, ['/case/case-1']);
 	});
 });
