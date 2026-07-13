@@ -4,6 +4,11 @@ import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
 
 export type Config = BaseConfig & {
+	blobStorage: {
+		containerName: string;
+		connectionString?: string;
+		accountUrl?: string;
+	};
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;
@@ -39,7 +44,10 @@ export function loadConfig(): Config {
 		SQL_CONNECTION_STRING,
 		GOV_NOTIFY_DISABLED,
 		GOV_NOTIFY_API_KEY,
-		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID
+		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
+		BLOB_STORE_CONTAINER,
+		BLOB_STORE_CONNECTION_STRING,
+		BLOB_STORE_ACCOUNT_URL
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -86,6 +94,12 @@ export function loadConfig(): Config {
 		},
 		// the static directory to serve assets from (images, css, etc..)
 		staticDir: buildConfig.staticDir,
+		blobStorage: {
+			containerName: BLOB_STORE_CONTAINER || 'uploads',
+			connectionString:
+				BLOB_STORE_CONNECTION_STRING || (NODE_ENV === 'production' ? undefined : 'UseDevelopmentStorage=true'),
+			accountUrl: BLOB_STORE_ACCOUNT_URL || undefined
+		},
 		govNotify: {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',

@@ -111,6 +111,15 @@ export default class FileUploaderQuestion extends Question {
 		};
 	}
 
+	isAnswered(journeyResponse: { answers: Record<string, unknown> }, fieldName = this.fieldName): boolean {
+		const answer = journeyResponse.answers[fieldName];
+		if (Array.isArray(answer)) {
+			return answer.length > 0;
+		}
+
+		return super.isAnswered(journeyResponse as never, fieldName);
+	}
+
 	formatAnswerForSummary(
 		sectionSegment: string,
 		journey: any,

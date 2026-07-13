@@ -19,6 +19,12 @@ export type FileUploaderControllerOptions = {
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
 	redirect?: string | ((req: Request) => string);
+	onFilesChange?: (params: {
+		req: Request;
+		sessionKey: string;
+		fieldName: string;
+		uploadedFiles: UploadedFile[];
+	}) => void | Promise<void>;
 };
 
 type RequestWithFiles = Request & {
@@ -56,12 +62,20 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 			uploadedFiles.push(await storage.upload(file, destination));
 		}
 
+		const nextUploadedFiles = [...existingFiles, ...uploadedFiles];
+
 		session.fileUploader = {
 			...session.fileUploader,
 			[sessionKey]: {
-				uploadedFiles: [...existingFiles, ...uploadedFiles]
+				uploadedFiles: nextUploadedFiles
 			}
 		};
+		await options.onFilesChange?.({
+			req: request,
+			sessionKey,
+			fieldName: options.fieldName,
+			uploadedFiles: nextUploadedFiles
+		});
 		delete session.errors;
 		delete session.errorSummary;
 
@@ -83,12 +97,20 @@ export function createFileUploaderDeleteController(options: FileUploaderControll
 			await storage.delete?.(file);
 		}
 
+		const nextUploadedFiles = uploadedFiles.filter((item) => item.id !== fileId);
+
 		session.fileUploader = {
 			...session.fileUploader,
 			[sessionKey]: {
-				uploadedFiles: uploadedFiles.filter((item) => item.id !== fileId)
+				uploadedFiles: nextUploadedFiles
 			}
 		};
+		await options.onFilesChange?.({
+			req: request,
+			sessionKey,
+			fieldName: options.fieldName,
+			uploadedFiles: nextUploadedFiles
+		});
 
 		return redirectSafely(res, resolveRedirect(request, options));
 	};
