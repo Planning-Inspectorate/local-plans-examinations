@@ -167,7 +167,22 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(errorSummary[0].text, 'You must confirm both declarations before you can submit your application.');
 	});
 
-	it('generates submission reference number on validation error', async () => {
+	it('generates submission reference number on successful submission', async () => {
+		const service = createMockService();
+		const handler = buildPostDeclarationPage(service);
+		const { req, res, redirectCalls } = createReq({
+			body: { declaration: ['informationTrue', 'privacyNotice'] }
+		});
+
+		await handler(req, res);
+
+		assert.equal(redirectCalls.length, 1);
+		const logMessage = service.infoCalls.find((msg) => msg.includes('submission reference:'));
+		assert.ok(logMessage, 'Expected a log message containing the submission reference');
+		assert.match(logMessage as string, /SUB-\d+-[A-Z0-9]{6}/);
+	});
+
+	it('does not generate submission reference on validation error', async () => {
 		const service = createMockService();
 		const handler = buildPostDeclarationPage(service);
 		const { req, res, renderCalls } = createReq({
@@ -177,8 +192,6 @@ describe('buildPostDeclarationPage', () => {
 		await handler(req, res);
 
 		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.ok(model.submissionReference);
-		assert.equal(typeof model.submissionReference, 'string');
-		assert.match(model.submissionReference as string, /^SUB-\d+-[A-Z0-9]{6}$/);
+		assert.equal(model.submissionReference, undefined);
 	});
 });
