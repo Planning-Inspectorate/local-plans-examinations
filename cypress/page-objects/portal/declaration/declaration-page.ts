@@ -30,14 +30,6 @@ export class PortalDeclarationPage extends BasePage {
 		return cy.get('#declaration-2');
 	}
 
-	get insetText() {
-		return cy.get('.govuk-inset-text');
-	}
-
-	get bodyText() {
-		return cy.get('.govuk-body');
-	}
-
 	get confirmInformationLabel() {
 		return cy.get('label[for="declaration"]');
 	}
@@ -60,32 +52,6 @@ export class PortalDeclarationPage extends BasePage {
 
 	verifyConfirmAndSubmitButton() {
 		this.confirmAndSubmitButton.should('be.visible');
-	}
-
-	verifyConfirmInformationCheckbox(labelText: string) {
-		this.confirmInformationCheckbox.should('exist').and('not.be.checked');
-		this.confirmInformationLabel.should('contain.text', labelText);
-	}
-
-	verifyPrivacyNoteCheckbox(labelText: string) {
-		this.privacyNoteCheckbox.should('exist').and('not.be.checked');
-		this.privacyNoteLabel.should('contain.text', labelText);
-	}
-
-	verifyBodyText(text: string) {
-		this.bodyText.should('be.visible').and('contain.text', text);
-	}
-
-	verifyInsetText(text: string) {
-		this.insetText.should('be.visible').and('contain.text', text);
-	}
-
-	verifyBackLink(href: string) {
-		this.backLink.should('be.visible').and('contain.text', 'Back').and('have.attr', 'href', href);
-	}
-
-	verifyCaption(reference: string) {
-		this.pageHeading.find('.govuk-caption-xl').should('be.visible').and('contain.text', reference);
 	}
 }
 
