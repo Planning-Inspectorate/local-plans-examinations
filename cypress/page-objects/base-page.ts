@@ -62,6 +62,10 @@ export class BasePage {
 		return cy.getByData('manage-list-summary');
 	}
 
+	get bodyText() {
+		return cy.get('.govuk-body');
+	}
+
 	summaryRow(key: string) {
 		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
 	}
@@ -212,5 +216,10 @@ export class BasePage {
 	verifyErrorSummary(title: string, linkText: string) {
 		this.errorSummary.should('be.visible').and('contain.text', title);
 		this.errorSummaryList.should('contain.text', linkText);
+	}
+	verifyServiceNavigation(...links: string[]) {
+		links.forEach((link) => {
+			cy.contains('a', link).should('be.visible');
+		});
 	}
 }

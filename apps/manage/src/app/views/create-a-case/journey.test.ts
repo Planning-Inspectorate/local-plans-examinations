@@ -1,4 +1,5 @@
 import { createLpaOptions } from './journey.ts';
+import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
@@ -13,6 +14,8 @@ describe('createLpaOptions', () => {
 			LPACode: ''
 		};
 
+		const req = { params: { manageListAction: 'edit' } } as unknown as Request;
+
 		const questions = {
 			lpa: {
 				options: [{ value: 'lpa-1', text: 'Local Authority 1' }]
@@ -22,7 +25,7 @@ describe('createLpaOptions', () => {
 			}
 		};
 
-		createLpaOptions(response, questions);
+		createLpaOptions(response, questions, req);
 
 		assert.strictEqual(questions.contactDetails.inputFields[0].options.length, 1);
 		assert.deepStrictEqual(questions.contactDetails.inputFields[0].options[0], {
@@ -41,6 +44,8 @@ describe('createLpaOptions', () => {
 			LPACode: ''
 		};
 
+		const req = { params: { manageListAction: 'edit' } } as unknown as Request;
+
 		const questions = {
 			lpa: {
 				options: [{ value: 'lpa-1', text: 'Local Authority 1' }]
@@ -50,7 +55,7 @@ describe('createLpaOptions', () => {
 			}
 		};
 
-		createLpaOptions(response, questions);
+		createLpaOptions(response, questions, req);
 
 		assert.strictEqual((response as any).answers.lpaContact, 'lpa-1');
 	});
@@ -62,7 +67,9 @@ describe('createLpaOptions', () => {
 			contactDetails: { inputFields: [{ fieldName: 'lpaContact', options: [] }] }
 		};
 
-		createLpaOptions(response, questions);
+		const req = { params: { manageListAction: 'edit' } } as unknown as Request;
+
+		createLpaOptions(response, questions, req);
 
 		assert.strictEqual((response as any).answers.lpaContact, undefined);
 		assert.deepStrictEqual(questions.contactDetails.inputFields[0].options, []);
@@ -82,7 +89,9 @@ describe('createLpaOptions', () => {
 			}
 		};
 
-		createLpaOptions(response, questions);
+		const req = { params: { manageListAction: 'edit' } } as unknown as Request;
+
+		createLpaOptions(response, questions, req);
 
 		assert.strictEqual((response as any).answers.lpaContact, undefined);
 		assert.deepStrictEqual(questions.contactDetails.inputFields[0].options, []);
@@ -109,9 +118,51 @@ describe('createLpaOptions', () => {
 			}
 		};
 
-		createLpaOptions(response, questions);
+		const req = { params: { manageListAction: 'edit' } } as unknown as Request;
+
+		createLpaOptions(response, questions, req);
 
 		assert.strictEqual(questions.contactDetails.inputFields[0].options.length, 2);
 		assert.strictEqual((response as any).answers.lpaContact, undefined);
+	});
+
+	it('should disable selected LPAs while keeping the current LPA enabled when editing', () => {
+		const response = {
+			answers: {
+				checkLpas: [
+					{ id: 'item-1', lpa: 'lpa-1' },
+					{ id: 'item-2', lpa: 'lpa-2' }
+				]
+			},
+			referenceId: '',
+			journeyId: '',
+			LPACode: ''
+		};
+
+		const getDisabledOptions = (params: Record<string, string>) => {
+			const questions = {
+				lpa: {
+					options: [
+						{ value: 'lpa-1', text: 'Local Authority 1' },
+						{ value: 'lpa-2', text: 'Local Authority 2' },
+						{ value: 'lpa-3', text: 'Local Authority 3' }
+					] as Array<{ value: string; text: string; disabled?: boolean }>
+				},
+				contactDetails: {
+					inputFields: [{ fieldName: 'lpaContact', options: [] }]
+				}
+			};
+
+			createLpaOptions(response, questions, { params } as unknown as Request);
+
+			return questions.lpa.options.map((option) => option.disabled ?? false);
+		};
+
+		assert.deepStrictEqual(getDisabledOptions({ manageListAction: 'add' }), [true, true, false]);
+		assert.deepStrictEqual(getDisabledOptions({ manageListAction: 'edit', manageListItemId: 'item-2' }), [
+			true,
+			false,
+			false
+		]);
 	});
 });

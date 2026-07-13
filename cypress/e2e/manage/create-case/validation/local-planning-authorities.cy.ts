@@ -15,6 +15,31 @@ describe('Create a case - Local Planning Authorities', () => {
 		selectLocalPlanningAuthorityPage.visitForNewItemAndSubmitForValidation('Select a Local Planning Authority');
 	});
 
+	it(
+		'prevents duplicate Local Planning Authorities while allowing the current one to be edited',
+		{ tags: ['regression'] },
+		() => {
+			loadCreateCaseData().then((data) => {
+				const [firstLpa, secondLpa] = Object.values(data.lpa);
+
+				localPlanningAuthoritiesPage.visit();
+				localPlanningAuthoritiesPage.verifyLoaded();
+				localPlanningAuthoritiesPage.addLocalPlanningAuthority(firstLpa);
+				localPlanningAuthoritiesPage.addLocalPlanningAuthority();
+
+				selectLocalPlanningAuthorityPage.verifyLoaded();
+				selectLocalPlanningAuthorityPage.verifyLocalPlanningAuthorityOptionDisabled(firstLpa);
+				selectLocalPlanningAuthorityPage.verifyLocalPlanningAuthorityOptionEnabled(secondLpa);
+				selectLocalPlanningAuthorityPage.selectLocalPlanningAuthority(secondLpa);
+				localPlanningAuthoritiesPage.changeListItem(2);
+
+				selectLocalPlanningAuthorityPage.verifyLoaded();
+				selectLocalPlanningAuthorityPage.verifyLocalPlanningAuthorityOptionDisabled(firstLpa);
+				selectLocalPlanningAuthorityPage.verifyLocalPlanningAuthorityOptionEnabled(secondLpa);
+			});
+		}
+	);
+
 	it('changes and removes Local Planning Authorities', { tags: ['regression'] }, () => {
 		loadCreateCaseData().then((data) => {
 			const [firstLpa, secondLpa] = Object.values(data.lpa);

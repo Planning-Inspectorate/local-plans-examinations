@@ -6,7 +6,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 export const JOURNEY_ID = 'edit-case-overview';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	createLpaOptions(response, questions);
+	createLpaOptions(response, questions, req);
 	const overviewUrl = req.baseUrl + '/overview';
 
 	const journey = new Journey({
