@@ -1,6 +1,7 @@
 import { portalDeclarationPage } from '../../../../page-objects/portal/declaration/declaration-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
+import { gateway2ApplicationPage } from '../../../../page-objects/portal/declaration/gateway-2-application-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -16,7 +17,7 @@ describe('Declaration page content', () => {
 			portalDeclarationPage.visit(plan.urlReference);
 			portalDeclarationPage.verifyLoaded();
 			portalDeclarationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
-			portalDeclarationPage.verifyBackLink('/manage-local-plans/p/gateway-2-application');
+			portalDeclarationPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			portalDeclarationPage.verifyMainContains(
 				'Your application',
 				'Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application.',
