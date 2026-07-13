@@ -5,18 +5,6 @@ export class PortalDeclarationPage extends BasePage {
 		super();
 	}
 
-	verifyLoaded() {
-		this.verifyPathMatches(/\/application-declaration$/);
-	}
-
-	visit(planReference: string) {
-		cy.visit(`/manage-local-plans/${planReference}/gateway-2-application/application-declaration`);
-	}
-
-	get backLink() {
-		return cy.getByData('back-link');
-	}
-
 	get confirmAndSubmitButton() {
 		return cy.contains('button[type="submit"]', 'Confirm and submit');
 	}
