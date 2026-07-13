@@ -1,28 +1,24 @@
-import BaseValidator from '@planning-inspectorate/dynamic-forms/src/validator/base-validator.js';
+import { RequiredValidator } from '@planning-inspectorate/dynamic-forms';
 import { body } from 'express-validator';
 
-export default class FileUploadRequiredValidator extends BaseValidator {
+export default class FileUploadRequiredValidator extends RequiredValidator {
 	readonly fieldName: string;
-	readonly errorMessage: string;
 
 	constructor(fieldName: string, errorMessage = 'Upload a file') {
-		super();
+		super(errorMessage);
 		this.fieldName = fieldName;
-		this.errorMessage = errorMessage;
 	}
 
 	validate() {
-		return [
-			body(this.fieldName).custom((value) => {
-				const decodedJson = Buffer.from(String(value ?? ''), 'base64').toString('utf-8');
-				const parsed = JSON.parse(decodedJson);
+		return body(this.fieldName).custom((value) => {
+			const decodedJson = Buffer.from(String(value ?? ''), 'base64').toString('utf-8');
+			const parsed = JSON.parse(decodedJson);
 
-				if (!Array.isArray(parsed) || parsed.length === 0) {
-					throw new Error(this.errorMessage);
-				}
+			if (!Array.isArray(parsed) || parsed.length === 0) {
+				throw new Error(this.errorMessage);
+			}
 
-				return true;
-			})
-		];
+			return true;
+		});
 	}
 }
