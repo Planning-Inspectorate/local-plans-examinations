@@ -62,6 +62,10 @@ export class BasePage {
 		return cy.getByData('manage-list-summary');
 	}
 
+	get bodyText() {
+		return cy.get('.govuk-body');
+	}
+
 	summaryRow(key: string) {
 		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
 	}

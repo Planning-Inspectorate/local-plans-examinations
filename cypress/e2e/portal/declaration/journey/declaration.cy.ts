@@ -17,6 +17,7 @@ describe('Declaration page journeys', () => {
 		loadPlanDetails().then((plan) => {
 			portalDeclarationPage.visit(plan.urlReference);
 			portalDeclarationPage.verifyLoaded();
+			portalDeclarationPage.verifyHeading('Review declaration');
 
 			portalDeclarationPage.backLink.click();
 			gateway2ApplicationPage.verifyPathForPlan(plan.urlReference);
@@ -30,6 +31,7 @@ describe('Declaration page journeys', () => {
 			loadPlanDetails().then((plan) => {
 				portalDeclarationPage.visit(plan.urlReference);
 				portalDeclarationPage.verifyLoaded();
+				portalDeclarationPage.verifyHeading('Review declaration');
 
 				portalDeclarationPage.confirmInformationCheckbox.click();
 				portalDeclarationPage.privacyNoteCheckbox.click();

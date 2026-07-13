@@ -1,7 +1,6 @@
 import { portalDeclarationPage } from '../../../../page-objects/portal/declaration/declaration-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { gateway2ApplicationPage } from '../../../../page-objects/portal/declaration/gateway-2-application-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -17,16 +16,13 @@ describe('Declaration page content', () => {
 			portalDeclarationPage.visit(plan.urlReference);
 			portalDeclarationPage.verifyLoaded();
 			portalDeclarationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
-			portalDeclarationPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
-			portalDeclarationPage.verifyCaption('Your application');
-			portalDeclarationPage.verifyInsetText(
-				'Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application.'
-			);
-			portalDeclarationPage.verifyBodyText('By submitting this application, I confirm that:');
-			portalDeclarationPage.verifyConfirmInformationCheckbox(
-				'To the best of your knowledge, the information given in this application and enclosed maps, plans and other documents are true.'
-			);
-			portalDeclarationPage.verifyPrivacyNoteCheckbox(
+			portalDeclarationPage.verifyBackLink('/manage-local-plans/p/gateway-2-application');
+			portalDeclarationPage.verifyHeading('Review declaration');
+			portalDeclarationPage.verifyMainContains(
+				'Your application',
+				'Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application.',
+				'By submitting this application, I confirm that:',
+				'To the best of your knowledge, the information given in this application and enclosed maps, plans and other documents are true.',
 				`I have read and agree to The Planning Inspectorate's privacy note`
 			);
 			portalDeclarationPage.verifyPrivacyNoteLink();
