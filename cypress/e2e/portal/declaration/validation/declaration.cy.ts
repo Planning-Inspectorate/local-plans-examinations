@@ -1,5 +1,14 @@
 import { portalDeclarationPage } from '../../../../page-objects/portal/declaration/declaration-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
+
+const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+
+const openDeclarationPage = () => {
+	loadPlanDetails().then((plan) => {
+		portalDeclarationPage.visit(plan.urlReference);
+	});
+};
 
 describe('Portal declaration page validation tests', () => {
 	beforeEach(() => {
@@ -9,7 +18,7 @@ describe('Portal declaration page validation tests', () => {
 	});
 
 	it('Shows an error when no checkbox has been selected', { tags: ['regression'] }, () => {
-		portalDeclarationPage.visit('p');
+		openDeclarationPage();
 		portalDeclarationPage.confirmAndSubmitButton.click();
 
 		portalDeclarationPage.verifyErrorSummary(
@@ -22,7 +31,7 @@ describe('Portal declaration page validation tests', () => {
 	});
 
 	it('Shows an error when not all checkboxes have been selected', { tags: ['regression'] }, () => {
-		portalDeclarationPage.visit('p');
+		openDeclarationPage();
 		portalDeclarationPage.confirmInformationCheckbox.click();
 		portalDeclarationPage.confirmAndSubmitButton.click();
 
@@ -52,7 +61,7 @@ describe('Portal declaration page validation tests', () => {
 		'Submission reference number is generated when not all checkboxes have been selected',
 		{ tags: ['regression'] },
 		() => {
-			portalDeclarationPage.visit('p');
+			openDeclarationPage();
 			portalDeclarationPage.confirmAndSubmitButton.click();
 			portalDeclarationPage.submissionReference.invoke('text').should('match', /SUB-\d+-[A-Z0-9]+/);
 

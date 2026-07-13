@@ -2,7 +2,20 @@ import { BasePage } from '../../base-page.ts';
 
 export class PortalDeclarationPage extends BasePage {
 	constructor() {
-		super();
+		super(/^\/manage-local-plans\/[^/]+\/gateway-2-application\/application-declaration$/);
+	}
+
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}/gateway-2-application/application-declaration`;
+	}
+
+	visit(planReference: string) {
+		cy.visit(this.pathFor(planReference));
+	}
+
+	verifyLoaded() {
+		this.verifyPath();
+		this.verifyHeading('Review declaration');
 	}
 
 	get confirmAndSubmitButton() {
