@@ -1,9 +1,16 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { validationResult } from 'express-validator';
+import { RequiredValidator } from '@planning-inspectorate/dynamic-forms';
 import FileUploadRequiredValidator from './required-validator.ts';
 
 describe('FileUploadRequiredValidator', () => {
+	it('counts as a required validator for journey completion', () => {
+		const validator = new FileUploadRequiredValidator('documents');
+
+		assert.equal(validator instanceof RequiredValidator, true);
+	});
+
 	it('passes when the encoded uploaded files value contains at least one file', async () => {
 		const validator = new FileUploadRequiredValidator('documents');
 		const req = {
@@ -12,7 +19,7 @@ describe('FileUploadRequiredValidator', () => {
 			}
 		};
 
-		await validator.validate()[0].run(req);
+		await validator.validate().run(req);
 
 		assert.equal(validationResult(req).isEmpty(), true);
 	});
@@ -25,7 +32,7 @@ describe('FileUploadRequiredValidator', () => {
 			}
 		};
 
-		await validator.validate()[0].run(req);
+		await validator.validate().run(req);
 		const result = validationResult(req);
 
 		assert.equal(result.isEmpty(), false);
