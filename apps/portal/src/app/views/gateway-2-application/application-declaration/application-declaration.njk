@@ -10,12 +10,6 @@
             text: "Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application."
         }) }}
 
-        {% if submissionReference %}
-        <p class="govuk-body govuk-!-margin-top-4">
-            <strong>Submission reference:</strong> {{ submissionReference }}
-        </p>
-        {% endif %}
-
         <form method="post" novalidate>
             <p class="govuk-body">By submitting this application, I confirm that:</p>
 
@@ -25,13 +19,13 @@
                 items: [
                     {
                         value: "informationTrue",
-                        text: "To the best of your knowledge, the information given in this application and enclosed maps, plans and other documents are true.",
+                        text: "To the best of my knowledge, the information given in this application and enclosed maps, plans and other documents are true.",
                         checked: formValues.informationTrue if formValues
                     },
                     {
                         value: "privacyNotice",
                         checked: formValues.privacyNotice if formValues,
-                        html: 'I have read and agree to The Planning Inspectorate\'s <a href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices" class="govuk-link" target="_blank">privacy note</a>'
+                        html: 'I have read and agree to The Planning Inspectorate\'s <a href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice" class="govuk-link" rel="noopener noreferrer" target="_blank">privacy note</a>'
                     }
                 ]
             }) }}

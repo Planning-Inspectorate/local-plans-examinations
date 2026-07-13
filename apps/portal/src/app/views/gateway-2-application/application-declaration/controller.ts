@@ -38,9 +38,6 @@ export function buildPostDeclarationPage(service: PortalService): AsyncRequestHa
 		if (!hasInformationTrue || !hasPrivacyNotice) {
 			logger.info(`Declaration validation failed for case ${reference}`);
 
-			// Generate submission reference number
-			const submissionReference = `SUB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
 			return res.render(VIEW_PATH, {
 				pageTitle: 'Review declaration',
 				pageHeading: 'Review declaration',
@@ -60,12 +57,13 @@ export function buildPostDeclarationPage(service: PortalService): AsyncRequestHa
 				formValues: {
 					informationTrue: hasInformationTrue,
 					privacyNotice: hasPrivacyNotice
-				},
-				submissionReference
+				}
 			});
 		}
 
-		logger.info(`Declaration confirmed for case ${reference}`);
+		// Generate submission reference number
+		const submissionReference = `SUB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+		logger.info(`Declaration confirmed for case ${reference}, submission reference: ${submissionReference}`);
 
 		return res.redirect(`/manage-local-plans/${reference}/gateway-2-application/application-complete`);
 	};
