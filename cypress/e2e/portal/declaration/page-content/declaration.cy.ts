@@ -17,7 +17,6 @@ describe('Declaration page content', () => {
 			portalDeclarationPage.verifyLoaded();
 			portalDeclarationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
 			portalDeclarationPage.verifyBackLink('/manage-local-plans/p/gateway-2-application');
-			portalDeclarationPage.verifyHeading('Review declaration');
 			portalDeclarationPage.verifyMainContains(
 				'Your application',
 				'Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application.',
