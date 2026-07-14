@@ -4,17 +4,12 @@ import { clearDataFromSession, type JourneyResponse } from '@planning-inspectora
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { JOURNEY_ID } from './journey.ts';
 
-/**
- * The structure of data for the journey answers
- * depends on the fieldName for each question
- */
+// Defines the answers saved for the Gateway 2 journey.
 export interface Gateway2ApplicationAnswers {
 	gateway2CoverLetter: UploadedFile[];
 }
 
-/**
- * Returns a controller/handler to save the journey answers to the database
- */
+// Creates the controller that handles the final Gateway 2 submission.
 export function buildSaveController(service: PortalService): RequestHandler {
 	return async (req, res) => {
 		if (!res.locals || !res.locals.journeyResponse) {
@@ -29,6 +24,7 @@ export function buildSaveController(service: PortalService): RequestHandler {
 		// Code for submitted plan
 		service.logger.info(answers, 'Plan submitted');
 
+		// Clears the Gateway 2 journey answers after submission.
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
 		// res.render('views/layouts/success.njk', { reference: '123456' });
 	};
