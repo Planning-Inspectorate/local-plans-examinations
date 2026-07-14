@@ -40,27 +40,7 @@ describe('buildSaveController', () => {
 			locals: {
 				journeyResponse: {
 					answers: {
-						caseOfficer: 'John Doe',
-						planTitle: 'Development Plan 2024',
-						planType: 'Local Plan',
-						email: 'contact@lpa.gov.uk',
-						reference: '',
-						checkLpas: [{ lpa: 'lpa-1' }, { lpa: 'lpa-2' }],
-						contactDetails: [
-							{
-								firstName: 'Jane',
-								lastName: 'Smith',
-								email: 'jane@lpa.gov.uk',
-								phone: '01234567890',
-								lpaContact: 'lpa-1'
-							},
-							{
-								firstName: 'Bob',
-								lastName: 'Johnson',
-								email: 'bob@lpa.gov.uk',
-								lpaContact: 'lpa-2'
-							}
-						]
+						gateway2CoverLetter: [{ id: 'file-1', fileName: 'cover-letter.pdf' }]
 					}
 				}
 			},
