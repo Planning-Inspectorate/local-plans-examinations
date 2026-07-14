@@ -1,4 +1,4 @@
-import { portalDeclarationPage } from '../../../../page-objects/portal/declaration/declaration-page.ts';
+import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
