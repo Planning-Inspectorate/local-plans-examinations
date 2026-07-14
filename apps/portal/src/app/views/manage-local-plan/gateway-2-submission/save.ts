@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { PortalService } from '#service';
 import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { JOURNEY_ID } from './journey.ts';
 
 /**
@@ -8,26 +9,7 @@ import { JOURNEY_ID } from './journey.ts';
  * depends on the fieldName for each question
  */
 export interface Gateway2ApplicationAnswers {
-	// email: string;
-	// reference: string;
-	// caseOfficer: string;
-	planTitle: string;
-	// planType: string;
-	// checkLpas: {
-	// 	lpa: string;
-	// }[];
-	// contactDetails: {
-	// 	firstName: string;
-	// 	lastName: string;
-	// 	email: string;
-	// 	phone?: string;
-	// 	lpaContact: string;
-	// }[];
-	// intentionToCommenceDate?: string;
-	// gateway1Date?: string;
-	// gateway2Date?: string;
-	// gateway3Date?: string;
-	// submissionDate?: string;
+	gateway2CoverLetter: UploadedFile[];
 }
 
 /**
