@@ -90,58 +90,19 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 
 		(req as any).currentCase = currentCase;
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
-			...getCaseScopedSessionAnswers(req, routePlanReference ?? planReference),
-			planTitle: currentCase.planTitle,
-			planDate: currentCase.gateway2Date
+			...getCaseScopedSessionAnswers(req, routePlanReference ?? planReference)
 		});
 
 		return next();
 	};
 }
 
-function buildSaveDataToCase(service: PortalService) {
+function buildSaveDataToCase() {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 
 	return async (params: any) => {
 		await saveDataToCaseSession(params);
-
-		const planReference = getPlanReference(params.req);
-		if (!planReference) {
-			throw new Error('Invalid plan reference');
-		}
-
-		const updateData = buildCaseUpdateData(params.data?.answers ?? {});
-		if (Object.keys(updateData).length === 0) {
-			return;
-		}
-
-		await service.db.case.update({
-			where: { reference: planReference },
-			data: updateData
-		});
 	};
-}
-
-function buildCaseUpdateData(answers: Record<string, unknown>) {
-	const updateData: Record<string, unknown> = {};
-
-	if (Object.hasOwn(answers, 'planTitle')) {
-		updateData.planTitle = String(answers.planTitle ?? '');
-	}
-
-	if (Object.hasOwn(answers, 'planDate')) {
-		updateData.gateway2Date = normaliseOptionalDate(answers.planDate);
-	}
-
-	return updateData;
-}
-
-function normaliseOptionalDate(value: unknown): Date | null {
-	if (value === null || value === undefined || value === '') {
-		return null;
-	}
-
-	return value instanceof Date ? value : new Date(String(value));
 }
 
 function getCaseScopedSessionAnswers(req: any, planReference: string): Record<string, unknown> {
@@ -219,7 +180,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
-	const saveDataToCase = buildSaveDataToCase(service);
+	const saveDataToCase = buildSaveDataToCase();
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
 	const uploadGateway2CoverLetter = createFileUploaderUploadController({
 		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
