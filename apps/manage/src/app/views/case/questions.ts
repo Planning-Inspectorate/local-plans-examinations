@@ -2,7 +2,8 @@ import {
 	COMPONENT_TYPES,
 	createQuestions,
 	RequiredValidator,
-	questionClasses
+	questionClasses,
+	DateValidator
 } from '@planning-inspectorate/dynamic-forms';
 import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
@@ -13,8 +14,6 @@ const allQuestionClasses = {
 	...questionClasses,
 	...CUSTOM_COMPONENT_CLASSES
 };
-
-export const JOURNEY_ID = 'edit-case-overview';
 
 const caseOverviewQuestions: Record<string, QuestionProps> = {
 	planTitle: {
@@ -249,6 +248,63 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
 		validators: [new RequiredValidator('Input QA Inspector 3')]
+	},
+	noticeOfIntentionPublishDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Notice of Intention published?',
+		fieldName: 'noticeOfIntention',
+		url: 'notice-of-intention-publish-date',
+		title: 'Notice of Intention publish date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'notice-of-intention-publish-date' }
+	},
+	gateway1estimatedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the estimated Gateway 1 date?',
+		fieldName: 'estimatedGateway1Date',
+		url: 'estimated-gateway-1-date',
+		title: 'Gateway 1 estimated date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'estimated-gateway-1-date' }
+	},
+	gateway1ActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was Gateway 1 completed?',
+		fieldName: 'completedGateway1Date',
+		url: 'completed-gateway-1-date',
+		title: 'Gateway 1 actual date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'completed-gateway-1-date' }
+	},
+	slaSentDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the SLA sent?',
+		fieldName: 'slaSentDate',
+		url: 'sla-sent-date',
+		title: 'SLA sent date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'sla-sent-date' }
+	},
+	slaReceivedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the SLA received?',
+		fieldName: 'slaReceivedDate',
+		url: 'sla-received-date',
+		title: 'SLA received date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'sla-received-date' }
+	},
+	dsaCheck: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Does the LPA have a Digital Sharing Agreement (DSA)?',
+		fieldName: 'dsaChecked',
+		url: 'dsa-checked',
+		title: 'Digital Sharing Agreement (DSA) check',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
 	}
 };
 

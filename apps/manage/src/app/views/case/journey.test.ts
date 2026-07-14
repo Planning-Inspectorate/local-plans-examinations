@@ -2,13 +2,13 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { createOverviewJourney, JOURNEY_ID } from './journey.ts';
+import { createOverviewJourney, OVERVIEW_JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
 
 function createJourney() {
 	return createOverviewJourney(
 		{ baseUrl: '/case/LP-TEST-001' } as Request,
-		new JourneyResponse(JOURNEY_ID, '', {}),
+		new JourneyResponse(OVERVIEW_JOURNEY_ID, '', {}),
 		questions
 	);
 }

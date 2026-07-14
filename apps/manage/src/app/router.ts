@@ -17,7 +17,6 @@ export function buildRouter(service: ManageService): IRouter {
 	const router = createRouter();
 	const monitoringRoutes = createMonitoringRoutes(service);
 	const { router: authRoutes, guards: authGuards } = createAuthRoutesAndGuards(service);
-	// const caseRoutes = caseRouter(service);
 
 	router.use('/', monitoringRoutes);
 
