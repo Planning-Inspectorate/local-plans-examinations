@@ -1,6 +1,6 @@
 import { applicationCompletePage } from '../../../../page-objects/portal/gw2-application/application-complete-page.ts';
 import { startPortalOtpLogin, completePortalLogin } from '../../../../flows/portal/login-flow.ts';
-import { planDetailsPage } from 'cypress/page-objects/portal/plan-details/plan-details-page.ts';
+import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');

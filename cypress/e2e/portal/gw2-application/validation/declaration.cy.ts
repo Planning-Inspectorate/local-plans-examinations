@@ -1,6 +1,7 @@
 import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
+import { ERROR_MESSAGES } from 'cypress/constants/portal/error-messages.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -22,12 +23,10 @@ describe('Portal declaration page validation tests', () => {
 		portalDeclarationPage.confirmAndSubmitButton.click();
 
 		portalDeclarationPage.verifyErrorSummary(
-			'There is a problem',
-			'You must confirm both declarations before you can submit your application.'
+			ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+			ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED
 		);
-		portalDeclarationPage.verifyFieldErrorContains(
-			'You must confirm both declarations before you can submit your application.'
-		);
+		portalDeclarationPage.verifyFieldErrorContains(ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED);
 	});
 
 	it('Shows an error when not all checkboxes have been selected', { tags: ['regression'] }, () => {
@@ -36,12 +35,10 @@ describe('Portal declaration page validation tests', () => {
 		portalDeclarationPage.confirmAndSubmitButton.click();
 
 		portalDeclarationPage.verifyErrorSummary(
-			'There is a problem',
-			'You must confirm both declarations before you can submit your application.'
+			ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+			ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED
 		);
-		portalDeclarationPage.verifyFieldErrorContains(
-			'You must confirm both declarations before you can submit your application.'
-		);
+		portalDeclarationPage.verifyFieldErrorContains(ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED);
 		portalDeclarationPage.confirmInformationCheckbox.click();
 		portalDeclarationPage.confirmInformationCheckbox.should('not.be.checked');
 
@@ -49,12 +46,10 @@ describe('Portal declaration page validation tests', () => {
 		portalDeclarationPage.confirmAndSubmitButton.click();
 
 		portalDeclarationPage.verifyErrorSummary(
-			'There is a problem',
-			'You must confirm both declarations before you can submit your application.'
+			ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+			ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED
 		);
-		portalDeclarationPage.verifyFieldErrorContains(
-			'You must confirm both declarations before you can submit your application.'
-		);
+		portalDeclarationPage.verifyFieldErrorContains(ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED);
 	});
 
 	it(
