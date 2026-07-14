@@ -73,6 +73,7 @@ export const questions = createQuestions(
 
 const checkAnswersRedirects: Partial<Record<keyof typeof gateway2ApplicationQuestions, CheckAnswersRedirect>> = {};
 
+// Adds check answers redirect behaviour to configured questions.
 for (const [questionName, redirect] of Object.entries(checkAnswersRedirects)) {
 	if (!redirect) {
 		continue;
@@ -81,6 +82,7 @@ for (const [questionName, redirect] of Object.entries(checkAnswersRedirects)) {
 	addCheckAnswersRedirectToAction(questions[questionName], redirect);
 }
 
+// Updates a question action so it includes the check answers redirect query.
 function addCheckAnswersRedirectToAction(question: any, redirect: CheckAnswersRedirect) {
 	const getAction = question.getAction.bind(question);
 
@@ -97,6 +99,8 @@ function addCheckAnswersRedirectToAction(question: any, redirect: CheckAnswersRe
 	};
 }
 
+// Appends a query parameter to a URL.
+// Example format: /plan-title?checkAnswersRedirect=check-your-answers.
 function appendQueryParam(url: string, key: string, value: string) {
 	const separator = url.includes('?') ? '&' : '?';
 	return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;

@@ -36,16 +36,19 @@ const upload = multer({
 	}
 });
 
+// Marks the user as editing from the check answers page.
 function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
 	next();
 }
 
+// Saves the answer and sends the user back to check answers when needed.
 function redirectAfterCyaEdit(req: any, res: any, next: any) {
 	const returnToCya = getCheckAnswersRedirect(req) ?? req.session.editingFromCheckAnswers === true;
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
+// Saves the case answer and returns to check answers by default.
 function redirectAfterCaseQuestionEdit(saveDataToCase: ReturnType<typeof buildSaveDataToCase>) {
 	return (req: any, res: any, next: any) => {
 		const returnToCya = getCheckAnswersRedirect(req) ?? true;
@@ -53,6 +56,7 @@ function redirectAfterCaseQuestionEdit(saveDataToCase: ReturnType<typeof buildSa
 	};
 }
 
+// Reads the check answers redirect query and converts it to true or false.
 function getCheckAnswersRedirect(req: any): boolean | undefined {
 	const redirect = Array.isArray(req.query?.[CHECK_ANSWERS_REDIRECT_QUERY])
 		? req.query[CHECK_ANSWERS_REDIRECT_QUERY][0]
@@ -67,11 +71,13 @@ function getCheckAnswersRedirect(req: any): boolean | undefined {
 	}
 }
 
+// Builds the URL for the current file upload question.
 function redirectToFileUploaderQuestion(req: any) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
 
+// Loads the case for the plan reference and creates the journey response.
 function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler {
 	return async (req, res, next) => {
 		const routePlanReference = getRoutePlanReference(req);
@@ -97,6 +103,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 	};
 }
 
+// Saves case-scoped answers into the session.
 function buildSaveDataToCase() {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 
@@ -105,6 +112,7 @@ function buildSaveDataToCase() {
 	};
 }
 
+// Gets saved answers for this plan and journey from the session.
 function getCaseScopedSessionAnswers(req: any, planReference: string): Record<string, unknown> {
 	const answers = req.session?.forms?.[planReference]?.[JOURNEY_ID];
 	if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
@@ -116,10 +124,13 @@ function getCaseScopedSessionAnswers(req: any, planReference: string): Record<st
 	);
 }
 
+// Retrieves the plan reference from the params and creates the file upload session key.
+// Example format: LP-TEST-001:gateway2CoverLetter.
 function fileUploaderCaseSessionKey(req: any) {
 	return `${req.params.planReference}:${GATEWAY_2_COVER_LETTER_FIELD}`;
 }
 
+// Keeps the Gateway 2 cover letter answer in sync with uploaded files.
 export function syncGateway2CoverLetterAnswer(req: any, uploadedFiles: UploadedFile[]) {
 	if (!req.session) {
 		return;
@@ -137,6 +148,7 @@ export function syncGateway2CoverLetterAnswer(req: any, uploadedFiles: UploadedF
 	delete answers[GATEWAY_2_COVER_LETTER_FIELD];
 }
 
+// Reads the plan reference from the route params.
 function getRoutePlanReference(req: any): string | undefined {
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
@@ -145,11 +157,13 @@ function getRoutePlanReference(req: any): string | undefined {
 	return planReference || undefined;
 }
 
+// Gets the plan reference in the format used by the database.
 function getPlanReference(req: any): string | undefined {
 	const planReference = getRoutePlanReference(req);
 	return normalisePlanReferenceForLookup(planReference);
 }
 
+// Converts route references like PLAN-123 to database references like PLAN/123.
 export function normalisePlanReferenceForLookup(planReference: string | undefined): string | undefined {
 	if (!planReference) {
 		return undefined;
@@ -162,6 +176,7 @@ export function normalisePlanReferenceForLookup(planReference: string | undefine
 	return planReference;
 }
 
+// Renders the standard page not found screen.
 function renderNotFound(res: any) {
 	return res.status(404).render('views/layouts/error', {
 		pageTitle: 'Page not found',
@@ -172,6 +187,7 @@ function renderNotFound(res: any) {
 	});
 }
 
+// Registers the Gateway 2 submission routes.
 export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
