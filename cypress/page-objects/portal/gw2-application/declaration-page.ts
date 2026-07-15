@@ -39,7 +39,9 @@ export class PortalDeclarationPage extends BasePage {
 	}
 
 	get privacyNoteLink() {
-		return cy.get('a[href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices"]');
+		return cy.get(
+			'a[href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice"]'
+		);
 	}
 
 	get submissionReference() {
