@@ -12,10 +12,9 @@ export const ERROR_MESSAGES = {
 	// OPT
 
 	NO_CODE_ENTERED_SUMMARY: 'You have not entered a code',
-	NO_CODE_ENTERED: 'Enter the code we sent to your email address',
+	ENTER_CODE_SENT: 'Enter the code we sent to your email address',
 
 	INCORRECT_CODE_SUMMARY: 'The code you entered is incorrect',
-	// INCORRECT_CODE: '';
 
 	// Declaration page
 

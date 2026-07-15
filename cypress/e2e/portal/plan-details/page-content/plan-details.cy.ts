@@ -1,4 +1,4 @@
-import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
@@ -7,9 +7,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Plan details page content', () => {
 	beforeEach(() => {
-		cy.setCookie('cookie_consent', 'accept');
-		startPortalOtpLogin();
-		completePortalLogin();
+		portalLogin();
 		loadPlanDetails().then((plan) => {
 			portalLandingPage.openPlan(plan.reference);
 		});

@@ -1,5 +1,5 @@
 import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
-import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { ERROR_MESSAGES } from 'cypress/constants/portal/error-messages.ts';
 
@@ -13,9 +13,7 @@ const openDeclarationPage = () => {
 
 describe('Portal declaration page validation tests', () => {
 	beforeEach(() => {
-		cy.setCookie('cookie_consent', 'accept');
-		startPortalOtpLogin();
-		completePortalLogin();
+		portalLogin();
 	});
 
 	it('Shows an error when no checkbox has been selected', { tags: ['regression'] }, () => {
