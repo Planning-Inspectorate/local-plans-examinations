@@ -64,9 +64,11 @@ describe('file uploader upload controller', () => {
 
 	it('stores validation errors in the session and redirects without uploading', async () => {
 		const upload = mock.fn(async () => buildUploadedFile());
+		const onUploadError = mock.fn();
 		const controller = createFileUploaderUploadController({
 			fieldName: 'documents',
 			storage: async () => buildStorage({ upload }),
+			onUploadError,
 			question: buildQuestionConfig()
 		});
 		const req = buildRequest({
@@ -79,10 +81,48 @@ describe('file uploader upload controller', () => {
 		await controller(req, res, mock.fn());
 
 		assert.equal(upload.mock.callCount(), 0);
+		assert.equal(onUploadError.mock.callCount(), 1);
+		assert.deepEqual(onUploadError.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				errors: [{ text: 'Choose a file to upload', href: '#upload-form' }]
+			}
+		]);
 		assert.deepEqual(req.session.errors, { 'upload-form': { msg: 'Errors encountered during file upload' } });
 		assert.deepEqual(req.session.errorSummary, [{ text: 'Choose a file to upload', href: '#upload-form' }]);
 		// Commented out due to GH security alert, will look at removing / resolving with the cover letter release
 		// assert.deepEqual(res.redirect.mock.calls[0].arguments, ['/case/gateway-2']);
+	});
+
+	it('calls the upload error callback and rethrows when storage upload fails', async () => {
+		const error = new Error('storage failed');
+		const upload = mock.fn(async () => {
+			throw error;
+		});
+		const onUploadError = mock.fn();
+		const controller = createFileUploaderUploadController({
+			fieldName: 'documents',
+			storage: async () => buildStorage({ upload }),
+			onUploadError,
+			question: buildQuestionConfig()
+		});
+		const req = buildRequest();
+		const res = buildResponse();
+
+		await assert.rejects(() => controller(req, res, mock.fn()), error);
+
+		assert.equal(onUploadError.mock.callCount(), 1);
+		assert.deepEqual(onUploadError.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				error
+			}
+		]);
+		assert.equal(res.redirect.mock.callCount(), 0);
 	});
 });
 
@@ -127,6 +167,47 @@ describe('file uploader delete controller', () => {
 			}
 		]);
 		assert.deepEqual(res.redirect.mock.calls[0].arguments, ['/case/case-1']);
+	});
+
+	it('calls the delete error callback and rethrows when storage delete fails', async () => {
+		const error = new Error('delete failed');
+		const deleteFile = mock.fn(async () => {
+			throw error;
+		});
+		const onDeleteError = mock.fn();
+		const fileToDelete = buildUploadedFile({ id: 'file-to-delete' });
+		const controller = createFileUploaderDeleteController({
+			fieldName: 'documents',
+			storage: async () => buildStorage({ delete: deleteFile }),
+			onDeleteError,
+			question: buildQuestionConfig()
+		});
+		const req = buildRequest({
+			params: { fileId: 'file-to-delete' },
+			session: {
+				fileUploader: {
+					documents: {
+						uploadedFiles: [fileToDelete]
+					}
+				}
+			}
+		});
+		const res = buildResponse();
+
+		await assert.rejects(() => controller(req, res, mock.fn()), error);
+
+		assert.equal(onDeleteError.mock.callCount(), 1);
+		assert.deepEqual(onDeleteError.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				fileId: 'file-to-delete',
+				error
+			}
+		]);
+		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [fileToDelete]);
+		assert.equal(res.redirect.mock.callCount(), 0);
 	});
 });
 

@@ -237,6 +237,65 @@ function getOrCreateRecord(container: Record<string, unknown>, key: string): Rec
 	return value;
 }
 
+function gateway2CoverLetterLogContext(req: Request) {
+	const request = req as Gateway2Request;
+	return {
+		planReference: getRoutePlanReference(req),
+		caseId: request.currentCase?.id,
+		fieldName: GATEWAY_2_COVER_LETTER_FIELD
+	};
+}
+
+function logGateway2CoverLetterUploaded(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
+	service.logger.info(
+		{
+			...gateway2CoverLetterLogContext(req),
+			fileCount: uploadedFiles.length
+		},
+		'Gateway 2 cover letter uploaded'
+	);
+}
+
+function logGateway2CoverLetterUploadFailed(
+	service: PortalService,
+	req: Request,
+	{ errors, error }: { errors?: Array<{ text: string; href: string }>; error?: unknown }
+) {
+	const context = {
+		...gateway2CoverLetterLogContext(req),
+		errorCount: errors?.length ?? 0
+	};
+
+	if (error) {
+		service.logger.error({ ...context, error }, 'Gateway 2 cover letter upload failed');
+		return;
+	}
+
+	service.logger.warn(context, 'Gateway 2 cover letter upload failed');
+}
+
+function logGateway2CoverLetterDeleted(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
+	service.logger.info(
+		{
+			...gateway2CoverLetterLogContext(req),
+			fileId: req.params.fileId,
+			remainingFileCount: uploadedFiles.length
+		},
+		'Gateway 2 cover letter deleted'
+	);
+}
+
+function logGateway2CoverLetterDeleteFailed(service: PortalService, req: Request, fileId: string, error: unknown) {
+	service.logger.error(
+		{
+			...gateway2CoverLetterLogContext(req),
+			fileId,
+			error
+		},
+		'Gateway 2 cover letter delete failed'
+	);
+}
+
 // Registers the Gateway 2 submission routes.
 export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -259,7 +318,11 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 				fieldName: GATEWAY_2_COVER_LETTER_FIELD
 			}
 		}),
-		onFilesChange: ({ req, uploadedFiles }) => syncGateway2CoverLetterAnswer(req, uploadedFiles),
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2CoverLetterAnswer(req, uploadedFiles);
+			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
+		},
+		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const uploadGateway2CoverLetterForCase = createFileUploaderUploadController({
@@ -279,14 +342,22 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 				}
 			};
 		},
-		onFilesChange: ({ req, uploadedFiles }) => syncGateway2CoverLetterAnswer(req, uploadedFiles),
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2CoverLetterAnswer(req, uploadedFiles);
+			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
+		},
+		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const deleteGateway2CoverLetter = createFileUploaderDeleteController({
 		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
-		onFilesChange: ({ req, uploadedFiles }) => syncGateway2CoverLetterAnswer(req, uploadedFiles),
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2CoverLetterAnswer(req, uploadedFiles);
+			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
+		},
+		onDeleteError: ({ req, fileId, error }) => logGateway2CoverLetterDeleteFailed(service, req, fileId, error),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const deleteGateway2CoverLetterForCase = createFileUploaderDeleteController({
@@ -294,7 +365,11 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
 		sessionKey: fileUploaderCaseSessionKey,
-		onFilesChange: ({ req, uploadedFiles }) => syncGateway2CoverLetterAnswer(req, uploadedFiles),
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2CoverLetterAnswer(req, uploadedFiles);
+			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
+		},
+		onDeleteError: ({ req, fileId, error }) => logGateway2CoverLetterDeleteFailed(service, req, fileId, error),
 		redirect: redirectToFileUploaderQuestion
 	});
 
