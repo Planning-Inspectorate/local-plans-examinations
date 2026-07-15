@@ -1,14 +1,12 @@
 import { applicationCompletePage } from '../../../../page-objects/portal/gw2-application/application-complete-page.ts';
-import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
 describe('Application Complete page content', () => {
 	beforeEach(() => {
-		cy.setCookie('cookie_consent', 'accept');
-		startPortalOtpLogin();
-		completePortalLogin();
+		portalLogin();
 	});
 
 	it('Verifying page content for the application complete page', { tags: ['regression'] }, () => {

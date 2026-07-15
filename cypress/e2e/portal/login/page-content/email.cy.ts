@@ -7,6 +7,7 @@ describe('Portal login email page', () => {
 
 	it('displays the sign-in page content', { tags: ['smoke'] }, () => {
 		portalLoginEmailPage.verifyHeading('Sign-in');
+		portalLoginEmailPage.verifyMainContains('What is your email address');
 		portalLoginEmailPage.verifySaveAndContinueVisible();
 	});
 });

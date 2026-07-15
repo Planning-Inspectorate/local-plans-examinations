@@ -16,3 +16,9 @@ export const completePortalLogin = () => {
 		portalLoginOtpPage.saveAndContinue();
 	});
 };
+
+export const portalLogin = () => {
+	cy.setCookie('cookie_consent', 'accept');
+	startPortalOtpLogin();
+	completePortalLogin();
+};

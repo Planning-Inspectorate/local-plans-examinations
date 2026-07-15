@@ -1,5 +1,5 @@
 import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
-import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 
@@ -7,9 +7,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Declaration page content', () => {
 	beforeEach(() => {
-		cy.setCookie('cookie_consent', 'accept');
-		startPortalOtpLogin();
-		completePortalLogin();
+		portalLogin();
 	});
 
 	it('Verifying page content for the declaration page', { tags: ['regression'] }, () => {

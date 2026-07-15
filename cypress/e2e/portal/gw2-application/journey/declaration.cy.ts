@@ -1,4 +1,4 @@
-import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { applicationCompletePage } from '../../../../page-objects/portal/gw2-application/application-complete-page.ts';
 import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
@@ -8,9 +8,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Declaration page journeys', () => {
 	beforeEach(() => {
-		cy.setCookie('cookie_consent', 'accept');
-		startPortalOtpLogin();
-		completePortalLogin();
+		portalLogin();
 	});
 
 	it('Navigates to gateway 2 application when back link is clicked', { tags: ['smoke'] }, () => {
