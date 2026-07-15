@@ -26,6 +26,5 @@ export function buildSaveController(service: PortalService): RequestHandler {
 
 		// Clears the Gateway 2 journey answers after submission.
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
-		// res.render('views/layouts/success.njk', { reference: '123456' });
 	};
 }

@@ -1,5 +1,12 @@
 import type { PortalService } from '#service';
-import { type IRouter, type RequestHandler, Router as createRouter } from 'express';
+import {
+	type IRouter,
+	type NextFunction,
+	type Request,
+	type RequestHandler,
+	type Response,
+	Router as createRouter
+} from 'express';
 import multer from 'multer';
 import {
 	buildGetJourney,
@@ -9,24 +16,44 @@ import {
 	buildSaveDataToSession,
 	JourneyResponse,
 	question,
+	type SaveDataFn,
+	type SaveParams,
 	saveDataToSession,
 	validate,
 	validationErrorHandler
 } from '@planning-inspectorate/dynamic-forms';
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import { CHECK_ANSWERS_REDIRECT_QUERY, CHECK_ANSWERS_REDIRECTS, questions } from './questions.ts';
+import {
+	CHECK_ANSWERS_REDIRECT_QUERY,
+	CHECK_ANSWERS_REDIRECTS,
+	gateway2CoverLetterQuestion,
+	questions
+} from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
 	fileUploaderQuestionMiddleware,
+	type FileUploaderSession,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 
 const GATEWAY_2_COVER_LETTER_FIELD = 'gateway2CoverLetter';
 const GATEWAY_2_COVER_LETTER_URL = 'gateway-2-cover-letter';
-const GATEWAY_2_COVER_LETTER_QUESTION = questions[GATEWAY_2_COVER_LETTER_FIELD].config;
+const GATEWAY_2_COVER_LETTER_QUESTION = gateway2CoverLetterQuestion;
+
+type Gateway2Session = Request['session'] &
+	FileUploaderSession & {
+		editingFromCheckAnswers?: boolean;
+		forms?: Record<string, unknown>;
+	};
+
+type Gateway2Request = Request & {
+	currentCase?: CaseModel;
+	session: Gateway2Session;
+};
 
 const upload = multer({
 	storage: multer.memoryStorage(),
@@ -37,27 +64,29 @@ const upload = multer({
 });
 
 // Marks the user as editing from the check answers page.
-function setAsEditingFromCya(req: any, _: any, next: any) {
-	req.session.editingFromCheckAnswers = true;
+function setAsEditingFromCya(req: Request, _: Response, next: NextFunction) {
+	const request = req as Gateway2Request;
+	request.session.editingFromCheckAnswers = true;
 	next();
 }
 
 // Saves the answer and sends the user back to check answers when needed.
-function redirectAfterCyaEdit(req: any, res: any, next: any) {
-	const returnToCya = getCheckAnswersRedirect(req) ?? req.session.editingFromCheckAnswers === true;
+function redirectAfterCyaEdit(req: Request, res: Response, next: NextFunction) {
+	const request = req as Gateway2Request;
+	const returnToCya = getCheckAnswersRedirect(req) ?? request.session.editingFromCheckAnswers === true;
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
 // Saves the case answer and returns to check answers by default.
 function redirectAfterCaseQuestionEdit(saveDataToCase: ReturnType<typeof buildSaveDataToCase>) {
-	return (req: any, res: any, next: any) => {
+	return (req: Request, res: Response, next: NextFunction) => {
 		const returnToCya = getCheckAnswersRedirect(req) ?? true;
 		buildSave(saveDataToCase, returnToCya)(req, res, next);
 	};
 }
 
 // Reads the check answers redirect query and converts it to true or false.
-function getCheckAnswersRedirect(req: any): boolean | undefined {
+function getCheckAnswersRedirect(req: Request): boolean | undefined {
 	const redirect = Array.isArray(req.query?.[CHECK_ANSWERS_REDIRECT_QUERY])
 		? req.query[CHECK_ANSWERS_REDIRECT_QUERY][0]
 		: req.query?.[CHECK_ANSWERS_REDIRECT_QUERY];
@@ -72,7 +101,7 @@ function getCheckAnswersRedirect(req: any): boolean | undefined {
 }
 
 // Builds the URL for the current file upload question.
-function redirectToFileUploaderQuestion(req: any) {
+function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
@@ -94,7 +123,8 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			return renderNotFound(res);
 		}
 
-		(req as any).currentCase = currentCase;
+		const request = req as Gateway2Request;
+		request.currentCase = currentCase;
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...getCaseScopedSessionAnswers(req, routePlanReference ?? planReference)
 		});
@@ -104,18 +134,20 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 }
 
 // Saves case-scoped answers into the session.
-function buildSaveDataToCase() {
+function buildSaveDataToCase(): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 
-	return async (params: any) => {
+	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
 	};
 }
 
 // Gets saved answers for this plan and journey from the session.
-function getCaseScopedSessionAnswers(req: any, planReference: string): Record<string, unknown> {
-	const answers = req.session?.forms?.[planReference]?.[JOURNEY_ID];
-	if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+function getCaseScopedSessionAnswers(req: Request, planReference: string): Record<string, unknown> {
+	const request = req as Gateway2Request;
+	const planForms = asRecord(request.session.forms?.[planReference]);
+	const answers = asRecord(planForms?.[JOURNEY_ID]);
+	if (!answers) {
 		return {};
 	}
 
@@ -126,19 +158,22 @@ function getCaseScopedSessionAnswers(req: any, planReference: string): Record<st
 
 // Retrieves the plan reference from the params and creates the file upload session key.
 // Example format: LP-TEST-001:gateway2CoverLetter.
-function fileUploaderCaseSessionKey(req: any) {
+function fileUploaderCaseSessionKey(req: Request) {
 	return `${req.params.planReference}:${GATEWAY_2_COVER_LETTER_FIELD}`;
 }
 
 // Keeps the Gateway 2 cover letter answer in sync with uploaded files.
-export function syncGateway2CoverLetterAnswer(req: any, uploadedFiles: UploadedFile[]) {
+export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: UploadedFile[]) {
 	if (!req.session) {
 		return;
 	}
 
+	const request = req as Gateway2Request;
 	const planReference = getRoutePlanReference(req);
-	const forms = (req.session.forms ??= {});
-	const answers = planReference ? ((forms[planReference] ??= {})[JOURNEY_ID] ??= {}) : (forms[JOURNEY_ID] ??= {});
+	const forms = (request.session.forms ??= {});
+	const answers = planReference
+		? getOrCreateRecord(getOrCreateRecord(forms, planReference), JOURNEY_ID)
+		: getOrCreateRecord(forms, JOURNEY_ID);
 
 	if (uploadedFiles.length > 0) {
 		answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
@@ -149,7 +184,7 @@ export function syncGateway2CoverLetterAnswer(req: any, uploadedFiles: UploadedF
 }
 
 // Reads the plan reference from the route params.
-function getRoutePlanReference(req: any): string | undefined {
+function getRoutePlanReference(req: Request): string | undefined {
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
 		: req.params.planReference;
@@ -158,7 +193,7 @@ function getRoutePlanReference(req: any): string | undefined {
 }
 
 // Gets the plan reference in the format used by the database.
-function getPlanReference(req: any): string | undefined {
+function getPlanReference(req: Request): string | undefined {
 	const planReference = getRoutePlanReference(req);
 	return normalisePlanReferenceForLookup(planReference);
 }
@@ -177,7 +212,7 @@ export function normalisePlanReferenceForLookup(planReference: string | undefine
 }
 
 // Renders the standard page not found screen.
-function renderNotFound(res: any) {
+function renderNotFound(res: Response) {
 	return res.status(404).render('views/layouts/error', {
 		pageTitle: 'Page not found',
 		messages: [
@@ -185,6 +220,21 @@ function renderNotFound(res: any) {
 			'If you pasted the web address, check you copied the entire address.'
 		]
 	});
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function getOrCreateRecord(container: Record<string, unknown>, key: string): Record<string, unknown> {
+	const existingValue = asRecord(container[key]);
+	if (existingValue) {
+		return existingValue;
+	}
+
+	const value: Record<string, unknown> = {};
+	container[key] = value;
+	return value;
 }
 
 // Registers the Gateway 2 submission routes.
@@ -217,15 +267,18 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
 		sessionKey: fileUploaderCaseSessionKey,
-		destination: (req) => ({
-			folderPath: `${(req as any).currentCase?.id ?? req.params.planReference}/${GATEWAY_2_COVER_LETTER_URL}`,
-			metadata: {
-				journeyId: JOURNEY_ID,
-				caseId: (req as any).currentCase?.id,
-				caseReference: req.params.planReference,
-				fieldName: GATEWAY_2_COVER_LETTER_FIELD
-			}
-		}),
+		destination: (req) => {
+			const request = req as Gateway2Request;
+			return {
+				folderPath: `${request.currentCase?.id ?? req.params.planReference}/${GATEWAY_2_COVER_LETTER_URL}`,
+				metadata: {
+					journeyId: JOURNEY_ID,
+					caseId: request.currentCase?.id,
+					caseReference: req.params.planReference,
+					fieldName: GATEWAY_2_COVER_LETTER_FIELD
+				}
+			};
+		},
 		onFilesChange: ({ req, uploadedFiles }) => syncGateway2CoverLetterAnswer(req, uploadedFiles),
 		redirect: redirectToFileUploaderQuestion
 	});
