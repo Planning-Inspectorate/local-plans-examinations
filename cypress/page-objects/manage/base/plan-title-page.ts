@@ -17,7 +17,7 @@ export class PlanTitleBasePage extends BasePage {
 	}
 
 	verifyLoaded(value?: string) {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyPlanTitleForm(value);
 	}
 

@@ -14,7 +14,7 @@ export class PlanTypeBasePage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyPlanTypeForm();
 	}
 

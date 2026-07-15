@@ -12,7 +12,7 @@ export class DateQuestionPage extends BasePage {
 	}
 
 	verifyLoaded(date?: DateAnswer) {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading(this.heading);
 		this.verifyDateInputsVisible(this.fieldName);
 		this.verifySaveAndContinueVisible();

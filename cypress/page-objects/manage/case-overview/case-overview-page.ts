@@ -66,7 +66,7 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyLoaded(planTitle?: string) {
-		this.verifyPath();
+		super.verifyLoaded();
 
 		if (planTitle) {
 			this.verifyHeading(planTitle);

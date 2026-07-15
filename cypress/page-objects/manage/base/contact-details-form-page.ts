@@ -49,7 +49,7 @@ export class ContactDetailsFormPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyContactDetailsForm();
 	}
 

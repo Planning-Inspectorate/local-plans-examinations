@@ -14,7 +14,7 @@ export class Gateway1DsaPage extends BasePage {
 	}
 
 	verifyLoaded(value?: string) {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('Does the LPA have a Digital Sharing Agreement (DSA)?');
 		this.dsaOptionLabel('yes').should('be.visible').and('contain.text', 'Yes');
 		this.dsaOptionLabel('no').should('be.visible').and('contain.text', 'No');
