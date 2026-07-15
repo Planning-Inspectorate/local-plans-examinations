@@ -20,7 +20,7 @@ export class ContactDetailsListBasePage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyContactDetailsList();
 	}
 

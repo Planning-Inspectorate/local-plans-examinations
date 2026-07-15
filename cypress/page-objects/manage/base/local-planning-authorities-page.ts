@@ -20,7 +20,7 @@ export class LocalPlanningAuthoritiesBasePage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyLocalPlanningAuthoritiesList();
 	}
 

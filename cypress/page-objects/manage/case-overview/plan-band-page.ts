@@ -6,7 +6,7 @@ export class CaseOverviewPlanBandPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('What is the plan band?');
 	}
 }

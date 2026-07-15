@@ -285,6 +285,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 
 	return items.map((item) => ({
 		...item,
-		active: item.active ?? (currentSection !== 'case-history' && item.href !== '#' && item.href.includes(pathWithoutQuery))
+		active:
+			item.active ?? (currentSection !== 'case-history' && item.href !== '#' && item.href.includes(pathWithoutQuery))
 	}));
 }

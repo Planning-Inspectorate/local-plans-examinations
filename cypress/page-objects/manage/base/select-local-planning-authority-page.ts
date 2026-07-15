@@ -29,7 +29,7 @@ export class SelectLocalPlanningAuthorityBasePage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifySelectLocalPlanningAuthorityForm();
 	}
 

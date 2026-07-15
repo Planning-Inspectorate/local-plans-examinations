@@ -15,7 +15,7 @@ export class KeyStageDatesPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('Enter dates for key stages of the local plan');
 		this.verifyMainContains(
 			'Date the Notice of Intention to Commence Plan Making was published',

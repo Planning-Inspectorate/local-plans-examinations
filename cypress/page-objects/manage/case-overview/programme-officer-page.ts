@@ -10,7 +10,7 @@ export class CaseOverviewProgrammeOfficerPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('Who is the programme officer?');
 		this.programmeOfficerInput.should('be.visible').and('have.value', '');
 		this.verifySaveAndContinueVisible();

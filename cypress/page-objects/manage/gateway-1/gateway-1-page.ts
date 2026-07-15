@@ -25,7 +25,7 @@ export class Gateway1Page extends BasePage {
 	}
 
 	verifyLoaded(planTitle?: string) {
-		this.verifyPath();
+		super.verifyLoaded();
 
 		if (planTitle) {
 			this.verifyHeading(planTitle);

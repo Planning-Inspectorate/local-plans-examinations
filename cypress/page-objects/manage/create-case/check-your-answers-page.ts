@@ -29,7 +29,7 @@ export class CheckYourAnswersPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('Check your answers');
 	}
 

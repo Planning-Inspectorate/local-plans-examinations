@@ -10,7 +10,7 @@ export class CaseOfficerPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('Who is the case officer?');
 		this.caseOfficerSelect.should('be.visible');
 		this.verifySaveAndContinueVisible();
