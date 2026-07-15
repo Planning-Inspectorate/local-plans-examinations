@@ -1,4 +1,5 @@
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { createJourney, JOURNEY_ID } from './journey.ts';
@@ -12,7 +13,7 @@ describe('createJourney', () => {
 			params: {
 				planReference: 'PLAN-123456'
 			}
-		} as any;
+		} as unknown as Request;
 
 		const journey = createJourney(req, response, questions);
 
@@ -29,7 +30,7 @@ describe('createJourney', () => {
 		const req = {
 			baseUrl: '/manage-local-plan',
 			params: {}
-		} as any;
+		} as unknown as Request;
 
 		const journey = createJourney(req, response, questions);
 
@@ -63,7 +64,7 @@ function createTestJourney(answers: Record<string, unknown>) {
 	const req = {
 		baseUrl: '/manage-local-plan',
 		params: {}
-	} as any;
+	} as unknown as Request;
 
 	return createJourney(req, response, questions);
 }
