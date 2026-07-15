@@ -14,6 +14,11 @@ export const ERROR_MESSAGES = {
 	NO_CODE_ENTERED_SUMMARY: 'You have not entered a code',
 	NO_CODE_ENTERED: 'Enter the code we sent to your email address',
 
-	INCORRECT_CODE_SUMMARY: 'The code you entered is incorrect'
+	INCORRECT_CODE_SUMMARY: 'The code you entered is incorrect',
 	// INCORRECT_CODE: '';
+
+	// Declaration page
+
+	THERE_IS_A_PROBLEM: 'There is a problem',
+	DECLARATIONS_NOT_CONFIRMED: 'You must confirm both declarations before you can submit your application.'
 };

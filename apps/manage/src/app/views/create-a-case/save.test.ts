@@ -64,6 +64,7 @@ describe('buildSaveController', () => {
 	it('should create case with all data, send emails, and display success page', async () => {
 		process.env.PORTAL_URL = 'http://localhost:3000';
 		process.env.TEMPLATE_ID = 'template-123';
+		mockRequest.session.editingFromCheckAnswers = true;
 
 		const controller = buildSaveController(mockService);
 		await controller(mockRequest, mockResponse, mock.fn());
@@ -88,5 +89,6 @@ describe('buildSaveController', () => {
 
 		assert.strictEqual(mockResponse.render.mock.callCount(), 1);
 		assert.strictEqual(mockResponse.render.mock.calls[0].arguments[0], 'views/layouts/success.njk');
+		assert.strictEqual(mockRequest.session.editingFromCheckAnswers, undefined);
 	});
 });

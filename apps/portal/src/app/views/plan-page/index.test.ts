@@ -198,7 +198,10 @@ describe('plan page', () => {
 		const expectedButton = 'Start Gateway 2 submission';
 
 		assert.strictEqual(data.button, expectedButton, `expected ${expectedButton} but got ${data.button}`);
-		assert.ok(html.includes('href="/applicationPage/PLAN-001/1"'), 'expected action link to point to Gateway 2');
+		assert.ok(
+			html.includes('href="/manage-local-plans/PLAN-001/gateway-2-application/application-declaration"'),
+			'expected action link to point to Gateway 2 declaration'
+		);
 		assert.ok(html.includes('data-cy="plan-details-action"'), 'expected action link to have a stable selector');
 	});
 
@@ -215,7 +218,7 @@ describe('plan page', () => {
 			it(`status ${StatusLabel[status]}`, async () => {
 				const { data, html } = await renderPlan({ refNum });
 
-				const expectedHTML = `<a href="/applicationPage/${refNum}/1" class="govuk-button">`;
+				const expectedHTML = `<a href="/manage-local-plans/${refNum}/gateway-2-application/application-declaration" class="govuk-button">`;
 
 				assert.strictEqual(data.button, null, `expected null but got ${data.button}`);
 				assert.ok(!html.includes(expectedHTML), `expected html not to contain ${expectedHTML}`);
@@ -241,9 +244,10 @@ describe('plan page', () => {
 	it('should render task table links correctly for case 1 (G1 complete)', async () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
 
-		const expectedLinks = ['/applicationPage/PLAN-001/1', null, null];
+		const expectedLinks = ['/manage-local-plans/PLAN-001/gateway-2-application', null, null];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
-		const expectedHTML = 'class="govuk-link govuk-task-list__link" href="/applicationPage/PLAN-001/1"';
+		const expectedHTML =
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -309,9 +313,14 @@ describe('plan page', () => {
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
-		const expectedLinks = ['/applicationPage/PLAN-001/1', `/applicationPage/PLAN-001/2`, null];
+		const expectedLinks = [
+			'/manage-local-plans/PLAN-001/gateway-2-application',
+			`/manage-local-plans/PLAN-001/gateway-2-application`,
+			null
+		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
-		const expectedHTML = 'class="govuk-link govuk-task-list__link" href="/applicationPage/PLAN-001/2"';
+		const expectedHTML =
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -382,9 +391,14 @@ describe('plan page', () => {
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
-		const expectedLinks = ['/applicationPage/PLAN-001/1', `/applicationPage/PLAN-001/2`, `/applicationPage/PLAN-001/3`];
+		const expectedLinks = [
+			'/manage-local-plans/PLAN-001/gateway-2-application',
+			`/manage-local-plans/PLAN-001/gateway-2-application`,
+			`/manage-local-plans/PLAN-001/gateway-2-application`
+		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
-		const expectedHTML = 'class="govuk-link govuk-task-list__link" href="/applicationPage/PLAN-001/3"';
+		const expectedHTML =
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -454,9 +468,14 @@ describe('plan page', () => {
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
-		const expectedLinks = ['/applicationPage/PLAN-001/1', '/applicationPage/PLAN-001/2', '/applicationPage/PLAN-001/3'];
+		const expectedLinks = [
+			'/manage-local-plans/PLAN-001/gateway-2-application',
+			'/manage-local-plans/PLAN-001/gateway-2-application',
+			'/manage-local-plans/PLAN-001/gateway-2-application'
+		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
-		const expectedHTML = 'class="govuk-link govuk-task-list__link" href="/applicationPage/PLAN-001/3"';
+		const expectedHTML =
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
