@@ -16,7 +16,7 @@ describe('buildSaveController', () => {
 		mockResponse = createMockResponse();
 	});
 
-	it('should log the submitted answers and clear the journey session', async () => {
+	it('should log the submitted answers, clear the scoped journey session and redirect to application complete', async () => {
 		process.env.PORTAL_URL = 'http://localhost:3000';
 		process.env.TEMPLATE_ID = 'template-123';
 
@@ -30,8 +30,11 @@ describe('buildSaveController', () => {
 		assert.strictEqual(mockService.db.case.create.mock.callCount(), 0);
 		assert.strictEqual(mockService.notifyClient.sendEmail.mock.callCount(), 0);
 		assert.strictEqual(mockService.logger.info.mock.callCount(), 1);
-		assert.strictEqual(mockRequest.session.forms[JOURNEY_ID], undefined);
+		assert.strictEqual(mockRequest.session.forms['LPE-TEST-001'][JOURNEY_ID], undefined);
 		assert.strictEqual(mockResponse.render.mock.callCount(), 0);
+		assert.deepStrictEqual(mockResponse.redirect.mock.calls[0].arguments, [
+			'/manage-local-plans/LPE-TEST-001/gateway-2-application/application-complete'
+		]);
 	});
 });
 
@@ -55,10 +58,15 @@ function createMockService() {
 
 function createMockRequest() {
 	return {
+		params: {
+			planReference: 'LPE-TEST-001'
+		},
 		session: {
 			forms: {
-				[JOURNEY_ID]: {
-					gateway2CoverLetter: [{ id: 'file-1', fileName: 'cover-letter.pdf' }]
+				'LPE-TEST-001': {
+					[JOURNEY_ID]: {
+						gateway2CoverLetter: [{ id: 'file-1', fileName: 'cover-letter.pdf' }]
+					}
 				}
 			}
 		},
@@ -75,6 +83,7 @@ function createMockResponse() {
 				}
 			}
 		},
-		render: mock.fn()
+		render: mock.fn(),
+		redirect: mock.fn()
 	};
 }
