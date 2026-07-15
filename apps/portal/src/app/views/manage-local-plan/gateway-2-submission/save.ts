@@ -1,4 +1,4 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
 import type { PortalService } from '#service';
 import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
@@ -25,6 +25,23 @@ export function buildSaveController(service: PortalService): RequestHandler {
 		service.logger.info(answers, 'Plan submitted');
 
 		// Clears the Gateway 2 journey answers after submission.
+		const planReference = getRoutePlanReference(req);
+		if (planReference) {
+			clearDataFromSession({ req, journeyId: JOURNEY_ID, reqParam: 'planReference' });
+			return res.redirect(
+				`/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-application/application-complete`
+			);
+		}
+
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
+		return res.redirect('/manage-local-plans/your-plans');
 	};
+}
+
+function getRoutePlanReference(req: Request): string | undefined {
+	const planReference = Array.isArray(req.params.planReference)
+		? req.params.planReference[0]
+		: req.params.planReference;
+
+	return planReference || undefined;
 }
