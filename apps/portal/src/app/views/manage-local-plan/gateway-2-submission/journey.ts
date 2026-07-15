@@ -1,10 +1,11 @@
 import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
+import type { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
 import type { Request } from 'express';
 
 export const JOURNEY_ID = 'gateway-2-application';
 
 // Creates the Gateway 2 journey and builds its URLs from the plan reference.
-export function createJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+export function createJourney(req: Request, response: JourneyResponse, questions: Record<string, Question>) {
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
 		: req.params.planReference;

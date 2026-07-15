@@ -1,5 +1,7 @@
 import assert from 'node:assert';
+import type { Request } from 'express';
 import { describe, it } from 'node:test';
+import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { normalisePlanReferenceForLookup, syncGateway2CoverLetterAnswer } from './index.ts';
 
 describe('normalisePlanReferenceForLookup', () => {
@@ -24,7 +26,7 @@ describe('syncGateway2CoverLetterAnswer', () => {
 			session: {}
 		};
 
-		syncGateway2CoverLetterAnswer(req, [uploadedFile]);
+		syncGateway2CoverLetterAnswer(req as unknown as Request, [uploadedFile]);
 
 		assert.deepEqual(req.session, {
 			forms: {
@@ -51,13 +53,13 @@ describe('syncGateway2CoverLetterAnswer', () => {
 			}
 		};
 
-		syncGateway2CoverLetterAnswer(req, []);
+		syncGateway2CoverLetterAnswer(req as unknown as Request, []);
 
 		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
 	});
 });
 
-function buildUploadedFile(overrides: Record<string, unknown> = {}) {
+function buildUploadedFile(overrides: Partial<UploadedFile> = {}): UploadedFile {
 	return {
 		id: 'file-1',
 		fileName: 'cover-letter.pdf',
