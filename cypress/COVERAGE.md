@@ -28,6 +28,9 @@ Coverage levels:
 | COV-MAN-007 | Case overview            | Page content | Overview tab renders populated/unstarted rows and action links                               | `manage/case-overview/page-content/case-overview.cy.ts`                            | Checks all current row action URLs. We do not click every row because they use the same pattern |
 | COV-MAN-008 | Case overview updates    | Journey      | Representative Change and Answer links update overview answers                               | `manage/case-overview/journey/case-overview.cy.ts`                                 | Clicks examples of text, radio, contact and unanswered rows rather than every repeated link     |
 | COV-MAN-009 | Create case CYA edits    | Regression   | Check your answers edit flows return correctly for new journeys and list add-another actions | `manage/create-case/journey/create-case.cy.ts`                                     | Protects the sticky CYA state bug and add-another behaviour for LPAs and contact details        |
+| COV-MAN-010 | Gateway 1                | Page content | Gateway 1 tab renders expected rows, seeded answers and action links                         | `manage/gateway-1/page-content/gateway-1.cy.ts`                                    | Checks the Gateway 1 view and all current row action URLs                                       |
+| COV-MAN-011 | Gateway 1 updates        | Journey      | Representative Gateway 1 date and DSA answers update from the tab                            | `manage/gateway-1/journey/gateway-1.cy.ts`                                         | Date rows use the same component, so one date update is clicked end-to-end                      |
+| COV-MAN-012 | Gateway 1 validation     | Validation   | Blank Gateway 1 date shows the expected validation error                                     | `manage/gateway-1/validation/gateway-1.cy.ts`                                      | Covers the shared date component; DSA blank state would need a separate seed case               |
 
 ## Portal
 
@@ -52,7 +55,7 @@ Coverage levels:
 
 | Area                             | Status             | Notes                                                                                         |
 | -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------- |
-| Case history                     | Gap                | Not covered until the feature is available to test                                            |
+| Case history                     | Gap                | Not covered until the feature is available to test; Gateway 1 history updates are not present |
 | Plan band                        | Gap                | Add as a separate Case Overview row when implemented                                          |
 | Delete case                      | Gap                | Add as a separate Case Overview row when implemented                                          |
 | Notify email delivery            | Manual/service led | Best verified manually or with service-level tests unless a stable local test double is added |

@@ -6,25 +6,6 @@ export class KeyStageDatesPage extends BasePage {
 		super('/create-a-case/dates/key-stage-dates');
 	}
 
-	dateInput(fieldName: keyof CreateCaseData['dates'], part: 'day' | 'month' | 'year') {
-		return cy.get(`[name="${fieldName}-${part}"]`);
-	}
-
-	verifyDateInputsVisible(fieldName: keyof CreateCaseData['dates']) {
-		this.dateInput(fieldName, 'day').should('be.visible');
-		this.dateInput(fieldName, 'month').should('be.visible');
-		this.dateInput(fieldName, 'year').should('be.visible');
-	}
-
-	verifyDateInputValues(
-		fieldName: keyof CreateCaseData['dates'],
-		date: CreateCaseData['dates'][keyof CreateCaseData['dates']]
-	) {
-		this.dateInput(fieldName, 'day').should('have.value', date.day);
-		this.dateInput(fieldName, 'month').should('have.value', date.month);
-		this.dateInput(fieldName, 'year').should('have.value', date.year);
-	}
-
 	verifyKeyStageDatesPopulated(dates: CreateCaseData['dates']) {
 		this.verifyDateInputValues('intentionToCommenceDate', dates.intentionToCommenceDate);
 		this.verifyDateInputValues('gateway1Date', dates.gateway1Date);
@@ -52,11 +33,11 @@ export class KeyStageDatesPage extends BasePage {
 	}
 
 	enterKeyStageDates(dates: CreateCaseData['dates']) {
-		cy.fillDate('intentionToCommenceDate', dates.intentionToCommenceDate);
-		cy.fillDate('gateway1Date', dates.gateway1Date);
-		cy.fillDate('gateway2Date', dates.gateway2Date);
-		cy.fillDate('gateway3Date', dates.gateway3Date);
-		cy.fillDate('submissionDate', dates.submissionDate);
+		this.enterDateAnswer('intentionToCommenceDate', dates.intentionToCommenceDate);
+		this.enterDateAnswer('gateway1Date', dates.gateway1Date);
+		this.enterDateAnswer('gateway2Date', dates.gateway2Date);
+		this.enterDateAnswer('gateway3Date', dates.gateway3Date);
+		this.enterDateAnswer('submissionDate', dates.submissionDate);
 		this.saveAndContinue();
 	}
 }

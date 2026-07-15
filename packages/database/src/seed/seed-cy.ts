@@ -2,6 +2,7 @@ import path from 'path';
 import { loadEnvFile } from 'node:process';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
+import { gateway1DateAnswers, gateway1DsaAnswer } from '../../../../cypress/fixtures/manage/gateway-1.ts';
 
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
@@ -41,6 +42,12 @@ async function run() {
 				gateway2Date: new Date(Date.now()),
 				gateway3Date: new Date(Date.now()),
 				submissionDate: new Date(Date.now()),
+				noticeOfIntention: new Date(gateway1DateAnswers.noticeOfIntention.seedDate),
+				estimatedGateway1Date: new Date(gateway1DateAnswers.estimatedGateway1Date.seedDate),
+				completedGateway1Date: new Date(gateway1DateAnswers.completedGateway1Date.seedDate),
+				slaSentDate: new Date(gateway1DateAnswers.slaSentDate.seedDate),
+				slaReceivedDate: new Date(gateway1DateAnswers.slaReceivedDate.seedDate),
+				dsaChecked: gateway1DsaAnswer.value,
 				lpas: {
 					connectOrCreate: lpaCodes.map((lpaCode) => ({
 						where: { lpaCode },

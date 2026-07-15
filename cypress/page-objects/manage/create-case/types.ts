@@ -1,13 +1,8 @@
+import type { DisplayDateAnswer } from '../../../types/date.ts';
+
 export type SelectAnswer = {
 	value: string;
 	label: string;
-};
-
-export type DateAnswer = {
-	day: string;
-	month: string;
-	year: string;
-	display: string;
 };
 
 export type CreateCaseData = {
@@ -23,10 +18,10 @@ export type CreateCaseData = {
 		lpaContact: SelectAnswer;
 	};
 	dates: {
-		intentionToCommenceDate: DateAnswer;
-		gateway1Date: DateAnswer;
-		gateway2Date: DateAnswer;
-		gateway3Date: DateAnswer;
-		submissionDate: DateAnswer;
+		intentionToCommenceDate: DisplayDateAnswer;
+		gateway1Date: DisplayDateAnswer;
+		gateway2Date: DisplayDateAnswer;
+		gateway3Date: DisplayDateAnswer;
+		submissionDate: DisplayDateAnswer;
 	};
 };

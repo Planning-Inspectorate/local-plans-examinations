@@ -1,3 +1,5 @@
+import type { DateAnswer } from '../types/date.ts';
+
 export class BasePage {
 	private readonly path?: string | RegExp;
 
@@ -82,6 +84,34 @@ export class BasePage {
 		return this.summaryRowActions(key).find('a');
 	}
 
+	dateInput(fieldName: string, part: keyof DateAnswer) {
+		return cy.get(`[name="${fieldName}-${part}"], [name="${fieldName}_${part}"]`);
+	}
+
+	verifyDateInputsVisible(fieldName: string) {
+		this.dateInput(fieldName, 'day').should('be.visible');
+		this.dateInput(fieldName, 'month').should('be.visible');
+		this.dateInput(fieldName, 'year').should('be.visible');
+	}
+
+	verifyDateInputValues(fieldName: string, date: DateAnswer) {
+		this.dateInput(fieldName, 'day').should('have.value', date.day);
+		this.dateInput(fieldName, 'month').should('have.value', date.month);
+		this.dateInput(fieldName, 'year').should('have.value', date.year);
+	}
+
+	enterDateAnswer(fieldName: string, date: DateAnswer) {
+		this.dateInput(fieldName, 'day').clearAndWrite(date.day);
+		this.dateInput(fieldName, 'month').clearAndWrite(date.month);
+		this.dateInput(fieldName, 'year').clearAndWrite(date.year);
+	}
+
+	clearDateInputs(fieldName: string) {
+		this.dateInput(fieldName, 'day').clear();
+		this.dateInput(fieldName, 'month').clear();
+		this.dateInput(fieldName, 'year').clear();
+	}
+
 	verifySummaryRowContains(key: string, ...values: string[]) {
 		values.forEach((value) => {
 			this.summaryRowValue(key).should('contain.text', value);
@@ -114,11 +144,13 @@ export class BasePage {
 		this.pageHeading.should('be.visible').and('contain.text', text);
 	}
 
-	verifyBackLink(href?: string) {
+	verifyBackLink(href?: string | RegExp) {
 		const backLink = this.backLink.should('be.visible');
 
 		if (href) {
-			backLink.should('have.attr', 'href', href);
+			const assertion = typeof href === 'string' ? 'eq' : 'match';
+
+			backLink.should('have.attr', 'href').and(assertion, href);
 		}
 	}
 
