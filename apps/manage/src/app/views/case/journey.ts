@@ -65,7 +65,9 @@ function useOverviewBackLinks(journey: Journey, overviewUrl: string): Journey {
 }
 
 export function gateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	return new Journey({
+	const gateway1Url = req.baseUrl + '/gateway-1';
+
+	const journey = new Journey({
 		journeyId: GATEWAY_1_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 1', 'gateway-1')
@@ -80,8 +82,12 @@ export function gateway1Journey(req: Request, response: JourneyResponse, questio
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Gateway 1',
 		returnToListing: false,
-		makeBaseUrl: () => req.baseUrl + '/gateway-1',
-		initialBackLink: req.baseUrl + '/gateway-1',
+		makeBaseUrl: () => gateway1Url,
+		initialBackLink: gateway1Url,
 		response
 	});
+
+	journey.getBackLink = () => gateway1Url;
+
+	return journey;
 }
