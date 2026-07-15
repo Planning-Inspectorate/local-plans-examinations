@@ -81,6 +81,10 @@ export class CaseOverviewPage extends BasePage {
 		});
 	}
 
+	openServiceNavigationItem(item: string) {
+		this.serviceNavigation.contains('a', item).should('be.visible').click();
+	}
+
 	verifyExpectedServiceNavigation() {
 		this.verifyServiceNavigation(...serviceNavigationItems);
 	}
