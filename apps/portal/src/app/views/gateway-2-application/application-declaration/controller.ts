@@ -61,9 +61,7 @@ export function buildPostDeclarationPage(service: PortalService): AsyncRequestHa
 			});
 		}
 
-		// Generate submission reference number
-		const submissionReference = `SUB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-		logger.info(`Declaration confirmed for case ${reference}, submission reference: ${submissionReference}`);
+		logger.info(`Declaration confirmed for case ${reference}`);
 
 		return res.redirect(`/manage-local-plans/${reference}/gateway-2-application/application-complete`);
 	};
