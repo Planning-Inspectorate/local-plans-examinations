@@ -22,7 +22,7 @@ describe('Declaration page content', () => {
 				'Your application',
 				'Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application.',
 				'By submitting this application, I confirm that:',
-				'To the best of your knowledge, the information given in this application and enclosed maps, plans and other documents are true.',
+				'To the best of my knowledge, the information given in this application and enclosed maps, plans and other documents are true.',
 				`I have read and agree to The Planning Inspectorate's privacy note`
 			);
 			portalDeclarationPage.verifyPrivacyNoteLink();
