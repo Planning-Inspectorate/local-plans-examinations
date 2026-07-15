@@ -22,8 +22,8 @@ datasource db {
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
 model Case {
-  id                      String    @id @default(uuid()) @db.UniqueIdentifier
-  reference               String    @unique
+  id                      String        @id @default(uuid()) @db.UniqueIdentifier
+  reference               String        @unique
   email                   String
   caseOfficer             String
   planTitle               String
@@ -46,7 +46,7 @@ model Case {
   gateway2Date            DateTime?
   gateway3Date            DateTime?
   submissionDate          DateTime?
-  createdAt               DateTime  @default(now())
+  createdAt               DateTime      @default(now())
   noticeOfIntention       DateTime?
   estimatedGateway1Date   DateTime?
   completedGateway1Date   DateTime?
