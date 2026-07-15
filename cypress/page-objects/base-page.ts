@@ -40,6 +40,10 @@ export class BasePage {
 		this.verifyPath();
 	}
 
+	verifySearch(search: string) {
+		cy.location('search').should('eq', search);
+	}
+
 	get pageHeading() {
 		return cy.get('h1').first();
 	}

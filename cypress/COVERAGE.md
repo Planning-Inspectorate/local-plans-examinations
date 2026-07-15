@@ -31,6 +31,7 @@ Coverage levels:
 | COV-MAN-010 | Gateway 1                | Page content | Gateway 1 tab renders expected rows, seeded answers and action links                         | `manage/gateway-1/page-content/gateway-1.cy.ts`                                    | Checks the Gateway 1 view and all current row action URLs                                       |
 | COV-MAN-011 | Gateway 1 updates        | Journey      | Representative Gateway 1 date and DSA answers update from the tab                            | `manage/gateway-1/journey/gateway-1.cy.ts`                                         | Date rows use the same component, so one date update is clicked end-to-end                      |
 | COV-MAN-012 | Gateway 1 validation     | Validation   | Blank Gateway 1 date shows the expected validation error                                     | `manage/gateway-1/validation/gateway-1.cy.ts`                                      | Covers the shared date component; DSA blank state would need a separate seed case               |
+| COV-MAN-013 | Case history             | Journey      | Case History tab shows the case creation history after a case is created                     | `manage/case-history/journey/case-history.cy.ts`                                   | Covers the only history event currently written; add more rows when more events are implemented |
 
 ## Portal
 
@@ -55,7 +56,7 @@ Coverage levels:
 
 | Area                             | Status             | Notes                                                                                         |
 | -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------- |
-| Case history                     | Gap                | Not covered until the feature is available to test; Gateway 1 history updates are not present |
+| Case history updates             | Gap                | Only case creation writes history at present; add update-event coverage when implemented      |
 | Plan band                        | Gap                | Add as a separate Case Overview row when implemented                                          |
 | Delete case                      | Gap                | Add as a separate Case Overview row when implemented                                          |
 | Notify email delivery            | Manual/service led | Best verified manually or with service-level tests unless a stable local test double is added |
