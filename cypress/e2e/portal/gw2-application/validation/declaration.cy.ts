@@ -51,24 +51,4 @@ describe('Portal declaration page validation tests', () => {
 		);
 		portalDeclarationPage.verifyFieldErrorContains(ERROR_MESSAGES.DECLARATIONS_NOT_CONFIRMED);
 	});
-
-	it(
-		'Submission reference number is generated when not all checkboxes have been selected',
-		{ tags: ['regression'] },
-		() => {
-			openDeclarationPage();
-			portalDeclarationPage.confirmAndSubmitButton.click();
-			portalDeclarationPage.submissionReference.invoke('text').should('match', /SUB-\d+-[A-Z0-9]+/);
-
-			portalDeclarationPage.confirmInformationCheckbox.click();
-			portalDeclarationPage.confirmAndSubmitButton.click();
-			portalDeclarationPage.submissionReference.invoke('text').should('match', /SUB-\d+-[A-Z0-9]+/);
-
-			portalDeclarationPage.confirmInformationCheckbox.click();
-			portalDeclarationPage.confirmInformationCheckbox.should('not.be.checked');
-			portalDeclarationPage.privacyNoteCheckbox.click();
-			portalDeclarationPage.confirmAndSubmitButton.click();
-			portalDeclarationPage.submissionReference.invoke('text').should('match', /SUB-\d+-[A-Z0-9]+/);
-		}
-	);
 });

@@ -44,10 +44,6 @@ export class PortalDeclarationPage extends BasePage {
 		);
 	}
 
-	get submissionReference() {
-		return cy.contains('p', 'Submission reference');
-	}
-
 	verifyPrivacyNoteLink() {
 		this.privacyNoteLink.should('be.visible').and('contain.text', 'privacy note');
 	}
