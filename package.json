@@ -75,7 +75,7 @@
     "@types/express": "^5.0.5",
     "@types/express-session": "^1.19.0",
     "@types/multer": "^2.2.0",
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.1.1",
     "@types/nunjucks": "^3.2.6",
     "cookie-parser": "^1.4.7",
     "cross-env": "^10.1.0",
