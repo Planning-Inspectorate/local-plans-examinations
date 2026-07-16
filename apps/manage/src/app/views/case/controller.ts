@@ -2,15 +2,14 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import type { ManageService } from '#service';
 import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response } from 'express';
-import type { Prisma } from '@pins/local-plans-database/src/client/client.ts';
+import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** The section within the case overview journey being edited. */
 const CONTACTS_SECTION = 'contacts';
 
-/** Shape of the fields we accept from the case overview form. */
-interface CaseFormInput {
+interface CaseOverviewInput {
 	planTitle?: string;
 	planType?: string;
 	planBand?: string;
@@ -32,12 +31,27 @@ interface CaseFormInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+}
+
+interface Gateway1Input {
 	noticeOfIntention?: Date;
 	estimatedGateway1Date?: Date;
 	completedGateway1Date?: Date;
 	slaSentDate?: Date;
 	slaReceivedDate?: Date;
 	dsaChecked?: string;
+}
+
+interface Gateway2Input {
+	estimatedDate?: Date;
+	actualDate?: Date;
+	validDate?: Date;
+	assessorDate?: Date;
+	assessorAppointmentDate?: Date;
+	workshopDate?: Date;
+	workshopVenue?: string;
+	reportIssuedDate?: Date;
+	reportPublishedByLPA?: Date;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -50,29 +64,126 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
 
-		const answers = res.locals?.journeyResponse?.answers ?? {};
-		logger.info(`Updating case ${reference} with ${JSON.stringify(answers)}`);
-
 		if (action === 'remove') {
 			await removeItem({ db, reference, section, currentItemId });
 			return;
 		}
-
-		const formData = trimStringValues(data.answers as CaseFormInput);
-
-		if (action === 'edit' && section === CONTACTS_SECTION) {
-			await db.contact.update({
-				where: { id: currentItemId },
-				data: buildContactData(formData)
-			});
-			return;
+		logger.info(res.locals);
+		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
+		switch (firstSegmentUrl) {
+			case 'overview':
+				await updateOverview(
+					db,
+					trimStringValues(data.answers as CaseOverviewInput),
+					reference,
+					action,
+					section,
+					currentItemId,
+					req.params.question
+				);
+				break;
+			case 'gateway-1':
+				await updateGateway1(db, trimStringValues(data.answers as Gateway1Input), reference);
+				break;
+			case 'gateway-2':
+				await updateGateway2(db, trimStringValues(data.answers as Gateway2Input), reference);
+				break;
+			default:
+				//TODO redirect to case overview
+				console.log('!!\nurl not found');
+				break;
 		}
-
-		await db.case.update({
-			where: { reference },
-			data: buildCaseData(formData, currentItemId)
-		});
 	};
+}
+
+interface CaseFormInput extends CaseOverviewInput, Gateway1Input {}
+
+async function updateOverview(
+	db: PrismaClient,
+	answers: CaseFormInput,
+	caseId: string,
+	action?: string,
+	section?: string,
+	currentItemId?: string,
+	question?: string
+) {
+	// Editing a contact's details (incl. changing that contact's LPA)
+	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
+		await db.contact.update({
+			where: { id: currentItemId },
+			data: buildContactData(answers)
+		});
+		return;
+	}
+
+	// Changing the LPA associated with the *case*:
+	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
+	if (question === 'check-lpas' && answers.lpa) {
+		await db.case.update({
+			where: { reference: caseId },
+			data: {
+				lpas: {
+					connectOrCreate: {
+						where: {
+							lpaCode: answers.lpa
+						},
+						create: {
+							lpaCode: answers.lpa
+						}
+					},
+					disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
+				}
+			}
+		});
+		return;
+	}
+
+	// The manage-list summary POSTs carry no item data to persist
+	if (question === 'check-lpas' || question === 'check-contact-details') {
+		return;
+	}
+
+	// Updating case (scalar) details + any newly added contact / LPA
+	await db.case.update({
+		where: { reference: caseId },
+		data: buildCaseData(answers, currentItemId ?? '')
+	});
+}
+
+// async function updateOverview(
+// 	db: PrismaClient,
+// 	answers: CaseOverviewInput,
+// 	caseId: string, action?: string | undefined,
+// 	section?: string | undefined,
+// 	currentItemId?: string | undefined,
+// 	question?: string | undefined
+// ) {
+// 	if (question === 'check-lpas') {
+// 		return
+// 	}
+// 	if (question === 'check-contact-details') {
+// 		return
+// 	}
+// 	await db.case.update({
+// 		where: { reference: caseId},
+// 		data: answers
+// 	})
+// }
+
+async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: string) {
+	await db.gateway1Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
+}
+
+async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string) {
+	await db.gateway2Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
 }
 
 /** Removes a contact, or disconnects an LPA from the case. */
@@ -204,45 +315,50 @@ export function trimStringValues<T extends object>(input: T): T {
 export function buildGetJourneyMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const { db, logger } = service;
+		const reference = getReference(req);
 
-		const rawReference = Array.isArray(req.params.reference) ? req.params.reference[0] : req.params.reference;
-		let reference: string;
-		try {
-			reference = decodeURIComponent(rawReference);
-		} catch {
-			return res.status(404).render('views/errors/404.njk');
-		}
+		const planTitle = await db.case.findUnique({
+			where: { reference },
+			select: { planTitle: true }
+		});
+		if (!planTitle) return res.status(404).render('views/errors/404.njk');
+		res.locals.planTitle = planTitle.planTitle;
+		res.locals.reference = reference;
 
-		try {
-			const currentCase = await db.case.findUnique({
-				where: { reference },
-				include: { lpas: true, contacts: true }
-			});
-
-			if (!currentCase) {
-				return res.status(404).render('views/errors/404.njk');
+		const currentPage = getFirstSegmentOfUrl(req.url);
+		switch (currentPage) {
+			case 'overview': {
+				const overviewData = await getOverviewData(db, reference);
+				if (!overviewData) return res.status(404).render('views/errors/404.njk');
+				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
+				res.locals.journeyResponse = journeyResponse;
+				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
+					id: lpa.lpaCode,
+					lpa: lpa.lpaCode
+				}));
+				journeyResponse.answers.contactDetails = overviewData.contacts.map((contact) => ({
+					...contact,
+					phone: contact.phoneNumber,
+					lpaContact: contact.lpaCode
+				}));
+				if (next) next();
+				return;
 			}
-
-			// make planTitle and reference easily accessible in the template
-			res.locals.planTitle = currentCase.planTitle;
-			res.locals.reference = currentCase.reference;
-
-			const journeyResponse = new JourneyResponse(journeyId, '', currentCase);
-			journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
-				id: lpa.lpaCode,
-				lpa: lpa.lpaCode
-			}));
-			journeyResponse.answers.contactDetails = currentCase.contacts.map((contact) => ({
-				...contact,
-				phone: contact.phoneNumber,
-				lpaContact: contact.lpaCode
-			}));
-			res.locals.journeyResponse = journeyResponse;
-		} catch (error) {
-			logger.error(`Unable to fetch case ${reference} ${error}`);
+			case 'gateway-1': {
+				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
+				if (next) next();
+				return;
+			}
+			case 'gateway-2': {
+				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+				if (next) next();
+				return;
+			}
+			default:
+				logger.error(`Unknown page ${currentPage} for case ${reference}`);
 		}
-
-		if (next) next();
 	};
 }
 
@@ -270,4 +386,15 @@ function createNavigationParameters(path: string, reference: string) {
 		...item,
 		active: item.href.includes(path)
 	}));
+}
+
+function getFirstSegmentOfUrl(url: string): string {
+	return url.split('/').filter(Boolean)[0];
+}
+
+async function getOverviewData(db: PrismaClient, reference: string) {
+	return db.case.findUnique({
+		where: { reference },
+		include: { lpas: true, contacts: true }
+	});
 }

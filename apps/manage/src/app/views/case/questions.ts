@@ -2,7 +2,8 @@ import {
 	COMPONENT_TYPES,
 	createQuestions,
 	RequiredValidator,
-	questionClasses
+	questionClasses,
+	DateValidator
 } from '@planning-inspectorate/dynamic-forms';
 import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
@@ -14,7 +15,8 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const caseOverviewQuestions: Record<string, QuestionProps> = {
+const caseQuestions: Record<string, QuestionProps> = {
+	//overview
 	planTitle: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		question: 'What is the plan title?',
@@ -248,13 +250,14 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		title: 'QA Inspector 3',
 		validators: [new RequiredValidator('Input QA Inspector 3')]
 	},
+	//gateway 1
 	noticeOfIntentionPublishDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the Notice of Intention published?',
 		fieldName: 'noticeOfIntention',
 		url: 'notice-of-intention-publish-date',
 		title: 'Notice of Intention publish date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'notice-of-intention-publish-date' }
 	},
 	gateway1estimatedDate: {
@@ -263,7 +266,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		fieldName: 'estimatedGateway1Date',
 		url: 'estimated-gateway-1-date',
 		title: 'Estimated Gateway 1 date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'estimated-gateway-1-date' }
 	},
 	gateway1ActualDate: {
@@ -272,7 +275,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		fieldName: 'completedGateway1Date',
 		url: 'completed-gateway-1-date',
 		title: 'Completed Gateway 1 date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'completed-gateway-1-date' }
 	},
 	slaSentDate: {
@@ -281,7 +284,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		fieldName: 'slaSentDate',
 		url: 'sla-sent-date',
 		title: 'SLA sent date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'sla-sent-date' }
 	},
 	slaReceivedDate: {
@@ -290,7 +293,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		fieldName: 'slaReceivedDate',
 		url: 'sla-received-date',
 		title: 'SLA received date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'sla-received-date' }
 	},
 	dsaCheck: {
@@ -305,31 +308,32 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		],
 		validators: [new RequiredValidator('Select an option')]
 	},
+	//gateway 2
 	gateway2EstimatedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'What is the estimated Gateway 2 date?',
-		fieldName: 'gateway2EstimatedDate',
+		fieldName: 'estimatedDate',
 		url: 'gateway-2-estimated-date',
 		title: 'Gateway 2 estimated date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-estimated-date' }
 	},
 	gateway2ActualDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was Gateway 2 completed?',
-		fieldName: 'gateway2ActualDate',
+		fieldName: 'actualDate',
 		url: 'gateway-2-actual-date',
 		title: 'Gateway 2 actual date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-actual-date' }
 	},
 	gateway2ValidDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'What is the Gateway 2 valid date?',
-		fieldName: 'gateway2ValidDate',
+		fieldName: 'validDate',
 		url: 'gateway-2-valid-date',
 		title: 'Gateway 2 valid date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
 	},
 	gateway2AssessorsName: {
@@ -342,7 +346,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 			{ value: 'assessor-3', text: 'Assessor 3' },
 			{ value: 'assessor-4', text: 'Assessor 4' }
 		],
-		fieldName: 'gateway2Assessor',
+		fieldName: 'assessorName',
 		url: 'gateway-2-assessor',
 		title: 'Gateway 2 assessor',
 		validators: [new RequiredValidator('Select a name')],
@@ -351,25 +355,25 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 	assessorDateOfAppointment: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the Gateway 2 assessor appointed?',
-		fieldName: 'gateway2AssessorAppointed',
+		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
 		title: 'Assessor date of appointment',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
 	},
 	workshopDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When is the Gateway 2 workshop?',
-		fieldName: 'gateway2WorkshopDate',
+		fieldName: 'workshopDate',
 		url: 'gateway-2-workshop-date',
 		title: 'Workshop date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' }
 	},
 	workshopVenue: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		question: 'What is the venue for the Gateway 2 workshop?',
-		fieldName: 'gateway2WorkshopVenue',
+		fieldName: 'workshopVenue',
 		url: 'gateway-2-workshop-venue',
 		title: 'Workshop venue',
 		validators: [new RequiredValidator('Enter a venue name')],
@@ -378,25 +382,25 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',
-		fieldName: 'gateway2ReportIssuedDate',
+		fieldName: 'reportIssuedDate',
 		url: 'gateway-2-report-issued-date',
 		title: 'Report issued date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-issued-date' }
 	},
 	reportPublishedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report published by the LPA?',
-		fieldName: 'gateway2ReportPublishedDate',
+		fieldName: 'reportPublishedByLPA',
 		url: 'gateway-2-report-published-date',
 		title: 'Report published by LPA date',
-		validators: [new RequiredValidator('Enter a date')],
+		validators: [new DateValidator('Enter a date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	}
 };
 
 export const questions = createQuestions(
-	caseOverviewQuestions,
+	caseQuestions,
 	allQuestionClasses,
 	{},
 	{ continueButtonText: 'Save and continue' }

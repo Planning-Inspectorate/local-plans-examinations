@@ -1,7 +1,14 @@
 import { type IRouter, Router as createRouter } from 'express';
 import { addCaseNavigation, buildGetJourneyMiddleware, updateCaseField } from './controller.ts';
 import type { ManageService } from '#service';
-import { buildGetJourney, buildList, buildSave, question } from '@planning-inspectorate/dynamic-forms';
+import {
+	buildGetJourney,
+	buildList,
+	buildSave,
+	question,
+	validate,
+	validationErrorHandler
+} from '@planning-inspectorate/dynamic-forms';
 import { questions } from './questions.ts';
 import {
 	createOverviewJourney,
@@ -43,6 +50,8 @@ export function caseRouter(service: ManageService): IRouter {
 		'/overview/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getOverviewJourneyResponse,
 		getOverviewJourney,
+		validate,
+		validationErrorHandler,
 		buildSave(updateCase, true)
 	);
 
@@ -55,6 +64,8 @@ export function caseRouter(service: ManageService): IRouter {
 		'/gateway-1/:section/:question',
 		getGateway1JourneyResponse,
 		getGateway1Journey,
+		validate,
+		validationErrorHandler,
 		buildSave(updateCase, true)
 	);
 
@@ -72,6 +83,8 @@ export function caseRouter(service: ManageService): IRouter {
 		'/gateway-2/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getGateway2JourneyResponse,
 		getGateway2Journey,
+		validate,
+		validationErrorHandler,
 		buildSave(updateCase, true)
 	);
 

@@ -22,8 +22,8 @@ datasource db {
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
 model Case {
-  id                      String    @id @default(uuid()) @db.UniqueIdentifier
-  reference               String    @unique
+  id                      String        @id @default(uuid()) @db.UniqueIdentifier
+  reference               String        @unique
   email                   String
   caseOfficer             String
   planTitle               String
@@ -46,14 +46,37 @@ model Case {
   gateway2Date            DateTime?
   gateway3Date            DateTime?
   submissionDate          DateTime?
-  createdAt               DateTime  @default(now())
-  noticeOfIntention       DateTime?
-  estimatedGateway1Date   DateTime?
-  completedGateway1Date   DateTime?
-  slaSentDate             DateTime?
-  slaReceivedDate         DateTime?
-  dsaChecked              String?
+  createdAt               DateTime      @default(now())
+  gateway1Info            Gateway1Info?
+  gateway2Info            Gateway2Info?
   gateways                Gateway[]
+}
+
+model Gateway1Info {
+  id                    String    @id @default(uuid()) @db.UniqueIdentifier
+  case                  Case      @relation(fields: [caseId], references: [reference])
+  caseId                String    @unique
+  noticeOfIntention     DateTime? @db.DateTime2
+  estimatedGateway1Date DateTime? @db.DateTime2
+  completedGateway1Date DateTime? @db.DateTime2
+  slaSentDate           DateTime? @db.DateTime2
+  slaReceivedDate       DateTime? @db.DateTime2
+  dsaChecked            String?
+}
+
+model Gateway2Info {
+  id                      String    @id @default(uuid()) @db.UniqueIdentifier
+  case                    Case      @relation(fields: [caseId], references: [reference])
+  caseId                  String    @unique
+  estimatedDate           DateTime? @db.DateTime2
+  actualDate              DateTime? @db.DateTime2
+  validDate               DateTime? @db.DateTime2
+  assessorName            String?
+  assessorAppointmentDate DateTime? @db.DateTime2
+  workshopDate            DateTime? @db.DateTime2
+  workshopVenue           String?
+  reportIssuedDate        DateTime? @db.DateTime2
+  reportPublishedByLPA    DateTime? @db.DateTime2
 }
 
 model LPA {

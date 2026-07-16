@@ -10,6 +10,8 @@ async function run() {
 
 	const dbClient = newDatabaseClient(config.db);
 	try {
+		await dbClient.gateway1Info.deleteMany({});
+		await dbClient.gateway2Info.deleteMany({});
 		await dbClient.case.deleteMany({});
 		await dbClient.contact.deleteMany({});
 		await dbClient.lPA.deleteMany({});
