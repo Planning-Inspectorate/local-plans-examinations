@@ -38,4 +38,23 @@ describe('Declaration page journeys', () => {
 			});
 		}
 	);
+
+	it(
+		'Navigates to customer privacy notice guidance form after privacy note link is clicked',
+		{ tags: ['smoke'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				portalDeclarationPage.visit(plan.urlReference);
+				portalDeclarationPage.verifyLoaded();
+
+				portalDeclarationPage.privacyNoteLink
+					.should(
+						'have.attr',
+						'href',
+						'https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice'
+					)
+					.and('have.attr', 'target', '_blank');
+			});
+		}
+	);
 });
