@@ -15,7 +15,7 @@ describe('Gateway 2 application page validation tests', () => {
 	});
 
 	it('Shows error message when Submit is clicked and no documents have been added', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.submitGateway2Assessmentbutton.click();
+		gateway2ApplicationPage.submitGateway2AssessmentButton.click();
 		gateway2ApplicationPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.ADD_ONE_DOCUMENT);
 		gateway2ApplicationPage.verifyFieldErrorContains(ERROR_MESSAGES.ADD_ONE_DOCUMENT);
 	});

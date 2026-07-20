@@ -17,6 +17,10 @@ export class PlanDetailsPage extends BasePage {
 		return cy.get('section[aria-labelledby="plan-progress-heading"]');
 	}
 
+	get gateway2Link() {
+		return cy.contains('a', 'Gateway 2 - advisory check');
+	}
+
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 	}
