@@ -62,8 +62,47 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
 };
 
+export const gateway2LocalPlanTimetableQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Local plan timetable',
+	question: 'Upload local plan timetable',
+	fieldName: 'gateway2LocalPlanTimetable',
+	url: 'local-plan-timetable',
+	allowedFileExtensions: ALLOWED_EXTENSIONS,
+	allowedMimeTypes: ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: 3,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: false,
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Your timetable should set out:',
+		bulletList: [
+			'the matters your plan will deal with',
+			'the geographical area that your plan will cover',
+			'any supplementary plans that you will prepare (including the subject matter, geographical area and sites they relate to)',
+			'key milestone dates',
+			'estimated date and venue for your workshop'
+		],
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
+		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Continue',
+		continueAction: 'project-initiation-document',
+		returnLink: {
+			text: 'Return to your application'
+		}
+	},
+	validators: [new FileUploadRequiredValidator('gateway2LocalPlanTimetable', 'Upload local plan timetable')]
+};
+
 const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
-	gateway2CoverLetter: gateway2CoverLetterQuestion
+	gateway2CoverLetter: gateway2CoverLetterQuestion,
+	gateway2LocalPlanTimetable: gateway2LocalPlanTimetableQuestion
 };
 
 export const questions = createQuestions(

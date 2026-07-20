@@ -7,6 +7,7 @@ import { JOURNEY_ID } from './journey.ts';
 // Defines the answers saved for the Gateway 2 journey.
 export interface Gateway2ApplicationAnswers {
 	gateway2CoverLetter: UploadedFile[];
+	gateway2LocalPlanTimetable: UploadedFile[];
 }
 
 // Creates the controller that handles the final Gateway 2 submission.
