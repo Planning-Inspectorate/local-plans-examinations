@@ -10,6 +10,7 @@ import { MAX_NO_OF_FILES_TO_UPLOAD, TOTAL_FILE_UPLOAD_LIMIT, TOTAL_FILE_UPLOAD_L
 
 type CheckForValidationErrorsParams = Parameters<Question['checkForValidationErrors']>;
 type RequestWithFileUploaderCustomViewData = CheckForValidationErrorsParams[0] & {
+	fileUploaderSessionKey?: string;
 	session?: FileUploaderCustomViewData & { fileUploader?: FileUploaderCustomViewData['fileUploader'] };
 };
 
@@ -91,7 +92,7 @@ export default class FileUploaderQuestion extends Question {
 			manageListQuestion,
 			customViewData: {
 				currentUrl: request.originalUrl,
-				sessionKey: this.fieldName,
+				sessionKey: request.fileUploaderSessionKey ?? this.fieldName,
 				fileUploader: request.session?.fileUploader,
 				errors: hasBodyErrors
 					? (request.body?.errors as FileUploaderCustomViewData['errors'])

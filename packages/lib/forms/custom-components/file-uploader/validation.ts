@@ -45,6 +45,10 @@ export function validateFiles(
 		errors.push({ text: `You can only upload up to ${options.maxFilesPerUpload} files at a time`, href });
 	}
 
+	if (existingFiles.length > 0 && existingFiles.length + files.length > options.maxFilesPerUpload) {
+		errors.push({ text: `You can only upload up to ${options.maxFilesPerUpload} files in total`, href });
+	}
+
 	for (const file of files) {
 		const extension = getFileExtension(file.originalname);
 		if (!allowedExtensions.includes(extension)) {

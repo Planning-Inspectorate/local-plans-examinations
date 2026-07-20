@@ -55,6 +55,7 @@ model Case {
   dsaChecked              String?
   gateways                Gateway[]
   caseHistories           CaseHistory[]
+  documents               Document[]
 }
 
 model LPA {
@@ -133,9 +134,10 @@ model DocumentSet {
   documentCategoryId String           @db.NVarChar(4)
   documentCategory   DocumentCategory @relation(fields: [documentCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  displayName  String @db.NVarChar(200) // Covering Letter, Initiation Document
-  folderName   String @db.NVarChar(200)
+  displayName  String     @db.NVarChar(200) // Covering Letter, Initiation Document
+  folderName   String     @db.NVarChar(200)
   displayOrder Int?
+  documents    Document[]
 
   @@unique([documentCategoryId, displayName])
   @@index([documentCategoryId])
@@ -148,4 +150,68 @@ model CaseHistory {
   caseId   String   @db.UniqueIdentifier
   username String   @db.NVarChar(100)
   case     Case     @relation(fields: [caseId], references: [id])
+}
+
+/// Document model
+/// Contains information about the documents that are saved against a plan.
+/// This model is a central space for each document which might have several
+/// versions and can store shared metadata.
+model Document {
+  guid                  String            @id @default(uuid()) @db.UniqueIdentifier
+  name                  String
+  case                  Case              @relation(fields: [caseId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  caseId                String            @db.UniqueIdentifier
+  documentSet           DocumentSet       @relation(fields: [documentSetId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  documentSetId         String            @db.NVarChar(20)
+  createdAt             DateTime          @default(now())
+  isDeleted             Boolean           @default(false)
+  latestDocumentVersion DocumentVersion?  @relation("latestVersion", fields: [guid, latestVersionId], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
+  latestVersionId       Int?
+  versions              DocumentVersion[] @relation("versionHistory")
+
+  @@unique([name, documentSetId])
+  @@unique([guid, latestVersionId])
+  @@index([caseId, documentSetId])
+}
+
+/// DocumentVersion model
+/// Stores information pertaining to each version of a document.
+/// Versions are stored against the `version` value (starting with 1).
+/// The physical location of these documents should be stored here.
+model DocumentVersion {
+  documentGuid         String                 @db.UniqueIdentifier
+  version              Int
+  lastModified         DateTime?
+  sourceSystem         String                 @default("front-office")
+  virusCheckStatus     String                 @default("not_scanned")
+  originalFilename     String?
+  fileName             String?
+  owner                String?
+  mime                 String?
+  size                 Int?
+  blobStorageContainer String?
+  blobStoragePath      String?
+  documentURI          String?
+  dateCreated          DateTime?              @default(now())
+  isDeleted            Boolean                @default(false)
+  document             Document               @relation("versionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
+  latestVersion        Document?              @relation("latestVersion")
+  avScan               DocumentVersionAvScan?
+
+  @@id([documentGuid, version])
+  @@index([documentGuid], map: "documentGuid")
+  @@index([documentURI])
+}
+
+/// DocumentVersionAvScan model
+/// Stores AV scan result against uploaded blobs.
+model DocumentVersionAvScan {
+  documentGuid    String          @db.UniqueIdentifier
+  version         Int
+  avScanSuccess   Boolean
+  avScanDate      DateTime        @default(now())
+  documentVersion DocumentVersion @relation(fields: [documentGuid, version], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
+
+  @@id([documentGuid, version])
+  @@index([documentGuid], map: "documentGuid")
 }

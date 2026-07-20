@@ -62,6 +62,16 @@ describe('file uploader validation', () => {
 			assert.deepEqual(errors, [{ text: 'cover?letter.pdf has already been uploaded', href: '#upload-form' }]);
 		});
 
+		it('validates total number of files across existing and new files', () => {
+			const errors = validateFiles(
+				[buildRequestFile({ originalname: 'replacement.pdf', mimetype: 'application/pdf', size: 100 })],
+				[buildUploadedFile({ fileName: 'existing.pdf' })],
+				buildValidationOptions({ maxFilesPerUpload: 1 })
+			);
+
+			assert.deepEqual(errors, [{ text: 'You can only upload up to 1 files in total', href: '#upload-form' }]);
+		});
+
 		it('validates total upload size across existing and new files', () => {
 			const errors = validateFiles(
 				[buildRequestFile({ originalname: 'cover-letter.pdf', mimetype: 'application/pdf', size: 600 })],
