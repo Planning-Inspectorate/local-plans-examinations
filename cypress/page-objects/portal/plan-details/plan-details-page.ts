@@ -25,10 +25,6 @@ export class PlanDetailsPage extends BasePage {
 		this.backLink.should('be.visible').and('contain.text', 'Back to my plans').and('have.attr', 'href', href);
 	}
 
-	verifyCaption(reference: string) {
-		this.pageHeading.find('.govuk-caption-xl').should('be.visible').and('contain.text', reference);
-	}
-
 	summaryRow(key: string) {
 		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
 	}
@@ -75,6 +71,14 @@ export class PlanDetailsPage extends BasePage {
 		row.should('contain.text', title);
 		row.should('contain.text', hint);
 		row.should('contain.text', status);
+	}
+
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}`;
+	}
+
+	verifyPathForPlan(planReference: string) {
+		this.verifyPath(this.pathFor(planReference));
 	}
 }
 
