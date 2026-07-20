@@ -30,6 +30,7 @@ import {
 	questions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
+import { loadGateway2CoverLetterDocuments, saveGateway2CoverLetterDocuments } from './documents.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import {
 	createFileUploaderDeleteController,
@@ -125,8 +126,17 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
+		const uploadedFiles = await loadGateway2CoverLetterDocuments(service, currentCase.id);
+		setFileUploaderUploadedFiles(request, fileUploaderCaseSessionKey(req), uploadedFiles);
+		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
+		if (uploadedFiles.length > 0) {
+			answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
+		} else {
+			delete answers[GATEWAY_2_COVER_LETTER_FIELD];
+		}
+
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
-			...getCaseScopedSessionAnswers(req, routePlanReference ?? planReference)
+			...answers
 		});
 
 		return next();
@@ -160,6 +170,16 @@ function getCaseScopedSessionAnswers(req: Request, planReference: string): Recor
 // Example format: LP-TEST-001:gateway2CoverLetter.
 function fileUploaderCaseSessionKey(req: Request) {
 	return `${req.params.planReference}:${GATEWAY_2_COVER_LETTER_FIELD}`;
+}
+
+// Populates the generic file uploader session from persisted case documents.
+function setFileUploaderUploadedFiles(req: Gateway2Request, sessionKey: string, uploadedFiles: UploadedFile[]) {
+	req.session.fileUploader = {
+		...req.session.fileUploader,
+		[sessionKey]: {
+			uploadedFiles
+		}
+	};
 }
 
 // Keeps the Gateway 2 cover letter answer in sync with uploaded files.
@@ -342,7 +362,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 				}
 			};
 		},
-		onFilesChange: ({ req, uploadedFiles }) => {
+		onFilesChange: async ({ req, uploadedFiles }) => {
+			await saveGateway2CoverLetterDocuments(service, req, uploadedFiles);
 			syncGateway2CoverLetterAnswer(req, uploadedFiles);
 			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
 		},
@@ -365,7 +386,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
 		sessionKey: fileUploaderCaseSessionKey,
-		onFilesChange: ({ req, uploadedFiles }) => {
+		onFilesChange: async ({ req, uploadedFiles }) => {
+			await saveGateway2CoverLetterDocuments(service, req, uploadedFiles);
 			syncGateway2CoverLetterAnswer(req, uploadedFiles);
 			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
 		},

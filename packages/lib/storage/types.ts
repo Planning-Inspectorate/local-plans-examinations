@@ -9,6 +9,7 @@ export type UploadedFile = {
 	mimeType: string;
 	size: number;
 	storageProvider: FileStorageProvider;
+	containerName?: string;
 	path?: string;
 	url?: string;
 	metadata?: Record<string, unknown>;

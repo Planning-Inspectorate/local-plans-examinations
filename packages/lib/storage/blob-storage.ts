@@ -73,6 +73,7 @@ export class BlobFileStorageAdapter implements FileUploadStorageAdapter {
 			mimeType: file.mimetype,
 			size: file.size,
 			storageProvider: this.provider,
+			containerName: this.config.containerName,
 			path: blobName,
 			url: blockBlob.url,
 			metadata: destination.metadata
@@ -114,6 +115,7 @@ export class BlobFileStorageAdapter implements FileUploadStorageAdapter {
 				mimeType: blob.properties.contentType ?? 'application/octet-stream',
 				size: blob.properties.contentLength ?? 0,
 				storageProvider: this.provider,
+				containerName: this.config.containerName,
 				path: blob.name
 			});
 		}
