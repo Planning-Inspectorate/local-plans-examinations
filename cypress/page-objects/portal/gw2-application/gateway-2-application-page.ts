@@ -13,7 +13,7 @@ export class Gateway2ApplicationPage extends BasePage {
 		return cy.getByData('save-and-come-back');
 	}
 
-	get submitGateway2Assessmentbutton() {
+	get submitGateway2AssessmentButton() {
 		return cy.getByData('submit-gateway-2');
 	}
 
@@ -33,6 +33,11 @@ export class Gateway2ApplicationPage extends BasePage {
 		return cy.getByData('workshop-preferences-table');
 	}
 
+	verifyLoaded() {
+		super.verifyLoaded();
+		this.verifyHeading('Gateway 2 submission');
+	}
+
 	verifySaveAndComeBackLink(href: string) {
 		this.saveAndComeBackLink
 			.should('be.visible')
@@ -41,7 +46,7 @@ export class Gateway2ApplicationPage extends BasePage {
 	}
 
 	verifySubmitGateway2AssessmentButton() {
-		this.submitGateway2Assessmentbutton
+		this.submitGateway2AssessmentButton
 			.should('be.visible')
 			.and('contain.text', 'Submit for Gateway 2 assessment')
 			.and('have.attr', 'type', 'submit');
