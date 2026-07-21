@@ -328,6 +328,24 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 				attributes: { 'data-cy': 'programme-officer-email' }
 			}
 		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'programmeOfficerFirstName',
+						validators: [new RequiredValidator('Input a first name')]
+					},
+					{
+						fieldName: 'programmeOfficerLastName',
+						validators: [new RequiredValidator('Input a last name')]
+					},
+					{
+						fieldName: 'programmeOfficerEmail',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
 		question: 'Programme Officer details',
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer-details',
