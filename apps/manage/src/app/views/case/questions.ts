@@ -169,14 +169,6 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 			})
 		]
 	},
-	programmeOfficer: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the programme officer?',
-		fieldName: 'programmeOfficer',
-		url: 'programme-officer',
-		title: 'Programme Officer',
-		validators: [new RequiredValidator('Input a programme officer')]
-	},
 	examinationWebsite: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		question: 'What is the address of the examination website?',
