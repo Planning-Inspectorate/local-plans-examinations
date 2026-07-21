@@ -5,7 +5,8 @@ import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components
 import {
 	normalisePlanReferenceForLookup,
 	syncGateway2CoverLetterAnswer,
-	syncGateway2LocalPlanTimetableAnswer
+	syncGateway2LocalPlanTimetableAnswer,
+	syncGateway2ProjectInitiationDocumentAnswer
 } from './index.ts';
 
 describe('normalisePlanReferenceForLookup', () => {
@@ -99,6 +100,47 @@ describe('syncGateway2LocalPlanTimetableAnswer', () => {
 		};
 
 		syncGateway2LocalPlanTimetableAnswer(req as unknown as Request, []);
+
+		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
+	});
+});
+
+describe('syncGateway2ProjectInitiationDocumentAnswer', () => {
+	it('stores uploaded files in the case-scoped journey answers', () => {
+		const uploadedFile = buildUploadedFile({ id: 'file-1', fileName: 'pid.pdf' });
+		const req = {
+			params: { planReference: 'LPE-TEST-001' },
+			session: {}
+		};
+
+		syncGateway2ProjectInitiationDocumentAnswer(req as unknown as Request, [uploadedFile]);
+
+		assert.deepEqual(req.session, {
+			forms: {
+				'LPE-TEST-001': {
+					'gateway-2-application': {
+						gateway2ProjectInitiationDocument: [uploadedFile]
+					}
+				}
+			}
+		});
+	});
+
+	it('removes the case-scoped journey answer when no uploaded files remain', () => {
+		const req = {
+			params: { planReference: 'LPE-TEST-001' },
+			session: {
+				forms: {
+					'LPE-TEST-001': {
+						'gateway-2-application': {
+							gateway2ProjectInitiationDocument: [buildUploadedFile({ id: 'file-1' })]
+						}
+					}
+				}
+			}
+		};
+
+		syncGateway2ProjectInitiationDocumentAnswer(req as unknown as Request, []);
 
 		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
 	});

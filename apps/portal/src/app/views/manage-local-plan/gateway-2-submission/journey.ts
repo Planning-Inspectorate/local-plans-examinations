@@ -19,6 +19,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 			new Section('Procedural documents', 'procedural')
 				.addQuestion(questions.gateway2CoverLetter)
 				.addQuestion(questions.gateway2LocalPlanTimetable)
+				.addQuestion(questions.gateway2ProjectInitiationDocument)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',

@@ -28,6 +28,7 @@ import {
 	CHECK_ANSWERS_REDIRECTS,
 	gateway2CoverLetterQuestion,
 	gateway2LocalPlanTimetableQuestion,
+	gateway2ProjectInitiationDocumentQuestion,
 	questions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
@@ -48,6 +49,10 @@ const GATEWAY_2_COVER_LETTER_QUESTION = gateway2CoverLetterQuestion;
 const GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD = 'gateway2LocalPlanTimetable';
 const GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL = 'local-plan-timetable';
 const GATEWAY_2_LOCAL_PLAN_TIMETABLE_QUESTION = gateway2LocalPlanTimetableQuestion;
+
+const GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD = 'gateway2ProjectInitiationDocument';
+const GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL = 'project-initiation-document';
+const GATEWAY_2_PROJECT_INITIATION_DOCUMENT_QUESTION = gateway2ProjectInitiationDocumentQuestion;
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
@@ -117,6 +122,12 @@ function redirectToProjectInitiationDocument(req: Request) {
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/project-initiation-document`;
 }
 
+// Builds the URL for the draft statement of compliance page after PID upload.
+function redirectToDraftStatementOfCompliance(req: Request) {
+	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
+	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/draft-statement-of-compliance`;
+}
+
 // Wraps multer upload to catch file size limit errors.
 function uploadWithSizeErrorHandling(req: Request, res: Response, next: NextFunction) {
 	upload.array('files[]')(req, res, (error: unknown) => {
@@ -137,7 +148,8 @@ function uploadWithSizeErrorHandling(req: Request, res: Response, next: NextFunc
 // Dispatches to the correct file uploader controller based on the question URL.
 function selectFileUploader(
 	coverLetterController: RequestHandler,
-	timetableController: RequestHandler
+	timetableController: RequestHandler,
+	pidController: RequestHandler
 ): RequestHandler {
 	return (req, res, next) => {
 		const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
@@ -145,6 +157,8 @@ function selectFileUploader(
 			return coverLetterController(req, res, next);
 		} else if (questionUrl === GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL) {
 			return timetableController(req, res, next);
+		} else if (questionUrl === GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL) {
+			return pidController(req, res, next);
 		}
 		return next();
 	};
@@ -153,15 +167,19 @@ function selectFileUploader(
 // Dispatches to the correct case-scoped file uploader controller based on the question URL.
 function selectFileUploaderForCase(
 	coverLetterController: RequestHandler,
-	timetableController: RequestHandler
+	timetableController: RequestHandler,
+	pidController: RequestHandler
 ): RequestHandler {
-	return selectFileUploader(coverLetterController, timetableController);
+	return selectFileUploader(coverLetterController, timetableController, pidController);
 }
 
 // Selects the correct case session key based on the question URL.
 function selectFileUploaderCaseSessionKey(req: Request): string {
 	if (req.params.question === GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL) {
 		return fileUploaderTimetableCaseSessionKey(req);
+	}
+	if (req.params.question === GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL) {
+		return fileUploaderPidCaseSessionKey(req);
 	}
 	return fileUploaderCoverLetterCaseSessionKey(req);
 }
@@ -227,6 +245,11 @@ function fileUploaderTimetableCaseSessionKey(req: Request) {
 	return `${req.params.planReference}:${GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD}`;
 }
 
+// Example format: LP-TEST-001:gateway2ProjectInitiationDocument.
+function fileUploaderPidCaseSessionKey(req: Request) {
+	return `${req.params.planReference}:${GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD}`;
+}
+
 // Keeps the Gateway 2 cover letter answer in sync with uploaded files.
 export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: UploadedFile[]) {
 	syncGateway2Answer(req, GATEWAY_2_COVER_LETTER_FIELD, uploadedFiles);
@@ -235,6 +258,11 @@ export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: Uploa
 // Keeps the local plan timetable answer in sync with uploaded files.
 export function syncGateway2LocalPlanTimetableAnswer(req: Request, uploadedFiles: UploadedFile[]) {
 	syncGateway2Answer(req, GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD, uploadedFiles);
+}
+
+// Keeps the project initiation document answer in sync with uploaded files.
+export function syncGateway2ProjectInitiationDocumentAnswer(req: Request, uploadedFiles: UploadedFile[]) {
+	syncGateway2Answer(req, GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD, uploadedFiles);
 }
 
 // Keeps a Gateway 2 answer in sync with uploaded files.
@@ -435,6 +463,78 @@ function logGateway2LocalPlanTimetableDeleteFailed(
 	);
 }
 
+function gateway2ProjectInitiationDocumentLogContext(req: Request) {
+	const request = req as Gateway2Request;
+	return {
+		planReference: getRoutePlanReference(req),
+		caseId: request.currentCase?.id,
+		fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD
+	};
+}
+
+function logGateway2ProjectInitiationDocumentUploaded(
+	service: PortalService,
+	req: Request,
+	uploadedFiles: UploadedFile[]
+) {
+	service.logger.info(
+		{
+			...gateway2ProjectInitiationDocumentLogContext(req),
+			fileCount: uploadedFiles.length
+		},
+		'Gateway 2 project initiation document uploaded'
+	);
+}
+
+function logGateway2ProjectInitiationDocumentUploadFailed(
+	service: PortalService,
+	req: Request,
+	{ errors, error }: { errors?: Array<{ text: string; href: string }>; error?: unknown }
+) {
+	const context = {
+		...gateway2ProjectInitiationDocumentLogContext(req),
+		errorCount: errors?.length ?? 0
+	};
+
+	if (error) {
+		service.logger.error({ ...context, error }, 'Gateway 2 project initiation document upload failed');
+		return;
+	}
+
+	service.logger.warn(context, 'Gateway 2 project initiation document upload failed');
+}
+
+function logGateway2ProjectInitiationDocumentDeleted(
+	service: PortalService,
+	req: Request,
+	uploadedFiles: UploadedFile[]
+) {
+	service.logger.info(
+		{
+			...gateway2ProjectInitiationDocumentLogContext(req),
+			fileId: req.params.fileId,
+			remainingFileCount: uploadedFiles.length
+		},
+		'Gateway 2 project initiation document deleted'
+	);
+}
+
+function logGateway2ProjectInitiationDocumentDeleteFailed(
+	service: PortalService,
+	req: Request,
+	fileId: string,
+	error: unknown
+) {
+	service.logger.error(
+		{
+			...gateway2ProjectInitiationDocumentLogContext(req),
+			fileId,
+			error
+		},
+		'Gateway 2 project initiation document delete failed'
+	);
+}
+
 // Generates task list data from the journey's sections and questions.
 function buildTaskListData(req: Request, res: Response, next: NextFunction) {
 	const journey = res.locals.journey;
@@ -617,6 +717,75 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		onDeleteError: ({ req, fileId, error }) => logGateway2LocalPlanTimetableDeleteFailed(service, req, fileId, error),
 		redirect: redirectToFileUploaderQuestion
 	});
+	const uploadGateway2ProjectInitiationDocument = createFileUploaderUploadController({
+		fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD,
+		question: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_QUESTION,
+		storage: fileUploaderStorage,
+		destination: (req) => ({
+			folderPath: `${req.sessionID ?? 'session'}/${GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL}`,
+			metadata: {
+				journeyId: JOURNEY_ID,
+				fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD
+			}
+		}),
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2ProjectInitiationDocumentAnswer(req, uploadedFiles);
+			logGateway2ProjectInitiationDocumentUploaded(service, req, uploadedFiles);
+		},
+		onUploadError: ({ req, errors, error }) =>
+			logGateway2ProjectInitiationDocumentUploadFailed(service, req, { errors, error }),
+		redirect: redirectToDraftStatementOfCompliance
+	});
+	const uploadGateway2ProjectInitiationDocumentForCase = createFileUploaderUploadController({
+		fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD,
+		question: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_QUESTION,
+		storage: fileUploaderStorage,
+		sessionKey: fileUploaderPidCaseSessionKey,
+		destination: (req) => {
+			const request = req as Gateway2Request;
+			return {
+				folderPath: `${request.currentCase?.id ?? req.params.planReference}/${GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL}`,
+				metadata: {
+					journeyId: JOURNEY_ID,
+					caseId: request.currentCase?.id,
+					caseReference: req.params.planReference,
+					fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD
+				}
+			};
+		},
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2ProjectInitiationDocumentAnswer(req, uploadedFiles);
+			logGateway2ProjectInitiationDocumentUploaded(service, req, uploadedFiles);
+		},
+		onUploadError: ({ req, errors, error }) =>
+			logGateway2ProjectInitiationDocumentUploadFailed(service, req, { errors, error }),
+		redirect: redirectToDraftStatementOfCompliance
+	});
+	const deleteGateway2ProjectInitiationDocument = createFileUploaderDeleteController({
+		fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD,
+		question: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_QUESTION,
+		storage: fileUploaderStorage,
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2ProjectInitiationDocumentAnswer(req, uploadedFiles);
+			logGateway2ProjectInitiationDocumentDeleted(service, req, uploadedFiles);
+		},
+		onDeleteError: ({ req, fileId, error }) =>
+			logGateway2ProjectInitiationDocumentDeleteFailed(service, req, fileId, error),
+		redirect: redirectToFileUploaderQuestion
+	});
+	const deleteGateway2ProjectInitiationDocumentForCase = createFileUploaderDeleteController({
+		fieldName: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_FIELD,
+		question: GATEWAY_2_PROJECT_INITIATION_DOCUMENT_QUESTION,
+		storage: fileUploaderStorage,
+		sessionKey: fileUploaderPidCaseSessionKey,
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2ProjectInitiationDocumentAnswer(req, uploadedFiles);
+			logGateway2ProjectInitiationDocumentDeleted(service, req, uploadedFiles);
+		},
+		onDeleteError: ({ req, fileId, error }) =>
+			logGateway2ProjectInitiationDocumentDeleteFailed(service, req, fileId, error),
+		redirect: redirectToFileUploaderQuestion
+	});
 
 	router.get(
 		'/gateway-2-submission',
@@ -645,14 +814,22 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		uploadWithSizeErrorHandling,
-		selectFileUploaderForCase(uploadGateway2CoverLetterForCase, uploadGateway2LocalPlanTimetableForCase)
+		selectFileUploaderForCase(
+			uploadGateway2CoverLetterForCase,
+			uploadGateway2LocalPlanTimetableForCase,
+			uploadGateway2ProjectInitiationDocumentForCase
+		)
 	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
-		selectFileUploaderForCase(deleteGateway2CoverLetterForCase, deleteGateway2LocalPlanTimetableForCase)
+		selectFileUploaderForCase(
+			deleteGateway2CoverLetterForCase,
+			deleteGateway2LocalPlanTimetableForCase,
+			deleteGateway2ProjectInitiationDocumentForCase
+		)
 	);
 
 	router.post(
@@ -660,44 +837,43 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		uploadWithSizeErrorHandling,
-		selectFileUploader(uploadGateway2CoverLetter, uploadGateway2LocalPlanTimetable)
+		selectFileUploader(
+			uploadGateway2CoverLetter,
+			uploadGateway2LocalPlanTimetable,
+			uploadGateway2ProjectInitiationDocument
+		)
 	);
 
 	router.post(
 		'/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponse,
 		getJourney,
-		selectFileUploader(deleteGateway2CoverLetter, deleteGateway2LocalPlanTimetable)
+		selectFileUploader(
+			deleteGateway2CoverLetter,
+			deleteGateway2LocalPlanTimetable,
+			deleteGateway2ProjectInitiationDocument
+		)
 	);
 
 	router.get(
-		'/:planReference/gateway-2-submission/:section/project-initiation-document',
+		'/:planReference/gateway-2-submission/:section/draft-statement-of-compliance',
 		getJourneyResponseFromCase,
 		getJourney,
 		(req, res) => {
-			res.render('views/manage-local-plan/gateway-2-submission/project-initiation-document.njk');
-		}
-	);
-
-	router.post(
-		'/:planReference/gateway-2-submission/:section/project-initiation-document',
-		getJourneyResponseFromCase,
-		getJourney,
-		(req, res) => {
-			res.render('views/manage-local-plan/gateway-2-submission/project-initiation-document.njk');
+			res.render('views/manage-local-plan/gateway-2-submission/draft-statement-of-compliance.njk');
 		}
 	);
 
 	router.get(
 		'/:planReference/gateway-2-submission/:section/:question',
-		(req, res, next) => {
-			console.log('Question route hit:', req.params);
-			next();
-		},
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL, GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL],
+			questionUrls: [
+				GATEWAY_2_COVER_LETTER_URL,
+				GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL,
+				GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL
+			],
 			sessionKey: selectFileUploaderCaseSessionKey
 		}),
 		question
@@ -708,7 +884,11 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL, GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL],
+			questionUrls: [
+				GATEWAY_2_COVER_LETTER_URL,
+				GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL,
+				GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL
+			],
 			sessionKey: selectFileUploaderCaseSessionKey
 		}),
 		question
@@ -728,7 +908,11 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL, GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL]
+			questionUrls: [
+				GATEWAY_2_COVER_LETTER_URL,
+				GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL,
+				GATEWAY_2_PROJECT_INITIATION_DOCUMENT_URL
+			]
 		}),
 		question
 	);
