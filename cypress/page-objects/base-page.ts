@@ -258,4 +258,12 @@ export class BasePage {
 			cy.contains('a', link).should('be.visible');
 		});
 	}
+
+	verifyCaption(reference: string) {
+		this.pageHeading.find('.govuk-caption-xl').should('be.visible').and('contain.text', reference);
+	}
+
+	verifySubHeading(text: string) {
+		cy.contains('h2', text).should('be.visible');
+	}
 }
