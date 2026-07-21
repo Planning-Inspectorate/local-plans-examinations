@@ -6,7 +6,7 @@ import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
-/** The section within the case overview journey being edited. */
+/** The contacts section within the case overview journey. */
 const CONTACTS_SECTION = 'contacts';
 
 interface CaseOverviewInput {
@@ -68,7 +68,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			await removeItem({ db, reference, section, currentItemId });
 			return;
 		}
-		logger.info(res.locals);
+
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
 			case 'overview':
@@ -79,7 +79,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					action,
 					section,
 					currentItemId,
-					req.params.question
+					getParam(req.params.question)
 				);
 				break;
 			case 'gateway-1':
@@ -89,18 +89,15 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				await updateGateway2(db, trimStringValues(data.answers as Gateway2Input), reference);
 				break;
 			default:
-				//TODO redirect to case overview
-				console.log('!!\nurl not found');
-				break;
+				logger.info(`url - ${req.url} not found`);
+				return res.status(404).render('views/errors/404.njk');
 		}
 	};
 }
 
-interface CaseFormInput extends CaseOverviewInput, Gateway1Input {}
-
 async function updateOverview(
 	db: PrismaClient,
-	answers: CaseFormInput,
+	answers: CaseOverviewInput,
 	caseId: string,
 	action?: string,
 	section?: string,
@@ -138,37 +135,28 @@ async function updateOverview(
 		return;
 	}
 
-	// The manage-list summary POSTs carry no item data to persist
-	if (question === 'check-lpas' || question === 'check-contact-details') {
+	if (question === 'check-contact-details') {
+		if (currentItemId === '') return;
+		const contactData = buildContactData(answers);
+		await db.contact.upsert({
+			where: { id: currentItemId ?? '' },
+			create: {
+				...contactData,
+				cases: { connect: { reference: caseId } }
+			},
+			update: contactData
+		});
 		return;
 	}
 
 	// Updating case (scalar) details + any newly added contact / LPA
+	const { ...scalars } = answers;
+
 	await db.case.update({
 		where: { reference: caseId },
-		data: buildCaseData(answers, currentItemId ?? '')
+		data: scalars
 	});
 }
-
-// async function updateOverview(
-// 	db: PrismaClient,
-// 	answers: CaseOverviewInput,
-// 	caseId: string, action?: string | undefined,
-// 	section?: string | undefined,
-// 	currentItemId?: string | undefined,
-// 	question?: string | undefined
-// ) {
-// 	if (question === 'check-lpas') {
-// 		return
-// 	}
-// 	if (question === 'check-contact-details') {
-// 		return
-// 	}
-// 	await db.case.update({
-// 		where: { reference: caseId},
-// 		data: answers
-// 	})
-// }
 
 async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: string) {
 	await db.gateway1Info.upsert({
@@ -208,72 +196,8 @@ async function removeItem({
 	});
 }
 
-/** Builds the `data` payload for a case update (scalar fields + contact/LPA nesting). */
-function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.CaseUpdateInput {
-	// get scalar values
-	const {
-		planTitle,
-		planType,
-		planBand,
-		caseOfficer,
-		lpa,
-		firstName,
-		lastName,
-		email,
-		phone,
-		programmeOfficer,
-		examinationWebsite,
-		assessorGateway2,
-		assessorGateway3,
-		examiningInspector1,
-		examiningInspector2,
-		examiningInspector3,
-		qaInspector1,
-		qaInspector2,
-		qaInspector3,
-		noticeOfIntention,
-		estimatedGateway1Date,
-		completedGateway1Date,
-		slaSentDate,
-		slaReceivedDate,
-		dsaChecked
-	} = formData;
-
-	const hasContact = Boolean(firstName || lastName || email || phone);
-
-	return {
-		planTitle,
-		planType,
-		planBand,
-		caseOfficer,
-		programmeOfficer,
-		examinationWebsite,
-		assessorGateway2,
-		assessorGateway3,
-		examiningInspector1,
-		examiningInspector2,
-		examiningInspector3,
-		qaInspector1,
-		qaInspector2,
-		qaInspector3,
-		noticeOfIntention,
-		estimatedGateway1Date,
-		completedGateway1Date,
-		slaSentDate,
-		slaReceivedDate,
-		dsaChecked,
-		contacts: hasContact ? { create: buildContactData(formData) } : undefined,
-		lpas: lpa
-			? {
-					connectOrCreate: lpaConnectOrCreate(lpa),
-					disconnect: [{ lpaCode: currentItemId }]
-				}
-			: undefined
-	};
-}
-
 /** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(formData: CaseFormInput): Prisma.ContactCreateWithoutCasesInput {
+function buildContactData(formData: CaseOverviewInput): Prisma.ContactCreateWithoutCasesInput {
 	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
 	return {
 		firstName,
