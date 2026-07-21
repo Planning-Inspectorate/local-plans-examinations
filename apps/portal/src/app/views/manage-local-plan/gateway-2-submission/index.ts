@@ -135,22 +135,27 @@ function uploadWithSizeErrorHandling(req: Request, res: Response, next: NextFunc
 }
 
 // Dispatches to the correct file uploader controller based on the question URL.
-function selectFileUploader(controllers: Record<string, RequestHandler>): RequestHandler {
+function selectFileUploader(
+	coverLetterController: RequestHandler,
+	timetableController: RequestHandler
+): RequestHandler {
 	return (req, res, next) => {
 		const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
-		if (questionUrl && Object.prototype.hasOwnProperty.call(controllers, questionUrl)) {
-			const controller = controllers[questionUrl];
-			if (typeof controller === 'function') {
-				return controller(req, res, next);
-			}
+		if (questionUrl === GATEWAY_2_COVER_LETTER_URL) {
+			return coverLetterController(req, res, next);
+		} else if (questionUrl === GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL) {
+			return timetableController(req, res, next);
 		}
 		return next();
 	};
 }
 
 // Dispatches to the correct case-scoped file uploader controller based on the question URL.
-function selectFileUploaderForCase(controllers: Record<string, RequestHandler>): RequestHandler {
-	return selectFileUploader(controllers);
+function selectFileUploaderForCase(
+	coverLetterController: RequestHandler,
+	timetableController: RequestHandler
+): RequestHandler {
+	return selectFileUploader(coverLetterController, timetableController);
 }
 
 // Selects the correct case session key based on the question URL.
@@ -640,20 +645,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		uploadWithSizeErrorHandling,
-		selectFileUploaderForCase({
-			[GATEWAY_2_COVER_LETTER_URL]: uploadGateway2CoverLetterForCase,
-			[GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL]: uploadGateway2LocalPlanTimetableForCase
-		})
+		selectFileUploaderForCase(uploadGateway2CoverLetterForCase, uploadGateway2LocalPlanTimetableForCase)
 	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
-		selectFileUploaderForCase({
-			[GATEWAY_2_COVER_LETTER_URL]: deleteGateway2CoverLetterForCase,
-			[GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL]: deleteGateway2LocalPlanTimetableForCase
-		})
+		selectFileUploaderForCase(deleteGateway2CoverLetterForCase, deleteGateway2LocalPlanTimetableForCase)
 	);
 
 	router.post(
@@ -661,20 +660,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		uploadWithSizeErrorHandling,
-		selectFileUploader({
-			[GATEWAY_2_COVER_LETTER_URL]: uploadGateway2CoverLetter,
-			[GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL]: uploadGateway2LocalPlanTimetable
-		})
+		selectFileUploader(uploadGateway2CoverLetter, uploadGateway2LocalPlanTimetable)
 	);
 
 	router.post(
 		'/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponse,
 		getJourney,
-		selectFileUploader({
-			[GATEWAY_2_COVER_LETTER_URL]: deleteGateway2CoverLetter,
-			[GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL]: deleteGateway2LocalPlanTimetable
-		})
+		selectFileUploader(deleteGateway2CoverLetter, deleteGateway2LocalPlanTimetable)
 	);
 
 	router.get(
