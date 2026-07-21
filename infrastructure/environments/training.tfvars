@@ -59,7 +59,7 @@ front_door_config = {
 
 gov_notify = {
   templates = {
-    auth_id = "e57674eb-7830-4b71-9300-76fdac5ad13b" # Check for correct value for training environment
+    case_created = "09f1b5f7-4c2c-40c3-abee-505ffd86e629" # Check for correct value for training environment
   }
 }
 

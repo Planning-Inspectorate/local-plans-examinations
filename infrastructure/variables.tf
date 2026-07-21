@@ -84,7 +84,7 @@ variable "gov_notify" {
   description = "IDs for Gov Notify template"
   type = object({
     templates = object({
-      auth_id = string
+      case_created = string
     })
   })
 }
