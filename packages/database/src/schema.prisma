@@ -22,39 +22,41 @@ datasource db {
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
 model Case {
-  id                      String        @id @default(uuid()) @db.UniqueIdentifier
-  reference               String        @unique
-  email                   String
-  caseOfficer             String
-  planTitle               String
-  planType                String
-  planBand                String?
-  lpas                    LPA[]
-  contacts                Contact[]
-  programmeOfficer        String?
-  examinationWebsite      String?
-  assessorGateway2        String?
-  assessorGateway3        String?
-  examiningInspector1     String?
-  examiningInspector2     String?
-  examiningInspector3     String?
-  qaInspector1            String?
-  qaInspector2            String?
-  qaInspector3            String?
-  intentionToCommenceDate DateTime?
-  gateway1Date            DateTime?
-  gateway2Date            DateTime?
-  gateway3Date            DateTime?
-  submissionDate          DateTime?
-  createdAt               DateTime      @default(now())
-  noticeOfIntention       DateTime?
-  estimatedGateway1Date   DateTime?
-  completedGateway1Date   DateTime?
-  slaSentDate             DateTime?
-  slaReceivedDate         DateTime?
-  dsaChecked              String?
-  gateways                Gateway[]
-  caseHistories           CaseHistory[]
+  id                        String        @id @default(uuid()) @db.UniqueIdentifier
+  reference                 String        @unique
+  email                     String
+  caseOfficer               String
+  planTitle                 String
+  planType                  String
+  planBand                  String?
+  lpas                      LPA[]
+  contacts                  Contact[]
+  programmeOfficerFirstName String?
+  programmeOfficerLastName  String?
+  programmeOfficerEmail     String?
+  examinationWebsite        String?
+  assessorGateway2          String?
+  assessorGateway3          String?
+  examiningInspector1       String?
+  examiningInspector2       String?
+  examiningInspector3       String?
+  qaInspector1              String?
+  qaInspector2              String?
+  qaInspector3              String?
+  intentionToCommenceDate   DateTime?
+  gateway1Date              DateTime?
+  gateway2Date              DateTime?
+  gateway3Date              DateTime?
+  submissionDate            DateTime?
+  createdAt                 DateTime      @default(now())
+  noticeOfIntention         DateTime?
+  estimatedGateway1Date     DateTime?
+  completedGateway1Date     DateTime?
+  slaSentDate               DateTime?
+  slaReceivedDate           DateTime?
+  dsaChecked                String?
+  gateways                  Gateway[]
+  caseHistories             CaseHistory[]
 }
 
 model LPA {

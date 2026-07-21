@@ -22,7 +22,9 @@ interface CaseFormInput {
 	lastName?: string;
 	email?: string;
 	phone?: string;
-	programmeOfficer?: string;
+	programmeOfficerFirstName?: string;
+	programmeOfficerLastName?: string;
+	programmeOfficerEmail?: string;
 	examinationWebsite?: string;
 	assessorGateway2?: string;
 	assessorGateway3?: string;
@@ -110,7 +112,9 @@ function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.C
 		lastName,
 		email,
 		phone,
-		programmeOfficer,
+		programmeOfficerFirstName,
+		programmeOfficerLastName,
+		programmeOfficerEmail,
 		examinationWebsite,
 		assessorGateway2,
 		assessorGateway3,
@@ -135,7 +139,9 @@ function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.C
 		planType,
 		planBand,
 		caseOfficer,
-		programmeOfficer,
+		programmeOfficerFirstName,
+		programmeOfficerLastName,
+		programmeOfficerEmail,
 		examinationWebsite,
 		assessorGateway2,
 		assessorGateway3,
@@ -157,7 +163,14 @@ function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.C
 					connectOrCreate: lpaConnectOrCreate(lpa),
 					disconnect: [{ lpaCode: currentItemId }]
 				}
-			: undefined
+			: undefined,
+		caseHistories: {
+			create: {
+				event: `Updated ${Object.keys(formData).join(', ')} to ${Object.values(formData).join(', ')}`,
+				// TODO: Get user once authentication is implemented
+				username: 'Unknown'
+			}
+		}
 	};
 }
 
