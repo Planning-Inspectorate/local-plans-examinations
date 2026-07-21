@@ -179,7 +179,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 	},
 	examinationWebsite: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'What is the examination website?',
+		question: 'What is the address of the examination website?',
 		fieldName: 'examinationWebsite',
 		url: 'examination-website',
 		title: 'Examination website',
@@ -305,6 +305,33 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 			{ value: 'no', text: 'No' }
 		],
 		validators: [new RequiredValidator('Select an option')]
+	},
+	programmeOfficerDetails: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerFirstName',
+				label: 'First name',
+				attributes: { 'data-cy': 'programme-officer-first-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerLastName',
+				label: 'Last name',
+				attributes: { 'data-cy': 'programme-officer-last-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerEmail',
+				label: 'Email address',
+				attributes: { 'data-cy': 'programme-officer-email' }
+			}
+		],
+		question: 'Programme Officer details',
+		fieldName: 'programmeOfficerDetails',
+		url: 'programme-officer-details',
+		title: 'Programme Officer'
 	}
 };
 
