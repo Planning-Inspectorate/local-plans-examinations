@@ -138,9 +138,11 @@ function uploadWithSizeErrorHandling(req: Request, res: Response, next: NextFunc
 function selectFileUploader(controllers: Record<string, RequestHandler>): RequestHandler {
 	return (req, res, next) => {
 		const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
-		const controller = questionUrl ? controllers[questionUrl] : undefined;
-		if (controller) {
-			return controller(req, res, next);
+		if (questionUrl && Object.prototype.hasOwnProperty.call(controllers, questionUrl)) {
+			const controller = controllers[questionUrl];
+			if (typeof controller === 'function') {
+				return controller(req, res, next);
+			}
 		}
 		return next();
 	};
