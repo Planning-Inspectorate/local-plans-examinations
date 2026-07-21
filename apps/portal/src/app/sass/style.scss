@@ -16,3 +16,32 @@
 .govuk-summary-list--no-border .govuk-summary-list__key {
 	width: 50% !important;
 }
+
+.app-section-break {
+	margin-top: 30px;
+	margin-bottom: 35px;
+}
+
+.govuk-grid-column-two-thirds {
+	width: 80% !important;
+	max-width: 80%;
+}
+
+.govuk-table[data-cy$='-table'] {
+	table-layout: fixed;
+	width: 100%;
+	border-top: 1px solid govuk.$govuk-border-colour;
+
+	td:first-child,
+	th:first-child {
+		width: 233px;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		font-weight: bold;
+	}
+
+	td:last-child,
+	th:last-child {
+		text-align: right;
+	}
+}

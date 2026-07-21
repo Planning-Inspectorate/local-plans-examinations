@@ -5,7 +5,7 @@
 
 {% block pageContent %}
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-two-thirds">
 
         {{ govukInsetText({
             text: "Your target submission date is " + targetDate + ". A Gateway 2 assessment usually takes about 6 weeks."
@@ -14,138 +14,126 @@
         <p class="govuk-body">
             <a href="{{ saveAndComeBackUrl }}" class="govuk-link" data-cy="save-and-come-back">Save and come back later</a>
         </p>
+        <hr class="govuk-section-break govuk-section-break--visible app-section-break">
 
-        <p class="govuk-body">Add the documents that are relevant to your plan above the Procedural Documents section</p>
+        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
 
-        <h2 class="govuk-heading-m" id="procedural-documents">Procedural Documents</h2>
+        <div class="govuk-!-margin-bottom-8" data-cy="procedural-documents-section">
+            <h2 class="govuk-heading-m" id="procedural-documents">Procedural Documents</h2>
 
-        {% if errors and errors.submit %}
-            <p class="govuk-error-message" data-cy="submit-error">
-                <span class="govuk-visually-hidden">Error:</span> {{ errors.submit.text }}
-            </p>
-        {% endif %}
+            {% if errors and errors.submit %}
+                <p class="govuk-error-message" data-cy="submit-error">
+                    <span class="govuk-visually-hidden">Error:</span> {{ errors.submit.text }}
+                </p>
+            {% endif %}
 
-        {{ govukTable({
-            attributes: { "data-cy": "procedural-documents-table" },
-            head: [
-                { text: "Document" },
-                { text: "Status" },
-                { text: "Action" }
-            ],
-            rows: [
-                [
-                    { text: "Gateway 2 cover letter" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-gateway-2-cover-letter">Add</a>' }
-                ],
-                [
-                    { text: "Local plan timetable" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-local-plan-timetable">Add</a>' }
-                ],
-                [
-                    { text: "Project initiation document" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-project-initiation-document">Add</a>' }
-                ],
-                [
-                    { text: "Draft statement of compliance" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-draft-statement-of-compliance">Add</a>' }
-                ],
-                [
-                    { text: "Draft statement of soundness" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-draft-statement-of-soundness">Add</a>' }
+            {{ govukTable({
+                attributes: { "data-cy": "procedural-documents-table" },
+                rows: [
+                    [
+                        { text: "Gateway 2 cover letter" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-gateway-2-cover-letter">Add</a>' }
+                    ],
+                    [
+                        { text: "Local plan timetable" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-local-plan-timetable">Add</a>' }
+                    ],
+                    [
+                        { text: "Project initiation document" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-project-initiation-document">Add</a>' }
+                    ],
+                    [
+                        { text: "Draft statement of compliance" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-draft-statement-of-compliance">Add</a>' }
+                    ],
+                    [
+                        { text: "Draft statement of soundness" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-draft-statement-of-soundness">Add</a>' }
+                    ]
                 ]
-            ]
-        }) }}
+            }) }}
+        </div>
 
-        <h2 class="govuk-heading-m">Consultation Documents</h2>
+        <div class="govuk-!-margin-bottom-8" data-cy="consultation-documents-section">
+            <h2 class="govuk-heading-m">Consultation Documents</h2>
 
-        {{ govukTable({
-            attributes: { "data-cy": "consultation-documents-table" },
-            head: [
-                { text: "Document" },
-                { text: "Status" },
-                { text: "Action" }
-            ],
-            rows: [
-                [
-                    { text: "Notice of Intention to commence local plan preparation" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-notice-of-intention">Add</a>' }
-                ],
-                [
-                    { text: "Scoping consultation documents" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-scoping-consultation-documents">Add</a>' }
-                ],
-                [
-                    { text: "Consultation summary of feedback to scoping consultation" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-consultation-summary-scoping">Add</a>' }
-                ],
-                [
-                    { text: "Gateway 1 - Self Assessment of Readiness" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-gateway-1-self-assessment">Add</a>' }
-                ],
-                [
-                    { text: "Consultation on proposed local plan content and evidence documents" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-consultation-proposed-content">Add</a>' }
-                ],
-                [
-                    { text: "Consultation summary for proposed local plan content and evidence documents" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-consultation-summary-proposed-content">Add</a>' }
+            {{ govukTable({
+                attributes: { "data-cy": "consultation-documents-table" },
+                rows: [
+                    [
+                        { text: "Notice of Intention to commence local plan preparation" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-notice-of-intention">Add</a>' }
+                    ],
+                    [
+                        { text: "Scoping consultation documents" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-scoping-consultation-documents">Add</a>' }
+                    ],
+                    [
+                        { text: "Consultation summary of feedback to scoping consultation" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-consultation-summary-scoping">Add</a>' }
+                    ],
+                    [
+                        { text: "Gateway 1 - Self Assessment of Readiness" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-gateway-1-self-assessment">Add</a>' }
+                    ],
+                    [
+                        { text: "Consultation on proposed local plan content and evidence documents" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-consultation-proposed-content">Add</a>' }
+                    ],
+                    [
+                        { text: "Consultation summary for proposed local plan content and evidence documents" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-consultation-summary-proposed-content">Add</a>' }
+                    ]
                 ]
-            ]
-        }) }}
+            }) }}
+        </div>
 
-        <h2 class="govuk-heading-m">Additional documents</h2>
+        <div class="govuk-!-margin-bottom-8" data-cy="additional-documents-section">
+            <h2 class="govuk-heading-m">Additional documents</h2>
 
-        {{ govukTable({
-            attributes: { "data-cy": "additional-documents-table" },
-            head: [
-                { text: "Document" },
-                { text: "Status" },
-                { text: "Action" }
-            ],
-            rows: [
-                [
-                    { text: "Subsequent work towards a draft Plan" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-subsequent-work">Add</a>' }
+            {{ govukTable({
+                attributes: { "data-cy": "additional-documents-table" },
+                rows: [
+                    [
+                        { text: "Subsequent work towards a draft Plan" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-subsequent-work">Add</a>' }
+                    ]
                 ]
-            ]
-        }) }}
+            }) }}
+        </div>
 
-        <h2 class="govuk-heading-m">Workshop preferences</h2>
+        <div class="govuk-!-margin-bottom-8" data-cy="workshop-preferences-section">
+            <h2 class="govuk-heading-m">Workshop preferences</h2>
 
-        {{ govukTable({
-            attributes: { "data-cy": "workshop-preferences-table" },
-            head: [
-                { text: "Detail" },
-                { text: "Status" },
-                { text: "Action" }
-            ],
-            rows: [
-                [
-                    { text: "Suggested workshop venue" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-workshop-venue">Add</a>' }
-                ],
-                [
-                    { text: "Suggested workshop dates" },
-                    { text: "Not added" },
-                    { html: '<a href="#" class="govuk-link" data-cy="add-workshop-dates">Add</a>' }
+            {{ govukTable({
+                attributes: { "data-cy": "workshop-preferences-table" },
+                rows: [
+                    [
+                        { text: "Suggested workshop venue" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-workshop-venue">Add</a>' }
+                    ],
+                    [
+                        { text: "Suggested workshop dates" },
+                        { text: "Not added" },
+                        { html: '<a href="#" class="govuk-link" data-cy="add-workshop-dates">Add</a>' }
+                    ]
                 ]
-            ]
-        }) }}
+            }) }}
+        </div>
 
-        <h2 class="govuk-heading-m" id="submit">3. Submit for Gateway 2 assessment</h2>
 
         <form method="post" novalidate>
             {{ govukButton({
