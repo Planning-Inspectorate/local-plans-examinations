@@ -22,7 +22,7 @@ describe('Gateway 2 application page content', () => {
 			gateway2ApplicationPage.verifyMainContains(
 				`Your target submission date is ${plan.dates.gateway2}. A Gateway 2 assessment usually takes about 6 weeks.`,
 				'Save and come back later',
-				'Add the documents that are relevant to your plan above the Procedural Documents section'
+				'Add the documents that are relevant to your plan.'
 			);
 			gateway2ApplicationPage.verifySaveAndComeBackLink(`/manage-local-plans/${plan.urlReference}`);
 		});
