@@ -26,6 +26,7 @@
     "express-validator": "*",
     "govuk-frontend": "*",
     "helmet": "*",
+    "multer": "^2.2.0",
     "nunjucks": "*",
     "pino": "*",
     "pino-pretty": "*",
