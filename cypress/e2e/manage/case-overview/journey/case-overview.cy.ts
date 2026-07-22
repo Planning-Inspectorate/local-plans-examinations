@@ -67,15 +67,26 @@ describe('Case overview updates', () => {
 	});
 
 	it('answers an empty overview question and updates the overview row', () => {
-		const programmeOfficer = 'Programme Officer 1';
+		const programmeOfficerFirstName = 'Programme';
+		const programmeOfficerLastName = 'Officer 1';
+		const programmeOfficerEmail = 'programme.officer1@example.com';
 
 		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
 		caseOverviewPage.openActionLinkFor('Programme Officer');
 		caseOverviewProgrammeOfficerPage.verifyLoaded();
-		caseOverviewProgrammeOfficerPage.enterProgrammeOfficer(programmeOfficer);
+		caseOverviewProgrammeOfficerPage.enterProgrammeeOfficerDetails(
+			programmeOfficerFirstName,
+			programmeOfficerLastName,
+			programmeOfficerEmail
+		);
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
-		caseOverviewPage.verifySummaryRowContains('Programme Officer', programmeOfficer);
+		caseOverviewPage.verifySummaryRowContains(
+			'Programme Officer',
+			programmeOfficerFirstName,
+			programmeOfficerLastName,
+			programmeOfficerEmail
+		);
 	});
 
 	it('returns to overview from the plan band back link', () => {
