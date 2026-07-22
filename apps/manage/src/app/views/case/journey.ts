@@ -27,7 +27,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 				)
 				.addQuestion(questions.programmeOfficer)
 				.addQuestion(questions.examinationWebsite)
-				.addQuestion(questions.assessorGateway2)
+				.addQuestion(questions.gateway2AssessorsName)
 				.addQuestion(questions.assessorGateway3)
 				.addQuestion(questions.examiningInspector1)
 				.addQuestion(questions.examiningInspector2)

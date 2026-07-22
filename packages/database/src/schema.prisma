@@ -33,7 +33,6 @@ model Case {
   contacts                Contact[]
   programmeOfficer        String?
   examinationWebsite      String?
-  assessorGateway2        String?
   assessorGateway3        String?
   examiningInspector1     String?
   examiningInspector2     String?

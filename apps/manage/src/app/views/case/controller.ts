@@ -23,7 +23,8 @@ interface CaseOverviewInput {
 	phone?: string;
 	programmeOfficer?: string;
 	examinationWebsite?: string;
-	assessorGateway2?: string;
+	// assessor for Gateway 2
+	assessorName?: string;
 	assessorGateway3?: string;
 	examiningInspector1?: string;
 	examiningInspector2?: string;
@@ -46,6 +47,7 @@ interface Gateway2Input {
 	estimatedDate?: Date;
 	actualDate?: Date;
 	validDate?: Date;
+	assessorName?: string;
 	assessorDate?: Date;
 	assessorAppointmentDate?: Date;
 	workshopDate?: Date;
@@ -104,6 +106,10 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
+	if (question === 'gateway-2-assessor') {
+		await updateGateway2(db, { assessorName: answers.assessorName }, caseId);
+		return;
+	}
 	// Editing a contact's details (incl. changing that contact's LPA)
 	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
 		await db.contact.update({
@@ -256,6 +262,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				if (!overviewData) return res.status(404).render('views/errors/404.njk');
 				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
 				res.locals.journeyResponse = journeyResponse;
+				journeyResponse.answers.assessorName = overviewData.gateway2Info?.assessorName;
 				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
 					id: lpa.lpaCode,
 					lpa: lpa.lpaCode
@@ -319,6 +326,14 @@ function getFirstSegmentOfUrl(url: string): string {
 async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
 		where: { reference },
-		include: { lpas: true, contacts: true }
+		include: {
+			lpas: true,
+			contacts: true,
+			gateway2Info: {
+				select: {
+					assessorName: true
+				}
+			}
+		}
 	});
 }
