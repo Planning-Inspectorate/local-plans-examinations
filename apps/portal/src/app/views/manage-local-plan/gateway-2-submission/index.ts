@@ -27,6 +27,7 @@ import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
 	gateway2CoverLetterQuestion,
+	gateway2LocalPlanTimetableQuestion,
 	questions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
@@ -43,6 +44,10 @@ import type { CaseModel } from '@pins/local-plans-database/src/client/models/Cas
 const GATEWAY_2_COVER_LETTER_FIELD = 'gateway2CoverLetter';
 const GATEWAY_2_COVER_LETTER_URL = 'gateway-2-cover-letter';
 const GATEWAY_2_COVER_LETTER_QUESTION = gateway2CoverLetterQuestion;
+
+const GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD = 'gateway2LocalPlanTimetable';
+const GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL = 'local-plan-timetable';
+const GATEWAY_2_LOCAL_PLAN_TIMETABLE_QUESTION = gateway2LocalPlanTimetableQuestion;
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
@@ -106,6 +111,61 @@ function redirectToFileUploaderQuestion(req: Request) {
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
 
+// Builds the URL for the project initiation document page after timetable upload.
+function redirectToProjectInitiationDocument(req: Request) {
+	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
+	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/project-initiation-document`;
+}
+
+// Wraps multer upload to catch file size limit errors.
+function uploadWithSizeErrorHandling(req: Request, res: Response, next: NextFunction) {
+	upload.array('files[]')(req, res, (error: unknown) => {
+		if (error && typeof error === 'object' && 'code' in error && error.code === 'LIMIT_FILE_SIZE') {
+			const session = req as unknown as { session: FileUploaderSession & Record<string, unknown> };
+			const errorMessage = `The selected file must be smaller than ${GATEWAY_2_COVER_LETTER_QUESTION.maxFileSizeLabel}`;
+			session.session.errors = { 'upload-form': { msg: errorMessage } };
+			session.session.errorSummary = [{ text: errorMessage, href: '#upload-form' }];
+			return res.redirect(redirectToFileUploaderQuestion(req));
+		}
+		if (error) {
+			return next(error);
+		}
+		return next();
+	});
+}
+
+// Dispatches to the correct file uploader controller based on the question URL.
+function selectFileUploader(
+	coverLetterController: RequestHandler,
+	timetableController: RequestHandler
+): RequestHandler {
+	return (req, res, next) => {
+		const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
+		if (questionUrl === GATEWAY_2_COVER_LETTER_URL) {
+			return coverLetterController(req, res, next);
+		} else if (questionUrl === GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL) {
+			return timetableController(req, res, next);
+		}
+		return next();
+	};
+}
+
+// Dispatches to the correct case-scoped file uploader controller based on the question URL.
+function selectFileUploaderForCase(
+	coverLetterController: RequestHandler,
+	timetableController: RequestHandler
+): RequestHandler {
+	return selectFileUploader(coverLetterController, timetableController);
+}
+
+// Selects the correct case session key based on the question URL.
+function selectFileUploaderCaseSessionKey(req: Request): string {
+	if (req.params.question === GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL) {
+		return fileUploaderTimetableCaseSessionKey(req);
+	}
+	return fileUploaderCoverLetterCaseSessionKey(req);
+}
+
 // Loads the case for the plan reference and creates the journey response.
 function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler {
 	return async (req, res, next) => {
@@ -158,12 +218,27 @@ function getCaseScopedSessionAnswers(req: Request, planReference: string): Recor
 
 // Retrieves the plan reference from the params and creates the file upload session key.
 // Example format: LP-TEST-001:gateway2CoverLetter.
-function fileUploaderCaseSessionKey(req: Request) {
+function fileUploaderCoverLetterCaseSessionKey(req: Request) {
 	return `${req.params.planReference}:${GATEWAY_2_COVER_LETTER_FIELD}`;
+}
+
+// Example format: LP-TEST-001:gateway2LocalPlanTimetable.
+function fileUploaderTimetableCaseSessionKey(req: Request) {
+	return `${req.params.planReference}:${GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD}`;
 }
 
 // Keeps the Gateway 2 cover letter answer in sync with uploaded files.
 export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: UploadedFile[]) {
+	syncGateway2Answer(req, GATEWAY_2_COVER_LETTER_FIELD, uploadedFiles);
+}
+
+// Keeps the local plan timetable answer in sync with uploaded files.
+export function syncGateway2LocalPlanTimetableAnswer(req: Request, uploadedFiles: UploadedFile[]) {
+	syncGateway2Answer(req, GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD, uploadedFiles);
+}
+
+// Keeps a Gateway 2 answer in sync with uploaded files.
+function syncGateway2Answer(req: Request, fieldName: string, uploadedFiles: UploadedFile[]) {
 	if (!req.session) {
 		return;
 	}
@@ -176,11 +251,11 @@ export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: Uploa
 		: getOrCreateRecord(forms, JOURNEY_ID);
 
 	if (uploadedFiles.length > 0) {
-		answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
+		answers[fieldName] = uploadedFiles;
 		return;
 	}
 
-	delete answers[GATEWAY_2_COVER_LETTER_FIELD];
+	delete answers[fieldName];
 }
 
 // Reads the plan reference from the route params.
@@ -296,6 +371,109 @@ function logGateway2CoverLetterDeleteFailed(service: PortalService, req: Request
 	);
 }
 
+function gateway2LocalPlanTimetableLogContext(req: Request) {
+	const request = req as Gateway2Request;
+	return {
+		planReference: getRoutePlanReference(req),
+		caseId: request.currentCase?.id,
+		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD
+	};
+}
+
+function logGateway2LocalPlanTimetableUploaded(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
+	service.logger.info(
+		{
+			...gateway2LocalPlanTimetableLogContext(req),
+			fileCount: uploadedFiles.length
+		},
+		'Gateway 2 local plan timetable uploaded'
+	);
+}
+
+function logGateway2LocalPlanTimetableUploadFailed(
+	service: PortalService,
+	req: Request,
+	{ errors, error }: { errors?: Array<{ text: string; href: string }>; error?: unknown }
+) {
+	const context = {
+		...gateway2LocalPlanTimetableLogContext(req),
+		errorCount: errors?.length ?? 0
+	};
+
+	if (error) {
+		service.logger.error({ ...context, error }, 'Gateway 2 local plan timetable upload failed');
+		return;
+	}
+
+	service.logger.warn(context, 'Gateway 2 local plan timetable upload failed');
+}
+
+function logGateway2LocalPlanTimetableDeleted(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
+	service.logger.info(
+		{
+			...gateway2LocalPlanTimetableLogContext(req),
+			fileId: req.params.fileId,
+			remainingFileCount: uploadedFiles.length
+		},
+		'Gateway 2 local plan timetable deleted'
+	);
+}
+
+function logGateway2LocalPlanTimetableDeleteFailed(
+	service: PortalService,
+	req: Request,
+	fileId: string,
+	error: unknown
+) {
+	service.logger.error(
+		{
+			...gateway2LocalPlanTimetableLogContext(req),
+			fileId,
+			error
+		},
+		'Gateway 2 local plan timetable delete failed'
+	);
+}
+
+// Generates task list data from the journey's sections and questions.
+function buildTaskListData(req: Request, res: Response, next: NextFunction) {
+	const journey = res.locals.journey;
+	if (!journey) {
+		return next();
+	}
+
+	const taskListData: Array<{
+		title: { text: string };
+		hint?: { text: string };
+		href?: string;
+		uploadedFiles?: UploadedFile[];
+		status: { text: string; html?: string };
+	}> = [];
+
+	for (const section of journey.sections) {
+		for (const question of section.questions) {
+			const isAnswered = question.isAnswered(journey.response);
+			const planReference = req.params.planReference;
+			const questionUrl = planReference
+				? `${req.baseUrl}/${planReference}/gateway-2-submission/${section.segment}/${question.url}`
+				: `${req.baseUrl}/gateway-2-submission/${section.segment}/${question.url}`;
+
+			const answer = journey.response?.answers?.[question.fieldName];
+			const uploadedFiles = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
+
+			taskListData.push({
+				title: { text: question.title },
+				href: questionUrl,
+				uploadedFiles,
+				status: isAnswered ? { text: 'Completed' } : { text: 'Not started' }
+			});
+		}
+	}
+
+	res.locals.taskListData = taskListData;
+	next();
+}
+
 // Registers the Gateway 2 submission routes.
 export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -329,7 +507,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
-		sessionKey: fileUploaderCaseSessionKey,
+		sessionKey: fileUploaderCoverLetterCaseSessionKey,
 		destination: (req) => {
 			const request = req as Gateway2Request;
 			return {
@@ -364,7 +542,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
-		sessionKey: fileUploaderCaseSessionKey,
+		sessionKey: fileUploaderCoverLetterCaseSessionKey,
 		onFilesChange: ({ req, uploadedFiles }) => {
 			syncGateway2CoverLetterAnswer(req, uploadedFiles);
 			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
@@ -372,8 +550,82 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		onDeleteError: ({ req, fileId, error }) => logGateway2CoverLetterDeleteFailed(service, req, fileId, error),
 		redirect: redirectToFileUploaderQuestion
 	});
+	const uploadGateway2LocalPlanTimetable = createFileUploaderUploadController({
+		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD,
+		question: GATEWAY_2_LOCAL_PLAN_TIMETABLE_QUESTION,
+		storage: fileUploaderStorage,
+		destination: (req) => ({
+			folderPath: `${req.sessionID ?? 'session'}/${GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL}`,
+			metadata: {
+				journeyId: JOURNEY_ID,
+				fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD
+			}
+		}),
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2LocalPlanTimetableAnswer(req, uploadedFiles);
+			logGateway2LocalPlanTimetableUploaded(service, req, uploadedFiles);
+		},
+		onUploadError: ({ req, errors, error }) =>
+			logGateway2LocalPlanTimetableUploadFailed(service, req, { errors, error }),
+		redirect: redirectToProjectInitiationDocument
+	});
+	const uploadGateway2LocalPlanTimetableForCase = createFileUploaderUploadController({
+		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD,
+		question: GATEWAY_2_LOCAL_PLAN_TIMETABLE_QUESTION,
+		storage: fileUploaderStorage,
+		sessionKey: fileUploaderTimetableCaseSessionKey,
+		destination: (req) => {
+			const request = req as Gateway2Request;
+			return {
+				folderPath: `${request.currentCase?.id ?? req.params.planReference}/${GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL}`,
+				metadata: {
+					journeyId: JOURNEY_ID,
+					caseId: request.currentCase?.id,
+					caseReference: req.params.planReference,
+					fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD
+				}
+			};
+		},
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2LocalPlanTimetableAnswer(req, uploadedFiles);
+			logGateway2LocalPlanTimetableUploaded(service, req, uploadedFiles);
+		},
+		onUploadError: ({ req, errors, error }) =>
+			logGateway2LocalPlanTimetableUploadFailed(service, req, { errors, error }),
+		redirect: redirectToProjectInitiationDocument
+	});
+	const deleteGateway2LocalPlanTimetable = createFileUploaderDeleteController({
+		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD,
+		question: GATEWAY_2_LOCAL_PLAN_TIMETABLE_QUESTION,
+		storage: fileUploaderStorage,
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2LocalPlanTimetableAnswer(req, uploadedFiles);
+			logGateway2LocalPlanTimetableDeleted(service, req, uploadedFiles);
+		},
+		onDeleteError: ({ req, fileId, error }) => logGateway2LocalPlanTimetableDeleteFailed(service, req, fileId, error),
+		redirect: redirectToFileUploaderQuestion
+	});
+	const deleteGateway2LocalPlanTimetableForCase = createFileUploaderDeleteController({
+		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD,
+		question: GATEWAY_2_LOCAL_PLAN_TIMETABLE_QUESTION,
+		storage: fileUploaderStorage,
+		sessionKey: fileUploaderTimetableCaseSessionKey,
+		onFilesChange: ({ req, uploadedFiles }) => {
+			syncGateway2LocalPlanTimetableAnswer(req, uploadedFiles);
+			logGateway2LocalPlanTimetableDeleted(service, req, uploadedFiles);
+		},
+		onDeleteError: ({ req, fileId, error }) => logGateway2LocalPlanTimetableDeleteFailed(service, req, fileId, error),
+		redirect: redirectToFileUploaderQuestion
+	});
 
-	router.get('/gateway-2-submission', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
+	router.get(
+		'/gateway-2-submission',
+		getJourneyResponse,
+		getJourney,
+		setAsEditingFromCya,
+		buildTaskListData,
+		buildList()
+	);
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
 
@@ -382,6 +634,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,
+		buildTaskListData,
 		buildList()
 	);
 
@@ -391,30 +644,63 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		'/:planReference/gateway-2-submission/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
 		getJourney,
-		upload.array('files[]'),
-		uploadGateway2CoverLetterForCase
+		uploadWithSizeErrorHandling,
+		selectFileUploaderForCase(uploadGateway2CoverLetterForCase, uploadGateway2LocalPlanTimetableForCase)
 	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
-		deleteGateway2CoverLetterForCase
+		selectFileUploaderForCase(deleteGateway2CoverLetterForCase, deleteGateway2LocalPlanTimetableForCase)
 	);
 
 	router.post(
 		'/gateway-2-submission/:section/:question/upload-documents',
 		getJourneyResponse,
 		getJourney,
-		upload.array('files[]'),
-		uploadGateway2CoverLetter
+		uploadWithSizeErrorHandling,
+		selectFileUploader(uploadGateway2CoverLetter, uploadGateway2LocalPlanTimetable)
 	);
 
 	router.post(
 		'/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponse,
 		getJourney,
-		deleteGateway2CoverLetter
+		selectFileUploader(deleteGateway2CoverLetter, deleteGateway2LocalPlanTimetable)
+	);
+
+	router.get(
+		'/:planReference/gateway-2-submission/:section/project-initiation-document',
+		getJourneyResponseFromCase,
+		getJourney,
+		(req, res) => {
+			res.render('views/manage-local-plan/gateway-2-submission/project-initiation-document.njk');
+		}
+	);
+
+	router.post(
+		'/:planReference/gateway-2-submission/:section/project-initiation-document',
+		getJourneyResponseFromCase,
+		getJourney,
+		(req, res) => {
+			res.render('views/manage-local-plan/gateway-2-submission/project-initiation-document.njk');
+		}
+	);
+
+	router.get(
+		'/:planReference/gateway-2-submission/:section/:question',
+		(req, res, next) => {
+			console.log('Question route hit:', req.params);
+			next();
+		},
+		getJourneyResponseFromCase,
+		getJourney,
+		fileUploaderQuestionMiddleware({
+			questionUrls: [GATEWAY_2_COVER_LETTER_URL, GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL],
+			sessionKey: selectFileUploaderCaseSessionKey
+		}),
+		question
 	);
 
 	router.get(
@@ -422,8 +708,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL],
-			sessionKey: fileUploaderCaseSessionKey
+			questionUrls: [GATEWAY_2_COVER_LETTER_URL, GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL],
+			sessionKey: selectFileUploaderCaseSessionKey
 		}),
 		question
 	);
@@ -442,7 +728,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL]
+			questionUrls: [GATEWAY_2_COVER_LETTER_URL, GATEWAY_2_LOCAL_PLAN_TIMETABLE_URL]
 		}),
 		question
 	);

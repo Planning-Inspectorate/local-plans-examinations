@@ -40,14 +40,19 @@ describe('file uploader validation', () => {
 					buildRequestFile({ originalname: 'report.docx', mimetype: 'application/pdf', size: 100 })
 				],
 				[],
-				buildValidationOptions({ maxFilesPerUpload: 1, maxFileSizeBytes: 1000, maxTotalUploadSizeBytes: 5000 })
+				buildValidationOptions({
+					maxFilesPerUpload: 1,
+					maxFileSizeBytes: 1000,
+					maxFileSizeLabel: '250MB',
+					maxTotalUploadSizeBytes: 5000
+				})
 			);
 
 			assert.deepEqual(errors, [
 				{ text: 'You can only upload up to 1 files at a time', href: '#upload-form' },
 				{ text: 'cover-letter.exe must be an allowed file type', href: '#upload-form' },
 				{ text: 'cover-letter.exe is not an allowed file type', href: '#upload-form' },
-				{ text: 'cover-letter.exe must be smaller than the maximum file size', href: '#upload-form' },
+				{ text: 'The selected file must be smaller than 250MB', href: '#upload-form' },
 				{ text: 'report.docx must be an allowed file type', href: '#upload-form' }
 			]);
 		});

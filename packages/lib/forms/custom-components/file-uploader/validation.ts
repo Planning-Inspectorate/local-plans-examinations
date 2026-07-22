@@ -6,6 +6,7 @@ export type FileValidationOptions = {
 	allowedFileExtensions: string[];
 	allowedMimeTypes?: string[];
 	maxFileSizeBytes: number;
+	maxFileSizeLabel?: string;
 	maxFilesPerUpload: number;
 	maxTotalUploadSizeBytes: number;
 	uploadFormHref?: string;
@@ -56,7 +57,10 @@ export function validateFiles(
 		}
 
 		if (file.size > options.maxFileSizeBytes) {
-			errors.push({ text: `${file.originalname} must be smaller than the maximum file size`, href });
+			errors.push({
+				text: `The selected file must be smaller than ${options.maxFileSizeLabel ?? 'the maximum file size'}`,
+				href
+			});
 		}
 	}
 

@@ -1,0 +1,43 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageTitle %}Gateway 2 submission{% endblock %}
+
+{% block content %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            <h1 class="govuk-heading-l">Gateway 2 submission</h1>
+            <p class="govuk-body">Upload the documents required for your Gateway 2 advisory check.</p>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h2 class="govuk-heading-m">Procedural documents</h2>
+            <dl class="govuk-summary-list">
+                {% for item in taskListData %}
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">{{ item.title.text }}</dt>
+                        <dd class="govuk-summary-list__value">
+                            {% if item.uploadedFiles and item.uploadedFiles.length %}
+                                {% for file in item.uploadedFiles %}
+                                    <a class="govuk-link" href="{{ item.href }}">{{ file.fileName }}</a>{% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <strong class="govuk-tag govuk-tag--grey">Not started</strong>
+                            {% endif %}
+                        </dd>
+                        <dd class="govuk-summary-list__actions">
+                            {% if item.uploadedFiles and item.uploadedFiles.length %}
+                                <a class="govuk-link" href="{{ item.href }}">Change</a>
+                            {% else %}
+                                <a class="govuk-link" href="{{ item.href }}">Add</a>
+                            {% endif %}
+                        </dd>
+                    </div>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
+{% endblock %}

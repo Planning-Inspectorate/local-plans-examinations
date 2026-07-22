@@ -15,10 +15,14 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 
 	return new Journey({
 		journeyId: JOURNEY_ID,
-		sections: [new Section('Procedural documents', 'procedural').addQuestion(questions.gateway2CoverLetter)],
+		sections: [
+			new Section('Procedural documents', 'procedural')
+				.addQuestion(questions.gateway2CoverLetter)
+				.addQuestion(questions.gateway2LocalPlanTimetable)
+		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
-		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		taskListTemplate: 'views/layouts/forms-task-list.njk',
 		journeyTitle: 'Gateway 2 Application',
 		returnToListing: false,
 		makeBaseUrl: () => baseUrl,

@@ -232,8 +232,10 @@ function buildQuestionConfig() {
 		allowedFileExtensions: ['pdf'],
 		allowedMimeTypes: ['application/pdf'],
 		maxFileSizeBytes: 1000,
+		maxFileSizeLabel: '250MB',
 		maxFilesPerUpload: 3,
-		maxTotalUploadSizeBytes: 2000
+		maxTotalUploadSizeBytes: 2000,
+		multiple: true
 	};
 }
 

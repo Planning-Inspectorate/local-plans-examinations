@@ -2,7 +2,11 @@ import assert from 'node:assert';
 import type { Request } from 'express';
 import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { normalisePlanReferenceForLookup, syncGateway2CoverLetterAnswer } from './index.ts';
+import {
+	normalisePlanReferenceForLookup,
+	syncGateway2CoverLetterAnswer,
+	syncGateway2LocalPlanTimetableAnswer
+} from './index.ts';
 
 describe('normalisePlanReferenceForLookup', () => {
 	it('keeps hyphenated LPE references unchanged', () => {
@@ -54,6 +58,47 @@ describe('syncGateway2CoverLetterAnswer', () => {
 		};
 
 		syncGateway2CoverLetterAnswer(req as unknown as Request, []);
+
+		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
+	});
+});
+
+describe('syncGateway2LocalPlanTimetableAnswer', () => {
+	it('stores uploaded files in the case-scoped journey answers', () => {
+		const uploadedFile = buildUploadedFile({ id: 'file-1', fileName: 'timetable.pdf' });
+		const req = {
+			params: { planReference: 'LPE-TEST-001' },
+			session: {}
+		};
+
+		syncGateway2LocalPlanTimetableAnswer(req as unknown as Request, [uploadedFile]);
+
+		assert.deepEqual(req.session, {
+			forms: {
+				'LPE-TEST-001': {
+					'gateway-2-application': {
+						gateway2LocalPlanTimetable: [uploadedFile]
+					}
+				}
+			}
+		});
+	});
+
+	it('removes the case-scoped journey answer when no uploaded files remain', () => {
+		const req = {
+			params: { planReference: 'LPE-TEST-001' },
+			session: {
+				forms: {
+					'LPE-TEST-001': {
+						'gateway-2-application': {
+							gateway2LocalPlanTimetable: [buildUploadedFile({ id: 'file-1' })]
+						}
+					}
+				}
+			}
+		};
+
+		syncGateway2LocalPlanTimetableAnswer(req as unknown as Request, []);
 
 		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
 	});

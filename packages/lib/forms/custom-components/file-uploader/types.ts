@@ -36,8 +36,9 @@ export type FileUploaderText = {
 	uploadingText?: string;
 	removeLinkText?: string;
 	continueButtonText?: string;
+	continueAction?: string;
 	returnLink?: {
-		href: string;
+		href?: string;
 		text: string;
 	};
 };
