@@ -88,7 +88,12 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				await updateGateway1(db, trimStringValues(data.answers as Gateway1Input), reference);
 				break;
 			case 'gateway-2':
-				await updateGateway2(db, trimStringValues(data.answers as Gateway2Input), reference);
+				await updateGateway2(
+					db,
+					trimStringValues(data.answers as Gateway2Input),
+					reference,
+					req.params.question as string
+				);
 				break;
 			default:
 				logger.info(`url - ${req.url} not found`);
@@ -172,7 +177,10 @@ async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: 
 	});
 }
 
-async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string) {
+async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string, question?: string) {
+	if (question === 'gateway-2-assessor') {
+		answers.assessorAppointmentDate = new Date();
+	}
 	await db.gateway2Info.upsert({
 		where: { caseId },
 		update: { ...answers },

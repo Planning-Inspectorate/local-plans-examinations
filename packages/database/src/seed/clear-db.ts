@@ -12,6 +12,8 @@ async function run() {
 	try {
 		await dbClient.gateway1Info.deleteMany({});
 		await dbClient.gateway2Info.deleteMany({});
+		await dbClient.gateway3Info.deleteMany({});
+		await dbClient.examinationInfo.deleteMany({});
 		await dbClient.case.deleteMany({});
 		await dbClient.contact.deleteMany({});
 		await dbClient.lPA.deleteMany({});
