@@ -32,7 +32,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 }
 
 /**
- * Returns a controller/handler to save the journey answers to the database
+ * Returns a function to save the journey answers to the database
  */
 export function buildSaveController(service: ManageService): RequestHandler {
 	return async (req, res) => {
@@ -51,45 +51,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		const allEmails = answers.contactDetails.map((contact) => contact.email);
 
 		const uniqueLpaCodes = [...new Set(answers.checkLpas.map((lpa) => lpa.lpa))];
-		await service.db.case.create({
-			data: {
-				reference: answers.reference,
-				email: answers.email,
-				caseOfficer: answers.caseOfficer,
-				planTitle: answers.planTitle,
-				planType: answers.planType,
-				...(answers.intentionToCommenceDate && {
-					intentionToCommenceDate: new Date(answers.intentionToCommenceDate)
-				}),
-				...(answers.gateway1Date && {
-					gateway1Date: new Date(answers.gateway1Date)
-				}),
-				...(answers.gateway2Date && {
-					gateway2Date: new Date(answers.gateway2Date)
-				}),
-				...(answers.gateway3Date && {
-					gateway3Date: new Date(answers.gateway3Date)
-				}),
-				...(answers.submissionDate && {
-					submissionDate: new Date(answers.submissionDate)
-				}),
-				lpas: {
-					connectOrCreate: uniqueLpaCodes.map((lpaCode) => ({
-						where: { lpaCode },
-						create: { lpaCode }
-					}))
-				},
-				contacts: {
-					create: answers.contactDetails.map((contact) => ({
-						firstName: contact.firstName,
-						lastName: contact.lastName,
-						email: contact.email,
-						phoneNumber: contact.phone || '',
-						lpaCode: contact.lpaContact
-					}))
-				}
-			}
-		});
+		await saveDataToDatabase(service, answers, uniqueLpaCodes);
 
 		service.logger.info(answers, 'case created');
 
@@ -124,4 +86,80 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
 		res.render('views/layouts/success.njk', { reference: answers.reference });
 	};
+}
+
+function parseDdMmYyyy(value: string): Date {
+	const [day, month, year] = value.split('/').map(Number);
+	return new Date(year, month - 1, day);
+}
+
+async function saveDataToDatabase(
+	service: ManageService,
+	answers: CreateCaseAnswers,
+	uniqueLpaCodes: string[]
+): Promise<void> {
+	await service.db.$transaction(async (tx) => {
+		await tx.case.create({
+			data: {
+				reference: answers.reference,
+				email: answers.email,
+				caseOfficer: answers.caseOfficer,
+				planTitle: answers.planTitle,
+				planType: answers.planType,
+				lpas: {
+					connectOrCreate: uniqueLpaCodes.map((lpaCode) => ({
+						where: { lpaCode },
+						create: { lpaCode }
+					}))
+				},
+				contacts: {
+					create: answers.contactDetails.map((contact) => ({
+						firstName: contact.firstName,
+						lastName: contact.lastName,
+						email: contact.email,
+						phoneNumber: contact.phone || '',
+						lpaCode: contact.lpaContact
+					}))
+				}
+			}
+		});
+
+		await Promise.all([
+			tx.gateway1Info.create({
+				data: {
+					caseId: answers.reference,
+					...(answers.intentionToCommenceDate && {
+						noticeOfIntention: parseDdMmYyyy(answers.intentionToCommenceDate)
+					}),
+					...(answers.gateway1Date && {
+						estimatedGateway1Date: parseDdMmYyyy(answers.gateway1Date)
+					})
+				}
+			}),
+			tx.gateway2Info.create({
+				data: {
+					caseId: answers.reference,
+					...(answers.gateway2Date && {
+						estimatedDate: parseDdMmYyyy(answers.gateway2Date)
+					})
+				}
+			}),
+			tx.gateway3Info.create({
+				data: {
+					caseId: answers.reference,
+					...(answers.gateway3Date && {
+						estimatedDate: parseDdMmYyyy(answers.gateway3Date)
+					})
+				}
+			}),
+			tx.examinationInfo.create({
+				data: {
+					caseId: answers.reference,
+					...(answers.submissionDate && {
+						submissionForExaminationDate: parseDdMmYyyy(answers.submissionDate)
+					})
+				}
+			})
+		]);
+	});
 }
