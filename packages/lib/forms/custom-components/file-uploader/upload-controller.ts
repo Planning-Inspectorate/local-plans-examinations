@@ -15,7 +15,13 @@ export type FileUploaderControllerOptions = {
 	storage: FileUploadStorageAdapterFactory;
 	question: Pick<
 		FileUploaderQuestionConfig,
-		'allowedFileExtensions' | 'allowedMimeTypes' | 'maxFileSizeBytes' | 'maxFilesPerUpload' | 'maxTotalUploadSizeBytes'
+		| 'allowedFileExtensions'
+		| 'allowedMimeTypes'
+		| 'maxFileSizeBytes'
+		| 'maxFileSizeLabel'
+		| 'maxFilesPerUpload'
+		| 'maxTotalUploadSizeBytes'
+		| 'multiple'
 	>;
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
@@ -59,6 +65,7 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 			allowedFileExtensions: options.question.allowedFileExtensions,
 			allowedMimeTypes: options.question.allowedMimeTypes,
 			maxFileSizeBytes: options.question.maxFileSizeBytes,
+			maxFileSizeLabel: options.question.maxFileSizeLabel,
 			maxFilesPerUpload: options.question.maxFilesPerUpload ?? 3,
 			maxTotalUploadSizeBytes: options.question.maxTotalUploadSizeBytes ?? 1024 * 1024 * 1024
 		});
@@ -94,7 +101,7 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 			throw error;
 		}
 
-		const nextUploadedFiles = [...existingFiles, ...uploadedFiles];
+		const nextUploadedFiles = options.question.multiple ? [...existingFiles, ...uploadedFiles] : uploadedFiles;
 
 		session.fileUploader = {
 			...session.fileUploader,
@@ -223,6 +230,12 @@ function redirectSafely(res: Response, target: string): void {
 }
 
 function resolveRedirect(req: Request, options: FileUploaderControllerOptions): string {
+	const request = req as RequestWithFiles;
+	const continueUrl = request.body?._continueUrl as string | undefined;
+	if (continueUrl && isSafeLocalRedirect(continueUrl)) {
+		return continueUrl;
+	}
+
 	if (typeof options.redirect === 'function') {
 		const redirect = options.redirect(req);
 		if (isSafeLocalRedirect(redirect)) {

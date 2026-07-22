@@ -44,26 +44,9 @@
 				<p class="govuk-body">{{ question.text.totalUploadSizeText }}</p>
 			{% endif %}
 
-			{% if uploadedFiles and uploadedFiles.length %}
-				<dl class="govuk-summary-list">
-					{% for file in uploadedFiles %}
-						<div class="govuk-summary-list__row">
-							<dt class="govuk-summary-list__value">{{ file.fileName }}</dt>
-							<dd class="govuk-summary-list__actions">
-								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
-									<input type="hidden" name="_csrf" value="{{ _csrf }}">
-									<button class="govuk-link govuk-!-font-size-19" type="submit">
-										{{ question.text.removeLinkText or "Remove" }}
-										<span class="govuk-visually-hidden">{{ file.fileName }}</span>
-									</button>
-								</form>
-							</dd>
-						</div>
-					{% endfor %}
-				</dl>
-			{% endif %}
+			{# uploaded files list removed - shown on task list instead #}
 
-			<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents">
+			<form id="upload-form" class="file-uploader-custom" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents">
 				<input type="hidden" name="_csrf" value="{{ _csrf }}">
 				{{ govukFileUpload({
 					id: question.fieldName,
@@ -73,7 +56,7 @@
 						classes: "govuk-visually-hidden"
 					},
 					javascript: true,
-					multiple: question.multiple,
+					multiple: question.multiple if question.multiple else undefined,
 					chooseFilesButtonText: question.text.chooseFilesButtonText or "Choose files",
 					dropInstructionText: question.text.dropInstructionText or "or drop files",
 					attributes: {
@@ -83,12 +66,6 @@
 						text: errors["upload-form"].msg
 					}
 				}) }}
-				{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files" }) }}
-			</form>
-
-			<form action="" method="post" novalidate>
-				<input type="hidden" name="_csrf" value="{{ _csrf }}">
-				<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
 				{{ govukButton({
 					text: question.text.continueButtonText or continueButtonText or "Continue",
 					type: "submit"
@@ -97,7 +74,7 @@
 
 			{% if question.text.returnLink %}
 				<p class="govuk-body">
-					<a class="govuk-link" href="{{ question.text.returnLink.href }}">{{ question.text.returnLink.text }}</a>
+					<a class="govuk-link" href="{{ question.text.returnLink.href or listLink }}">{{ question.text.returnLink.text }}</a>
 				</p>
 			{% endif %}
 		</div>

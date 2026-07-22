@@ -39,20 +39,47 @@ describe('createJourney', () => {
 		assert.strictEqual(journey.initialBackLink, '/');
 	});
 
-	it('is incomplete until a Gateway 2 cover letter has been uploaded', () => {
+	it('builds the local plan timetable question URL from a plan reference', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plan',
+			params: {
+				planReference: 'PLAN-123456'
+			}
+		} as unknown as Request;
+
+		const journey = createJourney(req, response, questions);
+
+		assert.strictEqual(
+			journey.getCurrentQuestionUrl('procedural', 'local-plan-timetable'),
+			'/manage-local-plan/PLAN-123456/gateway-2-submission/procedural/local-plan-timetable'
+		);
+	});
+
+	it('is incomplete until both a cover letter and a timetable have been uploaded', () => {
+		const coverLetterFile = {
+			id: 'file-1',
+			fileName: 'cover-letter.pdf',
+			mimeType: 'application/pdf',
+			size: 100,
+			storageProvider: 'blob'
+		};
+		const timetableFile = {
+			id: 'file-2',
+			fileName: 'timetable.pdf',
+			mimeType: 'application/pdf',
+			size: 200,
+			storageProvider: 'blob'
+		};
+
 		assert.strictEqual(createTestJourney({}).isComplete(), false);
 		assert.strictEqual(createTestJourney({ gateway2CoverLetter: [] }).isComplete(), false);
+		assert.strictEqual(createTestJourney({ gateway2CoverLetter: [coverLetterFile] }).isComplete(), false);
+		assert.strictEqual(createTestJourney({ gateway2LocalPlanTimetable: [timetableFile] }).isComplete(), false);
 		assert.strictEqual(
 			createTestJourney({
-				gateway2CoverLetter: [
-					{
-						id: 'file-1',
-						fileName: 'cover-letter.pdf',
-						mimeType: 'application/pdf',
-						size: 100,
-						storageProvider: 'blob'
-					}
-				]
+				gateway2CoverLetter: [coverLetterFile],
+				gateway2LocalPlanTimetable: [timetableFile]
 			}).isComplete(),
 			true
 		);

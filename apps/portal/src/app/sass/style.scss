@@ -16,3 +16,43 @@
 .govuk-summary-list--no-border .govuk-summary-list__key {
 	width: 50% !important;
 }
+
+.govuk-file-upload-button__status {
+	display: none;
+}
+
+.govuk-file-upload-button {
+	border: 4px dashed #1d70b8;
+	padding: 80px 16px;
+	display: flex;
+	align-items: center;
+	background-color: #ffffff;
+	margin-bottom: 30px;
+	height: 206px;
+}
+
+.govuk-file-upload-button--empty .govuk-file-upload-button__pseudo-button {
+	width: 128px;
+	height: 40px;
+	margin: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.file-uploader-custom .govuk-file-upload-button__pseudo-button {
+	padding: 0;
+}
+
+.file-uploader-custom .govuk-file-upload-button .govuk-file-upload-button__pseudo-button {
+	width: 128px;
+	height: 40px;
+	margin: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.govuk-body.govuk-file-upload-button__instruction {
+	margin-left: 10px;
+}
