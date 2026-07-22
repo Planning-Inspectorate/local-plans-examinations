@@ -340,7 +340,7 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 		],
 		question: 'Programme Officer details',
 		fieldName: 'programmeOfficerDetails',
-		url: 'programme-officer-details',
+		url: 'programme-officer',
 		title: 'Programme Officer'
 	}
 };
