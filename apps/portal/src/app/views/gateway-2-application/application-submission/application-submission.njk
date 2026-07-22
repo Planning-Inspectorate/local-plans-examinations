@@ -5,7 +5,7 @@
 
 {% block pageContent %}
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-two-thirds app-grid-column--80">
 
         {{ govukInsetText({
             text: "Your target submission date is " + targetDate + ". A Gateway 2 assessment usually takes about 6 weeks."
@@ -29,6 +29,11 @@
 
             {{ govukTable({
                 attributes: { "data-cy": "procedural-documents-table" },
+                head: [
+                    { text: "Document", classes: "govuk-visually-hidden" },
+                    { text: "Status", classes: "govuk-visually-hidden" },
+                    { text: "Action", classes: "govuk-visually-hidden" }
+                ],
                 rows: [
                     [
                         { text: "Gateway 2 cover letter" },
@@ -64,6 +69,11 @@
 
             {{ govukTable({
                 attributes: { "data-cy": "consultation-documents-table" },
+                head: [
+                    { text: "Document", classes: "govuk-visually-hidden" },
+                    { text: "Status", classes: "govuk-visually-hidden" },
+                    { text: "Action", classes: "govuk-visually-hidden" }
+                ],
                 rows: [
                     [
                         { text: "Notice of Intention to commence local plan preparation" },
@@ -104,6 +114,11 @@
 
             {{ govukTable({
                 attributes: { "data-cy": "additional-documents-table" },
+                head: [
+                    { text: "Document", classes: "govuk-visually-hidden" },
+                    { text: "Status", classes: "govuk-visually-hidden" },
+                    { text: "Action", classes: "govuk-visually-hidden" }
+                ],
                 rows: [
                     [
                         { text: "Subsequent work towards a draft Plan" },
@@ -119,6 +134,11 @@
 
             {{ govukTable({
                 attributes: { "data-cy": "workshop-preferences-table" },
+                head: [
+                    { text: "Detail", classes: "govuk-visually-hidden" },
+                    { text: "Status", classes: "govuk-visually-hidden" },
+                    { text: "Action", classes: "govuk-visually-hidden" }
+                ],
                 rows: [
                     [
                         { text: "Suggested workshop venue" },
