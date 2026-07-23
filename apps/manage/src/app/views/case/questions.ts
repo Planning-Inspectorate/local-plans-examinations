@@ -351,3 +351,13 @@ export const questions = createQuestions(
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
+
+questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+	// Prepend https:// to the answer if it doesn't already start with http:// or https://
+	const href = answer && !/^https?:\/\//i.test(answer) ? `https://${answer}` : answer;
+
+	const value = answer
+		? `<a href="${href}" class="govuk-link" rel="noreferrer noopener" target="_blank">${answer}</a>`
+		: this.notStartedText;
+	return [{ key: this.title, value, action: this.getAction(sectionSegment, journey, answer) }];
+};
