@@ -24,7 +24,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 					questions.checkContactDetails,
 					Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
 				)
-				.addQuestion(questions.programmeOfficer)
+				.addQuestion(questions.programmeOfficerDetails)
 				.addQuestion(questions.examinationWebsite)
 				.addQuestion(questions.assessorGateway2)
 				.addQuestion(questions.assessorGateway3)
