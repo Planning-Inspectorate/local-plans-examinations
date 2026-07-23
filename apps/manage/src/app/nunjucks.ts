@@ -53,6 +53,13 @@ export function configureNunjucks(): nunjucks.Environment {
 				year: '2-digit'
 			});
 		}
+		if (format === 'd MMM yyyy') {
+			return d.toLocaleDateString('en-GB', {
+				day: 'numeric',
+				month: 'short',
+				year: 'numeric'
+			});
+		}
 		return d.toISOString();
 	});
 
