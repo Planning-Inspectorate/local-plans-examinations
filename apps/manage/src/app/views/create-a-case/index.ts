@@ -1,5 +1,5 @@
 import type { ManageService } from '#service';
-import { type IRouter, Router as createRouter } from 'express';
+import { type IRouter, type NextFunction, type Response, Router as createRouter } from 'express';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -31,6 +31,18 @@ function redirectAfterCyaEdit(req: any, res: any, next: any) {
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
+function saveLastQuestionUrl(req: any, _: any, next: any) {
+	req.session.lastQuestionUrl = req.originalUrl;
+	next();
+}
+
+function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
+	if (req.session.lastQuestionUrl) {
+		res.locals.backLink = req.session.lastQuestionUrl;
+	}
+	next();
+}
+
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
@@ -39,7 +51,14 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
 
-	router.get('/check-your-answers', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
+	router.get(
+		'/check-your-answers',
+		getJourneyResponse,
+		getJourney,
+		setAsEditingFromCya,
+		setBackLinkFromSession,
+		buildList()
+	);
 
 	router.post('/check-your-answers', getJourneyResponse, getJourney, saveToDatabase);
 
@@ -56,6 +75,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		getJourney,
 		validate,
 		validationErrorHandler,
+		saveLastQuestionUrl,
 		redirectAfterCyaEdit
 	);
 
