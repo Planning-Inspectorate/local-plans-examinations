@@ -33,7 +33,7 @@
   {% set rows = [] %}
   {% for history in currentCase.caseHistories %}
     {% set row = [
-      { text: history.date | date("YYYY-MM-DD HH:mm"), attributes: { "data-cy": "case-history-date" } },
+      { text: history.date | date("d MMM yyyy"), attributes: { "data-cy": "case-history-date" } },
       { text: history.event, attributes: { "data-cy": "case-history-event" } },
       { text: history.username, attributes: { "data-cy": "case-history-user" } }
     ] %}
