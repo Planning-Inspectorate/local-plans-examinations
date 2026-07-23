@@ -28,12 +28,12 @@ describe('Gateway 2 application page content', () => {
 		});
 	});
 
-	it.skip('Shows Procedural Documents - SKIPPED: bug LP-755 needs to be resolved', { tags: ['regression'] }, () => {
+	it('Shows Procedural Documents', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubHeading('Procedural Documents');
 		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.proceduralDocumentsTable, [
 			{ document: 'Gateway 2 cover letter', status: 'Not added', addCy: 'add-gateway-2-cover-letter' },
 			{ document: 'Local plan timetable', status: 'Not added', addCy: 'add-local-plan-timetable' },
-			{ document: 'Project initiation document', status: 'Not added', addCy: 'add-project-initiation' },
+			{ document: 'Project initiation document', status: 'Not added', addCy: 'add-project-initiation-document' },
 			{ document: 'Draft statement of compliance', status: 'Not added', addCy: 'add-draft-statement-of-compliance' },
 			{ document: 'Draft statement of soundness', status: 'Not added', addCy: 'add-draft-statement-of-soundness' }
 		]);
@@ -105,11 +105,7 @@ describe('Gateway 2 application page content', () => {
 		]);
 	});
 
-	it.skip(
-		'Shows Submit for Gateway 2 assessment - SKIPPED: bug LP-755 needs to be resolved',
-		{ tags: ['regression'] },
-		() => {
-			gateway2ApplicationPage.verifySubmitGateway2AssessmentButton();
-		}
-	);
+	it('Shows Submit for Gateway 2 assessment', { tags: ['regression'] }, () => {
+		gateway2ApplicationPage.verifySubmitGateway2AssessmentButton();
+	});
 });
