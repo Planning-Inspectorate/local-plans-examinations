@@ -294,6 +294,22 @@ function logGateway2CoverLetterUploadFailed(
 	service.logger.warn(context, 'Gateway 2 cover letter upload failed');
 }
 
+function logGateway2CoverLetterUploadCleanupFailed(
+	service: PortalService,
+	req: Request,
+	file: UploadedFile,
+	error: unknown
+) {
+	service.logger.error(
+		{
+			...gateway2CoverLetterLogContext(req),
+			fileId: file.id,
+			error
+		},
+		'Gateway 2 cover letter upload cleanup failed'
+	);
+}
+
 function logGateway2CoverLetterDeleted(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
 	service.logger.info(
 		{
@@ -343,6 +359,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
 		},
 		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
+		onUploadCleanupError: ({ req, file, error }) =>
+			logGateway2CoverLetterUploadCleanupFailed(service, req, file, error),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const uploadGateway2CoverLetterForCase = createFileUploaderUploadController({
@@ -368,6 +386,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
 		},
 		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
+		onUploadCleanupError: ({ req, file, error }) =>
+			logGateway2CoverLetterUploadCleanupFailed(service, req, file, error),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const deleteGateway2CoverLetter = createFileUploaderDeleteController({

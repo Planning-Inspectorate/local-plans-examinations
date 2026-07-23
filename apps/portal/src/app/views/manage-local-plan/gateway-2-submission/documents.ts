@@ -32,7 +32,7 @@ type DocumentRow = {
 	latestDocumentVersion: DocumentVersionRow | null;
 };
 
-type SyncUploadedDocumentsParams = {
+type SyncGateway2CoverLetterDocumentsParams = {
 	caseId: string;
 	documentSetId: string;
 	uploadedFiles: UploadedFile[];
@@ -57,7 +57,7 @@ export async function saveGateway2CoverLetterDocuments(
 		throw new Error('Cannot save Gateway 2 cover letter documents without a loaded case');
 	}
 
-	await syncUploadedDocuments(service, {
+	await syncGateway2CoverLetterDocuments(service, {
 		caseId,
 		documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
 		uploadedFiles
@@ -88,9 +88,9 @@ async function loadUploadedDocuments(
 }
 
 // Makes the database match the uploaded file list.
-async function syncUploadedDocuments(
+async function syncGateway2CoverLetterDocuments(
 	service: PortalService,
-	{ caseId, documentSetId, uploadedFiles }: SyncUploadedDocumentsParams
+	{ caseId, documentSetId, uploadedFiles }: SyncGateway2CoverLetterDocumentsParams
 ): Promise<void> {
 	if (uploadedFiles.length > 1) {
 		throw new Error('Gateway 2 cover letter can only have one active uploaded document');

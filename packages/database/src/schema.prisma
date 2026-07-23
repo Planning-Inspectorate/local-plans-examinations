@@ -158,7 +158,7 @@ model CaseHistory {
 /// versions and can store shared metadata.
 model Document {
   guid                  String            @id @default(uuid()) @db.UniqueIdentifier
-  name                  String
+  name                  String            @db.NVarChar(1000)
   case                  Case              @relation(fields: [caseId], references: [id], onUpdate: NoAction, onDelete: NoAction)
   caseId                String            @db.UniqueIdentifier
   documentSet           DocumentSet       @relation(fields: [documentSetId], references: [id], onUpdate: NoAction, onDelete: NoAction)
@@ -182,16 +182,16 @@ model DocumentVersion {
   documentGuid         String                 @db.UniqueIdentifier
   version              Int
   lastModified         DateTime?
-  sourceSystem         String                 @default("front-office")
-  virusCheckStatus     String                 @default("not_scanned")
-  originalFilename     String?
-  fileName             String?
-  owner                String?
-  mime                 String?
+  sourceSystem         String                 @default("front-office") @db.NVarChar(1000)
+  virusCheckStatus     String                 @default("not_scanned") @db.NVarChar(1000)
+  originalFilename     String?                @db.NVarChar(1000)
+  fileName             String?                @db.NVarChar(1000)
+  owner                String?                @db.NVarChar(1000)
+  mime                 String?                @db.NVarChar(1000)
   size                 Int?
-  blobStorageContainer String?
-  blobStoragePath      String?
-  documentURI          String?
+  blobStorageContainer String?                @db.NVarChar(1000)
+  blobStoragePath      String?                @db.NVarChar(1000)
+  documentURI          String?                @db.NVarChar(1000)
   dateCreated          DateTime?              @default(now())
   isDeleted            Boolean                @default(false)
   document             Document               @relation("versionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)

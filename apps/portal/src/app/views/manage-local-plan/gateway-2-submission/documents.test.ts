@@ -136,6 +136,84 @@ describe('saveGateway2CoverLetterDocuments', () => {
 		});
 	});
 
+	it('restores a soft-deleted document when the same uploader file ID is uploaded again', async () => {
+		const tx = createTransactionClient();
+		const service = createMockService({
+			tx,
+			existingDocuments: [
+				buildDocumentRow({
+					guid: 'document-1',
+					isDeleted: true,
+					latestDocumentVersion: {
+						version: 3,
+						originalFilename: 'cover-letter.pdf',
+						fileName: 'cover-letter.pdf',
+						mime: 'application/pdf',
+						size: 100,
+						blobStorageContainer: 'local-planning-documents',
+						blobStoragePath: 'gateway-2/cover-letter.pdf',
+						documentURI: 'http://storage/cover-letter.pdf',
+						isDeleted: true
+					}
+				})
+			]
+		});
+
+		await saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [buildUploadedFile()]);
+
+		assert.equal(tx.document.create.mock.callCount(), 0);
+		assert.equal(tx.documentVersion.create.mock.callCount(), 0);
+		assert.deepEqual(tx.document.update.mock.calls[0].arguments[0], {
+			where: {
+				guid: 'document-1'
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+		assert.deepEqual(tx.documentVersion.update.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid_version: {
+					documentGuid: 'document-1',
+					version: 3
+				}
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+	});
+
+	it('restores a soft-deleted document without a latest document version', async () => {
+		const tx = createTransactionClient();
+		const service = createMockService({
+			tx,
+			existingDocuments: [
+				buildDocumentRow({
+					guid: 'document-1',
+					isDeleted: true,
+					latestDocumentVersion: null
+				})
+			]
+		});
+
+		await saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [
+			buildUploadedFile({ id: 'gateway-2/cover-letter.pdf' })
+		]);
+
+		assert.equal(tx.document.create.mock.callCount(), 0);
+		assert.equal(tx.documentVersion.create.mock.callCount(), 0);
+		assert.equal(tx.documentVersion.update.mock.callCount(), 0);
+		assert.deepEqual(tx.document.update.mock.calls[0].arguments[0], {
+			where: {
+				guid: 'document-1'
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+	});
+
 	it('rejects more than one active uploaded document', async () => {
 		const service = createMockService();
 

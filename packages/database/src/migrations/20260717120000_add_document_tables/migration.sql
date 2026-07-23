@@ -49,9 +49,6 @@ CREATE TABLE [dbo].[DocumentVersionAvScan] (
 CREATE NONCLUSTERED INDEX [Document_caseId_documentSetId_idx] ON [dbo].[Document]([caseId],[documentSetId]);
 
 -- CreateIndex
-CREATE UNIQUE NONCLUSTERED INDEX [Document_one_active_per_case_documentSet_idx] ON [dbo].[Document]([caseId],[documentSetId]) WHERE [isDeleted] = 0;
-
--- CreateIndex
 CREATE NONCLUSTERED INDEX [documentGuid] ON [dbo].[DocumentVersion]([documentGuid]);
 
 -- CreateIndex
