@@ -48,7 +48,8 @@ resource "azurerm_key_vault_secret" "manual_secrets" {
 
   lifecycle {
     ignore_changes = [
-      value
+      value,
+      expiration_date
     ]
   }
 }
