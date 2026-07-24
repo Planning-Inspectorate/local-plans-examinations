@@ -6,6 +6,7 @@ import {
 	keyStageDatesPage,
 	localPlanningAuthoritiesPage,
 	planTitlePage,
+	planTypePage,
 	type CreateCaseData
 } from '../../../../page-objects/manage/create-case/index.ts';
 import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flow.ts';
@@ -103,6 +104,40 @@ describe('Create a case', () => {
 				addedContact.email,
 				addedContact.phone
 			);
+		});
+	});
+
+	it('Iterates back through create-a-case flow using back button', { tags: ['regression'] }, () => {
+		loadCreateCaseData().then((data) => {
+			completeCreateCaseFlow(data);
+
+			checkYourAnswersPage.verifyLoaded();
+			checkYourAnswersPage.goBack();
+
+			keyStageDatesPage.verifyLoaded();
+			keyStageDatesPage.verifyKeyStageDatesPopulated(data.dates);
+			keyStageDatesPage.goBack();
+
+			contactDetailsListPage.verifyLoaded();
+			contactDetailsListPage.verifyContactListed(data.contact);
+			contactDetailsListPage.goBack();
+
+			localPlanningAuthoritiesPage.verifyLoaded();
+			localPlanningAuthoritiesPage.verifyLocalPlanningAuthoritiesListed(data);
+			localPlanningAuthoritiesPage.goBack();
+
+			planTypePage.verifyLoaded();
+			planTypePage.verifyPlanTypeSelected(data.planType.value);
+			planTypePage.goBack();
+
+			planTitlePage.verifyLoaded();
+			planTitlePage.verifyTitleFilled(data.planTitle);
+			planTitlePage.goBack();
+
+			caseOfficerPage.verifyLoaded();
+			caseOfficerPage.verifyCaseOfficerSelected(data.caseOfficer.value);
+			caseOfficerPage.goBack();
+			manageHomePage.verifyLoaded();
 		});
 	});
 });

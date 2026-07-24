@@ -1,6 +1,7 @@
 export * from './contact-details-list-page.ts';
 export * from './contact-details-page.ts';
 export * from './case-overview-page.ts';
+export * from './examination-website-page.ts';
 export * from './local-planning-authorities-page.ts';
 export * from './plan-band-page.ts';
 export * from './plan-title-page.ts';

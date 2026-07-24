@@ -16,6 +16,10 @@ export class PlanTitleBasePage extends BasePage {
 		this.verifySaveAndContinueVisible();
 	}
 
+	verifyTitleFilled(value: string) {
+		this.planTitleInput.should('have.value', value);
+	}
+
 	verifyLoaded(value?: string) {
 		super.verifyLoaded();
 		this.verifyPlanTitleForm(value);

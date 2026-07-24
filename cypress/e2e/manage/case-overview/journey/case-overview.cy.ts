@@ -1,5 +1,6 @@
 import {
 	caseOverviewContactDetailsListPage,
+	caseOverviewExaminationWebsitePage,
 	caseOverviewPage,
 	caseOverviewPlanBandPage,
 	caseOverviewPlanTitlePage,
@@ -66,7 +67,7 @@ describe('Case overview updates', () => {
 		);
 	});
 
-	it('answers an empty overview question and updates the overview row', () => {
+	it('answers an empty overview question (Programme Officer) and updates the overview row', () => {
 		const programmeOfficerFirstName = 'Programme';
 		const programmeOfficerLastName = 'Officer 1';
 		const programmeOfficerEmail = 'programme.officer1@example.com';
@@ -95,5 +96,18 @@ describe('Case overview updates', () => {
 		caseOverviewPlanBandPage.goBack();
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+	});
+
+	it('answers an empty overview question (Examination website) and checks the hyperlink created', () => {
+		const examinationWebisteLink = 'https://www.gov.uk/';
+
+		caseOverviewPage.openActionLinkFor('Examination website');
+
+		caseOverviewExaminationWebsitePage.verifyLoaded();
+		caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebisteLink);
+
+		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifySummaryRowContains('Examination website', examinationWebisteLink);
+		caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebisteLink);
 	});
 });
