@@ -1,5 +1,9 @@
 import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flow.ts';
-import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
+import {
+	caseOverviewPage,
+	caseOverviewPlanTitlePage,
+	caseOverviewPlanTypePage
+} from '../../../../page-objects/manage/case-overview/index.ts';
 import {
 	caseCreatedPage,
 	checkYourAnswersPage,
@@ -9,6 +13,14 @@ import { caseHistoryPage } from '../../../../page-objects/manage/case-history/in
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
+
+const openSeededCase = () => {
+	cy.task('seedDb');
+
+	manageHomePage.visit();
+	manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
+	caseOverviewPage.verifyLoaded('Cypress Test Plan');
+};
 
 describe('Case history', () => {
 	beforeEach(() => {
@@ -33,5 +45,29 @@ describe('Case history', () => {
 			caseHistoryPage.verifyTableHeadings();
 			caseHistoryPage.verifyCaseCreatedHistory(data.planTitle);
 		});
+	});
+
+	it('shows the case overview update history', { tags: ['regression'] }, () => {
+		const planTypeSelectionValue = 'other';
+		const planTypeSelectionName = 'Other';
+		const updatedPlanTitle = 'Updated plan title';
+		openSeededCase();
+
+		caseOverviewPage.openActionLinkFor('Plan type');
+		caseOverviewPlanTypePage.verifyLoaded();
+		caseOverviewPlanTypePage.selectPlanType(planTypeSelectionValue);
+		caseOverviewPage.verifySummaryRowContains('Plan type', planTypeSelectionName);
+
+		caseOverviewPage.openActionLinkFor('Plan title');
+		caseOverviewPlanTitlePage.verifyLoaded();
+		caseOverviewPlanTitlePage.enterPlanTitle(updatedPlanTitle);
+		caseOverviewPage.verifySummaryRowContains('Plan title', updatedPlanTitle);
+
+		caseOverviewPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyTableHeadings();
+
+		caseHistoryPage.verifyUpdateHistory('planType', planTypeSelectionValue);
+		caseHistoryPage.verifyUpdateHistory('planTitle', updatedPlanTitle);
 	});
 });

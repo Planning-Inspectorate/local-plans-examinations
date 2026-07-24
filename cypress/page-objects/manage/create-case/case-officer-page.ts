@@ -9,6 +9,10 @@ export class CaseOfficerPage extends BasePage {
 		return cy.get('#caseOfficer');
 	}
 
+	caseOfficerOption(value: string) {
+		return cy.getByData(`answer-${value}`);
+	}
+
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading('Who is the case officer?');
@@ -19,6 +23,10 @@ export class CaseOfficerPage extends BasePage {
 	selectCaseOfficer(value: string) {
 		this.caseOfficerSelect.should('be.visible').select(value);
 		this.saveAndContinue();
+	}
+
+	verifyCaseOfficerSelected(value: string) {
+		this.caseOfficerOption(value).should('have.attr', 'selected');
 	}
 }
 

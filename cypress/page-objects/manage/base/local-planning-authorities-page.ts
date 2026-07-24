@@ -1,5 +1,11 @@
 import { BasePage } from '../../base-page.ts';
 import type { SelectAnswer, SelectLocalPlanningAuthorityBasePage } from './select-local-planning-authority-page.ts';
+import type { CreateCaseData } from '../create-case/types.ts';
+
+type localPlanningAuthorityTableExpectation = {
+	key: string;
+	values: string[];
+};
 
 export class LocalPlanningAuthoritiesBasePage extends BasePage {
 	private readonly selectLocalPlanningAuthorityPage: SelectLocalPlanningAuthorityBasePage;
@@ -54,5 +60,22 @@ export class LocalPlanningAuthoritiesBasePage extends BasePage {
 
 	verifyLocalPlanningAuthorityNotListed(lpa: SelectAnswer) {
 		this.verifySummaryDoesNotContain(lpa.value);
+	}
+
+	expectedLocalPlanningAuthorityRow(data: CreateCaseData): localPlanningAuthorityTableExpectation[] {
+		const lpaArray = Object.values(data.lpa);
+
+		return [
+			{
+				key: 'Local Planning Authority:',
+				values: lpaArray.map((l) => l.value)
+			}
+		];
+	}
+
+	verifyLocalPlanningAuthoritiesListed(data: CreateCaseData) {
+		this.expectedLocalPlanningAuthorityRow(data).forEach((row, index) => {
+			this.verifySummaryContains(row.values[index]);
+		});
 	}
 }
