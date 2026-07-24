@@ -18,6 +18,10 @@ export class PlanTypeBasePage extends BasePage {
 		this.verifyPlanTypeForm();
 	}
 
+	verifyPlanTypeSelected(value: string) {
+		this.planTypeOption(value).should('have.attr', 'checked');
+	}
+
 	selectPlanType(value: string) {
 		this.planTypeOption(value).should('exist').check();
 		this.saveAndContinue();
