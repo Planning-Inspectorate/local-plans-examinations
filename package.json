@@ -44,6 +44,7 @@
     "@planning-inspectorate/dynamic-forms": "^3.15.4",
     "@prisma/adapter-mssql": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@redis/entraid": "^6.2.0",
     "@types/escape-html": "^1.0.4",
     "accessible-autocomplete": "^3.0.1",
     "bcrypt": "^6.0.0",
@@ -62,7 +63,7 @@
     "nunjucks": "^3.2.4",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.2",
-    "redis": "^6.0.0"
+    "redis": "^6.2.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",

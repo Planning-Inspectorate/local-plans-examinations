@@ -1,13 +1,15 @@
 import { Prisma } from '@pins/local-plans-database/src/client/client.ts';
 import type { Logger } from 'pino';
 import type { ErrorRequestHandler, Request, Response } from 'express';
+import { ClientClosedError, ClientOfflineError } from 'redis';
 
 /**
  * A catch-all error handler to use as express middleware
  */
 export function buildDefaultErrorHandlerMiddleware(logger: Logger): ErrorRequestHandler {
 	return (error, req, res, next) => {
-		const wrappedError = wrapPrismaErrors(error);
+		let wrappedError = wrapPrismaErrors(error);
+		wrappedError = wrapRedisErrors(wrappedError);
 		const message = wrappedError.message || 'unknown error';
 		logger.error(error, message); // log the original error to include full details
 
@@ -50,6 +52,17 @@ export function wrapPrismaErrors(error: Error): Error {
 			code = 'P1001';
 		}
 		return new Error(`Connection error (code: ${code || 'unknown'})`);
+	}
+	return error;
+}
+
+/**
+ * Wrap Redis errors so they are not shown directly to users.
+ */
+export function wrapRedisErrors(error: Error): Error {
+	// these errors will throw if a request to session is made before the Redis cluster has connected
+	if (error instanceof ClientClosedError || error instanceof ClientOfflineError) {
+		return new Error(`The service is not ready. Please try again in a moment.`);
 	}
 	return error;
 }

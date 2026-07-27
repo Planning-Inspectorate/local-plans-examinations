@@ -9,9 +9,11 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@azure/identity": "*",
     "@azure/msal-node": "*",
     "@azure/storage-blob": "^12.33.0",
     "@pins/local-plans-database": "*",
+    "@redis/entraid": "*",
     "connect-redis": "*",
     "cookie-parser": "*",
     "express-session": "*",
