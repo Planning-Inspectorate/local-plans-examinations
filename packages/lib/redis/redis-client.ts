@@ -1,10 +1,11 @@
-import { createClient } from 'redis';
+import { createCluster, type RedisClusterType } from 'redis';
 import { RedisStore } from 'connect-redis';
 import { MSALCacheClient } from './msal-cache-client.ts';
 import { PartitionManager } from './partition-manager.ts';
 import { DistributedCachePlugin } from '@azure/msal-node';
+import { EntraIdCredentialsProviderFactory, REDIS_SCOPE_DEFAULT } from '@redis/entraid';
+import { getDefaultAzureCredential } from '@azure/identity';
 import type { Logger } from 'pino';
-import type { RedisClientType } from 'redis';
 import type { IPartitionManager } from '@azure/msal-node';
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -12,48 +13,63 @@ const FIVE_MINUTES_MS = 5 * 60 * 1000;
 export class RedisClient {
 	private readonly prefix: string;
 	private readonly logger: Logger;
-	private readonly client: RedisClientType;
+	private readonly client: RedisClusterType;
 	readonly store: RedisStore;
 	readonly get: (key: string) => Promise<null | string>;
 	readonly set: (key: string, value: string) => void;
 	private readonly clientWrapper: MSALCacheClient;
 
 	/**
-     @param connString - Redis connection string
+     @param url - Redis URL e.g. `rediss://my-redis:123` (see https://github.com/redis/node-redis/blob/master/docs/client-configuration.md#createclient-configuration)
      @param logger
      @param prefix - prefix to use for shared instances
    **/
-	constructor(connString: string, logger: Logger, prefix?: string) {
+	constructor(url: string, logger: Logger, prefix?: string) {
 		this.prefix = prefix + 'sess:';
 		this.logger = logger;
 
-		const redisParams = parseRedisConnectionString(connString);
-
-		this.client = createClient({
-			// @ts-expect-error - doesn't seem to match the types but we've always used this config!
-			socket: {
-				host: redisParams.host,
-				port: redisParams.port,
-				tls: redisParams.ssl
-			},
-			password: redisParams.password,
-			// send a ping every 5 minutes to prevent idle timeout (10mins in Azure)
-			// https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-best-practices-connection#idle-timeout
-			pingInterval: FIVE_MINUTES_MS
+		// configure Entra auth
+		const credential = getDefaultAzureCredential();
+		const provider = EntraIdCredentialsProviderFactory.createForDefaultAzureCredential({
+			credential,
+			scopes: REDIS_SCOPE_DEFAULT,
+			tokenManagerConfig: {
+				expirationRefreshRatio: 0.8
+			}
 		});
 
-		const onError = (err: Error) => logger.error(`Could not establish a connection with redis server: ${err}`);
+		this.client = createCluster({
+			rootNodes: [{ url }],
+			defaults: {
+				credentialsProvider: provider,
+				// send a ping every 5 minutes to prevent idle timeout (10mins in Azure)
+				// https://learn.microsoft.com/en-us/azure/redis/best-practices-connection#idle-timeout
+				pingInterval: FIVE_MINUTES_MS,
+				socket: {
+					tls: true,
+					rejectUnauthorized: false
+				}
+			}
+		});
 
-		this.client.on('connect', () => logger.info('Initiating connection to redis server...'));
-		this.client.on('ready', () => logger.info('Connected to redis server successfully...'));
-		this.client.on('end', () => logger.info('Disconnected from redis server...'));
+		// register events for info - the 'error' event must be subscribed to, to avoid Node exiting, handled below
+		for (const event of RedisEvents) {
+			this.client.on(event, buildLogEvent(logger, event));
+		}
+
+		const onError = (error: Error, node?: RedisNode) => {
+			const fields: { error: Error; node?: RedisNode } = { error };
+			if (node) {
+				fields.node = node;
+			}
+			logger.error(fields, `Redis cluster error: ${error?.message}`);
+		};
 		this.client.on('error', onError);
-		this.client.on('reconnecting', () => logger.info('Reconnecting to redis server...'));
+		this.client.on('node-error', onError);
 
 		// kick off the connection - no await here, in the background
 		this.client.connect().catch(onError);
 
-		// dev note: this may 'error' in vscode, but tscheck is all OK
 		this.store = new RedisStore({
 			client: this.client,
 			prefix: this.prefix
@@ -71,47 +87,26 @@ export class RedisClient {
 	}
 }
 
-export interface RedisConnectionDetails {
-	host: string;
-	port: number;
-	password: string;
-	ssl: boolean;
-	abortConnect: boolean;
+const RedisEvents = Object.freeze([
+	'connect',
+	'disconnect',
+	'node-ready',
+	'node-connect',
+	'node-reconnecting',
+	'node-disconnect'
+]);
+
+function buildLogEvent(logger: Logger, event: string) {
+	return (node?: RedisNode) => {
+		const fields: { node?: RedisNode } = {};
+		if (node) {
+			fields.node = node;
+		}
+		logger.info(fields, `Redis cluster: ${event}`);
+	};
 }
 
-/**
- * @param {string} str - in the form 'some.example.org:6380,password=some_password,ssl=True,abortConnect=False'
- * @returns {RedisConnectionDetails}
- */
-export function parseRedisConnectionString(str: string): RedisConnectionDetails {
-	if (typeof str !== 'string') {
-		throw new Error('not a string');
-	}
-	const parts = str.split(',');
-	if (parts.length !== 4) {
-		throw new Error('unexpected redis connection string format, expected 4 parts');
-	}
-	const [hostPort, passwordPart, sslPart, abortConnectPart] = parts;
-	const hostParts = hostPort.split(':');
-	if (hostParts.length !== 2) {
-		throw new Error('unexpected host:port format for redis string, expected 2 parts');
-	}
-	const port = parseInt(hostParts[1]);
-	if (isNaN(port)) {
-		throw new Error('unexpected port for redis string, expected int');
-	}
-	if (!passwordPart.startsWith('password=')) {
-		throw new Error('unexpected password for redis string, expected password=');
-	}
-	const password = passwordPart.substring('password='.length);
-	const ssl = sslPart.toLowerCase().endsWith('true');
-	const abortConnect = abortConnectPart.toLowerCase().endsWith('true');
-
-	return {
-		host: hostParts[0],
-		port,
-		password,
-		ssl,
-		abortConnect
-	};
+interface RedisNode {
+	host: string;
+	port: number;
 }
