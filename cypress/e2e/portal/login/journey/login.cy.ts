@@ -1,11 +1,13 @@
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
+import { portalLoginEmailPage } from '../../../../page-objects/portal/login/email-page.ts';
 import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-page.ts';
 
 describe('Portal login journey', () => {
-	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
+	it('redirects to login when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
-		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
+
+		portalLoginEmailPage.verifyPath();
 	});
 
 	it('redirects to the OTP page after a recognised email is submitted', { tags: ['smoke'] }, () => {

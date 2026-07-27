@@ -3,7 +3,7 @@
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
-import { buildEnterEmailPage, buildEnterOtpPage, buildSubmitEmailPage, buildSubmitOtpPage } from './controller.ts';
+import { buildEnterOtpPage, buildSubmitEmailPage, buildSubmitOtpPage } from './controller.ts';
 
 function createMockService(overrides = {}) {
 	return {
@@ -443,19 +443,14 @@ describe('buildSubmitOtpPage', () => {
 });
 
 describe('buildEnterOtpPage', () => {
-	it('should render page not found when no email in session', async () => {
+	it('should redirect to login when no email in session', async () => {
 		const handler = buildEnterOtpPage();
 		const req = createMockReq({}, {});
 		const res = createMockRes();
 
 		await handler(req, res);
 
-		assert.strictEqual(res.status.mock.callCount(), 1);
-		assert.strictEqual(res.status.mock.calls[0].arguments[0], 404);
-		assert.strictEqual(res.render.mock.callCount(), 1);
-		const [view, data] = res.render.mock.calls[0].arguments;
-		assert.strictEqual(view, 'views/layouts/error');
-		assert.strictEqual(data.pageTitle, 'Page not found');
+		assertRedirect(res, '/login');
 	});
 
 	it('should render enter-otp page when email is in session', async () => {

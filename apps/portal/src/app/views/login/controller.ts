@@ -160,13 +160,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 	return async (req, res) => {
 		if (!req.session.email) {
-			return res.status(404).render('views/layouts/error', {
-				pageTitle: 'Page not found',
-				messages: [
-					'If you typed the web address, check it is correct.',
-					'If you pasted the web address, check you copied the entire address.'
-				]
-			});
+			return res.redirect(`${req.baseUrl}`);
 		}
 
 		const showNewCodeMessage = req.session.showNewCodeMessage || false;
