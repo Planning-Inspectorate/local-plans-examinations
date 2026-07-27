@@ -157,6 +157,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 	return async (req, res) => {
+		if (!req.session.email) {
+			return res.redirect(`${req.baseUrl}`);
+		}
+
 		const showNewCodeMessage = req.session.showNewCodeMessage || false;
 		delete req.session.showNewCodeMessage;
 
