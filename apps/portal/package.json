@@ -26,13 +26,14 @@
     "express-validator": "*",
     "govuk-frontend": "*",
     "helmet": "*",
+    "multer": "^2.2.0",
     "nunjucks": "*",
     "pino": "*",
     "pino-pretty": "*",
     "redis": "*"
   },
   "devDependencies": {
-    "cypress": "^15.16.0",
+    "cypress": "^15.18.1",
     "nodemon": "*",
     "sass": "*"
   },

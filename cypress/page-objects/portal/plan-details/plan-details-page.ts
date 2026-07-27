@@ -17,16 +17,16 @@ export class PlanDetailsPage extends BasePage {
 		return cy.get('section[aria-labelledby="plan-progress-heading"]');
 	}
 
+	get gateway2Link() {
+		return cy.contains('a', 'Gateway 2 - advisory check');
+	}
+
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 	}
 
 	verifyBackLink(href: string) {
 		this.backLink.should('be.visible').and('contain.text', 'Back to my plans').and('have.attr', 'href', href);
-	}
-
-	verifyCaption(reference: string) {
-		this.pageHeading.find('.govuk-caption-xl').should('be.visible').and('contain.text', reference);
 	}
 
 	summaryRow(key: string) {
@@ -75,6 +75,14 @@ export class PlanDetailsPage extends BasePage {
 		row.should('contain.text', title);
 		row.should('contain.text', hint);
 		row.should('contain.text', status);
+	}
+
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}`;
+	}
+
+	verifyPathForPlan(planReference: string) {
+		this.verifyPath(this.pathFor(planReference));
 	}
 }
 

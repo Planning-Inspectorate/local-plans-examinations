@@ -19,5 +19,9 @@ export const ERROR_MESSAGES = {
 	// Declaration page
 
 	THERE_IS_A_PROBLEM: 'There is a problem',
-	DECLARATIONS_NOT_CONFIRMED: 'You must confirm both declarations before you can submit your application.'
+	DECLARATIONS_NOT_CONFIRMED: 'You must confirm both declarations before you can submit your application.',
+
+	//Gateway 2 application page
+
+	ADD_ONE_DOCUMENT: 'Add at least one document before submitting'
 };

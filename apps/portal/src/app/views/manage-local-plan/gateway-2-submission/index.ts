@@ -31,6 +31,7 @@ import {
 	questions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
+import { loadGateway2CoverLetterDocuments, saveGateway2CoverLetterDocuments } from './documents.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import {
 	createFileUploaderDeleteController,
@@ -185,8 +186,17 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
+		const uploadedFiles = await loadGateway2CoverLetterDocuments(service, currentCase.id);
+		setFileUploaderUploadedFiles(request, fileUploaderCaseSessionKey(req), uploadedFiles);
+		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
+		if (uploadedFiles.length > 0) {
+			answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
+		} else {
+			delete answers[GATEWAY_2_COVER_LETTER_FIELD];
+		}
+
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
-			...getCaseScopedSessionAnswers(req, routePlanReference ?? planReference)
+			...answers
 		});
 
 		return next();
@@ -225,6 +235,16 @@ function fileUploaderCoverLetterCaseSessionKey(req: Request) {
 // Example format: LP-TEST-001:gateway2LocalPlanTimetable.
 function fileUploaderTimetableCaseSessionKey(req: Request) {
 	return `${req.params.planReference}:${GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD}`;
+}
+
+// Populates the generic file uploader session from persisted case documents.
+function setFileUploaderUploadedFiles(req: Gateway2Request, sessionKey: string, uploadedFiles: UploadedFile[]) {
+	req.session.fileUploader = {
+		...req.session.fileUploader,
+		[sessionKey]: {
+			uploadedFiles
+		}
+	};
 }
 
 // Keeps the Gateway 2 cover letter answer in sync with uploaded files.
@@ -347,6 +367,22 @@ function logGateway2CoverLetterUploadFailed(
 	}
 
 	service.logger.warn(context, 'Gateway 2 cover letter upload failed');
+}
+
+function logGateway2CoverLetterUploadCleanupFailed(
+	service: PortalService,
+	req: Request,
+	file: UploadedFile,
+	error: unknown
+) {
+	service.logger.error(
+		{
+			...gateway2CoverLetterLogContext(req),
+			fileId: file.id,
+			error
+		},
+		'Gateway 2 cover letter upload cleanup failed'
+	);
 }
 
 function logGateway2CoverLetterDeleted(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
@@ -501,6 +537,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
 		},
 		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
+		onUploadCleanupError: ({ req, file, error }) =>
+			logGateway2CoverLetterUploadCleanupFailed(service, req, file, error),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const uploadGateway2CoverLetterForCase = createFileUploaderUploadController({
@@ -520,11 +558,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 				}
 			};
 		},
-		onFilesChange: ({ req, uploadedFiles }) => {
+		onFilesChange: async ({ req, uploadedFiles }) => {
+			await saveGateway2CoverLetterDocuments(service, req, uploadedFiles);
 			syncGateway2CoverLetterAnswer(req, uploadedFiles);
 			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
 		},
 		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
+		onUploadCleanupError: ({ req, file, error }) =>
+			logGateway2CoverLetterUploadCleanupFailed(service, req, file, error),
 		redirect: redirectToFileUploaderQuestion
 	});
 	const deleteGateway2CoverLetter = createFileUploaderDeleteController({
@@ -543,7 +584,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		question: GATEWAY_2_COVER_LETTER_QUESTION,
 		storage: fileUploaderStorage,
 		sessionKey: fileUploaderCoverLetterCaseSessionKey,
-		onFilesChange: ({ req, uploadedFiles }) => {
+		onFilesChange: async ({ req, uploadedFiles }) => {
+			await saveGateway2CoverLetterDocuments(service, req, uploadedFiles);
 			syncGateway2CoverLetterAnswer(req, uploadedFiles);
 			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
 		},

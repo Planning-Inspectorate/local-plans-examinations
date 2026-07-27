@@ -14,7 +14,7 @@ export class PortalDeclarationPage extends BasePage {
 	}
 
 	verifyLoaded() {
-		this.verifyPath();
+		super.verifyLoaded();
 		this.verifyHeading('Review declaration');
 	}
 

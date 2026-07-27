@@ -39,6 +39,13 @@ export type FileUploaderControllerOptions = {
 		errors?: FileValidationError[];
 		error?: unknown;
 	}) => void | Promise<void>;
+	onUploadCleanupError?: (params: {
+		req: Request;
+		sessionKey: string;
+		fieldName: string;
+		file: UploadedFile;
+		error: unknown;
+	}) => void | Promise<void>;
 	onDeleteError?: (params: {
 		req: Request;
 		sessionKey: string;
@@ -83,9 +90,10 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 		}
 
 		const uploadedFiles: UploadedFile[] = [];
+		let storage: Awaited<ReturnType<FileUploadStorageAdapterFactory>>;
 
 		try {
-			const storage = await options.storage(request);
+			storage = await options.storage(request);
 			const destination = await resolveDestination(request, options);
 
 			for (const file of files) {
@@ -103,18 +111,34 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 
 		const nextUploadedFiles = options.question.multiple ? [...existingFiles, ...uploadedFiles] : uploadedFiles;
 
+		try {
+			await options.onFilesChange?.({
+				req: request,
+				sessionKey,
+				fieldName: options.fieldName,
+				uploadedFiles: nextUploadedFiles
+			});
+		} catch (error) {
+			await cleanupUploadedFiles(request, options, sessionKey, storage, uploadedFiles);
+			try {
+				await options.onUploadError?.({
+					req: request,
+					sessionKey,
+					fieldName: options.fieldName,
+					error
+				});
+			} catch {
+				// Preserve the persistence error thrown by onFilesChange.
+			}
+			throw error;
+		}
+
 		session.fileUploader = {
 			...session.fileUploader,
 			[sessionKey]: {
 				uploadedFiles: nextUploadedFiles
 			}
 		};
-		await options.onFilesChange?.({
-			req: request,
-			sessionKey,
-			fieldName: options.fieldName,
-			uploadedFiles: nextUploadedFiles
-		});
 		delete session.errors;
 		delete session.errorSummary;
 
@@ -130,6 +154,25 @@ export function createFileUploaderDeleteController(options: FileUploaderControll
 		const fileId = Array.isArray(request.params.fileId) ? request.params.fileId[0] : request.params.fileId;
 		const uploadedFiles = session.fileUploader?.[sessionKey]?.uploadedFiles ?? [];
 		const file = uploadedFiles.find((item) => item.id === fileId);
+		const nextUploadedFiles = uploadedFiles.filter((item) => item.id !== fileId);
+
+		try {
+			await options.onFilesChange?.({
+				req: request,
+				sessionKey,
+				fieldName: options.fieldName,
+				uploadedFiles: nextUploadedFiles
+			});
+		} catch (error) {
+			await options.onDeleteError?.({
+				req: request,
+				sessionKey,
+				fieldName: options.fieldName,
+				fileId,
+				error
+			});
+			throw error;
+		}
 
 		if (file) {
 			try {
@@ -147,23 +190,45 @@ export function createFileUploaderDeleteController(options: FileUploaderControll
 			}
 		}
 
-		const nextUploadedFiles = uploadedFiles.filter((item) => item.id !== fileId);
-
 		session.fileUploader = {
 			...session.fileUploader,
 			[sessionKey]: {
 				uploadedFiles: nextUploadedFiles
 			}
 		};
-		await options.onFilesChange?.({
-			req: request,
-			sessionKey,
-			fieldName: options.fieldName,
-			uploadedFiles: nextUploadedFiles
-		});
 
 		return redirectSafely(res, resolveRedirect(request, options));
 	};
+}
+
+async function cleanupUploadedFiles(
+	req: Request,
+	options: FileUploaderControllerOptions,
+	sessionKey: string,
+	storage: Awaited<ReturnType<FileUploadStorageAdapterFactory>>,
+	uploadedFiles: UploadedFile[]
+): Promise<void> {
+	if (!storage.delete) {
+		return;
+	}
+
+	for (const file of uploadedFiles) {
+		try {
+			await storage.delete(file);
+		} catch (error) {
+			try {
+				await options.onUploadCleanupError?.({
+					req,
+					sessionKey,
+					fieldName: options.fieldName,
+					file,
+					error
+				});
+			} catch {
+				// Preserve the persistence error thrown by onFilesChange.
+			}
+		}
+	}
 }
 
 function normaliseRequestFiles(req: RequestWithFiles): UploadedRequestFile[] {
