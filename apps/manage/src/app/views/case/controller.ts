@@ -61,7 +61,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
 		const { db, logger } = service;
 
-		const reference = getReference(req);
+		const reference = getParam(req.params.reference);
 		const section = getParam(req.params.section);
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
@@ -233,13 +233,6 @@ function getParam(value: string | string[] | undefined): string {
 	return value ?? '';
 }
 
-/** Extracts and validates the case reference from the route params. */
-function getReference(req: Request): string {
-	const { reference } = req.params;
-	if (typeof reference !== 'string') throw new Error('reference must be a string');
-	return reference;
-}
-
 /** * Trims every string value on the form input. * Returns a new object rather than mutating the request body. */
 export function trimStringValues<T extends object>(input: T): T {
 	const trimmed = {} as T;
@@ -253,7 +246,7 @@ export function trimStringValues<T extends object>(input: T): T {
 export function buildGetJourneyMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const { db, logger } = service;
-		const reference = getReference(req);
+		const reference = getParam(req.params.reference);
 
 		const planTitle = await db.case.findUnique({
 			where: { reference },
@@ -304,7 +297,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 /** Adds the case section navigation to locals for the case routes. */
 export function addCaseNavigation(): AsyncRequestHandler {
 	return async (req, res, next) => {
-		const reference = getReference(req);
+		const reference = getParam(req.params.reference);
 		res.locals.navigation = createNavigationParameters(req.url, reference);
 		if (next) next();
 	};

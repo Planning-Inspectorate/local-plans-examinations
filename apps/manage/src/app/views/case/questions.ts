@@ -187,12 +187,20 @@ const caseQuestions: Record<string, QuestionProps> = {
 		validators: [new RequiredValidator('Input an examination website')]
 	},
 	assessorGateway2: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Assessor Gateway 2?',
-		fieldName: 'assessorGateway2',
-		url: 'assessor-gateway-2',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Who is the Gateway 2 assessor?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'assessor-1', text: 'Assessor 1' },
+			{ value: 'assessor-2', text: 'Assessor 2' },
+			{ value: 'assessor-3', text: 'Assessor 3' },
+			{ value: 'assessor-4', text: 'Assessor 4' }
+		],
+		fieldName: 'assessorName',
+		url: 'gateway-2-assessor',
 		title: 'Assessor Gateway 2',
-		validators: [new RequiredValidator('Input Assessor Gateway 2')]
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
 	assessorGateway3: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -348,7 +356,7 @@ const caseQuestions: Record<string, QuestionProps> = {
 		],
 		fieldName: 'assessorName',
 		url: 'gateway-2-assessor',
-		title: 'Gateway 2 assessor',
+		title: 'Gateway 2 assessor name',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
