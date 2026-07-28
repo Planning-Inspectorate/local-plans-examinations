@@ -26,7 +26,7 @@ export class CaseOverviewProgrammeOfficerPage extends BasePage {
 		this.verifySaveAndContinueVisible();
 	}
 
-	enterProgrammeeOfficerDetails(firstName: string, lastName: string, email: string) {
+	enterProgrammeOfficerDetails(firstName: string, lastName: string, email: string) {
 		this.programmeOfficerFirstNameInput.clearAndWrite(firstName);
 		this.programmeOfficerLastNameInput.clearAndWrite(lastName);
 		this.programmeOfficerEmailInput.clearAndWrite(email);

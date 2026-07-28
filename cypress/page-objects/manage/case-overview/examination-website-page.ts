@@ -1,4 +1,4 @@
-import { BasePage } from 'cypress/page-objects/base-page.ts';
+import { BasePage } from '../../base-page.ts';
 
 export class CaseOverviewExaminationWebsitePage extends BasePage {
 	constructor() {

@@ -58,11 +58,12 @@ Coverage levels:
 
 ## Known gaps
 
-| Area                             | Status             | Notes                                                                                         |
-| -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------- |
-| Case history updates             | Gap                | Only case creation writes history at present; add update-event coverage when implemented      |
-| Plan band                        | Gap                | Add as a separate Case Overview row when implemented                                          |
-| Delete case                      | Gap                | Add as a separate Case Overview row when implemented                                          |
-| Notify email delivery            | Manual/service led | Best verified manually or with service-level tests unless a stable local test double is added |
-| OTP resend/new-code flow         | Gap                | Existing Cypress test is skipped because it depends on Notify-style behaviour                 |
-| Cookie analytics/script blocking | Gap                | Consent persistence is covered; blocking non-essential scripts is not covered by Cypress      |
+| Area                                   | Status             | Notes                                                                                          |
+| -------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------- |
+| Case history updates                   | Gap                | Only case creation writes history at present; add update-event coverage when implemented       |
+| Plan band                              | Gap                | Add as a separate Case Overview row when implemented                                           |
+| Delete case                            | Gap                | Add as a separate Case Overview row when implemented                                           |
+| Notify email delivery                  | Manual/service led | Best verified manually or with service-level tests unless a stable local test double is added  |
+| OTP resend/new-code flow               | Gap                | Existing Cypress test is skipped because it depends on Notify-style behaviour                  |
+| Cookie analytics/script blocking       | Gap                | Consent persistence is covered; blocking non-essential scripts is not covered by Cypress       |
+| Overview page placeholder website link | Gap                | For testing the Examination website hyperlink a gov.uk link is used as a temporary placeholder |
