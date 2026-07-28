@@ -75,7 +75,7 @@ describe('Case overview updates', () => {
 		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
 		caseOverviewPage.openActionLinkFor('Programme Officer');
 		caseOverviewProgrammeOfficerPage.verifyLoaded();
-		caseOverviewProgrammeOfficerPage.enterProgrammeeOfficerDetails(
+		caseOverviewProgrammeOfficerPage.enterProgrammeOfficerDetails(
 			programmeOfficerFirstName,
 			programmeOfficerLastName,
 			programmeOfficerEmail
@@ -99,15 +99,15 @@ describe('Case overview updates', () => {
 	});
 
 	it('answers an empty overview question (Examination website) and checks the hyperlink created', () => {
-		const examinationWebisteLink = 'https://www.gov.uk/';
+		const examinationWebsiteLink = 'https://www.gov.uk/';
 
 		caseOverviewPage.openActionLinkFor('Examination website');
 
 		caseOverviewExaminationWebsitePage.verifyLoaded();
-		caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebisteLink);
+		caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebsiteLink);
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
-		caseOverviewPage.verifySummaryRowContains('Examination website', examinationWebisteLink);
-		caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebisteLink);
+		caseOverviewPage.verifySummaryRowContains('Examination website', examinationWebsiteLink);
+		caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebsiteLink);
 	});
 });
