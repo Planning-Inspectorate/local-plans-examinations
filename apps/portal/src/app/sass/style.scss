@@ -17,6 +17,33 @@
 	width: 50% !important;
 }
 
+.multi-file-upload__list {
+	border: none;
+}
+
+.multi-file-upload__list .govuk-summary-list__row {
+	border-bottom: 1px solid #b1b4b6;
+}
+
+.multi-file-upload__list .govuk-summary-list__key {
+	font-weight: normal;
+	width: auto;
+	padding-right: 20px;
+}
+
+.multi-file-upload__list .govuk-summary-list__actions {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.multi-file-upload__upload {
+	margin-top: 30px;
+}
+
+.multi-file-upload__delete {
+	cursor: pointer;
+}
+
 .govuk-file-upload-button__status {
 	display: none;
 }

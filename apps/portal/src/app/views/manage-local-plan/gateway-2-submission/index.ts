@@ -112,10 +112,10 @@ function redirectToFileUploaderQuestion(req: Request) {
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
 
-// Builds the URL for the project initiation document page after timetable upload.
-function redirectToProjectInitiationDocument(req: Request) {
+// Builds the URL for the Gateway 2 submission task list page.
+function redirectToGateway2Submission(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
-	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/project-initiation-document`;
+	return `${req.baseUrl}${planPath}/gateway-2-submission`;
 }
 
 // Wraps multer upload to catch file size limit errors.
@@ -187,7 +187,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
 		const uploadedFiles = await loadGateway2CoverLetterDocuments(service, currentCase.id);
-		setFileUploaderUploadedFiles(request, fileUploaderCaseSessionKey(req), uploadedFiles);
+		setFileUploaderUploadedFiles(request, selectFileUploaderCaseSessionKey(req), uploadedFiles);
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
 		if (uploadedFiles.length > 0) {
 			answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
@@ -245,6 +245,85 @@ function setFileUploaderUploadedFiles(req: Gateway2Request, sessionKey: string, 
 			uploadedFiles
 		}
 	};
+}
+
+// Wraps a file upload/delete controller to return JSON for AJAX requests.
+function ajaxFileHandler(controller: RequestHandler): RequestHandler {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		const isAjax = req.xhr || req.get('X-Requested-With') === 'XMLHttpRequest';
+		if (!isAjax) {
+			return controller(req, res, next);
+		}
+
+		// Intercept redirect to return JSON instead
+		const originalRedirect = res.redirect.bind(res);
+		const jsonRedirect = function () {
+			const request = req as RequestWithFiles;
+			const sessionKey = selectFileUploaderCaseSessionKey(req);
+			const session = request.session as FileUploaderSession;
+			const uploadedFiles = session.fileUploader?.[sessionKey]?.uploadedFiles ?? [];
+
+			// Check if there were errors
+			if (session.errors || session.errorSummary) {
+				const errors = session.errorSummary ?? [];
+				delete session.errors;
+				delete session.errorSummary;
+				return res.status(400).json({ errors, allFiles: uploadedFiles });
+			}
+
+			// Get newly uploaded files (last ones added)
+			const requestFiles = normaliseAjaxRequestFiles(request);
+			const newFiles = uploadedFiles.slice(-requestFiles.length);
+
+			return res.json({ files: newFiles, allFiles: uploadedFiles });
+		};
+		res.redirect = jsonRedirect as unknown as typeof res.redirect;
+
+		try {
+			await (controller as (req: Request, res: Response, next: NextFunction) => Promise<void>)(req, res, next);
+		} catch {
+			res.redirect = originalRedirect;
+			return res.status(500).json({ errors: [{ text: 'Upload failed' }] });
+		}
+	};
+}
+
+// Wraps a file delete controller to return JSON for AJAX requests.
+function ajaxDeleteHandler(controller: RequestHandler): RequestHandler {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		const isAjax = req.xhr || req.get('X-Requested-With') === 'XMLHttpRequest';
+		if (!isAjax) {
+			return controller(req, res, next);
+		}
+
+		const originalRedirect = res.redirect.bind(res);
+		const jsonDeleteRedirect = function () {
+			const request = req as RequestWithFiles;
+			const sessionKey = selectFileUploaderCaseSessionKey(req);
+			const session = request.session as FileUploaderSession;
+			const uploadedFiles = session.fileUploader?.[sessionKey]?.uploadedFiles ?? [];
+			return res.json({ allFiles: uploadedFiles });
+		};
+		res.redirect = jsonDeleteRedirect as unknown as typeof res.redirect;
+
+		try {
+			await (controller as (req: Request, res: Response, next: NextFunction) => Promise<void>)(req, res, next);
+		} catch {
+			res.redirect = originalRedirect;
+			return res.status(500).json({ errors: [{ text: 'Delete failed' }] });
+		}
+	};
+}
+
+type RequestWithFiles = Request & {
+	files?: Array<{ originalname: string }>;
+	file?: { originalname: string };
+};
+
+function normaliseAjaxRequestFiles(req: RequestWithFiles): Array<{ originalname: string }> {
+	if (Array.isArray(req.files)) return req.files;
+	if (req.file) return [req.file];
+	return [];
 }
 
 // Keeps the Gateway 2 cover letter answer in sync with uploaded files.
@@ -609,7 +688,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		},
 		onUploadError: ({ req, errors, error }) =>
 			logGateway2LocalPlanTimetableUploadFailed(service, req, { errors, error }),
-		redirect: redirectToProjectInitiationDocument
+		redirect: redirectToGateway2Submission
 	});
 	const uploadGateway2LocalPlanTimetableForCase = createFileUploaderUploadController({
 		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD,
@@ -634,7 +713,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		},
 		onUploadError: ({ req, errors, error }) =>
 			logGateway2LocalPlanTimetableUploadFailed(service, req, { errors, error }),
-		redirect: redirectToProjectInitiationDocument
+		redirect: redirectToGateway2Submission
 	});
 	const deleteGateway2LocalPlanTimetable = createFileUploaderDeleteController({
 		fieldName: GATEWAY_2_LOCAL_PLAN_TIMETABLE_FIELD,
@@ -687,14 +766,18 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		uploadWithSizeErrorHandling,
-		selectFileUploaderForCase(uploadGateway2CoverLetterForCase, uploadGateway2LocalPlanTimetableForCase)
+		ajaxFileHandler(
+			selectFileUploaderForCase(uploadGateway2CoverLetterForCase, uploadGateway2LocalPlanTimetableForCase)
+		)
 	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
-		selectFileUploaderForCase(deleteGateway2CoverLetterForCase, deleteGateway2LocalPlanTimetableForCase)
+		ajaxDeleteHandler(
+			selectFileUploaderForCase(deleteGateway2CoverLetterForCase, deleteGateway2LocalPlanTimetableForCase)
+		)
 	);
 
 	router.post(
@@ -702,14 +785,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		uploadWithSizeErrorHandling,
-		selectFileUploader(uploadGateway2CoverLetter, uploadGateway2LocalPlanTimetable)
+		ajaxFileHandler(selectFileUploader(uploadGateway2CoverLetter, uploadGateway2LocalPlanTimetable))
 	);
 
 	router.post(
 		'/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponse,
 		getJourney,
-		selectFileUploader(deleteGateway2CoverLetter, deleteGateway2LocalPlanTimetable)
+		ajaxDeleteHandler(selectFileUploader(deleteGateway2CoverLetter, deleteGateway2LocalPlanTimetable))
 	);
 
 	router.get(

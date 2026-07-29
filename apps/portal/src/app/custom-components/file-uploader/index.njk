@@ -36,47 +36,65 @@
 				</ul>
 			{% endif %}
 
-			{% if question.text.fileRequirementsText %}
-				<p class="govuk-body">{{ question.text.fileRequirementsText }}</p>
-			{% endif %}
-
-			{% if question.text.totalUploadSizeText %}
-				<p class="govuk-body">{{ question.text.totalUploadSizeText }}</p>
-			{% endif %}
-
-			{# uploaded files list removed - shown on task list instead #}
-
-			<form id="upload-form" class="file-uploader-custom" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents">
+			<form action="{{ currentUrl }}/upload-documents" method="post" enctype="multipart/form-data"
+				data-module="multi-file-upload"
+				data-upload-url="{{ currentUrl }}/upload-documents"
+				data-delete-url="{{ currentUrl }}/delete-document"
+				data-csrf="{{ _csrf }}">
 				<input type="hidden" name="_csrf" value="{{ _csrf }}">
-				{{ govukFileUpload({
-					id: question.fieldName,
-					name: "files[]",
-					label: {
-						text: question.text.uploadLabel or "Upload files",
-						classes: "govuk-visually-hidden"
-					},
-					javascript: true,
-					multiple: question.multiple if question.multiple else undefined,
-					chooseFilesButtonText: question.text.chooseFilesButtonText or "Choose files",
-					dropInstructionText: question.text.dropInstructionText or "or drop files",
-					attributes: {
-						accept: question.allowedMimeTypes | join(", ")
-					},
-					errorMessage: errors["upload-form"] and {
-						text: errors["upload-form"].msg
-					}
-				}) }}
+
+				<div class="multi-file-upload__uploaded-files" id="files-added-section">
+					<h2 class="govuk-heading-m">Files added</h2>
+					<dl class="govuk-summary-list multi-file-upload__list" id="files-added-list">
+						{% if uploadedFiles and uploadedFiles.length %}
+							{% for file in uploadedFiles %}
+								<div class="govuk-summary-list__row" data-file-id="{{ file.id }}">
+									<dt class="govuk-summary-list__key">
+										{{ file.fileName }} (100%)
+									</dt>
+									<dd class="govuk-summary-list__actions">
+										<a href="#" class="govuk-link multi-file-upload__delete" data-file-id="{{ file.id }}">
+											Remove<span class="govuk-visually-hidden"> {{ file.fileName }}</span>
+										</a>
+									</dd>
+								</div>
+							{% endfor %}
+						{% endif %}
+					</dl>
+				</div>
+
+				<div class="multi-file-upload__upload">
+					<h2 class="govuk-heading-m">Upload files</h2>
+
+					{% if question.text.fileRequirementsText %}
+						<p class="govuk-body">{{ question.text.fileRequirementsText }}</p>
+					{% endif %}
+
+					{{ govukFileUpload({
+						id: question.fieldName,
+						name: "files[]",
+						label: {
+							text: "Upload a file",
+							classes: "govuk-visually-hidden"
+						},
+						javascript: true,
+						multiple: question.multiple,
+						chooseFilesButtonText: question.text.chooseFilesButtonText or "Select files",
+						dropInstructionText: question.text.dropInstructionText or "Drag and drop files here or",
+						attributes: {
+							accept: question.allowedMimeTypes | join(", ")
+						},
+						errorMessage: errors["upload-form"] and {
+							text: errors["upload-form"].msg
+						}
+					}) }}
+				</div>
+
 				{{ govukButton({
-					text: question.text.continueButtonText or continueButtonText or "Continue",
-					type: "submit"
+					text: question.text.continueButtonText or "Save and return"
 				}) }}
 			</form>
-
-			{% if question.text.returnLink %}
-				<p class="govuk-body">
-					<a class="govuk-link" href="{{ question.text.returnLink.href or listLink }}">{{ question.text.returnLink.text }}</a>
-				</p>
-			{% endif %}
 		</div>
 	</div>
+	<script {% if cspNonce %}nonce={{ cspNonce }}{% endif %} src="/assets/js/file-uploader.js"></script>
 {% endblock %}

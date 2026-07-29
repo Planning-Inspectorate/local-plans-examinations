@@ -75,7 +75,7 @@ export const gateway2LocalPlanTimetableQuestion: FileUploaderQuestionProps = {
 	maxFilesPerUpload: 3,
 	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
-	multiple: false,
+	multiple: true,
 	text: {
 		caption: 'Procedural documents',
 		introduction: 'Your timetable should set out:',
@@ -91,11 +91,7 @@ export const gateway2LocalPlanTimetableQuestion: FileUploaderQuestionProps = {
 		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
 		dropInstructionText: 'or drop files',
-		continueButtonText: 'Continue',
-		continueAction: 'project-initiation-document',
-		returnLink: {
-			text: 'Return to your application'
-		}
+		continueButtonText: 'Save and return'
 	},
 	validators: [new FileUploadRequiredValidator('gateway2LocalPlanTimetable', 'Upload local plan timetable')]
 };

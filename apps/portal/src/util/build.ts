@@ -20,6 +20,11 @@ async function run(): Promise<void> {
 	const cookieBannerSrc = path.join(config.srcDir, 'app', 'views', 'layouts', 'components', 'cookie-banner.js');
 	const cookieBannerDest = path.join(config.staticDir, 'assets', 'js', 'cookie-banner.js');
 	await copyFile(cookieBannerSrc, cookieBannerDest);
+
+	// copy file uploader JS into static assets
+	const fileUploaderSrc = path.join(config.srcDir, 'app', 'custom-components', 'file-uploader', 'file-uploader.js');
+	const fileUploaderDest = path.join(config.staticDir, 'assets', 'js', 'file-uploader.js');
+	await copyFile(fileUploaderSrc, fileUploaderDest);
 }
 
 // run the build, and write any errors to console
