@@ -48,6 +48,10 @@ common_config = {
   }
 }
 
+documents_config = {
+  account_replication_type = "LRS"
+}
+
 environment = "prod"
 
 front_door_config = {

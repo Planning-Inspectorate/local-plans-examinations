@@ -65,6 +65,10 @@ module "app_portal" {
     # database connection
     SQL_CONNECTION_STRING = local.key_vault_refs["sql-app-connection-string"]
 
+    # document storage
+    BLOB_STORE_ACCOUNT_URL = azurerm_storage_account.documents.primary_blob_endpoint
+    BLOB_STORE_CONTAINER   = azurerm_storage_container.local_planning_documents.name
+
     #Gov Notify
     GOV_NOTIFY_API_KEY               = local.key_vault_refs["localplans-gov-notify-api-key"]
     GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID = var.gov_notify.templates.auth_id
@@ -104,6 +108,20 @@ resource "azurerm_role_assignment" "app_web_staging_secrets_user" {
   principal_id         = module.app_portal.staging_principal_id
 }
 
+## RBAC for document storage
+resource "azurerm_role_assignment" "app_web_documents_contributor" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = module.app_portal.principal_id
+}
+
+## RBAC for document storage (staging slot)
+resource "azurerm_role_assignment" "app_web_staging_documents_contributor" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = module.app_portal.staging_principal_id
+}
+
 # sessions
 resource "random_password" "web_session_secret" {
   length  = 32
@@ -119,5 +137,4 @@ resource "azurerm_key_vault_secret" "web_session_secret" {
 
   tags = local.tags
 }
-
 
