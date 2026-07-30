@@ -20,4 +20,8 @@ export class FunctionService {
 	get exampleSchedule() {
 		return this.#config.example.schedule;
 	}
+
+	get exampleEnabled() {
+		return this.#config.example.enabled;
+	}
 }
