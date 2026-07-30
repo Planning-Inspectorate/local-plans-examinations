@@ -96,7 +96,7 @@ resource "azurerm_eventgrid_event_subscription" "malware_scan_results" {
   scope = azurerm_eventgrid_topic.document_scan_results.id
 
   azure_function_endpoint {
-    function_id                       = "${module.function_doc_processing.app_id}/functions/malware-detection"
+    function_id                       = "${module.function_doc_processing.app_id}/functions/update-malware-scan"
     max_events_per_batch              = 1
     preferred_batch_size_in_kilobytes = 64
   }
