@@ -1,12 +1,12 @@
-import { BasePage } from '../../base-page.ts';
+import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
-export class Gateway2ApplicationPage extends BasePage {
+export class Gateway2ApplicationPage extends PortalPlanBasePage {
 	constructor() {
 		super(/^\/manage-local-plans\/[^/]+\/gateway-2-application$/);
 	}
 
-	visit(planReference: string) {
-		cy.visit(this.pathFor(planReference));
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}/gateway-2-application`;
 	}
 
 	get saveAndComeBackLink() {
@@ -69,14 +69,6 @@ export class Gateway2ApplicationPage extends BasePage {
 				cy.getByData(addCy).should('be.visible');
 			});
 		});
-	}
-
-	pathFor(planReference: string) {
-		return `/manage-local-plans/${planReference}/gateway-2-application`;
-	}
-
-	verifyPathForPlan(planReference: string) {
-		this.verifyPath(this.pathFor(planReference));
 	}
 
 	verifyTableRowsInOrder(table: Cypress.Chainable, documents: string[]) {

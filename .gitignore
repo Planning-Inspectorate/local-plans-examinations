@@ -110,3 +110,10 @@ cypress/reports/
 
 # VS Code workspace copies
 local-plans-examinationscopy.code-workspace
+
+# Large file ignored to avoid bloating the repo
+cypress/fixtures/portal/files/test-document-over-250MB.xlsx
+cypress/fixtures/portal/files/test-document-invalid.txt
+cypress/fixtures/portal/files/test-document.docx
+cypress/fixtures/portal/files/test-document.pdf
+cypress/fixtures/portal/files/test-document.xlsx
