@@ -1,5 +1,5 @@
 # Function
-This package includes and example Azure Function, which can b e used for integration. See [Create a function in Azure from the command line](https://learn.microsoft.com/en-gb/azure/azure-functions/how-to-create-function-azure-cli) for adding new functions.
+This package contains Azure Functions used by the Local Plans service.
 
 ## Setup
 
@@ -27,5 +27,3 @@ See also [Code and test Azure Functions locally](https://learn.microsoft.com/en-
 
 * Run `azurite` in a temporary directory somewhere as a storage emulator
 * Run `npm run start` in `apps/function` to start the function(s)
-
-The example function runs on a schedule and prints a message to the console
