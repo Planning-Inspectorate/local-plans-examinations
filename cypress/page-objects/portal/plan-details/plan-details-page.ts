@@ -1,12 +1,12 @@
-import { BasePage } from '../../base-page.ts';
+import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
-export class PlanDetailsPage extends BasePage {
+export class PlanDetailsPage extends PortalPlanBasePage {
 	constructor() {
 		super();
 	}
 
-	get backLink() {
-		return cy.getByData('back-link');
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}`;
 	}
 
 	get actionButton() {
@@ -23,10 +23,6 @@ export class PlanDetailsPage extends BasePage {
 
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
-	}
-
-	verifyBackLink(href: string) {
-		this.backLink.should('be.visible').and('contain.text', 'Back to my plans').and('have.attr', 'href', href);
 	}
 
 	summaryRow(key: string) {
@@ -75,14 +71,6 @@ export class PlanDetailsPage extends BasePage {
 		row.should('contain.text', title);
 		row.should('contain.text', hint);
 		row.should('contain.text', status);
-	}
-
-	pathFor(planReference: string) {
-		return `/manage-local-plans/${planReference}`;
-	}
-
-	verifyPathForPlan(planReference: string) {
-		this.verifyPath(this.pathFor(planReference));
 	}
 }
 
