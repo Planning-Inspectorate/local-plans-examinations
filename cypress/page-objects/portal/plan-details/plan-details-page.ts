@@ -25,14 +25,6 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 	}
 
-	summaryRow(key: string) {
-		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
-	}
-
-	summaryRowValue(key: string) {
-		return this.summaryRow(key).find('.govuk-summary-list__value');
-	}
-
 	verifyMetadataValue(key: string, ...expectedText: string[]) {
 		const value = this.summaryRowValue(key).should('be.visible');
 
