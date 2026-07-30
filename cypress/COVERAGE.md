@@ -60,7 +60,6 @@ Coverage levels:
 
 | Area                                                | Status             | Notes                                                                                                                                                               |
 | --------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Case history updates                                | Gap                | Only case creation writes history at present; add update-event coverage when implemented                                                                            |
 | Plan band                                           | Gap                | Add as a separate Case Overview row when implemented                                                                                                                |
 | Delete case                                         | Gap                | Add as a separate Case Overview row when implemented                                                                                                                |
 | Notify email delivery                               | Manual/service led | Best verified manually or with service-level tests unless a stable local test double is added                                                                       |
