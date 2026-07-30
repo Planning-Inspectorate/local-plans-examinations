@@ -49,7 +49,7 @@ common_config = {
 }
 
 documents_config = {
-  account_replication_type = "LRS"
+  account_replication_type = "GZRS"
 }
 
 environment = "prod"
