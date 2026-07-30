@@ -60,6 +60,7 @@ Coverage levels:
 
 | Area                                                | Status             | Notes                                                                                                                                                               |
 | --------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Case history updates                                | Gap                | Only case creation writes history at present; add update-event coverage when implemented                                                                            |
 | Plan band                                           | Gap                | Add as a separate Case Overview row when implemented                                                                                                                |
 | Delete case                                         | Gap                | Add as a separate Case Overview row when implemented                                                                                                                |
 | Notify email delivery                               | Manual/service led | Best verified manually or with service-level tests unless a stable local test double is added                                                                       |
@@ -69,3 +70,4 @@ Coverage levels:
 | Journey tests                                       | Improvement        | Journey tests currently navigate directly to pages via URL — these should be updated to navigate through the real user flow as new pages and journeys are built out |
 | Assessment information section on plan details page | Gap                | Add tests for the data that is in the Assessment information section of the plan details page once the AC has been created for each tab                             |
 | Date assertion in Case History tests                | Gap                | Only the year is used in asserting the date of case history updates, Date month and day methods can be flaky |
+| Case History dates                                  | Gap                | Assertion for correct Case History dates are vague as Date day and month methods are flaky in CICD environments                                                     |     |
