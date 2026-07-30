@@ -108,9 +108,9 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			service.logger.warn('Notify client not configured');
 		} else {
 			const portalUrl = process.env.PORTAL_URL;
-			const templateID = process.env.TEMPLATE_ID;
+			const templateID = process.env.GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID;
 			if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-			if (!templateID) throw new Error('TEMPLATE_ID environment variable is not set');
+			if (!templateID) throw new Error('GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID environment variable is not set');
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 
