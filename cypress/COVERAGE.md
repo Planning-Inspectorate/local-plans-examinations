@@ -69,3 +69,4 @@ Coverage levels:
 | Overview page placeholder website link              | Gap                | For testing the Examination website hyperlink a gov.uk link is used as a temporary placeholder                                                                      |
 | Journey tests                                       | Improvement        | Journey tests currently navigate directly to pages via URL — these should be updated to navigate through the real user flow as new pages and journeys are built out |
 | Assessment information section on plan details page | Gap                | Add tests for the data that is in the Assessment information section of the plan details page once the AC has been created for each tab                             |
+| Date assertion in Case History tests                | Gap                | Only the year is used in asserting the date of case history updates, Date month and day methods can be flaky |
