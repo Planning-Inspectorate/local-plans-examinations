@@ -65,6 +65,14 @@ variable "common_config" {
   })
 }
 
+variable "documents_config" {
+  description = "Config for document blob storage"
+  type = object({
+    # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account#account_replication_type
+    account_replication_type = string
+  })
+}
+
 variable "environment" {
   description = "The name of the environment in which resources will be deployed"
   type        = string
