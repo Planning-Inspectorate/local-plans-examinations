@@ -6,7 +6,7 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		const { db, logger } = service;
 		try {
-			const cases = await db.case.findMany();
+			const cases = await db.case.findMany({ where: { deletedDate: null } });
 			return res.render('views/landing-page/landing-page.njk', { cases });
 		} catch (error) {
 			logger.error({ error }, 'Unable to fetch cases');

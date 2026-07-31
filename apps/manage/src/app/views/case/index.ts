@@ -1,5 +1,11 @@
 import { type IRouter, Router as createRouter } from 'express';
-import { addCaseNavigation, buildGetJourneyMiddleware, updateCaseField } from './controller.ts';
+import {
+	addCaseNavigation,
+	buildGetJourneyMiddleware,
+	updateCaseField,
+	getDeleteCase,
+	postMarkAsDeleteCase
+} from './controller.ts';
 import type { ManageService } from '#service';
 import {
 	buildGetJourney,
@@ -13,6 +19,7 @@ import { questions } from './questions.ts';
 import { createOverviewJourney, gateway1Journey, GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
 
 export function caseRouter(service: ManageService): IRouter {
+	console.log('Building case router');
 	const router = createRouter({ mergeParams: true });
 	const getOverviewJourney = buildGetJourney((req, journeyResponse) =>
 		createOverviewJourney(req, journeyResponse, questions)
@@ -57,6 +64,12 @@ export function caseRouter(service: ManageService): IRouter {
 		validationErrorHandler,
 		buildSave(updateCase, true)
 	);
+
+	/**
+	 * Delete case
+	 */
+	router.get('/delete-case', getDeleteCase(service));
+	router.post('/delete-case', postMarkAsDeleteCase(service));
 
 	return router;
 }
