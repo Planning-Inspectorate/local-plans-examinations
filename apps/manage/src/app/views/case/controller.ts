@@ -442,7 +442,7 @@ export function addCaseNavigation(): AsyncRequestHandler {
 }
 
 function createNavigationParameters(path: string, reference: string, currentSection?: string) {
-	const baseUrl = `/case/${encodeURIComponent(reference)}`;
+	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/overview` },
 		{ text: 'Timetable', href: '#' },
@@ -545,4 +545,56 @@ function formatCaseHistoryValue(value: unknown) {
 	}
 
 	return `${value ?? ''}`;
+}
+export function getDeleteCase(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const currentCase = await service.db.case.findUnique({
+			where: { reference },
+			include: { lpas: true }
+		});
+
+		if (!currentCase) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
+
+		const rows = [
+			[{ text: 'Case reference' }, { text: currentCase.reference }],
+			[{ text: 'Plan title' }, { text: currentCase.planTitle }],
+			[{ text: 'Plan type' }, { text: currentCase.planType }],
+			[{ text: 'LPA' }, { text: currentCase.lpas.map((lpa) => lpa.lpaCode).join(', ') }],
+			[{ text: 'Case officer' }, { text: currentCase.caseOfficer }]
+		];
+
+		res.render('views/layouts/delete-case.njk', {
+			rows
+		});
+	};
+}
+
+export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const currentCase = await service.db.case.findUnique({
+			where: { reference }
+		});
+
+		if (!currentCase) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		await markAsDeleteCase({
+			db: service.db,
+			id: currentCase.id
+		});
+
+		return res.redirect('/');
+	};
+}
+
+async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: string }): Promise<void> {
+	await db.case.update({ where: { id: id }, data: { deletedDate: new Date() } });
+	return;
 }
