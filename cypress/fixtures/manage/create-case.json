@@ -30,16 +30,16 @@
 	},
 	"dates": {
 		"intentionToCommenceDate": {
-			"day": "1",
-			"month": "2",
-			"year": "2026",
-			"display": "1/2/2026"
+			"day": "31",
+			"month": "12",
+			"year": "2025",
+			"display": "31/12/2025"
 		},
 		"gateway1Date": {
-			"day": "3",
-			"month": "3",
+			"day": "1",
+			"month": "1",
 			"year": "2026",
-			"display": "3/3/2026"
+			"display": "1/1/2026"
 		},
 		"gateway2Date": {
 			"day": "4",
@@ -55,9 +55,9 @@
 		},
 		"submissionDate": {
 			"day": "6",
-			"month": "6",
+			"month": "12",
 			"year": "2026",
-			"display": "6/6/2026"
+			"display": "6/12/2026"
 		}
 	}
 }
