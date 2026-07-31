@@ -104,12 +104,6 @@ variable "health_check_eviction_time_in_min" {
   default     = 10
 }
 
-variable "malware_scan_event_subscription_enabled" {
-  description = "Whether to create the Event Grid subscription for malware scan results. Enable after the Function App code has been deployed."
-  type        = bool
-  default     = false
-}
-
 variable "monitoring_config" {
   description = "Config for monitoring"
   type = object({
