@@ -192,7 +192,9 @@ describe('updateCaseField', () => {
 					planTitle: 'Southshire Local Plan',
 					planType: 'Local Plan',
 					caseOfficer: 'John Doe',
-					programmeOfficer: 'Pat Officer',
+					programmeOfficerFirstName: 'Pat',
+					programmeOfficerLastName: 'Officer',
+					programmeOfficerEmail: 'pat.officer@example.com',
 					examinationWebsite: 'https://example.com',
 					examiningInspector1: 'Insp One'
 				}
@@ -206,7 +208,9 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.planTitle, 'Southshire Local Plan');
 			assert.equal(args.data.planType, 'Local Plan');
 			assert.equal(args.data.caseOfficer, 'John Doe');
-			assert.equal(args.data.programmeOfficer, 'Pat Officer');
+			assert.equal(args.data.programmeOfficerFirstName, 'Pat');
+			assert.equal(args.data.programmeOfficerLastName, 'Officer');
+			assert.equal(args.data.programmeOfficerEmail, 'pat.officer@example.com');
 			assert.equal(args.data.examiningInspector1, 'Insp One');
 			// no contact or lpa fields -> undefined
 			assert.equal(args.data.contacts, undefined);

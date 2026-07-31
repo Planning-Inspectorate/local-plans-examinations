@@ -169,17 +169,9 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 			})
 		]
 	},
-	programmeOfficer: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the programme officer?',
-		fieldName: 'programmeOfficer',
-		url: 'programme-officer',
-		title: 'Programme Officer',
-		validators: [new RequiredValidator('Input a programme officer')]
-	},
 	examinationWebsite: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'What is the examination website?',
+		question: 'What is the address of the examination website?',
 		fieldName: 'examinationWebsite',
 		url: 'examination-website',
 		title: 'Examination website',
@@ -305,6 +297,51 @@ const caseOverviewQuestions: Record<string, QuestionProps> = {
 			{ value: 'no', text: 'No' }
 		],
 		validators: [new RequiredValidator('Select an option')]
+	},
+	programmeOfficerDetails: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerFirstName',
+				label: 'First name',
+				attributes: { 'data-cy': 'programme-officer-first-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerLastName',
+				label: 'Last name',
+				attributes: { 'data-cy': 'programme-officer-last-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerEmail',
+				label: 'Email address',
+				attributes: { 'data-cy': 'programme-officer-email' }
+			}
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'programmeOfficerFirstName',
+						validators: [new RequiredValidator('Input a first name')]
+					},
+					{
+						fieldName: 'programmeOfficerLastName',
+						validators: [new RequiredValidator('Input a last name')]
+					},
+					{
+						fieldName: 'programmeOfficerEmail',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
+		question: 'Programme Officer details',
+		fieldName: 'programmeOfficerDetails',
+		url: 'programme-officer',
+		title: 'Programme Officer'
 	}
 };
 
@@ -314,3 +351,13 @@ export const questions = createQuestions(
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
+
+questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+	// Prepend https:// to the answer if it doesn't already start with http:// or https://
+	const href = answer && !/^https?:\/\//i.test(answer) ? `https://${answer}` : answer;
+
+	const value = answer
+		? `<a href="${href}" class="govuk-link" rel="noreferrer noopener" target="_blank">${answer}</a>`
+		: this.notStartedText;
+	return [{ key: this.title, value, action: this.getAction(sectionSegment, journey, answer) }];
+};

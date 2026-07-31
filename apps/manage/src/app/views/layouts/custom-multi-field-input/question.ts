@@ -215,7 +215,19 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	 * checks whether any answers have been provided for input field questions
 	 */
 	#allQuestionsUnanswered(journey: Journey): boolean {
-		return this.inputFields.every((field: any) => journey.response.answers[field.fieldName] === undefined);
+		return this.inputFields.every((field: any) => {
+			const value = journey.response.answers[field.fieldName];
+
+			if (value === undefined || value === null) {
+				return true;
+			}
+
+			if (typeof value === 'string') {
+				return value.trim() === '';
+			}
+
+			return false;
+		});
 	}
 
 	/**

@@ -1,5 +1,6 @@
 import {
 	caseOverviewContactDetailsListPage,
+	caseOverviewExaminationWebsitePage,
 	caseOverviewPage,
 	caseOverviewPlanBandPage,
 	caseOverviewPlanTitlePage,
@@ -66,16 +67,27 @@ describe('Case overview updates', () => {
 		);
 	});
 
-	it('answers an empty overview question and updates the overview row', () => {
-		const programmeOfficer = 'Programme Officer 1';
+	it('answers an empty overview question (Programme Officer) and updates the overview row', () => {
+		const programmeOfficerFirstName = 'Programme';
+		const programmeOfficerLastName = 'Officer 1';
+		const programmeOfficerEmail = 'programme.officer1@example.com';
 
 		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
 		caseOverviewPage.openActionLinkFor('Programme Officer');
 		caseOverviewProgrammeOfficerPage.verifyLoaded();
-		caseOverviewProgrammeOfficerPage.enterProgrammeOfficer(programmeOfficer);
+		caseOverviewProgrammeOfficerPage.enterProgrammeOfficerDetails(
+			programmeOfficerFirstName,
+			programmeOfficerLastName,
+			programmeOfficerEmail
+		);
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
-		caseOverviewPage.verifySummaryRowContains('Programme Officer', programmeOfficer);
+		caseOverviewPage.verifySummaryRowContains(
+			'Programme Officer',
+			programmeOfficerFirstName,
+			programmeOfficerLastName,
+			programmeOfficerEmail
+		);
 	});
 
 	it('returns to overview from the plan band back link', () => {
@@ -84,5 +96,18 @@ describe('Case overview updates', () => {
 		caseOverviewPlanBandPage.goBack();
 
 		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+	});
+
+	it('answers an empty overview question (Examination website) and checks the hyperlink created', () => {
+		const examinationWebsiteLink = 'https://www.gov.uk/';
+
+		caseOverviewPage.openActionLinkFor('Examination website');
+
+		caseOverviewExaminationWebsitePage.verifyLoaded();
+		caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebsiteLink);
+
+		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifySummaryRowContains('Examination website', examinationWebsiteLink);
+		caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebsiteLink);
 	});
 });

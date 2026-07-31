@@ -125,6 +125,13 @@ export class CaseOverviewPage extends BasePage {
 	verifyDeleteCaseButton() {
 		cy.contains('button.govuk-button', 'Delete case').should('be.visible');
 	}
+
+	verifyExaminationWebsiteHyperlink(hyperlink: string) {
+		cy.get(`a[href="${hyperlink}"]`)
+			.should('be.visible')
+			.and('have.attr', 'href', `${hyperlink}`)
+			.and('have.attr', 'target', '_blank');
+	}
 }
 
 export const caseOverviewPage = new CaseOverviewPage();

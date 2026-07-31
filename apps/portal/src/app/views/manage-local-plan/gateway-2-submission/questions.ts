@@ -41,10 +41,10 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	allowedMimeTypes: ALLOWED_MIME_TYPES,
 	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
 	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
-	maxFilesPerUpload: 3,
+	maxFilesPerUpload: 1,
 	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
-	multiple: true,
+	multiple: false,
 	text: {
 		caption: 'Procedural documents',
 		introduction: 'Your cover letter should set out:',

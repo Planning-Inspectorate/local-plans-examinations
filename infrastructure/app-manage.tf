@@ -47,6 +47,7 @@ module "app_manage" {
 
     APP_HOSTNAME                  = var.web_domains.manage
     PORTAL_HOSTNAME               = "https://${var.web_domains.portal}"
+    PORTAL_URL                    = "https://${var.web_domains.portal}"
     AUTH_CLIENT_ID                = var.apps_config.auth.client_id
     AUTH_CLIENT_SECRET            = local.key_vault_refs["localplans-client-secret"]
     AUTH_GROUP_APPLICATION_ACCESS = var.apps_config.auth.group_application_access
@@ -58,9 +59,10 @@ module "app_manage" {
     LOG_LEVEL = var.apps_config.logging.level
 
     # database connection
-    SQL_CONNECTION_STRING    = local.key_vault_refs["sql-app-connection-string"]
-    GOV_NOTIFY_API_KEY       = local.key_vault_refs["localplans-gov-notify-api-key"]
-    GOV_NOTIFY_WEBHOOK_TOKEN = local.key_vault_refs["gov-notify-webhook-token"]
+    SQL_CONNECTION_STRING              = local.key_vault_refs["sql-app-connection-string"]
+    GOV_NOTIFY_API_KEY                 = local.key_vault_refs["localplans-gov-notify-api-key"]
+    GOV_NOTIFY_WEBHOOK_TOKEN           = local.key_vault_refs["gov-notify-webhook-token"]
+    GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = var.gov_notify.templates.case_created
 
     # retries
     RETRY_MAX_ATTEMPTS = "3"

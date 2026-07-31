@@ -124,6 +124,98 @@ describe('file uploader upload controller', () => {
 		]);
 		assert.equal(res.redirect.mock.callCount(), 0);
 	});
+
+	it('deletes newly uploaded files and rethrows when persisting uploaded files fails', async () => {
+		const persistenceError = new Error('database failed');
+		const existingFile = buildUploadedFile({ id: 'existing-file', fileName: 'existing.pdf' });
+		const uploadedFile = buildUploadedFile({ id: 'new-file', fileName: 'new.pdf' });
+		const upload = mock.fn(async () => uploadedFile);
+		const deleteFile = mock.fn(async () => undefined);
+		const onFilesChange = mock.fn(async () => {
+			throw persistenceError;
+		});
+		const onUploadError = mock.fn();
+		const controller = createFileUploaderUploadController({
+			fieldName: 'documents',
+			storage: async () => buildStorage({ upload, delete: deleteFile }),
+			onFilesChange,
+			onUploadError,
+			question: buildQuestionConfig()
+		});
+		const req = buildRequest({
+			session: {
+				fileUploader: {
+					documents: {
+						uploadedFiles: [existingFile]
+					}
+				}
+			}
+		});
+		const res = buildResponse();
+
+		await assert.rejects(() => controller(req, res, mock.fn()), persistenceError);
+
+		assert.equal(deleteFile.mock.callCount(), 1);
+		assert.deepEqual(deleteFile.mock.calls[0].arguments, [uploadedFile]);
+		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [existingFile]);
+		assert.equal(onUploadError.mock.callCount(), 1);
+		assert.deepEqual(onUploadError.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				error: persistenceError
+			}
+		]);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+
+	it('does not replace the persistence error when uploaded file cleanup fails', async () => {
+		const persistenceError = new Error('database failed');
+		const cleanupError = new Error('cleanup failed');
+		const existingFile = buildUploadedFile({ id: 'existing-file', fileName: 'existing.pdf' });
+		const uploadedFile = buildUploadedFile({ id: 'new-file', fileName: 'new.pdf' });
+		const upload = mock.fn(async () => uploadedFile);
+		const deleteFile = mock.fn(async () => {
+			throw cleanupError;
+		});
+		const onUploadCleanupError = mock.fn();
+		const controller = createFileUploaderUploadController({
+			fieldName: 'documents',
+			storage: async () => buildStorage({ upload, delete: deleteFile }),
+			onFilesChange: async () => {
+				throw persistenceError;
+			},
+			onUploadCleanupError,
+			question: buildQuestionConfig()
+		});
+		const req = buildRequest({
+			session: {
+				fileUploader: {
+					documents: {
+						uploadedFiles: [existingFile]
+					}
+				}
+			}
+		});
+		const res = buildResponse();
+
+		await assert.rejects(() => controller(req, res, mock.fn()), persistenceError);
+
+		assert.equal(deleteFile.mock.callCount(), 1);
+		assert.deepEqual(deleteFile.mock.calls[0].arguments, [uploadedFile]);
+		assert.deepEqual(onUploadCleanupError.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				file: uploadedFile,
+				error: cleanupError
+			}
+		]);
+		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [existingFile]);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
 });
 
 describe('file uploader delete controller', () => {
@@ -207,6 +299,49 @@ describe('file uploader delete controller', () => {
 			}
 		]);
 		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [fileToDelete]);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+
+	it('does not delete the stored file or update the session when persisting the delete fails', async () => {
+		const persistenceError = new Error('database failed');
+		const deleteFile = mock.fn(async () => undefined);
+		const onDeleteError = mock.fn();
+		const fileToDelete = buildUploadedFile({ id: 'file-to-delete' });
+		const fileToKeep = buildUploadedFile({ id: 'file-to-keep' });
+		const controller = createFileUploaderDeleteController({
+			fieldName: 'documents',
+			storage: async () => buildStorage({ delete: deleteFile }),
+			onFilesChange: async () => {
+				throw persistenceError;
+			},
+			onDeleteError,
+			question: buildQuestionConfig()
+		});
+		const req = buildRequest({
+			params: { fileId: 'file-to-delete' },
+			session: {
+				fileUploader: {
+					documents: {
+						uploadedFiles: [fileToDelete, fileToKeep]
+					}
+				}
+			}
+		});
+		const res = buildResponse();
+
+		await assert.rejects(() => controller(req, res, mock.fn()), persistenceError);
+
+		assert.equal(deleteFile.mock.callCount(), 0);
+		assert.deepEqual(onDeleteError.mock.calls[0].arguments, [
+			{
+				req,
+				sessionKey: 'documents',
+				fieldName: 'documents',
+				fileId: 'file-to-delete',
+				error: persistenceError
+			}
+		]);
+		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [fileToDelete, fileToKeep]);
 		assert.equal(res.redirect.mock.callCount(), 0);
 	});
 });

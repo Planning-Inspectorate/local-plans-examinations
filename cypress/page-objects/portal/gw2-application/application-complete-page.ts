@@ -1,24 +1,16 @@
-import { BasePage } from '../../base-page.ts';
+import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
-export class ApplicationCompletePage extends BasePage {
+export class ApplicationCompletePage extends PortalPlanBasePage {
 	constructor() {
 		super(/^\/manage-local-plans\/[^/]+\/gateway-2-application\/application-complete$/);
-	}
-
-	returnToYourPlanLink(planReference: string) {
-		return cy.get(`a[href="/manage-local-plans/${planReference}"]`);
-	}
-
-	visit(planReference: string) {
-		cy.visit(this.pathFor(planReference));
 	}
 
 	pathFor(planReference: string) {
 		return `/manage-local-plans/${planReference}/gateway-2-application/application-complete`;
 	}
 
-	verifyPathForPlan(planReference: string) {
-		this.verifyPath(this.pathFor(planReference));
+	returnToYourPlanLink(planReference: string) {
+		return cy.get(`a[href="/manage-local-plans/${planReference}"]`);
 	}
 }
 

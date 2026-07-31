@@ -2,6 +2,7 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { FileUploaderSession } from './types.ts';
 
 type RequestWithFileUploaderSession = Request & {
+	fileUploaderSessionKey?: string;
 	session?: FileUploaderSession & Record<string, unknown>;
 };
 
@@ -34,6 +35,8 @@ export function fileUploaderQuestionMiddleware(options: FileUploaderQuestionMidd
 				: (options.sessionKey ?? question.fieldName);
 		const hasSessionErrors =
 			(request.session?.errorSummary?.length ?? 0) > 0 || Object.keys(request.session?.errors ?? {}).length > 0;
+
+		request.fileUploaderSessionKey = sessionKey;
 
 		const viewModel = hasSessionErrors
 			? question.checkForValidationErrors(request, section, journey)

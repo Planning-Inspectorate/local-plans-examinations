@@ -63,7 +63,7 @@ describe('buildSaveController', () => {
 
 	it('should create case with all data, send emails, and display success page', async () => {
 		process.env.PORTAL_URL = 'http://localhost:3000';
-		process.env.TEMPLATE_ID = 'template-123';
+		process.env.GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = 'template-123';
 		mockRequest.session.editingFromCheckAnswers = true;
 
 		const controller = buildSaveController(mockService);

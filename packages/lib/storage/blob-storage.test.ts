@@ -42,6 +42,7 @@ describe('BlobFileStorageAdapter', () => {
 			mimeType: 'application/pdf',
 			size: buffer.length,
 			storageProvider: 'blob',
+			containerName: 'documents',
 			path: fakeAzure.blobName,
 			url: `https://storage.example/${fakeAzure.blobName}`,
 			metadata: { caseId: 123, checked: true }
@@ -112,6 +113,7 @@ describe('BlobFileStorageAdapter', () => {
 				mimeType: 'application/pdf',
 				size: 123,
 				storageProvider: 'blob',
+				containerName: 'documents',
 				path: 'cases/gateway-2/cover-letter.pdf'
 			},
 			{
@@ -120,6 +122,7 @@ describe('BlobFileStorageAdapter', () => {
 				mimeType: 'application/octet-stream',
 				size: 0,
 				storageProvider: 'blob',
+				containerName: 'documents',
 				path: 'cases/gateway-2/readme'
 			}
 		]);

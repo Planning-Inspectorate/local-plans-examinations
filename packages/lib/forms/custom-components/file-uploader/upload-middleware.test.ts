@@ -65,6 +65,41 @@ describe('fileUploaderQuestionMiddleware', () => {
 		assert.equal(req.session.errors, undefined);
 		assert.equal(req.session.errorSummary, undefined);
 	});
+
+	it('passes the resolved session key when rendering validation errors', () => {
+		const next = mock.fn();
+		const question = buildQuestion();
+		const middleware = fileUploaderQuestionMiddleware({
+			sessionKey: (req) => `${req.params.planReference}:documents`
+		});
+		const req = buildRequest({
+			params: {
+				planReference: 'LPE-TEST-001',
+				section: 'case',
+				question: 'documents'
+			},
+			session: {
+				errors: { 'upload-form': { msg: 'Errors encountered during file upload' } },
+				errorSummary: [{ text: 'You can only upload up to 1 files in total', href: '#upload-form' }],
+				fileUploader: {
+					'LPE-TEST-001:documents': {
+						uploadedFiles: [{ id: 'file-1', fileName: 'cover-letter.pdf' }]
+					}
+				}
+			}
+		});
+		const res = buildResponse({ question });
+
+		middleware(req, res, next);
+
+		assert.equal(next.mock.callCount(), 0);
+		assert.equal(req.fileUploaderSessionKey, 'LPE-TEST-001:documents');
+		assert.equal(question.checkForValidationErrors.mock.callCount(), 1);
+		assert.equal(
+			question.checkForValidationErrors.mock.calls[0].arguments[0].fileUploaderSessionKey,
+			'LPE-TEST-001:documents'
+		);
+	});
 });
 
 function buildQuestion() {

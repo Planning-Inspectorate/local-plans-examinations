@@ -1,12 +1,12 @@
-import { BasePage } from '../../base-page.ts';
+import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
-export class PlanDetailsPage extends BasePage {
+export class PlanDetailsPage extends PortalPlanBasePage {
 	constructor() {
 		super();
 	}
 
-	get backLink() {
-		return cy.getByData('back-link');
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}`;
 	}
 
 	get actionButton() {
@@ -17,24 +17,12 @@ export class PlanDetailsPage extends BasePage {
 		return cy.get('section[aria-labelledby="plan-progress-heading"]');
 	}
 
+	get gateway2Link() {
+		return cy.contains('a', 'Gateway 2 - advisory check');
+	}
+
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
-	}
-
-	verifyBackLink(href: string) {
-		this.backLink.should('be.visible').and('contain.text', 'Back to my plans').and('have.attr', 'href', href);
-	}
-
-	verifyCaption(reference: string) {
-		this.pageHeading.find('.govuk-caption-xl').should('be.visible').and('contain.text', reference);
-	}
-
-	summaryRow(key: string) {
-		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
-	}
-
-	summaryRowValue(key: string) {
-		return this.summaryRow(key).find('.govuk-summary-list__value');
 	}
 
 	verifyMetadataValue(key: string, ...expectedText: string[]) {

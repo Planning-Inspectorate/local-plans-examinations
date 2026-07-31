@@ -4,6 +4,7 @@ import { clearDataFromSession, type JourneyResponse } from '@planning-inspectora
 import type { JourneyAnswers } from '@planning-inspectorate/dynamic-forms/src/journey/journey-types.d.ts';
 import { JOURNEY_ID } from './journey.ts';
 import * as authSession from '../../auth/session.service.ts';
+import { parseDate } from '../../util/date.ts';
 
 /**
  * The structure of data for the journey answers
@@ -63,19 +64,19 @@ export function buildSaveController(service: ManageService): RequestHandler {
 				planTitle: answers.planTitle,
 				planType: answers.planType,
 				...(answers.intentionToCommenceDate && {
-					intentionToCommenceDate: new Date(answers.intentionToCommenceDate)
+					intentionToCommenceDate: parseDate(answers.intentionToCommenceDate)
 				}),
 				...(answers.gateway1Date && {
-					gateway1Date: new Date(answers.gateway1Date)
+					gateway1Date: parseDate(answers.gateway1Date)
 				}),
 				...(answers.gateway2Date && {
-					gateway2Date: new Date(answers.gateway2Date)
+					gateway2Date: parseDate(answers.gateway2Date)
 				}),
 				...(answers.gateway3Date && {
-					gateway3Date: new Date(answers.gateway3Date)
+					gateway3Date: parseDate(answers.gateway3Date)
 				}),
 				...(answers.submissionDate && {
-					submissionDate: new Date(answers.submissionDate)
+					submissionDate: parseDate(answers.submissionDate)
 				}),
 				lpas: {
 					connectOrCreate: uniqueLpaCodes.map((lpaCode) => ({
@@ -108,9 +109,9 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			service.logger.warn('Notify client not configured');
 		} else {
 			const portalUrl = process.env.PORTAL_URL;
-			const templateID = process.env.TEMPLATE_ID;
+			const templateID = process.env.GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID;
 			if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-			if (!templateID) throw new Error('TEMPLATE_ID environment variable is not set');
+			if (!templateID) throw new Error('GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID environment variable is not set');
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 

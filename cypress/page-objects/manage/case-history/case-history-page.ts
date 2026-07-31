@@ -1,5 +1,12 @@
 import { BasePage } from '../../base-page.ts';
 
+const expectedDate = new Date().toLocaleDateString('en-GB', {
+	day: 'numeric',
+	month: 'short',
+	year: 'numeric',
+	timeZone: 'GMT'
+});
+
 export class CaseHistoryPage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/overview$/);
@@ -28,7 +35,17 @@ export class CaseHistoryPage extends BasePage {
 		const event = `Case created for plan ${planTitle}`;
 
 		this.table.within(() => {
-			cy.getByData('case-history-date').first().should('contain.text', new Date().getFullYear().toString());
+			cy.getByData('case-history-date').first().should('contain.text', expectedDate);
+			cy.getByData('case-history-event').should('contain.text', event);
+			cy.getByData('case-history-user').should('contain.text', user);
+		});
+	}
+
+	verifyUpdateHistory(itemUpdatedFrom: string, itemUpdatedTo: string, user = 'Unknown') {
+		const event = `Updated ${itemUpdatedFrom} to ${itemUpdatedTo}`;
+
+		this.table.within(() => {
+			cy.getByData('case-history-date').first().should('contain.text', expectedDate);
 			cy.getByData('case-history-event').should('contain.text', event);
 			cy.getByData('case-history-user').should('contain.text', user);
 		});
