@@ -91,18 +91,17 @@ module "function_doc_processing" {
   }
 }
 
-resource "azurerm_eventgrid_event_subscription" "malware_scan_results" {
-  count = var.malware_scan_event_subscription_enabled ? 1 : 0
-
-  name  = "malware-scan-results-subscription-${local.resource_suffix}"
-  scope = azurerm_eventgrid_topic.document_scan_results.id
-
-  azure_function_endpoint {
-    function_id                       = "${module.function_doc_processing.app_id}/functions/update-malware-scan"
-    max_events_per_batch              = 1
-    preferred_batch_size_in_kilobytes = 64
-  }
-}
+# Enable after the update-malware-scan function code has been deployed.
+# resource "azurerm_eventgrid_event_subscription" "malware_scan_results" {
+#   name  = "malware-scan-results-subscription-${local.resource_suffix}"
+#   scope = azurerm_eventgrid_topic.document_scan_results.id
+#
+#   azure_function_endpoint {
+#     function_id                       = "${module.function_doc_processing.app_id}/functions/update-malware-scan"
+#     max_events_per_batch              = 1
+#     preferred_batch_size_in_kilobytes = 64
+#   }
+# }
 
 resource "azurerm_role_assignment" "function_doc_processing_secrets_user" {
   scope                = azurerm_key_vault.main.id
