@@ -92,6 +92,8 @@ module "function_doc_processing" {
 }
 
 resource "azurerm_eventgrid_event_subscription" "malware_scan_results" {
+  count = var.malware_scan_event_subscription_enabled ? 1 : 0
+
   name  = "malware-scan-results-subscription-${local.resource_suffix}"
   scope = azurerm_eventgrid_topic.document_scan_results.id
 
