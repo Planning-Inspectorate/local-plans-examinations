@@ -41,8 +41,8 @@ export class CaseHistoryPage extends BasePage {
 		});
 	}
 
-	verifyUpdateHistory(itemUpdatedFrom: string, itemUpdatedTo: string, user = 'Unknown') {
-		const event = `Updated ${itemUpdatedFrom} to ${itemUpdatedTo}`;
+	verifyUpdateHistory(item: string, itemUpdatedFrom: string, itemUpdatedTo: string, user = 'Unknown') {
+		const event = `Updated ${item} from ${itemUpdatedFrom} to ${itemUpdatedTo}`;
 
 		this.table.within(() => {
 			cy.getByData('case-history-date').first().should('contain.text', expectedDate);

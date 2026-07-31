@@ -69,7 +69,7 @@ describe('Case history', () => {
 
 		//Due to a known bug the update history displays the raw value names
 		//When fixed 'planType' and 'planTitle' should be changed to their appropriate names
-		caseHistoryPage.verifyUpdateHistory('planType', planTypeSelectionValue);
-		caseHistoryPage.verifyUpdateHistory('planTitle', updatedPlanTitle);
+		caseHistoryPage.verifyUpdateHistory('planType', 'local-plan', planTypeSelectionValue);
+		caseHistoryPage.verifyUpdateHistory('planTitle', 'Cypress Test Plan', updatedPlanTitle);
 	});
 });
