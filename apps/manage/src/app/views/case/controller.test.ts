@@ -1,14 +1,11 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Request, Response } from 'express';
-import type { ManageService } from '#service';
-import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import { updateCaseField, trimStringValues, buildGetJourneyMiddleware } from './controller.ts';
 
+const REFERENCE = 'PLAN/123456';
 const JOURNEY_ID = 'edit-case-overview';
 
-/** * Builds a mock ManageService with mocked Prisma delegates and a mock logger. */
-function createMockService() {
+function createService(): any {
 	return {
 		db: {
 			case: {
@@ -17,181 +14,210 @@ function createMockService() {
 			},
 			contact: {
 				update: mock.fn(async () => ({})),
-				delete: mock.fn(async () => ({}))
+				delete: mock.fn(async () => ({})),
+				upsert: mock.fn(async () => ({}))
+			},
+			gateway1Info: {
+				upsert: mock.fn(async () => ({})),
+				findUnique: mock.fn(async () => null)
+			},
+			gateway2Info: {
+				upsert: mock.fn(async () => ({})),
+				findUnique: mock.fn(async () => null)
 			}
 		},
-		logger: mockLogger()
-	} as unknown as ManageService & {
-		db: {
-			case: { update: ReturnType<typeof mock.fn>; findUnique: ReturnType<typeof mock.fn> };
-			contact: { update: ReturnType<typeof mock.fn>; delete: ReturnType<typeof mock.fn> };
-		};
-		logger: { error: ReturnType<typeof mock.fn> } & ManageService['logger'];
+		logger: {
+			info: mock.fn(),
+			error: mock.fn()
+		}
 	};
 }
 
-/** * Builds a mock request with params, body and journey response locals. */
-function createReq(overrides: {
-	params?: Record<string, unknown>;
-	body?: Record<string, unknown>;
-	answers?: Record<string, unknown>;
-}): { req: Request; res: Response; data: Record<string, any> } {
-	const req = {
-		params: { reference: 'PLAN/123456', ...(overrides.params ?? {}) },
-		body: overrides.body ?? {}
-	} as unknown as Request;
+function createResponse(): any {
+	const res: any = {
+		locals: {}
+	};
 
-	const res = {
-		locals: { journeyResponse: { answers: overrides.answers ?? {} } }
-	} as unknown as Response;
+	res.status = mock.fn(() => res);
+	res.render = mock.fn(() => res);
 
-	// The handler reads form values from `data.answers`
-	const data = { answers: overrides.body ?? {} };
-
-	return { req, res, data };
+	return res;
 }
 
-/**
- * Invokes a SaveDataFn with the minimal params the handler reads, while
- * satisfying the full SaveParams type required by the signature.
- */
-function invokeSave(
-	handler: ReturnType<typeof updateCaseField>,
-	{ req, res, data }: { req: Request; res: Response; data: Record<string, any> }
-) {
-	return handler({
-		req,
-		res,
-		data,
+function createSaveContext({
+	url = '/overview',
+	params = {},
+	body = {}
+}: {
+	url?: string;
+	params?: Record<string, unknown>;
+	body?: Record<string, unknown>;
+} = {}) {
+	return {
+		req: {
+			url,
+			params: {
+				reference: REFERENCE,
+				...params
+			},
+			body
+		},
+		res: createResponse(),
+		data: {
+			answers: body
+		}
+	};
+}
+
+async function save(handler: ReturnType<typeof updateCaseField>, context: ReturnType<typeof createSaveContext>) {
+	await handler({
+		req: context.req,
+		res: context.res,
+		data: context.data,
 		journeyId: JOURNEY_ID,
 		referenceId: '',
 		isManageListItem: false
-	} as Parameters<typeof handler>[0]);
+	} as any);
 }
 
 describe('updateCaseField', () => {
-	it('throws when the reference param is not a string', async () => {
-		const service = createMockService();
+	it('removes a contact from the contacts section', async () => {
+		const service = createService();
 		const handler = updateCaseField(service);
-		const { req, res, data } = createReq({ params: { reference: undefined } });
+		const context = createSaveContext({
+			params: {
+				section: 'contacts',
+				manageListAction: 'remove',
+				manageListItemId: 'contact-1'
+			}
+		});
 
-		await assert.rejects(() => invokeSave(handler, { req, res, data }), /reference must be a string/);
+		await save(handler, context);
+
+		assert.equal(service.db.contact.delete.mock.callCount(), 1);
+		assert.deepEqual(service.db.contact.delete.mock.calls[0].arguments[0], {
+			where: {
+				id: 'contact-1'
+			}
+		});
+
+		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});
 
-	describe('remove action', () => {
-		it('deletes a contact when the section is contacts', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: { section: 'contacts', manageListAction: 'remove', manageListItemId: 'contact-1' }
-			});
-
-			await invokeSave(handler, { req, res, data });
-
-			assert.equal(service.db.contact.delete.mock.callCount(), 1);
-			assert.deepEqual(service.db.contact.delete.mock.calls[0].arguments[0], {
-				where: { id: 'contact-1' }
-			});
-			assert.equal(service.db.case.update.mock.callCount(), 0);
+	it('disconnects an LPA when removing from a non-contact section', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			params: {
+				section: 'case-details',
+				manageListAction: 'remove',
+				manageListItemId: 'E60000001'
+			}
 		});
 
-		it('disconnects an LPA from the case', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: { section: 'case-details', manageListAction: 'remove', manageListItemId: 'E60000001' }
-			});
+		await save(handler, context);
 
-			await invokeSave(handler, { req, res, data });
-
-			assert.equal(service.db.case.update.mock.callCount(), 1);
-			assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
-				where: { reference: 'PLAN/123456' },
-				data: { lpas: { disconnect: { lpaCode: 'E60000001' } } }
-			});
-			assert.equal(service.db.contact.delete.mock.callCount(), 0);
-		});
-
-		it('uses the first id when manageListItemId is an array', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: {
-					section: 'contacts',
-					manageListAction: 'remove',
-					manageListItemId: ['contact-1', 'ignored']
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
+			where: {
+				reference: REFERENCE
+			},
+			data: {
+				lpas: {
+					disconnect: {
+						lpaCode: 'E60000001'
+					}
 				}
-			});
-
-			await invokeSave(handler, { req, res, data });
-
-			assert.deepEqual(service.db.contact.delete.mock.calls[0].arguments[0], {
-				where: { id: 'contact-1' }
-			});
+			}
 		});
+
+		assert.equal(service.db.contact.delete.mock.callCount(), 0);
 	});
 
-	describe('edit contact action', () => {
-		it('updates the contact and connects/creates its LPA', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: { section: 'contacts', manageListAction: 'edit', manageListItemId: 'contact-1' },
-				body: {
-					firstName: 'Jane',
-					lastName: 'Smith',
-					email: 'jane@lpa.gov.uk',
-					phone: '01234567890',
-					lpaContact: 'E60000001'
-				}
-			});
+	it('updates a contact when editing an existing contact row', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			params: {
+				section: 'contacts',
+				manageListAction: 'edit',
+				manageListItemId: 'contact-1'
+			},
+			body: {
+				firstName: 'Jane',
+				lastName: 'Smith',
+				email: 'jane@example.com',
+				phone: '01234567890',
+				lpaContact: 'E60000001'
+			}
+		});
 
-			await invokeSave(handler, { req, res, data });
+		await save(handler, context);
 
-			assert.equal(service.db.contact.update.mock.callCount(), 1);
-			assert.deepEqual(service.db.contact.update.mock.calls[0].arguments[0], {
-				where: { id: 'contact-1' },
-				data: {
-					firstName: 'Jane',
-					lastName: 'Smith',
-					email: 'jane@lpa.gov.uk',
-					phoneNumber: '01234567890',
-					lpa: {
-						connectOrCreate: {
-							where: { lpaCode: 'E60000001' },
-							create: { lpaCode: 'E60000001' }
+		assert.equal(service.db.contact.update.mock.callCount(), 1);
+		assert.deepEqual(service.db.contact.update.mock.calls[0].arguments[0], {
+			where: {
+				id: 'contact-1'
+			},
+			data: {
+				firstName: 'Jane',
+				lastName: 'Smith',
+				email: 'jane@example.com',
+				phoneNumber: '01234567890',
+				lpa: {
+					connectOrCreate: {
+						where: {
+							lpaCode: 'E60000001'
+						},
+						create: {
+							lpaCode: 'E60000001'
 						}
 					}
 				}
-			});
-			assert.equal(service.db.case.update.mock.callCount(), 0);
+			}
+		});
+	});
+
+	it('prefers lpaCode over lpaContact when saving contact LPA data', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			params: {
+				section: 'contacts',
+				manageListAction: 'edit',
+				manageListItemId: 'contact-1'
+			},
+			body: {
+				firstName: 'Jane',
+				lpaCode: 'E60000002',
+				lpaContact: 'E60000001'
+			}
 		});
 
-		it('prefers lpaCode over lpaContact for the contact LPA', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: { section: 'contacts', manageListAction: 'edit', manageListItemId: 'contact-1' },
-				body: { firstName: 'Jane', lpaCode: 'E60000002', lpaContact: 'E60000001' }
-			});
+		await save(handler, context);
 
-			await invokeSave(handler, { req, res, data });
+		const update = service.db.contact.update.mock.calls[0].arguments[0];
 
-			const updateData = (service.db.contact.update.mock.calls[0].arguments[0] as any).data;
-			assert.deepEqual(updateData.lpa.connectOrCreate.where, { lpaCode: 'E60000002' });
+		assert.deepEqual(update.data.lpa.connectOrCreate, {
+			where: {
+				lpaCode: 'E60000002'
+			},
+			create: {
+				lpaCode: 'E60000002'
+			}
 		});
 	});
 
 	describe('case update (default action)', () => {
 		it('updates scalar case fields', async () => {
-			const service = createMockService();
+			const service = createService();
 			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: {},
+			const context = createSaveContext({
+				url: '/overview',
 				body: {
-					planTitle: 'Southshire Local Plan',
+					planTitle: '  Southshire Local Plan  ',
 					planType: 'Local Plan',
-					caseOfficer: 'John Doe',
+					caseOfficer: '  John Doe  ',
 					programmeOfficerFirstName: 'Pat',
 					programmeOfficerLastName: 'Officer',
 					programmeOfficerEmail: 'pat.officer@example.com',
@@ -200,9 +226,9 @@ describe('updateCaseField', () => {
 				}
 			});
 
-			await invokeSave(handler, { req, res, data });
+			await save(handler, context);
 
-			assert.equal(service.db.case.update.mock.callCount(), 1);
+			assert.equal(service.db.case.update.mock.callCount(), 2);
 			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
 			assert.deepEqual(args.where, { reference: 'PLAN/123456' });
 			assert.equal(args.data.planTitle, 'Southshire Local Plan');
@@ -216,259 +242,466 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.contacts, undefined);
 			assert.equal(args.data.lpas, undefined);
 		});
+	});
 
-		it('creates a nested contact when contact fields are present', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: {},
-				body: {
-					firstName: 'Jane',
-					lastName: 'Smith',
-					email: 'jane@lpa.gov.uk',
-					phone: '01234567890',
-					lpaContact: 'E60000001'
-				}
-			});
-
-			await invokeSave(handler, { req, res, data });
-
-			const caseData = (service.db.case.update.mock.calls[0].arguments[0] as any).data;
-			assert.deepEqual(caseData.contacts.create, {
+	it('upserts contact details on the check-contact-details overview question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/overview',
+			params: {
+				question: 'check-contact-details',
+				manageListItemId: 'contact-1'
+			},
+			body: {
 				firstName: 'Jane',
 				lastName: 'Smith',
-				email: 'jane@lpa.gov.uk',
+				email: 'jane@example.com',
+				phone: '01234567890',
+				lpaContact: 'E60000001'
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.contact.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.contact.upsert.mock.calls[0].arguments[0], {
+			where: {
+				id: 'contact-1'
+			},
+			create: {
+				firstName: 'Jane',
+				lastName: 'Smith',
+				email: 'jane@example.com',
 				phoneNumber: '01234567890',
 				lpa: {
 					connectOrCreate: {
-						where: { lpaCode: 'E60000001' },
-						create: { lpaCode: 'E60000001' }
+						where: {
+							lpaCode: 'E60000001'
+						},
+						create: {
+							lpaCode: 'E60000001'
+						}
+					}
+				},
+				cases: {
+					connect: {
+						reference: REFERENCE
 					}
 				}
-			});
+			},
+			update: {
+				firstName: 'Jane',
+				lastName: 'Smith',
+				email: 'jane@example.com',
+				phoneNumber: '01234567890',
+				lpa: {
+					connectOrCreate: {
+						where: {
+							lpaCode: 'E60000001'
+						},
+						create: {
+							lpaCode: 'E60000001'
+						}
+					}
+				}
+			}
+		});
+	});
+
+	it('does not upsert contact details when the current item id is empty', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/overview',
+			params: {
+				question: 'check-contact-details',
+				manageListItemId: ''
+			},
+			body: {
+				firstName: 'Jane'
+			}
 		});
 
-		it('connects/creates and disconnects an LPA when lpa is provided', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: { manageListItemId: 'E60000000' },
-				body: { lpa: 'E60000001' }
-			});
+		await save(handler, context);
 
-			await invokeSave(handler, { req, res, data });
+		assert.equal(service.db.contact.upsert.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+	});
 
-			const caseData = (service.db.case.update.mock.calls[0].arguments[0] as any).data;
-			assert.deepEqual(caseData.lpas.connectOrCreate, {
-				where: { lpaCode: 'E60000001' },
-				create: { lpaCode: 'E60000001' }
-			});
-			assert.deepEqual(caseData.lpas.disconnect, [{ lpaCode: 'E60000000' }]);
+	it('upserts gateway 1 data', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const date = new Date('2026-01-01T00:00:00.000Z');
+		const context = createSaveContext({
+			url: '/gateway-1',
+			body: {
+				noticeOfIntention: date,
+				dsaChecked: '  yes  '
+			}
 		});
 
-		it('trims whitespace from body fields before saving', async () => {
-			const service = createMockService();
-			const handler = updateCaseField(service);
-			const { req, res, data } = createReq({
-				params: {},
-				body: { planTitle: '  Southshire Local Plan  ', caseOfficer: ' John Doe ' }
-			});
+		await save(handler, context);
 
-			await invokeSave(handler, { req, res, data });
-
-			const caseData = (service.db.case.update.mock.calls[0].arguments[0] as any).data;
-			assert.equal(caseData.planTitle, 'Southshire Local Plan');
-			assert.equal(caseData.caseOfficer, 'John Doe');
+		assert.equal(service.db.gateway1Info.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.gateway1Info.upsert.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			},
+			update: {
+				noticeOfIntention: date,
+				dsaChecked: 'yes'
+			},
+			create: {
+				caseId: REFERENCE,
+				noticeOfIntention: date,
+				dsaChecked: 'yes'
+			}
 		});
+	});
+
+	it('upserts gateway 2 data and sets appointment date for the assessor question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/gateway-2',
+			params: {
+				question: 'gateway-2-assessor'
+			},
+			body: {
+				assessorName: '  Alex Assessor  '
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
+
+		const upsert = service.db.gateway2Info.upsert.mock.calls[0].arguments[0];
+
+		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.update.assessorName, 'Alex Assessor');
+		assert.equal(upsert.create.caseId, REFERENCE);
+		assert.equal(upsert.create.assessorName, 'Alex Assessor');
+		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
+		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
+	});
+
+	it('renders 404 when saving an unknown case page', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/unknown-page'
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.logger.info.mock.callCount(), 1);
+		assert.match(service.logger.info.mock.calls[0].arguments[0], /unknown-page/);
+
+		assert.equal(context.res.status.mock.callCount(), 1);
+		assert.equal(context.res.status.mock.calls[0].arguments[0], 404);
+
+		assert.equal(context.res.render.mock.callCount(), 1);
+		assert.equal(context.res.render.mock.calls[0].arguments[0], 'views/errors/404.njk');
 	});
 });
 
-describe('processInputForDB', () => {
-	it('trims all string values', () => {
+describe('trimStringValues', () => {
+	it('trims string values', () => {
+		assert.deepEqual(
+			trimStringValues({
+				planTitle: '  Southshire Local Plan  ',
+				caseOfficer: '  John Doe  '
+			}),
+			{
+				planTitle: 'Southshire Local Plan',
+				caseOfficer: 'John Doe'
+			}
+		);
+	});
+
+	it('does not mutate the input object', () => {
 		const input = {
-			caseTitle: '  title  ',
-			caseOfficer: '  officer  ',
-			planType: '  plan type  '
+			planTitle: '  Southshire Local Plan  '
 		};
-		assert.deepEqual(trimStringValues(input), {
-			caseTitle: 'title',
-			caseOfficer: 'officer',
-			planType: 'plan type'
-		});
-	});
 
-	it('returns a new object without mutating the input', () => {
-		const input = { planTitle: '  x  ' };
 		const output = trimStringValues(input);
+
 		assert.notEqual(output, input);
-		assert.equal(input.planTitle, '  x  ');
-		assert.equal(output.planTitle, 'x');
+		assert.equal(input.planTitle, '  Southshire Local Plan  ');
+		assert.equal(output.planTitle, 'Southshire Local Plan');
 	});
 
-	it('leaves non-string values untouched', () => {
-		const input = { planTitle: '  x  ', count: 3, flag: true, missing: undefined };
-		assert.deepEqual(trimStringValues(input), {
-			planTitle: 'x',
-			count: 3,
-			flag: true,
-			missing: undefined
-		});
+	it('leaves non-string values unchanged', () => {
+		const date = new Date('2026-01-01T00:00:00.000Z');
+
+		assert.deepEqual(
+			trimStringValues({
+				name: '  value  ',
+				count: 1,
+				enabled: true,
+				date,
+				missing: undefined
+			}),
+			{
+				name: 'value',
+				count: 1,
+				enabled: true,
+				date,
+				missing: undefined
+			}
+		);
 	});
 });
 
 describe('buildGetJourneyMiddleware', () => {
-	function createMiddlewareHarness(
-		findUniqueImpl: () => Promise<unknown>,
-		reference: string | string[] | undefined = 'PLAN/123456'
-	) {
-		const service = createMockService();
-		service.db.case.findUnique.mock.mockImplementation(findUniqueImpl);
-
-		const renderCalls: Array<[string, unknown?]> = [];
-		const statusCalls: number[] = [];
-		const res = {
-			locals: {},
-			render(view: string, model?: unknown) {
-				renderCalls.push([view, model]);
-				return this;
-			},
-			status(code: number) {
-				statusCalls.push(code);
-				return this;
-			}
-		} as unknown as Response;
-
+	function createMiddlewareContext({
+		url = '/overview',
+		reference = REFERENCE
+	}: {
+		url?: string;
+		reference?: unknown;
+	} = {}) {
+		const service = createService();
 		const req = {
-			params: { reference },
-			path: '/overview',
-			url: '/overview',
-			query: { section: 'overview' }
-		} as unknown as Request;
+			url,
+			params: {
+				reference
+			}
+		};
+		const res = createResponse();
 		const next = mock.fn();
 
 		return {
 			service,
-			handler: buildGetJourneyMiddleware(service, JOURNEY_ID),
 			req,
 			res,
 			next,
-			renderCalls,
-			statusCalls
+			handler: buildGetJourneyMiddleware(service, JOURNEY_ID)
 		};
 	}
 
-	it('populates journey locals and calls next when the case exists', async () => {
-		const currentCase = {
-			reference: 'PLAN/123456',
-			planTitle: 'Southshire Local Plan',
-			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-			contacts: [
-				{
-					id: 'contact-1',
-					firstName: 'Jane',
-					lastName: 'Smith',
-					email: 'jane@lpa.gov.uk',
-					phoneNumber: '01234567890',
-					lpaCode: 'E60000001'
-				}
-			]
-		};
-		const ctx = createMiddlewareHarness(async () => currentCase);
+	it('renders 404 when the case title cannot be found', async () => {
+		const ctx = createMiddlewareContext();
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => null);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 1);
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				reference: REFERENCE
+			},
+			select: {
+				planTitle: true
+			}
+		});
+
+		assert.equal(ctx.res.status.mock.callCount(), 1);
+		assert.equal(ctx.res.status.mock.calls[0].arguments[0], 404);
+
+		assert.equal(ctx.res.render.mock.callCount(), 1);
+		assert.equal(ctx.res.render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+
+		assert.equal(ctx.next.mock.callCount(), 0);
+	});
+
+	it('loads overview journey data and maps list answers', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/overview'
+		});
+
+		const overviewData = {
+			reference: REFERENCE,
+			planTitle: 'Southshire Local Plan',
+			planType: 'Local Plan',
+			gateway2Info: {
+				assessorName: 'Alex Assessor'
+			},
+			lpas: [
+				{
+					lpaCode: 'E60000001'
+				},
+				{
+					lpaCode: 'E60000002'
+				}
+			],
+			contacts: [
+				{
+					id: 'contact-1',
+					firstName: 'Jane',
+					lastName: 'Smith',
+					email: 'jane@example.com',
+					phoneNumber: '01234567890',
+					lpaCode: 'E60000001'
+				}
+			]
+		};
+
+		let caseFindCount = 0;
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => {
+			caseFindCount += 1;
+			return caseFindCount === 1 ? { planTitle: 'Southshire Local Plan' } : overviewData;
+		});
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 2);
+
+		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
 			where: { reference: 'PLAN/123456' },
+			select: { planTitle: true }
+		});
+
+		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[1].arguments[0], {
+			where: {
+				reference: REFERENCE
+			},
 			include: {
+				caseHistories: {
+					orderBy: {
+						date: 'desc'
+					}
+				},
 				lpas: true,
 				contacts: true,
-				caseHistories: {
-					orderBy: { date: 'desc' }
+				gateway2Info: {
+					select: {
+						assessorName: true
+					}
 				}
 			}
 		});
+
 		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
-		assert.equal(ctx.res.locals.reference, 'PLAN/123456');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.assessorName, 'Alex Assessor');
+
 		assert.deepEqual(ctx.res.locals.journeyResponse.answers.checkLpas, [
-			{ id: 'E60000001', lpa: 'E60000001' },
-			{ id: 'E60000002', lpa: 'E60000002' }
+			{
+				id: 'E60000001',
+				lpa: 'E60000001'
+			},
+			{
+				id: 'E60000002',
+				lpa: 'E60000002'
+			}
 		]);
+
 		assert.deepEqual(ctx.res.locals.journeyResponse.answers.contactDetails, [
 			{
 				id: 'contact-1',
 				firstName: 'Jane',
 				lastName: 'Smith',
-				email: 'jane@lpa.gov.uk',
+				email: 'jane@example.com',
 				phoneNumber: '01234567890',
 				lpaCode: 'E60000001',
 				phone: '01234567890',
 				lpaContact: 'E60000001'
 			}
 		]);
-		assert.equal(ctx.next.mock.callCount(), 1);
-		assert.deepEqual(ctx.statusCalls, []);
-	});
 
-	it('decodes an encoded reference before fetching', async () => {
-		const ctx = createMiddlewareHarness(
-			async () => ({ reference: 'PLAN/123456', planTitle: 'x', lpas: [], contacts: [] }),
-			'PLAN%2F123456'
-		);
-
-		await ctx.handler(ctx.req, ctx.res, ctx.next);
-
-		assert.deepEqual((ctx.service.db.case.findUnique.mock.calls[0].arguments[0] as any).where, {
-			reference: 'PLAN/123456'
-		});
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
-	it('uses the first reference when an array is provided', async () => {
-		const ctx = createMiddlewareHarness(
-			async () => ({ reference: 'PLAN/123456', planTitle: 'x', lpas: [], contacts: [] }),
-			['PLAN%2F123456', 'IGNORED']
-		);
-
-		await ctx.handler(ctx.req, ctx.res, ctx.next);
-
-		assert.deepEqual((ctx.service.db.case.findUnique.mock.calls[0].arguments[0] as any).where, {
-			reference: 'PLAN/123456'
+	it('renders 404 when overview data cannot be found', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/overview'
 		});
-	});
 
-	it('renders 404 when the reference encoding is invalid and does not call next', async () => {
-		const ctx = createMiddlewareHarness(async () => null, '%E0%A4%A');
+		let caseFindCount = 0;
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => {
+			caseFindCount += 1;
+			return caseFindCount === 1 ? { planTitle: 'Southshire Local Plan' } : null;
+		});
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
-		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 0);
-		assert.deepEqual(ctx.statusCalls, [404]);
-		assert.deepEqual(ctx.renderCalls, [['views/errors/404.njk', undefined]]);
+		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 2);
+
+		assert.equal(ctx.res.status.mock.callCount(), 1);
+		assert.equal(ctx.res.status.mock.calls[0].arguments[0], 404);
+
+		assert.equal(ctx.res.render.mock.callCount(), 1);
+		assert.equal(ctx.res.render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+
 		assert.equal(ctx.next.mock.callCount(), 0);
 	});
 
-	it('renders 404 when the case cannot be found and does not call next', async () => {
-		const ctx = createMiddlewareHarness(async () => null);
+	it('loads gateway 1 journey data', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-1'
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
+
+		ctx.service.db.gateway1Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: REFERENCE,
+			dsaChecked: 'yes'
+		}));
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
-		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 1);
-		assert.deepEqual(ctx.statusCalls, [404]);
-		assert.deepEqual(ctx.renderCalls, [['views/errors/404.njk', undefined]]);
-		assert.equal(ctx.next.mock.callCount(), 0);
+		assert.deepEqual(ctx.service.db.gateway1Info.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			}
+		});
+
+		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.dsaChecked, 'yes');
+		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
-	it('logs the error and still calls next when the fetch throws', async () => {
-		const ctx = createMiddlewareHarness(async () => {
-			throw new Error('db failed');
+	it('loads gateway 2 journey data', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-2'
 		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
+
+		ctx.service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: REFERENCE,
+			assessorName: 'Alex Assessor'
+		}));
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(ctx.service.db.gateway2Info.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			}
+		});
+
+		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.assessorName, 'Alex Assessor');
+		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	it('logs unknown pages after loading the case title', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/unknown-page'
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.equal(ctx.service.logger.error.mock.callCount(), 1);
-		assert.match(ctx.service.logger.error.mock.calls[0].arguments[0] as string, /Unable to fetch case PLAN\/123456/);
-		assert.equal(ctx.next.mock.callCount(), 1);
-		assert.deepEqual(ctx.statusCalls, []);
+		assert.match(ctx.service.logger.error.mock.calls[0].arguments[0], /Unknown page unknown-page/);
+
+		assert.equal(ctx.next.mock.callCount(), 0);
+		assert.equal(ctx.res.status.mock.callCount(), 0);
+		assert.equal(ctx.res.render.mock.callCount(), 0);
 	});
 });

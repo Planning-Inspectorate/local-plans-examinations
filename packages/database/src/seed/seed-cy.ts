@@ -2,7 +2,6 @@ import path from 'path';
 import { loadEnvFile } from 'node:process';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
-import { gateway1DateAnswers, gateway1DsaAnswer } from '../../../../cypress/fixtures/manage/gateway-1.ts';
 
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
@@ -11,7 +10,7 @@ async function run() {
 	const config = loadConfig();
 	// prettier-ignore
 	try { loadEnvFile(); } catch {/* ignore errors*/}
-
+	const now = new Date(Date.now());
 	const dbClient = newDatabaseClient(config.db);
 	const lpaCodes = ['lpa-1', 'lpa-2'];
 	const contactDetails = [
@@ -37,17 +36,11 @@ async function run() {
 				caseOfficer: 'officer-1',
 				planTitle: 'Cypress Test Plan',
 				planType: 'local-plan',
-				intentionToCommenceDate: new Date(Date.now()),
-				gateway1Date: new Date(Date.now()),
-				gateway2Date: new Date(Date.now()),
-				gateway3Date: new Date(Date.now()),
-				submissionDate: new Date(Date.now()),
-				noticeOfIntention: new Date(gateway1DateAnswers.noticeOfIntention.seedDate),
-				estimatedGateway1Date: new Date(gateway1DateAnswers.estimatedGateway1Date.seedDate),
-				completedGateway1Date: new Date(gateway1DateAnswers.completedGateway1Date.seedDate),
-				slaSentDate: new Date(gateway1DateAnswers.slaSentDate.seedDate),
-				slaReceivedDate: new Date(gateway1DateAnswers.slaReceivedDate.seedDate),
-				dsaChecked: gateway1DsaAnswer.value,
+				intentionToCommenceDate: now,
+				gateway1Date: now,
+				gateway2Date: now,
+				gateway3Date: now,
+				submissionDate: now,
 				lpas: {
 					connectOrCreate: lpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
@@ -62,6 +55,37 @@ async function run() {
 						phoneNumber: contact.phone || '',
 						lpaCode: contact.lpaContact
 					}))
+				},
+				gateway1Info: {
+					create: {
+						noticeOfIntention: new Date('2026-05-01T12:00:00.000Z'),
+						estimatedGateway1Date: new Date('2026-06-01T12:00:00.000Z'),
+						completedGateway1Date: new Date('2026-07-01T12:00:00.000Z'),
+						slaSentDate: new Date('2026-08-01T12:00:00.000Z'),
+						slaReceivedDate: new Date('2026-09-01T12:00:00.000Z'),
+						dsaChecked: 'yes'
+					}
+				},
+				gateway2Info: {
+					create: {
+						estimatedDate: now
+					}
+				},
+				gateway3Info: {
+					create: {
+						estimatedDate: now
+					}
+				},
+				examinationInfo: {
+					create: {
+						submissionForExaminationDate: now
+					}
+				},
+				caseHistories: {
+					create: {
+						event: `Case created for plan Cypress Test Plan`,
+						username: 'unknown'
+					}
 				}
 			}
 		});
