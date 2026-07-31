@@ -8,11 +8,28 @@ describe('buildSaveController', () => {
 	let mockResponse: any;
 
 	before(() => {
+		const caseCreate = mock.fn(async () => ({ id: '123' }));
+		const gateway1Create = mock.fn(async () => ({}));
+		const gateway2Create = mock.fn(async () => ({}));
+		const gateway3Create = mock.fn(async () => ({}));
+		const examinationCreate = mock.fn(async () => ({}));
 		mockService = {
 			db: {
-				case: {
-					create: mock.fn(async () => ({ id: '123' }))
-				}
+				case: { create: caseCreate },
+				gateway1Info: { create: gateway1Create },
+				gateway2Info: { create: gateway2Create },
+				gateway3Info: { create: gateway3Create },
+				examinationInfo: { create: examinationCreate },
+				$transaction: mock.fn(async (cb: any) => {
+					const tx = {
+						case: { create: caseCreate },
+						gateway1Info: { create: gateway1Create },
+						gateway2Info: { create: gateway2Create },
+						gateway3Info: { create: gateway3Create },
+						examinationInfo: { create: examinationCreate }
+					};
+					return cb(tx);
+				})
 			},
 			notifyClient: {
 				sendEmail: mock.fn(async () => ({}))
