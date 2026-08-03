@@ -5,8 +5,7 @@ import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-pa
 describe('Portal login journey', () => {
 	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
-
-		cy.contains('Page not found').should('be.visible');
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
 	});
 
 	it('redirects to the OTP page after a recognised email is submitted', { tags: ['smoke'] }, () => {
@@ -23,6 +22,14 @@ describe('Portal login journey', () => {
 
 		portalLandingPage.verifyLoaded();
 		portalLandingPage.verifyHeading('My plans');
+	});
+
+	it('user cannot access OPT page by using back link and typing in url', { tags: ['regression'] }, () => {
+		startPortalOtpLogin();
+		portalLoginOtpPage.verifyLoaded();
+		portalLoginOtpPage.goBack();
+		cy.visit('/login/enter-code', { failOnStatusCode: false });
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
 	});
 
 	it.skip('requests a new code from the OTP page', { tags: ['notify'] }, () => {
