@@ -23,10 +23,15 @@
     }) }}
 
     <form method="post">
-    {{ govukButton({
-        text: "Delete case",
-        classes: "govuk-button--warning"
-    }) }}
+        <div class="govuk-button-group">
+            {{ govukButton({
+            text: "Yes, delete this case",
+            classes: "govuk-button--warning"
+            }) }}
+
+            <a class="govuk-link" href="{{ baseUrl }}/overview">Cancel</a>
+        </div>
     </form>
+</div>
 {% endblock %}
 

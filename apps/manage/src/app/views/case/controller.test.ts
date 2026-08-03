@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import type { ManageService } from '#service';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
-import { updateCaseField, trimStringValues, buildGetJourneyMiddleware } from './controller.ts';
+import {
+	updateCaseField,
+	trimStringValues,
+	buildGetJourneyMiddleware,
+	getDeleteCase,
+	postMarkAsDeleteCase
+} from './controller.ts';
 
 const JOURNEY_ID = 'edit-case-overview';
 
@@ -471,4 +477,70 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 1);
 		assert.deepEqual(ctx.statusCalls, []);
 	});
+});
+
+describe('DeleteCase', () => {
+	(it('renders delete-case.njk when getDeleteCase is called', async () => {
+		const service = createMockService();
+		const currentCase = {
+			reference: 'PLAN/123456',
+			planTitle: 'Southshire Local Plan',
+			planType: 'Local Plan',
+			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+			caseOfficer: 'John Doe'
+		};
+		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+		const render = mock.fn();
+		const status = mock.fn(() => ({ render }));
+		const res = {
+			locals: {},
+			render,
+			status
+		} as unknown as Response;
+		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+		await getDeleteCase(service)(req, res);
+
+		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
+	}),
+		it('sets deletedDate when delete is confirmed', async () => {
+			const service = createMockService();
+			const currentCase = {
+				reference: 'PLAN/123456',
+				planTitle: 'Southshire Local Plan',
+				planType: 'Local Plan',
+				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+				caseOfficer: 'John Doe'
+			};
+			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(service.db.case.update.mock.callCount(), 1);
+
+			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
+
+			assert.ok(args.data.deletedDate instanceof Date);
+		}),
+		it('redirects to all cases when delete is confirmed', async () => {
+			const service = createMockService();
+			const currentCase = {
+				reference: 'PLAN/123456',
+				planTitle: 'Southshire Local Plan',
+				planType: 'Local Plan',
+				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+				caseOfficer: 'John Doe'
+			};
+			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(redirect.mock.calls[0].arguments[0], '/');
+		}));
 });
