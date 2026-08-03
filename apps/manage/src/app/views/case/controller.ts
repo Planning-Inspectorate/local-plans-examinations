@@ -2,15 +2,14 @@ import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handl
 import type { ManageService } from '#service';
 import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response } from 'express';
-import type { Prisma } from '@pins/local-plans-database/src/client/client.ts';
+import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
 
-/** Shape of the fields we accept from the case overview form. */
-interface CaseFormInput {
+interface CaseOverviewInput {
 	planTitle?: string;
 	planType?: string;
 	planBand?: string;
@@ -26,7 +25,8 @@ interface CaseFormInput {
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
 	examinationWebsite?: string;
-	assessorGateway2?: string;
+	// assessor for Gateway 2
+	assessorName?: string;
 	assessorGateway3?: string;
 	examiningInspector1?: string;
 	examiningInspector2?: string;
@@ -34,6 +34,9 @@ interface CaseFormInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+}
+
+interface Gateway1Input {
 	noticeOfIntention?: Date;
 	estimatedGateway1Date?: Date;
 	completedGateway1Date?: Date;
@@ -42,39 +45,158 @@ interface CaseFormInput {
 	dsaChecked?: string;
 }
 
+interface Gateway2Input {
+	estimatedDate?: Date;
+	actualDate?: Date;
+	validDate?: Date;
+	assessorName?: string;
+	assessorDate?: Date;
+	assessorAppointmentDate?: Date;
+	workshopDate?: Date;
+	workshopVenue?: string;
+	reportIssuedDate?: Date;
+	reportPublishedByLPA?: Date;
+}
+
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
 		const { db, logger } = service;
 
-		const reference = getReference(req);
+		const reference = getParam(req.params.reference);
 		const section = getParam(req.params.section);
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
-
-		const answers = res.locals?.journeyResponse?.answers ?? {};
-		logger.info(`Updating case ${reference} with ${JSON.stringify(answers)}`);
 
 		if (action === 'remove') {
 			await removeItem({ db, reference, section, currentItemId });
 			return;
 		}
 
-		const formData = trimStringValues(data.answers as CaseFormInput);
-
-		if (action === 'edit' && section === CONTACTS_SECTION) {
-			await db.contact.update({
-				where: { id: currentItemId },
-				data: buildContactData(formData)
-			});
-			return;
+		let updated;
+		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
+		switch (firstSegmentUrl) {
+			case 'overview':
+				updated = await updateOverview(
+					db,
+					trimStringValues(data.answers as CaseOverviewInput),
+					reference,
+					action,
+					section,
+					currentItemId,
+					getParam(req.params.question)
+				);
+				break;
+			case 'gateway-1':
+				updated = await updateGateway1(db, trimStringValues(data.answers as Gateway1Input), reference);
+				break;
+			case 'gateway-2':
+				updated = await updateGateway2(
+					db,
+					trimStringValues(data.answers as Gateway2Input),
+					reference,
+					req.params.question as string
+				);
+				break;
+			default:
+				logger.info(`url - ${req.url} not found`);
+				return res.status(404).render('views/errors/404.njk');
 		}
-
-		await db.case.update({
-			where: { reference },
-			data: buildCaseData(formData, currentItemId)
-		});
+		if (updated) {
+			const columns = Object.keys(data.answers);
+			const oldValues = Object.fromEntries(columns.map((key) => [key, res.locals.journeyResponse?.answers[key]]));
+			await updateCaseHistory(db, oldValues, data.answers, reference);
+		}
 	};
+}
+
+async function updateOverview(
+	db: PrismaClient,
+	answers: CaseOverviewInput,
+	caseId: string,
+	action?: string,
+	section?: string,
+	currentItemId?: string,
+	question?: string
+) {
+	if (question === 'gateway-2-assessor') {
+		await updateGateway2(db, { assessorName: answers.assessorName }, caseId);
+		return true;
+	}
+	// Editing a contact's details (incl. changing that contact's LPA)
+	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
+		await db.contact.update({
+			where: { id: currentItemId },
+			data: buildContactData(answers)
+		});
+		return true;
+	}
+
+	// Changing the LPA associated with the *case*:
+	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
+	if (question === 'check-lpas' && answers.lpa) {
+		await db.case.update({
+			where: { reference: caseId },
+			data: {
+				lpas: {
+					connectOrCreate: {
+						where: {
+							lpaCode: answers.lpa
+						},
+						create: {
+							lpaCode: answers.lpa
+						}
+					},
+					disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
+				}
+			}
+		});
+		return true;
+	}
+
+	if (question === 'check-contact-details') {
+		if (!currentItemId) return false;
+		const contactData = buildContactData(answers);
+		await db.contact.upsert({
+			where: { id: currentItemId },
+			create: {
+				...contactData,
+				cases: { connect: { reference: caseId } }
+			},
+			update: contactData
+		});
+		return true;
+	}
+
+	// Updating case (scalar) details + any newly added contact / LPA
+	const { ...scalars } = answers;
+
+	await db.case.update({
+		where: { reference: caseId },
+		data: scalars
+	});
+	return true;
+}
+
+async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: string) {
+	await db.gateway1Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
+	return true;
+}
+
+async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string, question?: string) {
+	if (question === 'gateway-2-assessor') {
+		answers.assessorAppointmentDate = new Date();
+	}
+	await db.gateway2Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
+	return true;
 }
 
 /** Removes a contact, or disconnects an LPA from the case. */
@@ -99,83 +221,8 @@ async function removeItem({
 	});
 }
 
-/** Builds the `data` payload for a case update (scalar fields + contact/LPA nesting). */
-function buildCaseData(formData: CaseFormInput, currentItemId: string): Prisma.CaseUpdateInput {
-	// get scalar values
-	const {
-		planTitle,
-		planType,
-		planBand,
-		caseOfficer,
-		lpa,
-		firstName,
-		lastName,
-		email,
-		phone,
-		programmeOfficerFirstName,
-		programmeOfficerLastName,
-		programmeOfficerEmail,
-		examinationWebsite,
-		assessorGateway2,
-		assessorGateway3,
-		examiningInspector1,
-		examiningInspector2,
-		examiningInspector3,
-		qaInspector1,
-		qaInspector2,
-		qaInspector3,
-		noticeOfIntention,
-		estimatedGateway1Date,
-		completedGateway1Date,
-		slaSentDate,
-		slaReceivedDate,
-		dsaChecked
-	} = formData;
-
-	const hasContact = Boolean(firstName || lastName || email || phone);
-
-	return {
-		planTitle,
-		planType,
-		planBand,
-		caseOfficer,
-		programmeOfficerFirstName,
-		programmeOfficerLastName,
-		programmeOfficerEmail,
-		examinationWebsite,
-		assessorGateway2,
-		assessorGateway3,
-		examiningInspector1,
-		examiningInspector2,
-		examiningInspector3,
-		qaInspector1,
-		qaInspector2,
-		qaInspector3,
-		noticeOfIntention,
-		estimatedGateway1Date,
-		completedGateway1Date,
-		slaSentDate,
-		slaReceivedDate,
-		dsaChecked,
-		contacts: hasContact ? { create: buildContactData(formData) } : undefined,
-		lpas: lpa
-			? {
-					connectOrCreate: lpaConnectOrCreate(lpa),
-					disconnect: [{ lpaCode: currentItemId }]
-				}
-			: undefined,
-		caseHistories: {
-			create: {
-				event: `Updated ${Object.keys(formData).join(', ')} to ${Object.values(formData).join(', ')}`,
-				// TODO: Get user once authentication is implemented
-				username: 'Unknown'
-			}
-		}
-	};
-}
-
 /** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(formData: CaseFormInput): Prisma.ContactCreateWithoutCasesInput {
+function buildContactData(formData: CaseOverviewInput): Prisma.ContactCreateWithoutCasesInput {
 	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
 	return {
 		firstName,
@@ -197,13 +244,6 @@ function getParam(value: string | string[] | undefined): string {
 	return value ?? '';
 }
 
-/** Extracts and validates the case reference from the route params. */
-function getReference(req: Request): string {
-	const { reference } = req.params;
-	if (typeof reference !== 'string') throw new Error('reference must be a string');
-	return reference;
-}
-
 /** * Trims every string value on the form input. * Returns a new object rather than mutating the request body. */
 export function trimStringValues<T extends object>(input: T): T {
 	const trimmed = {} as T;
@@ -217,63 +257,64 @@ export function trimStringValues<T extends object>(input: T): T {
 export function buildGetJourneyMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const { db, logger } = service;
+		const reference = getParam(req.params.reference);
 
-		const rawReference = Array.isArray(req.params.reference) ? req.params.reference[0] : req.params.reference;
-		let reference: string;
-		try {
-			reference = decodeURIComponent(rawReference);
-		} catch {
-			return res.status(404).render('views/errors/404.njk');
-		}
+		const planTitle = await db.case.findUnique({
+			where: { reference },
+			select: { planTitle: true }
+		});
+		if (!planTitle) return res.status(404).render('views/errors/404.njk');
+		res.locals.planTitle = planTitle.planTitle;
+		res.locals.reference = reference;
 
-		try {
-			const currentCase = await db.case.findUnique({
-				where: { reference },
-				include: {
-					lpas: true,
-					contacts: true,
-					caseHistories: {
-						orderBy: { date: 'desc' }
-					}
-				}
-			});
-
-			if (!currentCase) {
-				return res.status(404).render('views/errors/404.njk');
+		const currentPage = getFirstSegmentOfUrl(req.url);
+		switch (currentPage) {
+			case 'overview': {
+				const overviewData = await getOverviewData(db, reference);
+				if (!overviewData) return res.status(404).render('views/errors/404.njk');
+				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
+				res.locals.journeyResponse = journeyResponse;
+				res.locals.currentCase = overviewData;
+				res.locals.currentSection = (req.query?.section as string) ?? '';
+				journeyResponse.answers.assessorName = overviewData.gateway2Info?.assessorName;
+				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
+					id: lpa.lpaCode,
+					lpa: lpa.lpaCode
+				}));
+				journeyResponse.answers.contactDetails = overviewData.contacts.map((contact) => ({
+					...contact,
+					phone: contact.phoneNumber,
+					lpaContact: contact.lpaCode
+				}));
+				if (next) next();
+				return;
 			}
 
-			// make planTitle and reference easily accessible in the template
-			res.locals.planTitle = currentCase.planTitle;
-			res.locals.reference = currentCase.reference;
-			res.locals.currentCase = currentCase;
-			res.locals.currentSection = req.query.section as string;
-			res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
-			const journeyResponse = new JourneyResponse(journeyId, '', currentCase);
-			journeyResponse.answers.checkLpas = currentCase.lpas.map((lpa) => ({
-				id: lpa.lpaCode,
-				lpa: lpa.lpaCode
-			}));
-			journeyResponse.answers.contactDetails = currentCase.contacts.map((contact) => ({
-				...contact,
-				phone: contact.phoneNumber,
-				lpaContact: contact.lpaCode
-			}));
-			res.locals.journeyResponse = journeyResponse;
-		} catch (error) {
-			logger.error(`Unable to fetch case ${reference} ${error}`);
+			case 'gateway-1': {
+				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
+				if (next) next();
+				return;
+			}
+
+			case 'gateway-2': {
+				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+				if (next) next();
+				return;
+			}
+
+			default:
+				logger.error(`Unknown page ${currentPage} for case ${reference}`);
 		}
-
-		res.locals.navigation = createNavigationParameters(req.url, reference, res.locals.currentSection);
-
-		if (next) next();
 	};
 }
 
 /** Adds the case section navigation to locals for the case routes. */
 export function addCaseNavigation(): AsyncRequestHandler {
 	return async (req, res, next) => {
-		const reference = getReference(req);
-		res.locals.navigation = createNavigationParameters(req.url, reference, res.locals.currentSection);
+		const reference = getParam(req.params.reference);
+		res.locals.navigation = createNavigationParameters(req.url, reference);
 		if (next) next();
 	};
 }
@@ -284,7 +325,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 		{ text: 'Overview', href: `${baseUrl}/overview` },
 		{ text: 'Timetable', href: '#' },
 		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
-		{ text: 'Gateway 2', href: '#' },
+		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
 		{ text: 'Gateway 3', href: '#' },
 		{ text: 'Examination', href: '#' },
 		{
@@ -303,9 +344,52 @@ function createNavigationParameters(path: string, reference: string, currentSect
 	}));
 }
 
+function getFirstSegmentOfUrl(url: string): string {
+	const path = url.split('?')[0];
+	return path.split('/').filter(Boolean)[0] ?? '';
+}
+
+async function getOverviewData(db: PrismaClient, reference: string) {
+	return db.case.findUnique({
+		where: { reference },
+		include: {
+			lpas: true,
+			contacts: true,
+			gateway2Info: {
+				select: {
+					assessorName: true
+				}
+			},
+			caseHistories: {
+				orderBy: { date: 'desc' }
+			}
+		}
+	});
+}
+
+export async function updateCaseHistory(
+	db: PrismaClient,
+	previousValues: Record<string, any>,
+	newValues: Record<string, any>,
+	reference: string
+) {
+	await db.case.update({
+		where: { reference },
+		data: {
+			caseHistories: {
+				create: Object.entries(previousValues).map(([key, oldValue]) => ({
+					event: `Updated ${key} from ${oldValue} to ${newValues[key]}`,
+					// TODO: Get user once authentication is implemented
+					username: 'Unknown'
+				}))
+			}
+		}
+	});
+}
+
 export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
-		const reference = getReference(req);
+		const reference = getParam(req.params.reference);
 		const currentCase = await service.db.case.findUnique({
 			where: { reference },
 			include: { lpas: true }
@@ -333,7 +417,7 @@ export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 
 export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
-		const reference = getReference(req);
+		const reference = getParam(req.params.reference);
 		const currentCase = await service.db.case.findUnique({
 			where: { reference }
 		});

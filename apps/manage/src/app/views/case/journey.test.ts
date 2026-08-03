@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { createOverviewJourney, gateway1Journey, GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
+import { createOverviewJourney, createGateway1Journey, GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
 
 function createOverviewJourneyForTest() {
@@ -14,7 +14,7 @@ function createOverviewJourneyForTest() {
 }
 
 function createGateway1JourneyForTest() {
-	return gateway1Journey(
+	return createGateway1Journey(
 		{ baseUrl: '/case/LP-TEST-001' } as Request,
 		new JourneyResponse(GATEWAY_1_JOURNEY_ID, '', {}),
 		questions

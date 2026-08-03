@@ -13,57 +13,61 @@ import {
 	buildSave,
 	question,
 	validate,
-	validationErrorHandler
+	validationErrorHandler,
+	type Journey,
+	type JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
+import type { Request } from 'express';
 import { questions } from './questions.ts';
-import { createOverviewJourney, gateway1Journey, GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
+import {
+	createOverviewJourney,
+	createGateway1Journey,
+	createGateway2Journey,
+	GATEWAY_1_JOURNEY_ID,
+	GATEWAY_2_JOURNEY_ID,
+	OVERVIEW_JOURNEY_ID
+} from './journey.ts';
+
+type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
+
+interface CaseJourneyConfig {
+	path: string;
+	journeyId: string;
+	createJourney: JourneyFactory;
+	supportsManageList?: boolean;
+}
+
+/** To add a new route, add a new object here **/
+const CASE_JOURNEYS: CaseJourneyConfig[] = [
+	{
+		path: 'overview',
+		journeyId: OVERVIEW_JOURNEY_ID,
+		createJourney: createOverviewJourney,
+		supportsManageList: true
+	},
+	{
+		path: 'gateway-1',
+		journeyId: GATEWAY_1_JOURNEY_ID,
+		createJourney: createGateway1Journey
+	},
+	{
+		path: 'gateway-2',
+		journeyId: GATEWAY_2_JOURNEY_ID,
+		createJourney: createGateway2Journey,
+		supportsManageList: true
+	}
+];
 
 export function caseRouter(service: ManageService): IRouter {
 	console.log('Building case router');
 	const router = createRouter({ mergeParams: true });
-	const getOverviewJourney = buildGetJourney((req, journeyResponse) =>
-		createOverviewJourney(req, journeyResponse, questions)
-	);
-	const getGateway1Journey = buildGetJourney((req, journeyResponse) =>
-		gateway1Journey(req, journeyResponse, questions)
-	);
-	const getOverviewJourneyResponse = buildGetJourneyMiddleware(service, OVERVIEW_JOURNEY_ID);
-	const getGateway1JourneyResponse = buildGetJourneyMiddleware(service, GATEWAY_1_JOURNEY_ID);
 	const updateCase = updateCaseField(service);
+
 	router.use(addCaseNavigation());
 
-	/**
-	 * Case overview
-	 */
-	router.get('/overview', getOverviewJourneyResponse, getOverviewJourney, buildList());
-	router.get(
-		'/overview/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
-		getOverviewJourneyResponse,
-		getOverviewJourney,
-		question
-	);
-	router.post(
-		'/overview/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
-		getOverviewJourneyResponse,
-		getOverviewJourney,
-		validate,
-		validationErrorHandler,
-		buildSave(updateCase, true)
-	);
-
-	/**
-	 * Gateway 1
-	 */
-	router.get('/gateway-1', getGateway1JourneyResponse, getGateway1Journey, buildList());
-	router.get('/gateway-1/:section/:question', getGateway1JourneyResponse, getGateway1Journey, question);
-	router.post(
-		'/gateway-1/:section/:question',
-		getGateway1JourneyResponse,
-		getGateway1Journey,
-		validate,
-		validationErrorHandler,
-		buildSave(updateCase, true)
-	);
+	for (const config of CASE_JOURNEYS) {
+		registerCaseJourney(router, service, config, updateCase);
+	}
 
 	/**
 	 * Delete case
@@ -72,4 +76,36 @@ export function caseRouter(service: ManageService): IRouter {
 	router.post('/delete-case', postMarkAsDeleteCase(service));
 
 	return router;
+}
+
+function registerCaseJourney(
+	router: IRouter,
+	service: ManageService,
+	config: CaseJourneyConfig,
+	updateCase: ReturnType<typeof updateCaseField>
+): void {
+	const { path, journeyId, createJourney, supportsManageList } = config;
+
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
+
+	const questionPath = supportsManageList
+		? `/${path}/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}`
+		: `/${path}/:section/:question`;
+
+	// List view
+	router.get(`/${path}`, getJourneyResponse, getJourney, buildList());
+
+	// Single question view
+	router.get(questionPath, getJourneyResponse, getJourney, question);
+
+	// Save answer
+	router.post(
+		questionPath,
+		getJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		buildSave(updateCase, true)
+	);
 }
