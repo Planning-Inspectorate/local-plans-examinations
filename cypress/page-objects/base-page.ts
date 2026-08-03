@@ -266,4 +266,15 @@ export class BasePage {
 	verifySubHeading(text: string) {
 		cy.contains('h2', text).should('be.visible');
 	}
+
+	verifyPageNotFound(attemptedUrl?: string) {
+		this.verifyMainContains(
+			'Page not found',
+			'If you typed the web address, check it is correct.',
+			'If you pasted the web address, check you copied the entire address.'
+		);
+		if (attemptedUrl) {
+			cy.url().should('contain', attemptedUrl);
+		}
+	}
 }
