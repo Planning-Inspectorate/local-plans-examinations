@@ -119,8 +119,8 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
-	if (question === 'gateway-2-assessor') {
-		await updateGateway2(db, { assessorName: answers.assessorName }, caseId);
+	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
+		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
 		return true;
 	}
 	// Editing a contact's details (incl. changing that contact's LPA)
@@ -188,7 +188,7 @@ async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: 
 }
 
 async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string, question?: string) {
-	if (question === 'gateway-2-assessor') {
+	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
 	await db.gateway2Info.upsert({
