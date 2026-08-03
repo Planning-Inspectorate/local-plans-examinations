@@ -8,6 +8,8 @@ const MAX_ATTEMPTS = 3;
 
 export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
+		delete req.session.email;
+
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
 			pageHeading: 'Sign-in',
@@ -158,7 +160,13 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 	return async (req, res) => {
 		if (!req.session.email) {
-			return res.redirect(`${req.baseUrl}`);
+			return res.status(404).render('views/layouts/error', {
+				pageTitle: 'Page not found',
+				messages: [
+					'If you typed the web address, check it is correct.',
+					'If you pasted the web address, check you copied the entire address.'
+				]
+			});
 		}
 
 		const showNewCodeMessage = req.session.showNewCodeMessage || false;
@@ -181,7 +189,13 @@ export function buildSubmitOtpPage(service: PortalService) {
 		const email = req.session.email;
 
 		if (!email) {
-			return res.redirect(`${req.baseUrl}`);
+			return res.status(404).render('views/layouts/error', {
+				pageTitle: 'Page not found',
+				messages: [
+					'If you typed the web address, check it is correct.',
+					'If you pasted the web address, check you copied the entire address.'
+				]
+			});
 		}
 
 		const { otp } = req.body;
@@ -299,6 +313,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 					locked_out_until: null
 				}
 			});
+
+			delete req.session.email;
 
 			logger.info({ email }, 'OTP verification success');
 			return res.redirect('/manage-local-plans/your-plans');
