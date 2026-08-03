@@ -275,6 +275,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
 				res.locals.journeyResponse = journeyResponse;
 				res.locals.currentCase = overviewData;
+				res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
 				res.locals.currentSection = (req.query?.section as string) ?? '';
 				journeyResponse.answers.assessorName = overviewData.gateway2Info?.assessorName;
 				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
