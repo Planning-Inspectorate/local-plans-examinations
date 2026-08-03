@@ -205,8 +205,15 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new RequiredValidator('Input Assessor Gateway 3')]
 	},
 	examiningInspector1: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Examining Inspector 1?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for Examination?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'examiningInspector1',
 		url: 'examining-inspector-1',
 		title: 'Examining Inspector 1',
@@ -214,7 +221,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	examiningInspector2: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Examining Inspector 2?',
+		question: 'Which Inspector is assigned for Examination?',
 		fieldName: 'examiningInspector2',
 		url: 'examining-inspector-2',
 		title: 'Examining Inspector 2',
@@ -222,7 +229,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	examiningInspector3: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Examining Inspector 3?',
+		question: 'Which Inspector is assigned for Examination?',
 		fieldName: 'examiningInspector3',
 		url: 'examining-inspector-3',
 		title: 'Examining Inspector 3',
@@ -230,7 +237,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaInspector1: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 1?',
+		question: 'Which Inspector is assigned for QA?',
 		fieldName: 'qaInspector1',
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
@@ -238,7 +245,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaInspector2: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 2?',
+		question: 'Which Inspector is assigned for QA?',
 		fieldName: 'qaInspector2',
 		url: 'qa-inspector-2',
 		title: 'QA Inspector 2',
@@ -246,7 +253,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaInspector3: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 3?',
+		question: 'Which Inspector is assigned for QA?',
 		fieldName: 'qaInspector3',
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
