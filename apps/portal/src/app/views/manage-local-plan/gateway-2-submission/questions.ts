@@ -10,6 +10,7 @@ import {
 	ALLOWED_MIME_TYPES,
 	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
+	MAX_NO_OF_FILES_TO_UPLOAD,
 	SINGLE_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
@@ -62,8 +63,34 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
 };
 
+export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Local plan timetable',
+	question: 'Upload local plan timetable',
+	fieldName: 'localPlanTimetable',
+	url: 'local-plan-timetable',
+	allowedFileExtensions: ALLOWED_EXTENSIONS,
+	allowedMimeTypes: ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
+		caption: 'Procedural documents',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
+		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files'
+	},
+	validators: [new FileUploadRequiredValidator('localPlanTimetable', 'Upload local plan timetable')]
+};
+
 const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
-	gateway2CoverLetter: gateway2CoverLetterQuestion
+	gateway2CoverLetter: gateway2CoverLetterQuestion,
+	localPlanTimetable: localPlanTimetableQuestion
 };
 
 export const questions = createQuestions(

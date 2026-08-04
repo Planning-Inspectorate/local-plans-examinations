@@ -15,7 +15,11 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 
 	return new Journey({
 		journeyId: JOURNEY_ID,
-		sections: [new Section('Procedural documents', 'procedural').addQuestion(questions.gateway2CoverLetter)],
+		sections: [
+			new Section('Procedural documents', 'procedural')
+				.addQuestion(questions.gateway2CoverLetter)
+				.addQuestion(questions.localPlanTimetable)
+		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',

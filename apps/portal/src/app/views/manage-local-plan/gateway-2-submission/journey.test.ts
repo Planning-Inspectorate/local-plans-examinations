@@ -54,6 +54,33 @@ describe('createJourney', () => {
 					}
 				]
 			}).isComplete(),
+			false
+		);
+	});
+
+	it('is incomplete until a local plan timetable has been uploaded', () => {
+		assert.strictEqual(createTestJourney({ localPlanTimetable: [] }).isComplete(), false);
+		assert.strictEqual(
+			createTestJourney({
+				gateway2CoverLetter: [
+					{
+						id: 'file-1',
+						fileName: 'cover-letter.pdf',
+						mimeType: 'application/pdf',
+						size: 100,
+						storageProvider: 'blob'
+					}
+				],
+				localPlanTimetable: [
+					{
+						id: 'file-2',
+						fileName: 'timetable.pdf',
+						mimeType: 'application/pdf',
+						size: 200,
+						storageProvider: 'blob'
+					}
+				]
+			}).isComplete(),
 			true
 		);
 	});
