@@ -20,6 +20,11 @@ resource "azurerm_storage_account" "documents" {
   min_tls_version                  = "TLS1_2"
   public_network_access_enabled    = false
 
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = local.tags
 }
 
