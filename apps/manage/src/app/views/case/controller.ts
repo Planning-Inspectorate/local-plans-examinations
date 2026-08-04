@@ -21,9 +21,6 @@ interface CaseOverviewInput {
 	lastName?: string;
 	email?: string;
 	phone?: string;
-	programmeOfficerFirstName?: string;
-	programmeOfficerLastName?: string;
-	programmeOfficerEmail?: string;
 	examinationWebsite?: string;
 	// assessor for Gateway 2
 	assessorName?: string;
@@ -34,6 +31,10 @@ interface CaseOverviewInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+	//programme Officer for gateway 3
+	programmeOfficerFirstName?: string;
+	programmeOfficerLastName?: string;
+	programmeOfficerEmail?: string;
 }
 
 interface Gateway1Input {
@@ -56,6 +57,17 @@ interface Gateway2Input {
 	workshopVenue?: string;
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
+}
+
+interface Gateway3Input {
+	estimatedDate?: Date;
+	actualDate?: Date;
+	assessorName?: string;
+	assessorDateOfAppointment?: Date;
+	completionDate?: Date;
+	programmeOfficerFirstName?: string;
+	programmeOfficerLastName?: string;
+	programmeOfficerEmail?: string;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -98,6 +110,14 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
+			case 'gateway-3':
+				updated = await updateGateway3(
+					db,
+					trimStringValues(data.answers as Gateway3Input),
+					reference,
+					req.params.question as string
+				);
+				break;
 			default:
 				logger.info(`url - ${req.url} not found`);
 				return res.status(404).render('views/errors/404.njk');
@@ -121,6 +141,18 @@ async function updateOverview(
 ) {
 	if (question === 'gateway-2-assessor') {
 		await updateGateway2(db, { assessorName: answers.assessorName }, caseId);
+		return true;
+	}
+	if (question === 'programme-officer') {
+		await updateGateway3(
+			db,
+			{
+				programmeOfficerFirstName: answers.programmeOfficerFirstName,
+				programmeOfficerLastName: answers.programmeOfficerLastName,
+				programmeOfficerEmail: answers.programmeOfficerEmail
+			},
+			caseId
+		);
 		return true;
 	}
 	// Editing a contact's details (incl. changing that contact's LPA)
@@ -196,6 +228,22 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 		update: { ...answers },
 		create: { caseId, ...answers }
 	});
+	return true;
+}
+
+async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseId: string, question?: string) {
+	console.log('question:', question);
+	console.log('answers:', answers);
+	if (question === 'gateway-3-assessor-name') {
+		answers.assessorDateOfAppointment = new Date();
+	}
+
+	await db.gateway3Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
+
 	return true;
 }
 
@@ -277,6 +325,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				res.locals.currentCase = overviewData;
 				res.locals.currentSection = (req.query?.section as string) ?? '';
 				journeyResponse.answers.assessorName = overviewData.gateway2Info?.assessorName;
+				journeyResponse.answers.programmeOfficerFirstName = overviewData.gateway3Info?.programmeOfficerFirstName;
+				journeyResponse.answers.programmeOfficerLastName = overviewData.gateway3Info?.programmeOfficerLastName;
+				journeyResponse.answers.programmeOfficerEmail = overviewData.gateway3Info?.programmeOfficerEmail;
 				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
 					id: lpa.lpaCode,
 					lpa: lpa.lpaCode
@@ -304,6 +355,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
+			case 'gateway-3': {
+				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				if (next) next();
+				return;
+			}
+
 			default:
 				logger.error(`Unknown page ${currentPage} for case ${reference}`);
 		}
@@ -326,7 +384,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 		{ text: 'Timetable', href: '#' },
 		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
 		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
-		{ text: 'Gateway 3', href: '#' },
+		{ text: 'Gateway 3', href: `${baseUrl}/gateway-3` },
 		{ text: 'Examination', href: '#' },
 		{
 			text: 'Case History',
@@ -358,6 +416,13 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 			gateway2Info: {
 				select: {
 					assessorName: true
+				}
+			},
+			gateway3Info: {
+				select: {
+					programmeOfficerFirstName: true,
+					programmeOfficerLastName: true,
+					programmeOfficerEmail: true
 				}
 			},
 			caseHistories: {
