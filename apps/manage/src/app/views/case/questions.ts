@@ -362,7 +362,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'estimatedDate',
 		url: 'gateway-2-estimated-date',
 		title: 'Gateway 2 estimated date',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-estimated-date' }
 	},
 	gateway2ActualDate: {
@@ -371,7 +371,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'actualDate',
 		url: 'gateway-2-actual-date',
 		title: 'Gateway 2 actual date',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-actual-date' }
 	},
 	gateway2ValidDate: {
@@ -380,7 +380,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'validDate',
 		url: 'gateway-2-valid-date',
 		title: 'Gateway 2 valid date',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
 	},
 	gateway2AssessorsName: {
@@ -396,7 +396,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'gateway-2-assessor',
 		title: 'Gateway 2 assessor name',
-		validators: [new RequiredValidator('Select a name')],
+		validators: [new RequiredValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
 	assessorDateOfAppointment: {
@@ -405,7 +405,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
 		title: 'Assessor date of appointment',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
 	},
 	workshopDate: {
@@ -414,7 +414,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'workshopDate',
 		url: 'gateway-2-workshop-date',
 		title: 'Workshop date',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' }
 	},
 	workshopVenue: {
@@ -432,7 +432,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'reportIssuedDate',
 		url: 'gateway-2-report-issued-date',
 		title: 'Report issued date',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-issued-date' }
 	},
 	reportPublishedDate: {
@@ -441,7 +441,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'reportPublishedByLPA',
 		url: 'gateway-2-report-published-date',
 		title: 'Report published by LPA date',
-		validators: [new DateValidator('Enter a date')],
+		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	}
 };

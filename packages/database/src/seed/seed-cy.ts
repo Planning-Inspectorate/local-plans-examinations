@@ -68,7 +68,15 @@ async function run() {
 				},
 				gateway2Info: {
 					create: {
-						estimatedDate: now
+						estimatedDate: new Date('2026-06-01T12:00:00.000Z'),
+						actualDate: new Date('2026-07-01T12:00:00.000Z'),
+						validDate: new Date('2026-08-01T12:00:00.000Z'),
+						assessorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
+						workshopDate: new Date('2026-09-01T12:00:00.000Z'),
+						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z'),
+						reportPublishedByLPA: new Date('2026-09-01T12:00:00.000Z'),
+						assessorName: 'assessor-1',
+						workshopVenue: 'Workshop venue name'
 					}
 				},
 				gateway3Info: {
