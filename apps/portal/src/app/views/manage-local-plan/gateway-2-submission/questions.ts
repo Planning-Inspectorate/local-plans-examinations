@@ -83,7 +83,8 @@ export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
-		dropInstructionText: 'or drop files'
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
 	},
 	validators: [new FileUploadRequiredValidator('localPlanTimetable', 'Upload local plan timetable')]
 };
