@@ -1,6 +1,7 @@
 export const DOCUMENT_SET_ID = {
 	// Procedural
 	G2_COVER_LETTER: 'g2-cover-letter',
+	G2_LOCAL_PLAN_TIMETABLE: 'g2-lp-timetable',
 	G2_PROJ_INIT_DOC: 'g2-init-doc',
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'g2-draft-stat-comp',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'g2-draft-stat-sound',
@@ -16,6 +17,7 @@ export const DOCUMENT_SET_ID = {
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
 	G2_COVER_LETTER: 'covering-letter',
+	G2_LOCAL_PLAN_TIMETABLE: 'local-plan-timetable',
 	G2_PROJ_INIT_DOC: 'initiation-document',
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'draft-stat-compliance',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'draft-stat-soundness',
