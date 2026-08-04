@@ -65,7 +65,8 @@ module "function_doc_processing" {
   app_service_plan_id = azurerm_service_plan.apps.id
 
   # storage
-  function_apps_storage_account            = azurerm_storage_account.functions.name
+  function_apps_storage_account = azurerm_storage_account.functions.name
+  # TODO: Move the function app host storage connection to managed identity when the shared node-function-app module supports identity-based storage.
   function_apps_storage_account_access_key = azurerm_storage_account.functions.primary_access_key
 
   # networking
