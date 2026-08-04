@@ -1,4 +1,4 @@
-import { CachedEntraClient, buildInitEntraClient } from './cached-entra-client.ts';
+import { CachedEntraClient } from './cached-entra-client.ts';
 import { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
 import { EntraClient } from './entra.ts';
 import assert from 'node:assert';
