@@ -5,8 +5,7 @@ import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-pa
 describe('Portal login journey', () => {
 	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
-
-		cy.contains('Page not found').should('be.visible');
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
 	});
 
 	it('redirects to the OTP page after a recognised email is submitted', { tags: ['smoke'] }, () => {
