@@ -5,6 +5,7 @@ import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 export const GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
+export const LOCAL_PLAN_TIMETABLE_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_LOCAL_PLAN_TIMETABLE;
 
 type RequestWithCurrentCase = Request & {
 	currentCase?: {
@@ -32,7 +33,7 @@ type DocumentRow = {
 	latestDocumentVersion: DocumentVersionRow | null;
 };
 
-type SyncGateway2CoverLetterDocumentsParams = {
+type SyncDocumentsParams = {
 	caseId: string;
 	documentSetId: string;
 	uploadedFiles: UploadedFile[];
@@ -46,6 +47,29 @@ export async function loadGateway2CoverLetterDocuments(
 	return loadUploadedDocuments(service, caseId, GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID);
 }
 
+// Loads the saved local plan timetable files for this case.
+export async function loadLocalPlanTimetableDocuments(service: PortalService, caseId: string): Promise<UploadedFile[]> {
+	return loadUploadedDocuments(service, caseId, LOCAL_PLAN_TIMETABLE_DOCUMENT_SET_ID);
+}
+
+// Saves the current local plan timetable upload state.
+export async function saveLocalPlanTimetableDocuments(
+	service: PortalService,
+	req: Request,
+	uploadedFiles: UploadedFile[]
+): Promise<void> {
+	const caseId = (req as RequestWithCurrentCase).currentCase?.id;
+	if (!caseId) {
+		throw new Error('Cannot save local plan timetable documents without a loaded case');
+	}
+
+	await syncDocuments(service, {
+		caseId,
+		documentSetId: LOCAL_PLAN_TIMETABLE_DOCUMENT_SET_ID,
+		uploadedFiles
+	});
+}
+
 // Saves the current cover letter upload state.
 export async function saveGateway2CoverLetterDocuments(
 	service: PortalService,
@@ -57,7 +81,11 @@ export async function saveGateway2CoverLetterDocuments(
 		throw new Error('Cannot save Gateway 2 cover letter documents without a loaded case');
 	}
 
-	await syncGateway2CoverLetterDocuments(service, {
+	if (uploadedFiles.length > 1) {
+		throw new Error('Gateway 2 cover letter can only have one active uploaded document');
+	}
+
+	await syncDocuments(service, {
 		caseId,
 		documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
 		uploadedFiles
@@ -88,14 +116,10 @@ async function loadUploadedDocuments(
 }
 
 // Makes the database match the uploaded file list.
-async function syncGateway2CoverLetterDocuments(
+async function syncDocuments(
 	service: PortalService,
-	{ caseId, documentSetId, uploadedFiles }: SyncGateway2CoverLetterDocumentsParams
+	{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
 ): Promise<void> {
-	if (uploadedFiles.length > 1) {
-		throw new Error('Gateway 2 cover letter can only have one active uploaded document');
-	}
-
 	await assertDocumentSetExists(service, documentSetId);
 
 	const existingDocuments = (await service.db.document.findMany({
