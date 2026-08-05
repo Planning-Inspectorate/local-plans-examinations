@@ -1,4 +1,4 @@
-import { BasePage } from '../../base-page.ts';
+import { gatewayBasePage } from '../base/gateway-page.ts';
 import { gateway1DateAnswers, gateway1DsaAnswer, gateway1ExpectedAnswers } from '../../../fixtures/manage/gateway-1.ts';
 
 const gateway1Rows = [...Object.values(gateway1DateAnswers).map(({ row }) => row), gateway1DsaAnswer.row];
@@ -11,29 +11,9 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	[gateway1DsaAnswer.row, new RegExp(`^/case/.+/gateway-1/gateway-1/${gateway1DsaAnswer.path}$`)]
 ];
 
-export class Gateway1Page extends BasePage {
+export class Gateway1Page extends gatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-1$/);
-	}
-
-	sectionHeading(text: string) {
-		return cy.contains('h2', text);
-	}
-
-	openActionLinkFor(key: string) {
-		this.summaryRowActionLink(key).should('be.visible').click();
-	}
-
-	verifyLoaded(planTitle?: string) {
-		super.verifyLoaded();
-
-		if (planTitle) {
-			this.verifyHeading(planTitle);
-		}
-	}
-
-	verifySectionHeading(text: string) {
-		this.sectionHeading(text).should('be.visible');
 	}
 
 	verifyExpectedRows() {

@@ -396,7 +396,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'gateway-2-assessor',
 		title: 'Gateway 2 assessor name',
-		validators: [new RequiredValidator(' a valid date')],
+		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
 	assessorDateOfAppointment: {

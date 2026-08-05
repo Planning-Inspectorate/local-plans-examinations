@@ -21,7 +21,7 @@ describe('Gateway 2 updates', () => {
 	});
 	after(() => cy.task('clearDb'));
 
-	it('updates a Gateway 2 date answer', () => {
+	it('updates a Gateway 2 date answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2EstimatedDate.row);
 
 		gateway2EstimatedDatePage.verifyLoaded(gateway2DateAnswers.gateway2EstimatedDate.input);
@@ -34,17 +34,17 @@ describe('Gateway 2 updates', () => {
 		);
 	});
 
-	it('updates the Gateway 2 assessor answer', () => {
+	it('updates the Gateway 2 assessor answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
-		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.assessor1Select);
-		gateway2AssessorPage.selectAssessorName(gateway2AssessorAnswer.updatedAssessorSelect);
+		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.assessor1);
+		gateway2AssessorPage.selectAssessorName(gateway2AssessorAnswer.Assessor2);
 
 		gateway2Page.verifyLoaded('Cypress Test Plan');
-		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.updatedAssessor);
+		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.Assessor2);
 	});
 
-	it('updates the workshop venue answer', () => {
+	it('updates the workshop venue answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
 
 		workshopVenuePage.verifyLoaded(workshopVenueAnswer.value);
@@ -54,8 +54,7 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, updatedWorkshopVenueAnswer.value);
 	});
 
-	it('returns to Gateway 2 from Gateway 2 answer page back links', () => {
-		//
+	it('returns to Gateway 2 from Gateway 2 answer page back links', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2ActualDate.row);
 		gateway2ActualDatePage.verifyLoaded(gateway2DateAnswers.gateway2ActualDate.input);
 		gateway2ActualDatePage.goBack();
