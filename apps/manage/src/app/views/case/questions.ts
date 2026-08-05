@@ -3,19 +3,21 @@ import {
 	createQuestions,
 	RequiredValidator,
 	questionClasses,
-	DateValidator
+	DateValidator,
+	type BaseQuestionProps
 } from '@planning-inspectorate/dynamic-forms';
-import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
+
+type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
 const allQuestionClasses = {
 	...questionClasses,
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const caseQuestions: Record<string, QuestionProps> = {
+const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
 	planTitle: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,

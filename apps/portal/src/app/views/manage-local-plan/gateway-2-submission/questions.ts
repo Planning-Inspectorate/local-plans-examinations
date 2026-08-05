@@ -1,5 +1,4 @@
-import { createQuestions, questionClasses } from '@planning-inspectorate/dynamic-forms';
-import type { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
 import {
 	CUSTOM_COMPONENT_CLASSES,
 	CUSTOM_COMPONENTS,

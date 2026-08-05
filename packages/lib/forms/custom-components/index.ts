@@ -1,4 +1,4 @@
-import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
+import type { QuestionProps } from '@planning-inspectorate/dynamic-forms';
 import {
 	FILE_UPLOADER_COMPONENT_TYPE,
 	FileUploaderQuestion,
