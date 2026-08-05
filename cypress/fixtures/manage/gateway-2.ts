@@ -68,7 +68,7 @@ export const gateway2DateAnswers = {
 	reportPublishedDate: {
 		row: 'Report published by LPA date',
 		heading: 'When was the report published by the LPA?',
-		fieldName: 'reportPublishedByLpa',
+		fieldName: 'reportPublishedByLPA',
 		path: 'gateway-2-report-published-date',
 		seedDate: '2026-09-01T12:00:00.000Z',
 		input: { day: '1', month: '9', year: '2026' },
@@ -80,9 +80,7 @@ export const gateway2AssessorAnswer = {
 	row: 'Gateway 2 assessor name',
 	path: 'gateway-2-assessor',
 	assessor1: 'Assessor 1',
-	assessor1Select: '1',
-	updatedAssessor: 'Assessor 2',
-	updatedAssessorSelect: '2',
+	Assessor2: 'Assessor 2',
 	display: 'Assessor 1'
 } as const;
 

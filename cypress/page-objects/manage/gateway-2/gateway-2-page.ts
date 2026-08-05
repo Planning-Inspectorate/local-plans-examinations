@@ -1,4 +1,4 @@
-import { BasePage } from '../../base-page.ts';
+import { gatewayBasePage } from '../base/gateway-page.ts';
 import {
 	gateway2DateAnswers,
 	workshopVenueAnswer,
@@ -21,29 +21,9 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	[gateway2AssessorAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${gateway2AssessorAnswer.path}$`)]
 ];
 
-export class Gateway2Page extends BasePage {
+export class Gateway2Page extends gatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-2$/);
-	}
-
-	sectionHeading(text: string) {
-		return cy.contains('h2', text);
-	}
-
-	openActionLinkFor(key: string) {
-		this.summaryRowActionLink(key).should('be.visible').click();
-	}
-
-	verifyLoaded(planTitle?: string) {
-		super.verifyLoaded();
-
-		if (planTitle) {
-			this.verifyHeading(planTitle);
-		}
-	}
-
-	verifySectionHeading(text: string) {
-		this.sectionHeading(text).should('be.visible');
 	}
 
 	verifyExpectedRows() {
