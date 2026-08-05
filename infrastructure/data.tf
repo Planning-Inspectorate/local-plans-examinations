@@ -41,6 +41,13 @@ data "azurerm_private_dns_zone" "redis_cache" {
   provider = azurerm.tooling
 }
 
+data "azurerm_private_dns_zone" "managed_redis" {
+  name                = "privatelink.redis.azure.net"
+  resource_group_name = var.tooling_config.network_rg
+
+  provider = azurerm.tooling
+}
+
 data "azurerm_private_dns_zone" "keyvault" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.tooling_config.network_rg
