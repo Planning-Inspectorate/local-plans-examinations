@@ -3,8 +3,6 @@ import { EntraClient } from './entra.ts';
 import type { GroupMember } from './entra.ts';
 import type { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
 
-const CACHE_PREFIX = 'entra-group__';
-
 export type InitEntraClient = (session: AuthSession) => CachedEntraClient | null;
 
 export interface AuthSession {
@@ -48,13 +46,12 @@ export class CachedEntraClient {
 	 * Fetch all group members - direct and indirect - of an Entra group, up to a maximum of 5000
 	 */
 	async listAllGroupMembers(groupId: string): Promise<GroupMember[]> {
-		const key = CACHE_PREFIX + groupId;
-		let members = this.#cache.get(key);
+		let members = this.#cache.get(groupId);
 		if (members) {
 			return members;
 		}
 		members = await this.#client.listAllGroupMembers(groupId);
-		this.#cache.set(key, members);
+		this.#cache.set(groupId, members);
 		return members;
 	}
 }
