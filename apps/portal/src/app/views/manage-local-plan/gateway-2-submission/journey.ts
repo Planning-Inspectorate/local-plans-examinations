@@ -15,7 +15,25 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 
 	return new Journey({
 		journeyId: JOURNEY_ID,
-		sections: [new Section('Procedural documents', 'procedural').addQuestion(questions.gateway2CoverLetter)],
+		sections: [
+			new Section('Procedural documents', 'procedural')
+				.addQuestion(questions.gateway2CoverLetter)
+				.addQuestion(questions.localPlanTimetable)
+				.addQuestion(questions.projectInitiation)
+				.addQuestion(questions.draftStatementOfCompliance)
+				.addQuestion(questions.draftStatementOfSoundness),
+			new Section('Consultation documents', 'consultation')
+				.addQuestion(questions.noticeOfIntentionToCommenceLocalPlanPreparation)
+				.addQuestion(questions.scopingConsultationDocuments)
+				.addQuestion(questions.consultationSummaryOfFeedbackToScopingConsultation)
+				.addQuestion(questions.gateway1SelfAssessmentOfReadiness)
+				.addQuestion(questions.consultationOnProposedLocalPlanContentAndEvidence)
+				.addQuestion(questions.summaryOfConsultationOnProposedLocalPlanContentAndEvidenceDocuments),
+			new Section('Additional documents', 'additional').addQuestion(questions.subsequentWorkTowardsADraftPlan),
+			new Section('Workshop preferences', 'workshop')
+				.addQuestion(questions.suggestedWorkshopVenue)
+				.addQuestion(questions.suggestedWorkshopDates)
+		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',

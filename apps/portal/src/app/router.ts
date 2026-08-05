@@ -11,7 +11,6 @@ import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
 import { createApplicationDeclarationRoutes } from './views/gateway-2-application/application-declaration/index.ts';
-import { createApplicationSubmissionRoutes } from './views/gateway-2-application/application-submission/index.ts';
 import { createApplicationCompleteRoutes } from './views/gateway-2-application/application-complete/index.ts';
 
 /**
@@ -39,7 +38,7 @@ export function buildRouter(service: PortalService): IRouter {
 		'/manage-local-plans/:reference/gateway-2-application/application-declaration',
 		createApplicationDeclarationRoutes(service)
 	);
-	router.use('/manage-local-plans/:reference/gateway-2-application', createApplicationSubmissionRoutes(service));
+	router.use('/manage-local-plans/:reference/gateway-2-application', gateway2SubmissionRoutes(service));
 	router.use(
 		'/manage-local-plans/:reference/gateway-2-application/application-complete',
 		createApplicationCompleteRoutes()

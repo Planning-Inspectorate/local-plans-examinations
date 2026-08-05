@@ -2,27 +2,38 @@
 
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
-{% block pageTitle %}Check your answers{% endblock %}
+
+{% block pageTitle %}Application details - Submit your application{% endblock %}
 
 {% block content %}
     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <h1 class="govuk-heading-l" data-cy="check-your-answers-heading">Check your answers</h1>
+        <div class="govuk-grid-column-two-thirds app-grid-column--80">
+            <h1 class="govuk-heading-xl app-header__title" data-cy="check-your-answers-heading">
+                {#TODO set plan title#}
+                <span class="govuk-caption-xl">to do... plan title goes here</span>
+                Gateway 2 submission
+            </h1>
+            {#TODO set targetDate#}
+        {{ govukInsetText({
+            text: "Your target submission date is " + targetDate + ". A Gateway 2 assessment usually takes about 6 weeks."
+        }) }}
+        <p class="govuk-body">
+            <a href="{{ saveAndComeBackUrl }}" class="govuk-link" data-cy="save-and-come-back">Save and come back later</a>
+        </p>
+        <hr class="govuk-section-break govuk-section-break--visible app-section-break">
+
+        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
         </div>
     </div>
 
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
+    <div class="govuk-grid-row govuk-!-margin-top-6">
+        <div class="govuk-grid-column-two-thirds app-grid-column--80">
             {% for section in summaryListData.sections %}
                 {% if section.list.rows.length %}
+                    <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                     {{ govukSummaryList({
-                        card: {
-                            title: {
-                                text: section.heading
-                            },
-                            attributes: {id: section.heading | lower}
-                        },
                         rows: section.list.rows
                     }) }}
                 {% endif %}

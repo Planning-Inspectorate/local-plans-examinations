@@ -415,7 +415,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		redirect: redirectToFileUploaderQuestion
 	});
 
-	router.get('/gateway-2-submission', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
+	router.get('/', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
 
