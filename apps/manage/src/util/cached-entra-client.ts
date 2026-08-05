@@ -2,9 +2,16 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { EntraClient } from './entra.ts';
 import type { GroupMember } from './entra.ts';
 import type { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
-import type { AuthSession, InitEntraClient } from './entra-groups.ts';
 
 const CACHE_PREFIX = 'entra-group__';
+
+export type InitEntraClient = (session: AuthSession) => CachedEntraClient | null;
+
+export interface AuthSession {
+	account?: {
+		accessToken?: string;
+	};
+}
 
 export function buildInitEntraClient(authEnabled: boolean, cache: MapCache): InitEntraClient {
 	return (session: AuthSession) => {
