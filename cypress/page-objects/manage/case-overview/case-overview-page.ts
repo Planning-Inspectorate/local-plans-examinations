@@ -123,7 +123,7 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyDeleteCaseButton() {
-		cy.contains('button.govuk-button', 'Delete case').should('be.visible');
+		cy.contains('[role="button"]', 'Delete case').should('be.visible');
 	}
 
 	verifyExaminationWebsiteHyperlink(hyperlink: string) {
