@@ -41,6 +41,12 @@ variable "apps_config" {
       family   = string
       sku_name = string
     })
+
+    managed_redis = object({
+      sku_name                  = string
+      high_availability_enabled = bool
+      rdb_backup_frequency      = string
+    })
   })
 }
 

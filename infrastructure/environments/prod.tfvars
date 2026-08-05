@@ -31,6 +31,11 @@ apps_config = {
     family   = "C"
     sku_name = "Basic"
   }
+  managed_redis = {
+    sku_name                  = "Balanced_B1"
+    high_availability_enabled = true
+    rdb_backup_frequency      = "1h"
+  }
 }
 
 auth_config_portal = {
