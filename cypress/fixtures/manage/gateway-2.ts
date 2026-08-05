@@ -79,8 +79,9 @@ export const gateway2DateAnswers = {
 export const gateway2AssessorAnswer = {
 	row: 'Gateway 2 assessor name',
 	path: 'gateway-2-assessor',
+	heading: 'Who is the Gateway 2 assessor?',
 	assessor1: 'Assessor 1',
-	Assessor2: 'Assessor 2',
+	assessor2: 'Assessor 2',
 	display: 'Assessor 1'
 } as const;
 
@@ -89,14 +90,8 @@ export const workshopVenueAnswer = {
 	path: 'gateway-2-workshop-venue',
 	heading: 'What is the venue for the Gateway 2 workshop?',
 	value: 'Workshop venue name',
+	updatedValue: 'Updated Workshop Venue',
 	display: 'Workshop venue'
-} as const;
-
-export const updatedWorkshopVenueAnswer = {
-	row: 'Workshop venue',
-	path: 'gateway-2-workshop-venue',
-	heading: 'What is the venue for the Gateway 2 workshop?',
-	value: 'Updated Workshop Venue'
 } as const;
 
 export const updatedGateway2EstimatedDateAnswer = {

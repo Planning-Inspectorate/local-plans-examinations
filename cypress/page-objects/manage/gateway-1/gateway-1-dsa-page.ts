@@ -1,6 +1,6 @@
-import { BasePage } from '../../base-page.ts';
+import { GatewayBasePage } from '../base/gateway-page.ts';
 
-export class Gateway1DsaPage extends BasePage {
+export class Gateway1DsaPage extends GatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-1\/gateway-1\/dsa-checked$/);
 	}

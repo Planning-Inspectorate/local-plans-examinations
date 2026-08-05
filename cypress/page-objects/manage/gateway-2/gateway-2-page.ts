@@ -1,4 +1,4 @@
-import { gatewayBasePage } from '../base/gateway-page.ts';
+import { GatewayBasePage } from '../base/gateway-page.ts';
 import {
 	gateway2DateAnswers,
 	workshopVenueAnswer,
@@ -21,7 +21,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	[gateway2AssessorAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${gateway2AssessorAnswer.path}$`)]
 ];
 
-export class Gateway2Page extends gatewayBasePage {
+export class Gateway2Page extends GatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-2$/);
 	}
