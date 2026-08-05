@@ -1,4 +1,4 @@
-import { type IRouter, Router as createRouter } from 'express';
+import { type IRouter, Router as createRouter, type NextFunction, type Response } from 'express';
 import { addCaseNavigation, buildGetJourneyMiddleware, updateCaseField } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -21,6 +21,8 @@ import {
 	GATEWAY_2_JOURNEY_ID,
 	OVERVIEW_JOURNEY_ID
 } from './journey.ts';
+import * as authSession from '../../auth/session.service.ts';
+import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -29,6 +31,24 @@ interface CaseJourneyConfig {
 	journeyId: string;
 	createJourney: JourneyFactory;
 	supportsManageList?: boolean;
+}
+
+function buildInspectorOptions(service: ManageService) {
+	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+		const inspectorIds = await entraClient?.listAllGroupMembers(service.entraGroupIds.inspectors);
+		let options: { value: string; text: string }[] = [];
+		if (inspectorIds) {
+			options = [{ value: '', text: '' }, ...inspectorIds.map((m) => ({ value: m.id, text: m.displayName }))];
+		}
+		questions.examiningInspector1.options = options;
+		questions.examiningInspector2.options = options;
+		questions.examiningInspector3.options = options;
+		questions.qaInspector1.options = options;
+		questions.qaInspector2.options = options;
+		questions.qaInspector3.options = options;
+		next();
+	});
 }
 
 /** To add a new route, add a new object here **/
@@ -81,15 +101,16 @@ function registerCaseJourney(
 		: `/${path}/:section/:question`;
 
 	// List view
-	router.get(`/${path}`, getJourneyResponse, getJourney, buildList());
+	router.get(`/${path}`, getJourneyResponse, buildInspectorOptions(service), getJourney, buildList());
 
 	// Single question view
-	router.get(questionPath, getJourneyResponse, getJourney, question);
+	router.get(questionPath, getJourneyResponse, buildInspectorOptions(service), getJourney, question);
 
 	// Save answer
 	router.post(
 		questionPath,
 		getJourneyResponse,
+		buildInspectorOptions(service),
 		getJourney,
 		validate,
 		validationErrorHandler,
