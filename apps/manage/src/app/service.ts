@@ -3,7 +3,8 @@ import { initGovNotify } from '@pins/local-plans-lib/govnotify/index.ts';
 import type { GovNotifyClient } from '@pins/local-plans-lib/govnotify/index.ts';
 import type { Config } from './config.ts';
 import { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
-import { buildInitEntraClient, InitEntraClient } from '#util/cached-entra-client.ts';
+import { buildInitEntraClient } from '#util/cached-entra-client.ts';
+import type { InitEntraClient } from '#util/cached-entra-client.ts';
 
 export class ManageService extends BaseService {
 	#config: Config;
