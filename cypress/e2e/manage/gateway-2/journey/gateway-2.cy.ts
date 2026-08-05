@@ -10,7 +10,6 @@ import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
 	workshopVenueAnswer,
-	updatedWorkshopVenueAnswer,
 	updatedGateway2EstimatedDateAnswer
 } from '../../../../fixtures/manage/gateway-2.ts';
 
@@ -34,24 +33,26 @@ describe('Gateway 2 updates', () => {
 		);
 	});
 
-	it('updates the Gateway 2 assessor answer', { tags: ['regression'] }, () => {
+	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
-		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.assessor1);
-		gateway2AssessorPage.selectAssessorName(gateway2AssessorAnswer.Assessor2);
+		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
+		gateway2AssessorPage.assessorSelected(gateway2AssessorAnswer.assessor1);
+		gateway2AssessorPage.selectAssessorName(gateway2AssessorAnswer.assessor2);
 
 		gateway2Page.verifyLoaded('Cypress Test Plan');
-		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.Assessor2);
+		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
 	});
 
 	it('updates the workshop venue answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
 
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.value);
-		workshopVenuePage.enterWorkshopVenue(updatedWorkshopVenueAnswer.value);
+		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
+		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
+		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
 
 		gateway2Page.verifyLoaded('Cypress Test Plan');
-		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, updatedWorkshopVenueAnswer.value);
+		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
 	});
 
 	it('returns to Gateway 2 from Gateway 2 answer page back links', { tags: ['regression'] }, () => {
@@ -62,7 +63,7 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifyLoaded('Cypress Test Plan');
 
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.value);
+		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
 		workshopVenuePage.goBack();
 
 		gateway2Page.verifyLoaded('Cypress Test Plan');

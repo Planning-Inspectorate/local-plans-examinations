@@ -26,27 +26,29 @@ describe('Gateway 2 validation', () => {
 		gateway2ActualDatePage.saveAndContinue();
 
 		gateway2ActualDatePage.verifyLoaded();
-		//for valid date error messages, asssertions need 2 spaces due to how the message is processed
+		//for valid date error messages, assertions need 2 spaces due to how the message is processed
 		gateway2ActualDatePage.verifyValidationError('Enter  a valid date');
 	});
 
 	it('shows an error when a workshop venue is blank', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.value);
+		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
+		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
 		workshopVenuePage.workshopVenueInput.clear();
 		workshopVenuePage.saveAndContinue();
 
-		workshopVenuePage.verifyLoaded();
+		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
 		workshopVenuePage.verifyValidationError('Enter a venue name');
 	});
 
 	it('shows an error when Gateway 2 assessor name is blank', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
-		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.assessor1);
+		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
+		gateway2AssessorPage.assessorSelected(gateway2AssessorAnswer.assessor1);
 		gateway2AssessorPage.assessorNameField.clear();
 		gateway2AssessorPage.saveAndContinue();
 
-		gateway2AssessorPage.verifyLoaded();
+		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
 		gateway2AssessorPage.verifyValidationError('Select a name');
 	});
 });

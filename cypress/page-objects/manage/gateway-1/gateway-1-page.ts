@@ -1,4 +1,4 @@
-import { gatewayBasePage } from '../base/gateway-page.ts';
+import { GatewayBasePage } from '../base/gateway-page.ts';
 import { gateway1DateAnswers, gateway1DsaAnswer, gateway1ExpectedAnswers } from '../../../fixtures/manage/gateway-1.ts';
 
 const gateway1Rows = [...Object.values(gateway1DateAnswers).map(({ row }) => row), gateway1DsaAnswer.row];
@@ -11,7 +11,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	[gateway1DsaAnswer.row, new RegExp(`^/case/.+/gateway-1/gateway-1/${gateway1DsaAnswer.path}$`)]
 ];
 
-export class Gateway1Page extends gatewayBasePage {
+export class Gateway1Page extends GatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-1$/);
 	}
