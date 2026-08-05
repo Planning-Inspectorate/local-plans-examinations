@@ -1,6 +1,6 @@
-import { BasePage } from '../../base-page.ts';
+import { GatewayBasePage } from '../base/gateway-page.ts';
 
-export class Gateway2AssessorPage extends BasePage {
+export class Gateway2AssessorPage extends GatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/);
 	}
@@ -19,19 +19,13 @@ export class Gateway2AssessorPage extends BasePage {
 		this.saveAndContinue();
 	}
 
-	assessorItemVisible(AssessorName: string) {
+	assessorSelected(AssessorName: string) {
 		return this.assessorNameField.should('have.value', AssessorName);
 	}
 
-	verifyLoaded(value?: string) {
-		super.verifyLoaded();
-		this.verifyHeading('Who is the Gateway 2 assessor?');
-		//check autocorrect somehow
-		this.verifySaveAndContinueVisible();
-
-		if (value) {
-			this.assessorItemVisible(value);
-		}
+	verifyLoaded(planTitle: string) {
+		super.verifyLoaded(planTitle);
+		super.verifySaveAndContinueVisible();
 	}
 }
 export const gateway2AssessorPage = new Gateway2AssessorPage();

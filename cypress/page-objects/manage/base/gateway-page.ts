@@ -1,6 +1,6 @@
 import { BasePage } from '../../base-page.ts';
 
-export class gatewayBasePage extends BasePage {
+export class GatewayBasePage extends BasePage {
 	sectionHeading(text: string) {
 		return cy.contains('h2', text);
 	}
@@ -11,7 +11,6 @@ export class gatewayBasePage extends BasePage {
 
 	verifyLoaded(planTitle?: string) {
 		super.verifyLoaded();
-
 		if (planTitle) {
 			this.verifyHeading(planTitle);
 		}

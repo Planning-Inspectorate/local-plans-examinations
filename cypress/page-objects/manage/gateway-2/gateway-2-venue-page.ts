@@ -1,6 +1,6 @@
-import { BasePage } from '../../base-page.ts';
+import { GatewayBasePage } from '../base/gateway-page.ts';
 
-export class WorkshopVenuePage extends BasePage {
+export class WorkshopVenuePage extends GatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-workshop-venue$/);
 	}
@@ -9,25 +9,19 @@ export class WorkshopVenuePage extends BasePage {
 		return cy.get('input[id="workshopVenue"]');
 	}
 
-	verifyWorkshopVenueForm(value?: string) {
-		this.verifyHeading('What is the venue for the Gateway 2 workshop?');
+	verifyWorkshopVenueForm(value: string) {
 		this.workshopVenueInput.should('be.visible');
-
-		if (value) {
-			this.workshopVenueInput.should('have.value', value);
-		}
-
-		this.verifySaveAndContinueVisible();
-	}
-
-	verifyLoaded(value?: string) {
-		super.verifyLoaded();
-		this.verifyWorkshopVenueForm(value);
+		this.workshopVenueInput.should('have.value', value);
 	}
 
 	enterWorkshopVenue(value: string) {
 		this.workshopVenueInput.clearAndWrite(value);
 		this.saveAndContinue();
+	}
+
+	verifyLoaded(planTitle: string) {
+		super.verifyLoaded(planTitle);
+		super.verifySaveAndContinueVisible();
 	}
 }
 

@@ -1,11 +1,17 @@
 import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
-import { gateway2DateAnswers } from '../../../../fixtures/manage/gateway-2.ts';
+import {
+	gateway2AssessorAnswer,
+	gateway2DateAnswers,
+	workshopVenueAnswer
+} from '../../../../fixtures/manage/gateway-2.ts';
 import {
 	gateway2Page,
 	gateway2EstimatedDatePage,
 	gateway2ActualDatePage,
 	gateway2ValidDatePage,
+	gateway2AssessorPage,
 	workshopDatePage,
+	workshopVenuePage,
 	assessorDateOfAppointmentPage,
 	reportIssuedDatePage,
 	reportPublishedByLPADatePage
@@ -52,12 +58,13 @@ describe('Gateway 2 page content', () => {
 		gateway2ValidDatePage.verifyLoaded(gateway2DateAnswers.gateway2ValidDate.input);
 	});
 
-	it('loads Gateway 2 workshop date page', { tags: ['regression'] }, () => {
+	it('loads Gateway 2 assessor name page', { tags: ['regression'] }, () => {
 		openSeededGateway2Page();
 
-		gateway2Page.openActionLinkFor(gateway2DateAnswers.workshopDate.row);
+		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
-		workshopDatePage.verifyLoaded(gateway2DateAnswers.workshopDate.input);
+		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
+		gateway2AssessorPage.assessorSelected(gateway2AssessorAnswer.assessor1);
 	});
 
 	it('loads Gateway 2 assessor date of appointment page', { tags: ['regression'] }, () => {
@@ -66,6 +73,23 @@ describe('Gateway 2 page content', () => {
 		gateway2Page.openActionLinkFor(gateway2DateAnswers.assessorDateOfAppointment.row);
 
 		assessorDateOfAppointmentPage.verifyLoaded(gateway2DateAnswers.assessorDateOfAppointment.input);
+	});
+
+	it('loads Gateway 2 workshop date page', { tags: ['regression'] }, () => {
+		openSeededGateway2Page();
+
+		gateway2Page.openActionLinkFor(gateway2DateAnswers.workshopDate.row);
+
+		workshopDatePage.verifyLoaded(gateway2DateAnswers.workshopDate.input);
+	});
+
+	it('loads Gateway 2 workshop venue page', { tags: ['regression'] }, () => {
+		openSeededGateway2Page();
+
+		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
+
+		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
+		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
 	});
 
 	it('loads Gateway 2 report issued date page', { tags: ['regression'] }, () => {

@@ -8,7 +8,7 @@ import {
 import { gateway1DsaPage, gateway1Page } from '../../../../page-objects/manage/gateway-1/index.ts';
 import { gateway1DsaAnswer } from '../../../../fixtures/manage/gateway-1.ts';
 import { gateway2Page, workshopVenuePage } from '../../../../page-objects/manage/gateway-2/index.ts';
-import { workshopVenueAnswer, updatedWorkshopVenueAnswer } from '../../../../fixtures/manage/gateway-2.ts';
+import { workshopVenueAnswer } from '../../../../fixtures/manage/gateway-2.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
@@ -72,11 +72,12 @@ describe('Case history', () => {
 		caseOverviewPage.openServiceNavigationItem('Gateway 2');
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
 
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.value);
-		workshopVenuePage.enterWorkshopVenue(updatedWorkshopVenueAnswer.value);
+		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
+		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
+		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
 
 		gateway2Page.verifyLoaded('Cypress Test Plan');
-		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, updatedWorkshopVenueAnswer.value);
+		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
 
 		caseOverviewPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
@@ -86,6 +87,6 @@ describe('Case history', () => {
 		//When fixed 'planType' and others should be changed to their appropriate names
 		caseHistoryPage.verifyUpdateHistory('planType', originalPlanTypeName, planTypeSelectionValue);
 		caseHistoryPage.verifyUpdateHistory('dsaChecked', gateway1DsaAnswer.value, gateway1DsaAnswer.updatedValue);
-		caseHistoryPage.verifyUpdateHistory('workshopVenue', workshopVenueAnswer.value, updatedWorkshopVenueAnswer.value);
+		caseHistoryPage.verifyUpdateHistory('workshopVenue', workshopVenueAnswer.value, workshopVenueAnswer.updatedValue);
 	});
 });
