@@ -3,7 +3,7 @@
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
-import { buildSubmitEmailPage, buildSubmitOtpPage } from './controller.ts';
+import { buildEnterEmailPage, buildEnterOtpPage, buildSubmitEmailPage, buildSubmitOtpPage } from './controller.ts';
 
 function createMockService(overrides = {}) {
 	return {
@@ -26,7 +26,8 @@ function createMockService(overrides = {}) {
 function createMockRes() {
 	const res = {
 		render: mock.fn(() => res),
-		redirect: mock.fn(() => res)
+		redirect: mock.fn(() => res),
+		status: mock.fn(() => res)
 	};
 	return res;
 }
@@ -55,6 +56,19 @@ function assertRedirect(res, url) {
 	assert.strictEqual(res.render.mock.callCount(), 0);
 	assert.strictEqual(res.redirect.mock.calls[0].arguments[0], url);
 }
+
+describe('buildEnterEmailPage', () => {
+	it('should clear session email when rendered', async () => {
+		const handler = buildEnterEmailPage();
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assert.strictEqual(req.session.email, undefined);
+		assertRender(res, 'views/login/enter-email-page.njk');
+	});
+});
 
 describe('buildSubmitEmailPage', () => {
 	it('should render error when email is not provided', async () => {
@@ -216,7 +230,7 @@ describe('buildSubmitEmailPage', () => {
 });
 
 describe('buildSubmitOtpPage', () => {
-	it('should redirect to login when no email in session', async () => {
+	it('should render page not found when no email in session', async () => {
 		const service = createMockService();
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({}, {});
@@ -224,7 +238,12 @@ describe('buildSubmitOtpPage', () => {
 
 		await handler(req, res);
 
-		assertRedirect(res, '/login');
+		assert.strictEqual(res.status.mock.callCount(), 1);
+		assert.strictEqual(res.status.mock.calls[0].arguments[0], 404);
+		assert.strictEqual(res.render.mock.callCount(), 1);
+		const [view, data] = res.render.mock.calls[0].arguments;
+		assert.strictEqual(view, 'views/layouts/error');
+		assert.strictEqual(data.pageTitle, 'Page not found');
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 	});
 
@@ -372,7 +391,7 @@ describe('buildSubmitOtpPage', () => {
 		process.env.NODE_ENV = originalEnv;
 	});
 
-	it('should redirect to home on successful OTP verification', async () => {
+	it('should redirect to home on successful OTP verification and clear session email', async () => {
 		const bcrypt = await import('bcrypt');
 		const hashedOtp = await bcrypt.hash('ABCDEFGH', 10);
 
@@ -393,6 +412,7 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		assertRedirect(res, '/manage-local-plans/your-plans');
+		assert.strictEqual(req.session.email, undefined);
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		const updateArgs = service.db.oneTimePassword.update.mock.calls[0].arguments[0];
 		assert.strictEqual(updateArgs.data.attempts, 0);
@@ -419,5 +439,35 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(service.logger.error.mock.callCount(), 1);
 		const logArgs = service.logger.error.mock.calls[0].arguments;
 		assert.strictEqual(logArgs[0].email, 'test@example.com');
+	});
+});
+
+describe('buildEnterOtpPage', () => {
+	it('should render page not found when no email in session', async () => {
+		const handler = buildEnterOtpPage();
+		const req = createMockReq({}, {});
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assert.strictEqual(res.status.mock.callCount(), 1);
+		assert.strictEqual(res.status.mock.calls[0].arguments[0], 404);
+		assert.strictEqual(res.render.mock.callCount(), 1);
+		const [view, data] = res.render.mock.calls[0].arguments;
+		assert.strictEqual(view, 'views/layouts/error');
+		assert.strictEqual(data.pageTitle, 'Page not found');
+	});
+
+	it('should render enter-otp page when email is in session', async () => {
+		const handler = buildEnterOtpPage();
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRender(res, 'views/login/enter-otp.njk', (data) => {
+			assert.strictEqual(data.pageHeading, 'Enter your one-time password');
+			assert.strictEqual(data.userEmail, 'test@example.com');
+		});
 	});
 });

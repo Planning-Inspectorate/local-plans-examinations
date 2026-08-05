@@ -51,6 +51,8 @@ export function loadConfig(): Config {
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
+	const blobStoreAccountUrl = BLOB_STORE_ACCOUNT_URL || undefined;
+	const shouldUseDevelopmentStorage = !blobStoreAccountUrl && NODE_ENV !== 'production';
 
 	if (!SESSION_SECRET) {
 		throw new Error('SESSION_SECRET is required');
@@ -97,8 +99,8 @@ export function loadConfig(): Config {
 		blobStorage: {
 			containerName: BLOB_STORE_CONTAINER || 'uploads',
 			connectionString:
-				BLOB_STORE_CONNECTION_STRING || (NODE_ENV === 'production' ? undefined : 'UseDevelopmentStorage=true'),
-			accountUrl: BLOB_STORE_ACCOUNT_URL || undefined
+				BLOB_STORE_CONNECTION_STRING || (shouldUseDevelopmentStorage ? 'UseDevelopmentStorage=true' : undefined),
+			accountUrl: blobStoreAccountUrl
 		},
 		govNotify: {
 			disabled: notifyDisabled,
