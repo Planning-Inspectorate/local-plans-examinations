@@ -1,5 +1,4 @@
-import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
-import type { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { Journey, JourneyResponse, Section, type Question } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 
 export const JOURNEY_ID = 'gateway-2-application';
