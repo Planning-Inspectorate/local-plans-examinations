@@ -6,7 +6,7 @@ export class WorkshopVenuePage extends BasePage {
 	}
 
 	get workshopVenueInput() {
-		return cy.get('[id="workshopVenue"], input[name="workshopVenue"]');
+		return cy.get('input[id="workshopVenue"]');
 	}
 
 	verifyWorkshopVenueForm(value?: string) {
@@ -18,10 +18,6 @@ export class WorkshopVenuePage extends BasePage {
 		}
 
 		this.verifySaveAndContinueVisible();
-	}
-
-	verifyWorkshopVenueFilled(value: string) {
-		this.workshopVenueInput.should('have.value', value);
 	}
 
 	verifyLoaded(value?: string) {

@@ -5,22 +5,22 @@ export class Gateway2AssessorPage extends BasePage {
 		super(/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/);
 	}
 
-	assessorNameField() {
+	get assessorNameField() {
 		return cy.get('input[id="assessorName"]');
 	}
 
-	assessorNameItem(AssessorID: string) {
-		return cy.get(`[role="option"]`).contains(AssessorID).should('be.visible');
+	assessorNameItem(AssessorName: string) {
+		return cy.get(`[role="option"]`).contains(AssessorName).should('be.visible');
 	}
 
-	selectAssessorName(AssessorID: string) {
-		this.assessorNameField().type(AssessorID);
-		this.assessorNameItem(AssessorID).click();
+	selectAssessorName(AssessorName: string) {
+		this.assessorNameField.type(AssessorName);
+		this.assessorNameItem(AssessorName).click();
 		this.saveAndContinue();
 	}
 
-	assessorItemVisible(AssessorID: string) {
-		return cy.get(`[role="option"]`).contains(AssessorID).should('exist');
+	assessorItemVisible(AssessorName: string) {
+		return this.assessorNameField.should('have.value', AssessorName);
 	}
 
 	verifyLoaded(value?: string) {
@@ -30,7 +30,7 @@ export class Gateway2AssessorPage extends BasePage {
 		this.verifySaveAndContinueVisible();
 
 		if (value) {
-			this.assessorItemVisible(value).should('exist');
+			this.assessorItemVisible(value);
 		}
 	}
 }
