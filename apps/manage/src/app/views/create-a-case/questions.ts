@@ -2,19 +2,21 @@ import {
 	COMPONENT_TYPES,
 	createQuestions,
 	RequiredValidator,
-	questionClasses
+	questionClasses,
+	type BaseQuestionProps
 } from '@planning-inspectorate/dynamic-forms';
-import type { QuestionProps } from '@planning-inspectorate/dynamic-forms/types/src/questions/create-questions.d.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
+
+type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
 const allQuestionClasses = {
 	...questionClasses,
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const createACaseQuestions: Record<string, QuestionProps> = {
+const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 	caseOfficer: {
 		type: COMPONENT_TYPES.SELECT,
 		options: [

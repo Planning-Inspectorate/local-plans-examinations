@@ -1,6 +1,5 @@
-import { Journey, JourneyResponse, Section } from '@planning-inspectorate/dynamic-forms';
+import { Journey, JourneyResponse, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
-import { ManageListSection } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/manage-list-section.js';
 
 export const JOURNEY_ID = 'create-a-case';
 
