@@ -24,6 +24,7 @@ interface CaseOverviewInput {
 	examinationWebsite?: string;
 	// assessor for Gateway 2
 	assessorName?: string;
+	gateway3AssessorName?: string;
 	assessorGateway3?: string;
 	examiningInspector1?: string;
 	examiningInspector2?: string;
@@ -63,7 +64,7 @@ interface Gateway3Input {
 	estimatedDate?: Date;
 	actualDate?: Date;
 	assessorName?: string;
-	assessorDateOfAppointment?: Date;
+	assessorAppointmentDate?: Date;
 	completionDate?: Date;
 	programmeOfficerFirstName?: string;
 	programmeOfficerLastName?: string;
@@ -139,8 +140,13 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
+	console.log(question);
 	if (question === 'gateway-2-assessor') {
-		await updateGateway2(db, { assessorName: answers.assessorName }, caseId);
+		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
+		return true;
+	}
+	if (question === 'assessor-gateway-3') {
+		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, caseId, question);
 		return true;
 	}
 	if (question === 'programme-officer') {
@@ -232,10 +238,8 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 }
 
 async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseId: string, question?: string) {
-	console.log('question:', question);
-	console.log('answers:', answers);
-	if (question === 'gateway-3-assessor-name') {
-		answers.assessorDateOfAppointment = new Date();
+	if (question === 'assessor-gateway-3') {
+		answers.assessorAppointmentDate = new Date();
 	}
 
 	await db.gateway3Info.upsert({

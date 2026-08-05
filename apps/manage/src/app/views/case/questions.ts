@@ -196,8 +196,8 @@ const caseQuestions: Record<string, QuestionProps> = {
 	},
 	assessorGateway3: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Assessor Gateway 3?',
-		fieldName: 'assessorGateway3',
+		question: 'Who is the Gateway 3 assessor ?',
+		fieldName: 'assessorName',
 		url: 'assessor-gateway-3',
 		title: 'Assessor Gateway 3',
 		validators: [new RequiredValidator('Input Assessor Gateway 3')]
@@ -461,10 +461,10 @@ const caseQuestions: Record<string, QuestionProps> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-actual-date' }
 	},
-	gateway3AssessorName: {
+	gateway3AssessorsName: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		question: 'Who is the Gateway 3 assessor?',
-		fieldName: 'assessorName',
+		fieldName: 'gateway3AssessorName',
 		url: 'gateway-3-assessor-name',
 		title: 'Gateway 3 assessor name',
 		validators: [new RequiredValidator('Gateway 3 assessor name')]
@@ -472,7 +472,7 @@ const caseQuestions: Record<string, QuestionProps> = {
 	gateway3AssessorDateOfAppointment: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the Gateway 3 assessor appointed?',
-		fieldName: 'assessorDateOfAppointment',
+		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-3-assessor-date-of-appointment',
 		title: 'Gateway 3 assessor date of appointment',
 		validators: [new DateValidator(' a valid date')],

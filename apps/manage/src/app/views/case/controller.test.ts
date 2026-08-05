@@ -24,6 +24,10 @@ function createService(): any {
 			gateway2Info: {
 				upsert: mock.fn(async () => ({})),
 				findUnique: mock.fn(async () => null)
+			},
+			gateway3Info: {
+				upsert: mock.fn(async () => ({})),
+				findUnique: mock.fn(async () => null)
 			}
 		},
 		logger: {
@@ -378,6 +382,33 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
 
 		const upsert = service.db.gateway2Info.upsert.mock.calls[0].arguments[0];
+
+		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.update.assessorName, 'Alex Assessor');
+		assert.equal(upsert.create.caseId, REFERENCE);
+		assert.equal(upsert.create.assessorName, 'Alex Assessor');
+		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
+		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
+	});
+
+	it('upserts gateway 3 data and sets appointment date for the assessor question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/gateway-3',
+			params: {
+				question: 'gateway-3-assessor'
+			},
+			body: {
+				assessorName: '  Alex Assessor  '
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+
+		const upsert = service.db.gateway3Info.upsert.mock.calls[0].arguments[0];
 
 		assert.equal(upsert.where.caseId, REFERENCE);
 		assert.equal(upsert.update.assessorName, 'Alex Assessor');

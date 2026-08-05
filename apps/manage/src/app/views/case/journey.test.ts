@@ -2,7 +2,14 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { createOverviewJourney, createGateway1Journey, GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
+import {
+	createOverviewJourney,
+	createGateway1Journey,
+	createGateway3Journey,
+	GATEWAY_1_JOURNEY_ID,
+	OVERVIEW_JOURNEY_ID,
+	GATEWAY_3_JOURNEY_ID
+} from './journey.ts';
 import { questions } from './questions.ts';
 
 function createOverviewJourneyForTest() {
@@ -17,6 +24,14 @@ function createGateway1JourneyForTest() {
 	return createGateway1Journey(
 		{ baseUrl: '/case/LP-TEST-001' } as Request,
 		new JourneyResponse(GATEWAY_1_JOURNEY_ID, '', {}),
+		questions
+	);
+}
+
+function createGateway3JourneyForTest() {
+	return createGateway3Journey(
+		{ baseUrl: '/case/LP-TEST-001' } as Request,
+		new JourneyResponse(GATEWAY_3_JOURNEY_ID, '', {}),
 		questions
 	);
 }
@@ -68,6 +83,28 @@ describe('gateway1Journey', () => {
 			});
 
 			assert.equal(backLink, '/case/LP-TEST-001/gateway-1');
+		});
+	});
+});
+
+describe('gateway3Journey', () => {
+	it('links Gateway 3 question pages back to the Gateway 3 page', () => {
+		const journey = createGateway3JourneyForTest();
+		const gateway3Questions = [
+			'gateway-3-estimated-date',
+			'gateway-3-actual-date',
+			'cgateway-3-assessor-name',
+			'gateway-3-assessor-date-of-appointment',
+			'programme-officer-details',
+			'gateway-3-completion-date'
+		];
+
+		gateway3Questions.forEach((question) => {
+			const backLink = journey.getBackLink({
+				params: { section: 'gateway-3', question }
+			});
+
+			assert.equal(backLink, '/case/LP-TEST-001/gateway-3');
 		});
 	});
 });

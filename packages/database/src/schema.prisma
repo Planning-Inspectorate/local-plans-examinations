@@ -32,7 +32,6 @@ model Case {
   lpas                    LPA[]
   contacts                Contact[]
   examinationWebsite      String?
-  assessorGateway3        String?
   examiningInspector1     String?
   examiningInspector2     String?
   examiningInspector3     String?
@@ -91,7 +90,7 @@ model Gateway3Info {
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorName              String?
-  assessorDateOfAppointment DateTime? @db.DateTime2
+  assessorAppointmentDate   DateTime? @db.DateTime2
   completionDate            DateTime? @db.DateTime2
 }
 
