@@ -64,7 +64,7 @@ describe('cached-entra-client', () => {
 				'groupB',
 				new Map<string, any>([
 					[
-						'entra-group__groupB',
+						'groupB',
 						[
 							{
 								id: '3',
