@@ -71,6 +71,7 @@ module "app_manage" {
     RETRY_STATUS_CODES = "408,413,429,500,502,503,504,521,522,524"
 
     # sessions
+    MANAGED_REDIS_URL       = local.managed_redis_url
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]
     SESSION_SECRET          = local.key_vault_refs["session-secret-manage"]
   }
@@ -127,3 +128,12 @@ resource "azurerm_key_vault_secret" "gov_notify_webhook_token" {
   tags = local.tags
 }
 
+# managed redis access
+resource "azurerm_managed_redis_access_policy_assignment" "manage" {
+  managed_redis_id = azurerm_managed_redis.cache.id
+  object_id        = module.app_manage.principal_id
+}
+resource "azurerm_managed_redis_access_policy_assignment" "manage_staging" {
+  managed_redis_id = azurerm_managed_redis.cache.id
+  object_id        = module.app_manage.staging_principal_id
+}
