@@ -40,6 +40,7 @@ model Case {
   gateway2Date              DateTime?
   gateway3Date              DateTime?
   submissionDate            DateTime?
+  deletedDate               DateTime?
   createdAt                 DateTime         @default(now())
   gateway1Info              Gateway1Info?
   gateway2Info              Gateway2Info?
