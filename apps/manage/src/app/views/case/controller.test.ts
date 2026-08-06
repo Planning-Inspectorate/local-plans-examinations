@@ -320,6 +320,42 @@ describe('updateCaseField', () => {
 		});
 	});
 
+	it('upserts programme officer details from the overview programme-officer question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/overview',
+			params: {
+				question: 'programme-officer'
+			},
+			body: {
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			},
+			update: {
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			},
+			create: {
+				caseId: REFERENCE,
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			}
+		});
+	});
+
 	it('does not upsert contact details when the current item id is empty', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
@@ -721,6 +757,34 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.gateway2Info.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			}
+		});
+
+		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.assessorName, 'Alex Assessor');
+		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	it('loads gateway 3 journey data', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-3'
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
+
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: REFERENCE,
+			assessorName: 'Alex Assessor'
+		}));
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(ctx.service.db.gateway3Info.findUnique.mock.calls[0].arguments[0], {
 			where: {
 				caseId: REFERENCE
 			}
