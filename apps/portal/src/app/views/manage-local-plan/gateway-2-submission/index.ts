@@ -430,7 +430,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	router.post('/:planReference/gateway-2-submission', getJourneyResponseFromCase, getJourney, saveToDatabase);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question/upload-documents',
+		'/:planReference/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
@@ -438,29 +438,24 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
+		'/:planReference/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
 		deleteGateway2CoverLetterForCase
 	);
 
 	router.post(
-		'/gateway-2-submission/:section/:question/upload-documents',
+		'/:section/:question/upload-documents',
 		getJourneyResponse,
 		getJourney,
 		upload.array('files[]'),
 		uploadGateway2CoverLetter
 	);
 
-	router.post(
-		'/gateway-2-submission/:section/:question/delete-document/:fileId',
-		getJourneyResponse,
-		getJourney,
-		deleteGateway2CoverLetter
-	);
+	router.post('/:section/:question/delete-document/:fileId', getJourneyResponse, getJourney, deleteGateway2CoverLetter);
 
 	router.get(
-		'/:planReference/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:planReference/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderQuestionMiddleware({
@@ -471,7 +466,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:planReference/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		validate,
@@ -480,7 +475,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.get(
-		'/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
 		getJourney,
 		fileUploaderQuestionMiddleware({
@@ -490,7 +485,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
 		getJourney,
 		validate,

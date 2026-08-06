@@ -9,11 +9,9 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
 		: req.params.planReference;
-	const baseUrl = planReference
-		? `${req.baseUrl}/${planReference}/gateway-2-submission`
-		: `${req.baseUrl}/gateway-2-submission`;
+	const baseUrl = planReference ? `${req.baseUrl}/${planReference}` : `${req.baseUrl}`;
 
-	return new Journey({
+	const gateway2Journey = new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
 			new Section('Procedural documents', 'procedural')
@@ -43,4 +41,23 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 		initialBackLink: planReference ? baseUrl : '/',
 		response
 	});
+
+	return getBacklinks(gateway2Journey, baseUrl);
+}
+
+function getBacklinks(journey: Journey, overviewUrl: string): Journey {
+	const getBackLink = journey.getBackLink.bind(journey);
+
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		const { params, manageListQuestion } = options;
+		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
+
+		if (!manageListQuestion && !isManageListStep) {
+			return overviewUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	return journey;
 }
