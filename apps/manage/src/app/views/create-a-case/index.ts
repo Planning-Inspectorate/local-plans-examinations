@@ -14,7 +14,6 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { getEntraGroupMembers } from '#util/entra-groups.ts';
 import type { Request } from 'express';
 import * as authSession from '../../auth/session.service.ts';
 
@@ -48,13 +47,9 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 
 function buildCaseOfficerOptions(service: ManageService) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-		const { logger, getEntraClient, entraGroupIds } = service;
-		const { caseOfficers } = await getEntraGroupMembers({
-			logger,
-			initClient: getEntraClient,
-			session: req.session as authSession.SessionWithAuth,
-			groupIds: entraGroupIds
-		});
+		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+
+		const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
 
 		questions.caseOfficer.options = [
 			{ value: '', text: '' },
