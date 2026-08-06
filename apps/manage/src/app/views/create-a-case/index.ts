@@ -1,5 +1,5 @@
 import type { ManageService } from '#service';
-import { type IRouter, type NextFunction, type Response, type Request, Router as createRouter } from 'express';
+import { type IRouter, type NextFunction, type Response, Router as createRouter } from 'express';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -14,7 +14,7 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import * as authSession from '../../auth/session.service.ts';
+import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
 
 function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
@@ -44,20 +44,6 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 	next();
 }
 
-function buildCaseOfficerOptions(service: ManageService) {
-	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
-
-		const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
-
-		questions.caseOfficer.options = [
-			{ value: '', text: '' },
-			...caseOfficers.map((m) => ({ value: m.id, text: m.displayName }))
-		];
-		next();
-	});
-}
-
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
@@ -69,19 +55,25 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.get(
 		'/check-your-answers',
 		getJourneyResponse,
-		buildCaseOfficerOptions(service),
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		setAsEditingFromCya,
 		setBackLinkFromSession,
 		buildList()
 	);
 
-	router.post('/check-your-answers', getJourneyResponse, buildCaseOfficerOptions(service), getJourney, saveToDatabase);
+	router.post(
+		'/check-your-answers',
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		getJourney,
+		saveToDatabase
+	);
 
 	router.get(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		buildCaseOfficerOptions(service),
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		question
 	);
@@ -89,7 +81,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.post(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		buildCaseOfficerOptions(service),
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		validate,
 		validationErrorHandler,
