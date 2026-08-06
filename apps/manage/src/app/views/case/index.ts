@@ -1,4 +1,4 @@
-import { type IRouter, type NextFunction, type Response, Router as createRouter } from 'express';
+import { type IRouter, type Request, Router as createRouter } from 'express';
 import { addCaseNavigation, buildGetJourneyMiddleware, updateCaseField } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -11,7 +11,6 @@ import {
 	type Journey,
 	type JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
-import type { Request } from 'express';
 import { questions } from './questions.ts';
 import {
 	createOverviewJourney,
@@ -21,8 +20,7 @@ import {
 	GATEWAY_2_JOURNEY_ID,
 	OVERVIEW_JOURNEY_ID
 } from './journey.ts';
-import * as authSession from '../../auth/session.service.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -54,20 +52,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 	}
 ];
 
-function buildCaseOfficerOptions(service: ManageService) {
-	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
-
-		const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
-
-		questions.caseOfficer.options = [
-			{ value: '', text: '' },
-			...caseOfficers.map((m) => ({ value: m.id, text: m.displayName }))
-		];
-		next();
-	});
-}
-
 export function caseRouter(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 	const updateCase = updateCaseField(service);
@@ -97,16 +81,16 @@ function registerCaseJourney(
 		: `/${path}/:section/:question`;
 
 	// List view
-	router.get(`/${path}`, getJourneyResponse, buildCaseOfficerOptions(service), getJourney, buildList());
+	router.get(`/${path}`, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, buildList());
 
 	// Single question view
-	router.get(questionPath, getJourneyResponse, buildCaseOfficerOptions(service), getJourney, question);
+	router.get(questionPath, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, question);
 
 	// Save answer
 	router.post(
 		questionPath,
 		getJourneyResponse,
-		buildCaseOfficerOptions(service),
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		validate,
 		validationErrorHandler,
