@@ -717,7 +717,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 describe('DeleteCase', () => {
 	(it('renders delete-case.njk when getDeleteCase is called', async () => {
-		const service = createMockService();
+		const service = createService();
 		const currentCase = {
 			reference: 'PLAN/123456',
 			planTitle: 'Southshire Local Plan',
@@ -740,7 +740,7 @@ describe('DeleteCase', () => {
 		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
 	}),
 		it('sets deletedDate when delete is confirmed', async () => {
-			const service = createMockService();
+			const service = createService();
 			const currentCase = {
 				reference: 'PLAN/123456',
 				planTitle: 'Southshire Local Plan',
@@ -762,7 +762,7 @@ describe('DeleteCase', () => {
 			assert.ok(args.data.deletedDate instanceof Date);
 		}),
 		it('redirects to all cases when delete is confirmed', async () => {
-			const service = createMockService();
+			const service = createService();
 			const currentCase = {
 				reference: 'PLAN/123456',
 				planTitle: 'Southshire Local Plan',
