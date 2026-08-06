@@ -12,6 +12,7 @@ import {
 } from '@planning-inspectorate/dynamic-forms';
 import { createJourney, JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
+import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
@@ -44,6 +45,17 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 	next();
 }
 
+async function buildLpaOptions() {
+	return asyncHandler(async (req: any, res: Response, next: NextFunction) => {
+		const loaded = await loadLpaOptions();
+		if (loaded.length > 0) {
+			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+		}
+
+		next();
+	});
+}
+
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
@@ -73,6 +85,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		'/check-your-answers',
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
+		buildLpaOptions,
 		getJourney,
 		saveToDatabase
 	);
@@ -81,6 +94,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
+		buildLpaOptions,
 		getJourney,
 		question
 	);
@@ -89,6 +103,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
+		buildLpaOptions,
 		getJourney,
 		validate,
 		validationErrorHandler,
