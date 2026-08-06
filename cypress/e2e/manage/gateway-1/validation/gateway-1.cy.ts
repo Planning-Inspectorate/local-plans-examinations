@@ -17,6 +17,7 @@ describe('Gateway 1 validation', () => {
 		noticeOfIntentionPublishDatePage.saveAndContinue();
 
 		noticeOfIntentionPublishDatePage.verifyLoaded();
+		//valid date error message assertions need 2 spaces due to how the message is processed
 		noticeOfIntentionPublishDatePage.verifyValidationError('Enter  a valid date');
 	});
 });

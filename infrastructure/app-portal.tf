@@ -84,6 +84,7 @@ module "app_portal" {
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS         = data.azurerm_client_config.current.tenant_id
 
     # sessions
+    MANAGED_REDIS_URL       = local.managed_redis_url
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]
     SESSION_SECRET          = local.key_vault_refs["session-secret-portal"]
   }
@@ -138,3 +139,12 @@ resource "azurerm_key_vault_secret" "web_session_secret" {
   tags = local.tags
 }
 
+# Managed redis access
+resource "azurerm_managed_redis_access_policy_assignment" "portal" {
+  managed_redis_id = azurerm_managed_redis.cache.id
+  object_id        = module.app_portal.principal_id
+}
+resource "azurerm_managed_redis_access_policy_assignment" "portal_staging" {
+  managed_redis_id = azurerm_managed_redis.cache.id
+  object_id        = module.app_portal.staging_principal_id
+}

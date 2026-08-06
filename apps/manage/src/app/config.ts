@@ -17,6 +17,13 @@ export interface Config extends BaseConfig {
 		redirectUri: string;
 		signoutUrl: string;
 	};
+	entra: {
+		cacheTtl: number;
+		groupIds: {
+			caseOfficers: string;
+			inspectors: string;
+		};
+	};
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;
@@ -63,11 +70,14 @@ export function loadConfig(): Config {
 		AUTH_GROUP_APPLICATION_ACCESS,
 		AUTH_TENANT_ID,
 		CACHE_CONTROL_MAX_AGE,
+		ENTRA_GROUP_CACHE_TTL,
+		ENTRA_GROUP_ID_CASE_OFFICERS,
+		ENTRA_GROUP_ID_INSPECTORS,
 		GIT_SHA,
 		LOG_LEVEL,
 		PORT,
+		MANAGED_REDIS_URL,
 		NODE_ENV,
-		REDIS_CONNECTION_STRING,
 		SESSION_SECRET,
 		SQL_CONNECTION_STRING,
 		GOV_NOTIFY_DISABLED,
@@ -100,7 +110,9 @@ export function loadConfig(): Config {
 			AUTH_CLIENT_ID,
 			AUTH_CLIENT_SECRET,
 			AUTH_GROUP_APPLICATION_ACCESS,
-			AUTH_TENANT_ID
+			AUTH_TENANT_ID,
+			ENTRA_GROUP_ID_CASE_OFFICERS,
+			ENTRA_GROUP_ID_INSPECTORS
 		};
 		for (const [k, v] of Object.entries(props)) {
 			if (v === undefined || v === '') {
@@ -134,6 +146,13 @@ export function loadConfig(): Config {
 			redirectUri: `${protocol}${APP_HOSTNAME}/auth/redirect`,
 			signoutUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout'
 		},
+		entra: {
+			cacheTtl: parseInt(ENTRA_GROUP_CACHE_TTL || '15', 10),
+			groupIds: {
+				caseOfficers: ENTRA_GROUP_ID_CASE_OFFICERS || '',
+				inspectors: ENTRA_GROUP_ID_INSPECTORS || ''
+			}
+		},
 		cacheControl: {
 			maxAge: CACHE_CONTROL_MAX_AGE || '1d'
 		},
@@ -150,7 +169,7 @@ export function loadConfig(): Config {
 		srcDir: buildConfig.srcDir,
 		session: {
 			redisPrefix: 'manage:',
-			redis: REDIS_CONNECTION_STRING,
+			redis: MANAGED_REDIS_URL,
 			secret: SESSION_SECRET
 		},
 		// the static directory to serve assets from (images, css, etc..)
