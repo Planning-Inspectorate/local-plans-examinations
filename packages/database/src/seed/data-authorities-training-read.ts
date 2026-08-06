@@ -13,7 +13,7 @@ const HEADERS: Readonly<{ [x: string]: string }> = {
 /**
  * Reads the CSV file specified by the LPA_DATA_FILE_PATH environment variable, parses it, and writes a JSON file with the same data in a format suitable for seeding the database.
  * The CSV file is expected to have three columns: pinsName, pinsCode, and status. The first row is treated as headers.
- * The output JSON file will be written to the same directory as this script, with the name 'data-authorities-dev-list.json'.
+ * The output JSON file will be written to the same directory as this script, with the name 'data-authorities-training-list.json'.
  */
 async function run(): Promise<void> {
 	const LPA_DATA_FILE_PATH = process.env.LPA_DATA_FILE_PATH;
@@ -59,11 +59,11 @@ async function run(): Promise<void> {
 	}
 
 	await writeFile(
-		path.join(__dirname, 'data-authorities-dev-list.json'),
+		path.join(__dirname, 'data-authorities-training-list.json'),
 		JSON.stringify(createInputs, null, 2),
 		'utf8'
 	);
-	console.log(`data-authorities-dev-list.json written with ${createInputs.length} LPAs`);
+	console.log(`data-authorities-training-list.json written with ${createInputs.length} LPAs`);
 }
 
 /**
