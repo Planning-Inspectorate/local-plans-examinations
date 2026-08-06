@@ -140,8 +140,7 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
-	console.log(question);
-	if (question === 'gateway-2-assessor') {
+	if (question === 'assessor-gateway-2') {
 		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
 		return true;
 	}
@@ -332,6 +331,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				journeyResponse.answers.programmeOfficerFirstName = overviewData.gateway3Info?.programmeOfficerFirstName;
 				journeyResponse.answers.programmeOfficerLastName = overviewData.gateway3Info?.programmeOfficerLastName;
 				journeyResponse.answers.programmeOfficerEmail = overviewData.gateway3Info?.programmeOfficerEmail;
+				journeyResponse.answers.gateway3AssessorName = overviewData.gateway3Info?.assessorName;
 				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
 					id: lpa.lpaCode,
 					lpa: lpa.lpaCode
@@ -426,7 +426,8 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 				select: {
 					programmeOfficerFirstName: true,
 					programmeOfficerLastName: true,
-					programmeOfficerEmail: true
+					programmeOfficerEmail: true,
+					assessorName: true
 				}
 			},
 			caseHistories: {

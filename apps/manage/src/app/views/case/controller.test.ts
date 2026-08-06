@@ -397,7 +397,7 @@ describe('updateCaseField', () => {
 		const context = createSaveContext({
 			url: '/gateway-3',
 			params: {
-				question: 'gateway-3-assessor'
+				question: 'assessor-gateway-3'
 			},
 			body: {
 				assessorName: '  Alex Assessor  '
@@ -600,6 +600,14 @@ describe('buildGetJourneyMiddleware', () => {
 				contacts: true,
 				gateway2Info: {
 					select: {
+						assessorName: true
+					}
+				},
+				gateway3Info: {
+					select: {
+						programmeOfficerFirstName: true,
+						programmeOfficerLastName: true,
+						programmeOfficerEmail: true,
 						assessorName: true
 					}
 				}
