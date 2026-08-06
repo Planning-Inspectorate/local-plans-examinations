@@ -45,8 +45,10 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 	next();
 }
 
-async function buildLpaOptions() {
-	return asyncHandler(async (req: any, res: Response, next: NextFunction) => {
+export function createACaseRoutes(service: ManageService): IRouter {
+	const router = createRouter({ mergeParams: true });
+
+	const buildLpaOptions = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
 		const loaded = await loadLpaOptions();
 		if (loaded.length > 0) {
 			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
@@ -54,10 +56,6 @@ async function buildLpaOptions() {
 
 		next();
 	});
-}
-
-export function createACaseRoutes(service: ManageService): IRouter {
-	const router = createRouter({ mergeParams: true });
 
 	router.use((req, _res, next) => {
 		if (req.session) {
@@ -75,6 +73,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		'/check-your-answers',
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
+		buildLpaOptions,
 		getJourney,
 		setAsEditingFromCya,
 		setBackLinkFromSession,
