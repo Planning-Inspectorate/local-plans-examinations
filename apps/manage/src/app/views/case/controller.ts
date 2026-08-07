@@ -140,7 +140,7 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
-	if (question === 'assessor-gateway-2') {
+	if (question === 'gateway-2-assessor') {
 		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
 		return true;
 	}
