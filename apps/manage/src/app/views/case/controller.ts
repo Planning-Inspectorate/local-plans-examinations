@@ -443,7 +443,7 @@ export function addCaseNavigation(): AsyncRequestHandler {
 }
 
 function createNavigationParameters(path: string, reference: string, currentSection?: string) {
-	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
+	const baseUrl = `/case/${encodeURIComponent(reference)}`;
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/overview` },
 		{ text: 'Timetable', href: '#' },
