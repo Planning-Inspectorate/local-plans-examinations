@@ -36,6 +36,12 @@ interface CaseJourneyConfig {
 function buildInspectorOptions(service: ManageService) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+		if (!entraClient) {
+			// Leave the default options
+			next();
+			return;
+		}
+		console.log('cuatro');
 		const inspectorIds = await entraClient?.listAllGroupMembers(service.entraGroupIds.inspectors);
 		let options: { value: string; text: string }[] = [];
 		if (inspectorIds) {
