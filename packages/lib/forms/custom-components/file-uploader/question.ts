@@ -1,4 +1,5 @@
 import { Question } from '@planning-inspectorate/dynamic-forms';
+import escape from 'escape-html';
 import type {
 	FileUploaderCustomViewData,
 	FileUploaderQuestionConfig,
@@ -131,7 +132,7 @@ export default class FileUploaderQuestion extends Question {
 		action: { href: string; text: string; visuallyHiddenText: string };
 	}> {
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = files.length > 0 ? files.map((file) => file.fileName).join('<br>') : this.notStartedText;
+		const value = formatUploadedFilesForSummary(files, this.notStartedText);
 
 		return [
 			{
@@ -145,6 +146,19 @@ export default class FileUploaderQuestion extends Question {
 			}
 		];
 	}
+}
+
+function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: string): string {
+	if (files.length === 0) {
+		return notStartedText;
+	}
+
+	if (files.length === 1) {
+		return escape(files[0].fileName);
+	}
+
+	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
+	return `<ul class="govuk-list govuk-list--bullet">${listItems}</ul>`;
 }
 
 function readUploadedFiles(value: unknown): UploadedFile[] {

@@ -1,10 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
 import type { PortalService } from '#service';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-
-export const GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
 
 type RequestWithCurrentCase = Request & {
 	currentCase?: {
@@ -32,34 +29,39 @@ type DocumentRow = {
 	latestDocumentVersion: DocumentVersionRow | null;
 };
 
-type SyncGateway2CoverLetterDocumentsParams = {
+type SyncGateway2DocumentsParams = {
 	caseId: string;
 	documentSetId: string;
 	uploadedFiles: UploadedFile[];
 };
 
-// Loads the saved cover letter files for this case.
-export async function loadGateway2CoverLetterDocuments(
+// Loads the saved files for this Gateway 2 upload question.
+export async function loadGateway2Documents(
 	service: PortalService,
-	caseId: string
+	caseId: string,
+	documentSetFolderName: string
 ): Promise<UploadedFile[]> {
-	return loadUploadedDocuments(service, caseId, GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID);
+	const documentSetId = await getDocumentSetIdByFolderName(service, documentSetFolderName);
+	return loadUploadedDocuments(service, caseId, documentSetId);
 }
 
-// Saves the current cover letter upload state.
-export async function saveGateway2CoverLetterDocuments(
+// Saves the current Gateway 2 upload state.
+export async function saveGateway2Documents(
 	service: PortalService,
 	req: Request,
+	documentSetFolderName: string,
 	uploadedFiles: UploadedFile[]
 ): Promise<void> {
 	const caseId = (req as RequestWithCurrentCase).currentCase?.id;
 	if (!caseId) {
-		throw new Error('Cannot save Gateway 2 cover letter documents without a loaded case');
+		throw new Error('Cannot save Gateway 2 documents without a loaded case');
 	}
 
-	await syncGateway2CoverLetterDocuments(service, {
+	const documentSetId = await getDocumentSetIdByFolderName(service, documentSetFolderName);
+
+	await syncGateway2Documents(service, {
 		caseId,
-		documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
+		documentSetId,
 		uploadedFiles
 	});
 }
@@ -88,16 +90,10 @@ async function loadUploadedDocuments(
 }
 
 // Makes the database match the uploaded file list.
-async function syncGateway2CoverLetterDocuments(
+async function syncGateway2Documents(
 	service: PortalService,
-	{ caseId, documentSetId, uploadedFiles }: SyncGateway2CoverLetterDocumentsParams
+	{ caseId, documentSetId, uploadedFiles }: SyncGateway2DocumentsParams
 ): Promise<void> {
-	if (uploadedFiles.length > 1) {
-		throw new Error('Gateway 2 cover letter can only have one active uploaded document');
-	}
-
-	await assertDocumentSetExists(service, documentSetId);
-
 	const existingDocuments = (await service.db.document.findMany({
 		where: {
 			caseId,
@@ -175,17 +171,24 @@ function getDocumentUploadedFileId(document: DocumentRow): string | undefined {
 	return version?.blobStoragePath ?? version?.documentURI ?? document.name;
 }
 
-// Checks the reference data exists before saving.
-async function assertDocumentSetExists(service: PortalService, documentSetId: string): Promise<void> {
-	const documentSet = await service.db.documentSet.findUnique({
+// Finds the document set reference data from the question URL/folder name.
+async function getDocumentSetIdByFolderName(service: PortalService, documentSetFolderName: string): Promise<string> {
+	const documentSet = await service.db.documentSet.findFirst({
 		where: {
-			id: documentSetId
+			folderName: documentSetFolderName
+		},
+		select: {
+			id: true
 		}
 	});
 
 	if (!documentSet) {
-		throw new Error(`Missing document set reference data for "${documentSetId}". Run the database static seed.`);
+		throw new Error(
+			`Missing document set reference data for "${documentSetFolderName}". Run the database static seed.`
+		);
 	}
+
+	return documentSet.id;
 }
 
 // Creates the document and its first version.

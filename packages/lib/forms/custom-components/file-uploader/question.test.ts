@@ -23,7 +23,60 @@ describe('FileUploaderQuestion', () => {
 			true
 		);
 	});
+
+	it('formats a missing file upload answer as not started', () => {
+		const question = buildQuestion();
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), []);
+
+		assert.equal(row.value, 'Not started');
+	});
+
+	it('formats one uploaded file as plain escaped text', () => {
+		const question = buildQuestion();
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
+			{ id: 'file-1', fileName: 'cover-letter.pdf' }
+		]);
+
+		assert.equal(row.value, 'cover-letter.pdf');
+	});
+
+	it('formats multiple uploaded files as a bullet list', () => {
+		const question = buildQuestion();
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
+			{ id: 'file-1', fileName: 'beach.jpg' },
+			{ id: 'file-2', fileName: 'bridge.jpg' },
+			{ id: 'file-3', fileName: 'bullfrog.jpg' }
+		]);
+
+		assert.equal(
+			row.value,
+			'<ul class="govuk-list govuk-list--bullet"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>'
+		);
+	});
+
+	it('escapes uploaded file names before rendering summary HTML', () => {
+		const question = buildQuestion();
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
+			{ id: 'file-1', fileName: '<script>alert("x")</script>.pdf' },
+			{ id: 'file-2', fileName: 'safe.pdf' }
+		]);
+
+		assert.equal(
+			row.value,
+			'<ul class="govuk-list govuk-list--bullet"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
+		);
+	});
 });
+
+function buildJourney() {
+	return {
+		getCurrentQuestionUrl: () => '/section/documents'
+	};
+}
 
 function buildQuestion() {
 	return new FileUploaderQuestion({
