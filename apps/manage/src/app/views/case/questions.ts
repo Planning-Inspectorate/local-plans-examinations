@@ -520,6 +520,24 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Examining Inspector(s) appointment date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
+	},
+	letterSentToMHCLGDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the 48-hour protocol letter sent to MHCLG?',
+		fieldName: 'letterSentToMHCLGDate',
+		url: 'letter-sent-to-mhclg-date',
+		title: 'Letter sent to MHCLG date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'letter-sent-to-mhclg-date' }
+	},
+	letterIssueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the letter sent to the LPA?',
+		fieldName: 'letterIssueDate',
+		url: 'letter-issue-date',
+		title: 'Letter issue date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'letter-issue-date' }
 	}
 };
 
