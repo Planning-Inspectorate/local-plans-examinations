@@ -1,4 +1,5 @@
-import { Journey, JourneyResponse, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
+import { Journey, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
+import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 

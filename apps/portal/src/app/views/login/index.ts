@@ -9,7 +9,7 @@ import {
 	buildSubmitOtpPage
 } from './controller.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
-import { PortalService } from '#service';
+import type { PortalService } from '#service';
 
 export function createLoginRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
