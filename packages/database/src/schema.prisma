@@ -98,6 +98,8 @@ model ExaminationInfo {
   examiningInspector3                   String?
   examiningInspectorAppointmentDate     DateTime? @db.DateTime2
   examinationWebsite                    String?
+  letterSentToMHCLGDate                 DateTime? @db.DateTime2
+  letterIssueDate                       DateTime? @db.DateTime2
 }
 
 model LPA {

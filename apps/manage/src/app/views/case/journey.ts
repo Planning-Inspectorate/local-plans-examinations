@@ -117,7 +117,10 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examiningInspector2)
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
-			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite)
+			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
+			new Section('Letters', 'letters')
+				.addQuestion(questions.letterSentToMHCLGDate)
+				.addQuestion(questions.letterIssueDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
