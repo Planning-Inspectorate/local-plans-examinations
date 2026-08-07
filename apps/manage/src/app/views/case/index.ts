@@ -1,4 +1,4 @@
-import { type IRouter, Router as createRouter } from 'express';
+import { type IRouter, type Request, Router as createRouter } from 'express';
 import { addCaseNavigation, buildGetJourneyMiddleware, updateCaseField } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -11,7 +11,6 @@ import {
 	type Journey,
 	type JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
-import type { Request } from 'express';
 import { questions } from './questions.ts';
 import {
 	createOverviewJourney,
@@ -21,6 +20,7 @@ import {
 	GATEWAY_2_JOURNEY_ID,
 	OVERVIEW_JOURNEY_ID
 } from './journey.ts';
+import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -81,15 +81,16 @@ function registerCaseJourney(
 		: `/${path}/:section/:question`;
 
 	// List view
-	router.get(`/${path}`, getJourneyResponse, getJourney, buildList());
+	router.get(`/${path}`, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, buildList());
 
 	// Single question view
-	router.get(questionPath, getJourneyResponse, getJourney, question);
+	router.get(questionPath, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, question);
 
 	// Save answer
 	router.post(
 		questionPath,
 		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		validate,
 		validationErrorHandler,

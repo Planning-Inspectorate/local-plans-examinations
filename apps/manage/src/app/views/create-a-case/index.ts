@@ -14,6 +14,7 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
 
 function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
@@ -54,17 +55,25 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.get(
 		'/check-your-answers',
 		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		setAsEditingFromCya,
 		setBackLinkFromSession,
 		buildList()
 	);
 
-	router.post('/check-your-answers', getJourneyResponse, getJourney, saveToDatabase);
+	router.post(
+		'/check-your-answers',
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		getJourney,
+		saveToDatabase
+	);
 
 	router.get(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		question
 	);
@@ -72,6 +81,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.post(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
 		getJourney,
 		validate,
 		validationErrorHandler,
