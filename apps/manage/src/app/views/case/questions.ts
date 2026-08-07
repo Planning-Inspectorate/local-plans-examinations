@@ -230,7 +230,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaInspector1: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 1?',
+		question: 'Who is the QA 1?',
 		fieldName: 'qaInspector1',
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
@@ -443,6 +443,34 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Report published by LPA date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
+	},
+	// Examination
+	estimatedSubmissionForExaminationDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the estimated examination date?',
+		fieldName: 'estimatedSubmissionForExaminationDate',
+		url: 'examination-estimated-submission-date',
+		title: 'Estimated submission date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' }
+	},
+	submissionForExaminationDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the actual examination date?',
+		fieldName: 'submissionForExaminationDate',
+		url: 'examination-actual-submission-date',
+		title: 'Actual submission date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-actual-submission-date' }
+	},
+	examiningInspectorAppointmentDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When were the examining Inspectors appointed?',
+		fieldName: 'examiningInspectorAppointmentDate',
+		url: 'examination-examining-inspector-appointment-date',
+		title: 'Examining Inspector(s) appointment date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
 	}
 };
 

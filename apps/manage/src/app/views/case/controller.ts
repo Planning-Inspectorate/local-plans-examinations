@@ -58,6 +58,16 @@ interface Gateway2Input {
 	reportPublishedByLPA?: Date;
 }
 
+interface ExaminationInput {
+	estimatedSubmissionForExaminationDate?: Date;
+	submissionForExaminationDate?: Date;
+	examiningInspector1?: string;
+	examiningInspector2?: string;
+	examiningInspector3?: string;
+	examiningInspectorAppointmentDate?: Date;
+	examinationWebsite?: string;
+}
+
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
@@ -97,6 +107,9 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					reference,
 					req.params.question as string
 				);
+				break;
+			case 'examination':
+				updated = await updateExamination(db, trimStringValues(data.answers as ExaminationInput), reference);
 				break;
 			default:
 				logger.info(`url - ${req.url} not found`);
@@ -168,6 +181,19 @@ async function updateOverview(
 		return true;
 	}
 
+	if (question === 'examining-inspector-1') {
+		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, caseId);
+	}
+	if (question === 'examining-inspector-2') {
+		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, caseId);
+	}
+	if (question === 'examining-inspector-3') {
+		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, caseId);
+	}
+	if (question === 'examination-website') {
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId);
+	}
+
 	// Updating case (scalar) details + any newly added contact / LPA
 	const { ...scalars } = answers;
 
@@ -192,6 +218,15 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 		answers.assessorAppointmentDate = new Date();
 	}
 	await db.gateway2Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
+	return true;
+}
+
+async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseId: string) {
+	await db.examinationInfo.upsert({
 		where: { caseId },
 		update: { ...answers },
 		create: { caseId, ...answers }
@@ -286,6 +321,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					phone: contact.phoneNumber,
 					lpaContact: contact.lpaCode
 				}));
+				journeyResponse.answers.examiningInspector1 = overviewData.examinationInfo?.examiningInspector1;
+				journeyResponse.answers.examiningInspector2 = overviewData.examinationInfo?.examiningInspector2;
+				journeyResponse.answers.examiningInspector3 = overviewData.examinationInfo?.examiningInspector3;
+				journeyResponse.answers.examinationWebsite = overviewData.examinationInfo?.examinationWebsite;
 				if (next) next();
 				return;
 			}
@@ -300,6 +339,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			case 'gateway-2': {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: reference } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+				if (next) next();
+				return;
+			}
+
+			case 'examination': {
+				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
 				if (next) next();
 				return;
 			}
@@ -327,7 +373,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
 		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
 		{ text: 'Gateway 3', href: '#' },
-		{ text: 'Examination', href: '#' },
+		{ text: 'Examination', href: `${baseUrl}/examination` },
 		{
 			text: 'Case History',
 			href: `${baseUrl}/overview?section=case-history`,
@@ -362,7 +408,8 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 			},
 			caseHistories: {
 				orderBy: { date: 'desc' }
-			}
+			},
+			examinationInfo: true
 		}
 	});
 }
