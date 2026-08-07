@@ -17,9 +17,11 @@ import {
 	createOverviewJourney,
 	createGateway1Journey,
 	createGateway2Journey,
+	createExaminationJourney,
 	GATEWAY_1_JOURNEY_ID,
 	GATEWAY_2_JOURNEY_ID,
-	OVERVIEW_JOURNEY_ID
+	OVERVIEW_JOURNEY_ID,
+	EXAMINATION_JOURNEY_ID
 } from './journey.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
@@ -48,6 +50,12 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-2',
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
+		supportsManageList: true
+	},
+	{
+		path: 'examination',
+		journeyId: EXAMINATION_JOURNEY_ID,
+		createJourney: createExaminationJourney,
 		supportsManageList: true
 	}
 ];
