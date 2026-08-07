@@ -17,4 +17,10 @@
         }) }}
     {% endif %}
     {% block dynQuestionContent %}{% endblock %}
+    <a
+				href="{{ backLink }}"
+				class="govuk-button govuk-button--secondary"
+				data-cy="button-back"
+				aria-describedby="remove-description"
+		>Cancel</a>
 {% endblock %}

@@ -34,11 +34,7 @@ model Case {
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
-  examinationWebsite        String?
   assessorGateway3          String?
-  examiningInspector1       String?
-  examiningInspector2       String?
-  examiningInspector3       String?
   qaInspector1              String?
   qaInspector2              String?
   qaInspector3              String?
@@ -92,10 +88,23 @@ model Gateway3Info {
 }
 
 model ExaminationInfo {
-  id                           String    @id @default(uuid()) @db.UniqueIdentifier
-  case                         Case      @relation(fields: [caseId], references: [reference])
-  caseId                       String    @unique
-  submissionForExaminationDate DateTime? @db.DateTime2
+  id                                    String    @id @default(uuid()) @db.UniqueIdentifier
+  case                                  Case      @relation(fields: [caseId], references: [reference])
+  caseId                                String    @unique
+  estimatedSubmissionForExaminationDate DateTime? @db.DateTime2
+  submissionForExaminationDate          DateTime? @db.DateTime2
+  examiningInspector1                   String?
+  examiningInspector2                   String?
+  examiningInspector3                   String?
+  examiningInspectorAppointmentDate     DateTime? @db.DateTime2
+  examinationWebsite                    String?
+  letterSentToMHCLGDate                 DateTime? @db.DateTime2
+  letterIssueDate                       DateTime? @db.DateTime2
+  factCheckDateReceivedFromInspector    DateTime? @db.DateTime2
+  factCheckDueDate                      DateTime? @db.DateTime2
+  factCheckActualDate                   DateTime? @db.DateTime2
+  factCheckReceivedBackFromLPADate      DateTime? @db.DateTime2
+  finalReportIssueDate                  DateTime? @db.DateTime2
 }
 
 model LPA {

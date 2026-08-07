@@ -230,7 +230,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaInspector1: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 1?',
+		question: 'Who is the QA 1?',
 		fieldName: 'qaInspector1',
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
@@ -443,6 +443,97 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Report published by LPA date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
+	},
+	// Examination
+	estimatedSubmissionForExaminationDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the estimated examination date?',
+		fieldName: 'estimatedSubmissionForExaminationDate',
+		url: 'examination-estimated-submission-date',
+		title: 'Estimated submission date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' }
+	},
+	submissionForExaminationDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the actual examination date?',
+		fieldName: 'submissionForExaminationDate',
+		url: 'examination-actual-submission-date',
+		title: 'Actual submission date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-actual-submission-date' }
+	},
+	examiningInspectorAppointmentDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When were the examining Inspectors appointed?',
+		fieldName: 'examiningInspectorAppointmentDate',
+		url: 'examination-examining-inspector-appointment-date',
+		title: 'Examining Inspector(s) appointment date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
+	},
+	letterSentToMHCLGDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the 48-hour protocol letter sent to MHCLG?',
+		fieldName: 'letterSentToMHCLGDate',
+		url: 'letter-sent-to-mhclg-date',
+		title: 'Letter sent to MHCLG date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'letter-sent-to-mhclg-date' }
+	},
+	letterIssueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the letter sent to the LPA?',
+		fieldName: 'letterIssueDate',
+		url: 'letter-issue-date',
+		title: 'Letter issue date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'letter-issue-date' }
+	},
+	factCheckDateReceivedFromInspector: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the Inspector issue the Fact Check?',
+		fieldName: 'factCheckDateReceivedFromInspector',
+		url: 'fact-check-date-received-from-inspector',
+		title: 'Fact Check date received from Inspector',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-date-received-from-inspector' }
+	},
+	factCheckDueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the Fact Check expected to be sent to the LPA?',
+		fieldName: 'factCheckDueDate',
+		url: 'fact-check-due-date',
+		title: 'Fact Check due date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-due-date' }
+	},
+	factCheckActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Fact Check actually sent to the LPA?',
+		fieldName: 'factCheckActualDate',
+		url: 'fact-check-actual-date',
+		title: 'Fact Check actual date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-actual-date' }
+	},
+	factCheckReceivedBackFromLPADate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Fact Check returned?',
+		fieldName: 'factCheckReceivedBackFromLPADate',
+		url: 'fact-check-received-back-from-lpa-date',
+		title: 'Fact Check received back from LPA',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-received-back-from-lpa-date' }
+	},
+	finalReportIssueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the final report issued?',
+		fieldName: 'finalReportIssueDate',
+		url: 'final-report-issue-date',
+		title: 'Final report issue date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'final-report-issue-date' }
 	}
 };
 
