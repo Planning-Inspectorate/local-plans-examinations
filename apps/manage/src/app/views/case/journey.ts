@@ -119,7 +119,13 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
-				.addQuestion(questions.letterIssueDate)
+				.addQuestion(questions.letterIssueDate),
+			new Section('Fact Check', 'fact-check')
+				.addQuestion(questions.factCheckDateReceivedFromInspector)
+				.addQuestion(questions.factCheckDueDate)
+				.addQuestion(questions.factCheckActualDate)
+				.addQuestion(questions.factCheckReceivedBackFromLPADate)
+				.addQuestion(questions.finalReportIssueDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',

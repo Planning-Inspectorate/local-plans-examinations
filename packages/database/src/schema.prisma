@@ -100,6 +100,11 @@ model ExaminationInfo {
   examinationWebsite                    String?
   letterSentToMHCLGDate                 DateTime? @db.DateTime2
   letterIssueDate                       DateTime? @db.DateTime2
+  factCheckDateReceivedFromInspector    DateTime? @db.DateTime2
+  factCheckDueDate                      DateTime? @db.DateTime2
+  factCheckActualDate                   DateTime? @db.DateTime2
+  factCheckReceivedBackFromLPADate      DateTime? @db.DateTime2
+  finalReportIssueDate                  DateTime? @db.DateTime2
 }
 
 model LPA {

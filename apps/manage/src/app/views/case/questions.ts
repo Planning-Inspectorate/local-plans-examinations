@@ -489,6 +489,51 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Letter issue date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'letter-issue-date' }
+	},
+	factCheckDateReceivedFromInspector: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the Inspector issue the Fact Check?',
+		fieldName: 'factCheckDateReceivedFromInspector',
+		url: 'fact-check-date-received-from-inspector',
+		title: 'Fact Check date received from Inspector',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-date-received-from-inspector' }
+	},
+	factCheckDueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the Fact Check expected to be sent to the LPA?',
+		fieldName: 'factCheckDueDate',
+		url: 'fact-check-due-date',
+		title: 'Fact Check due date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-due-date' }
+	},
+	factCheckActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Fact Check actually sent to the LPA?',
+		fieldName: 'factCheckActualDate',
+		url: 'fact-check-actual-date',
+		title: 'Fact Check actual date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-actual-date' }
+	},
+	factCheckReceivedBackFromLPADate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Fact Check returned?',
+		fieldName: 'factCheckReceivedBackFromLPADate',
+		url: 'fact-check-received-back-from-lpa-date',
+		title: 'Fact Check received back from LPA',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-received-back-from-lpa-date' }
+	},
+	finalReportIssueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the final report issued?',
+		fieldName: 'finalReportIssueDate',
+		url: 'final-report-issue-date',
+		title: 'Final report issue date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'final-report-issue-date' }
 	}
 };
 
