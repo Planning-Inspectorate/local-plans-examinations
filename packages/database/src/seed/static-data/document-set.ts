@@ -10,12 +10,20 @@ export const DOCUMENT_SET = [
 		displayOrder: 1
 	},
 	{
+		id: DOCUMENT_SET_ID.G2_LOCAL_PLAN_TIMETABLE,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Local plan timetable',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE,
+		displayOrder: 2
+	},
+	{
 		id: DOCUMENT_SET_ID.G2_PROJ_INIT_DOC,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Project Initiation Document',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_PROJ_INIT_DOC,
-		displayOrder: 2
+		displayOrder: 3
 	},
 	{
 		id: DOCUMENT_SET_ID.G2_DRAFT_STATEMENT_COMPLIANCE,
@@ -23,7 +31,7 @@ export const DOCUMENT_SET = [
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Draft statement of compliance',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_DRAFT_STATEMENT_COMPLIANCE,
-		displayOrder: 3
+		displayOrder: 4
 	},
 	{
 		id: DOCUMENT_SET_ID.G2_DRAFT_STATEMENT_SOUNDNESS,
@@ -31,7 +39,7 @@ export const DOCUMENT_SET = [
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Draft statement of soundness',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_DRAFT_STATEMENT_SOUNDNESS,
-		displayOrder: 4
+		displayOrder: 5
 	},
 
 	{

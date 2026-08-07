@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import type { Request } from 'express';
 import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { normalisePlanReferenceForLookup, syncGateway2CoverLetterAnswer } from './index.ts';
+import { normalisePlanReferenceForLookup, syncGateway2UploadAnswer } from './index.ts';
 
 describe('normalisePlanReferenceForLookup', () => {
 	it('keeps hyphenated LPE references unchanged', () => {
@@ -18,7 +18,7 @@ describe('normalisePlanReferenceForLookup', () => {
 	});
 });
 
-describe('syncGateway2CoverLetterAnswer', () => {
+describe('syncGateway2UploadAnswer', () => {
 	it('stores uploaded files in the case-scoped journey answers', () => {
 		const uploadedFile = buildUploadedFile({ id: 'file-1', fileName: 'cover-letter.pdf' });
 		const req = {
@@ -26,7 +26,7 @@ describe('syncGateway2CoverLetterAnswer', () => {
 			session: {}
 		};
 
-		syncGateway2CoverLetterAnswer(req as unknown as Request, [uploadedFile]);
+		syncGateway2UploadAnswer(req as unknown as Request, 'gateway2CoverLetter', [uploadedFile]);
 
 		assert.deepEqual(req.session, {
 			forms: {
@@ -53,7 +53,7 @@ describe('syncGateway2CoverLetterAnswer', () => {
 			}
 		};
 
-		syncGateway2CoverLetterAnswer(req as unknown as Request, []);
+		syncGateway2UploadAnswer(req as unknown as Request, 'gateway2CoverLetter', []);
 
 		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
 	});
