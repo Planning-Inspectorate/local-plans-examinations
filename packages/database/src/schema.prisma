@@ -22,39 +22,36 @@ datasource db {
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
 model Case {
-  id                        String           @id @default(uuid()) @db.UniqueIdentifier
-  reference                 String           @unique
-  email                     String
-  caseOfficer               String
-  planTitle                 String
-  planType                  String
-  planBand                  String?
-  lpas                      LPA[]
-  contacts                  Contact[]
-  programmeOfficerFirstName String?
-  programmeOfficerLastName  String?
-  programmeOfficerEmail     String?
-  examinationWebsite        String?
-  assessorGateway3          String?
-  examiningInspector1       String?
-  examiningInspector2       String?
-  examiningInspector3       String?
-  qaInspector1              String?
-  qaInspector2              String?
-  qaInspector3              String?
-  intentionToCommenceDate   DateTime?
-  gateway1Date              DateTime?
-  gateway2Date              DateTime?
-  gateway3Date              DateTime?
-  submissionDate            DateTime?
-  createdAt                 DateTime         @default(now())
-  gateway1Info              Gateway1Info?
-  gateway2Info              Gateway2Info?
-  gateway3Info              Gateway3Info?
-  examinationInfo           ExaminationInfo?
-  gateways                  Gateway[]
-  caseHistories             CaseHistory[]
-  documents                 Document[]
+  id                      String           @id @default(uuid()) @db.UniqueIdentifier
+  reference               String           @unique
+  email                   String
+  caseOfficer             String
+  planTitle               String
+  planType                String
+  planBand                String?
+  lpas                    LPA[]
+  contacts                Contact[]
+  examinationWebsite      String?
+  examiningInspector1     String?
+  examiningInspector2     String?
+  examiningInspector3     String?
+  qaInspector1            String?
+  qaInspector2            String?
+  qaInspector3            String?
+  intentionToCommenceDate DateTime?
+  gateway1Date            DateTime?
+  gateway2Date            DateTime?
+  gateway3Date            DateTime?
+  submissionDate          DateTime?
+  createdAt               DateTime         @default(now())
+  deletedDate             DateTime?
+  gateway1Info            Gateway1Info?
+  gateway2Info            Gateway2Info?
+  gateway3Info            Gateway3Info?
+  examinationInfo         ExaminationInfo?
+  gateways                Gateway[]
+  caseHistories           CaseHistory[]
+  documents               Document[]
 }
 
 model Gateway1Info {
@@ -85,10 +82,17 @@ model Gateway2Info {
 }
 
 model Gateway3Info {
-  id            String    @id @default(uuid()) @db.UniqueIdentifier
-  case          Case      @relation(fields: [caseId], references: [reference])
-  caseId        String    @unique
-  estimatedDate DateTime? @db.DateTime2
+  id                        String    @id @default(uuid()) @db.UniqueIdentifier
+  case                      Case      @relation(fields: [caseId], references: [reference])
+  caseId                    String    @unique
+  estimatedDate             DateTime? @db.DateTime2
+  actualDate                DateTime? @db.DateTime2
+  programmeOfficerFirstName String?
+  programmeOfficerLastName  String?
+  programmeOfficerEmail     String?
+  assessorName              String?
+  assessorAppointmentDate   DateTime? @db.DateTime2
+  completionDate            DateTime? @db.DateTime2
 }
 
 model ExaminationInfo {
@@ -189,7 +193,7 @@ model CaseHistory {
   event    String   @db.NVarChar(200)
   caseId   String   @db.UniqueIdentifier
   username String   @db.NVarChar(100)
-  case     Case     @relation(fields: [caseId], references: [id])
+  case     Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
 }
 
 /// Document model

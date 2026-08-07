@@ -72,10 +72,12 @@
               {% endfor %}
           </div>
       </div>
-    {{ govukButton({
-      text: "Delete case",
-      classes: "govuk-button--warning"
-    }) }}
+
 {% endif %}
+{{ govukButton({
+    text: "Delete case",
+    classes: "govuk-button--warning",
+    href: baseUrl + "/delete-case"
+  }) }}
 {% endblock %}
 

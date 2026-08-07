@@ -197,12 +197,20 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
 	assessorGateway3: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Assessor Gateway 3?',
-		fieldName: 'assessorGateway3',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Who is the Gateway 3 assessor?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'assessor-1', text: 'Assessor 1' },
+			{ value: 'assessor-2', text: 'Assessor 2' },
+			{ value: 'assessor-3', text: 'Assessor 3' },
+			{ value: 'assessor-4', text: 'Assessor 4' }
+		],
+		fieldName: 'gateway3AssessorName',
 		url: 'assessor-gateway-3',
 		title: 'Assessor Gateway 3',
-		validators: [new RequiredValidator('Input Assessor Gateway 3')]
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
 	},
 	examiningInspector1: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -394,7 +402,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'assessor-4', text: 'Assessor 4' }
 		],
 		fieldName: 'assessorName',
-		url: 'gateway-2-assessor',
+		url: 'assessor-gateway-2',
 		title: 'Gateway 2 assessor name',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
@@ -443,6 +451,59 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Report published by LPA date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
+	},
+	//gateway 3
+	gateway3EstimatedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the estimated Gateway 3 date?',
+		fieldName: 'estimatedDate',
+		url: 'gateway-3-estimated-date',
+		title: 'Gateway 3 estimated date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-estimated-date' }
+	},
+	gateway3ActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the Gateway 3 actual date?',
+		fieldName: 'actualDate',
+		url: 'gateway-3-actual-date',
+		title: 'Gateway 3 actual date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-actual-date' }
+	},
+	gateway3AssessorsName: {
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Who is the Gateway 3 assessor?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'assessor-1', text: 'Assessor 1' },
+			{ value: 'assessor-2', text: 'Assessor 2' },
+			{ value: 'assessor-3', text: 'Assessor 3' },
+			{ value: 'assessor-4', text: 'Assessor 4' }
+		],
+		fieldName: 'assessorName',
+		url: 'gateway-3-assessor-name',
+		title: 'Gateway 3 assessor name',
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
+	},
+	gateway3AssessorDateOfAppointment: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Gateway 3 assessor appointed?',
+		fieldName: 'assessorAppointmentDate',
+		url: 'gateway-3-assessor-date-of-appointment',
+		title: 'Gateway 3 assessor date of appointment',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
+	},
+	gateway3CompletionDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was Gateway 3 completed?',
+		fieldName: 'completionDate',
+		url: 'gateway-3-completion-date',
+		title: 'Gateway 3 completion date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
 	}
 };
 
