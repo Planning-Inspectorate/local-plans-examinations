@@ -66,6 +66,7 @@ interface ExaminationInput {
 	examiningInspector3?: string;
 	examiningInspectorAppointmentDate?: Date;
 	examinationWebsite?: string;
+	isSound?: boolean;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -346,6 +347,11 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			case 'examination': {
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: reference } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+				let isSound: string | null = null;
+				if (typeof journey4Data?.isSound === 'boolean') {
+					isSound = journey4Data?.isSound ? 'yes' : 'no';
+				}
+				res.locals.journeyResponse.answers.isSound = isSound;
 				if (next) next();
 				return;
 			}

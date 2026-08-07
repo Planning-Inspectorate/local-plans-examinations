@@ -125,7 +125,15 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.factCheckDueDate)
 				.addQuestion(questions.factCheckActualDate)
 				.addQuestion(questions.factCheckReceivedBackFromLPADate)
-				.addQuestion(questions.finalReportIssueDate)
+				.addQuestion(questions.finalReportIssueDate),
+			new Section('Important dates for this plan', 'important-dates')
+				.addQuestion(questions.planPauseStartDate)
+				.addQuestion(questions.planPauseEndDate)
+				.addQuestion(questions.withdrawnDate)
+				.addQuestion(questions.isSound)
+				.addQuestion(questions.soundUnsoundDate)
+				.addQuestion(questions.adoptionDate)
+				.addQuestion(questions.approvedForCILDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',

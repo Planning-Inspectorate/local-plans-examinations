@@ -534,6 +534,81 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Final report issue date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'final-report-issue-date' }
+	},
+	planPauseStartDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the plan pause start?',
+		fieldName: 'planPauseStartDate',
+		url: 'plan-pause-start-date',
+		title: 'Plan pause date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'plan-pause-start-date' }
+	},
+	planPauseEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the plan pause end?',
+		fieldName: 'planPauseEndDate',
+		url: 'plan-pause-end-date',
+		title: 'Plan pause end date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'plan-pause-end-date' }
+	},
+	withdrawnDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan withdrawn?',
+		fieldName: 'withdrawnDate',
+		url: 'withdrawn-date',
+		title: 'Withdrawn date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'withdrawn-date-date' }
+	},
+	isSound: {
+		type: COMPONENT_TYPES.BOOLEAN,
+		options: [
+			{
+				text: 'Sound',
+				value: 'yes',
+				attributes: { 'data-cy': 'answer-yes' }
+			},
+			{
+				text: 'Unsound',
+				value: 'no',
+				attributes: { 'data-cy': 'answer-no' }
+			}
+		],
+		question: 'Was the plan found to be sound or unsound?',
+		fieldName: 'isSound',
+		url: 'is-sound',
+		title: 'Sound / unsound',
+		validators: [new RequiredValidator(' todo ')],
+		inputAttributes: { 'data-cy': 'is-sound' }
+	},
+	soundUnsoundDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan confirmed as sound or unsound?',
+		fieldName: 'soundUnsoundDate',
+		url: 'sound-unsound-date',
+		title: 'Sound / unsound date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'sound-unsound-date' }
+	},
+	adoptionDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan adopted?',
+		fieldName: 'adoptionDate',
+		url: 'adoption-date',
+		title: 'Adoption date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'adoption-date-date' }
+	},
+	approvedForCILDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan approved for CIL?',
+		fieldName: 'approvedForCILDate',
+		url: 'approved-for-cil-date',
+		title: 'Approved for CIL date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
 	}
 };
 
