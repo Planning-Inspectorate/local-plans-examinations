@@ -73,6 +73,9 @@ interface ExaminationInput {
 	factCheckActualDate?: Date;
 	factCheckReceivedBackFromLPADate?: Date;
 	finalReportIssueDate?: Date;
+	qaInspector1?: string;
+	qaInspector2?: string;
+	qaInspector3?: string;
 }
 
 const caseHistoryLabels: Record<string, string> = {
@@ -211,6 +214,16 @@ async function updateOverview(
 		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId);
 	}
 
+	if (question === 'inspector-qa-1') {
+		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, caseId);
+	}
+	if (question === 'inspector-qa-2') {
+		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, caseId);
+	}
+	if (question === 'inspector-qa-3') {
+		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, caseId);
+	}
+
 	// Updating case (scalar) details + any newly added contact / LPA
 	const { ...scalars } = answers;
 
@@ -342,6 +355,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				journeyResponse.answers.examiningInspector2 = overviewData.examinationInfo?.examiningInspector2;
 				journeyResponse.answers.examiningInspector3 = overviewData.examinationInfo?.examiningInspector3;
 				journeyResponse.answers.examinationWebsite = overviewData.examinationInfo?.examinationWebsite;
+				journeyResponse.answers.qaInspector1 = overviewData.examinationInfo?.qaInspector1;
+				journeyResponse.answers.qaInspector2 = overviewData.examinationInfo?.qaInspector2;
+				journeyResponse.answers.qaInspector3 = overviewData.examinationInfo?.qaInspector3;
+
 				if (next) next();
 				return;
 			}
@@ -431,7 +448,10 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 					examiningInspector1: true,
 					examiningInspector2: true,
 					examiningInspector3: true,
-					examinationWebsite: true
+					examinationWebsite: true,
+					qaInspector1: true,
+					qaInspector2: true,
+					qaInspector3: true
 				}
 			}
 		}

@@ -121,6 +121,13 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
+			new Section('QA', 'QA')
+				.addQuestion(questions.qaDate)
+				.addQuestion(questions.qaInspector1)
+				.addQuestion(questions.qaInspector2)
+				.addQuestion(questions.qaInspector3)
+				.addQuestion(questions.sentToPanelDate)
+				.addQuestion(questions.panelResponseSentToInspector),
 			new Section('Fact Check', 'fact-check')
 				.addQuestion(questions.factCheckDateReceivedFromInspector)
 				.addQuestion(questions.factCheckDueDate)

@@ -35,9 +35,6 @@ model Case {
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorGateway3          String?
-  qaInspector1              String?
-  qaInspector2              String?
-  qaInspector3              String?
   intentionToCommenceDate   DateTime?
   gateway1Date              DateTime?
   gateway2Date              DateTime?
@@ -100,6 +97,12 @@ model ExaminationInfo {
   examinationWebsite                    String?
   letterSentToMHCLGDate                 DateTime? @db.DateTime2
   letterIssueDate                       DateTime? @db.DateTime2
+  QADate                                DateTime? @db.DateTime2
+  qaInspector1                          String?
+  qaInspector2                          String?
+  qaInspector3                          String?
+  reportSentToPanelDate                 DateTime? @db.DateTime2
+  panelResponseToInspectorDate          DateTime? @db.DateTime2
   factCheckDateReceivedFromInspector    DateTime? @db.DateTime2
   factCheckDueDate                      DateTime? @db.DateTime2
   factCheckActualDate                   DateTime? @db.DateTime2
