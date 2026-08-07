@@ -22,6 +22,29 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
+const MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'csv', 'jpg', 'jpeg', 'png'];
+const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
+	'application/msword',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'application/pdf',
+	'text/csv',
+	'application/csv',
+	'application/vnd.ms-excel',
+	'image/jpeg',
+	'image/png',
+	'application/octet-stream'
+];
+const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT = 25 * 1024 * 1024;
+const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL = '25MB';
+const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
+	caption: 'Procedural documents',
+	introduction: 'Upload a file',
+	fileRequirementsText: 'The file must be a DOC, DOCX, PDF, CSV, JPG or PNG and be smaller than 25MB',
+	chooseFilesButtonText: 'Choose files',
+	dropInstructionText: 'or drop files'
+};
+const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
+
 export const CHECK_ANSWERS_REDIRECT_QUERY = 'checkAnswersRedirect';
 export const CHECK_ANSWERS_REDIRECTS = {
 	CHECK_YOUR_ANSWERS: 'check-your-answers',
@@ -61,8 +84,52 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
 };
 
+export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Local plan timetable',
+	question: 'Upload your local plan timetable',
+	fieldName: 'localPlanTimetable',
+	url: 'local-plan-timetable',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: 3,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+	validators: [new FileUploadRequiredValidator('localPlanTimetable', 'Upload local plan timetable')]
+};
+
+export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Project initiation document',
+	question: 'Upload your project initiation document',
+	fieldName: 'projectInitiationDocument',
+	url: 'project-initiation-document',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: Number.MAX_SAFE_INTEGER,
+	maxTotalUploadSizeLabel: 'unlimited',
+	multiple: true,
+	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+	validators: [new FileUploadRequiredValidator('projectInitiationDocument', 'Upload project initiation document')]
+};
+
 const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
-	gateway2CoverLetter: gateway2CoverLetterQuestion
+	gateway2CoverLetter: gateway2CoverLetterQuestion,
+	localPlanTimetable: localPlanTimetableQuestion,
+	projectInitiationDocument: projectInitiationDocumentQuestion
+};
+
+export const gateway2FileUploadQuestions = {
+	gateway2CoverLetter: gateway2CoverLetterQuestion,
+	localPlanTimetable: localPlanTimetableQuestion,
+	projectInitiationDocument: projectInitiationDocumentQuestion
 };
 
 export const questions = createQuestions(

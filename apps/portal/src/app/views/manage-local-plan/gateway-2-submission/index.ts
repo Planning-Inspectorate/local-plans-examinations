@@ -26,24 +26,50 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
-	gateway2CoverLetterQuestion,
+	gateway2FileUploadQuestions,
 	questions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
-import { loadGateway2CoverLetterDocuments, saveGateway2CoverLetterDocuments } from './documents.ts';
+import { loadGateway2Documents, saveGateway2Documents } from './documents.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
 	fileUploaderQuestionMiddleware,
+	type FileUploaderQuestionProps,
 	type FileUploaderSession,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 
-const GATEWAY_2_COVER_LETTER_FIELD = 'gateway2CoverLetter';
-const GATEWAY_2_COVER_LETTER_URL = 'gateway-2-cover-letter';
-const GATEWAY_2_COVER_LETTER_QUESTION = gateway2CoverLetterQuestion;
+// This file wires the Gateway 2 submission journey into Express.
+//
+// The main sections are:
+// - Upload question setup: turns the configured file upload questions into lists
+//   and maps that are easier for shared routes to use.
+// - Request/session helpers: loads the current case, normalises route params, and
+//   keeps the dynamic-forms answers in sync with uploaded files.
+// - Upload logging: adds useful context around upload, delete and cleanup events.
+// - Route setup: registers the Gateway 2 listing, question, upload and delete
+//   routes. The upload/delete routes are shared, so the `:question` URL decides
+//   which upload config, validation rules and document set are used.
+
+// The Gateway 2 upload routes are shared by all of the document questions.
+// Keep the question configs in a couple of route-friendly shapes so the URL in
+// `:question` decides which field, validation rules and document set are used.
+type Gateway2FileUploadQuestion = FileUploaderQuestionProps & {
+	fieldName: string;
+	url: string;
+};
+
+// Ordered list for loading each persisted upload when the case page opens.
+const gateway2FileUploadQuestionConfigs = Object.values(gateway2FileUploadQuestions) as Gateway2FileUploadQuestion[];
+// URL list for the file uploader middleware to recognise upload pages.
+const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
+// Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
+const gateway2FileUploadQuestionsByUrl = new Map(
+	gateway2FileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
+);
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
@@ -59,8 +85,7 @@ type Gateway2Request = Request & {
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
-		fileSize: GATEWAY_2_COVER_LETTER_QUESTION.maxFileSizeBytes,
-		files: GATEWAY_2_COVER_LETTER_QUESTION.maxFilesPerUpload
+		fileSize: Math.max(...gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.maxFileSizeBytes))
 	}
 });
 
@@ -107,6 +132,33 @@ function redirectToFileUploaderQuestion(req: Request) {
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
 
+function getRouteQuestionUrl(req: Request): string | undefined {
+	const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
+	return questionUrl || undefined;
+}
+
+function getRouteFileUploadQuestion(req: Request): Gateway2FileUploadQuestion {
+	const questionUrl = getRouteQuestionUrl(req);
+	const questionConfig = questionUrl ? gateway2FileUploadQuestionsByUrl.get(questionUrl) : undefined;
+	if (!questionConfig) {
+		throw new Error(`No Gateway 2 file upload question configured for "${questionUrl ?? ''}"`);
+	}
+
+	return questionConfig;
+}
+
+function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestHandler>): RequestHandler {
+	return (req, res, next) => {
+		const questionUrl = getRouteQuestionUrl(req);
+		const handler = questionUrl ? handlersByQuestionUrl.get(questionUrl) : undefined;
+		if (!handler) {
+			return renderNotFound(res);
+		}
+
+		return handler(req, res, next);
+	};
+}
+
 // Loads the case for the plan reference and creates the journey response.
 function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler {
 	return async (req, res, next) => {
@@ -126,13 +178,20 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
-		const uploadedFiles = await loadGateway2CoverLetterDocuments(service, currentCase.id);
-		setFileUploaderUploadedFiles(request, fileUploaderCaseSessionKey(req), uploadedFiles);
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
-		if (uploadedFiles.length > 0) {
-			answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
-		} else {
-			delete answers[GATEWAY_2_COVER_LETTER_FIELD];
+
+		for (const questionConfig of gateway2FileUploadQuestionConfigs) {
+			const uploadedFiles = await loadGateway2Documents(service, currentCase.id, questionConfig.url);
+			setFileUploaderUploadedFiles(
+				request,
+				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),
+				uploadedFiles
+			);
+			if (uploadedFiles.length > 0) {
+				answers[questionConfig.fieldName] = uploadedFiles;
+			} else {
+				delete answers[questionConfig.fieldName];
+			}
 		}
 
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
@@ -169,7 +228,12 @@ function getCaseScopedSessionAnswers(req: Request, planReference: string): Recor
 // Retrieves the plan reference from the params and creates the file upload session key.
 // Example format: LP-TEST-001:gateway2CoverLetter.
 function fileUploaderCaseSessionKey(req: Request) {
-	return `${req.params.planReference}:${GATEWAY_2_COVER_LETTER_FIELD}`;
+	const questionConfig = getRouteFileUploadQuestion(req);
+	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
+}
+
+function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
+	return `${req.params.planReference}:${fieldName}`;
 }
 
 // Populates the generic file uploader session from persisted case documents.
@@ -182,8 +246,8 @@ function setFileUploaderUploadedFiles(req: Gateway2Request, sessionKey: string, 
 	};
 }
 
-// Keeps the Gateway 2 cover letter answer in sync with uploaded files.
-export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: UploadedFile[]) {
+// Keeps a Gateway 2 file upload answer in sync with uploaded files.
+export function syncGateway2UploadAnswer(req: Request, fieldName: string, uploadedFiles: UploadedFile[]) {
 	if (!req.session) {
 		return;
 	}
@@ -196,11 +260,11 @@ export function syncGateway2CoverLetterAnswer(req: Request, uploadedFiles: Uploa
 		: getOrCreateRecord(forms, JOURNEY_ID);
 
 	if (uploadedFiles.length > 0) {
-		answers[GATEWAY_2_COVER_LETTER_FIELD] = uploadedFiles;
+		answers[fieldName] = uploadedFiles;
 		return;
 	}
 
-	delete answers[GATEWAY_2_COVER_LETTER_FIELD];
+	delete answers[fieldName];
 }
 
 // Reads the plan reference from the route params.
@@ -257,78 +321,97 @@ function getOrCreateRecord(container: Record<string, unknown>, key: string): Rec
 	return value;
 }
 
-function gateway2CoverLetterLogContext(req: Request) {
+function gateway2UploadLogContext(req: Request, questionConfig: Gateway2FileUploadQuestion) {
 	const request = req as Gateway2Request;
 	return {
 		planReference: getRoutePlanReference(req),
 		caseId: request.currentCase?.id,
-		fieldName: GATEWAY_2_COVER_LETTER_FIELD
+		fieldName: questionConfig.fieldName,
+		questionUrl: questionConfig.url
 	};
 }
 
-function logGateway2CoverLetterUploaded(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
+function logGateway2Uploaded(
+	service: PortalService,
+	req: Request,
+	questionConfig: Gateway2FileUploadQuestion,
+	uploadedFiles: UploadedFile[]
+) {
 	service.logger.info(
 		{
-			...gateway2CoverLetterLogContext(req),
+			...gateway2UploadLogContext(req, questionConfig),
 			fileCount: uploadedFiles.length
 		},
-		'Gateway 2 cover letter uploaded'
+		'Gateway 2 document uploaded'
 	);
 }
 
-function logGateway2CoverLetterUploadFailed(
+function logGateway2UploadFailed(
 	service: PortalService,
 	req: Request,
+	questionConfig: Gateway2FileUploadQuestion,
 	{ errors, error }: { errors?: Array<{ text: string; href: string }>; error?: unknown }
 ) {
 	const context = {
-		...gateway2CoverLetterLogContext(req),
+		...gateway2UploadLogContext(req, questionConfig),
 		errorCount: errors?.length ?? 0
 	};
 
 	if (error) {
-		service.logger.error({ ...context, error }, 'Gateway 2 cover letter upload failed');
+		service.logger.error({ ...context, error }, 'Gateway 2 document upload failed');
 		return;
 	}
 
-	service.logger.warn(context, 'Gateway 2 cover letter upload failed');
+	service.logger.warn(context, 'Gateway 2 document upload failed');
 }
 
-function logGateway2CoverLetterUploadCleanupFailed(
+function logGateway2UploadCleanupFailed(
 	service: PortalService,
 	req: Request,
+	questionConfig: Gateway2FileUploadQuestion,
 	file: UploadedFile,
 	error: unknown
 ) {
 	service.logger.error(
 		{
-			...gateway2CoverLetterLogContext(req),
+			...gateway2UploadLogContext(req, questionConfig),
 			fileId: file.id,
 			error
 		},
-		'Gateway 2 cover letter upload cleanup failed'
+		'Gateway 2 document upload cleanup failed'
 	);
 }
 
-function logGateway2CoverLetterDeleted(service: PortalService, req: Request, uploadedFiles: UploadedFile[]) {
+function logGateway2Deleted(
+	service: PortalService,
+	req: Request,
+	questionConfig: Gateway2FileUploadQuestion,
+	uploadedFiles: UploadedFile[]
+) {
 	service.logger.info(
 		{
-			...gateway2CoverLetterLogContext(req),
+			...gateway2UploadLogContext(req, questionConfig),
 			fileId: req.params.fileId,
 			remainingFileCount: uploadedFiles.length
 		},
-		'Gateway 2 cover letter deleted'
+		'Gateway 2 document deleted'
 	);
 }
 
-function logGateway2CoverLetterDeleteFailed(service: PortalService, req: Request, fileId: string, error: unknown) {
+function logGateway2DeleteFailed(
+	service: PortalService,
+	req: Request,
+	questionConfig: Gateway2FileUploadQuestion,
+	fileId: string,
+	error: unknown
+) {
 	service.logger.error(
 		{
-			...gateway2CoverLetterLogContext(req),
+			...gateway2UploadLogContext(req, questionConfig),
 			fileId,
 			error
 		},
-		'Gateway 2 cover letter delete failed'
+		'Gateway 2 document delete failed'
 	);
 }
 
@@ -343,77 +426,111 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	const saveToDatabase = asyncHandler(buildSaveController(service));
 	const saveDataToCase = buildSaveDataToCase();
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
-	const uploadGateway2CoverLetter = createFileUploaderUploadController({
-		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
-		question: GATEWAY_2_COVER_LETTER_QUESTION,
-		storage: fileUploaderStorage,
-		destination: (req) => ({
-			folderPath: `${req.sessionID ?? 'session'}/${GATEWAY_2_COVER_LETTER_URL}`,
-			metadata: {
-				journeyId: JOURNEY_ID,
-				fieldName: GATEWAY_2_COVER_LETTER_FIELD
-			}
-		}),
-		onFilesChange: ({ req, uploadedFiles }) => {
-			syncGateway2CoverLetterAnswer(req, uploadedFiles);
-			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
-		},
-		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
-		onUploadCleanupError: ({ req, file, error }) =>
-			logGateway2CoverLetterUploadCleanupFailed(service, req, file, error),
-		redirect: redirectToFileUploaderQuestion
-	});
-	const uploadGateway2CoverLetterForCase = createFileUploaderUploadController({
-		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
-		question: GATEWAY_2_COVER_LETTER_QUESTION,
-		storage: fileUploaderStorage,
-		sessionKey: fileUploaderCaseSessionKey,
-		destination: (req) => {
-			const request = req as Gateway2Request;
-			return {
-				folderPath: `${request.currentCase?.id ?? req.params.planReference}/${GATEWAY_2_COVER_LETTER_URL}`,
-				metadata: {
-					journeyId: JOURNEY_ID,
-					caseId: request.currentCase?.id,
-					caseReference: req.params.planReference,
-					fieldName: GATEWAY_2_COVER_LETTER_FIELD
-				}
-			};
-		},
-		onFilesChange: async ({ req, uploadedFiles }) => {
-			await saveGateway2CoverLetterDocuments(service, req, uploadedFiles);
-			syncGateway2CoverLetterAnswer(req, uploadedFiles);
-			logGateway2CoverLetterUploaded(service, req, uploadedFiles);
-		},
-		onUploadError: ({ req, errors, error }) => logGateway2CoverLetterUploadFailed(service, req, { errors, error }),
-		onUploadCleanupError: ({ req, file, error }) =>
-			logGateway2CoverLetterUploadCleanupFailed(service, req, file, error),
-		redirect: redirectToFileUploaderQuestion
-	});
-	const deleteGateway2CoverLetter = createFileUploaderDeleteController({
-		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
-		question: GATEWAY_2_COVER_LETTER_QUESTION,
-		storage: fileUploaderStorage,
-		onFilesChange: ({ req, uploadedFiles }) => {
-			syncGateway2CoverLetterAnswer(req, uploadedFiles);
-			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
-		},
-		onDeleteError: ({ req, fileId, error }) => logGateway2CoverLetterDeleteFailed(service, req, fileId, error),
-		redirect: redirectToFileUploaderQuestion
-	});
-	const deleteGateway2CoverLetterForCase = createFileUploaderDeleteController({
-		fieldName: GATEWAY_2_COVER_LETTER_FIELD,
-		question: GATEWAY_2_COVER_LETTER_QUESTION,
-		storage: fileUploaderStorage,
-		sessionKey: fileUploaderCaseSessionKey,
-		onFilesChange: async ({ req, uploadedFiles }) => {
-			await saveGateway2CoverLetterDocuments(service, req, uploadedFiles);
-			syncGateway2CoverLetterAnswer(req, uploadedFiles);
-			logGateway2CoverLetterDeleted(service, req, uploadedFiles);
-		},
-		onDeleteError: ({ req, fileId, error }) => logGateway2CoverLetterDeleteFailed(service, req, fileId, error),
-		redirect: redirectToFileUploaderQuestion
-	});
+	const uploadGateway2Document = buildFileUploadRouteHandler(
+		new Map(
+			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
+				questionConfig.url,
+				createFileUploaderUploadController({
+					fieldName: questionConfig.fieldName,
+					question: questionConfig,
+					storage: fileUploaderStorage,
+					destination: (req) => ({
+						folderPath: `${req.sessionID ?? 'session'}/${questionConfig.url}`,
+						metadata: {
+							journeyId: JOURNEY_ID,
+							fieldName: questionConfig.fieldName,
+							documentSetFolderName: questionConfig.url
+						}
+					}),
+					onFilesChange: ({ req, uploadedFiles }) => {
+						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
+					},
+					onUploadError: ({ req, errors, error }) =>
+						logGateway2UploadFailed(service, req, questionConfig, { errors, error }),
+					onUploadCleanupError: ({ req, file, error }) =>
+						logGateway2UploadCleanupFailed(service, req, questionConfig, file, error),
+					redirect: redirectToFileUploaderQuestion
+				})
+			])
+		)
+	);
+	const uploadGateway2DocumentForCase = buildFileUploadRouteHandler(
+		new Map(
+			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
+				questionConfig.url,
+				createFileUploaderUploadController({
+					fieldName: questionConfig.fieldName,
+					question: questionConfig,
+					storage: fileUploaderStorage,
+					sessionKey: fileUploaderCaseSessionKey,
+					destination: (req) => {
+						const request = req as Gateway2Request;
+						return {
+							folderPath: `${request.currentCase?.id ?? req.params.planReference}/${questionConfig.url}`,
+							metadata: {
+								journeyId: JOURNEY_ID,
+								caseId: request.currentCase?.id,
+								caseReference: req.params.planReference,
+								fieldName: questionConfig.fieldName,
+								documentSetFolderName: questionConfig.url
+							}
+						};
+					},
+					onFilesChange: async ({ req, uploadedFiles }) => {
+						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
+						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
+					},
+					onUploadError: ({ req, errors, error }) =>
+						logGateway2UploadFailed(service, req, questionConfig, { errors, error }),
+					onUploadCleanupError: ({ req, file, error }) =>
+						logGateway2UploadCleanupFailed(service, req, questionConfig, file, error),
+					redirect: redirectToFileUploaderQuestion
+				})
+			])
+		)
+	);
+	const deleteGateway2Document = buildFileUploadRouteHandler(
+		new Map(
+			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
+				questionConfig.url,
+				createFileUploaderDeleteController({
+					fieldName: questionConfig.fieldName,
+					question: questionConfig,
+					storage: fileUploaderStorage,
+					onFilesChange: ({ req, uploadedFiles }) => {
+						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						logGateway2Deleted(service, req, questionConfig, uploadedFiles);
+					},
+					onDeleteError: ({ req, fileId, error }) =>
+						logGateway2DeleteFailed(service, req, questionConfig, fileId, error),
+					redirect: redirectToFileUploaderQuestion
+				})
+			])
+		)
+	);
+	const deleteGateway2DocumentForCase = buildFileUploadRouteHandler(
+		new Map(
+			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
+				questionConfig.url,
+				createFileUploaderDeleteController({
+					fieldName: questionConfig.fieldName,
+					question: questionConfig,
+					storage: fileUploaderStorage,
+					sessionKey: fileUploaderCaseSessionKey,
+					onFilesChange: async ({ req, uploadedFiles }) => {
+						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
+						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						logGateway2Deleted(service, req, questionConfig, uploadedFiles);
+					},
+					onDeleteError: ({ req, fileId, error }) =>
+						logGateway2DeleteFailed(service, req, questionConfig, fileId, error),
+					redirect: redirectToFileUploaderQuestion
+				})
+			])
+		)
+	);
 
 	router.get('/gateway-2-submission', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
 
@@ -434,14 +551,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
-		uploadGateway2CoverLetterForCase
+		uploadGateway2DocumentForCase
 	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
-		deleteGateway2CoverLetterForCase
+		deleteGateway2DocumentForCase
 	);
 
 	router.post(
@@ -449,14 +566,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		upload.array('files[]'),
-		uploadGateway2CoverLetter
+		uploadGateway2Document
 	);
 
 	router.post(
 		'/gateway-2-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponse,
 		getJourney,
-		deleteGateway2CoverLetter
+		deleteGateway2Document
 	);
 
 	router.get(
@@ -464,7 +581,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL],
+			questionUrls: gateway2FileUploadQuestionUrls,
 			sessionKey: fileUploaderCaseSessionKey
 		}),
 		question
@@ -484,7 +601,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		fileUploaderQuestionMiddleware({
-			questionUrls: [GATEWAY_2_COVER_LETTER_URL]
+			questionUrls: gateway2FileUploadQuestionUrls
 		}),
 		question
 	);

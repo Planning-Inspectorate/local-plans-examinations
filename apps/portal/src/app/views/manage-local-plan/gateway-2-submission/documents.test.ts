@@ -2,14 +2,17 @@ import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { describe, it, mock } from 'node:test';
 import type { PortalService } from '#service';
-import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
-	GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
-	loadGateway2CoverLetterDocuments,
-	saveGateway2CoverLetterDocuments
-} from './documents.ts';
+	DOCUMENT_SET_FOLDER_NAME,
+	DOCUMENT_SET_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { loadGateway2Documents, saveGateway2Documents } from './documents.ts';
 
-describe('loadGateway2CoverLetterDocuments', () => {
+const GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
+const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G2_COVER_LETTER;
+
+describe('loadGateway2Documents', () => {
 	it('loads documents as uploaded files', async () => {
 		const service = createMockService({
 			existingDocuments: [
@@ -33,8 +36,20 @@ describe('loadGateway2CoverLetterDocuments', () => {
 			]
 		});
 
-		const files = await loadGateway2CoverLetterDocuments(service as unknown as PortalService, 'case-1');
+		const files = await loadGateway2Documents(
+			service as unknown as PortalService,
+			'case-1',
+			TEST_DOCUMENT_SET_FOLDER_NAME
+		);
 
+		assert.deepEqual(service.db.documentSet.findFirst.mock.calls[0].arguments[0], {
+			where: {
+				folderName: TEST_DOCUMENT_SET_FOLDER_NAME
+			},
+			select: {
+				id: true
+			}
+		});
 		assert.deepEqual(files, [
 			{
 				id: 'gateway-2/cover-letter.pdf',
@@ -68,15 +83,17 @@ describe('loadGateway2CoverLetterDocuments', () => {
 	});
 });
 
-describe('saveGateway2CoverLetterDocuments', () => {
+describe('saveGateway2Documents', () => {
 	it('creates a document and version for a new uploaded file', async () => {
 		const tx = createTransactionClient();
 		const service = createMockService({ tx });
 		const uploadedFile = buildUploadedFile();
 
-		await saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [uploadedFile]);
+		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+			uploadedFile
+		]);
 
-		assert.equal(service.db.documentSet.findUnique.mock.callCount(), 1);
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 1);
 		assert.equal(tx.document.create.mock.callCount(), 1);
 		assert.equal(tx.documentVersion.create.mock.callCount(), 1);
 		assert.equal(tx.document.update.mock.callCount(), 1);
@@ -116,7 +133,7 @@ describe('saveGateway2CoverLetterDocuments', () => {
 			existingDocuments: [buildDocumentRow({ guid: 'document-1' })]
 		});
 
-		await saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), []);
+		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, []);
 
 		assert.deepEqual(tx.document.update.mock.calls[0].arguments[0], {
 			where: {
@@ -159,7 +176,9 @@ describe('saveGateway2CoverLetterDocuments', () => {
 			]
 		});
 
-		await saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [buildUploadedFile()]);
+		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+			buildUploadedFile()
+		]);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);
 		assert.equal(tx.documentVersion.create.mock.callCount(), 0);
@@ -197,7 +216,7 @@ describe('saveGateway2CoverLetterDocuments', () => {
 			]
 		});
 
-		await saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [
+		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 			buildUploadedFile({ id: 'gateway-2/cover-letter.pdf' })
 		]);
 
@@ -214,27 +233,15 @@ describe('saveGateway2CoverLetterDocuments', () => {
 		});
 	});
 
-	it('rejects more than one active uploaded document', async () => {
-		const service = createMockService();
-
-		await assert.rejects(
-			() =>
-				saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [
-					buildUploadedFile({ id: 'file-1' }),
-					buildUploadedFile({ id: 'file-2' })
-				]),
-			/Gateway 2 cover letter can only have one active uploaded document/
-		);
-		assert.equal(service.db.$transaction.mock.callCount(), 0);
-	});
-
 	it('rejects save when the document set reference data is missing', async () => {
 		const service = createMockService({ documentSet: null });
 
 		await assert.rejects(
 			() =>
-				saveGateway2CoverLetterDocuments(service as unknown as PortalService, buildRequest(), [buildUploadedFile()]),
-			/Missing document set reference data for "g2-cover-letter"/
+				saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+					buildUploadedFile()
+				]),
+			/Missing document set reference data for "gateway-2-cover-letter"/
 		);
 		assert.equal(service.db.$transaction.mock.callCount(), 0);
 	});
@@ -243,10 +250,13 @@ describe('saveGateway2CoverLetterDocuments', () => {
 		const service = createMockService();
 
 		await assert.rejects(
-			() => saveGateway2CoverLetterDocuments(service as unknown as PortalService, {} as Request, [buildUploadedFile()]),
-			/Cannot save Gateway 2 cover letter documents without a loaded case/
+			() =>
+				saveGateway2Documents(service as unknown as PortalService, {} as Request, TEST_DOCUMENT_SET_FOLDER_NAME, [
+					buildUploadedFile()
+				]),
+			/Cannot save Gateway 2 documents without a loaded case/
 		);
-		assert.equal(service.db.documentSet.findUnique.mock.callCount(), 0);
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 0);
 	});
 });
 
@@ -262,7 +272,7 @@ function createMockService({
 	return {
 		db: {
 			documentSet: {
-				findUnique: mock.fn(async () => documentSet)
+				findFirst: mock.fn(async () => documentSet)
 			},
 			document: {
 				findMany: mock.fn(async () => existingDocuments)

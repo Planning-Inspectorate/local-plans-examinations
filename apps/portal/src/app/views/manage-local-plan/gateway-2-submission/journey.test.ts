@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import { questions } from './questions.ts';
+import { gateway2FileUploadQuestions, questions } from './questions.ts';
 
 describe('createJourney', () => {
 	it('builds scoped Gateway 2 submission URLs from a plan reference', () => {
@@ -39,25 +39,26 @@ describe('createJourney', () => {
 		assert.strictEqual(journey.initialBackLink, '/');
 	});
 
-	it('is incomplete until a Gateway 2 cover letter has been uploaded', () => {
+	it('is incomplete until all required Gateway 2 procedural documents have been uploaded', () => {
 		assert.strictEqual(createTestJourney({}).isComplete(), false);
 		assert.strictEqual(createTestJourney({ gateway2CoverLetter: [] }).isComplete(), false);
-		assert.strictEqual(
-			createTestJourney({
-				gateway2CoverLetter: [
-					{
-						id: 'file-1',
-						fileName: 'cover-letter.pdf',
-						mimeType: 'application/pdf',
-						size: 100,
-						storageProvider: 'blob'
-					}
-				]
-			}).isComplete(),
-			true
-		);
+		assert.strictEqual(createTestJourney(buildUploadedDocumentAnswers()).isComplete(), true);
 	});
 });
+
+function buildUploadedDocumentAnswers() {
+	const uploadedFile = {
+		id: 'file-1',
+		fileName: 'document.pdf',
+		mimeType: 'application/pdf',
+		size: 100,
+		storageProvider: 'blob'
+	};
+
+	return Object.fromEntries(
+		Object.values(gateway2FileUploadQuestions).map((questionConfig) => [questionConfig.fieldName, [uploadedFile]])
+	);
+}
 
 function createTestJourney(answers: Record<string, unknown>) {
 	const response = new JourneyResponse(JOURNEY_ID, 'session', answers);
