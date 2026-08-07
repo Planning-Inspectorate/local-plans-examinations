@@ -2,7 +2,7 @@ import { GatewayBasePage } from '../base/gateway-page.ts';
 
 export class Gateway2AssessorPage extends GatewayBasePage {
 	constructor() {
-		super(/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/);
+		super(/^\/case\/.+\/gateway-2\/gateway-2\/assessor-gateway-2$/);
 	}
 
 	get assessorNameField() {

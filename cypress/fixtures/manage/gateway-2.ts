@@ -78,7 +78,7 @@ export const gateway2DateAnswers = {
 
 export const gateway2AssessorAnswer = {
 	row: 'Gateway 2 assessor name',
-	path: 'gateway-2-assessor',
+	path: 'assessor-gateway-2',
 	heading: 'Who is the Gateway 2 assessor?',
 	assessor1: 'Assessor 1',
 	assessor2: 'Assessor 2',
