@@ -1,4 +1,36 @@
+#services:
+#  mssql:
+#    image: mcr.microsoft.com/azure-sql-edge:latest
+#    container_name: local-plans-mssql
+#    platform: linux/amd64 # force platform, so ARM machines to use emulation
+#    cap_add: ['SYS_PTRACE']
+#    user: root
+#    init: true
+#    environment:
+#      - 'ACCEPT_EULA=1'
+#      - 'MSSQL_SA_PASSWORD=DockerDatabaseP@22word!'
+#    ports:
+#      - 1433:1433
+#    hostname: mssql
+#    volumes:
+#      - ./packages/database/src/configuration/mssql.conf:/var/opt/mssql/mssql.conf
+#      - ${MSSQL_DATA_MOUNT:-./tmp/mssql-data}:/var/opt/mssql/data
+#
+#volumes:
+#  mssql-data:
+#    name: ${MSSQL_DATA_VOLUME:-local-plans-mssql-data}
 services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: local-plans-azurite
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --skipApiVersionCheck
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    volumes:
+      - ${AZURITE_DATA_MOUNT:-./tmp/azurite-data}:/data
+
   mssql:
     image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: local-plans-mssql
@@ -17,5 +49,7 @@ services:
       - ${MSSQL_DATA_MOUNT:-./tmp/mssql-data}:/var/opt/mssql/data
 
 volumes:
+  azurite-data:
+    name: ${AZURITE_DATA_VOLUME:-local-plans-azurite-data}
   mssql-data:
     name: ${MSSQL_DATA_VOLUME:-local-plans-mssql-data}

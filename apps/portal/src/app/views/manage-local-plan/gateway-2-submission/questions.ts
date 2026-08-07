@@ -1,10 +1,4 @@
-import {
-	COMPONENT_TYPES,
-	createQuestions,
-	questionClasses,
-	RequiredValidator,
-	StringValidator
-} from '@planning-inspectorate/dynamic-forms';
+import { COMPONENT_TYPES, createQuestions, questionClasses } from '@planning-inspectorate/dynamic-forms';
 import type { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
 import {
 	CUSTOM_COMPONENT_CLASSES,
@@ -14,7 +8,6 @@ import {
 import {
 	ALLOWED_EXTENSIONS,
 	ALLOWED_MIME_TYPES,
-	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
 	SINGLE_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT
@@ -64,18 +57,18 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
 		dropInstructionText: 'or drop files'
-	},
-	validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+	}
 };
 
 const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
+	//prodecural documents
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Local plan timetable',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your local plan timetable',
+		fieldName: 'localPlanTimetable',
+		url: 'local-plan-timetable',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -86,26 +79,19 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		multiple: false,
 		text: {
 			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	projectInitiation: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Project initiation document',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your Project Initiation document',
+		fieldName: 'projectInitiationDocument',
+		url: 'project-initiation-document',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -116,26 +102,19 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		multiple: false,
 		text: {
 			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	draftStatementOfCompliance: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Draft statement of compliance',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your draft Statement of Compliance',
+		fieldName: 'draftStatementOfCompliance',
+		url: 'draft-statement-of-compliance',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -146,26 +125,19 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		multiple: false,
 		text: {
 			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	draftStatementOfSoundness: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Draft statement of soundness',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your draft Statement of Soundness',
+		fieldName: 'draftStatementOfSoundness',
+		url: 'draft-statement-of-soundness',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -176,26 +148,20 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		multiple: false,
 		text: {
 			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
+	// consultation documents
 	noticeOfIntentionToCommenceLocalPlanPreparation: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Notice of intention to commence local plan preparation',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your notice of intention to commence local plan preparation',
+		fieldName: 'noticeOfIntentionToCommenceLocalPlanPreparation',
+		url: 'notice-of-intention-to-commence-local-plan-preparation',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -205,27 +171,20 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
+			caption: 'Consultation documents',
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	scopingConsultationDocuments: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Scoping consultation documents',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your scoping consultation documents',
+		fieldName: 'scopingConsultationDocuments',
+		url: 'scoping-consultation-documents',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -235,27 +194,20 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
+			caption: 'Consultation documents',
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	consultationSummaryOfFeedbackToScopingConsultation: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Consultation summary of feedback to scoping consultation',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your consultation summary of feedback to scoping consultation',
+		fieldName: 'consultationSummaryOfFeedbackToScopingConsultation',
+		url: 'consultation-summary-of-feedback-to-scoping-consultation',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -265,27 +217,20 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
+			caption: 'Consultation documents',
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	gateway1SelfAssessmentOfReadiness: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Gateway 1 - Self assessment of readiness',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload Gateway 1 - self assessment of readiness',
+		fieldName: 'gateway1SelfAssessmentOfReadiness',
+		url: 'gateway-1-self-assessment-of-readiness',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -295,27 +240,20 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
+			caption: 'Consultation documents',
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	consultationOnProposedLocalPlanContentAndEvidence: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Consultation on proposed local plan content and evidence documents',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your consultation on proposed local plan content and evidence documents',
+		fieldName: 'consultationOnProposedLocalPlanContentAndEvidenceDocuments',
+		url: 'consultation-on-proposed-local-plan-content-and-evidence-documents',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -325,27 +263,20 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
+			caption: 'Consultation documents',
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
 	summaryOfConsultationOnProposedLocalPlanContentAndEvidenceDocuments: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Summary of consultation on proposed local plan content and evidence documents',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload your summary of consultation on proposed local plan content and evidence documents',
+		fieldName: 'summaryOfConsultationOnProposedLocalPlanContentAndEvidenceDocuments',
+		url: 'summary-of-consultation-on-proposed-loca-plan-content-and-evidence-documents',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -355,27 +286,21 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
-			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-			],
+			caption: 'Consultation documents',
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
+	// Additional documents
 	subsequentWorkTowardsADraftPlan: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Subsequent work towards a draft plan',
-		question: 'Upload Gateway 2 cover letter',
-		fieldName: 'gateway2CoverLetter',
-		url: 'gateway-2-cover-letter',
+		question: 'Upload any subsequent work towards a draft plan',
+		fieldName: 'subsequentWorkTowardsADraftPlan',
+		url: 'subsequent-work-towards-a-draft-plan',
 		allowedFileExtensions: ALLOWED_EXTENSIONS,
 		allowedMimeTypes: ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
@@ -385,21 +310,31 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: false,
 		text: {
-			caption: 'Procedural documents',
-			introduction: 'Your cover letter should set out:',
+			caption: 'Additional documents',
+			introduction: 'This may include the following:',
 			bulletList: [
-				'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-				'a description of up to 5 main soundness issues which you are seeking advice on',
-				'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
+				'Up to 5 issues of soundness topic papers (2,000 word limit per paper)',
+				'Full list of evidence base documents (dates for completion)',
+				'Draft vision, aims and objectives, 10 draft outcomes',
+				'Latest version of a draft plan and/or policies map',
+				'Spatial strategy options or draft spatial strategy',
+				'Progress towards setting a housing requirement and associated evidence a such as a housing needs assessment and strategic housing market assessment',
+				'Progress towards identifying needs for Traveller accommodation and associated evidence such as accommodation assessment',
+				'Progress towards setting other development needs and supply (employment, retail etc)',
+				'Site selection approach / evidence',
+				'Draft Green Belt Review',
+				'Evidence relevant to the matters of soundness to be discussed',
+				'Evidence on engagement between plan making authorities and relevant bodies',
+				'Progress on assessments required by the Habitats Regulations and the Environmental Assessment Regulations'
 			],
 			fileRequirementsText:
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+		}
 	},
+	// workshop preferences
 	suggestedWorkshopVenue: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
@@ -415,28 +350,17 @@ const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
 			},
 			{ value: 'no-preference', text: 'No preference' }
 		],
-		question: 'What is the plan type?',
-		fieldName: 'planType',
-		url: 'plan-type',
-		title: 'Suggested workshop venue',
-		validators: [new RequiredValidator('Select a plan type')]
+		question: 'Where would you like to hold the workshop?',
+		fieldName: 'workshopLocation',
+		url: 'workshop-location',
+		title: 'Location'
 	},
 	suggestedWorkshopDates: {
 		type: COMPONENT_TYPES.TEXT_ENTRY,
-		title: 'Workshop dates',
-		question: 'What is the description of the development?',
-		hint: 'This will be published on the website.',
-		fieldName: 'description',
-		url: 'development-description',
-		validators: [
-			new RequiredValidator('Enter description'),
-			new StringValidator({
-				maxLength: {
-					maxLength: 1000,
-					maxLengthMessage: '1000 characters or less'
-				}
-			})
-		]
+		title: 'Dates',
+		question: 'Workshop dates',
+		fieldName: 'workshopDates',
+		url: 'workshop-dates'
 	}
 };
 
