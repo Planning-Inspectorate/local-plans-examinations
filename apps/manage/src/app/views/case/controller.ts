@@ -275,6 +275,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
 				res.locals.journeyResponse = journeyResponse;
 				res.locals.currentCase = overviewData;
+				res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
 				res.locals.currentSection = (req.query?.section as string) ?? '';
 				journeyResponse.answers.assessorName = overviewData.gateway2Info?.assessorName;
 				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
@@ -385,4 +386,56 @@ export async function updateCaseHistory(
 			}
 		}
 	});
+}
+export function getDeleteCase(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const currentCase = await service.db.case.findUnique({
+			where: { reference },
+			include: { lpas: true }
+		});
+
+		if (!currentCase) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
+
+		const rows = [
+			[{ text: 'Case reference' }, { text: currentCase.reference }],
+			[{ text: 'Plan title' }, { text: currentCase.planTitle }],
+			[{ text: 'Plan type' }, { text: currentCase.planType }],
+			[{ text: 'LPA' }, { text: currentCase.lpas.map((lpa) => lpa.lpaCode).join(', ') }],
+			[{ text: 'Case officer' }, { text: currentCase.caseOfficer }]
+		];
+
+		res.render('views/layouts/delete-case.njk', {
+			rows
+		});
+	};
+}
+
+export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const currentCase = await service.db.case.findUnique({
+			where: { reference }
+		});
+
+		if (!currentCase) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		await markAsDeleteCase({
+			db: service.db,
+			id: currentCase.id
+		});
+
+		return res.redirect('/');
+	};
+}
+
+async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: string }): Promise<void> {
+	await db.case.update({ where: { id: id }, data: { deletedDate: new Date() } });
+	return;
 }

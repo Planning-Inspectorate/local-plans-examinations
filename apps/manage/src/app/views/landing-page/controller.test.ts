@@ -7,9 +7,16 @@ import type { ManageService } from '#service';
 function createHarness(findManyImpl: () => Promise<unknown>) {
 	let findManyCallCount = 0;
 
-	const findMany = async () => {
+	const findMany = async ({ where }: { where?: { deletedDate?: null } }) => {
 		findManyCallCount += 1;
-		return findManyImpl();
+
+		const result = await findManyImpl();
+
+		if (where?.deletedDate === null && Array.isArray(result)) {
+			return result.filter((item) => item.deletedDate === null || item.deletedDate === undefined);
+		}
+
+		return result;
 	};
 
 	const errorCalls: Array<[unknown, string?]> = [];
@@ -73,5 +80,17 @@ describe('buildLandingPage', () => {
 		assert.deepEqual(ctx.errorCalls[0], [{ error: fetchError }, 'Unable to fetch cases']);
 		assert.deepEqual(ctx.statusCalls, [500]);
 		assert.deepEqual(ctx.renderCalls, [['views/errors/500.njk', undefined]]);
+	});
+
+	it('does not display cases that have a deletedDate attribute that is not null', async () => {
+		const cases = [{ id: 1, planTitle: 'noDisplay', deletedDate: new Date('1999-07-21') }, { id: 2 }];
+		const ctx = createHarness(async () => cases);
+		await ctx.handler(ctx.req, ctx.res);
+
+		const renderData = ctx.renderCalls[0][1] as { cases: unknown[] };
+
+		const renderedCases = renderData.cases;
+
+		assert.deepEqual(renderedCases, [{ id: 2 }]);
 	});
 });
