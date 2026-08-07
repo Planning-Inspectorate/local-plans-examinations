@@ -6,6 +6,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
+export const EXAMINATION_JOURNEY_ID = 'examination';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions, req);
@@ -100,6 +101,33 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 	});
 
 	return getBacklinks(journey, gateway1Url);
+}
+
+export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const examinationUrl = req.baseUrl + '/examination';
+
+	const journey = new Journey({
+		journeyId: EXAMINATION_JOURNEY_ID,
+		sections: [
+			new Section('Examination', 'examination')
+				.addQuestion(questions.estimatedSubmissionForExaminationDate)
+				.addQuestion(questions.submissionForExaminationDate),
+			new Section('Inspectors', 'inspectors')
+				.addQuestion(questions.examiningInspector1)
+				.addQuestion(questions.examiningInspector2)
+				.addQuestion(questions.examiningInspector3)
+				.addQuestion(questions.examiningInspectorAppointmentDate),
+			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Examination',
+		returnToListing: false,
+		makeBaseUrl: () => examinationUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+	return getBacklinks(journey, examinationUrl);
 }
 
 function getBacklinks(journey: Journey, overviewUrl: string): Journey {
