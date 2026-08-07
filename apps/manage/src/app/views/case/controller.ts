@@ -409,7 +409,14 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 			caseHistories: {
 				orderBy: { date: 'desc' }
 			},
-			examinationInfo: true
+			examinationInfo: {
+				select: {
+					examiningInspector1: true,
+					examiningInspector2: true,
+					examiningInspector3: true,
+					examinationWebsite: true
+				}
+			}
 		}
 	});
 }
