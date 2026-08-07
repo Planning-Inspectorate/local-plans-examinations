@@ -413,7 +413,7 @@ describe('updateCaseField', () => {
 		const context = createSaveContext({
 			url: '/gateway-2',
 			params: {
-				question: 'gateway-2-assessor'
+				question: 'assessor-gateway-2'
 			},
 			body: {
 				assessorName: '  Alex Assessor  '
