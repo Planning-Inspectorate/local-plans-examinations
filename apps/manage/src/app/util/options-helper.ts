@@ -7,6 +7,11 @@ export function buildCaseOfficerOptions(service: ManageService, questions: Recor
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
 
+		if (service.authDisabled) {
+			next();
+			return;
+		}
+
 		const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
 
 		questions.caseOfficer.options = [
