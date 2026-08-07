@@ -226,7 +226,8 @@ describe('updateCaseField', () => {
 					programmeOfficerLastName: 'Officer',
 					programmeOfficerEmail: 'pat.officer@example.com',
 					examinationWebsite: 'https://example.com',
-					examiningInspector1: 'Insp One'
+					examiningInspector1: 'Insp One',
+					qaInspector1: 'Insp One'
 				}
 			});
 
@@ -242,6 +243,7 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.programmeOfficerLastName, 'Officer');
 			assert.equal(args.data.programmeOfficerEmail, 'pat.officer@example.com');
 			assert.equal(args.data.examiningInspector1, 'Insp One');
+			assert.equal(args.data.qaInspector1, 'Insp One');
 			// no contact or lpa fields -> undefined
 			assert.equal(args.data.contacts, undefined);
 			assert.equal(args.data.lpas, undefined);
@@ -682,7 +684,10 @@ describe('buildGetJourneyMiddleware', () => {
 					examiningInspector1: 'Inspector Goole',
 					examiningInspector2: 'Inspector gadget',
 					examiningInspector3: null,
-					examinationWebsite: 'some website'
+					examinationWebsite: 'some website',
+					qaInspector1: 'Inspector Goole',
+					qaInspector2: 'Inspector Goolish',
+					qaInspector3: 'Inspector Goolishish'
 				}
 			]
 		};
@@ -724,7 +729,10 @@ describe('buildGetJourneyMiddleware', () => {
 						examiningInspector1: true,
 						examiningInspector2: true,
 						examiningInspector3: true,
-						examinationWebsite: true
+						examinationWebsite: true,
+						qaInspector1: true,
+						qaInspector2: true,
+						qaInspector3: true
 					}
 				}
 			}
@@ -763,7 +771,10 @@ describe('buildGetJourneyMiddleware', () => {
 				examiningInspector1: 'Inspector Goole',
 				examiningInspector2: 'Inspector gadget',
 				examiningInspector3: null,
-				examinationWebsite: 'some website'
+				examinationWebsite: 'some website',
+				qaInspector1: 'Inspector Goole',
+				qaInspector2: 'Inspector Goolish',
+				qaInspector3: 'Inspector Goolishish'
 			}
 		]);
 

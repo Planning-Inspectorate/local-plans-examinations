@@ -267,9 +267,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'inspector-4', text: 'Inspector 4' }
 		],
 		fieldName: 'qaInspector1',
-		url: 'qa-inspector-1',
-		title: 'QA Inspector 1',
-		validators: [new RequiredValidator('Input QA Inspector 1')]
+		url: 'inspector-qa-1',
+		title: 'QA 1 Inspector name',
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'inspector-qa-1' }
 	},
 	qaInspector2: {
 		type: COMPONENT_TYPES.SELECT,
@@ -282,9 +283,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'inspector-4', text: 'Inspector 4' }
 		],
 		fieldName: 'qaInspector2',
-		url: 'qa-inspector-2',
-		title: 'QA Inspector 2',
-		validators: [new RequiredValidator('Input QA Inspector 2')]
+		url: 'inspector-qa-2',
+		title: 'QA 2 Inspector name',
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'inspector-qa-2' }
 	},
 	qaInspector3: {
 		type: COMPONENT_TYPES.SELECT,
@@ -297,9 +299,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'inspector-4', text: 'Inspector 4' }
 		],
 		fieldName: 'qaInspector3',
-		url: 'qa-inspector-3',
-		title: 'QA Inspector 3',
-		validators: [new RequiredValidator('Input QA Inspector 3')]
+		url: 'inspector-qa-3',
+		title: 'QA 3 Inspector name',
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'inspector-qa-3' }
 	},
 	//gateway 1
 	noticeOfIntentionPublishDate: {
@@ -538,6 +541,33 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Letter issue date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'letter-issue-date' }
+	},
+	qaDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the date of QA?',
+		fieldName: 'QADate',
+		url: 'qa-date',
+		title: 'QA date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'qa-date' }
+	},
+	sentToPanelDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the report sent to the panel?',
+		fieldName: 'reportSentToPanelDate',
+		url: 'report-sent-to-panel-date',
+		title: 'Report sent to panel date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'report-sent-to-panel-date' }
+	},
+	panelResponseSentToInspector: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the panel send its QA response to the Inspector?',
+		fieldName: 'panelResponseToInspectorDate',
+		url: 'panel-response-to-inspector-date',
+		title: 'Panel response to Inspector date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'rpanel-response-to-inspector-date' }
 	},
 	factCheckDateReceivedFromInspector: {
 		type: COMPONENT_TYPES.DATE,
