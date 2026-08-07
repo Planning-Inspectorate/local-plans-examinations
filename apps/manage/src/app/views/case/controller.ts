@@ -79,6 +79,7 @@ interface ExaminationInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+	isSound?: boolean;
 }
 
 const caseHistoryLabels: Record<string, string> = {
@@ -398,6 +399,11 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			case 'examination': {
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: reference } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+				let isSound: string | null = null;
+				if (typeof journey4Data?.isSound === 'boolean') {
+					isSound = journey4Data?.isSound ? 'yes' : 'no';
+				}
+				res.locals.journeyResponse.answers.isSound = isSound;
 				if (next) next();
 				return;
 			}
