@@ -537,6 +537,14 @@ describe('buildGetJourneyMiddleware', () => {
 					phoneNumber: '01234567890',
 					lpaCode: 'E60000001'
 				}
+			],
+			examinationInfo: [
+				{
+					examiningInspector1: 'Inspector Goole',
+					examiningInspector2: 'Inspector gadget',
+					examiningInspector3: null,
+					examinationWebsite: 'some website'
+				}
 			]
 		};
 
@@ -571,6 +579,14 @@ describe('buildGetJourneyMiddleware', () => {
 					select: {
 						assessorName: true
 					}
+				},
+				examinationInfo: {
+					select: {
+						examiningInspector1: true,
+						examiningInspector2: true,
+						examiningInspector3: true,
+						examinationWebsite: true
+					}
 				}
 			}
 		});
@@ -600,6 +616,15 @@ describe('buildGetJourneyMiddleware', () => {
 				lpaCode: 'E60000001',
 				phone: '01234567890',
 				lpaContact: 'E60000001'
+			}
+		]);
+
+		assert.deepEqual(ctx.res.locals.journeyResponse.answers.examinationInfo, [
+			{
+				examiningInspector1: 'Inspector Goole',
+				examiningInspector2: 'Inspector gadget',
+				examiningInspector3: null,
+				examinationWebsite: 'some website'
 			}
 		]);
 
