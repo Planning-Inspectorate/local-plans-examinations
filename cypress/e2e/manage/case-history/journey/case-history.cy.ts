@@ -43,7 +43,7 @@ describe('Case history', () => {
 
 			caseHistoryPage.verifyLoaded();
 			caseHistoryPage.verifyTableHeadings();
-			caseHistoryPage.verifyCaseCreatedHistory(data.planTitle);
+			caseHistoryPage.verifyHistoryEvent(`Case created for plan ${data.planTitle}`);
 		});
 	});
 
@@ -85,8 +85,12 @@ describe('Case history', () => {
 
 		//Due to a known bug the update history displays the raw value names
 		//When fixed 'planType' and others should be changed to their appropriate names
-		caseHistoryPage.verifyUpdateHistory('planType', originalPlanTypeName, planTypeSelectionValue);
-		caseHistoryPage.verifyUpdateHistory('dsaChecked', gateway1DsaAnswer.value, gateway1DsaAnswer.updatedValue);
-		caseHistoryPage.verifyUpdateHistory('workshopVenue', workshopVenueAnswer.value, workshopVenueAnswer.updatedValue);
+		caseHistoryPage.verifyHistoryEvent(`Updated planType from ${originalPlanTypeName} to ${planTypeSelectionValue}`);
+		caseHistoryPage.verifyHistoryEvent(
+			`Updated dsaChecked from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
+		);
+		caseHistoryPage.verifyHistoryEvent(
+			`Updated workshopVenue from ${workshopVenueAnswer.value} to ${workshopVenueAnswer.updatedValue}`
+		);
 	});
 });

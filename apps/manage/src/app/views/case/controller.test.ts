@@ -24,6 +24,10 @@ function createService(): any {
 			gateway2Info: {
 				upsert: mock.fn(async () => ({})),
 				findUnique: mock.fn(async () => null)
+			},
+			examinationInfo: {
+				upsert: mock.fn(async () => ({})),
+				findUnique: mock.fn(async () => null)
 			}
 		},
 		logger: {
@@ -387,6 +391,38 @@ describe('updateCaseField', () => {
 		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
 	});
 
+	it('upserts examination letter date data', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const letterSentToMHCLGDate = new Date('2026-12-15T00:00:00.000Z');
+		const letterIssueDate = new Date('2026-12-16T00:00:00.000Z');
+		const context = createSaveContext({
+			url: '/examination',
+			body: {
+				letterSentToMHCLGDate,
+				letterIssueDate
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			},
+			update: {
+				letterSentToMHCLGDate,
+				letterIssueDate
+			},
+			create: {
+				caseId: REFERENCE,
+				letterSentToMHCLGDate,
+				letterIssueDate
+			}
+		});
+	});
+
 	it('renders 404 when saving an unknown case page', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
@@ -736,6 +772,35 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
 		assert.equal(ctx.res.locals.reference, REFERENCE);
 		assert.equal(ctx.res.locals.journeyResponse.answers.assessorName, 'Alex Assessor');
+		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	it('loads examination journey data', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/examination'
+		});
+		const letterSentToMHCLGDate = new Date('2026-10-01T12:00:00.000Z');
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
+
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			caseId: REFERENCE,
+			letterSentToMHCLGDate
+		}));
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			}
+		});
+
+		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.letterSentToMHCLGDate, letterSentToMHCLGDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 

@@ -31,19 +31,7 @@ export class CaseHistoryPage extends BasePage {
 		});
 	}
 
-	verifyCaseCreatedHistory(planTitle: string, user = 'Unknown') {
-		const event = `Case created for plan ${planTitle}`;
-
-		this.table.within(() => {
-			cy.getByData('case-history-date').first().should('contain.text', expectedDate);
-			cy.getByData('case-history-event').should('contain.text', event);
-			cy.getByData('case-history-user').should('contain.text', user);
-		});
-	}
-
-	verifyUpdateHistory(item: string, itemUpdatedFrom: string, itemUpdatedTo: string, user = 'Unknown') {
-		const event = `Updated ${item} from ${itemUpdatedFrom} to ${itemUpdatedTo}`;
-
+	verifyHistoryEvent(event: string, user = 'Unknown') {
 		this.table.within(() => {
 			cy.getByData('case-history-date').first().should('contain.text', expectedDate);
 			cy.getByData('case-history-event').should('contain.text', event);
