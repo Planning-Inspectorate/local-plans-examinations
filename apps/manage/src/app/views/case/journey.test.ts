@@ -2,7 +2,14 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { createOverviewJourney, createGateway1Journey, GATEWAY_1_JOURNEY_ID, OVERVIEW_JOURNEY_ID } from './journey.ts';
+import {
+	createOverviewJourney,
+	createGateway1Journey,
+	createExaminationJourney,
+	GATEWAY_1_JOURNEY_ID,
+	OVERVIEW_JOURNEY_ID,
+	EXAMINATION_JOURNEY_ID
+} from './journey.ts';
 import { questions } from './questions.ts';
 
 function createOverviewJourneyForTest() {
@@ -17,6 +24,14 @@ function createGateway1JourneyForTest() {
 	return createGateway1Journey(
 		{ baseUrl: '/case/LP-TEST-001' } as Request,
 		new JourneyResponse(GATEWAY_1_JOURNEY_ID, '', {}),
+		questions
+	);
+}
+
+function createExaminationJourneyForTest() {
+	return createExaminationJourney(
+		{ baseUrl: '/case/LP-TEST-001' } as Request,
+		new JourneyResponse(EXAMINATION_JOURNEY_ID, '', {}),
 		questions
 	);
 }
@@ -68,6 +83,27 @@ describe('gateway1Journey', () => {
 			});
 
 			assert.equal(backLink, '/case/LP-TEST-001/gateway-1');
+		});
+	});
+});
+
+describe('examinationJourney', () => {
+	it('links Fact Check question pages back to the Examination page', () => {
+		const journey = createExaminationJourneyForTest();
+		const factCheckQuestions = [
+			'fact-check-date-received-from-inspector',
+			'fact-check-due-date',
+			'fact-check-actual-date',
+			'fact-check-received-back-from-lpa-date',
+			'final-report-issue-date'
+		];
+
+		factCheckQuestions.forEach((question) => {
+			const backLink = journey.getBackLink({
+				params: { section: 'fact-check', question }
+			});
+
+			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
 	});
 });
