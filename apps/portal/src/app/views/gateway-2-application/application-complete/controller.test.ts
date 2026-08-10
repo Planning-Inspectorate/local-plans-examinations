@@ -32,6 +32,7 @@ describe('buildGetApplicationCompletePage', () => {
 		assert.equal(renderCalls.length, 1);
 		assert.equal(renderCalls[0][0], VIEW_PATH);
 		const model = renderCalls[0][1] as Record<string, unknown>;
+		assert.equal(model.pageTitle, 'Application complete');
 		assert.equal(model.returnToPlanUrl, '/manage-local-plans/PLAN-001');
 	});
 });
