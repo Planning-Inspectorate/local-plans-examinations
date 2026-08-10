@@ -16,7 +16,7 @@ describe('Plan details journey', () => {
 			portalLandingPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 
-			planDetailsPage.backLink.click();
+			planDetailsPage.goBack();
 
 			portalLandingPage.verifyLoaded();
 			portalLandingPage.verifyHeading('My plans');

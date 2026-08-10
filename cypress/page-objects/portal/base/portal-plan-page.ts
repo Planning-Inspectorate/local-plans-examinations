@@ -12,4 +12,8 @@ export class PortalPlanBasePage extends BasePage {
 	verifyPathForPlan(planReference: string) {
 		this.verifyPath(this.pathFor(planReference));
 	}
+
+	openPlan(reference: string) {
+		cy.contains('[data-cy="plan-link"]', reference).should('be.visible').click();
+	}
 }

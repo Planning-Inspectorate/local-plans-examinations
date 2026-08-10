@@ -16,7 +16,7 @@ describe('Declaration page journeys', () => {
 			portalDeclarationPage.visit(plan.urlReference);
 			portalDeclarationPage.verifyLoaded();
 
-			portalDeclarationPage.backLink.click();
+			portalDeclarationPage.goBack();
 			gateway2ApplicationPage.verifyPathForPlan(plan.urlReference);
 		});
 	});
