@@ -469,6 +469,41 @@ describe('updateCaseHistory', () => {
 		assert.equal(entries[0].event, 'Letter sent to MHCLG date updated to 4 October 2026');
 		assert.equal(entries[1].event, 'Letter issue date updated to 5 October 2026');
 	});
+
+	it('uses readable copy for Fact Check date updates', async () => {
+		const db = {
+			case: {
+				update: mock.fn(async () => ({}))
+			}
+		};
+
+		await updateCaseHistory(
+			db as any,
+			{
+				factCheckDateReceivedFromInspector: null,
+				factCheckDueDate: null,
+				factCheckActualDate: null,
+				factCheckReceivedBackFromLPADate: null,
+				finalReportIssueDate: null
+			},
+			{
+				factCheckDateReceivedFromInspector: new Date('2026-01-06T12:00:00.000Z'),
+				factCheckDueDate: new Date('2026-01-07T12:00:00.000Z'),
+				factCheckActualDate: new Date('2026-01-08T12:00:00.000Z'),
+				factCheckReceivedBackFromLPADate: new Date('2026-01-09T12:00:00.000Z'),
+				finalReportIssueDate: new Date('2026-01-10T12:00:00.000Z')
+			},
+			REFERENCE
+		);
+
+		const entries = db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+
+		assert.equal(entries[0].event, 'Fact Check date received from Inspector updated to 6 January 2026');
+		assert.equal(entries[1].event, 'Fact Check due date updated to 7 January 2026');
+		assert.equal(entries[2].event, 'Fact Check actual date updated to 8 January 2026');
+		assert.equal(entries[3].event, 'Fact Check received back from LPA updated to 9 January 2026');
+		assert.equal(entries[4].event, 'Final report issue date updated to 10 January 2026');
+	});
 });
 
 describe('trimStringValues', () => {
