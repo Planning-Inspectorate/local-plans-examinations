@@ -63,7 +63,7 @@ describe('Gateway 2 page content', () => {
 
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
-		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
+		gateway2AssessorPage.verifyLoaded();
 		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
 	});
 

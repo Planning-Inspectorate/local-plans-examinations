@@ -1,12 +1,14 @@
 import { caseOverviewPage, caseOverviewQAInspector3Page } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
+const planTitle = 'Cypress Test Plan';
+
 const openSeededCase = () => {
 	cy.task('seedDb');
 
 	manageHomePage.visit();
-	manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
-	caseOverviewPage.verifyLoaded('Cypress Test Plan');
+	manageHomePage.openCaseByPlanTitle(planTitle);
+	caseOverviewPage.verifyLoaded(planTitle);
 };
 
 describe('Case overview validation', () => {
@@ -21,7 +23,7 @@ describe('Case overview validation', () => {
 		caseOverviewPage.openActionLinkFor('QA Inspector 3');
 
 		caseOverviewQAInspector3Page.verifyLoaded();
-		caseOverviewQAInspector3Page.qaInspectorNameInputID.clearAndWrite('');
+		caseOverviewQAInspector3Page.clearLookupAnswer();
 		caseOverviewQAInspector3Page.submitAndVerifyValidationErrors('Input QA Inspector 3');
 	});
 });

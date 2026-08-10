@@ -36,7 +36,7 @@ describe('Gateway 2 updates', () => {
 	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
-		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
+		gateway2AssessorPage.verifyLoaded();
 		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
 		gateway2AssessorPage.enterAssessorName(gateway2AssessorAnswer.assessor2);
 

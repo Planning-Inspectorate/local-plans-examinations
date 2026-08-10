@@ -1,21 +1,8 @@
-import { BasePage } from '../../base-page.ts';
+import { SmartLookupPage } from '../base/index.ts';
 
-const fieldID = 'qaInspector2';
-
-export class CaseOverviewQAInspector2Page extends BasePage {
+export class CaseOverviewQAInspector2Page extends SmartLookupPage {
 	constructor() {
-		super(/^\/case\/.+\/overview\/contacts\/qa-inspector-2$/);
-	}
-
-	get qaInspectorNameInputID() {
-		return cy.get(`[id='${fieldID}']`);
-	}
-
-	verifyLoaded() {
-		super.verifyLoaded();
-		this.verifyHeading('Which Inspector is assigned for QA?');
-		this.qaInspectorNameInputID.should('be.visible');
-		this.verifySaveAndContinueVisible();
+		super(/^\/case\/.+\/overview\/contacts\/qa-inspector-2$/, 'qaInspector2', 'Which Inspector is assigned for QA?');
 	}
 }
 

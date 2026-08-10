@@ -1,27 +1,12 @@
-import { BasePage } from '../../base-page.ts';
+import { SmartLookupPage } from '../base/index.ts';
 
-const fieldID = 'assessorName';
-const listBoxID = 'assessorName__listbox';
-
-export class CaseOverviewGateway2AssessorPage extends BasePage {
+export class CaseOverviewGateway2AssessorPage extends SmartLookupPage {
 	constructor() {
-		super(/^\/case\/.+\/overview\/contacts\/assessor-gateway-2$/);
-	}
-
-	get assessorInputID() {
-		return cy.get(`[id='${fieldID}']`);
+		super(/^\/case\/.+\/overview\/contacts\/assessor-gateway-2$/, 'assessorName', 'Who is the Gateway 2 assessor?');
 	}
 
 	enterAssessorName(assessorName: string) {
-		this.enterSmartLookUp(fieldID, listBoxID, assessorName);
-		super.saveAndContinue();
-	}
-
-	verifyLoaded() {
-		super.verifyLoaded();
-		this.verifyHeading('Who is the Gateway 2 assessor?');
-		this.assessorInputID.should('be.visible');
-		this.verifySaveAndContinueVisible();
+		this.enterLookupAnswer(assessorName);
 	}
 }
 

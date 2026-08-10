@@ -1,29 +1,25 @@
-import { BasePage } from '../../base-page.ts';
+import { SmartLookupPage } from '../base/index.ts';
 import { gateway2AssessorAnswer } from '../../../fixtures/manage/gateway-2.ts';
 
-export class Gateway2AssessorPage extends BasePage {
+export class Gateway2AssessorPage extends SmartLookupPage {
 	constructor() {
-		super(/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/);
+		super(
+			/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/,
+			gateway2AssessorAnswer.inputField,
+			gateway2AssessorAnswer.heading
+		);
 	}
 
 	enterAssessorName(assessorInput: string) {
-		this.enterSmartLookUp(gateway2AssessorAnswer.inputField, gateway2AssessorAnswer.boxListField, assessorInput);
-		super.saveAndContinue();
+		this.enterLookupAnswer(assessorInput);
 	}
 
 	assessorNamePopulated(item: string) {
-		this.smartLookUpPopulated(gateway2AssessorAnswer.inputField, item);
+		this.verifyLookupAnswer(item);
 	}
 
 	clearAssessorNameField() {
-		cy.get(`[id='${gateway2AssessorAnswer.inputField}']`).clear();
-	}
-
-	verifyLoaded(planTitle?: string) {
-		super.verifyLoaded();
-		if (planTitle) {
-			this.verifyHeading(planTitle);
-		}
+		this.clearLookupAnswer();
 	}
 }
 export const gateway2AssessorPage = new Gateway2AssessorPage();
