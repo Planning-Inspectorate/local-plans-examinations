@@ -1,6 +1,7 @@
 import { BasePage } from '../../base-page.ts';
 
 const fieldID = 'assessorGateway3';
+const listBoxID = 'assessorGateway3__listbox';
 
 export class CaseOverviewGateway3AssessorPage extends BasePage {
 	constructor() {
@@ -12,7 +13,7 @@ export class CaseOverviewGateway3AssessorPage extends BasePage {
 	}
 
 	enterAssessorName(assessorName: string) {
-		this.enterSmartLookUp(fieldID, assessorName);
+		this.enterSmartLookUp(fieldID, listBoxID, assessorName);
 		super.saveAndContinue();
 	}
 

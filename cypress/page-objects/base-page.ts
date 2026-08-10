@@ -278,9 +278,9 @@ export class BasePage {
 		}
 	}
 
-	enterSmartLookUp(fieldID: string, input: string) {
-		cy.get(`input[id="${fieldID}"]`).clearAndWrite(input);
-		cy.get('[role="option"]').contains(input).should('be.visible').click();
+	enterSmartLookUp(inputFieldID: string, listBoxID: string, input: string) {
+		cy.get(`input[id="${inputFieldID}"]`).clearAndWrite(input);
+		cy.get(`[id="${listBoxID}"]`).contains('[role="option"]', input).should('be.visible').click();
 	}
 
 	smartLookUpPopulated(fieldID: string, item: string) {
