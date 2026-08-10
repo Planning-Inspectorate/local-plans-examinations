@@ -13,13 +13,22 @@ import { caseHistoryPage } from '../../../../page-objects/manage/case-history/in
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
+const seededPlanTitle = 'Cypress Test Plan';
+
+const openCaseFromHome = (planTitle: string) => {
+	manageHomePage.visit();
+	manageHomePage.openCaseByPlanTitle(planTitle);
+	caseOverviewPage.verifyLoaded(planTitle);
+};
 
 const openSeededCase = () => {
 	cy.task('seedDb');
+	openCaseFromHome(seededPlanTitle);
+};
 
-	manageHomePage.visit();
-	manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
-	caseOverviewPage.verifyLoaded('Cypress Test Plan');
+const openCaseHistory = () => {
+	caseOverviewPage.openServiceNavigationItem('Case History');
+	caseHistoryPage.verifyLoaded();
 };
 
 describe('Case history', () => {
@@ -36,59 +45,64 @@ describe('Case history', () => {
 			checkYourAnswersPage.submitCase();
 			caseCreatedPage.verifyLoaded();
 
-			manageHomePage.visit();
-			manageHomePage.openCaseByPlanTitle(data.planTitle);
-			caseOverviewPage.verifyLoaded(data.planTitle);
-			caseOverviewPage.openServiceNavigationItem('Case History');
-
-			caseHistoryPage.verifyLoaded();
+			openCaseFromHome(data.planTitle);
+			openCaseHistory();
 			caseHistoryPage.verifyTableHeadings();
 			caseHistoryPage.verifyHistoryEvent(`Case created for plan ${data.planTitle}`);
 		});
 	});
 
-	it('shows the case overview update history', { tags: ['regression'] }, () => {
+	it('shows case history after a case overview update', { tags: ['regression'] }, () => {
 		const planTypeSelectionValue = 'other';
 		const planTypeSelectionName = 'Other';
 		const originalPlanTypeName = 'local-plan';
+
 		openSeededCase();
 
-		//overview page
 		caseOverviewPage.openActionLinkFor('Plan type');
 		caseOverviewPlanTypePage.verifyLoaded();
 		caseOverviewPlanTypePage.selectPlanType(planTypeSelectionValue);
 		caseOverviewPage.verifySummaryRowContains('Plan type', planTypeSelectionName);
 
-		//gateway 1
+		openCaseHistory();
+
+		// Due to a known bug the update history displays the raw value names.
+		// When fixed, these should be changed to their appropriate display names.
+		caseHistoryPage.verifyHistoryEvent(`Updated planType from ${originalPlanTypeName} to ${planTypeSelectionValue}`);
+	});
+
+	it('shows case history after a Gateway 1 update', { tags: ['regression'] }, () => {
+		openSeededCase();
+
 		caseOverviewPage.openServiceNavigationItem('Gateway 1');
+		gateway1Page.verifyLoaded(seededPlanTitle);
 		gateway1Page.openActionLinkFor(gateway1DsaAnswer.row);
 		gateway1DsaPage.verifyLoaded(gateway1DsaAnswer.value);
 		gateway1DsaPage.selectAnswer(gateway1DsaAnswer.updatedValue);
 
-		gateway1Page.verifyLoaded('Cypress Test Plan');
+		gateway1Page.verifyLoaded(seededPlanTitle);
 		gateway1Page.verifySummaryRowContains(gateway1DsaAnswer.row, gateway1DsaAnswer.updatedDisplay);
 
-		//gateway 2
-		caseOverviewPage.openServiceNavigationItem('Gateway 2');
-		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(
+			`Updated dsaChecked from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
+		);
+	});
 
+	it('shows case history after a Gateway 2 update', { tags: ['regression'] }, () => {
+		openSeededCase();
+
+		caseOverviewPage.openServiceNavigationItem('Gateway 2');
+		gateway2Page.verifyLoaded(seededPlanTitle);
+		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
 		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
 		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
 		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
 
-		gateway2Page.verifyLoaded('Cypress Test Plan');
+		gateway2Page.verifyLoaded(seededPlanTitle);
 		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
 
-		caseOverviewPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyTableHeadings();
-
-		//Due to a known bug the update history displays the raw value names
-		//When fixed 'planType' and others should be changed to their appropriate names
-		caseHistoryPage.verifyHistoryEvent(`Updated planType from ${originalPlanTypeName} to ${planTypeSelectionValue}`);
-		caseHistoryPage.verifyHistoryEvent(
-			`Updated dsaChecked from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
-		);
+		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(
 			`Updated workshopVenue from ${workshopVenueAnswer.value} to ${workshopVenueAnswer.updatedValue}`
 		);

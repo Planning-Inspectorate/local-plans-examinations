@@ -9,6 +9,11 @@ export class ApplicationCompletePage extends PortalPlanBasePage {
 		return `/manage-local-plans/${planReference}/gateway-2-application/application-complete`;
 	}
 
+	verifyLoaded() {
+		super.verifyLoaded();
+		this.verifyHeading('Application complete');
+	}
+
 	returnToYourPlanLink(planReference: string) {
 		return cy.get(`a[href="/manage-local-plans/${planReference}"]`);
 	}
