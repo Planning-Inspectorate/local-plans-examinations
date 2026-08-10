@@ -1,4 +1,4 @@
-import { type NextFunction, type Response, type Request } from 'express';
+import type { NextFunction, Response, Request } from 'express';
 import * as authSession from '../../../src/app/auth/session.service.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import { ManageService } from '#service';
