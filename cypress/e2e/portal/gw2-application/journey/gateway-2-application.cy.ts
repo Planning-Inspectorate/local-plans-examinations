@@ -18,7 +18,7 @@ describe('Gateway 2 application page journeys', () => {
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.gateway2Link.click();
 			gateway2ApplicationPage.verifyLoaded();
-			gateway2ApplicationPage.backLink.click();
+			gateway2ApplicationPage.goBack();
 			planDetailsPage.verifyPathForPlan(plan.urlReference);
 		});
 	});
