@@ -82,6 +82,9 @@ module "app_portal" {
     #Auth
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = local.key_vault_refs["microsoft-provider-authentication-secret"]
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS         = data.azurerm_client_config.current.tenant_id
+    # Disable identity flow to resolve HTTP 431 - 431 Request Header Fields Too Large
+    # https://learn.microsoft.com/en-us/azure/app-service/reference-app-settings?tabs=kudu%2Cdotnet#-authentication-and-authorization
+    WEBSITE_AUTH_DISABLE_IDENTITY_FLOW = "true"
 
     # sessions
     MANAGED_REDIS_URL       = local.managed_redis_url
