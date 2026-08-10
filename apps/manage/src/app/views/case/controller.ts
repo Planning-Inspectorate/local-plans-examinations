@@ -66,7 +66,14 @@ interface ExaminationInput {
 	examiningInspector3?: string;
 	examiningInspectorAppointmentDate?: Date;
 	examinationWebsite?: string;
+	letterSentToMHCLGDate?: Date;
+	letterIssueDate?: Date;
 }
+
+const caseHistoryLabels: Record<string, string> = {
+	letterSentToMHCLGDate: 'Letter sent to MHCLG date',
+	letterIssueDate: 'Letter issue date'
+};
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
@@ -432,11 +439,34 @@ export async function updateCaseHistory(
 		data: {
 			caseHistories: {
 				create: Object.entries(previousValues).map(([key, oldValue]) => ({
-					event: `Updated ${key} from ${oldValue} to ${newValues[key]}`,
+					event: formatCaseHistoryEvent(key, oldValue, newValues[key]),
 					// TODO: Get user once authentication is implemented
 					username: 'Unknown'
 				}))
 			}
 		}
 	});
+}
+
+function formatCaseHistoryEvent(key: string, oldValue: unknown, newValue: unknown) {
+	const label = caseHistoryLabels[key];
+
+	if (label) {
+		return `${label} updated to ${formatCaseHistoryValue(newValue)}`;
+	}
+
+	return `Updated ${key} from ${oldValue} to ${newValue}`;
+}
+
+function formatCaseHistoryValue(value: unknown) {
+	if (value instanceof Date) {
+		return new Intl.DateTimeFormat('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			timeZone: 'Europe/London',
+			year: 'numeric'
+		}).format(value);
+	}
+
+	return `${value ?? ''}`;
 }
