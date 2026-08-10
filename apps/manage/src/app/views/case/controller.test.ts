@@ -423,6 +423,50 @@ describe('updateCaseField', () => {
 		});
 	});
 
+	it('upserts examination Fact Check date data', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const factCheckDateReceivedFromInspector = new Date('2026-01-06T12:00:00.000Z');
+		const factCheckDueDate = new Date('2026-01-07T12:00:00.000Z');
+		const factCheckActualDate = new Date('2026-01-08T12:00:00.000Z');
+		const factCheckReceivedBackFromLPADate = new Date('2026-01-09T12:00:00.000Z');
+		const finalReportIssueDate = new Date('2026-01-10T12:00:00.000Z');
+		const context = createSaveContext({
+			url: '/examination',
+			body: {
+				factCheckDateReceivedFromInspector,
+				factCheckDueDate,
+				factCheckActualDate,
+				factCheckReceivedBackFromLPADate,
+				finalReportIssueDate
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			},
+			update: {
+				factCheckDateReceivedFromInspector,
+				factCheckDueDate,
+				factCheckActualDate,
+				factCheckReceivedBackFromLPADate,
+				finalReportIssueDate
+			},
+			create: {
+				caseId: REFERENCE,
+				factCheckDateReceivedFromInspector,
+				factCheckDueDate,
+				factCheckActualDate,
+				factCheckReceivedBackFromLPADate,
+				finalReportIssueDate
+			}
+		});
+	});
+
 	it('renders 404 when saving an unknown case page', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
@@ -471,14 +515,10 @@ describe('updateCaseHistory', () => {
 	});
 
 	it('uses readable copy for Fact Check date updates', async () => {
-		const db = {
-			case: {
-				update: mock.fn(async () => ({}))
-			}
-		};
+		const service = createService();
 
 		await updateCaseHistory(
-			db as any,
+			service.db,
 			{
 				factCheckDateReceivedFromInspector: null,
 				factCheckDueDate: null,
@@ -496,7 +536,7 @@ describe('updateCaseHistory', () => {
 			REFERENCE
 		);
 
-		const entries = db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
 
 		assert.equal(entries[0].event, 'Fact Check date received from Inspector updated to 6 January 2026');
 		assert.equal(entries[1].event, 'Fact Check due date updated to 7 January 2026');
@@ -815,6 +855,7 @@ describe('buildGetJourneyMiddleware', () => {
 			url: '/examination'
 		});
 		const letterSentToMHCLGDate = new Date('2026-10-01T12:00:00.000Z');
+		const factCheckDueDate = new Date('2026-01-07T12:00:00.000Z');
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
 			planTitle: 'Southshire Local Plan'
@@ -822,7 +863,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
 			caseId: REFERENCE,
-			letterSentToMHCLGDate
+			letterSentToMHCLGDate,
+			factCheckDueDate
 		}));
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
@@ -836,6 +878,7 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
 		assert.equal(ctx.res.locals.reference, REFERENCE);
 		assert.equal(ctx.res.locals.journeyResponse.answers.letterSentToMHCLGDate, letterSentToMHCLGDate);
+		assert.equal(ctx.res.locals.journeyResponse.answers.factCheckDueDate, factCheckDueDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
