@@ -72,6 +72,10 @@ export class BasePage {
 		return cy.get('.govuk-body');
 	}
 
+	get serviceNavigation() {
+		return cy.getByData('service-navigation');
+	}
+
 	summaryRow(key: string) {
 		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
 	}
@@ -255,8 +259,12 @@ export class BasePage {
 	}
 	verifyServiceNavigation(...links: string[]) {
 		links.forEach((link) => {
-			cy.contains('a', link).should('be.visible');
+			this.serviceNavigation.contains('a', link).should('be.visible');
 		});
+	}
+
+	openServiceNavigationItem(item: string) {
+		this.serviceNavigation.contains('a', item).should('be.visible').click();
 	}
 
 	verifyCaption(reference: string) {
