@@ -7,7 +7,7 @@ export class Gateway2AssessorPage extends BasePage {
 	}
 
 	enterAssessorName(assessorInput: string) {
-		this.enterSmartLookUp(gateway2AssessorAnswer.inputField, assessorInput);
+		this.enterSmartLookUp(gateway2AssessorAnswer.inputField, gateway2AssessorAnswer.boxListField, assessorInput);
 		super.saveAndContinue();
 	}
 

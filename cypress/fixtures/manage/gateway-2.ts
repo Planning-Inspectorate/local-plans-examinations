@@ -83,7 +83,8 @@ export const gateway2AssessorAnswer = {
 	assessor1: 'Assessor 1',
 	assessor2: 'Assessor 2',
 	display: 'Assessor 1',
-	inputField: 'assessorName'
+	inputField: 'assessorName',
+	boxListField: 'assessorName__listbox'
 } as const;
 
 export const workshopVenueAnswer = {

@@ -1,6 +1,7 @@
 import { BasePage } from '../../base-page.ts';
 
 const fieldID = 'qaInspector1';
+const listBoxID = 'qaInspector1__listbox';
 
 export class CaseOverviewQAInspector1Page extends BasePage {
 	constructor() {
@@ -12,7 +13,7 @@ export class CaseOverviewQAInspector1Page extends BasePage {
 	}
 
 	enterQAInspectorName(inspectorName: string) {
-		this.enterSmartLookUp(fieldID, inspectorName);
+		this.enterSmartLookUp(fieldID, listBoxID, inspectorName);
 		super.saveAndContinue();
 	}
 
