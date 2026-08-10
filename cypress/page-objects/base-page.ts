@@ -73,7 +73,7 @@ export class BasePage {
 	}
 
 	get serviceNavigation() {
-		return cy.getByData('service-navigation');
+		return cy.get('[data-cy="service-navigation"], .govuk-service-navigation');
 	}
 
 	summaryRow(key: string) {
