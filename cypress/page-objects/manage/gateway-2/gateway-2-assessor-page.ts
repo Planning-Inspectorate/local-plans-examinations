@@ -1,31 +1,29 @@
-import { GatewayBasePage } from '../base/gateway-page.ts';
+import { BasePage } from '../../base-page.ts';
+import { gateway2AssessorAnswer } from '../../../fixtures/manage/gateway-2.ts';
 
-export class Gateway2AssessorPage extends GatewayBasePage {
+export class Gateway2AssessorPage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/);
 	}
 
-	get assessorNameField() {
-		return cy.get('input[id="assessorName"]');
+	enterAssessorName(assessorInput: string) {
+		this.enterSmartLookUp(gateway2AssessorAnswer.inputField, assessorInput);
+		super.saveAndContinue();
 	}
 
-	assessorNameItem(AssessorName: string) {
-		return cy.get(`[role="option"]`).contains(AssessorName).should('be.visible');
+	assessorNamePopulated(item: string) {
+		this.smartLookUpPopulated(gateway2AssessorAnswer.inputField, item);
 	}
 
-	selectAssessorName(AssessorName: string) {
-		this.assessorNameField.type(AssessorName);
-		this.assessorNameItem(AssessorName).click();
-		this.saveAndContinue();
+	clearAssessorNameField() {
+		cy.get(`[id='${gateway2AssessorAnswer.inputField}']`).clear();
 	}
 
-	assessorSelected(AssessorName: string) {
-		return this.assessorNameField.should('have.value', AssessorName);
-	}
-
-	verifyLoaded(planTitle: string) {
-		super.verifyLoaded(planTitle);
-		super.verifySaveAndContinueVisible();
+	verifyLoaded(planTitle?: string) {
+		super.verifyLoaded();
+		if (planTitle) {
+			this.verifyHeading(planTitle);
+		}
 	}
 }
 export const gateway2AssessorPage = new Gateway2AssessorPage();

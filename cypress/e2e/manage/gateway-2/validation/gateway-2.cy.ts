@@ -44,8 +44,8 @@ describe('Gateway 2 validation', () => {
 	it('shows an error when Gateway 2 assessor name is blank', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
-		gateway2AssessorPage.assessorSelected(gateway2AssessorAnswer.assessor1);
-		gateway2AssessorPage.assessorNameField.clear();
+		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
+		gateway2AssessorPage.clearAssessorNameField();
 		gateway2AssessorPage.saveAndContinue();
 
 		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);

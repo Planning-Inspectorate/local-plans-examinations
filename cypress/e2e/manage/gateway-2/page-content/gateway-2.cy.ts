@@ -64,7 +64,7 @@ describe('Gateway 2 page content', () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
 		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
-		gateway2AssessorPage.assessorSelected(gateway2AssessorAnswer.assessor1);
+		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
 	});
 
 	it('loads Gateway 2 assessor date of appointment page', { tags: ['regression'] }, () => {
