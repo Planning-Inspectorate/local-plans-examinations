@@ -1,27 +1,16 @@
-import { BasePage } from '../../base-page.ts';
+import { SmartLookupPage } from '../base/index.ts';
 
-const fieldID = 'examiningInspector1';
-const listBoxID = 'examiningInspector1__listbox';
-
-export class CaseOverviewExaminingInspector1Page extends BasePage {
+export class CaseOverviewExaminingInspector1Page extends SmartLookupPage {
 	constructor() {
-		super(/^\/case\/.+\/overview\/contacts\/examining-inspector-1$/);
-	}
-
-	get examiningInspectorInputID() {
-		return cy.get(`[id='${fieldID}']`);
+		super(
+			/^\/case\/.+\/overview\/contacts\/examining-inspector-1$/,
+			'examiningInspector1',
+			'Which Inspector is assigned for Examination?'
+		);
 	}
 
 	enterInspectorName(inspectorName: string) {
-		this.enterSmartLookUp(fieldID, listBoxID, inspectorName);
-		super.saveAndContinue();
-	}
-
-	verifyLoaded() {
-		super.verifyLoaded();
-		this.verifyHeading('Which Inspector is assigned for Examination?');
-		this.examiningInspectorInputID.should('be.visible');
-		this.verifySaveAndContinueVisible();
+		this.enterLookupAnswer(inspectorName);
 	}
 }
 export const caseOverviewExaminingInspector1Page = new CaseOverviewExaminingInspector1Page();

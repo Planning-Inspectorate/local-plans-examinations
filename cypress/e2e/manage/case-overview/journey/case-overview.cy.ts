@@ -12,12 +12,14 @@ import {
 } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
+const planTitle = 'Cypress Test Plan';
+
 const openSeededCase = () => {
 	cy.task('seedDb');
 
 	manageHomePage.visit();
-	manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
-	caseOverviewPage.verifyLoaded('Cypress Test Plan');
+	manageHomePage.openCaseByPlanTitle(planTitle);
+	caseOverviewPage.verifyLoaded(planTitle);
 };
 
 describe('Case overview updates', () => {
@@ -29,10 +31,10 @@ describe('Case overview updates', () => {
 	after(() => cy.task('clearDb'));
 
 	it('updates the plan title from the overview change link', { tags: ['regression'] }, () => {
-		const updatedPlanTitle = 'Updated Cypress Test Plan';
+		const updatedPlanTitle = `Updated ${planTitle}`;
 
 		caseOverviewPage.openActionLinkFor('Plan title');
-		caseOverviewPlanTitlePage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPlanTitlePage.verifyLoaded(planTitle);
 		caseOverviewPlanTitlePage.enterPlanTitle(updatedPlanTitle);
 
 		caseOverviewPage.verifyLoaded(updatedPlanTitle);
@@ -44,7 +46,7 @@ describe('Case overview updates', () => {
 		caseOverviewPlanTypePage.verifyLoaded();
 		caseOverviewPlanTypePage.selectPlanType('other');
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('Plan type', 'Other');
 	});
 
@@ -60,7 +62,7 @@ describe('Case overview updates', () => {
 		caseOverviewContactDetailsListPage.verifyLoaded();
 		caseOverviewContactDetailsListPage.changeContact(updatedContact);
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains(
 			'Contact details',
 			updatedContact.firstName,
@@ -87,7 +89,7 @@ describe('Case overview updates', () => {
 				programmeOfficerEmail
 			);
 
-			caseOverviewPage.verifyLoaded('Cypress Test Plan');
+			caseOverviewPage.verifyLoaded(planTitle);
 			caseOverviewPage.verifySummaryRowContains(
 				'Programme Officer',
 				programmeOfficerFirstName,
@@ -101,20 +103,23 @@ describe('Case overview updates', () => {
 		caseOverviewPage.openActionLinkFor('Plan band');
 		caseOverviewPlanBandPage.verifyLoaded();
 		caseOverviewPlanBandPage.goBack();
+		caseOverviewPage.verifyLoaded(planTitle);
 
 		caseOverviewPage.openActionLinkFor('Assessor Gateway 2');
 		caseOverviewGateway2AssessorPage.verifyLoaded();
 		caseOverviewGateway2AssessorPage.goBack();
+		caseOverviewPage.verifyLoaded(planTitle);
 
 		caseOverviewPage.openActionLinkFor('Examining Inspector 1');
 		caseOverviewExaminingInspector1Page.verifyLoaded();
 		caseOverviewExaminingInspector1Page.goBack();
+		caseOverviewPage.verifyLoaded(planTitle);
 
 		caseOverviewPage.openActionLinkFor('QA Inspector 1');
 		caseOverviewQAInspector1Page.verifyLoaded();
 		caseOverviewQAInspector1Page.goBack();
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(planTitle);
 	});
 
 	it(
@@ -128,7 +133,7 @@ describe('Case overview updates', () => {
 			caseOverviewExaminationWebsitePage.verifyLoaded();
 			caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebsiteLink);
 
-			caseOverviewPage.verifyLoaded('Cypress Test Plan');
+			caseOverviewPage.verifyLoaded(planTitle);
 			caseOverviewPage.verifySummaryRowContains('Examination website', examinationWebsiteLink);
 			caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebsiteLink);
 		}
@@ -140,7 +145,7 @@ describe('Case overview updates', () => {
 		caseOverviewGateway2AssessorPage.verifyLoaded();
 		caseOverviewGateway2AssessorPage.enterAssessorName('Assessor 1');
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('Assessor Gateway 2', 'Assessor 1');
 	});
 
@@ -150,7 +155,7 @@ describe('Case overview updates', () => {
 		caseOverviewExaminingInspector1Page.verifyLoaded();
 		caseOverviewExaminingInspector1Page.enterInspectorName('Inspector 1');
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('Examining Inspector 1', 'Inspector 1');
 	});
 
@@ -160,7 +165,7 @@ describe('Case overview updates', () => {
 		caseOverviewQAInspector1Page.verifyLoaded();
 		caseOverviewQAInspector1Page.enterQAInspectorName('Inspector 1');
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('QA Inspector 1', 'Inspector 1');
 	});
 });
