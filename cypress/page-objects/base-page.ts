@@ -277,4 +277,13 @@ export class BasePage {
 			cy.url().should('contain', attemptedUrl);
 		}
 	}
+
+	enterSmartLookUp(fieldID: string, input: string) {
+		cy.get(`input[id="${fieldID}"]`).clearAndWrite(input);
+		cy.get('[role="option"]').contains(input).should('be.visible').click();
+	}
+
+	smartLookUpPopulated(fieldID: string, item: string) {
+		return cy.get(`input[id="${fieldID}"]`).should('have.value', item);
+	}
 }
