@@ -1,6 +1,6 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { updateCaseField, trimStringValues, buildGetJourneyMiddleware } from './controller.ts';
+import { updateCaseField, trimStringValues, buildGetJourneyMiddleware, updateCaseHistory } from './controller.ts';
 
 const REFERENCE = 'PLAN/123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -404,6 +404,34 @@ describe('updateCaseField', () => {
 
 		assert.equal(context.res.render.mock.callCount(), 1);
 		assert.equal(context.res.render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+	});
+});
+
+describe('updateCaseHistory', () => {
+	it('uses readable copy for Examination letter date updates', async () => {
+		const db = {
+			case: {
+				update: mock.fn(async () => ({}))
+			}
+		};
+
+		await updateCaseHistory(
+			db as any,
+			{
+				letterSentToMHCLGDate: null,
+				letterIssueDate: null
+			},
+			{
+				letterSentToMHCLGDate: new Date('2026-10-03T23:00:00.000Z'),
+				letterIssueDate: new Date('2026-10-04T23:00:00.000Z')
+			},
+			REFERENCE
+		);
+
+		const entries = db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+
+		assert.equal(entries[0].event, 'Letter sent to MHCLG date updated to 4 October 2026');
+		assert.equal(entries[1].event, 'Letter issue date updated to 5 October 2026');
 	});
 });
 
