@@ -9,6 +9,60 @@ import {
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
+import {
+	FileUploadRequiredValidator,
+	TOTAL_FILE_UPLOAD_LIMIT
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { TOTAL_FILE_UPLOAD_LIMIT_LABEL } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+const GATEWAY_TWO_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'mpeg',
+	'mp3',
+	'mp4',
+	'mov',
+	'png',
+	'tif',
+	'tiff'
+];
+const GATEWAY_TWO_ALLOWED_MIME_TYPES = [
+	'application/pdf',
+	'application/msword', // docx
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+	'application/vnd.ms-powerpoint', // pptx
+	'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+	'application/vnd.ms-excel', // xlsx
+	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+	'application/vnd.ms-excel.sheet.macroenabled.12', // xlsx
+	'application/vnd.ms-excel.sheet.macroEnabled.12', // xlsx
+	'application/vnd.ms-outlook', // msg
+	'application/octet-stream', // msg
+	'image/jpeg', // jpeg
+	'video/mpeg', // mp3
+	'audio/mpeg', // mp3
+	'video/mp4',
+	'image/png',
+	'image/tiff'
+];
+const TYPE_FORMATTER = new Intl.ListFormat('en-GB', { style: 'long', type: 'disjunction' });
+
+const GATWAY_TWO_FILE_UPLOAD_LIMIT_BYTES = 25 * 1024 * 1024;
+const GATEWAY_TWO_FILE_UPLOAD_LIMIT_LABEL = '25MB';
+const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
+	caption: 'Procedural documents',
+	introduction: 'Upload a file',
+	fileRequirementsText: `The file must be a ${TYPE_FORMATTER.format(GATEWAY_TWO_ALLOWED_EXTENSIONS.map((word) => word.toUpperCase()))} and be smaller than ${GATEWAY_TWO_FILE_UPLOAD_LIMIT_LABEL}`,
+	chooseFilesButtonText: 'Choose files',
+	dropInstructionText: 'or drop files'
+};
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -425,6 +479,23 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Workshop venue',
 		validators: [new RequiredValidator('Enter a venue name')],
 		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' }
+	},
+	workshopDocument: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		question: 'Upload documents',
+		fieldName: 'workshopDocument',
+		url: 'gateway-2-workshop-document',
+		title: 'Workshop document',
+		allowedFileExtensions: GATEWAY_TWO_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: GATEWAY_TWO_ALLOWED_MIME_TYPES,
+		maxFileSizeBytes: GATWAY_TWO_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: GATEWAY_TWO_FILE_UPLOAD_LIMIT_LABEL,
+		maxFilesPerUpload: 3,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+		multiple: true,
+		text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+		validators: [new FileUploadRequiredValidator('workshopDocument', 'Upload gateway 2 workshop file')]
 	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
