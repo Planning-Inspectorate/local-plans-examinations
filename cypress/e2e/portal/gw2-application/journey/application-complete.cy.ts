@@ -10,7 +10,7 @@ describe('Application complete page journeys', () => {
 		portalLogin();
 	});
 
-	it.skip('Navigates to the plan details page, SKIPPED until bug LP-802 is resolved', { tags: ['smoke'] }, () => {
+	it('Navigates to the plan details page', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
 			applicationCompletePage.visit(plan.urlReference);
 			applicationCompletePage.verifyLoaded();

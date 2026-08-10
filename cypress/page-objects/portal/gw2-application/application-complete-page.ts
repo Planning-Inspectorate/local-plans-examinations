@@ -12,6 +12,7 @@ export class ApplicationCompletePage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading('Application complete');
+		cy.get('h1').should('have.length', 1);
 	}
 
 	returnToYourPlanLink(planReference: string) {
