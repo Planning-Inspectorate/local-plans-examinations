@@ -30,7 +30,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 	gateway1Date?: string;
 	gateway2Date?: string;
 	gateway3Date?: string;
-	submissionDate?: string;
+	estimatedSubmissionForExaminationDate?: string;
 }
 
 /**
@@ -163,8 +163,8 @@ async function saveDataToDatabase(
 			tx.examinationInfo.create({
 				data: {
 					caseId: answers.reference,
-					...(answers.submissionDate && {
-						submissionForExaminationDate: parseDate(answers.submissionDate)
+					...(answers.estimatedSubmissionForExaminationDate && {
+						estimatedSubmissionForExaminationDate: parseDate(answers.estimatedSubmissionForExaminationDate)
 					})
 				}
 			})
