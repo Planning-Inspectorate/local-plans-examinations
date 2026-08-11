@@ -262,11 +262,13 @@ async function updateOverview(
 		);
 		return true;
 	}
+
+	const lpaName = (questions.lpa.options || []).find((opt: any) => opt.value === answers.lpa)?.text || '';
 	// Editing a contact's details (incl. changing that contact's LPA)
 	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
 		await db.contact.update({
 			where: { id: currentItemId },
-			data: buildContactData(answers)
+			data: buildContactData(answers, lpaName)
 		});
 		return true;
 	}
@@ -283,7 +285,8 @@ async function updateOverview(
 							lpaCode: answers.lpa
 						},
 						create: {
-							lpaCode: answers.lpa
+							lpaCode: answers.lpa,
+							lpaName: lpaName
 						}
 					},
 					disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
@@ -295,7 +298,7 @@ async function updateOverview(
 
 	if (question === 'check-contact-details') {
 		if (!currentItemId) return false;
-		const contactData = buildContactData(answers);
+		const contactData = buildContactData(answers, lpaName);
 		await db.contact.upsert({
 			where: { id: currentItemId },
 			create: {
@@ -441,20 +444,20 @@ async function removeItem({
 }
 
 /** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(formData: CaseOverviewInput): Prisma.ContactCreateWithoutCasesInput {
+function buildContactData(formData: CaseOverviewInput, lpaName: string): Prisma.ContactCreateWithoutCasesInput {
 	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
 	return {
 		firstName,
 		lastName,
 		email,
 		phoneNumber: phone,
-		lpa: { connectOrCreate: lpaConnectOrCreate(lpaCode || lpaContact || '') }
+		lpa: { connectOrCreate: lpaConnectOrCreate(lpaCode || lpaContact || '', lpaName) }
 	};
 }
 
 /** A reusable `connectOrCreate` clause for an LPA by its code. */
-function lpaConnectOrCreate(lpaCode: string): Prisma.LPACreateOrConnectWithoutContactsInput {
-	return { where: { lpaCode }, create: { lpaCode } };
+function lpaConnectOrCreate(lpaCode: string, lpaName: string): Prisma.LPACreateOrConnectWithoutContactsInput {
+	return { where: { lpaCode }, create: { lpaCode, lpaName } };
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
