@@ -556,7 +556,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the report sent to the panel?',
 		fieldName: 'reportSentToPanelDate',
 		url: 'report-sent-to-panel-date',
-		title: 'Report sent to panel date',
+		title: 'Sent to panel date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'report-sent-to-panel-date' }
 	},
@@ -565,7 +565,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When did the panel send its QA response to the Inspector?',
 		fieldName: 'panelResponseToInspectorDate',
 		url: 'panel-response-to-inspector-date',
-		title: 'Panel response to Inspector date',
+		title: 'QA panel response sent to Inspector',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'rpanel-response-to-inspector-date' }
 	},
