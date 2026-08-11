@@ -214,13 +214,13 @@ async function updateOverview(
 		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId);
 	}
 
-	if (question === 'inspector-qa-1') {
+	if (question === 'qa-inspector-1') {
 		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, caseId);
 	}
-	if (question === 'inspector-qa-2') {
+	if (question === 'qa-inspector-2') {
 		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, caseId);
 	}
-	if (question === 'inspector-qa-3') {
+	if (question === 'qa-inspector-3') {
 		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, caseId);
 	}
 

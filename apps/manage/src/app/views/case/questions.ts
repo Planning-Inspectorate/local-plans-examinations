@@ -267,8 +267,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'inspector-4', text: 'Inspector 4' }
 		],
 		fieldName: 'qaInspector1',
-		url: 'inspector-qa-1',
-		title: 'QA 1 Inspector name',
+		url: 'qa-inspector-1',
+		title: 'QA Inspector 1',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'inspector-qa-1' }
 	},
@@ -283,8 +283,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'inspector-4', text: 'Inspector 4' }
 		],
 		fieldName: 'qaInspector2',
-		url: 'inspector-qa-2',
-		title: 'QA 2 Inspector name',
+		url: 'qa-inspector-2',
+		title: 'QA Inspector 2',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'inspector-qa-2' }
 	},
@@ -299,8 +299,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'inspector-4', text: 'Inspector 4' }
 		],
 		fieldName: 'qaInspector3',
-		url: 'inspector-qa-3',
-		title: 'QA 3 Inspector name',
+		url: 'qa-inspector-3',
+		title: 'QA Inspector 3',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'inspector-qa-3' }
 	},
