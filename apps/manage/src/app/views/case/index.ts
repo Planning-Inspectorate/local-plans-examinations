@@ -22,7 +22,7 @@ import {
 	OVERVIEW_JOURNEY_ID,
 	EXAMINATION_JOURNEY_ID
 } from './journey.ts';
-import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
+import { buildCaseOfficerOptions, buildInspectorOptions } from '../../util/options-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -89,16 +89,31 @@ function registerCaseJourney(
 		: `/${path}/:section/:question`;
 
 	// List view
-	router.get(`/${path}`, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, buildList());
+	router.get(
+		`/${path}`,
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
+		getJourney,
+		buildList()
+	);
 
 	// Single question view
-	router.get(questionPath, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, question);
+	router.get(
+		questionPath,
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
+		getJourney,
+		question
+	);
 
 	// Save answer
 	router.post(
 		questionPath,
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
 		getJourney,
 		validate,
 		validationErrorHandler,
