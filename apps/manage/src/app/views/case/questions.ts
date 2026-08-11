@@ -269,7 +269,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'qaInspector1',
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
-		validators: [new RequiredValidator('Select a name')],
+		validators: [new RequiredValidator('Input QA Inspector 1')],
 		inputAttributes: { 'data-cy': 'inspector-qa-1' }
 	},
 	qaInspector2: {
@@ -285,7 +285,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'qaInspector2',
 		url: 'qa-inspector-2',
 		title: 'QA Inspector 2',
-		validators: [new RequiredValidator('Select a name')],
+		validators: [new RequiredValidator('Input QA Inspector 2')],
 		inputAttributes: { 'data-cy': 'inspector-qa-2' }
 	},
 	qaInspector3: {
@@ -301,7 +301,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'qaInspector3',
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
-		validators: [new RequiredValidator('Select a name')],
+		validators: [new RequiredValidator('Input QA Inspector 3')],
 		inputAttributes: { 'data-cy': 'inspector-qa-3' }
 	},
 	//gateway 1
