@@ -8,7 +8,7 @@ const entraClient = { getUserDisplayName: async (id: string) => `User ${id}` };
 
 const account = { name: 'Officer1', localAccountId: 'officer-1' };
 
-function createService(cases: unknown[] = []) {
+function createService(cases: unknown[] = []): any {
 	return {
 		db: {
 			case: {
@@ -19,24 +19,24 @@ function createService(cases: unknown[] = []) {
 			error: mock.fn()
 		},
 		getEntraClient: mock.fn(() => entraClient)
-	} as unknown as ManageService;
+	};
 }
 
-function createResponse(): Response {
+function createResponse(): any {
 	const res = {
 		render: mock.fn(() => res),
 		status: mock.fn(() => res)
 	};
 
-	return res as unknown as Response;
+	return res;
 }
 
-function createRequest(): Request {
+function createRequest(): any {
 	return {
 		session: {
 			account
 		}
-	} as unknown as Request;
+	};
 }
 
 function createContext(cases: unknown[] = []) {
@@ -63,9 +63,7 @@ describe('buildAssignedToMe', () => {
 
 		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
 		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
-			where: {
-				caseOfficer: 'officer-1'
-			}
+			where: { caseOfficer: 'officer-1' }
 		});
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments, [
 			'views/assigned-to-me/assigned-to-me.njk',
@@ -119,9 +117,7 @@ describe('buildAssignedToMe', () => {
 
 		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
 		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
-			where: {
-				caseOfficer: 'officer-1'
-			}
+			where: { caseOfficer: 'officer-1' }
 		});
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments[1], {
 			cases: [
