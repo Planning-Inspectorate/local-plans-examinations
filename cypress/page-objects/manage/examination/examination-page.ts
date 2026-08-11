@@ -1,31 +1,25 @@
-import { examinationLetterDates } from '../../../fixtures/manage/examination.ts';
 import { GatewayBasePage } from '../base/gateway-page.ts';
-
-const actionLinkHrefs: Array<[string, RegExp]> = examinationLetterDates.map(({ row, path }): [string, RegExp] => [
-	row,
-	new RegExp(`^/case/.+/examination/letters/${path}$`)
-]);
 
 export class ExaminationPage extends GatewayBasePage {
 	constructor() {
 		super(/^\/case\/.+\/examination$/);
 	}
 
-	verifyExpectedLetterRows() {
-		examinationLetterDates.forEach(({ row }) => {
+	verifyExpectedRows(rows: Array<{ row: string }>) {
+		rows.forEach(({ row }) => {
 			this.summaryRow(row).should('be.visible');
 		});
 	}
 
-	verifyExpectedLetterAnswers() {
-		examinationLetterDates.forEach(({ row, display }) => {
+	verifyExpectedAnswers(rows: Array<{ row: string; display: string }>) {
+		rows.forEach(({ row, display }) => {
 			this.verifySummaryRowContains(row, display);
 		});
 	}
 
-	verifyExpectedLetterActionLinkHrefs() {
-		actionLinkHrefs.forEach(([key, href]) => {
-			this.verifySummaryRowActionHref(key, href);
+	verifyExpectedActionLinkHrefs(section: string, rows: Array<{ row: string; path: string }>) {
+		rows.forEach(({ row, path }) => {
+			this.verifySummaryRowActionHref(row, new RegExp(`^/case/.+/examination/${section}/${path}$`));
 		});
 	}
 }
