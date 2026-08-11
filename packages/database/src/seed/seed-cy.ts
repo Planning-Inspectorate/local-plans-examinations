@@ -40,7 +40,7 @@ async function run() {
 				gateway1Date: now,
 				gateway2Date: now,
 				gateway3Date: now,
-				submissionDate: now,
+				estimatedSubmissionDate: now,
 				lpas: {
 					connectOrCreate: lpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
