@@ -40,7 +40,6 @@ async function run() {
 				gateway1Date: now,
 				gateway2Date: now,
 				gateway3Date: now,
-				estimatedSubmissionForExaminationDate: now,
 				lpas: {
 					connectOrCreate: lpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
@@ -86,6 +85,7 @@ async function run() {
 				},
 				examinationInfo: {
 					create: {
+						estimatedSubmissionForExaminationDate: now,
 						submissionForExaminationDate: now,
 						letterSentToMHCLGDate: new Date('2026-10-01T12:00:00.000Z'),
 						letterIssueDate: new Date('2026-11-01T12:00:00.000Z'),
