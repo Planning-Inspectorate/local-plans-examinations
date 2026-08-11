@@ -15,7 +15,7 @@ export async function loadLpaOptions(): Promise<LpaOption[]> {
 		return arr
 			.map((item: any) => ({
 				value: String(item.pinsCode || '').trim(),
-				text: String(item.pinsName || '').trim()
+				text: String(item.name || '').trim()
 			}))
 			.filter((option) => option.value && option.text)
 			.sort((a, b) => a.text.localeCompare(b.text));
