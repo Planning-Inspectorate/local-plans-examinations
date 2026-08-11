@@ -138,7 +138,12 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				);
 				break;
 			case 'examination':
-				updated = await updateExamination(db, trimStringValues(data.answers as ExaminationInput), reference);
+				updated = await updateExamination(
+					db,
+					trimStringValues(data.answers as ExaminationInput),
+					reference,
+					req.params.question as string
+				);
 				break;
 			default:
 				logger.info(`url - ${req.url} not found`);
@@ -211,16 +216,16 @@ async function updateOverview(
 	}
 
 	if (question === 'examining-inspector-1') {
-		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, caseId);
+		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, caseId, question);
 	}
 	if (question === 'examining-inspector-2') {
-		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, caseId);
+		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, caseId, question);
 	}
 	if (question === 'examining-inspector-3') {
-		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, caseId);
+		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, caseId, question);
 	}
 	if (question === 'examination-website') {
-		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId);
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId, question);
 	}
 
 	if (question === 'qa-inspector-1') {
@@ -264,7 +269,11 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 	return true;
 }
 
-async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseId: string) {
+async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseId: string, question: string) {
+	const inspectorQuestions = ['examining-inspector-1', 'examining-inspector-2', 'examining-inspector-3'];
+	if (inspectorQuestions.includes(question)) {
+		answers.examiningInspectorAppointmentDate = new Date();
+	}
 	await db.examinationInfo.upsert({
 		where: { caseId },
 		update: { ...answers },
