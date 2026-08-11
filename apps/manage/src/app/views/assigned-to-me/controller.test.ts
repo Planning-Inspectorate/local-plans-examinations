@@ -3,105 +3,132 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildAssignedToMe } from './controller.ts';
 import type { ManageService } from '#service';
-import * as authSession from '../../auth/session.service.ts';
 
-function createHarness(findManyImpl: () => Promise<unknown>) {
-	let findManyCallCount = 0;
+const entraClient = { getUserDisplayName: async (id: string) => `User ${id}` };
 
-	const findMany = async () => {
-		findManyCallCount += 1;
-		return findManyImpl();
-	};
+const account = { name: 'Officer1', localAccountId: 'officer-1' };
 
-	const errorCalls: Array<[unknown, string?]> = [];
-	const loggerError = (meta: unknown, message?: string) => {
-		errorCalls.push([meta, message]);
-	};
-
-	const renderCalls: Array<[string, unknown?]> = [];
-	const statusCalls: number[] = [];
-
-	const resObj = {
-		render(view: string, model?: unknown) {
-			renderCalls.push([view, model]);
-			return this;
+function createService(cases: unknown[] = []) {
+	return {
+		db: {
+			case: {
+				findMany: mock.fn(async () => cases)
+			}
 		},
-		status(code: number) {
-			statusCalls.push(code);
-			return this;
-		}
+		logger: {
+			error: mock.fn()
+		},
+		getEntraClient: mock.fn(() => entraClient)
+	} as unknown as ManageService;
+}
+
+function createResponse(): Response {
+	const res = {
+		render: mock.fn(() => res),
+		status: mock.fn(() => res)
 	};
 
-	const service = {
-		db: { case: { findMany } },
-		logger: { error: loggerError }
-	} as unknown as ManageService;
+	return res as unknown as Response;
+}
+
+function createRequest(): Request {
+	return {
+		session: {
+			account
+		}
+	} as unknown as Request;
+}
+
+function createContext(cases: unknown[] = []) {
+	const service = createService(cases);
 
 	return {
-		handler: buildAssignedToMe(service),
-		req: {} as Request,
-		res: resObj as unknown as Response,
-		getFindManyCallCount: () => findManyCallCount,
-		errorCalls,
-		renderCalls,
-		statusCalls
+		service,
+		req: createRequest(),
+		res: createResponse(),
+		handler: buildAssignedToMe(service)
 	};
 }
 
 describe('buildAssignedToMe', () => {
-	it('renders buildAssignedToMe with cases when fetch succeeds', async () => {
+	it('renders assigned cases when fetch succeeds', async () => {
 		const cases = [
 			{ id: 1, caseOfficer: 'officer-1' },
 			{ id: 2, caseOfficer: 'officer-1' }
 		];
-		const account = { displayName: 'Officer1', id: 'officer-1' };
-		mock.method(authSession, 'getAccount', () => account);
-		mock.method(authSession, 'getAccount', () => account);
-		const ctx = createHarness(async () => cases);
+
+		const ctx = createContext(cases);
 
 		await ctx.handler(ctx.req, ctx.res);
 
-		assert.equal(ctx.getFindManyCallCount(), 1);
-		assert.deepEqual(ctx.renderCalls, [['views/assigned-to-me/assigned-to-me.njk', { cases }]]);
-		assert.deepEqual(ctx.statusCalls, []);
-		assert.deepEqual(ctx.errorCalls, []);
+		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
+		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseOfficer: 'officer-1'
+			}
+		});
+		assert.deepEqual(ctx.res.render.mock.calls[0].arguments, [
+			'views/assigned-to-me/assigned-to-me.njk',
+			{
+				cases: [
+					{ id: 1, caseOfficer: 'User officer-1' },
+					{ id: 2, caseOfficer: 'User officer-1' }
+				],
+				caseOfficerText: 'Officer1'
+			}
+		]);
+		assert.equal(ctx.res.status.mock.callCount(), 0);
 	});
 
 	it('logs and renders 500 page when fetch fails', async () => {
 		const fetchError = new Error('db failed');
-		const ctx = createHarness(async () => {
+		const service = createService();
+
+		service.db.case.findMany.mock.mockImplementation(async () => {
 			throw fetchError;
 		});
 
+		const ctx = {
+			service,
+			req: createRequest(),
+			res: createResponse(),
+			handler: buildAssignedToMe(service)
+		};
+
 		await ctx.handler(ctx.req, ctx.res);
 
-		assert.equal(ctx.getFindManyCallCount(), 1);
-		assert.equal(ctx.errorCalls.length, 1);
-		assert.deepEqual(ctx.errorCalls[0], [{ error: fetchError }, 'Unable to fetch cases']);
-		assert.deepEqual(ctx.statusCalls, [500]);
-		assert.deepEqual(ctx.renderCalls, [['views/errors/500.njk', undefined]]);
+		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
+		assert.equal(ctx.service.logger.error.mock.callCount(), 1);
+		assert.deepEqual(ctx.service.logger.error.mock.calls[0].arguments, [
+			{ error: fetchError },
+			'Unable to fetch cases'
+		]);
+		assert.equal(ctx.res.status.mock.calls[0].arguments[0], 500);
+		assert.deepEqual(ctx.res.render.mock.calls[0].arguments, ['views/errors/500.njk']);
 	});
-	it('renders all cases assigned to logged in user', async () => {
-		const cases = [{ id: 1 }, { id: 2 }];
-		const account = { name: 'Officer One', localAccountId: 'officer-1' };
-		mock.method(authSession, 'getAccount', () => account);
-		const ctx = createHarness(async () => cases);
-		await ctx.handler(ctx.req, ctx.res);
 
-		assert.equal(ctx.getFindManyCallCount(), 1);
-		assert.deepEqual(ctx.renderCalls, [['views/assigned-to-me/assigned-to-me.njk', { cases }]]);
-		assert.deepEqual(ctx.statusCalls, []);
-		assert.deepEqual(ctx.errorCalls, []);
-	});
-	it('does not render cases assigned to users other than logged in user', async () => {
-		const cases = [{ id: 1 }, { id: 2 }];
-		const ctx = createHarness(async () => cases);
+	it('renders only cases assigned to the logged in user', async () => {
+		const cases = [
+			{ id: 1, caseOfficer: 'officer-1' },
+			{ id: 2, caseOfficer: 'officer-1' }
+		];
+
+		const ctx = createContext(cases);
 
 		await ctx.handler(ctx.req, ctx.res);
 
-		assert.equal(ctx.getFindManyCallCount(), 1);
-		assert.deepEqual(ctx.renderCalls, [['views/assigned-to-me/assigned-to-me.njk', { cases }]]);
-		assert.deepEqual(ctx.statusCalls, []);
-		assert.deepEqual(ctx.errorCalls, []);
+		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
+		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseOfficer: 'officer-1'
+			}
+		});
+		assert.deepEqual(ctx.res.render.mock.calls[0].arguments[1], {
+			cases: [
+				{ id: 1, caseOfficer: 'User officer-1' },
+				{ id: 2, caseOfficer: 'User officer-1' }
+			],
+			caseOfficerText: 'Officer1'
+		});
 	});
 });
