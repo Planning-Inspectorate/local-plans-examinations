@@ -151,7 +151,7 @@ function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestH
 	return (req, res, next) => {
 		const questionUrl = getRouteQuestionUrl(req);
 		const handler = questionUrl ? handlersByQuestionUrl.get(questionUrl) : undefined;
-		if (!handler) {
+		if (!handler || typeof handler !== 'function') {
 			return renderNotFound(res);
 		}
 
