@@ -22,7 +22,7 @@ export class KeyStageDatesPage extends BasePage {
 			'Gateway 1 estimated date',
 			'Gateway 2 estimated date',
 			'Gateway 3 estimated date',
-			'Submission for examination date'
+			'Estimated submission for examination date'
 		);
 		this.verifyDateInputsVisible('intentionToCommenceDate');
 		this.verifyDateInputsVisible('gateway1Date');
