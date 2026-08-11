@@ -55,6 +55,16 @@ export class EntraClient {
 		return members;
 	}
 
+	async getUserDisplayName(guid: string): Promise<string | undefined> {
+		const res = await this.#client.api(`users/${guid}`).select(['id', 'displayName']).get();
+
+		if (!res?.id || typeof res?.displayName !== 'string') {
+			return undefined;
+		}
+
+		return res.displayName;
+	}
+
 	/**
 	 * Get a skip token out of an '@odata.nextLink' value
 	 */
