@@ -174,7 +174,11 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 estimated date' },
 			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 estimated date' },
 			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 estimated date' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'submissionDate', label: 'Submission for examination date' }
+			{
+				type: COMPONENT_TYPES.DATE,
+				fieldName: 'estimatedSubmissionForExaminationDate',
+				label: 'Estimated submission for examination date'
+			}
 		],
 		question: 'Enter dates for key stages of the local plan',
 		fieldName: 'keyStageDates',
