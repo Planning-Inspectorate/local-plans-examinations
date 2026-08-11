@@ -1,8 +1,13 @@
 import { openSeededExaminationPage } from '../../../../flows/manage/examination-flow.ts';
-import { letterIssueDate, letterSentToMHCLGDate } from '../../../../fixtures/manage/examination.ts';
+import {
+	examinationFactCheckDates,
+	examinationLetterDates,
+	factCheckDateReceivedFromInspector,
+	letterSentToMHCLGDate
+} from '../../../../fixtures/manage/examination.ts';
 import {
 	examinationPage,
-	letterIssueDatePage,
+	factCheckDateReceivedFromInspectorPage,
 	letterSentToMHCLGDatePage
 } from '../../../../page-objects/manage/examination/index.ts';
 
@@ -18,12 +23,12 @@ describe('Examination page content', () => {
 
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Letters');
-		examinationPage.verifyExpectedLetterRows();
-		examinationPage.verifyExpectedLetterAnswers();
-		examinationPage.verifyExpectedLetterActionLinkHrefs();
+		examinationPage.verifyExpectedRows(examinationLetterDates);
+		examinationPage.verifyExpectedAnswers(examinationLetterDates);
+		examinationPage.verifyExpectedActionLinkHrefs('letters', examinationLetterDates);
 	});
 
-	it('loads the Letter sent to MHCLG date page', { tags: ['regression'] }, () => {
+	it('loads a Letter date page with the saved answer', { tags: ['regression'] }, () => {
 		openSeededExaminationPage();
 
 		examinationPage.openActionLinkFor(letterSentToMHCLGDate.row);
@@ -31,11 +36,21 @@ describe('Examination page content', () => {
 		letterSentToMHCLGDatePage.verifyLoaded(letterSentToMHCLGDate.input);
 	});
 
-	it('loads the Letter issue date page', { tags: ['regression'] }, () => {
+	it('displays the Examination Fact Check content for a case', { tags: ['smoke', 'regression'] }, () => {
 		openSeededExaminationPage();
 
-		examinationPage.openActionLinkFor(letterIssueDate.row);
+		examinationPage.verifyBackLink('/');
+		examinationPage.verifySectionHeading('Fact Check');
+		examinationPage.verifyExpectedRows(examinationFactCheckDates);
+		examinationPage.verifyExpectedAnswers(examinationFactCheckDates);
+		examinationPage.verifyExpectedActionLinkHrefs('fact-check', examinationFactCheckDates);
+	});
 
-		letterIssueDatePage.verifyLoaded(letterIssueDate.input);
+	it('loads a Fact Check date page with the saved answer', { tags: ['regression'] }, () => {
+		openSeededExaminationPage();
+
+		examinationPage.openActionLinkFor(factCheckDateReceivedFromInspector.row);
+
+		factCheckDateReceivedFromInspectorPage.verifyLoaded(factCheckDateReceivedFromInspector.input);
 	});
 });
