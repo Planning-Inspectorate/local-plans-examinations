@@ -72,6 +72,10 @@ export class BasePage {
 		return cy.get('.govuk-body');
 	}
 
+	get serviceNavigation() {
+		return cy.get('[data-cy="service-navigation"], .govuk-service-navigation');
+	}
+
 	summaryRow(key: string) {
 		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
 	}
@@ -253,10 +257,15 @@ export class BasePage {
 		this.errorSummary.should('be.visible').and('contain.text', title);
 		this.errorSummaryList.should('contain.text', linkText);
 	}
+
 	verifyServiceNavigation(...links: string[]) {
 		links.forEach((link) => {
-			cy.contains('a', link).should('be.visible');
+			this.serviceNavigation.contains('a', link).should('be.visible');
 		});
+	}
+
+	openServiceNavigationItem(item: string) {
+		this.serviceNavigation.contains('a', item).should('be.visible').click();
 	}
 
 	verifyCaption(reference: string) {
@@ -276,5 +285,14 @@ export class BasePage {
 		if (attemptedUrl) {
 			cy.url().should('contain', attemptedUrl);
 		}
+	}
+
+	enterSmartLookUp(inputFieldID: string, listBoxID: string, input: string) {
+		cy.get(`input[id="${inputFieldID}"]`).clearAndWrite(input);
+		cy.get(`[id="${listBoxID}"]`).contains('[role="option"]', input).should('be.visible').click();
+	}
+
+	smartLookUpPopulated(fieldID: string, item: string) {
+		return cy.get(`input[id="${fieldID}"]`).should('have.value', item);
 	}
 }

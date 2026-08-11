@@ -8,21 +8,21 @@ describe('Case overview', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('home page should display message when no cases exist', () => {
+	it('home page should display message when no cases exist', { tags: ['smoke'] }, () => {
 		manageHomePage.visit();
 		manageHomePage.verifyHeading('All cases');
 		manageHomePage.verifyCreateCaseLink('Create a case');
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
 	});
 
-	it('should display a list of cases', () => {
+	it('should display a list of cases', { tags: ['smoke'] }, () => {
 		cy.task('seedDb');
 
 		manageHomePage.visit();
 		manageHomePage.verifyHeading('All cases (1)');
 	});
 
-	it('can view detailed overview of a case', () => {
+	it('can view detailed overview of a case', { tags: ['smoke'] }, () => {
 		cy.task('seedDb');
 
 		manageHomePage.visit();

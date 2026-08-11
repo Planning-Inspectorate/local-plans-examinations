@@ -58,6 +58,33 @@ interface Gateway2Input {
 	reportPublishedByLPA?: Date;
 }
 
+interface ExaminationInput {
+	estimatedSubmissionForExaminationDate?: Date;
+	submissionForExaminationDate?: Date;
+	examiningInspector1?: string;
+	examiningInspector2?: string;
+	examiningInspector3?: string;
+	examiningInspectorAppointmentDate?: Date;
+	examinationWebsite?: string;
+	letterSentToMHCLGDate?: Date;
+	letterIssueDate?: Date;
+	factCheckDateReceivedFromInspector?: Date;
+	factCheckDueDate?: Date;
+	factCheckActualDate?: Date;
+	factCheckReceivedBackFromLPADate?: Date;
+	finalReportIssueDate?: Date;
+}
+
+const caseHistoryLabels: Record<string, string> = {
+	letterSentToMHCLGDate: 'Letter sent to MHCLG date',
+	letterIssueDate: 'Letter issue date',
+	factCheckDateReceivedFromInspector: 'Fact Check date received from Inspector',
+	factCheckDueDate: 'Fact Check due date',
+	factCheckActualDate: 'Fact Check actual date',
+	factCheckReceivedBackFromLPADate: 'Fact Check received back from LPA',
+	finalReportIssueDate: 'Final report issue date'
+};
+
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
@@ -98,6 +125,9 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
+			case 'examination':
+				updated = await updateExamination(db, trimStringValues(data.answers as ExaminationInput), reference);
+				break;
 			default:
 				logger.info(`url - ${req.url} not found`);
 				return res.status(404).render('views/errors/404.njk');
@@ -119,8 +149,8 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
-	if (question === 'gateway-2-assessor') {
-		await updateGateway2(db, { assessorName: answers.assessorName }, caseId);
+	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
+		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
 		return true;
 	}
 	// Editing a contact's details (incl. changing that contact's LPA)
@@ -168,6 +198,19 @@ async function updateOverview(
 		return true;
 	}
 
+	if (question === 'examining-inspector-1') {
+		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, caseId);
+	}
+	if (question === 'examining-inspector-2') {
+		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, caseId);
+	}
+	if (question === 'examining-inspector-3') {
+		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, caseId);
+	}
+	if (question === 'examination-website') {
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId);
+	}
+
 	// Updating case (scalar) details + any newly added contact / LPA
 	const { ...scalars } = answers;
 
@@ -188,10 +231,19 @@ async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: 
 }
 
 async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string, question?: string) {
-	if (question === 'gateway-2-assessor') {
+	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
 	await db.gateway2Info.upsert({
+		where: { caseId },
+		update: { ...answers },
+		create: { caseId, ...answers }
+	});
+	return true;
+}
+
+async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseId: string) {
+	await db.examinationInfo.upsert({
 		where: { caseId },
 		update: { ...answers },
 		create: { caseId, ...answers }
@@ -286,6 +338,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					phone: contact.phoneNumber,
 					lpaContact: contact.lpaCode
 				}));
+				journeyResponse.answers.examiningInspector1 = overviewData.examinationInfo?.examiningInspector1;
+				journeyResponse.answers.examiningInspector2 = overviewData.examinationInfo?.examiningInspector2;
+				journeyResponse.answers.examiningInspector3 = overviewData.examinationInfo?.examiningInspector3;
+				journeyResponse.answers.examinationWebsite = overviewData.examinationInfo?.examinationWebsite;
 				if (next) next();
 				return;
 			}
@@ -300,6 +356,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			case 'gateway-2': {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: reference } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+				if (next) next();
+				return;
+			}
+
+			case 'examination': {
+				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: reference } });
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
 				if (next) next();
 				return;
 			}
@@ -327,7 +390,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
 		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
 		{ text: 'Gateway 3', href: '#' },
-		{ text: 'Examination', href: '#' },
+		{ text: 'Examination', href: `${baseUrl}/examination` },
 		{
 			text: 'Case History',
 			href: `${baseUrl}/overview?section=case-history`,
@@ -362,6 +425,14 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 			},
 			caseHistories: {
 				orderBy: { date: 'desc' }
+			},
+			examinationInfo: {
+				select: {
+					examiningInspector1: true,
+					examiningInspector2: true,
+					examiningInspector3: true,
+					examinationWebsite: true
+				}
 			}
 		}
 	});
@@ -378,11 +449,34 @@ export async function updateCaseHistory(
 		data: {
 			caseHistories: {
 				create: Object.entries(previousValues).map(([key, oldValue]) => ({
-					event: `Updated ${key} from ${oldValue} to ${newValues[key]}`,
+					event: formatCaseHistoryEvent(key, oldValue, newValues[key]),
 					// TODO: Get user once authentication is implemented
 					username: 'Unknown'
 				}))
 			}
 		}
 	});
+}
+
+function formatCaseHistoryEvent(key: string, oldValue: unknown, newValue: unknown) {
+	const label = caseHistoryLabels[key];
+
+	if (label) {
+		return `${label} updated to ${formatCaseHistoryValue(newValue)}`;
+	}
+
+	return `Updated ${key} from ${oldValue} to ${newValue}`;
+}
+
+function formatCaseHistoryValue(value: unknown) {
+	if (value instanceof Date) {
+		return new Intl.DateTimeFormat('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			timeZone: 'Europe/London',
+			year: 'numeric'
+		}).format(value);
+	}
+
+	return `${value ?? ''}`;
 }

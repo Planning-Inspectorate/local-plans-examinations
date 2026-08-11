@@ -86,7 +86,14 @@ async function run() {
 				},
 				examinationInfo: {
 					create: {
-						submissionForExaminationDate: now
+						submissionForExaminationDate: now,
+						letterSentToMHCLGDate: new Date('2026-10-01T12:00:00.000Z'),
+						letterIssueDate: new Date('2026-11-01T12:00:00.000Z'),
+						factCheckDateReceivedFromInspector: new Date('2026-10-01T12:00:00.000Z'),
+						factCheckDueDate: new Date('2026-11-01T12:00:00.000Z'),
+						factCheckActualDate: new Date('2026-12-01T12:00:00.000Z'),
+						factCheckReceivedBackFromLPADate: new Date('2026-12-02T12:00:00.000Z'),
+						finalReportIssueDate: new Date('2026-12-03T12:00:00.000Z')
 					}
 				},
 				caseHistories: {

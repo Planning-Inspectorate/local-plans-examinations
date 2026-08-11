@@ -197,56 +197,105 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
 	assessorGateway3: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Assessor Gateway 3?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Who is the Gateway 3 assessor?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'assessor-1', text: 'Assessor 1' },
+			{ value: 'assessor-2', text: 'Assessor 2' },
+			{ value: 'assessor-3', text: 'Assessor 3' },
+			{ value: 'assessor-4', text: 'Assessor 4' }
+		],
 		fieldName: 'assessorGateway3',
 		url: 'assessor-gateway-3',
 		title: 'Assessor Gateway 3',
 		validators: [new RequiredValidator('Input Assessor Gateway 3')]
 	},
 	examiningInspector1: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Examining Inspector 1?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for Examination?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'examiningInspector1',
 		url: 'examining-inspector-1',
 		title: 'Examining Inspector 1',
 		validators: [new RequiredValidator('Input Examining Inspector 1')]
 	},
 	examiningInspector2: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Examining Inspector 2?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for Examination?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'examiningInspector2',
 		url: 'examining-inspector-2',
 		title: 'Examining Inspector 2',
 		validators: [new RequiredValidator('Input Examining Inspector 2')]
 	},
 	examiningInspector3: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the Examining Inspector 3?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for Examination?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'examiningInspector3',
 		url: 'examining-inspector-3',
 		title: 'Examining Inspector 3',
 		validators: [new RequiredValidator('Input Examining Inspector 3')]
 	},
 	qaInspector1: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 1?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for QA?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'qaInspector1',
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
 		validators: [new RequiredValidator('Input QA Inspector 1')]
 	},
 	qaInspector2: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 2?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for QA?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'qaInspector2',
 		url: 'qa-inspector-2',
 		title: 'QA Inspector 2',
 		validators: [new RequiredValidator('Input QA Inspector 2')]
 	},
 	qaInspector3: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'Who is the QA Inspector 3?',
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Which Inspector is assigned for QA?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'inspector-1', text: 'Inspector 1' },
+			{ value: 'inspector-2', text: 'Inspector 2' },
+			{ value: 'inspector-3', text: 'Inspector 3' },
+			{ value: 'inspector-4', text: 'Inspector 4' }
+		],
 		fieldName: 'qaInspector3',
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
@@ -443,6 +492,97 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Report published by LPA date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
+	},
+	// Examination
+	estimatedSubmissionForExaminationDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the estimated examination date?',
+		fieldName: 'estimatedSubmissionForExaminationDate',
+		url: 'examination-estimated-submission-date',
+		title: 'Estimated submission date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' }
+	},
+	submissionForExaminationDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the actual examination date?',
+		fieldName: 'submissionForExaminationDate',
+		url: 'examination-actual-submission-date',
+		title: 'Actual submission date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-actual-submission-date' }
+	},
+	examiningInspectorAppointmentDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When were the examining Inspectors appointed?',
+		fieldName: 'examiningInspectorAppointmentDate',
+		url: 'examination-examining-inspector-appointment-date',
+		title: 'Examining Inspector(s) appointment date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
+	},
+	letterSentToMHCLGDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the 48-hour protocol letter sent to MHCLG?',
+		fieldName: 'letterSentToMHCLGDate',
+		url: 'letter-sent-to-mhclg-date',
+		title: 'Letter sent to MHCLG date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'letter-sent-to-mhclg-date' }
+	},
+	letterIssueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the letter sent to the LPA?',
+		fieldName: 'letterIssueDate',
+		url: 'letter-issue-date',
+		title: 'Letter issue date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'letter-issue-date' }
+	},
+	factCheckDateReceivedFromInspector: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the Inspector issue the Fact Check?',
+		fieldName: 'factCheckDateReceivedFromInspector',
+		url: 'fact-check-date-received-from-inspector',
+		title: 'Fact Check date received from Inspector',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-date-received-from-inspector' }
+	},
+	factCheckDueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the Fact Check expected to be sent to the LPA?',
+		fieldName: 'factCheckDueDate',
+		url: 'fact-check-due-date',
+		title: 'Fact Check due date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-due-date' }
+	},
+	factCheckActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Fact Check actually sent to the LPA?',
+		fieldName: 'factCheckActualDate',
+		url: 'fact-check-actual-date',
+		title: 'Fact Check actual date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-actual-date' }
+	},
+	factCheckReceivedBackFromLPADate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Fact Check returned?',
+		fieldName: 'factCheckReceivedBackFromLPADate',
+		url: 'fact-check-received-back-from-lpa-date',
+		title: 'Fact Check received back from LPA',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'fact-check-received-back-from-lpa-date' }
+	},
+	finalReportIssueDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the final report issued?',
+		fieldName: 'finalReportIssueDate',
+		url: 'final-report-issue-date',
+		title: 'Final report issue date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'final-report-issue-date' }
 	}
 };
 

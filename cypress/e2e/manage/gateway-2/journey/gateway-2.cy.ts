@@ -36,9 +36,9 @@ describe('Gateway 2 updates', () => {
 	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
 
-		gateway2AssessorPage.verifyLoaded(gateway2AssessorAnswer.heading);
-		gateway2AssessorPage.assessorSelected(gateway2AssessorAnswer.assessor1);
-		gateway2AssessorPage.selectAssessorName(gateway2AssessorAnswer.assessor2);
+		gateway2AssessorPage.verifyLoaded();
+		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
+		gateway2AssessorPage.enterAssessorName(gateway2AssessorAnswer.assessor2);
 
 		gateway2Page.verifyLoaded('Cypress Test Plan');
 		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
