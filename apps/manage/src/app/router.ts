@@ -7,6 +7,7 @@ import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.t
 import type { ManageService } from '#service';
 import type { IRouter } from 'express';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
+import { createAssignedToMeRoutes } from './views/assigned-to-me/index.ts';
 import { createACaseRoutes } from './views/create-a-case/index.ts';
 import { caseRouter } from './views/case/index.ts';
 
@@ -46,6 +47,7 @@ export function buildRouter(service: ManageService): IRouter {
 	}
 
 	router.use('/', createLandingPageRoutes(service));
+	router.use('/assigned-to-me', createAssignedToMeRoutes(service));
 	router.use('/case/:reference', caseRouter(service));
 	router.use('/error', createErrorRoutes(service));
 	router.use('/create-a-case', createACaseRoutes(service));
