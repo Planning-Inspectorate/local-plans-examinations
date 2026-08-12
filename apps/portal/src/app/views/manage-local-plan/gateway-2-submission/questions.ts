@@ -120,20 +120,14 @@ export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
 	validators: [new FileUploadRequiredValidator('projectInitiationDocument', 'Upload project initiation document')]
 };
 
-const gateway2ApplicationQuestions: Record<string, CrownQuestionProps> = {
-	gateway2CoverLetter: gateway2CoverLetterQuestion,
-	localPlanTimetable: localPlanTimetableQuestion,
-	projectInitiationDocument: projectInitiationDocumentQuestion
-};
-
 export const gateway2FileUploadQuestions = {
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: localPlanTimetableQuestion,
 	projectInitiationDocument: projectInitiationDocumentQuestion
-};
+} satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(
-	gateway2ApplicationQuestions,
+	gateway2FileUploadQuestions,
 	allQuestionClasses,
 	{},
 	{
@@ -141,7 +135,7 @@ export const questions = createQuestions(
 	}
 ) as Record<string, Question>;
 
-const checkAnswersRedirects: Partial<Record<keyof typeof gateway2ApplicationQuestions, CheckAnswersRedirect>> = {};
+const checkAnswersRedirects: Partial<Record<keyof typeof gateway2FileUploadQuestions, CheckAnswersRedirect>> = {};
 
 // Adds check answers redirect behaviour to configured questions.
 for (const [questionName, redirect] of Object.entries(checkAnswersRedirects)) {

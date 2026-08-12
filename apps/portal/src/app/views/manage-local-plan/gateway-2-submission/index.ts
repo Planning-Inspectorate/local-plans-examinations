@@ -30,7 +30,11 @@ import {
 	questions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
-import { loadGateway2Documents, saveGateway2Documents } from './documents.ts';
+import {
+	getDocumentSetIdsByFolderName,
+	loadGateway2DocumentsByDocumentSetId,
+	saveGateway2Documents
+} from './documents.ts';
 import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import {
 	createFileUploaderDeleteController,
@@ -179,9 +183,20 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
+		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
+			service,
+			gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+		);
 
 		for (const questionConfig of gateway2FileUploadQuestionConfigs) {
-			const uploadedFiles = await loadGateway2Documents(service, currentCase.id, questionConfig.url);
+			const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
+			if (!documentSetId) {
+				throw new Error(
+					`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`
+				);
+			}
+
+			const uploadedFiles = await loadGateway2DocumentsByDocumentSetId(service, currentCase.id, documentSetId);
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),

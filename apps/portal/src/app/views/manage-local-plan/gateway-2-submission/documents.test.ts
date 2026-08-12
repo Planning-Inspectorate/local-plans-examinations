@@ -7,7 +7,7 @@ import {
 	DOCUMENT_SET_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { loadGateway2Documents, saveGateway2Documents } from './documents.ts';
+import { getDocumentSetIdsByFolderName, loadGateway2Documents, saveGateway2Documents } from './documents.ts';
 
 const GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
 const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G2_COVER_LETTER;
@@ -80,6 +80,52 @@ describe('loadGateway2Documents', () => {
 				createdAt: 'asc'
 			}
 		});
+	});
+});
+
+describe('getDocumentSetIdsByFolderName', () => {
+	it('loads document set IDs for folder names in one query', async () => {
+		const service = createMockService({
+			documentSets: [
+				{ id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME },
+				{ id: 'g2-timetable', folderName: 'local-plan-timetable' }
+			]
+		});
+
+		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(service as unknown as PortalService, [
+			TEST_DOCUMENT_SET_FOLDER_NAME,
+			'local-plan-timetable',
+			TEST_DOCUMENT_SET_FOLDER_NAME
+		]);
+
+		assert.deepEqual(service.db.documentSet.findMany.mock.calls[0].arguments[0], {
+			where: {
+				folderName: {
+					in: [TEST_DOCUMENT_SET_FOLDER_NAME, 'local-plan-timetable']
+				}
+			},
+			select: {
+				id: true,
+				folderName: true
+			}
+		});
+		assert.equal(documentSetIdsByFolderName.get(TEST_DOCUMENT_SET_FOLDER_NAME), GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID);
+		assert.equal(documentSetIdsByFolderName.get('local-plan-timetable'), 'g2-timetable');
+	});
+
+	it('rejects when any requested document set is missing', async () => {
+		const service = createMockService({
+			documentSets: [{ id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }]
+		});
+
+		await assert.rejects(
+			() =>
+				getDocumentSetIdsByFolderName(service as unknown as PortalService, [
+					TEST_DOCUMENT_SET_FOLDER_NAME,
+					'local-plan-timetable'
+				]),
+			/Missing document set reference data for "local-plan-timetable"/
+		);
 	});
 });
 
@@ -262,17 +308,20 @@ describe('saveGateway2Documents', () => {
 
 function createMockService({
 	documentSet = { id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID },
+	documentSets = [{ id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }],
 	existingDocuments = [],
 	tx = createTransactionClient()
 }: {
 	documentSet?: { id: string } | null;
+	documentSets?: { id: string; folderName: string }[];
 	existingDocuments?: unknown[];
 	tx?: ReturnType<typeof createTransactionClient>;
 } = {}) {
 	return {
 		db: {
 			documentSet: {
-				findFirst: mock.fn(async () => documentSet)
+				findFirst: mock.fn(async () => documentSet),
+				findMany: mock.fn(async () => documentSets)
 			},
 			document: {
 				findMany: mock.fn(async () => existingDocuments)

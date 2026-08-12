@@ -35,6 +35,11 @@ type SyncGateway2DocumentsParams = {
 	uploadedFiles: UploadedFile[];
 };
 
+type DocumentSetRow = {
+	id: string;
+	folderName: string;
+};
+
 // Loads the saved files for this Gateway 2 upload question.
 export async function loadGateway2Documents(
 	service: PortalService,
@@ -42,6 +47,15 @@ export async function loadGateway2Documents(
 	documentSetFolderName: string
 ): Promise<UploadedFile[]> {
 	const documentSetId = await getDocumentSetIdByFolderName(service, documentSetFolderName);
+	return loadGateway2DocumentsByDocumentSetId(service, caseId, documentSetId);
+}
+
+// Loads the saved files for a Gateway 2 upload question with a known document set ID.
+export async function loadGateway2DocumentsByDocumentSetId(
+	service: PortalService,
+	caseId: string,
+	documentSetId: string
+): Promise<UploadedFile[]> {
 	return loadUploadedDocuments(service, caseId, documentSetId);
 }
 
@@ -169,6 +183,37 @@ function mapDocumentToUploadedFile(document: DocumentRow): UploadedFile | undefi
 function getDocumentUploadedFileId(document: DocumentRow): string | undefined {
 	const version = document.latestDocumentVersion;
 	return version?.blobStoragePath ?? version?.documentURI ?? document.name;
+}
+
+// Finds document set reference data for all configured question URLs/folder names.
+export async function getDocumentSetIdsByFolderName(
+	service: PortalService,
+	documentSetFolderNames: string[]
+): Promise<Map<string, string>> {
+	const uniqueFolderNames = [...new Set(documentSetFolderNames)];
+	const documentSets = (await service.db.documentSet.findMany({
+		where: {
+			folderName: {
+				in: uniqueFolderNames
+			}
+		},
+		select: {
+			id: true,
+			folderName: true
+		}
+	})) as DocumentSetRow[];
+
+	const documentSetIdsByFolderName = new Map(
+		documentSets.map((documentSet) => [documentSet.folderName, documentSet.id])
+	);
+
+	for (const folderName of uniqueFolderNames) {
+		if (!documentSetIdsByFolderName.has(folderName)) {
+			throw new Error(`Missing document set reference data for "${folderName}". Run the database static seed.`);
+		}
+	}
+
+	return documentSetIdsByFolderName;
 }
 
 // Finds the document set reference data from the question URL/folder name.
