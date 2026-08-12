@@ -229,13 +229,13 @@ async function updateOverview(
 	}
 
 	if (question === 'qa-inspector-1') {
-		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, caseId);
+		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, caseId, question);
 	}
 	if (question === 'qa-inspector-2') {
-		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, caseId);
+		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, caseId, question);
 	}
 	if (question === 'qa-inspector-3') {
-		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, caseId);
+		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, caseId, question);
 	}
 
 	// Updating case (scalar) details + any newly added contact / LPA
