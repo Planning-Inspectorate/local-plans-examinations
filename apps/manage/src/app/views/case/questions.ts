@@ -409,7 +409,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Programme Officer details'
 	},
 	//gateway 2
-	gateway2EstimatedDate: {
+	gateway2ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'What is the estimated Gateway 2 date?',
 		fieldName: 'estimatedDate',
@@ -556,7 +556,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When is the estimated examination date?',
 		fieldName: 'estimatedSubmissionForExaminationDate',
 		url: 'examination-estimated-submission-date',
-		title: 'Estimated submission date',
+		title: 'Expected submission date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' }
 	},

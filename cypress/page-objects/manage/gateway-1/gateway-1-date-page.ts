@@ -9,7 +9,7 @@ export const noticeOfIntentionPublishDatePage = new DateQuestionPage(
 	gateway1DateAnswers.noticeOfIntention.heading
 );
 
-export const gateway1EstimatedDatePage = new DateQuestionPage(
+export const gateway1ExpectedDatePage = new DateQuestionPage(
 	gateway1QuestionPath(gateway1DateAnswers.estimatedGateway1Date.path),
 	gateway1DateAnswers.estimatedGateway1Date.fieldName,
 	gateway1DateAnswers.estimatedGateway1Date.heading
