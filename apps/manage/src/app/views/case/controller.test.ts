@@ -1,8 +1,6 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
-import type { ManageService } from '#service';
-import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import {
 	updateCaseField,
 	trimStringValues,
