@@ -52,7 +52,7 @@ describe('loadGateway2Documents', () => {
 		});
 		assert.deepEqual(files, [
 			{
-				id: 'gateway-2/cover-letter.pdf',
+				id: 'document-1',
 				fileName: 'cover-letter.pdf',
 				mimeType: 'application/pdf',
 				size: 123,
@@ -199,7 +199,7 @@ describe('saveGateway2Documents', () => {
 		});
 	});
 
-	it('restores a soft-deleted document when the same uploader file ID is uploaded again', async () => {
+	it('restores a soft-deleted document when the same document ID is uploaded again', async () => {
 		const tx = createTransactionClient();
 		const service = createMockService({
 			tx,
@@ -223,7 +223,7 @@ describe('saveGateway2Documents', () => {
 		});
 
 		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			buildUploadedFile()
+			buildUploadedFile({ id: 'document-1' })
 		]);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);
@@ -263,7 +263,7 @@ describe('saveGateway2Documents', () => {
 		});
 
 		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			buildUploadedFile({ id: 'gateway-2/cover-letter.pdf' })
+			buildUploadedFile({ id: 'document-1' })
 		]);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);
