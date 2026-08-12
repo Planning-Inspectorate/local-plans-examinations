@@ -32,11 +32,11 @@ describe('Examination validation', () => {
 		actualSubmissionDatePage.verifyValidationError('Enter  a valid date');
 	});
 
-	it('shows an error when Examining Inspector 1 is blank', { tags: ['regression'] }, () => {
+	it('shows an error when Examining Inspector 2 is blank', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examiningInspector2.row);
 		examiningInspector2Page.verifyLoaded();
-		examiningInspector2Page.inspectorNamePopulated(examiningInspector2.display);
-		examiningInspector2Page.clearInspectorNameField();
+		examiningInspector2Page.verifyLookupAnswer(examiningInspector2.display);
+		examiningInspector2Page.clearLookupAnswer();
 		examiningInspector2Page.saveAndContinue();
 
 		examiningInspector2Page.verifyLoaded();

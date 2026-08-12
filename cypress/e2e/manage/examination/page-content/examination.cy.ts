@@ -60,7 +60,7 @@ describe('Examination page content', () => {
 		examinationPage.openActionLinkFor(examiningInspector1.row);
 
 		examiningInspector1Page.verifyLoaded();
-		examiningInspector1Page.inspectorNamePopulated(examiningInspector1.display);
+		examiningInspector1Page.verifyLookupAnswer(examiningInspector1.display);
 	});
 
 	it('displays the Examination website content for a case', { tags: ['smoke', 'regression'] }, () => {
