@@ -39,7 +39,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 export function buildSaveController(service: ManageService): RequestHandler {
 	return async (req, res) => {
 		const account = authSession.getAccount(req.session);
-		const currentUser = account?.username ?? 'Unknown';
+		const currentUser = account?.name ?? 'Unknown';
 
 		if (!res.locals || !res.locals.journeyResponse) {
 			throw new Error('journey response required');
