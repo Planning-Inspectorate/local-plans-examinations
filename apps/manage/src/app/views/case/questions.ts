@@ -500,10 +500,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//gateway 3
 	gateway3EstimatedDate: {
 		type: COMPONENT_TYPES.DATE,
-		question: 'What is the estimated Gateway 3 date?',
-		fieldName: 'estimatedDate',
-		url: 'gateway-3-estimated-date',
-		title: 'Gateway 3 estimated date',
+		question: 'What is the expected Gateway 3 date?',
+		fieldName: 'expectedDate',
+		url: 'gateway-3-expected-date',
+		title: 'Gateway 3 expected date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-estimated-date' }
 	},
