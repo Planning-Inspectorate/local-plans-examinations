@@ -241,3 +241,65 @@ export const QAExpectedAnswers = [
 	...Object.values(QADateAnswers).map(({ row, display, path }) => ({ row, display, path })),
 	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];
+
+export const planPauseStartDate = {
+	row: 'Plan pause date',
+	heading: 'When did the plan pause start?',
+	fieldName: 'planPauseStartDate',
+	path: 'plan-pause-start-date',
+	input: { day: '4', month: '12', year: '2026' },
+	display: '4 December 2026',
+	updatedInput: { day: '20', month: '12', year: '2026' },
+	updatedDisplay: '20 December 2026'
+};
+
+export const planPauseEndDate = {
+	row: 'Plan pause end date',
+	path: 'plan-pause-end-date',
+	display: '5 December 2026'
+};
+
+export const withdrawnDate = {
+	row: 'Withdrawn date',
+	path: 'withdrawn-date',
+	display: '6 December 2026'
+};
+
+export const soundUnsound = {
+	row: 'Sound / unsound',
+	heading: 'Was the plan found to be sound or unsound?',
+	fieldName: 'isSound',
+	path: 'is-sound',
+	value: 'yes',
+	display: 'Sound',
+	updatedValue: 'no',
+	updatedDisplay: 'Unsound'
+};
+
+export const soundUnsoundDate = {
+	row: 'Sound / unsound date',
+	path: 'sound-unsound-date',
+	display: '7 December 2026'
+};
+
+export const adoptionDate = {
+	row: 'Adoption date',
+	path: 'adoption-date',
+	display: '8 December 2026'
+};
+
+export const approvedForCILDate = {
+	row: 'Approved for CIL date',
+	path: 'approved-for-cil-date',
+	display: '9 December 2026'
+};
+
+export const examinationImportantDates = [
+	planPauseStartDate,
+	planPauseEndDate,
+	withdrawnDate,
+	soundUnsound,
+	soundUnsoundDate,
+	adoptionDate,
+	approvedForCILDate
+];

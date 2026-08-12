@@ -659,7 +659,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'isSound',
 		url: 'is-sound',
 		title: 'Sound / unsound',
-		validators: [new RequiredValidator(' todo ')],
+		validators: [new RequiredValidator('Please select an option')],
 		inputAttributes: { 'data-cy': 'is-sound' }
 	},
 	soundUnsoundDate: {

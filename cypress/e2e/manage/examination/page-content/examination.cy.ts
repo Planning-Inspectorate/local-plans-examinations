@@ -5,6 +5,7 @@ import {
 	examiningInspector1,
 	examiningInspectors,
 	examinationFactCheckDates,
+	examinationImportantDates,
 	examinationLetterDates,
 	examinationSubmissionDates,
 	factCheckDateReceivedFromInspector,
@@ -126,5 +127,15 @@ describe('Examination page content', () => {
 		examinationPage.verifyExpectedRows(QAExpectedAnswers);
 		examinationPage.verifyExpectedAnswers(QAExpectedAnswers);
 		examinationPage.verifyExpectedActionLinkHrefs('QA', QAExpectedAnswers);
+	});
+
+	it('displays the Examination Important Dates content for a case', { tags: ['smoke', 'regression'] }, () => {
+		openSeededExaminationPage();
+
+		examinationPage.verifyBackLink('/');
+		examinationPage.verifySectionHeading('Important dates for this plan');
+		examinationPage.verifyExpectedRows(examinationImportantDates);
+		examinationPage.verifyExpectedAnswers(examinationImportantDates);
+		examinationPage.verifyExpectedActionLinkHrefs('important-dates', examinationImportantDates);
 	});
 });

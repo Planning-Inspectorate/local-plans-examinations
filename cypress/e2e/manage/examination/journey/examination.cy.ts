@@ -11,7 +11,9 @@ import {
 	finalReportIssueDate,
 	letterSentToMHCLGDate,
 	QADateAnswers,
-	QAInspectorsAnswers
+	QAInspectorsAnswers,
+	planPauseStartDate,
+	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
@@ -25,7 +27,9 @@ import {
 	finalReportIssueDatePage,
 	letterSentToMHCLGDatePage,
 	examinationQAInspector1Page,
-	QAPanelResponseDatePage
+	QAPanelResponseDatePage,
+	planPauseStartDatePage,
+	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
 
 const factCheckUpdates = [
@@ -210,4 +214,35 @@ describe('Examination updates', () => {
 			);
 		}
 	);
+
+	it('updates Important Dates and records case history', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(planPauseStartDate.row);
+		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
+		planPauseStartDatePage.enterDate(planPauseStartDate.updatedInput);
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.updatedDisplay);
+
+		examinationPage.openActionLinkFor(soundUnsound.row);
+		soundUnsoundPage.verifyLoaded(soundUnsound.value);
+		soundUnsoundPage.selectAnswer(soundUnsound.updatedValue);
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(soundUnsound.row, soundUnsound.updatedDisplay);
+
+		examinationPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+
+		caseHistoryPage.verifyHistoryEvent(`${planPauseStartDate.row} updated to ${planPauseStartDate.updatedDisplay}`);
+		caseHistoryPage.verifyHistoryEvent(`${soundUnsound.row} updated to ${soundUnsound.updatedDisplay}`);
+	});
+
+	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(planPauseStartDate.row);
+		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
+		planPauseStartDatePage.goBack();
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.display);
+	});
 });

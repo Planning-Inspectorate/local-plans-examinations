@@ -103,7 +103,14 @@ async function run() {
 						panelResponseToInspectorDate: new Date('2026-12-06T12:00:00.000Z'),
 						qaInspector1: 'inspector-1',
 						qaInspector2: 'inspector-2',
-						qaInspector3: 'inspector-3'
+						qaInspector3: 'inspector-3',
+						planPauseStartDate: new Date('2026-12-04T12:00:00.000Z'),
+						planPauseEndDate: new Date('2026-12-05T12:00:00.000Z'),
+						withdrawnDate: new Date('2026-12-06T12:00:00.000Z'),
+						isSound: true,
+						soundUnsoundDate: new Date('2026-12-07T12:00:00.000Z'),
+						adoptionDate: new Date('2026-12-08T12:00:00.000Z'),
+						approvedForCILDate: new Date('2026-12-09T12:00:00.000Z')
 					}
 				},
 				caseHistories: {
