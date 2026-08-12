@@ -208,10 +208,9 @@ For each uploaded file with no matching existing document:
 To add another upload question:
 
 1. Add a `FileUploaderQuestionProps` config in `questions.ts`.
-2. Add it to `gateway2ApplicationQuestions`.
-3. Add it to `gateway2FileUploadQuestions`.
-4. Add it to the correct `Section` in `journey.ts`.
-5. Add or update the matching `DocumentSet` seed so `DocumentSet.folderName` equals the question `url`.
-6. Run the database seed or reset/reseed if the static data has changed.
+2. Add it to `gateway2FileUploadQuestions`.
+3. Add it to the correct `Section` in `journey.ts`.
+4. Add or update the matching `DocumentSet` seed so `DocumentSet.folderName` equals the question `url`.
+5. Run the database seed or reset/reseed if the static data has changed.
 
 The route layer should not need a new route. The shared dispatcher will pick it up from `gateway2FileUploadQuestions`.
