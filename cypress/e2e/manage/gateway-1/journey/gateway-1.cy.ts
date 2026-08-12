@@ -5,6 +5,7 @@ import {
 	noticeOfIntentionPublishDatePage
 } from '../../../../page-objects/manage/gateway-1/index.ts';
 import { openSeededGateway1Page } from '../../../../flows/manage/gateway-1-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway1DateAnswers,
 	gateway1DsaAnswer,
@@ -24,7 +25,7 @@ describe('Gateway 1 updates', () => {
 		noticeOfIntentionPublishDatePage.verifyLoaded(gateway1DateAnswers.noticeOfIntention.input);
 		noticeOfIntentionPublishDatePage.enterDate(updatedNoticeOfIntention.input);
 
-		gateway1Page.verifyLoaded('Cypress Test Plan');
+		gateway1Page.verifyLoaded(seededCase.planTitle);
 		gateway1Page.verifySummaryRowContains(gateway1DateAnswers.noticeOfIntention.row, updatedNoticeOfIntention.display);
 	});
 
@@ -33,7 +34,7 @@ describe('Gateway 1 updates', () => {
 		gateway1DsaPage.verifyLoaded(gateway1DsaAnswer.value);
 		gateway1DsaPage.selectAnswer(gateway1DsaAnswer.updatedValue);
 
-		gateway1Page.verifyLoaded('Cypress Test Plan');
+		gateway1Page.verifyLoaded(seededCase.planTitle);
 		gateway1Page.verifySummaryRowContains(gateway1DsaAnswer.row, gateway1DsaAnswer.updatedDisplay);
 	});
 
@@ -42,12 +43,12 @@ describe('Gateway 1 updates', () => {
 		gateway1EstimatedDatePage.verifyLoaded(gateway1DateAnswers.estimatedGateway1Date.input);
 		gateway1EstimatedDatePage.goBack();
 
-		gateway1Page.verifyLoaded('Cypress Test Plan');
+		gateway1Page.verifyLoaded(seededCase.planTitle);
 
 		gateway1Page.openActionLinkFor(gateway1DsaAnswer.row);
 		gateway1DsaPage.verifyLoaded(gateway1DsaAnswer.value);
 		gateway1DsaPage.goBack();
 
-		gateway1Page.verifyLoaded('Cypress Test Plan');
+		gateway1Page.verifyLoaded(seededCase.planTitle);
 	});
 });
