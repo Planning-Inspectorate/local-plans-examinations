@@ -3,6 +3,7 @@ import type { ManageService } from '#service';
 import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
+import * as authSession from '../../auth/session.service.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -166,7 +167,11 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		if (updated) {
 			const columns = Object.keys(data.answers);
 			const oldValues = Object.fromEntries(columns.map((key) => [key, res.locals.journeyResponse?.answers[key]]));
-			await updateCaseHistory(db, oldValues, data.answers, reference);
+
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+
+			await updateCaseHistory(db, oldValues, data.answers, reference, currentUser);
 		}
 	};
 }
@@ -499,7 +504,8 @@ export async function updateCaseHistory(
 	db: PrismaClient,
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
-	reference: string
+	reference: string,
+	currentUser: string
 ) {
 	await db.case.update({
 		where: { reference },
@@ -507,8 +513,7 @@ export async function updateCaseHistory(
 			caseHistories: {
 				create: Object.entries(previousValues).map(([key, oldValue]) => ({
 					event: formatCaseHistoryEvent(key, oldValue, newValues[key]),
-					// TODO: Get user once authentication is implemented
-					username: 'Unknown'
+					username: currentUser
 				}))
 			}
 		}
