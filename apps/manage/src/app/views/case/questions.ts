@@ -505,7 +505,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-3-expected-date',
 		title: 'Gateway 3 expected date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-3-estimated-date' }
+		inputAttributes: { 'data-cy': 'gateway-3-expected-date' }
 	},
 	gateway3ActualDate: {
 		type: COMPONENT_TYPES.DATE,
