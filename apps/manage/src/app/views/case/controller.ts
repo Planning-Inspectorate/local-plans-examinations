@@ -422,6 +422,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		res.locals.reference = reference;
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
+		console.log('journey router called');
+		console.log(req.url);
+		console.log(currentPage);
 		switch (currentPage) {
 			case 'overview': {
 				const overviewData = await getOverviewData(db, reference);
