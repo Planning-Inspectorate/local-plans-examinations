@@ -143,7 +143,7 @@ describe('Case overview updates', () => {
 		caseOverviewPage.openActionLinkFor('Assessor Gateway 2');
 
 		caseOverviewGateway2AssessorPage.verifyLoaded();
-		caseOverviewGateway2AssessorPage.enterAssessorName('Assessor 1');
+		caseOverviewGateway2AssessorPage.enterLookupAnswer('Assessor 1');
 
 		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('Assessor Gateway 2', 'Assessor 1');
@@ -153,7 +153,7 @@ describe('Case overview updates', () => {
 		caseOverviewPage.openActionLinkFor('Examining Inspector 1');
 
 		caseOverviewExaminingInspector1Page.verifyLoaded();
-		caseOverviewExaminingInspector1Page.enterInspectorName('Inspector 1');
+		caseOverviewExaminingInspector1Page.enterLookupAnswer('Inspector 1');
 
 		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('Examining Inspector 1', 'Inspector 1');
@@ -163,7 +163,7 @@ describe('Case overview updates', () => {
 		caseOverviewPage.openActionLinkFor('QA Inspector 1');
 
 		caseOverviewQAInspector1Page.verifyLoaded();
-		caseOverviewQAInspector1Page.enterQAInspectorName('Inspector 1');
+		caseOverviewQAInspector1Page.enterLookupAnswer('Inspector 1');
 
 		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('QA Inspector 1', 'Inspector 1');
