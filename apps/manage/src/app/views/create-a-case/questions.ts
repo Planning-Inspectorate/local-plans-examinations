@@ -171,12 +171,12 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 				label: 'Date the Notice of Intention to Commence Plan Making was published',
 				hint: 'For example, 27 3 2007'
 			},
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 estimated date' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 estimated date' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 estimated date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 expected date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 expected date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 expected date' },
 			{
 				type: COMPONENT_TYPES.DATE,
-				fieldName: 'estimatedSubmissionForExaminationDate',
+				fieldName: 'expectedSubmissionForExaminationDate',
 				label: 'Estimated submission for examination date'
 			}
 		],

@@ -39,8 +39,8 @@ describe('Gateway 1 updates', () => {
 	});
 
 	it('returns to Gateway 1 from Gateway 1 answer page back links', () => {
-		gateway1Page.openActionLinkFor(gateway1DateAnswers.estimatedGateway1Date.row);
-		gateway1ExpectedDatePage.verifyLoaded(gateway1DateAnswers.estimatedGateway1Date.input);
+		gateway1Page.openActionLinkFor(gateway1DateAnswers.expectedGateway1Date.row);
+		gateway1ExpectedDatePage.verifyLoaded(gateway1DateAnswers.expectedGateway1Date.input);
 		gateway1ExpectedDatePage.goBack();
 
 		gateway1Page.verifyLoaded(seededCase.planTitle);

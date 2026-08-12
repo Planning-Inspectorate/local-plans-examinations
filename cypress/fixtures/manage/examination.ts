@@ -1,4 +1,4 @@
-// seed-cy.ts sets estimatedSubmissionDate to `now` at seed time
+// seed-cy.ts sets expectedSubmissionDate to `now` at seed time
 // unlike a real case, where it comes from a fixed value answered during case creation. If seed-cy.ts is
 // ever changed to a fixed date instead, this dynamic today/todayInput/todayDisplay block can be removed
 
@@ -17,11 +17,11 @@ const todayDisplay = today.toLocaleDateString('en-GB', {
 	timeZone: 'GMT'
 });
 
-export const estimatedSubmissionDate = {
+export const expectedSubmissionDate = {
 	row: 'Estimated submission date',
-	heading: 'When is the estimated examination date?',
-	fieldName: 'estimatedSubmissionForExaminationDate',
-	path: 'examination-estimated-submission-date',
+	heading: 'When is the expected examination date?',
+	fieldName: 'expectedSubmissionForExaminationDate',
+	path: 'examination-expected-submission-date',
 	input: todayInput,
 	display: todayDisplay,
 	updatedInput: { day: '10', month: '10', year: '2026' },
@@ -39,7 +39,7 @@ export const actualSubmissionDate = {
 	updatedDisplay: '9 December 2026'
 };
 
-export const examinationSubmissionDates = [estimatedSubmissionDate, actualSubmissionDate];
+export const examinationSubmissionDates = [expectedSubmissionDate, actualSubmissionDate];
 
 export const examiningInspector1 = {
 	row: 'Examining Inspector 1',

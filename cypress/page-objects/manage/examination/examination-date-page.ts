@@ -6,7 +6,7 @@ import {
 	finalReportIssueDate,
 	letterIssueDate,
 	letterSentToMHCLGDate,
-	estimatedSubmissionDate,
+	expectedSubmissionDate,
 	actualSubmissionDate,
 	examiningInspectorAppointmentDate,
 	QADateAnswers,
@@ -21,10 +21,10 @@ const inspectorQuestionPath = (path: string) => new RegExp(`^/case/.+/examinatio
 const QADateQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/QA/${path}$`);
 const importantDatesQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/important-dates/${path}$`);
 
-export const estimatedSubmissionDatePage = new DateQuestionPage(
-	examinationQuestionPath(estimatedSubmissionDate.path),
-	estimatedSubmissionDate.fieldName,
-	estimatedSubmissionDate.heading
+export const expectedSubmissionDatePage = new DateQuestionPage(
+	examinationQuestionPath(expectedSubmissionDate.path),
+	expectedSubmissionDate.fieldName,
+	expectedSubmissionDate.heading
 );
 
 export const actualSubmissionDatePage = new DateQuestionPage(

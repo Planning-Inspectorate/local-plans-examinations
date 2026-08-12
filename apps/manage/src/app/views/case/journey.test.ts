@@ -70,7 +70,7 @@ describe('gateway1Journey', () => {
 		const journey = createGateway1JourneyForTest();
 		const gateway1Questions = [
 			'notice-of-intention-publish-date',
-			'estimated-gateway-1-date',
+			'expected-gateway-1-date',
 			'completed-gateway-1-date',
 			'sla-sent-date',
 			'sla-received-date',

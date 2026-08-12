@@ -30,7 +30,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 	gateway1Date?: string;
 	gateway2Date?: string;
 	gateway3Date?: string;
-	estimatedSubmissionForExaminationDate?: string;
+	expectedSubmissionForExaminationDate?: string;
 }
 
 /**
@@ -140,7 +140,7 @@ async function saveDataToDatabase(
 						noticeOfIntention: parseDate(answers.intentionToCommenceDate)
 					}),
 					...(answers.gateway1Date && {
-						estimatedGateway1Date: parseDate(answers.gateway1Date)
+						expectedGateway1Date: parseDate(answers.gateway1Date)
 					})
 				}
 			}),
@@ -148,7 +148,7 @@ async function saveDataToDatabase(
 				data: {
 					caseId: answers.reference,
 					...(answers.gateway2Date && {
-						estimatedDate: parseDate(answers.gateway2Date)
+						expectedDate: parseDate(answers.gateway2Date)
 					})
 				}
 			}),
@@ -156,15 +156,15 @@ async function saveDataToDatabase(
 				data: {
 					caseId: answers.reference,
 					...(answers.gateway3Date && {
-						estimatedDate: parseDate(answers.gateway3Date)
+						expectedDate: parseDate(answers.gateway3Date)
 					})
 				}
 			}),
 			tx.examinationInfo.create({
 				data: {
 					caseId: answers.reference,
-					...(answers.estimatedSubmissionForExaminationDate && {
-						estimatedSubmissionForExaminationDate: parseDate(answers.estimatedSubmissionForExaminationDate)
+					...(answers.expectedSubmissionForExaminationDate && {
+						expectedSubmissionForExaminationDate: parseDate(answers.expectedSubmissionForExaminationDate)
 					})
 				}
 			})
