@@ -24,6 +24,11 @@ export interface Config extends BaseConfig {
 			inspectors: string;
 		};
 	};
+	blobStorage: {
+		containerName: string;
+		connectionString?: string;
+		accountUrl?: string;
+	};
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;

@@ -54,19 +54,24 @@ interface Gateway2Input {
 	assessorAppointmentDate?: Date;
 	workshopDate?: Date;
 	workshopVenue?: string;
+	workshopDocument?: string;
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
 }
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
+	console.log('update case field called outer');
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
+		console.log('uno');
 		const { db, logger } = service;
 
 		const reference = getParam(req.params.reference);
 		const section = getParam(req.params.section);
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
+		console.log('action');
+		console.log(action);
 
 		if (action === 'remove') {
 			await removeItem({ db, reference, section, currentItemId });
@@ -74,7 +79,12 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		}
 
 		let updated;
+		console.log('update case field called');
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
+		console.log('full url');
+		console.log(req.url);
+		console.log('first segment');
+		console.log(firstSegmentUrl);
 		switch (firstSegmentUrl) {
 			case 'overview':
 				updated = await updateOverview(
@@ -100,6 +110,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				break;
 			default:
 				logger.info(`url - ${req.url} not found`);
+				console.log(`url - ${req.url} not found`);
 				return res.status(404).render('views/errors/404.njk');
 		}
 		if (updated) {

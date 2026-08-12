@@ -82,6 +82,7 @@ model Gateway2Info {
   workshopVenue           String?
   reportIssuedDate        DateTime? @db.DateTime2
   reportPublishedByLPA    DateTime? @db.DateTime2
+  workshopDocument        String?
 }
 
 model Gateway3Info {
