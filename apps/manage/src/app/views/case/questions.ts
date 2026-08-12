@@ -9,12 +9,39 @@ import {
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
+import {
+	FileUploadRequiredValidator,
+	TOTAL_FILE_UPLOAD_LIMIT
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { TOTAL_FILE_UPLOAD_LIMIT_LABEL } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
 const allQuestionClasses = {
 	...questionClasses,
 	...CUSTOM_COMPONENT_CLASSES
+};
+
+const MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'csv', 'jpg', 'jpeg', 'png'];
+const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
+	'application/msword',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'application/pdf',
+	'text/csv',
+	'application/csv',
+	'application/vnd.ms-excel',
+	'image/jpeg',
+	'image/png',
+	'application/octet-stream'
+];
+const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT = 25 * 1024 * 1024;
+const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL = '25MB';
+const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
+	caption: 'Procedural documents',
+	introduction: 'Upload a file',
+	fileRequirementsText: 'The file must be a DOC, DOCX, PDF, CSV, JPG or PNG and be smaller than 25MB',
+	chooseFilesButtonText: 'Choose files',
+	dropInstructionText: 'or drop files'
 };
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
@@ -496,6 +523,23 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Report published by LPA date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
+	},
+	workshopDocument: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Workshop document',
+		question: 'Upload documents',
+		fieldName: 'workshopDocument',
+		url: 'gateway-2-workshop-document',
+		allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+		maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
+		maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
+		maxFilesPerUpload: 1,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+		multiple: true,
+		text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+		validators: [new FileUploadRequiredValidator('workshopDocument', 'Upload gateway 2 workshop file')]
 	},
 	//gateway 3
 	gateway3ExpectedDate: {
