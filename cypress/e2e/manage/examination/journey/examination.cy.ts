@@ -71,8 +71,8 @@ describe('Examination updates', () => {
 		examinationPage.openActionLinkFor(examiningInspector1.row);
 
 		examiningInspector1Page.verifyLoaded();
-		examiningInspector1Page.inspectorNamePopulated(examiningInspector1.display);
-		examiningInspector1Page.enterInspectorName(examiningInspector1.updatedInput);
+		examiningInspector1Page.verifyLookupAnswer(examiningInspector1.display);
+		examiningInspector1Page.enterLookupAnswer(examiningInspector1.updatedInput);
 
 		examinationPage.verifyLoaded('Cypress Test Plan');
 		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.updatedInput);
@@ -85,7 +85,7 @@ describe('Examination updates', () => {
 	it('returns to Examination from an Examining Inspector page back link', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examiningInspector1.row);
 		examiningInspector1Page.verifyLoaded();
-		examiningInspector1Page.inspectorNamePopulated(examiningInspector1.display);
+		examiningInspector1Page.verifyLookupAnswer(examiningInspector1.display);
 		examiningInspector1Page.goBack();
 
 		examinationPage.verifyLoaded('Cypress Test Plan');
