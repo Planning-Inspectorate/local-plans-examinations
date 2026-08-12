@@ -79,7 +79,13 @@ interface ExaminationInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
+	planPauseStartDate?: Date;
+	planPauseEndDate?: Date;
+	withdrawnDate?: Date;
 	isSound?: boolean;
+	soundUnsoundDate?: Date;
+	adoptionDate?: Date;
+	approvedForCILDate?: Date;
 }
 
 const caseHistoryLabels: Record<string, string> = {
@@ -95,7 +101,14 @@ const caseHistoryLabels: Record<string, string> = {
 	qaInspector3: 'QA Inspector 3',
 	QADate: 'QA Date',
 	reportSentToPanelDate: 'Sent to panel date',
-	panelResponseToInspectorDate: 'QA panel response sent to inspector'
+	panelResponseToInspectorDate: 'QA panel response sent to inspector',
+	planPauseStartDate: 'Plan pause date',
+	planPauseEndDate: 'Plan pause end date',
+	withdrawnDate: 'Withdrawn date',
+	isSound: 'Sound / unsound',
+	soundUnsoundDate: 'Sound / unsound date',
+	adoptionDate: 'Adoption date',
+	approvedForCILDate: 'Approved for CIL date'
 };
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -520,6 +533,10 @@ function formatCaseHistoryValue(value: unknown) {
 			timeZone: 'Europe/London',
 			year: 'numeric'
 		}).format(value);
+	}
+
+	if (typeof value === 'boolean') {
+		return value ? 'Sound' : 'Unsound';
 	}
 
 	return `${value ?? ''}`;

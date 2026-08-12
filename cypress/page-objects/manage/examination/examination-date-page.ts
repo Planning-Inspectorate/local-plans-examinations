@@ -9,7 +9,8 @@ import {
 	estimatedSubmissionDate,
 	actualSubmissionDate,
 	examiningInspectorAppointmentDate,
-	QADateAnswers
+	QADateAnswers,
+	planPauseStartDate
 } from '../../../fixtures/manage/examination.ts';
 import { DateQuestionPage } from '../base/index.ts';
 
@@ -18,6 +19,7 @@ const factCheckQuestionPath = (path: string) => new RegExp(`^/case/.+/examinatio
 const examinationQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/examination/${path}$`);
 const inspectorQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/inspectors/${path}$`);
 const QADateQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/QA/${path}$`);
+const importantDatesQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/important-dates/${path}$`);
 
 export const estimatedSubmissionDatePage = new DateQuestionPage(
 	examinationQuestionPath(estimatedSubmissionDate.path),
@@ -95,4 +97,10 @@ export const QAPanelResponseDatePage = new DateQuestionPage(
 	QADateQuestionPath(QADateAnswers.QAPanelResponseDate.path),
 	QADateAnswers.QAPanelResponseDate.fieldName,
 	QADateAnswers.QAPanelResponseDate.heading
+);
+
+export const planPauseStartDatePage = new DateQuestionPage(
+	importantDatesQuestionPath(planPauseStartDate.path),
+	planPauseStartDate.fieldName,
+	planPauseStartDate.heading
 );
