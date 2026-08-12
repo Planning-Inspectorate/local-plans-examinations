@@ -160,10 +160,8 @@ function mapDocumentToUploadedFile(document: DocumentRow): UploadedFile | undefi
 		return undefined;
 	}
 
-	const id = version.blobStoragePath ?? version.documentURI ?? document.name;
-
 	return {
-		id,
+		id: document.guid,
 		fileName: version.originalFilename ?? version.fileName ?? document.name,
 		mimeType: version.mime ?? 'application/octet-stream',
 		size: version.size ?? 0,
@@ -179,10 +177,9 @@ function mapDocumentToUploadedFile(document: DocumentRow): UploadedFile | undefi
 	};
 }
 
-// Gets the storage id used by the uploader.
+// Gets the route-safe id used by the uploader.
 function getDocumentUploadedFileId(document: DocumentRow): string | undefined {
-	const version = document.latestDocumentVersion;
-	return version?.blobStoragePath ?? version?.documentURI ?? document.name;
+	return document.guid;
 }
 
 // Finds document set reference data for all configured question URLs/folder names.
