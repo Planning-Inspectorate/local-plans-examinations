@@ -136,7 +136,8 @@ export const examinationFactCheckDates = [
 	factCheckDateReceivedFromInspector,
 	factCheckDueDate,
 	factCheckActualDate,
-	factCheckReceivedBackFromLpaDate
+	factCheckReceivedBackFromLpaDate,
+	finalReportIssueDate
 ];
 
 export const QAExpectedAnswers = [

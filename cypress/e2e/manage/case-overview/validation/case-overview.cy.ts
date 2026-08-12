@@ -24,6 +24,6 @@ describe('Case overview validation', () => {
 
 		caseOverviewQAInspector3Page.verifyLoaded();
 		caseOverviewQAInspector3Page.clearLookupAnswer();
-		caseOverviewQAInspector3Page.submitAndVerifyValidationErrors('Select a name');
+		caseOverviewQAInspector3Page.submitAndVerifyValidationErrors('Input QA Inspector 3');
 	});
 });
