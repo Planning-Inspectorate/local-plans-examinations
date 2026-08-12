@@ -47,6 +47,13 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
+	router.use((req, _res, next) => {
+		if (req.session) {
+			req.session.currentJourney = JOURNEY_ID;
+		}
+		next();
+	});
+
 	// read answers from the session
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
