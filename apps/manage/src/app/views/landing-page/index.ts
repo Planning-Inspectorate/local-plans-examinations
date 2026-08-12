@@ -8,6 +8,5 @@ export function createLandingPageRoutes(service: ManageService): IRouter {
 	const landingPage = buildLandingPage(service);
 
 	router.get('/', asyncHandler(landingPage));
-
 	return router;
 }
