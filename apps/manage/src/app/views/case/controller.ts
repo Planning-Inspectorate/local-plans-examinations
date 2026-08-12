@@ -42,7 +42,7 @@ interface CaseOverviewInput {
 
 interface Gateway1Input {
 	noticeOfIntention?: Date;
-	estimatedGateway1Date?: Date;
+	expectedGateway1Date?: Date;
 	completedGateway1Date?: Date;
 	slaSentDate?: Date;
 	slaReceivedDate?: Date;
@@ -50,7 +50,7 @@ interface Gateway1Input {
 }
 
 interface Gateway2Input {
-	estimatedDate?: Date;
+	expectedDate?: Date;
 	actualDate?: Date;
 	validDate?: Date;
 	assessorName?: string;

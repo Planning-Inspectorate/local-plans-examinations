@@ -315,14 +315,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'notice-of-intention-publish-date' }
 	},
-	gateway1estimatedDate: {
+	gateway1ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
-		question: 'What is the estimated Gateway 1 date?',
-		fieldName: 'estimatedGateway1Date',
-		url: 'estimated-gateway-1-date',
-		title: 'Gateway 1 estimated date',
+		question: 'What is the expected Gateway 1 date?',
+		fieldName: 'expectedGateway1Date',
+		url: 'expected-gateway-1-date',
+		title: 'Gateway 1 expected date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'estimated-gateway-1-date' }
+		inputAttributes: { 'data-cy': 'expected-gateway-1-date' }
 	},
 	gateway1ActualDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -411,12 +411,12 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//gateway 2
 	gateway2ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
-		question: 'What is the estimated Gateway 2 date?',
-		fieldName: 'estimatedDate',
-		url: 'gateway-2-estimated-date',
-		title: 'Gateway 2 estimated date',
+		question: 'What is the expected Gateway 2 date?',
+		fieldName: 'expectedDate',
+		url: 'gateway-2-expected-date',
+		title: 'Gateway 2 expected date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-estimated-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-expected-date' }
 	},
 	gateway2ActualDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -551,14 +551,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
 	},
 	// Examination
-	estimatedSubmissionForExaminationDate: {
+	expectedSubmissionForExaminationDate: {
 		type: COMPONENT_TYPES.DATE,
-		question: 'When is the estimated examination date?',
-		fieldName: 'estimatedSubmissionForExaminationDate',
-		url: 'examination-estimated-submission-date',
+		question: 'When is the expected examination date?',
+		fieldName: 'expectedSubmissionForExaminationDate',
+		url: 'examination-expected-submission-date',
 		title: 'Expected submission date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' }
+		inputAttributes: { 'data-cy': 'examination-expected-submission-date' }
 	},
 	submissionForExaminationDate: {
 		type: COMPONENT_TYPES.DATE,

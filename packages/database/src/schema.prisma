@@ -56,7 +56,7 @@ model Gateway1Info {
   case                  Case      @relation(fields: [caseId], references: [reference])
   caseId                String    @unique
   noticeOfIntention     DateTime? @db.DateTime2
-  estimatedGateway1Date DateTime? @db.DateTime2
+  expectedGateway1Date  DateTime? @db.DateTime2
   completedGateway1Date DateTime? @db.DateTime2
   slaSentDate           DateTime? @db.DateTime2
   slaReceivedDate       DateTime? @db.DateTime2
@@ -67,7 +67,7 @@ model Gateway2Info {
   id                      String    @id @default(uuid()) @db.UniqueIdentifier
   case                    Case      @relation(fields: [caseId], references: [reference])
   caseId                  String    @unique
-  estimatedDate           DateTime? @db.DateTime2
+  expectedDate            DateTime? @db.DateTime2
   actualDate              DateTime? @db.DateTime2
   validDate               DateTime? @db.DateTime2
   assessorName            String?
@@ -82,7 +82,7 @@ model Gateway3Info {
   id                        String    @id @default(uuid()) @db.UniqueIdentifier
   case                      Case      @relation(fields: [caseId], references: [reference])
   caseId                    String    @unique
-  estimatedDate             DateTime? @db.DateTime2
+  expectedDate             DateTime? @db.DateTime2
   actualDate                DateTime? @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
