@@ -1,6 +1,9 @@
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { openSeededExaminationPage } from '../../../../flows/manage/examination-flow.ts';
 import {
+	actualSubmissionDate,
+	examiningInspector1,
+	examinationWebsite,
 	factCheckActualDate,
 	factCheckDateReceivedFromInspector,
 	factCheckDueDate,
@@ -11,7 +14,10 @@ import {
 	QAInspectorsAnswers
 } from '../../../../fixtures/manage/examination.ts';
 import {
+	actualSubmissionDatePage,
 	examinationPage,
+	examiningInspector1Page,
+	examinationWebsitePage,
 	factCheckActualDatePage,
 	factCheckDateReceivedFromInspectorPage,
 	factCheckDueDatePage,
@@ -37,6 +43,79 @@ describe('Examination updates', () => {
 	});
 
 	after(() => cy.task('clearDb'));
+
+	it('updates an Examination date and records case history', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(actualSubmissionDate.row);
+
+		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
+		actualSubmissionDatePage.enterDate(actualSubmissionDate.updatedInput);
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(actualSubmissionDate.row, actualSubmissionDate.updatedDisplay);
+
+		examinationPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyHistoryEvent('Updated submissionForExaminationDate from'); // This will be changed to readable format once bug: LPBO-188 is resolved
+	});
+
+	it('returns to Examination from an Examination date page back link', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(actualSubmissionDate.row);
+		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
+		actualSubmissionDatePage.goBack();
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(actualSubmissionDate.row, actualSubmissionDate.display);
+	});
+
+	it('updates an Examining Inspector and records case history', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(examiningInspector1.row);
+
+		examiningInspector1Page.verifyLoaded();
+		examiningInspector1Page.inspectorNamePopulated(examiningInspector1.display);
+		examiningInspector1Page.enterInspectorName(examiningInspector1.updatedInput);
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.updatedInput);
+
+		examinationPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyHistoryEvent('Updated examiningInspector1 from inspector-1 to inspector-4'); // This will be changed to readable format once bug: LPBO-188 is resolved
+	});
+
+	it('returns to Examination from an Examining Inspector page back link', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(examiningInspector1.row);
+		examiningInspector1Page.verifyLoaded();
+		examiningInspector1Page.inspectorNamePopulated(examiningInspector1.display);
+		examiningInspector1Page.goBack();
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
+	});
+
+	it('updates the Examination website and records case history', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(examinationWebsite.row);
+
+		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
+		examinationWebsitePage.enterExaminationWebsite(examinationWebsite.updatedValue);
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.updatedValue);
+
+		examinationPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyHistoryEvent(
+			`Updated examinationWebsite from null to ${examinationWebsite.updatedValue}` // This will be changed to readable format once bug: LPBO-188 is resolved
+		);
+	});
+
+	it('returns to Examination from an Examination website page back link', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(examinationWebsite.row);
+		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
+		examinationWebsitePage.goBack();
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(examinationWebsite.row, 'Not started');
+	});
 
 	it('updates a Letter date and records case history', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(letterSentToMHCLGDate.row);

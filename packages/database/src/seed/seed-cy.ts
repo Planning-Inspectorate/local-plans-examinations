@@ -86,7 +86,11 @@ async function run() {
 				examinationInfo: {
 					create: {
 						estimatedSubmissionForExaminationDate: now,
-						submissionForExaminationDate: now,
+						submissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
+						examiningInspector1: 'inspector-1',
+						examiningInspector2: 'inspector-2',
+						examiningInspector3: 'inspector-3',
+						examiningInspectorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
 						letterSentToMHCLGDate: new Date('2026-10-01T12:00:00.000Z'),
 						letterIssueDate: new Date('2026-11-01T12:00:00.000Z'),
 						factCheckDateReceivedFromInspector: new Date('2026-10-01T12:00:00.000Z'),

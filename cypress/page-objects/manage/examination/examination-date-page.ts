@@ -6,13 +6,37 @@ import {
 	finalReportIssueDate,
 	letterIssueDate,
 	letterSentToMHCLGDate,
+	estimatedSubmissionDate,
+	actualSubmissionDate,
+	examiningInspectorAppointmentDate,
 	QADateAnswers
 } from '../../../fixtures/manage/examination.ts';
 import { DateQuestionPage } from '../base/index.ts';
 
 const lettersQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/letters/${path}$`);
 const factCheckQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/fact-check/${path}$`);
+const examinationQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/examination/${path}$`);
+const inspectorQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/inspectors/${path}$`);
 const QADateQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/QA/${path}$`);
+
+export const estimatedSubmissionDatePage = new DateQuestionPage(
+	examinationQuestionPath(estimatedSubmissionDate.path),
+	estimatedSubmissionDate.fieldName,
+	estimatedSubmissionDate.heading
+);
+
+export const actualSubmissionDatePage = new DateQuestionPage(
+	examinationQuestionPath(actualSubmissionDate.path),
+	actualSubmissionDate.fieldName,
+	actualSubmissionDate.heading
+);
+
+export const examiningInspectorAppointmentDatePage = new DateQuestionPage(
+	inspectorQuestionPath(examiningInspectorAppointmentDate.path),
+	examiningInspectorAppointmentDate.fieldName,
+	examiningInspectorAppointmentDate.heading
+);
+
 export const letterSentToMHCLGDatePage = new DateQuestionPage(
 	lettersQuestionPath(letterSentToMHCLGDate.path),
 	letterSentToMHCLGDate.fieldName,
