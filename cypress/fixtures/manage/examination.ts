@@ -74,11 +74,70 @@ export const finalReportIssueDate = {
 	updatedInput: { day: '19', month: '12', year: '2026' },
 	updatedDisplay: '19 December 2026'
 };
+export const QADateAnswers = {
+	QADate: {
+		row: 'QA date',
+		heading: 'What is the date of QA?',
+		path: 'qa-date',
+		display: '4 December 2026'
+	},
+
+	sentToPanelDate: {
+		row: 'Sent to panel date',
+		heading: 'When was the report sent to the panel?',
+		path: 'report-sent-to-panel-date',
+		display: '5 December 2026'
+	},
+
+	QAPanelResponseDate: {
+		row: 'QA panel response sent to Inspector',
+		heading: 'When did the panel send its QA response to the Inspector?',
+		fieldName: 'panelResponseToInspectorDate',
+		path: 'panel-response-to-inspector-date',
+		input: { day: '6', month: '12', year: '2026' },
+		display: '6 December 2026',
+		updatedInput: { day: '22', month: '12', year: '2026' },
+		updatedDisplay: '22 December 2026'
+	}
+};
+
+export const QAInspectorsAnswers = {
+	QAInspector1: {
+		row: 'QA Inspector 1',
+		heading: 'Which Inspector is assigned for QA?',
+		fieldName: 'qaInspector1',
+		path: 'qa-inspector-1',
+		input: 'Inspector 1',
+		display: 'Inspector 1',
+		updatedInput: 'Inspector 2',
+		updatedDisplay: 'Inspector 2'
+	},
+
+	QAInspector2: {
+		row: 'QA Inspector 2',
+		heading: 'Which Inspector is assigned for QA?',
+		fieldName: 'qaInspector2',
+		path: 'qa-inspector-2',
+		display: 'Inspector 2'
+	},
+
+	QAInspector3: {
+		row: 'QA Inspector 3',
+		heading: 'Which Inspector is assigned for QA?',
+		fieldName: 'qaInspector3',
+		path: 'qa-inspector-3',
+		display: 'Inspector 3'
+	}
+};
 
 export const examinationFactCheckDates = [
 	factCheckDateReceivedFromInspector,
 	factCheckDueDate,
 	factCheckActualDate,
-	factCheckReceivedBackFromLpaDate,
-	finalReportIssueDate
+	factCheckReceivedBackFromLpaDate
+];
+
+export const QAExpectedAnswers = [
+	...Object.values(QADateAnswers).map(({ row, display, path }) => ({ row, display, path })),
+	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];

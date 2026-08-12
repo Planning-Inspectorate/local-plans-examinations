@@ -3,7 +3,8 @@ import {
 	examinationFactCheckDates,
 	examinationLetterDates,
 	factCheckDateReceivedFromInspector,
-	letterSentToMHCLGDate
+	letterSentToMHCLGDate,
+	QAExpectedAnswers
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	examinationPage,
@@ -52,5 +53,15 @@ describe('Examination page content', () => {
 		examinationPage.openActionLinkFor(factCheckDateReceivedFromInspector.row);
 
 		factCheckDateReceivedFromInspectorPage.verifyLoaded(factCheckDateReceivedFromInspector.input);
+	});
+
+	it('displays the QA content for a case', { tags: ['smoke', 'regression'] }, () => {
+		openSeededExaminationPage();
+
+		examinationPage.verifyBackLink('/');
+		examinationPage.verifySectionHeading('QA');
+		examinationPage.verifyExpectedRows(QAExpectedAnswers);
+		examinationPage.verifyExpectedAnswers(QAExpectedAnswers);
+		examinationPage.verifyExpectedActionLinkHrefs('QA', QAExpectedAnswers);
 	});
 });

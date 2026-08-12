@@ -5,13 +5,14 @@ import {
 	factCheckReceivedBackFromLpaDate,
 	finalReportIssueDate,
 	letterIssueDate,
-	letterSentToMHCLGDate
+	letterSentToMHCLGDate,
+	QADateAnswers
 } from '../../../fixtures/manage/examination.ts';
 import { DateQuestionPage } from '../base/index.ts';
 
 const lettersQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/letters/${path}$`);
 const factCheckQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/fact-check/${path}$`);
-
+const QADateQuestionPath = (path: string) => new RegExp(`^/case/.+/examination/QA/${path}$`);
 export const letterSentToMHCLGDatePage = new DateQuestionPage(
 	lettersQuestionPath(letterSentToMHCLGDate.path),
 	letterSentToMHCLGDate.fieldName,
@@ -52,4 +53,22 @@ export const finalReportIssueDatePage = new DateQuestionPage(
 	factCheckQuestionPath(finalReportIssueDate.path),
 	finalReportIssueDate.fieldName,
 	finalReportIssueDate.heading
+);
+
+export const QADatePage = new DateQuestionPage(
+	QADateQuestionPath(QADateAnswers.QADate.path),
+	QADateAnswers.QADate.fieldName,
+	QADateAnswers.QADate.heading
+);
+
+export const sentToPanelDatePage = new DateQuestionPage(
+	QADateQuestionPath(QADateAnswers.sentToPanelDate.path),
+	QADateAnswers.sentToPanelDate.fieldName,
+	QADateAnswers.sentToPanelDate.heading
+);
+
+export const QAPanelResponseDatePage = new DateQuestionPage(
+	QADateQuestionPath(QADateAnswers.QAPanelResponseDate.path),
+	QADateAnswers.QAPanelResponseDate.fieldName,
+	QADateAnswers.QAPanelResponseDate.heading
 );
