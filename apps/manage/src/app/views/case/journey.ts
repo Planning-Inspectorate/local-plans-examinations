@@ -67,7 +67,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
-		journeyTitle: 'Manage case',
+		journeyTitle: 'Gateway 2',
 		returnToListing: false,
 		makeBaseUrl: () => gateway2Url,
 		initialBackLink: gateway2Url,
