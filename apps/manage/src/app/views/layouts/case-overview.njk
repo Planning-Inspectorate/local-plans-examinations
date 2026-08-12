@@ -72,12 +72,14 @@
               {% endfor %}
           </div>
       </div>
-
+{% if journeyTitle == "Manage case" %}
+  {{ govukButton({
+      text: "Delete case",
+      classes: "govuk-button--warning",
+      href: baseUrl + "/delete-case"
+    }) }}
 {% endif %}
-{{ govukButton({
-    text: "Delete case",
-    classes: "govuk-button--warning",
-    href: baseUrl + "/delete-case"
-  }) }}
+{% endif %}
+
 {% endblock %}
 
