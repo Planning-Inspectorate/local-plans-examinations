@@ -66,6 +66,9 @@ interface ExaminationInput {
 	examiningInspector3?: string;
 	examiningInspectorAppointmentDate?: Date;
 	examinationWebsite?: string;
+	QADate?: Date;
+	reportSentToPanelDate?: Date;
+	panelResponseToInspectorDate?: Date;
 	letterSentToMHCLGDate?: Date;
 	letterIssueDate?: Date;
 	factCheckDateReceivedFromInspector?: Date;
@@ -85,7 +88,13 @@ const caseHistoryLabels: Record<string, string> = {
 	factCheckDueDate: 'Fact Check due date',
 	factCheckActualDate: 'Fact Check actual date',
 	factCheckReceivedBackFromLPADate: 'Fact Check received back from LPA',
-	finalReportIssueDate: 'Final report issue date'
+	finalReportIssueDate: 'Final report issue date',
+	qaInspector1: 'QA Inspector 1',
+	qaInspector2: 'QA Inspector 2',
+	qaInspector3: 'QA Inspector 3',
+	QADate: 'QA Date',
+	reportSentToPanelDate: 'Sent to panel date',
+	panelResponseToInspectorDate: 'QA panel response sent to inspector'
 };
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */

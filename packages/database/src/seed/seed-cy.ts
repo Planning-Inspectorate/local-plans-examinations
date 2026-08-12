@@ -93,7 +93,13 @@ async function run() {
 						factCheckDueDate: new Date('2026-11-01T12:00:00.000Z'),
 						factCheckActualDate: new Date('2026-12-01T12:00:00.000Z'),
 						factCheckReceivedBackFromLPADate: new Date('2026-12-02T12:00:00.000Z'),
-						finalReportIssueDate: new Date('2026-12-03T12:00:00.000Z')
+						finalReportIssueDate: new Date('2026-12-03T12:00:00.000Z'),
+						QADate: new Date('2026-12-04T12:00:00.000Z'),
+						reportSentToPanelDate: new Date('2026-12-05T12:00:00.000Z'),
+						panelResponseToInspectorDate: new Date('2026-12-06T12:00:00.000Z'),
+						qaInspector1: 'inspector-1',
+						qaInspector2: 'inspector-2',
+						qaInspector3: 'inspector-3'
 					}
 				},
 				caseHistories: {

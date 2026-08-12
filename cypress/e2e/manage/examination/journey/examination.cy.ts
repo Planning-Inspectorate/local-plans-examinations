@@ -6,7 +6,9 @@ import {
 	factCheckDueDate,
 	factCheckReceivedBackFromLpaDate,
 	finalReportIssueDate,
-	letterSentToMHCLGDate
+	letterSentToMHCLGDate,
+	QADateAnswers,
+	QAInspectorsAnswers
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	examinationPage,
@@ -15,7 +17,9 @@ import {
 	factCheckDueDatePage,
 	factCheckReceivedBackFromLpaDatePage,
 	finalReportIssueDatePage,
-	letterSentToMHCLGDatePage
+	letterSentToMHCLGDatePage,
+	examinationQAInspector1Page,
+	QAPanelResponseDatePage
 } from '../../../../page-objects/manage/examination/index.ts';
 
 const factCheckUpdates = [
@@ -87,4 +91,44 @@ describe('Examination updates', () => {
 			factCheckDateReceivedFromInspector.display
 		);
 	});
+
+	it('updates QA Inspector 1 question and records case history', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(QAInspectorsAnswers.QAInspector1.row);
+
+		examinationQAInspector1Page.verifyLoaded();
+		examinationQAInspector1Page.enterLookupAnswer(QAInspectorsAnswers.QAInspector1.updatedInput);
+
+		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifySummaryRowContains(
+			QAInspectorsAnswers.QAInspector1.row,
+			QAInspectorsAnswers.QAInspector1.updatedDisplay
+		);
+
+		examinationPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated to inspector-2');
+	});
+
+	it(
+		'updates QA panel response sent to Inspector Date question and records case history',
+		{ tags: ['regression'] },
+		() => {
+			examinationPage.openActionLinkFor(QADateAnswers.QAPanelResponseDate.row);
+
+			QAPanelResponseDatePage.verifyLoaded(QADateAnswers.QAPanelResponseDate.input);
+			QAPanelResponseDatePage.enterDate(QADateAnswers.QAPanelResponseDate.updatedInput);
+
+			examinationPage.verifyLoaded('Cypress Test Plan');
+			examinationPage.verifySummaryRowContains(
+				QADateAnswers.QAPanelResponseDate.row,
+				QADateAnswers.QAPanelResponseDate.updatedDisplay
+			);
+
+			examinationPage.openServiceNavigationItem('Case History');
+			caseHistoryPage.verifyLoaded();
+			caseHistoryPage.verifyHistoryEvent(
+				`QA panel response sent to inspector updated to ${QADateAnswers.QAPanelResponseDate.updatedDisplay}`
+			);
+		}
+	);
 });
