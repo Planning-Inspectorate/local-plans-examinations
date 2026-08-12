@@ -1,5 +1,6 @@
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { openSeededExaminationPage } from '../../../../flows/manage/examination-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	actualSubmissionDate,
 	examiningInspector1,
@@ -54,7 +55,7 @@ describe('Examination updates', () => {
 		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
 		actualSubmissionDatePage.enterDate(actualSubmissionDate.updatedInput);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(actualSubmissionDate.row, actualSubmissionDate.updatedDisplay);
 
 		examinationPage.openServiceNavigationItem('Case History');
@@ -67,7 +68,7 @@ describe('Examination updates', () => {
 		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
 		actualSubmissionDatePage.goBack();
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(actualSubmissionDate.row, actualSubmissionDate.display);
 	});
 
@@ -78,7 +79,7 @@ describe('Examination updates', () => {
 		examiningInspector1Page.verifyLookupAnswer(examiningInspector1.display);
 		examiningInspector1Page.enterLookupAnswer(examiningInspector1.updatedInput);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.updatedInput);
 
 		examinationPage.openServiceNavigationItem('Case History');
@@ -92,7 +93,7 @@ describe('Examination updates', () => {
 		examiningInspector1Page.verifyLookupAnswer(examiningInspector1.display);
 		examiningInspector1Page.goBack();
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
 	});
 
@@ -102,7 +103,7 @@ describe('Examination updates', () => {
 		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
 		examinationWebsitePage.enterExaminationWebsite(examinationWebsite.updatedValue);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.updatedValue);
 
 		examinationPage.openServiceNavigationItem('Case History');
@@ -117,7 +118,7 @@ describe('Examination updates', () => {
 		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
 		examinationWebsitePage.goBack();
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examinationWebsite.row, 'Not started');
 	});
 
@@ -127,7 +128,7 @@ describe('Examination updates', () => {
 		letterSentToMHCLGDatePage.verifyLoaded(letterSentToMHCLGDate.input);
 		letterSentToMHCLGDatePage.enterDate(letterSentToMHCLGDate.updatedInput);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(letterSentToMHCLGDate.row, letterSentToMHCLGDate.updatedDisplay);
 
 		examinationPage.openServiceNavigationItem('Case History');
@@ -140,7 +141,7 @@ describe('Examination updates', () => {
 		letterSentToMHCLGDatePage.verifyLoaded(letterSentToMHCLGDate.input);
 		letterSentToMHCLGDatePage.goBack();
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(letterSentToMHCLGDate.row, letterSentToMHCLGDate.display);
 	});
 
@@ -151,7 +152,7 @@ describe('Examination updates', () => {
 			page.verifyLoaded(answer.input);
 			page.enterDate(answer.updatedInput);
 
-			examinationPage.verifyLoaded('Cypress Test Plan');
+			examinationPage.verifyLoaded(seededCase.planTitle);
 			examinationPage.verifySummaryRowContains(answer.row, answer.updatedDisplay);
 		});
 
@@ -168,7 +169,7 @@ describe('Examination updates', () => {
 		factCheckDateReceivedFromInspectorPage.verifyLoaded(factCheckDateReceivedFromInspector.input);
 		factCheckDateReceivedFromInspectorPage.goBack();
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(
 			factCheckDateReceivedFromInspector.row,
 			factCheckDateReceivedFromInspector.display
@@ -181,7 +182,7 @@ describe('Examination updates', () => {
 		examinationQAInspector1Page.verifyLoaded();
 		examinationQAInspector1Page.enterLookupAnswer(QAInspectorsAnswers.QAInspector1.updatedInput);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(
 			QAInspectorsAnswers.QAInspector1.row,
 			QAInspectorsAnswers.QAInspector1.updatedDisplay
@@ -201,7 +202,7 @@ describe('Examination updates', () => {
 			QAPanelResponseDatePage.verifyLoaded(QADateAnswers.QAPanelResponseDate.input);
 			QAPanelResponseDatePage.enterDate(QADateAnswers.QAPanelResponseDate.updatedInput);
 
-			examinationPage.verifyLoaded('Cypress Test Plan');
+			examinationPage.verifyLoaded(seededCase.planTitle);
 			examinationPage.verifySummaryRowContains(
 				QADateAnswers.QAPanelResponseDate.row,
 				QADateAnswers.QAPanelResponseDate.updatedDisplay
@@ -220,14 +221,14 @@ describe('Examination updates', () => {
 		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
 		planPauseStartDatePage.enterDate(planPauseStartDate.updatedInput);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.updatedDisplay);
 
 		examinationPage.openActionLinkFor(soundUnsound.row);
 		soundUnsoundPage.verifyLoaded(soundUnsound.value);
 		soundUnsoundPage.selectAnswer(soundUnsound.updatedValue);
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(soundUnsound.row, soundUnsound.updatedDisplay);
 
 		examinationPage.openServiceNavigationItem('Case History');
@@ -242,7 +243,7 @@ describe('Examination updates', () => {
 		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
 		planPauseStartDatePage.goBack();
 
-		examinationPage.verifyLoaded('Cypress Test Plan');
+		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.display);
 	});
 });

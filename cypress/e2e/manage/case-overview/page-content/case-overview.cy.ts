@@ -1,3 +1,4 @@
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
@@ -26,14 +27,14 @@ describe('Case overview', () => {
 		cy.task('seedDb');
 
 		manageHomePage.visit();
-		manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
+		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(seededCase.planTitle);
 		caseOverviewPage.verifyBackLink('/');
 		caseOverviewPage.verifyExpectedServiceNavigation();
 		caseOverviewPage.verifyExpectedSectionHeadings();
 		caseOverviewPage.verifyExpectedSummaryRows();
-		caseOverviewPage.verifySummaryRowContains('Plan title', 'Cypress Test Plan');
+		caseOverviewPage.verifySummaryRowContains('Plan title', seededCase.planTitle);
 		caseOverviewPage.verifySummaryRowContains('Plan type', 'Local Plan');
 		caseOverviewPage.verifySummaryRowContains(
 			'Local Planning Authority',

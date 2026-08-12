@@ -1,5 +1,6 @@
 import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flow.ts';
 import { caseOverviewPage, caseOverviewPlanTypePage } from '../../../../page-objects/manage/case-overview/index.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	caseCreatedPage,
 	checkYourAnswersPage,
@@ -13,7 +14,6 @@ import { caseHistoryPage } from '../../../../page-objects/manage/case-history/in
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
-const seededPlanTitle = 'Cypress Test Plan';
 
 const openCaseFromHome = (planTitle: string) => {
 	manageHomePage.visit();
@@ -23,7 +23,7 @@ const openCaseFromHome = (planTitle: string) => {
 
 const openSeededCase = () => {
 	cy.task('seedDb');
-	openCaseFromHome(seededPlanTitle);
+	openCaseFromHome(seededCase.planTitle);
 };
 
 const openCaseHistory = () => {
@@ -75,12 +75,12 @@ describe('Case history', () => {
 		openSeededCase();
 
 		caseOverviewPage.openServiceNavigationItem('Gateway 1');
-		gateway1Page.verifyLoaded(seededPlanTitle);
+		gateway1Page.verifyLoaded(seededCase.planTitle);
 		gateway1Page.openActionLinkFor(gateway1DsaAnswer.row);
 		gateway1DsaPage.verifyLoaded(gateway1DsaAnswer.value);
 		gateway1DsaPage.selectAnswer(gateway1DsaAnswer.updatedValue);
 
-		gateway1Page.verifyLoaded(seededPlanTitle);
+		gateway1Page.verifyLoaded(seededCase.planTitle);
 		gateway1Page.verifySummaryRowContains(gateway1DsaAnswer.row, gateway1DsaAnswer.updatedDisplay);
 
 		openCaseHistory();
@@ -93,13 +93,13 @@ describe('Case history', () => {
 		openSeededCase();
 
 		caseOverviewPage.openServiceNavigationItem('Gateway 2');
-		gateway2Page.verifyLoaded(seededPlanTitle);
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
 		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
 		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
 		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
 
-		gateway2Page.verifyLoaded(seededPlanTitle);
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
 
 		openCaseHistory();

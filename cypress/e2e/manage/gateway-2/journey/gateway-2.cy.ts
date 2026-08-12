@@ -6,6 +6,7 @@ import {
 	gateway2EstimatedDatePage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
 import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
@@ -26,7 +27,7 @@ describe('Gateway 2 updates', () => {
 		gateway2EstimatedDatePage.verifyLoaded(gateway2DateAnswers.gateway2EstimatedDate.input);
 		gateway2EstimatedDatePage.enterDate(updatedGateway2EstimatedDateAnswer.input);
 
-		gateway2Page.verifyLoaded('Cypress Test Plan');
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.verifySummaryRowContains(
 			gateway2DateAnswers.gateway2EstimatedDate.row,
 			updatedGateway2EstimatedDateAnswer.display
@@ -40,7 +41,7 @@ describe('Gateway 2 updates', () => {
 		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
 		gateway2AssessorPage.enterAssessorName(gateway2AssessorAnswer.assessor2);
 
-		gateway2Page.verifyLoaded('Cypress Test Plan');
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
 	});
 
@@ -51,7 +52,7 @@ describe('Gateway 2 updates', () => {
 		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
 		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
 
-		gateway2Page.verifyLoaded('Cypress Test Plan');
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
 	});
 
@@ -60,12 +61,12 @@ describe('Gateway 2 updates', () => {
 		gateway2ActualDatePage.verifyLoaded(gateway2DateAnswers.gateway2ActualDate.input);
 		gateway2ActualDatePage.goBack();
 
-		gateway2Page.verifyLoaded('Cypress Test Plan');
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 
 		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
 		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
 		workshopVenuePage.goBack();
 
-		gateway2Page.verifyLoaded('Cypress Test Plan');
+		gateway2Page.verifyLoaded(seededCase.planTitle);
 	});
 });
