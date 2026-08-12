@@ -82,7 +82,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 2', 'gateway-2')
-				.addQuestion(questions.gateway2EstimatedDate)
+				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2AssessorsName)

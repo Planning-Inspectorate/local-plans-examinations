@@ -11,7 +11,7 @@ type Gateway2DateAnswer = {
 };
 
 export const gateway2DateAnswers = {
-	gateway2EstimatedDate: {
+	gateway2ExpectedDate: {
 		row: 'Gateway 2 estimated date',
 		heading: 'What is the estimated Gateway 2 date?',
 		fieldName: 'estimatedDate',
@@ -96,7 +96,7 @@ export const workshopVenueAnswer = {
 	display: 'Workshop venue'
 } as const;
 
-export const updatedGateway2EstimatedDateAnswer = {
+export const updatedGateway2ExpectedDateAnswer = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'
 } as const;
