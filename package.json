@@ -40,7 +40,7 @@
   "dependencies": {
     "@azure/functions": "^4.16.2",
     "@azure/identity": "^4.13.0",
-    "@azure/msal-node": "^5.4.2",
+    "@azure/msal-node": "^5.5.0",
     "@planning-inspectorate/dynamic-forms": "^3.15.4",
     "@prisma/adapter-mssql": "^7.9.1",
     "@prisma/client": "^7.9.1",
