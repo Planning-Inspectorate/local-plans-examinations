@@ -78,6 +78,7 @@ export const QADateAnswers = {
 	QADate: {
 		row: 'QA date',
 		heading: 'What is the date of QA?',
+		fieldName: 'QADate',
 		path: 'qa-date',
 		display: '4 December 2026'
 	},
@@ -85,6 +86,7 @@ export const QADateAnswers = {
 	sentToPanelDate: {
 		row: 'Sent to panel date',
 		heading: 'When was the report sent to the panel?',
+		fieldName: 'reportSentToPanelDate',
 		path: 'report-sent-to-panel-date',
 		display: '5 December 2026'
 	},
