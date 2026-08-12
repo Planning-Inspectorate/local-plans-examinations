@@ -88,9 +88,18 @@
                                 >
                             {% endif %}
                         {% elseif inputField.type == 'date' %}
+                            {% set dateError =
+                                errors[inputField.fieldName]
+                                or errors[inputField.fieldName + '_day']
+                                or errors[inputField.fieldName + '_month']
+                                or errors[inputField.fieldName + '_year']
+                            %}
+                            {% if dateError %}
+                                {% set label = inputField.label | replace(' (optional)', '') %}
+                                {% set errorText = label ~ ' is not valid' %}
+                            {% endif %}
                             {{ govukDateInput({
                                 id: inputField.fieldName,
-                                namePrefix: inputField.fieldName,
                                 hint: {
                                     text: inputField.hint
                                 },
@@ -100,8 +109,8 @@
                                         classes: "govuk-label govuk-!-font-weight-bold"
                                     }
                                 },
-                                errorMessage: errors[inputField.fieldName] and {
-                                    text: errors[inputField.fieldName].msg
+                                errorMessage: dateError and {
+                                    text: "Date is not valid"
                                 },
                                 items: inputField.items
                             }) }}

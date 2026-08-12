@@ -2,6 +2,7 @@ import {
 	COMPONENT_TYPES,
 	createQuestions,
 	RequiredValidator,
+	DateValidator,
 	questionClasses,
 	type BaseQuestionProps
 } from '@planning-inspectorate/dynamic-forms';
@@ -168,22 +169,52 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 			{
 				type: COMPONENT_TYPES.DATE,
 				fieldName: 'intentionToCommenceDate',
-				label: 'Date the Notice of Intention to Commence Plan Making was published',
+				label: 'Date the Notice of Intention to Commence Plan Making was published (optional)',
 				hint: 'For example, 27 3 2007'
 			},
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 expected date' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 expected date' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 expected date' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 expected date (optional)' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 expected date (optional)' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 expected date (optional)' },
 			{
 				type: COMPONENT_TYPES.DATE,
 				fieldName: 'expectedSubmissionForExaminationDate',
-				label: 'Expected submission for examination date'
+				label: 'Expected submission for examination date (optional)'
 			}
 		],
 		question: 'Enter dates for key stages of the local plan',
 		fieldName: 'keyStageDates',
 		url: 'key-stage-dates',
-		title: 'Dates'
+		title: 'Dates',
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'intentionToCommenceDate',
+						validators: [
+							new DateValidator('Date the Notice of Intention to Commence Plan Making was published', {
+								optional: true
+							})
+						]
+					},
+					{
+						fieldName: 'gateway1Date',
+						validators: [new DateValidator('Gateway 1 estimated date', { optional: true })]
+					},
+					{
+						fieldName: 'gateway2Date',
+						validators: [new DateValidator('Gateway 2 estimated date', { optional: true })]
+					},
+					{
+						fieldName: 'gateway3Date',
+						validators: [new DateValidator('Gateway 3 estimated date', { optional: true })]
+					},
+					{
+						fieldName: 'expectedSubmissionForExaminationDate',
+						validators: [new DateValidator('Expected submission for examination date', { optional: true })]
+					}
+				]
+			})
+		]
 	}
 };
 
