@@ -116,7 +116,6 @@ model ExaminationInfo {
   factCheckActualDate                  DateTime? @db.DateTime2
   factCheckReceivedBackFromLPADate     DateTime? @db.DateTime2
   finalReportIssueDate                 DateTime? @db.DateTime2
-<<<<<<< HEAD
   planPauseStartDate                   DateTime? @db.DateTime2
   planPauseEndDate                     DateTime? @db.DateTime2
   withdrawnDate                        DateTime? @db.DateTime2
@@ -124,8 +123,6 @@ model ExaminationInfo {
   soundUnsoundDate                     DateTime? @db.DateTime2
   adoptionDate                         DateTime? @db.DateTime2
   approvedForCILDate                   DateTime? @db.DateTime2
-=======
->>>>>>> 49d9aa3 (chore: merge with main)
 }
 
 model LPA {
