@@ -598,30 +598,4 @@ export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandle
 async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: string }): Promise<void> {
 	await db.case.update({ where: { id: id }, data: { deletedDate: new Date() } });
 	return;
-<<<<<<< HEAD
-=======
-}
-
-function formatCaseHistoryEvent(key: string, oldValue: unknown, newValue: unknown) {
-	const label = caseHistoryLabels[key];
-
-	if (label) {
-		return `${label} updated to ${formatCaseHistoryValue(newValue)}`;
-	}
-
-	return `Updated ${key} from ${oldValue} to ${newValue}`;
-}
-
-function formatCaseHistoryValue(value: unknown) {
-	if (value instanceof Date) {
-		return new Intl.DateTimeFormat('en-GB', {
-			day: 'numeric',
-			month: 'long',
-			timeZone: 'Europe/London',
-			year: 'numeric'
-		}).format(value);
-	}
-
-	return `${value ?? ''}`;
->>>>>>> 91dac5e (fix: fixed controller tests)
 }
