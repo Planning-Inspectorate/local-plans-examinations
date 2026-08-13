@@ -60,7 +60,9 @@ describe('Examination updates', () => {
 
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('Updated submissionForExaminationDate from'); // This will be changed to readable format once bug: LPBO-188 is resolved
+		caseHistoryPage.verifyHistoryEvent(
+			`Actual submission date updated from ${actualSubmissionDate.display} to ${actualSubmissionDate.updatedDisplay}`
+		);
 	});
 
 	it('returns to Examination from an Examination date page back link', { tags: ['regression'] }, () => {
@@ -84,7 +86,7 @@ describe('Examination updates', () => {
 
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('Updated examiningInspector1 from inspector-1 to inspector-4'); // This will be changed to readable format once bug: LPBO-188 is resolved
+		caseHistoryPage.verifyHistoryEvent('Examining Inspector 1 updated from inspector-1 to inspector-4');
 	});
 
 	it('returns to Examination from an Examining Inspector page back link', { tags: ['regression'] }, () => {
@@ -108,9 +110,7 @@ describe('Examination updates', () => {
 
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent(
-			`Updated examinationWebsite from null to ${examinationWebsite.updatedValue}` // This will be changed to readable format once bug: LPBO-188 is resolved
-		);
+		caseHistoryPage.verifyHistoryEvent(`Examination website updated to ${examinationWebsite.updatedValue}`);
 	});
 
 	it('returns to Examination from an Examination website page back link', { tags: ['regression'] }, () => {
@@ -133,7 +133,9 @@ describe('Examination updates', () => {
 
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent(`Letter sent to MHCLG date updated to ${letterSentToMHCLGDate.updatedDisplay}`);
+		caseHistoryPage.verifyHistoryEvent(
+			`Letter sent to MHCLG date updated from ${letterSentToMHCLGDate.display} to ${letterSentToMHCLGDate.updatedDisplay}`
+		);
 	});
 
 	it('returns to Examination from a Letter date page back link', { tags: ['regression'] }, () => {
@@ -160,7 +162,7 @@ describe('Examination updates', () => {
 		caseHistoryPage.verifyLoaded();
 
 		factCheckUpdates.forEach(({ answer }) => {
-			caseHistoryPage.verifyHistoryEvent(`${answer.row} updated to ${answer.updatedDisplay}`);
+			caseHistoryPage.verifyHistoryEvent(`${answer.row} updated from ${answer.display} to ${answer.updatedDisplay}`);
 		});
 	});
 
@@ -190,7 +192,7 @@ describe('Examination updates', () => {
 
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated to inspector-2');
+		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated from inspector-1 to inspector-2');
 	});
 
 	it(
@@ -211,7 +213,7 @@ describe('Examination updates', () => {
 			examinationPage.openServiceNavigationItem('Case History');
 			caseHistoryPage.verifyLoaded();
 			caseHistoryPage.verifyHistoryEvent(
-				`QA panel response sent to inspector updated to ${QADateAnswers.QAPanelResponseDate.updatedDisplay}`
+				`QA panel response sent to Inspector updated from ${QADateAnswers.QAPanelResponseDate.display} to ${QADateAnswers.QAPanelResponseDate.updatedDisplay}`
 			);
 		}
 	);
@@ -234,8 +236,12 @@ describe('Examination updates', () => {
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 
-		caseHistoryPage.verifyHistoryEvent(`${planPauseStartDate.row} updated to ${planPauseStartDate.updatedDisplay}`);
-		caseHistoryPage.verifyHistoryEvent(`${soundUnsound.row} updated to ${soundUnsound.updatedDisplay}`);
+		caseHistoryPage.verifyHistoryEvent(
+			`${planPauseStartDate.row} updated from ${planPauseStartDate.display} to ${planPauseStartDate.updatedDisplay}`
+		);
+		caseHistoryPage.verifyHistoryEvent(
+			`${soundUnsound.row} updated from ${soundUnsound.display} to ${soundUnsound.updatedDisplay}`
+		);
 	});
 
 	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {

@@ -110,7 +110,7 @@ interface Gateway3Input {
 }
 
 const caseHistoryLabels = Object.fromEntries(
-	Object.entries(questions).map(([key, value]) => [key, value.title])
+	Object.values(questions).map((value) => [value.fieldName, value.title])
 ) as Record<string, string>;
 
 type FileUploadSession = Request['session'] &
@@ -686,11 +686,11 @@ async function formatCaseHistoryEvent(
 	newValue: unknown
 ) {
 	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
-	let oldValueText = 'updated to ';
+	let oldValueText = 'updated to';
 	if (oldValue != null && oldValue != '') {
-		oldValueText = `updated from "${await formatCaseHistoryValue(service, req, key, oldValue)}" to `;
+		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;
 	}
-	return `${label} ${oldValueText} "${await formatCaseHistoryValue(service, req, key, newValue)}"`;
+	return `${label} ${oldValueText} ${await formatCaseHistoryValue(service, req, key, newValue)}`;
 }
 
 async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
