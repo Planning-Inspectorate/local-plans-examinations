@@ -12,10 +12,10 @@ type Gateway2DateAnswer = {
 
 export const gateway2DateAnswers = {
 	gateway2ExpectedDate: {
-		row: 'Gateway 2 expectedDate',
-		heading: 'What is the expectedGateway 2 date?',
+		row: 'Gateway 2 expected date',
+		heading: 'What is the expected Gateway 2 date?',
 		fieldName: 'expectedDate',
-		path: 'gateway-2-expectedDate',
+		path: 'gateway-2-expected-date',
 		seedDate: '2026-06-01T12:00:00.000Z',
 		input: { day: '1', month: '6', year: '2026' },
 		display: '1 June 2026'
