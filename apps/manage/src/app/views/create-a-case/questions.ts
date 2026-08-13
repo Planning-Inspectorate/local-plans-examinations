@@ -177,7 +177,7 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 			{
 				type: COMPONENT_TYPES.DATE,
 				fieldName: 'expectedSubmissionForExaminationDate',
-				label: 'Estimated submission for examination date'
+				label: 'Expected submission for examination date'
 			}
 		],
 		question: 'Enter dates for key stages of the local plan',
