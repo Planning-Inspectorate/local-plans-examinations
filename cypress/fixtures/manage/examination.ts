@@ -19,9 +19,9 @@ const todayDisplay = today.toLocaleDateString('en-GB', {
 
 export const expectedSubmissionDate = {
 	row: 'Estimated submission date',
-	heading: 'When is the expected examination date?',
-	fieldName: 'expectedSubmissionForExaminationDate',
-	path: 'examination-expected-submission-date',
+	heading: 'When is the expectedexamination date?',
+	fieldName: 'expectedubmissionForExaminationDate',
+	path: 'examination-expectedsubmission-date',
 	input: todayInput,
 	display: todayDisplay,
 	updatedInput: { day: '10', month: '10', year: '2026' },
