@@ -353,10 +353,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	dsaCheck: {
 		type: COMPONENT_TYPES.RADIO,
-		question: 'Does the LPA have a Digital Sharing Agreement (DSA)?',
+		question: 'Does the LPA have a Data Sharing Agreement (DSA)?',
 		fieldName: 'dsaChecked',
 		url: 'dsa-checked',
-		title: 'Digital Sharing Agreement (DSA) check',
+		title: 'Data Sharing Agreement (DSA) check',
 		options: [
 			{ value: 'yes', text: 'Yes' },
 			{ value: 'no', text: 'No' }
