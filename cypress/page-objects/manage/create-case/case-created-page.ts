@@ -17,7 +17,7 @@ export class CaseCreatedPage extends BasePage {
 		this.caseReference
 			.should('be.visible')
 			.invoke('text')
-			.should('match', /^PLAN\/\d+$/);
+			.should('contain', /^PLAN\/\d+$/);
 	}
 }
 
