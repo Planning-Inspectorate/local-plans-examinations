@@ -84,6 +84,7 @@ interface CaseJourneyConfig {
 	journeyId: string;
 	createJourney: JourneyFactory;
 	supportsManageList?: boolean;
+	supportsFileUpload?: boolean;
 }
 
 /** To add a new route, add a new object here **/
@@ -92,18 +93,21 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'overview',
 		journeyId: OVERVIEW_JOURNEY_ID,
 		createJourney: createOverviewJourney,
-		supportsManageList: true
+		supportsManageList: true,
+		supportsFileUpload: false
 	},
 	{
 		path: 'gateway-1',
 		journeyId: GATEWAY_1_JOURNEY_ID,
-		createJourney: createGateway1Journey
+		createJourney: createGateway1Journey,
+		supportsFileUpload: false
 	},
 	{
 		path: 'gateway-2',
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
-		supportsManageList: true
+		supportsManageList: true,
+		supportsFileUpload: true
 	},
 	{
 		path: 'gateway-3',
@@ -114,7 +118,8 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'examination',
 		journeyId: EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
-		supportsManageList: true
+		supportsManageList: true,
+		supportsFileUpload: false
 	}
 ];
 
@@ -144,7 +149,7 @@ function registerCaseJourney(
 	config: CaseJourneyConfig,
 	updateCase: ReturnType<typeof updateCaseField>
 ): void {
-	const { path, journeyId, createJourney, supportsManageList } = config;
+	const { path, journeyId, createJourney, supportsManageList, supportsFileUpload } = config;
 
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
@@ -157,6 +162,9 @@ function registerCaseJourney(
 	const questionPath = supportsManageList
 		? `/${path}/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}`
 		: `/${path}/:section/:question`;
+
+	console.log('questionPath');
+	console.log(questionPath);
 
 	// File upload
 	const fileUploaderStorage = () => service.createFileStorage(journeyId);
@@ -221,10 +229,19 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true),
-		upload.array('files[]'),
-		uploadDocumentRoute
+		buildSave(updateCase, true)
 	);
+	if (supportsFileUpload) {
+		router.post(
+			`${questionPath}/upload-documents`,
+			getJourneyResponse,
+			buildCaseOfficerOptions(service, questions),
+			getJourney,
+			buildSave(updateCase, true),
+			upload.array('files[]'),
+			uploadDocumentRoute
+		);
+	}
 }
 
 function getRouteQuestionUrl(req: Request): string | undefined {
