@@ -94,67 +94,67 @@
                                                 </a>{% if not loop.last %}<br>{% endif %}
                                             {% endfor %}
                                         {% endif %}
-	                                    </td>
-	                                </tr>
-	                            {% endfor %}
-	                            {% if section.heading | lower == "procedural documents" %}
-	                                {# Temporary placeholder rows. Remove when these items are converted to dynamic components. #}
-	                                {{ placeholderRow("Draft statement of compliance", "add-draft-statement-of-compliance") }}
-	                                {{ placeholderRow("Draft statement of soundness", "add-draft-statement-of-soundness") }}
-	                            {% endif %}
-	                        </tbody>
-	                    </table>
-	                </div>
-	            {% endif %}
-	        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            {% if section.heading | lower == "procedural documents" %}
+                                {# Temporary placeholder rows. Remove when these items are converted to dynamic components. #}
+                                {{ placeholderRow("Draft statement of compliance", "add-draft-statement-of-compliance") }}
+                                {{ placeholderRow("Draft statement of soundness", "add-draft-statement-of-soundness") }}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% endfor %}
 
-	        {# Temporary placeholder sections. Remove when these items are converted to dynamic components. #}
-	        {{ placeholderTable("Consultation Documents", "consultation-documents", [
-	            {
-	                text: "Notice of Intention to commence local plan preparation",
-	                dataCy: "add-notice-of-intention"
-	            },
-	            {
-	                text: "Scoping consultation documents",
-	                dataCy: "add-scoping-consultation-documents"
-	            },
-	            {
-	                text: "Consultation summary of feedback to scoping consultation",
-	                dataCy: "add-consultation-summary-scoping"
-	            },
-	            {
-	                text: "Gateway 1 - Self Assessment of Readiness",
-	                dataCy: "add-gateway-1-self-assessment"
-	            },
-	            {
-	                text: "Consultation on proposed local plan content and evidence documents",
-	                dataCy: "add-consultation-proposed-content"
-	            },
-	            {
-	                text: "Consultation summary for proposed local plan content and evidence documents",
-	                dataCy: "add-consultation-summary-proposed-content"
-	            }
-	        ]) }}
+        {# Temporary placeholder sections. Remove when these items are converted to dynamic components. #}
+        {{ placeholderTable("Consultation Documents", "consultation-documents", [
+            {
+                text: "Notice of Intention to commence local plan preparation",
+                dataCy: "add-notice-of-intention"
+            },
+            {
+                text: "Scoping consultation documents",
+                dataCy: "add-scoping-consultation-documents"
+            },
+            {
+                text: "Consultation summary of feedback to scoping consultation",
+                dataCy: "add-consultation-summary-scoping"
+            },
+            {
+                text: "Gateway 1 - Self Assessment of Readiness",
+                dataCy: "add-gateway-1-self-assessment"
+            },
+            {
+                text: "Consultation on proposed local plan content and evidence documents",
+                dataCy: "add-consultation-proposed-content"
+            },
+            {
+                text: "Consultation summary for proposed local plan content and evidence documents",
+                dataCy: "add-consultation-summary-proposed-content"
+            }
+        ]) }}
 
-	        {{ placeholderTable("Additional documents", "additional-documents", [
-	            {
-	                text: "Subsequent work towards a draft Plan",
-	                dataCy: "add-subsequent-work"
-	            }
-	        ]) }}
+        {{ placeholderTable("Additional documents", "additional-documents", [
+            {
+                text: "Subsequent work towards a draft Plan",
+                dataCy: "add-subsequent-work"
+            }
+        ]) }}
 
-	        {{ placeholderTable("Workshop preferences", "workshop-preferences", [
-	            {
-	                text: "Suggested workshop venue",
-	                dataCy: "add-workshop-venue"
-	            },
-	            {
-	                text: "Suggested workshop dates",
-	                dataCy: "add-workshop-dates"
-	            }
-	        ]) }}
+        {{ placeholderTable("Workshop preferences", "workshop-preferences", [
+            {
+                text: "Suggested workshop venue",
+                dataCy: "add-workshop-venue"
+            },
+            {
+                text: "Suggested workshop dates",
+                dataCy: "add-workshop-dates"
+            }
+        ]) }}
 
-	        {% if journeyComplete %}
+        {% if journeyComplete %}
             <form method="post" novalidate>
                 <input type="hidden" name="_csrf" value="{{ _csrf }}">
                 {{ govukButton({

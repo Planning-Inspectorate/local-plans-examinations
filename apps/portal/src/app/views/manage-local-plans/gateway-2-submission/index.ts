@@ -45,6 +45,7 @@ import {
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import { getRoutePlanReference } from './utils.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -309,15 +310,6 @@ export function syncGateway2UploadAnswer(req: Request, fieldName: string, upload
 	}
 
 	delete answers[fieldName];
-}
-
-// Reads the plan reference from the route params.
-function getRoutePlanReference(req: Request): string | undefined {
-	const planReference = Array.isArray(req.params.planReference)
-		? req.params.planReference[0]
-		: req.params.planReference;
-
-	return planReference || undefined;
 }
 
 // Gets the plan reference in the format used by the database.
