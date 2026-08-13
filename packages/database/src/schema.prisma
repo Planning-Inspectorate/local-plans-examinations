@@ -53,8 +53,8 @@ model Case {
 
 model Gateway1Info {
   id                    String    @id @default(uuid()) @db.UniqueIdentifier
-  case                  Case      @relation(fields: [caseId], references: [reference])
-  caseId                String    @unique
+  case                  Case      @relation(fields: [caseId], references: [id])
+  caseId                String    @unique @db.UniqueIdentifier
   noticeOfIntention     DateTime? @db.DateTime2
   expectedGateway1Date  DateTime? @db.DateTime2
   completedGateway1Date DateTime? @db.DateTime2
@@ -65,8 +65,8 @@ model Gateway1Info {
 
 model Gateway2Info {
   id                      String    @id @default(uuid()) @db.UniqueIdentifier
-  case                    Case      @relation(fields: [caseId], references: [reference])
-  caseId                  String    @unique
+  case                    Case      @relation(fields: [caseId], references: [id])
+  caseId                  String    @unique @db.UniqueIdentifier
   expectedDate            DateTime? @db.DateTime2
   actualDate              DateTime? @db.DateTime2
   validDate               DateTime? @db.DateTime2
@@ -80,8 +80,8 @@ model Gateway2Info {
 
 model Gateway3Info {
   id                        String    @id @default(uuid()) @db.UniqueIdentifier
-  case                      Case      @relation(fields: [caseId], references: [reference])
-  caseId                    String    @unique
+  case                      Case      @relation(fields: [caseId], references: [id])
+  caseId                    String    @unique @db.UniqueIdentifier
   expectedDate              DateTime? @db.DateTime2
   actualDate                DateTime? @db.DateTime2
   programmeOfficerFirstName String?
@@ -94,8 +94,8 @@ model Gateway3Info {
 
 model ExaminationInfo {
   id                                   String    @id @default(uuid()) @db.UniqueIdentifier
-  case                                 Case      @relation(fields: [caseId], references: [reference])
-  caseId                               String    @unique
+  case                                 Case      @relation(fields: [caseId], references: [id])
+  caseId                               String    @unique @db.UniqueIdentifier
   expectedSubmissionForExaminationDate DateTime? @db.DateTime2
   submissionForExaminationDate         DateTime? @db.DateTime2
   examiningInspector1                  String?
