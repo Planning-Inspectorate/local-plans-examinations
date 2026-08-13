@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { normalisePlanReferenceForLookup, syncGateway2UploadAnswer } from './index.ts';
+import { JOURNEY_ID } from './journey.ts';
 
 describe('normalisePlanReferenceForLookup', () => {
 	it('keeps hyphenated LPE references unchanged', () => {
@@ -31,7 +32,7 @@ describe('syncGateway2UploadAnswer', () => {
 		assert.deepEqual(req.session, {
 			forms: {
 				'LPE-TEST-001': {
-					'gateway-2-application': {
+					[JOURNEY_ID]: {
 						gateway2CoverLetter: [uploadedFile]
 					}
 				}
@@ -45,7 +46,7 @@ describe('syncGateway2UploadAnswer', () => {
 			session: {
 				forms: {
 					'LPE-TEST-001': {
-						'gateway-2-application': {
+						[JOURNEY_ID]: {
 							gateway2CoverLetter: [buildUploadedFile({ id: 'file-1' })]
 						}
 					}
@@ -55,7 +56,7 @@ describe('syncGateway2UploadAnswer', () => {
 
 		syncGateway2UploadAnswer(req as unknown as Request, 'gateway2CoverLetter', []);
 
-		assert.deepEqual(req.session.forms['LPE-TEST-001']['gateway-2-application'], {});
+		assert.deepEqual(req.session.forms['LPE-TEST-001'][JOURNEY_ID], {});
 	});
 });
 
