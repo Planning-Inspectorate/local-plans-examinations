@@ -8,7 +8,8 @@ import {
 	caseOverviewProgrammeOfficerPage,
 	caseOverviewGateway2AssessorPage,
 	caseOverviewExaminingInspector1Page,
-	caseOverviewQAInspector1Page
+	caseOverviewQAInspector1Page,
+	deletCasePage
 } from '../../../../page-objects/manage/case-overview/index.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
@@ -168,5 +169,14 @@ describe('Case overview updates', () => {
 
 		caseOverviewPage.verifyLoaded(planTitle);
 		caseOverviewPage.verifySummaryRowContains('QA Inspector 1', 'Inspector 1');
+	});
+
+	it('deletes a case from the case overview', { tags: ['regression'] }, () => {
+		caseOverviewPage.navigateToDeletePage();
+
+		deletCasePage.verifyLoaded();
+		deletCasePage.deleteCase();
+
+		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
 	});
 });

@@ -57,6 +57,10 @@ export class CaseOverviewPage extends BasePage {
 		return cy.getByData('service-navigation');
 	}
 
+	get deleteCaseButton() {
+		return cy.get('[data-cy="delete-button"]');
+	}
+
 	sectionHeading(text: string) {
 		return cy.contains('h2', text);
 	}
@@ -123,7 +127,7 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyDeleteCaseButton() {
-		cy.contains('[role="button"]', 'Delete case').should('be.visible');
+		this.deleteCaseButton.should('be.visible');
 	}
 
 	verifyExaminationWebsiteHyperlink(hyperlink: string) {
@@ -131,6 +135,10 @@ export class CaseOverviewPage extends BasePage {
 			.should('be.visible')
 			.and('have.attr', 'href', `${hyperlink}`)
 			.and('have.attr', 'target', '_blank');
+	}
+
+	navigateToDeletePage() {
+		this.deleteCaseButton.click();
 	}
 }
 

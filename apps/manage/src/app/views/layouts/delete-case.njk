@@ -19,6 +19,9 @@
   <h1 class="govuk-heading-m">Case details</h1>
 
     {{ govukTable({
+    attributes: {
+      "data-cy": "delete-case-details"
+    },
     rows: rows
     }) }}
 
@@ -26,7 +29,10 @@
         <div class="govuk-button-group">
             {{ govukButton({
             text: "Yes, delete this case",
-            classes: "govuk-button--warning"
+            classes: "govuk-button--warning",
+            attributes: {
+              "data-cy": "confirm-delete-button"
+            }
             }) }}
 
             <a class="govuk-link" href="{{ baseUrl }}/overview">Cancel</a>
