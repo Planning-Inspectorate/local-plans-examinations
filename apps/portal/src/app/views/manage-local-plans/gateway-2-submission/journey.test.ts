@@ -20,6 +20,10 @@ describe('createJourney', () => {
 		assert.strictEqual(journey.baseUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
 		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
 		assert.strictEqual(
+			journey.taskListTemplate,
+			'views/manage-local-plans/gateway-2-submission/check-your-answers.njk'
+		);
+		assert.strictEqual(
 			journey.getCurrentQuestionUrl('procedural', 'gateway-2-cover-letter'),
 			'/manage-local-plans/PLAN-123456/gateway-2-submission/procedural/gateway-2-cover-letter'
 		);

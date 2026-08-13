@@ -23,7 +23,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
-		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		taskListTemplate: 'views/manage-local-plans/gateway-2-submission/check-your-answers.njk',
 		journeyTitle: 'Gateway 2 Application',
 		returnToListing: false,
 		makeBaseUrl: () => baseUrl,
