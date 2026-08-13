@@ -109,28 +109,9 @@ interface Gateway3Input {
 	programmeOfficerEmail?: string;
 }
 
-const caseHistoryLabels: Record<string, string> = {
-	letterSentToMHCLGDate: 'Letter sent to MHCLG date',
-	letterIssueDate: 'Letter issue date',
-	factCheckDateReceivedFromInspector: 'Fact Check date received from Inspector',
-	factCheckDueDate: 'Fact Check due date',
-	factCheckActualDate: 'Fact Check actual date',
-	factCheckReceivedBackFromLPADate: 'Fact Check received back from LPA',
-	finalReportIssueDate: 'Final report issue date',
-	qaInspector1: 'QA Inspector 1',
-	qaInspector2: 'QA Inspector 2',
-	qaInspector3: 'QA Inspector 3',
-	QADate: 'QA Date',
-	reportSentToPanelDate: 'Sent to panel date',
-	panelResponseToInspectorDate: 'QA panel response sent to inspector',
-	planPauseStartDate: 'Plan pause date',
-	planPauseEndDate: 'Plan pause end date',
-	withdrawnDate: 'Withdrawn date',
-	isSound: 'Sound / unsound',
-	soundUnsoundDate: 'Sound / unsound date',
-	adoptionDate: 'Adoption date',
-	approvedForCILDate: 'Approved for CIL date'
-};
+const caseHistoryLabels = Object.fromEntries(
+	Object.entries(questions).map(([key, value]) => [key, value.title])
+) as Record<string, string>;
 
 type FileUploadSession = Request['session'] &
 	FileUploaderSession & {
@@ -227,7 +208,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 
-			await updateCaseHistory(db, oldValues, data.answers, reference, currentUser);
+			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
 		}
 	};
 }
@@ -673,6 +654,8 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 }
 
 export async function updateCaseHistory(
+	service: ManageService,
+	req: Request,
 	db: PrismaClient,
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
@@ -683,26 +666,34 @@ export async function updateCaseHistory(
 		where: { reference },
 		data: {
 			caseHistories: {
-				create: Object.entries(previousValues).map(([key, oldValue]) => ({
-					event: formatCaseHistoryEvent(key, oldValue, newValues[key]),
-					username: currentUser
-				}))
+				create: await Promise.all(
+					Object.entries(previousValues).map(async ([key, oldValue]) => ({
+						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key]),
+						// TODO: Get user once authentication is implemented
+						username: currentUser
+					}))
+				)
 			}
 		}
 	});
 }
 
-function formatCaseHistoryEvent(key: string, oldValue: unknown, newValue: unknown) {
-	const label = caseHistoryLabels[key];
-
-	if (label) {
-		return `${label} updated to ${formatCaseHistoryValue(newValue)}`;
+async function formatCaseHistoryEvent(
+	service: ManageService,
+	req: Request,
+	key: string,
+	oldValue: unknown,
+	newValue: unknown
+) {
+	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
+	let oldValueText = 'updated to ';
+	if (oldValue != null && oldValue != '') {
+		oldValueText = `updated from "${await formatCaseHistoryValue(service, req, key, oldValue)}" to `;
 	}
-
-	return `Updated ${key} from ${oldValue} to ${newValue}`;
+	return `${label} ${oldValueText} "${await formatCaseHistoryValue(service, req, key, newValue)}"`;
 }
 
-function formatCaseHistoryValue(value: unknown) {
+async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
 	if (value instanceof Date) {
 		return new Intl.DateTimeFormat('en-GB', {
 			day: 'numeric',
@@ -713,7 +704,34 @@ function formatCaseHistoryValue(value: unknown) {
 	}
 
 	if (typeof value === 'boolean') {
-		return value ? 'Sound' : 'Unsound';
+		switch (question) {
+			case 'isSound':
+				return value ? 'Sound' : 'Unsound';
+			default:
+				return value;
+		}
+	}
+	const entraUserQuestions = new Set([
+		'caseOfficer',
+		'examiningInspector1',
+		'examiningInspector2',
+		'examiningInspector3'
+	]);
+	console.log('fetched question');
+	console.log(question);
+	if (entraUserQuestions.has(question)) {
+		console.log('is an entra question');
+		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+		console.log('entraClient');
+		console.log(entraClient);
+		if (entraClient) {
+			const fetchedDisplayName = await entraClient.getUserDisplayName(String(value));
+			if (fetchedDisplayName) {
+				console.log('fetchedDisplayName');
+				console.log(fetchedDisplayName);
+				return fetchedDisplayName;
+			}
+		}
 	}
 
 	return `${value ?? ''}`;
