@@ -9,7 +9,7 @@ describe('createJourney', () => {
 	it('builds scoped Gateway 2 submission URLs from a plan reference', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
 		const req = {
-			baseUrl: '/manage-local-plan',
+			baseUrl: '/manage-local-plans',
 			params: {
 				planReference: 'PLAN-123456'
 			}
@@ -17,25 +17,25 @@ describe('createJourney', () => {
 
 		const journey = createJourney(req, response, questions);
 
-		assert.strictEqual(journey.baseUrl, '/manage-local-plan/PLAN-123456/gateway-2-submission');
-		assert.strictEqual(journey.taskListUrl, '/manage-local-plan/PLAN-123456/gateway-2-submission');
+		assert.strictEqual(journey.baseUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
+		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
 		assert.strictEqual(
 			journey.getCurrentQuestionUrl('procedural', 'gateway-2-cover-letter'),
-			'/manage-local-plan/PLAN-123456/gateway-2-submission/procedural/gateway-2-cover-letter'
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/procedural/gateway-2-cover-letter'
 		);
 	});
 
 	it('builds session Gateway 2 submission URLs without a plan reference', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'session', {});
 		const req = {
-			baseUrl: '/manage-local-plan',
+			baseUrl: '/manage-local-plans',
 			params: {}
 		} as unknown as Request;
 
 		const journey = createJourney(req, response, questions);
 
-		assert.strictEqual(journey.baseUrl, '/manage-local-plan/gateway-2-submission');
-		assert.strictEqual(journey.taskListUrl, '/manage-local-plan/gateway-2-submission');
+		assert.strictEqual(journey.baseUrl, '/manage-local-plans/gateway-2-submission');
+		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/gateway-2-submission');
 		assert.strictEqual(journey.initialBackLink, '/');
 	});
 
@@ -63,7 +63,7 @@ function buildUploadedDocumentAnswers() {
 function createTestJourney(answers: Record<string, unknown>) {
 	const response = new JourneyResponse(JOURNEY_ID, 'session', answers);
 	const req = {
-		baseUrl: '/manage-local-plan',
+		baseUrl: '/manage-local-plans',
 		params: {}
 	} as unknown as Request;
 
