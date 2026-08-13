@@ -22,9 +22,9 @@ export const gateway1DateAnswers = {
 	},
 	expectedGateway1Date: {
 		row: 'Gateway 1 expected date',
-		heading: 'What is the expectedGateway 1 date?',
+		heading: 'What is the expected Gateway 1 date?',
 		fieldName: 'expectedGateway1Date',
-		path: 'expectedgateway-1-date',
+		path: 'expected-gateway-1-date',
 		seedDate: '2026-06-01T12:00:00.000Z',
 		input: { day: '1', month: '6', year: '2026' },
 		display: '1 June 2026'
