@@ -623,13 +623,18 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 		}).format(value);
 	}
 
-	if (typeof value === 'boolean') {
-		switch (question) {
-			case 'isSound':
-				return value ? 'Sound' : 'Unsound';
-			default:
-				return value;
+	if (question == 'isSound') {
+		if (typeof value === 'boolean') {
+			return value ? 'Sound' : 'Unsound';
 		}
+		if (typeof value === 'string') {
+			return value == 'yes' ? 'Sound' : 'Unsound';
+		}
+		return value;
+	}
+
+	if (typeof value === 'boolean') {
+		return value;
 	}
 	const entraUserQuestions = new Set([
 		'caseOfficer',
