@@ -175,8 +175,8 @@ describe('Case overview updates', () => {
 		caseOverviewPage.navigateToDeletePage();
 
 		deletCasePage.verifyLoaded();
+		deletCasePage.verifyFixtureCaseData('Cypress Test Plan', 'local-plan', 'lpa-1, lpa-2', 'officer-1');
 		deletCasePage.deleteCase();
-
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
 	});
 });
