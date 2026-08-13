@@ -57,7 +57,8 @@ function createService(): any {
 		logger: {
 			info: mock.fn(),
 			error: mock.fn()
-		}
+		},
+		getEntraClient: mock.fn(() => null)
 	};
 }
 
@@ -88,7 +89,10 @@ function createSaveContext({
 				reference: REFERENCE,
 				...params
 			},
-			body
+			body,
+			session: {
+				authEnabled: false
+			}
 		},
 		res: createResponse(),
 		data: {
@@ -575,6 +579,10 @@ describe('updateCaseField', () => {
 });
 
 describe('updateCaseHistory', () => {
+	const service = createService();
+	const context = createSaveContext({
+		url: '/case'
+	});
 	it('uses readable copy for Examination letter date updates', async () => {
 		const db = {
 			case: {
@@ -583,6 +591,8 @@ describe('updateCaseHistory', () => {
 		};
 
 		await updateCaseHistory(
+			service,
+			context.req,
 			db as any,
 			{
 				letterSentToMHCLGDate: null,
@@ -606,6 +616,8 @@ describe('updateCaseHistory', () => {
 		const service = createService();
 
 		await updateCaseHistory(
+			service,
+			context.req,
 			service.db,
 			{
 				factCheckDateReceivedFromInspector: null,
@@ -638,6 +650,8 @@ describe('updateCaseHistory', () => {
 		const service = createService();
 
 		await updateCaseHistory(
+			service,
+			context.req,
 			service.db,
 			{
 				planPauseStartDate: null,
