@@ -58,7 +58,7 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	get deleteCaseButton() {
-		return cy.get('[data-cy="delete-button"]');
+		return cy.getByData('delete-case-button');
 	}
 
 	sectionHeading(text: string) {

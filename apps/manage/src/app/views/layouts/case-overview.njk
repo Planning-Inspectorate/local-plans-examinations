@@ -76,7 +76,10 @@
   {{ govukButton({
       text: "Delete case",
       classes: "govuk-button--warning",
-      href: baseUrl + "/delete-case"
+      href: baseUrl + "/delete-case",
+      attributes: {
+        "data-cy": "delete-case-button"
+      }
     }) }}
 {% endif %}
 {% endif %}
