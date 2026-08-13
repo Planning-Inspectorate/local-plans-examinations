@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 
-const VIEW_PATH = 'views/gateway-2-application/application-complete/index.njk';
+const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-submited/index.njk';
 
 /**
  * Renders the Application complete page.

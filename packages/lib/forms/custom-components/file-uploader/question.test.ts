@@ -9,6 +9,12 @@ describe('FileUploaderQuestion', () => {
 		assert.equal(question.isAnswered({ answers: {} }), false);
 	});
 
+	it('uses the shared file uploader Nunjucks template', () => {
+		const question = buildQuestion();
+
+		assert.equal(question.viewFolder, 'forms/custom-components/file-uploader');
+	});
+
 	it('is not answered when the uploaded files answer is empty', () => {
 		const question = buildQuestion();
 

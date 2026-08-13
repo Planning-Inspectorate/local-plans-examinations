@@ -32,7 +32,7 @@ export default class FileUploaderQuestion extends Question {
 	}: FileUploaderQuestionProps) {
 		super({
 			...params,
-			viewFolder: 'custom-components/file-uploader'
+			viewFolder: 'forms/custom-components/file-uploader'
 		});
 
 		this.config = {

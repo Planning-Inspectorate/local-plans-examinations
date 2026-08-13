@@ -217,6 +217,35 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 	};
 }
 
+function setGateway2CheckAnswersViewData(req: Request, res: Response, next: NextFunction) {
+	const request = req as Gateway2Request;
+	const planReference = getRoutePlanReference(req);
+	const currentCase = request.currentCase;
+
+	res.locals.pageTitle = 'Gateway 2 submission';
+	res.locals.pageHeading = 'Gateway 2 submission';
+	res.locals.pageCaption = currentCase?.planTitle;
+
+	if (planReference) {
+		res.locals.backLinkUrl = `/manage-local-plans/${planReference}`;
+		res.locals.saveAndComeBackUrl = `/manage-local-plans/${planReference}`;
+	}
+
+	if (currentCase?.gateway2Date) {
+		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
+	}
+
+	next();
+}
+
+function formatDisplayDate(date: Date) {
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
+}
+
 // Saves case-scoped answers into the session.
 function buildSaveDataToCase(): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
@@ -547,7 +576,14 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		)
 	);
 
-	router.get('/gateway-2-submission', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
+	router.get(
+		'/gateway-2-submission',
+		getJourneyResponse,
+		getJourney,
+		setAsEditingFromCya,
+		setGateway2CheckAnswersViewData,
+		buildList()
+	);
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
 
@@ -556,6 +592,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,
+		setGateway2CheckAnswersViewData,
 		buildList()
 	);
 

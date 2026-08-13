@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildGetApplicationCompletePage } from './controller.ts';
 
-const VIEW_PATH = 'views/gateway-2-application/application-complete/index.njk';
+const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-submited/index.njk';
 
 function createReq(overrides: { params?: Record<string, string> } = {}) {
 	const req = {
