@@ -27,11 +27,25 @@ Run these commands from the repo root.
    cp apps/portal/.env.example apps/portal/.env
    ```
 
-4. For local back office testing, either add the real `AUTH_*` values to `apps/manage/.env` or set:
+4. For local back office testing, set `AUTH_DISABLED` in `apps/manage/.env` depending on what you're testing:
 
-   ```text
-   AUTH_DISABLED=true
-   ```
+   - **Most manual and automated tests**: leave auth disabled, no sign-in required:
+
+     ```text
+     AUTH_DISABLED=true
+     ```
+
+   - **Testing user sign-in specifically** (for example, confirming a user's name is recorded against a case): enable real sign-in and populate the `AUTH_*` fields with real values:
+   (`AUTH_CLIENT_ID`, 
+   `AUTH_CLIENT_SECRET`, 
+   `AUTH_TENANT_ID`, 
+   `AUTH_GROUP_APPLICATION_ACCESS`, 
+   `ENTRA_GROUP_ID_CASE_OFFICERS`, 
+   `ENTRA_GROUP_ID_INSPECTORS`) 
+
+     ```text
+     AUTH_DISABLED=false
+     ```
 
 5. Start SQL Server and apply migrations:
 
