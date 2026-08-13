@@ -22,7 +22,7 @@ describe('Gateway 2 updates', () => {
 	after(() => cy.task('clearDb'));
 
 	it('updates a Gateway 2 date answer', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2EExpectedDate.row);
+		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2ExpectedDate.row);
 
 		gateway2ExpectedDatePage.verifyLoaded(gateway2DateAnswers.gateway2ExpectedDate.input);
 		gateway2ExpectedDatePage.enterDate(updatedGateway2ExpectedDateAnswer.input);
