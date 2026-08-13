@@ -17,6 +17,10 @@ export interface GroupMember {
 	displayName: string;
 }
 
+export interface User {
+	id: string;
+	displayName: string;
+}
 export class EntraClient {
 	#client: Client;
 
@@ -68,5 +72,9 @@ export class EntraClient {
 				return v;
 			}
 		}
+	}
+	async getUserDisplayName(userId: string): Promise<string> {
+		const user: User = await this.#client.api(`/users/${userId}`).select(['id', 'displayName']).top(1).get();
+		return String(user.displayName);
 	}
 }

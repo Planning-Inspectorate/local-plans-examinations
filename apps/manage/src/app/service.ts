@@ -16,7 +16,8 @@ export class ManageService extends BaseService {
 		this.#config = config;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 		const entraGroupCache = new MapCache(config.entra.cacheTtl);
-		this.getEntraClient = buildInitEntraClient(!config.auth.disabled, entraGroupCache);
+		const entraUserCache = new MapCache(config.entra.cacheTtl);
+		this.getEntraClient = buildInitEntraClient(!config.auth.disabled, entraGroupCache, entraUserCache);
 	}
 
 	get authConfig(): Config['auth'] {
