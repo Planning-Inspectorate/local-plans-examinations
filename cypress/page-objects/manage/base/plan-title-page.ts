@@ -20,6 +20,10 @@ export class PlanTitleBasePage extends BasePage {
 		this.planTitleInput.should('have.value', value);
 	}
 
+	verifyTitleEmpty() {
+		this.planTitleInput.should('have.value', '');
+	}
+
 	verifyLoaded(value?: string) {
 		super.verifyLoaded();
 		this.verifyPlanTitleForm(value);
