@@ -9,7 +9,7 @@ import {
 	caseOverviewGateway2AssessorPage,
 	caseOverviewExaminingInspector1Page,
 	caseOverviewQAInspector1Page,
-	deletCasePage
+	deleteCasePage
 } from '../../../../page-objects/manage/case-overview/index.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
@@ -174,9 +174,9 @@ describe('Case overview updates', () => {
 	it('deletes a case from the case overview', { tags: ['regression'] }, () => {
 		caseOverviewPage.navigateToDeletePage();
 
-		deletCasePage.verifyLoaded();
-		deletCasePage.verifyFixtureCaseData('Cypress Test Plan', 'local-plan', 'lpa-1, lpa-2', 'officer-1');
-		deletCasePage.deleteCase();
+		deleteCasePage.verifyLoaded();
+		deleteCasePage.verifyFixtureCaseData('Cypress Test Plan', 'local-plan', 'lpa-1, lpa-2', 'officer-1');
+		deleteCasePage.deleteCase();
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
 	});
 });

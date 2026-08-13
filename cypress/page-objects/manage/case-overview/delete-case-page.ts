@@ -1,6 +1,6 @@
 import { BasePage } from '../../base-page.ts';
 
-export class DeletCasePage extends BasePage {
+export class DeleteCasePage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/delete-case$/);
 	}
@@ -23,10 +23,21 @@ export class DeletCasePage extends BasePage {
 	}
 
 	verifyFixtureCaseData(...values: string[]) {
+		this.verifyCaseReference();
 		this.table.within(() => {
 			values.forEach((value) => {
 				cy.get('.govuk-table__row').should('contain.text', value);
 			});
+		});
+	}
+
+	verifyCaseReference() {
+		this.table.within(() => {
+			cy.get('.govuk-table__row')
+				.first()
+				.should('be.visible')
+				.invoke('text')
+				.should('match', /PLAN\/\d/);
 		});
 	}
 
@@ -35,4 +46,4 @@ export class DeletCasePage extends BasePage {
 	}
 }
 
-export const deletCasePage = new DeletCasePage();
+export const deleteCasePage = new DeleteCasePage();
