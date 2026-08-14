@@ -68,6 +68,7 @@ describe('buildAssignedToMe', () => {
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments, [
 			'views/assigned-to-me/assigned-to-me.njk',
 			{
+				backLinkUrl: '/',
 				cases: [
 					{ id: 1, caseOfficer: 'User officer-1' },
 					{ id: 2, caseOfficer: 'User officer-1' }
@@ -120,6 +121,7 @@ describe('buildAssignedToMe', () => {
 			where: { caseOfficer: 'officer-1' }
 		});
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments[1], {
+			backLinkUrl: '/',
 			cases: [
 				{ id: 1, caseOfficer: 'User officer-1' },
 				{ id: 2, caseOfficer: 'User officer-1' }
