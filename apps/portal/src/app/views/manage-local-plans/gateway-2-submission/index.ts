@@ -46,6 +46,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { getRoutePlanReference } from './utils.ts';
+import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -578,6 +579,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
+
+	router.use('/:planReference/gateway-2-submission/application-complete', createApplicationCompleteRoutes());
 
 	router.get(
 		'/:planReference/gateway-2-submission',
