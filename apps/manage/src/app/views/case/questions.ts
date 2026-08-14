@@ -14,7 +14,10 @@ import {
 	type FileUploaderQuestionProps,
 	TOTAL_FILE_UPLOAD_LIMIT
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { TOTAL_FILE_UPLOAD_LIMIT_LABEL } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import {
+	TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	MAX_NO_OF_FILES_TO_UPLOAD
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -525,22 +528,22 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	},
-	workshopDocument: {
+	workshopDocuments: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-		title: 'Workshop document',
+		title: 'Workshop documents',
 		question: 'Upload documents',
-		fieldName: 'workshopDocument',
+		fieldName: 'workshopDocuments',
 		url: 'gateway-2-workshop-document',
 		allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 		maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
 		maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
-		maxFilesPerUpload: 1,
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple: true,
 		text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
-		validators: [new FileUploadRequiredValidator('workshopDocument', 'Upload gateway 2 workshop file')]
+		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
 	},
 	//gateway 3
 	gateway3ExpectedDate: {
