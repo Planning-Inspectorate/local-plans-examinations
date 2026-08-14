@@ -154,8 +154,6 @@
             }
         ]) }}
 
-
-        {# THIS HAS BEEN CHANGED SO THE E2E tests pass - the button will always be displayed #}
         <form method="post" novalidate>
             <input type="hidden" name="_csrf" value="{{ _csrf }}">
             {{ govukButton({
@@ -163,20 +161,7 @@
                 attributes: { "data-cy": "submit-gateway-2" }
             }) }}
         </form>
-        {# DO NOT DELETE AS WE NEED THIS #}
-        {# {% if journeyComplete %}
-            <form method="post" novalidate>
-                <input type="hidden" name="_csrf" value="{{ _csrf }}">
-                {{ govukButton({
-                    text: "Submit for Gateway 2 assessment",
-                    attributes: { "data-cy": "submit-gateway-2" }
-                }) }}
-            </form>
-        {% else %}
-            <strong class="govuk-tag govuk-tag--grey" data-cy="cannot-submit-yet">
-                Cannot submit yet
-            </strong>
-        {% endif %} #}
+
     </div>
 </div>
 {% endblock %}
