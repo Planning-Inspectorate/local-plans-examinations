@@ -14,10 +14,12 @@ import {
 	type FileUploaderQuestionProps,
 	TOTAL_FILE_UPLOAD_LIMIT
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { MAX_NO_OF_FILES_TO_UPLOAD } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 import {
-	TOTAL_FILE_UPLOAD_LIMIT_LABEL,
-	MAX_NO_OF_FILES_TO_UPLOAD
-} from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+	MIME_TYPE_MAP,
+	formatByteCountIntoHumanReadableMemoryUnit,
+	formatFileExtensionsIntoHumanReadableList
+} from '@pins/local-plans-lib/util/file.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -26,27 +28,27 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'csv', 'jpg', 'jpeg', 'png'];
-const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
-	'application/msword',
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	'application/pdf',
-	'text/csv',
-	'application/csv',
-	'application/vnd.ms-excel',
-	'image/jpeg',
-	'image/png',
-	'application/octet-stream'
+const GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'mpeg',
+	'mp3',
+	'mp4',
+	'mov',
+	'png',
+	'tif',
+	'tiff'
 ];
-const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT = 25 * 1024 * 1024;
-const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL = '25MB';
-const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
-	caption: 'Procedural documents',
-	introduction: 'Upload a file',
-	fileRequirementsText: 'The file must be a DOC, DOCX, PDF, CSV, JPG or PNG and be smaller than 25MB',
-	chooseFilesButtonText: 'Choose files',
-	dropInstructionText: 'or drop files'
-};
+
+const GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES = 25 * 1000 * 1000; // 25MB
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
@@ -534,15 +536,24 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload documents',
 		fieldName: 'workshopDocuments',
 		url: 'gateway-2-workshop-document',
-		allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
-		allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
-		maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
-		maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
+		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES),
 		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
-		maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
-		text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+		text: {
+			caption: 'Workshop documents',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES)}`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
 		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
 	},
 	//gateway 3

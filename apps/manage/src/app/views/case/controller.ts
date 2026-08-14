@@ -354,8 +354,7 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 	}
 	const fileUploadQuestions = new Set(['gateway-2-workshop-document']);
 	if (fileUploadQuestions.has(String(question))) {
-		console.log('file upload question called');
-		console.log(answers);
+		// Documents are saved automatically by the file upload component
 		return true;
 	}
 	await db.gateway2Info.upsert({
@@ -562,9 +561,7 @@ async function addUploadedDocumentDetailsToAnswers(
 			}
 		};
 		if (uploadedFiles.length > 0) {
-			console.log('adding answers');
 			answers[questionConfig.fieldName] = uploadedFiles;
-			console.log(answers);
 		} else {
 			delete answers[questionConfig.fieldName];
 		}
