@@ -11,6 +11,7 @@ import ManageListValidator from '../validators/manage-list-validator.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 import {
 	FileUploadRequiredValidator,
+	type FileUploaderQuestionProps,
 	TOTAL_FILE_UPLOAD_LIMIT
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { TOTAL_FILE_UPLOAD_LIMIT_LABEL } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
@@ -788,6 +789,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
 	}
 };
+
+export const fileUploadQuestionProperties = Object.values(caseQuestions).filter(
+	(v) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER
+) as FileUploaderQuestionProps[];
 
 export const questions = createQuestions(
 	caseQuestions,
