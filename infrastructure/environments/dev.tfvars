@@ -115,3 +115,6 @@ web_domains = {
   manage = "local-plans-manage-dev.planninginspectorate.gov.uk"
   portal = "local-plans-portal-dev.planninginspectorate.gov.uk"
 }
+
+# Microsoft Clarity id for portal in this environment
+clarity_id = "y29lmknkkt"
