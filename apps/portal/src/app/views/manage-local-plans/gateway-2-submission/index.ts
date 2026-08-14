@@ -90,6 +90,9 @@ type Gateway2Request = Request & {
 	session: Gateway2Session;
 };
 
+// TODO: This shared Multer middleware uses the largest Gateway 2 question
+// upload limit because the upload routes are shared and the current question is
+// resolved later.
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
@@ -119,6 +122,8 @@ function redirectAfterCaseQuestionEdit(saveDataToCase: ReturnType<typeof buildSa
 	};
 }
 
+// TODO: Move this to a shared manage-local-plans utility when Gateway 3 or
+// other manage workflow sections use the same check answers redirect pattern.
 // Reads the check answers redirect query and converts it to true or false.
 function getCheckAnswersRedirect(req: Request): boolean | undefined {
 	const redirect = Array.isArray(req.query?.[CHECK_ANSWERS_REDIRECT_QUERY])
