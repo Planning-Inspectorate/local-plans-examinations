@@ -3,6 +3,7 @@ import {
 	addCaseNavigation,
 	buildGetJourneyMiddleware,
 	updateCaseField,
+	type Gateway2Request,
 	getDeleteCase,
 	postMarkAsDeleteCase
 } from './controller.ts';
@@ -17,7 +18,7 @@ import {
 	type Journey,
 	type JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
-import { questions } from './questions.ts';
+import { questions, fileUploadQuestionProperties } from './questions.ts';
 import {
 	createOverviewJourney,
 	createGateway1Journey,
@@ -36,11 +37,16 @@ import {
 	//createFileUploaderDeleteController,
 	createFileUploaderUploadController,
 	fileUploaderQuestionMiddleware,
+	//FileUploaderQuestion,
 	type FileUploaderQuestionProps,
-	type FileUploaderSession,
+	//type FileUploaderSession,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import {
+	//getDocumentSetIdsByFolderName,
+	//loadGateway2DocumentsByDocumentSetId,
+	saveGateway2Documents
+} from './documents.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -53,7 +59,7 @@ type FileUploadQuestion = FileUploaderQuestionProps & {
 };
 
 // Ordered list for loading each persisted upload when the case page opens.
-const gateway2FileUploadQuestionConfigs = Object.values(questions) as FileUploadQuestion[];
+const gateway2FileUploadQuestionConfigs = fileUploadQuestionProperties as FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
 const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
 // Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
@@ -67,17 +73,6 @@ const upload = multer({
 		fileSize: Math.max(...gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.maxFileSizeBytes))
 	}
 });
-
-type Gateway2Session = Request['session'] &
-	FileUploaderSession & {
-		editingFromCheckAnswers?: boolean;
-		forms?: Record<string, unknown>;
-	};
-
-type Gateway2Request = Request & {
-	currentCase?: CaseModel;
-	session: Gateway2Session;
-};
 
 interface CaseJourneyConfig {
 	path: string;
@@ -163,9 +158,6 @@ function registerCaseJourney(
 		? `/${path}/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}`
 		: `/${path}/:section/:question`;
 
-	console.log('questionPath');
-	console.log(questionPath);
-
 	// File upload
 	const fileUploaderStorage = () => service.createFileStorage(journeyId);
 	const uploadDocumentRoute = buildFileUploadRouteHandler(
@@ -184,7 +176,8 @@ function registerCaseJourney(
 							documentSetFolderName: questionConfig.url
 						}
 					}),
-					onFilesChange: ({ req, uploadedFiles }) => {
+					onFilesChange: async ({ req, uploadedFiles }) => {
+						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
@@ -237,7 +230,7 @@ function registerCaseJourney(
 			getJourneyResponse,
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
-			buildSave(updateCase, true),
+			//buildSave(updateCase, true),
 			upload.array('files[]'),
 			uploadDocumentRoute
 		);
@@ -345,7 +338,12 @@ function logGateway2UploadCleanupFailed(
 // Builds the URL for the current file upload question.
 function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
-	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
+	// Any questions that need to route to new subjourneys can be defined here
+	if (req.params.question == 'gateway-2-workshop-document') {
+		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+	}
+	const journey = req.url.split(String(req.params.section))[0];
+	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
 }
 
 function getRoutePlanReference(req: Request): string | undefined {

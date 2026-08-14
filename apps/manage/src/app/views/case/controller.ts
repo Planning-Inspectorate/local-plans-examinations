@@ -5,6 +5,8 @@ import type { Request, Response } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
+import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -60,6 +62,7 @@ interface Gateway2Input {
 	workshopVenue?: string;
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
+	workshopDocument?: any;
 }
 
 interface ExaminationInput {
@@ -124,6 +127,17 @@ const caseHistoryLabels: Record<string, string> = {
 	soundUnsoundDate: 'Sound / unsound date',
 	adoptionDate: 'Adoption date',
 	approvedForCILDate: 'Approved for CIL date'
+};
+
+type Gateway2Session = Request['session'] &
+	FileUploaderSession & {
+		editingFromCheckAnswers?: boolean;
+		forms?: Record<string, unknown>;
+	};
+
+type Gateway2Request = Request & {
+	currentCase?: CaseModel;
+	session: Gateway2Session;
 };
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -318,6 +332,12 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 	if (question === 'assessor-gateway-2' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
+	const fileUploadQuestions = new Set(['gateway-2-workshop-document']);
+	if (fileUploadQuestions.has(String(question))) {
+		console.log('file upload question called');
+		console.log(answers);
+		return true;
+	}
 	await db.gateway2Info.upsert({
 		where: { caseId },
 		update: { ...answers },
@@ -413,13 +433,14 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		const { db, logger } = service;
 		const reference = getParam(req.params.reference);
 
-		const planTitle = await db.case.findUnique({
-			where: { reference },
-			select: { planTitle: true }
+		const currentCase = await service.db.case.findUnique({
+			where: { reference: reference }
 		});
-		if (!planTitle) return res.status(404).render('views/errors/404.njk');
-		res.locals.planTitle = planTitle.planTitle;
+		if (!currentCase) return res.status(404).render('views/errors/404.njk');
+		res.locals.planTitle = currentCase.planTitle;
 		res.locals.reference = reference;
+		const request = req as Gateway2Request;
+		request.currentCase = currentCase;
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
 		console.log('journey router called');
