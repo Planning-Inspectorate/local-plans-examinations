@@ -65,7 +65,7 @@ interface Gateway2Input {
 	workshopVenue?: string;
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
-	workshopDocument?: any;
+	workshopDocuments?: any;
 }
 
 interface ExaminationInput {
