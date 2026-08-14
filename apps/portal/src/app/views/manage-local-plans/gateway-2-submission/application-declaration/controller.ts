@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { PortalService } from '#service';
+import { getRoutePlanReference } from '../utils.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
 
@@ -9,7 +10,7 @@ const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-dec
  */
 export function buildGetDeclarationPage(): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
-		const reference = req.params.planReference;
+		const reference = getRoutePlanReference(req) ?? '';
 		const encodedReference = encodeURIComponent(reference);
 
 		return res.render(VIEW_PATH, {
@@ -27,7 +28,7 @@ export function buildGetDeclarationPage(): AsyncRequestHandler {
  */
 export function buildPostDeclarationPage(service: PortalService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
-		const reference = req.params.planReference;
+		const reference = getRoutePlanReference(req) ?? '';
 		const encodedReference = encodeURIComponent(reference);
 		const { logger } = service;
 
