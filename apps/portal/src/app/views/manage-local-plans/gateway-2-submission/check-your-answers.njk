@@ -56,13 +56,13 @@
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
                 <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
-                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
-
                     {% if errors and errors.submit %}
                         <p class="govuk-error-message" data-cy="submit-error">
                             <span class="govuk-visually-hidden">Error:</span> {{ errors.submit.text }}
                         </p>
                     {% endif %}
+
+                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
 
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
