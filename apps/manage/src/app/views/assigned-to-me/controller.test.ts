@@ -134,7 +134,7 @@ describe('buildAssignedToMe', () => {
 	it('renders only cases assigned to the logged in user', async () => {
 		const cases = [
 			{ id: 1, caseOfficer: 'officer-1' },
-			{ id: 2, caseOfficer: 'officer-1' }
+			{ id: 2, caseOfficer: 'officer-2', qaInspector1: 'Officer1' }
 		];
 
 		const ctx = createContext(cases);
@@ -147,7 +147,7 @@ describe('buildAssignedToMe', () => {
 			backLinkUrl: '/',
 			cases: [
 				{ id: 1, caseOfficer: 'User officer-1' },
-				{ id: 2, caseOfficer: 'User officer-1' }
+				{ id: 2, caseOfficer: 'User officer-2', qaInspector1: 'Officer1' }
 			],
 			caseOfficerText: 'Officer1'
 		});
