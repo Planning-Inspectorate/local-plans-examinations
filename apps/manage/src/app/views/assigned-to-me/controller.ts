@@ -57,7 +57,7 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 				})
 			);
 
-			return res.render('views/assigned-to-me/assigned-to-me.njk', { cases, caseOfficerText });
+			return res.render('views/assigned-to-me/assigned-to-me.njk', { backLinkUrl: '/', cases, caseOfficerText });
 		} catch (error) {
 			logger.error({ error }, 'Unable to fetch cases');
 			return res.status(500).render('views/errors/500.njk');
