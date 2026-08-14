@@ -77,6 +77,7 @@ const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((qu
 const gateway2FileUploadQuestionsByUrl = new Map(
 	gateway2FileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
 );
+const GATEWAY_2_SUBMIT_ERROR = 'Add at least one document before submitting';
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
@@ -222,6 +223,11 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 }
 
 function setGateway2CheckAnswersViewData(req: Request, res: Response, next: NextFunction) {
+	setGateway2CheckAnswersViewLocals(req, res);
+	next();
+}
+
+function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	const request = req as Gateway2Request;
 	const planReference = getRoutePlanReference(req);
 	const currentCase = request.currentCase;
@@ -239,8 +245,6 @@ function setGateway2CheckAnswersViewData(req: Request, res: Response, next: Next
 	if (currentCase?.gateway2Date) {
 		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
 	}
-
-	next();
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {
@@ -250,6 +254,37 @@ function buildGateway2CheckAnswersList(): RequestHandler {
 		return buildList({
 			pageCaption: request.currentCase?.planTitle
 		})(req, res, next);
+	};
+}
+
+function validateGateway2Submission(): RequestHandler {
+	return (req, res, next) => {
+		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		const answers = journeyResponse?.answers ?? {};
+		const hasAnsweredQuestion = gateway2FileUploadQuestionConfigs.some((questionConfig) => {
+			const answer = answers[questionConfig.fieldName];
+			return Array.isArray(answer) && answer.length > 0;
+		});
+
+		if (hasAnsweredQuestion) {
+			return next();
+		}
+
+		setGateway2CheckAnswersViewLocals(req, res);
+		res.status(400);
+		res.locals.errors = {
+			submit: {
+				text: GATEWAY_2_SUBMIT_ERROR
+			}
+		};
+		res.locals.errorSummary = [
+			{
+				text: GATEWAY_2_SUBMIT_ERROR,
+				href: '#procedural-documents'
+			}
+		];
+
+		return buildGateway2CheckAnswersList()(req, res, next);
 	};
 }
 
@@ -577,7 +612,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		buildGateway2CheckAnswersList()
 	);
 
-	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
+	router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission(), saveToDatabase);
 
 	router.use(
 		'/:planReference/gateway-2-submission/application-declaration',
@@ -595,7 +630,13 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		buildGateway2CheckAnswersList()
 	);
 
-	router.post('/:planReference/gateway-2-submission', getJourneyResponseFromCase, getJourney, saveToDatabase);
+	router.post(
+		'/:planReference/gateway-2-submission',
+		getJourneyResponseFromCase,
+		getJourney,
+		validateGateway2Submission(),
+		saveToDatabase
+	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/upload-documents',

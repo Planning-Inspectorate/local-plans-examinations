@@ -32,7 +32,7 @@ describe('Plan details page content', () => {
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyActionButton(
 				'Start Gateway 2 submission',
-				`/manage-local-plans/${plan.urlReference}/gateway-2-application/application-declaration`
+				`/manage-local-plans/${plan.urlReference}/gateway-2-submission/application-declaration`
 			);
 			planDetailsPage.verifyPlanProgressHeading();
 			planDetailsPage.verifyPlanProgressRowsInOrder(

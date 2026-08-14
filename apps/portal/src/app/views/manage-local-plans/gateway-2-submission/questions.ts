@@ -5,9 +5,6 @@ import {
 	type CrownQuestionProps
 } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import {
-	ALLOWED_EXTENSIONS,
-	ALLOWED_MIME_TYPES,
-	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
 	SINGLE_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT
@@ -22,16 +19,33 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'csv', 'jpg', 'jpeg', 'png'];
+const MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'png',
+	'tif',
+	'tiff'
+];
 const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
+	'application/pdf',
 	'application/msword',
 	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	'application/pdf',
-	'text/csv',
-	'application/csv',
+	'application/vnd.ms-powerpoint',
+	'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 	'application/vnd.ms-excel',
+	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	'application/vnd.ms-outlook',
 	'image/jpeg',
 	'image/png',
+	'image/tiff',
 	'application/octet-stream'
 ];
 const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT = 25 * 1024 * 1024;
@@ -39,9 +53,11 @@ const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL = '25MB';
 const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
 	caption: 'Procedural documents',
 	introduction: 'Upload a file',
-	fileRequirementsText: 'The file must be a DOC, DOCX, PDF, CSV, JPG or PNG and be smaller than 25MB',
+	fileRequirementsText:
+		'The file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and be smaller than 25MB',
 	chooseFilesButtonText: 'Choose files',
-	dropInstructionText: 'or drop files'
+	dropInstructionText: 'or drop files',
+	continueButtonText: 'Save and return'
 };
 const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
 
@@ -59,8 +75,8 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	question: 'Upload Gateway 2 cover letter',
 	fieldName: 'gateway2CoverLetter',
 	url: 'gateway-2-cover-letter',
-	allowedFileExtensions: ALLOWED_EXTENSIONS,
-	allowedMimeTypes: ALLOWED_MIME_TYPES,
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
 	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 	maxFilesPerUpload: 1,
@@ -79,9 +95,10 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
-		dropInstructionText: 'or drop files'
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
 	},
-	validators: [new FileUploadRequiredValidator('gateway2CoverLetter', 'Upload Gateway 2 cover letter')]
+	validators: []
 };
 
 export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
@@ -99,7 +116,7 @@ export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 	multiple: true,
 	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
-	validators: [new FileUploadRequiredValidator('localPlanTimetable', 'Upload local plan timetable')]
+	validators: []
 };
 
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
@@ -117,7 +134,7 @@ export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
 	maxTotalUploadSizeLabel: 'unlimited',
 	multiple: true,
 	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
-	validators: [new FileUploadRequiredValidator('projectInitiationDocument', 'Upload project initiation document')]
+	validators: []
 };
 
 export const gateway2FileUploadQuestions = {

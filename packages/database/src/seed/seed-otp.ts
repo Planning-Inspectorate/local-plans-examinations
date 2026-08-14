@@ -28,7 +28,7 @@ async function run() {
 			update: {
 				email,
 				caseOfficer: 'Test Officer',
-				planTitle: 'Watford Local Plan',
+				planTitle: 'East Borough Local Plan',
 				planType: 'Local Plan',
 				gateway2Date: new Date('2026-07-21T12:00:00.000Z')
 			},
@@ -36,7 +36,7 @@ async function run() {
 				reference: 'PLAN/001',
 				email,
 				caseOfficer: 'Test Officer',
-				planTitle: 'Watford Local Plan',
+				planTitle: 'East Borough Local Plan',
 				planType: 'Local Plan',
 				gateway2Date: new Date('2026-07-21T12:00:00.000Z')
 			}
