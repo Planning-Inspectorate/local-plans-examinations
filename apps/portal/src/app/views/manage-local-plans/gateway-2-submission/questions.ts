@@ -131,6 +131,7 @@ export const questions = createQuestions(
 	allQuestionClasses,
 	{},
 	{
+		notStartedText: 'Not added',
 		answerActionText: 'Add'
 	}
 ) as Record<string, Question>;

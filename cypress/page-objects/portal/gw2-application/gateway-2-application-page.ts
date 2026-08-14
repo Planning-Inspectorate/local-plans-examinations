@@ -2,11 +2,11 @@ import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
 export class Gateway2ApplicationPage extends PortalPlanBasePage {
 	constructor() {
-		super(/^\/manage-local-plans\/[^/]+\/gateway-2-application$/);
+		super(/^\/manage-local-plans\/[^/]+\/gateway-2-submission$/);
 	}
 
 	pathFor(planReference: string) {
-		return `/manage-local-plans/${planReference}/gateway-2-application`;
+		return `/manage-local-plans/${planReference}/gateway-2-submission`;
 	}
 
 	get saveAndComeBackLink() {

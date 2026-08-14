@@ -62,7 +62,7 @@ function statusTag(status: Status) {
 
 describe('plan page', () => {
 	it('should render without error', async () => {
-		const { mockRes } = await renderPlan({ refNum: 'PLAN-001' });
+		const { mockRes } = await renderPlan({ refNum: 'PLAN/001' });
 
 		assert.strictEqual(mockRes.render.mock.callCount(), 1);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments.length, 2);
@@ -76,7 +76,7 @@ describe('plan page', () => {
 			status: STATUS.ActionNeeded,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN/004' }, plan);
 
 		const expectedBanClass = 'class="govuk-notification-banner__heading"';
 		const expectedBanHeading = 'Action required: Gateway 2 submission incomplete';
@@ -89,7 +89,7 @@ describe('plan page', () => {
 	describe('should not render notification banner if not state = action needed', () => {
 		const testCases = [
 			{
-				refNum: 'PLAN-001',
+				refNum: 'PLAN/001',
 				plan: {
 					refNum: 'PLAN/001',
 					stage: STAGE.Gateway2,
@@ -98,7 +98,7 @@ describe('plan page', () => {
 				}
 			},
 			{
-				refNum: 'PLAN-002',
+				refNum: 'PLAN/002',
 				plan: {
 					refNum: 'PLAN/002',
 					stage: STAGE.Gateway2,
@@ -107,7 +107,7 @@ describe('plan page', () => {
 				}
 			},
 			{
-				refNum: 'PLAN-003',
+				refNum: 'PLAN/003',
 				plan: {
 					refNum: 'PLAN/003',
 					stage: STAGE.Gateway3,
@@ -116,7 +116,7 @@ describe('plan page', () => {
 				}
 			},
 			{
-				refNum: 'PLAN-005',
+				refNum: 'PLAN/005',
 				plan: {
 					refNum: 'PLAN/005',
 					stage: STAGE.Examination,
@@ -125,7 +125,7 @@ describe('plan page', () => {
 				}
 			},
 			{
-				refNum: 'PLAN-006',
+				refNum: 'PLAN/006',
 				plan: {
 					refNum: 'PLAN/006',
 					stage: STAGE.Examination,
@@ -150,7 +150,7 @@ describe('plan page', () => {
 	});
 
 	it('should render title and caption correctly', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedTitle = 'East Borough Local Plan';
 		const expectedRef = 'PLAN/001';
@@ -162,7 +162,7 @@ describe('plan page', () => {
 	});
 
 	it('should render summary table correctly (Current stage, LPA, linked LPA)', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedStage = 'Gateway 2';
 		const expectedLPA = 'Southampton City Council';
@@ -177,7 +177,7 @@ describe('plan page', () => {
 	});
 
 	it('should render Current status tag correctly', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedTags = [
 			'<strong class="govuk-tag govuk-tag--green">Ready to start</strong>',
@@ -193,32 +193,32 @@ describe('plan page', () => {
 	});
 
 	it('should render button with correct link if status == ready to start', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedButton = 'Start Gateway 2 submission';
 
 		assert.strictEqual(data.button, expectedButton, `expected ${expectedButton} but got ${data.button}`);
 		assert.ok(
-			html.includes('href="/manage-local-plans/PLAN-001/gateway-2-application/application-declaration"'),
-			'expected action link to point to Gateway 2 declaration'
+			html.includes('href="/manage-local-plans/PLAN%2F001/gateway-2-submission"'),
+			'expected action link to point to Gateway 2 submission'
 		);
 		assert.ok(html.includes('data-cy="plan-details-action"'), 'expected action link to have a stable selector');
 	});
 
 	describe('should not render button if status != ready to start', () => {
 		const testCases = [
-			{ refNum: 'PLAN-002', status: STATUS.InProgress },
-			{ refNum: 'PLAN-003', status: STATUS.WithPINS },
-			{ refNum: 'PLAN-004', status: STATUS.ActionNeeded },
-			{ refNum: 'PLAN-005', status: STATUS.Invalid },
-			{ refNum: 'PLAN-006', status: STATUS.Completed }
+			{ refNum: 'PLAN/002', status: STATUS.InProgress },
+			{ refNum: 'PLAN/003', status: STATUS.WithPINS },
+			{ refNum: 'PLAN/004', status: STATUS.ActionNeeded },
+			{ refNum: 'PLAN/005', status: STATUS.Invalid },
+			{ refNum: 'PLAN/006', status: STATUS.Completed }
 		];
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
 				const { data, html } = await renderPlan({ refNum });
 
-				const expectedHTML = `<a href="/manage-local-plans/${refNum}/gateway-2-application/application-declaration" class="govuk-button">`;
+				const expectedHTML = `<a href="/manage-local-plans/${encodeURIComponent(refNum)}/gateway-2-submission" class="govuk-button">`;
 
 				assert.strictEqual(data.button, null, `expected null but got ${data.button}`);
 				assert.ok(!html.includes(expectedHTML), `expected html not to contain ${expectedHTML}`);
@@ -227,7 +227,7 @@ describe('plan page', () => {
 	});
 
 	it('should render task table headings correctly (g1, g2, g3, e)', async () => {
-		const { html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedHeadings = [
 			'Gateway 1 - self-assessment',
@@ -242,12 +242,12 @@ describe('plan page', () => {
 	});
 
 	it('should render task table links correctly for case 1 (G1 complete)', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' });
 
-		const expectedLinks = ['/manage-local-plans/PLAN-001/gateway-2-application', null, null];
+		const expectedLinks = ['/manage-local-plans/PLAN%2F001/gateway-2-submission', null, null];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
 		const expectedHTML =
-			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN%2F001/gateway-2-submission"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -257,7 +257,7 @@ describe('plan page', () => {
 	});
 
 	it('should render task tag correctly for case 1 (G1 complete)', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedTags = [
 			'<strong class="govuk-tag govuk-tag--green">Ready to start</strong>',
@@ -277,17 +277,17 @@ describe('plan page', () => {
 
 	describe('should render task tag correctly for case 1 (G1 complete) if status != 0', () => {
 		const testCases = [
-			{ refNum: 'PLAN-002', status: STATUS.InProgress },
-			{ refNum: 'PLAN-003', status: STATUS.WithPINS },
-			{ refNum: 'PLAN-004', status: STATUS.ActionNeeded },
-			{ refNum: 'PLAN-005', status: STATUS.Invalid },
-			{ refNum: 'PLAN-006', status: STATUS.Completed }
+			{ refNum: 'PLAN/002', status: STATUS.InProgress },
+			{ refNum: 'PLAN/003', status: STATUS.WithPINS },
+			{ refNum: 'PLAN/004', status: STATUS.ActionNeeded },
+			{ refNum: 'PLAN/005', status: STATUS.Invalid },
+			{ refNum: 'PLAN/006', status: STATUS.Completed }
 		];
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
 				const plan = {
-					refNum: refNum.replace('PLAN-', 'PLAN/'),
+					refNum,
 					stage: STAGE.Gateway2,
 					status,
 					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
@@ -311,16 +311,16 @@ describe('plan page', () => {
 			status: STATUS.ReadyToStart,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' }, plan);
 
 		const expectedLinks = [
-			'/manage-local-plans/PLAN-001/gateway-2-application',
-			`/manage-local-plans/PLAN-001/gateway-2-application`,
+			'/manage-local-plans/PLAN%2F001/gateway-2-submission',
+			`/manage-local-plans/PLAN%2F001/gateway-2-submission`,
 			null
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
 		const expectedHTML =
-			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN%2F001/gateway-2-submission"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -336,7 +336,7 @@ describe('plan page', () => {
 			status: STATUS.ReadyToStart,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' }, plan);
 
 		const expectedTags = [
 			'Completed',
@@ -355,17 +355,17 @@ describe('plan page', () => {
 
 	describe('should render task tag correctly for case 2 (G1, G2 complete) if status != 0', () => {
 		const testCases = [
-			{ refNum: 'PLAN-002', status: STATUS.InProgress },
-			{ refNum: 'PLAN-003', status: STATUS.WithPINS },
-			{ refNum: 'PLAN-004', status: STATUS.ActionNeeded },
-			{ refNum: 'PLAN-005', status: STATUS.Invalid },
-			{ refNum: 'PLAN-006', status: STATUS.Completed }
+			{ refNum: 'PLAN/002', status: STATUS.InProgress },
+			{ refNum: 'PLAN/003', status: STATUS.WithPINS },
+			{ refNum: 'PLAN/004', status: STATUS.ActionNeeded },
+			{ refNum: 'PLAN/005', status: STATUS.Invalid },
+			{ refNum: 'PLAN/006', status: STATUS.Completed }
 		];
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
 				const plan = {
-					refNum: refNum.replace('PLAN-', 'PLAN/'),
+					refNum,
 					stage: STAGE.Gateway3,
 					status,
 					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
@@ -389,16 +389,16 @@ describe('plan page', () => {
 			status: STATUS.ReadyToStart,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' }, plan);
 
 		const expectedLinks = [
-			'/manage-local-plans/PLAN-001/gateway-2-application',
-			`/manage-local-plans/PLAN-001/gateway-2-application`,
-			`/manage-local-plans/PLAN-001/gateway-2-application`
+			'/manage-local-plans/PLAN%2F001/gateway-2-submission',
+			`/manage-local-plans/PLAN%2F001/gateway-2-submission`,
+			`/manage-local-plans/PLAN%2F001/gateway-2-submission`
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
 		const expectedHTML =
-			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN%2F001/gateway-2-submission"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -414,7 +414,7 @@ describe('plan page', () => {
 			status: STATUS.ReadyToStart,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' }, plan);
 
 		const expectedTags = [
 			'Completed',
@@ -433,16 +433,16 @@ describe('plan page', () => {
 
 	describe('should render task tag correctly for case 3 (G1, G2, G3 complete) if status != 0', () => {
 		const testCases = [
-			{ refNum: 'PLAN-002', status: STATUS.InProgress },
-			{ refNum: 'PLAN-003', status: STATUS.WithPINS },
-			{ refNum: 'PLAN-004', status: STATUS.ActionNeeded },
-			{ refNum: 'PLAN-005', status: STATUS.Invalid }
+			{ refNum: 'PLAN/002', status: STATUS.InProgress },
+			{ refNum: 'PLAN/003', status: STATUS.WithPINS },
+			{ refNum: 'PLAN/004', status: STATUS.ActionNeeded },
+			{ refNum: 'PLAN/005', status: STATUS.Invalid }
 		];
 
 		for (const { refNum, status } of testCases) {
 			it(`status ${StatusLabel[status]}`, async () => {
 				const plan = {
-					refNum: refNum.replace('PLAN-', 'PLAN/'),
+					refNum,
 					stage: STAGE.Examination,
 					status,
 					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
@@ -466,16 +466,16 @@ describe('plan page', () => {
 			status: STATUS.Completed,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN/001' }, plan);
 
 		const expectedLinks = [
-			'/manage-local-plans/PLAN-001/gateway-2-application',
-			'/manage-local-plans/PLAN-001/gateway-2-application',
-			'/manage-local-plans/PLAN-001/gateway-2-application'
+			'/manage-local-plans/PLAN%2F001/gateway-2-submission',
+			'/manage-local-plans/PLAN%2F001/gateway-2-submission',
+			'/manage-local-plans/PLAN%2F001/gateway-2-submission'
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
 		const expectedHTML =
-			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-application"';
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN%2F001/gateway-2-submission"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
@@ -491,7 +491,7 @@ describe('plan page', () => {
 			status: STATUS.Completed,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
-		const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data } = await renderPlan({ refNum: 'PLAN/001' }, plan);
 
 		const expectedTags = ['Completed', 'Completed', 'Completed'];
 		const tags = [data.tagG2, data.tagG3, data.tagE];
@@ -502,7 +502,7 @@ describe('plan page', () => {
 	});
 
 	it('should render tab headings correctly', async () => {
-		const { html } = await renderPlan({ refNum: 'PLAN-001' });
+		const { html } = await renderPlan({ refNum: 'PLAN/001' });
 
 		const expectedTabTitle = [
 			`<a class="govuk-tabs__tab" href="#gateway-2">Gateway 2</a>`,
@@ -516,7 +516,7 @@ describe('plan page', () => {
 	});
 
 	it('should return 404 when plan is not found', async () => {
-		const { planPage, mockRes, mockReq, logger } = initialiseTest({ refNum: 'PLAN-999' });
+		const { planPage, mockRes, mockReq, logger } = initialiseTest({ refNum: 'PLAN/999' });
 		await planPage(mockReq, mockRes);
 
 		assert.strictEqual(logger.warn.mock.callCount(), 1);
@@ -534,7 +534,7 @@ describe('plan page', () => {
 			status: 999
 		};
 
-		const { planPage, mockRes, mockReq } = initialiseTest({ refNum: 'PLAN-001' }, plan);
+		const { planPage, mockRes, mockReq } = initialiseTest({ refNum: 'PLAN/001' }, plan);
 		await planPage(mockReq, mockRes);
 
 		assert.strictEqual(mockRes.status.mock.calls[0].arguments[0], 404);

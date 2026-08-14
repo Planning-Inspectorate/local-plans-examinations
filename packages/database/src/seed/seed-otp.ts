@@ -24,14 +24,21 @@ async function run() {
 	try {
 		// Ensure case record exists for the test email
 		await dbClient.case.upsert({
-			where: { reference: 'LP-TEST-001' },
-			update: { email },
-			create: {
-				reference: 'LP-TEST-001',
+			where: { reference: 'PLAN/001' },
+			update: {
 				email,
 				caseOfficer: 'Test Officer',
-				planTitle: 'Test Local Plan',
-				planType: 'Local Plan'
+				planTitle: 'Watford Local Plan',
+				planType: 'Local Plan',
+				gateway2Date: new Date('2026-07-21T12:00:00.000Z')
+			},
+			create: {
+				reference: 'PLAN/001',
+				email,
+				caseOfficer: 'Test Officer',
+				planTitle: 'Watford Local Plan',
+				planType: 'Local Plan',
+				gateway2Date: new Date('2026-07-21T12:00:00.000Z')
 			}
 		});
 

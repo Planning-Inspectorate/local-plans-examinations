@@ -2,20 +2,21 @@ import type { Request, Response } from 'express';
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { PortalService } from '#service';
 
-const VIEW_PATH = 'views/gateway-2-application/application-declaration/application-declaration.njk';
+const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
 
 /**
  * Renders the review declaration page.
  */
 export function buildGetDeclarationPage(): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
-		const reference = req.params.reference;
+		const reference = req.params.planReference;
+		const encodedReference = encodeURIComponent(reference);
 
 		return res.render(VIEW_PATH, {
 			pageTitle: 'Review declaration',
 			pageHeading: 'Review declaration',
 			pageCaption: 'Your application',
-			backLinkUrl: `/manage-local-plans/${reference}/gateway-2-application`
+			backLinkUrl: `/manage-local-plans/${encodedReference}/gateway-2-submission`
 		});
 	};
 }
@@ -26,7 +27,8 @@ export function buildGetDeclarationPage(): AsyncRequestHandler {
  */
 export function buildPostDeclarationPage(service: PortalService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
-		const reference = req.params.reference;
+		const reference = req.params.planReference;
+		const encodedReference = encodeURIComponent(reference);
 		const { logger } = service;
 
 		const declarations = req.body.declaration;
@@ -42,7 +44,7 @@ export function buildPostDeclarationPage(service: PortalService): AsyncRequestHa
 				pageTitle: 'Review declaration',
 				pageHeading: 'Review declaration',
 				pageCaption: 'Your application',
-				backLinkUrl: `/manage-local-plans/${reference}/gateway-2-application`,
+				backLinkUrl: `/manage-local-plans/${encodedReference}/gateway-2-submission`,
 				errorSummary: [
 					{
 						text: 'You must confirm both declarations before you can submit your application.',
@@ -63,6 +65,6 @@ export function buildPostDeclarationPage(service: PortalService): AsyncRequestHa
 
 		logger.info(`Declaration confirmed for case ${reference}`);
 
-		return res.redirect(`/manage-local-plans/${reference}/gateway-2-application/application-complete`);
+		return res.redirect(`/manage-local-plans/${encodedReference}/gateway-2-submission/application-complete`);
 	};
 }

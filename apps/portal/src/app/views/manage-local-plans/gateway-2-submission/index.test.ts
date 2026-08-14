@@ -2,22 +2,8 @@ import assert from 'node:assert';
 import type { Request } from 'express';
 import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { normalisePlanReferenceForLookup, syncGateway2UploadAnswer } from './index.ts';
+import { syncGateway2UploadAnswer } from './index.ts';
 import { JOURNEY_ID } from './journey.ts';
-
-describe('normalisePlanReferenceForLookup', () => {
-	it('keeps hyphenated LPE references unchanged', () => {
-		assert.strictEqual(normalisePlanReferenceForLookup('LPE-TEST-001'), 'LPE-TEST-001');
-	});
-
-	it('converts legacy PLAN route references back to stored case references', () => {
-		assert.strictEqual(normalisePlanReferenceForLookup('PLAN-001'), 'PLAN/001');
-	});
-
-	it('keeps already normalised references unchanged', () => {
-		assert.strictEqual(normalisePlanReferenceForLookup('PLAN/001'), 'PLAN/001');
-	});
-});
 
 describe('syncGateway2UploadAnswer', () => {
 	it('stores uploaded files in the case-scoped journey answers', () => {

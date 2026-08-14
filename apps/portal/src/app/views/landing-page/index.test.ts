@@ -137,7 +137,7 @@ describe('landing page', () => {
 
 		for (const plan of data.plans) {
 			const expectedRefNum = plan[0].html.match(/>([^<]+)</)?.[1]; // 0 for first cell - where link should be
-			const expectedHref = '/manage-local-plans/' + expectedRefNum.replace('/', '-');
+			const expectedHref = '/manage-local-plans/' + encodeURIComponent(expectedRefNum);
 
 			assert.ok(expectedRefNum.includes('PLAN'), `expected ref to contain PLAN`);
 			assert.ok(
