@@ -62,6 +62,7 @@ export default defineConfig({
 					return null;
 				},
 				seedCase: async () => {
+					await runCommand('npm run db-seed');
 					await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts --case-only');
 					return null;
 				},
