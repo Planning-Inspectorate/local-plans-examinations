@@ -89,5 +89,13 @@ export const DOCUMENT_SET = [
 		displayName: 'Summary of consultation on proposed local plan content and evidence documents',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUMMARY_OF_CONSULTATION,
 		displayOrder: 15
+	},
+	{
+		id: DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Gateway 2 Workshop Document',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP_DOCUMENT,
+		displayOrder: 16
 	}
 ];

@@ -5,7 +5,13 @@ import {
 	updateCaseField,
 	type Gateway2Request,
 	getDeleteCase,
-	postMarkAsDeleteCase
+	postMarkAsDeleteCase,
+	type UploadDocumentRequest,
+	fileUploadQuestionConfigs,
+	fileUploadQuestionUrls,
+	type FileUploadQuestion,
+	getRouteQuestionUrl,
+	fileUploaderCaseSessionKey
 } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -18,7 +24,7 @@ import {
 	type Journey,
 	type JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
-import { questions, fileUploadQuestionProperties } from './questions.ts';
+import { questions } from './questions.ts';
 import {
 	createOverviewJourney,
 	createGateway1Journey,
@@ -34,11 +40,10 @@ import {
 import { buildCaseOfficerOptions, buildInspectorOptions } from '../../util/options-helper.ts';
 import multer from 'multer';
 import {
-	//createFileUploaderDeleteController,
+	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
 	fileUploaderQuestionMiddleware,
 	//FileUploaderQuestion,
-	type FileUploaderQuestionProps,
 	//type FileUploaderSession,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
@@ -50,27 +55,10 @@ import {
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
-// The Gateway 2 upload routes are shared by all of the document questions.
-// Keep the question configs in a couple of route-friendly shapes so the URL in
-// `:question` decides which field, validation rules and document set are used.
-type FileUploadQuestion = FileUploaderQuestionProps & {
-	fieldName: string;
-	url: string;
-};
-
-// Ordered list for loading each persisted upload when the case page opens.
-const gateway2FileUploadQuestionConfigs = fileUploadQuestionProperties as FileUploadQuestion[];
-// URL list for the file uploader middleware to recognise upload pages.
-const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
-// Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
-const gateway2FileUploadQuestionsByUrl = new Map(
-	gateway2FileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
-);
-
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
-		fileSize: Math.max(...gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.maxFileSizeBytes))
+		fileSize: Math.max(...fileUploadQuestionConfigs.map((questionConfig) => questionConfig.maxFileSizeBytes))
 	}
 });
 
@@ -150,7 +138,7 @@ function registerCaseJourney(
 	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
 
 	const fileUploadMiddleware = fileUploaderQuestionMiddleware({
-		questionUrls: gateway2FileUploadQuestionUrls,
+		questionUrls: fileUploadQuestionUrls,
 		sessionKey: fileUploaderCaseSessionKey
 	});
 
@@ -162,7 +150,7 @@ function registerCaseJourney(
 	const fileUploaderStorage = () => service.createFileStorage(journeyId);
 	const uploadDocumentRoute = buildFileUploadRouteHandler(
 		new Map(
-			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
+			fileUploadQuestionConfigs.map((questionConfig) => [
 				questionConfig.url,
 				createFileUploaderUploadController({
 					fieldName: questionConfig.fieldName,
@@ -178,13 +166,33 @@ function registerCaseJourney(
 					}),
 					onFilesChange: async ({ req, uploadedFiles }) => {
 						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
-						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
 					onUploadError: ({ req, errors, error }) =>
 						logGateway2UploadFailed(service, req, questionConfig, { errors, error }),
 					onUploadCleanupError: ({ req, file, error }) =>
 						logGateway2UploadCleanupFailed(service, req, questionConfig, file, error),
+					redirect: redirectToFileUploaderQuestion
+				})
+			])
+		)
+	);
+	const deleteDocumentRoute = buildFileUploadRouteHandler(
+		new Map(
+			fileUploadQuestionConfigs.map((questionConfig) => [
+				questionConfig.url,
+				createFileUploaderDeleteController({
+					fieldName: questionConfig.fieldName,
+					question: questionConfig,
+					storage: fileUploaderStorage,
+					onFilesChange: async ({ req, uploadedFiles }) => {
+						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
+						syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
+						logGateway2Deleted(service, req, questionConfig, uploadedFiles);
+					},
+					onDeleteError: ({ req, fileId, error }) =>
+						logGateway2DeleteFailed(service, req, questionConfig, fileId, error),
 					redirect: redirectToFileUploaderQuestion
 				})
 			])
@@ -234,22 +242,15 @@ function registerCaseJourney(
 			upload.array('files[]'),
 			uploadDocumentRoute
 		);
+		router.post(
+			`${questionPath}/delete-document/:fileId`,
+			getJourneyResponse,
+			buildCaseOfficerOptions(service, questions),
+			getJourney,
+			//buildSave(updateCase, true),
+			deleteDocumentRoute
+		);
 	}
-}
-
-function getRouteQuestionUrl(req: Request): string | undefined {
-	const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
-	return questionUrl || undefined;
-}
-
-function getRouteFileUploadQuestion(req: Request): FileUploadQuestion {
-	const questionUrl = getRouteQuestionUrl(req);
-	const questionConfig = questionUrl ? gateway2FileUploadQuestionsByUrl.get(questionUrl) : undefined;
-	if (!questionConfig) {
-		throw new Error(`No Gateway 2 file upload question configured for "${questionUrl ?? ''}"`);
-	}
-
-	return questionConfig;
 }
 
 function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestHandler>): RequestHandler {
@@ -264,24 +265,26 @@ function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestH
 	};
 }
 
-// Retrieves the plan reference from the params and creates the file upload session key.
-// Example format: LP-TEST-001:gateway2CoverLetter.
-function fileUploaderCaseSessionKey(req: Request) {
-	const questionConfig = getRouteFileUploadQuestion(req);
-	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
-}
+// Keeps a file upload answer in sync with uploaded files.
+export function syncUploadAnswer(journeyId: string, req: Request, fieldName: string, uploadedFiles: UploadedFile[]) {
+	if (!req.session) {
+		return;
+	}
 
-function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
-	return `${req.params.planReference}:${fieldName}`;
-}
+	const request = req as UploadDocumentRequest;
+	const planReference = getRoutePlanReference(req);
+	const forms = (request.session.forms ??= {});
 
-// Keeps a Gateway 2 file upload answer in sync with uploaded files.
-export function syncGateway2UploadAnswer(req: Request, fieldName: string, uploadedFiles: UploadedFile[]) {
-	console.log(req);
-	console.log(fieldName);
-	console.log(uploadedFiles);
-	// TODO
-	return;
+	const answers = planReference
+		? getOrCreateRecord(getOrCreateRecord(forms, planReference), journeyId)
+		: getOrCreateRecord(forms, journeyId);
+
+	if (uploadedFiles.length > 0) {
+		answers[fieldName] = uploadedFiles;
+		return;
+	}
+
+	delete answers[fieldName];
 }
 
 function logGateway2Uploaded(
@@ -355,11 +358,59 @@ function getRoutePlanReference(req: Request): string | undefined {
 }
 
 function gateway2UploadLogContext(req: Request, questionConfig: FileUploadQuestion) {
-	const request = req as Gateway2Request;
+	const request = req as UploadDocumentRequest;
 	return {
 		planReference: getRoutePlanReference(req),
 		caseId: request.currentCase?.id,
 		fieldName: questionConfig.fieldName,
 		questionUrl: questionConfig.url
 	};
+}
+
+function logGateway2Deleted(
+	service: ManageService,
+	req: Request,
+	questionConfig: FileUploadQuestion,
+	uploadedFiles: UploadedFile[]
+) {
+	service.logger.info(
+		{
+			...gateway2UploadLogContext(req, questionConfig),
+			fileId: req.params.fileId,
+			remainingFileCount: uploadedFiles.length
+		},
+		'Gateway 2 document deleted'
+	);
+}
+
+function logGateway2DeleteFailed(
+	service: ManageService,
+	req: Request,
+	questionConfig: FileUploadQuestion,
+	fileId: string,
+	error: unknown
+) {
+	service.logger.error(
+		{
+			...gateway2UploadLogContext(req, questionConfig),
+			fileId,
+			error
+		},
+		'Gateway 2 document delete failed'
+	);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function getOrCreateRecord(container: Record<string, unknown>, key: string): Record<string, unknown> {
+	const existingValue = asRecord(container[key]);
+	if (existingValue) {
+		return existingValue;
+	}
+
+	const value: Record<string, unknown> = {};
+	container[key] = value;
+	return value;
 }
