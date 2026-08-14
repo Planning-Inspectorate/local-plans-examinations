@@ -9,14 +9,15 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
 		: req.params.planReference;
+	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
 	const baseUrl = planReference
-		? `${req.baseUrl}/${planReference}/gateway-2-submission`
+		? `${req.baseUrl}/${encodedPlanReference}/gateway-2-submission`
 		: `${req.baseUrl}/gateway-2-submission`;
 
 	return new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
-			new Section('Procedural documents', 'procedural')
+			new Section('Procedural Documents', 'procedural')
 				.addQuestion(questions.gateway2CoverLetter)
 				.addQuestion(questions.localPlanTimetable)
 				.addQuestion(questions.projectInitiationDocument)

@@ -47,6 +47,7 @@ import {
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
+import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -134,7 +135,8 @@ function getCheckAnswersRedirect(req: Request): boolean | undefined {
 
 // Builds the URL for the current file upload question.
 function redirectToFileUploaderQuestion(req: Request) {
-	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
+	const planReference = getRoutePlanReference(req);
+	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
 
@@ -229,8 +231,9 @@ function setGateway2CheckAnswersViewData(req: Request, res: Response, next: Next
 	res.locals.pageCaption = currentCase?.planTitle;
 
 	if (planReference) {
-		res.locals.backLinkUrl = `/manage-local-plans/${planReference}`;
-		res.locals.saveAndComeBackUrl = `/manage-local-plans/${planReference}`;
+		const encodedPlanReference = encodeURIComponent(planReference);
+		res.locals.backLinkUrl = `/manage-local-plans/${encodedPlanReference}`;
+		res.locals.saveAndComeBackUrl = `/manage-local-plans/${encodedPlanReference}`;
 	}
 
 	if (currentCase?.gateway2Date) {
@@ -238,6 +241,16 @@ function setGateway2CheckAnswersViewData(req: Request, res: Response, next: Next
 	}
 
 	next();
+}
+
+function buildGateway2CheckAnswersList(): RequestHandler {
+	return (req, res, next) => {
+		const request = req as Gateway2Request;
+
+		return buildList({
+			pageCaption: request.currentCase?.planTitle
+		})(req, res, next);
+	};
 }
 
 function formatDisplayDate(date: Date) {
@@ -313,23 +326,9 @@ export function syncGateway2UploadAnswer(req: Request, fieldName: string, upload
 	delete answers[fieldName];
 }
 
-// Gets the plan reference in the format used by the database.
+// Gets the decoded plan reference in the format used by the database.
 function getPlanReference(req: Request): string | undefined {
-	const planReference = getRoutePlanReference(req);
-	return normalisePlanReferenceForLookup(planReference);
-}
-
-// Converts route references like PLAN-123 to database references like PLAN/123.
-export function normalisePlanReferenceForLookup(planReference: string | undefined): string | undefined {
-	if (!planReference) {
-		return undefined;
-	}
-
-	if (/^PLAN-\d+$/.test(planReference)) {
-		return planReference.replace('PLAN-', 'PLAN/');
-	}
-
-	return planReference;
+	return getRoutePlanReference(req);
 }
 
 // Renders the standard page not found screen.
@@ -575,10 +574,15 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourney,
 		setAsEditingFromCya,
 		setGateway2CheckAnswersViewData,
-		buildList()
+		buildGateway2CheckAnswersList()
 	);
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
+
+	router.use(
+		'/:planReference/gateway-2-submission/application-declaration',
+		createApplicationDeclarationRoutes(service)
+	);
 
 	router.use('/:planReference/gateway-2-submission/application-complete', createApplicationCompleteRoutes());
 
@@ -588,7 +592,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourney,
 		setAsEditingFromCya,
 		setGateway2CheckAnswersViewData,
-		buildList()
+		buildGateway2CheckAnswersList()
 	);
 
 	router.post('/:planReference/gateway-2-submission', getJourneyResponseFromCase, getJourney, saveToDatabase);

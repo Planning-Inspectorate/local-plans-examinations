@@ -11,8 +11,7 @@ function statusTag(status: Status) {
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
-		// Route uses PLAN-001 but stored plans use PLAN/001
-		const planRef = String(req.params.refNum).replace('-', '/');
+		const planRef = String(req.params.refNum);
 		const rawPlans = await service.getPlans();
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
@@ -23,7 +22,8 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		const planStatus = statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
-		const applicationBase = `/manage-local-plans/${req.params.refNum}/gateway-2-application`;
+		const encodedPlanRef = encodeURIComponent(plan.refNum);
+		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
 		const currentApplicationLink = `${applicationBase}/application-declaration`;
 		const applicationLink = () => applicationBase;
 
