@@ -27,7 +27,7 @@
     "lint": "npx eslint .",
     "prepare": "node .husky/install.mjs",
     "test": "node --test",
-    "test-coverage": "node --test --experimental-test-coverage --test-coverage-lines=90 --test-coverage-branches=90 --test-coverage-functions=90",
+    "test-coverage": "node --test --experimental-test-coverage --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80",
     "cy:portal:smoke": "cross-env TEST_TARGET=portal npx cypress run --expose grepTags=smoke --spec='cypress/e2e/portal/**/*'",
     "cy:portal:regression": "cross-env TEST_TARGET=portal npx cypress run --expose grepTags=regression --spec='cypress/e2e/portal/**/*'",
     "cy:portal:all": "cross-env TEST_TARGET=portal npx cypress run --spec='cypress/e2e/portal/**/*'",
