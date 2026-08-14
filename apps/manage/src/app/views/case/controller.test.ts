@@ -959,67 +959,61 @@ describe('buildGetJourneyMiddleware', () => {
 });
 
 describe('DeleteCase', () => {
-	(it('renders delete-case.njk when getDeleteCase is called', async () => {
+	const currentCase = {
+		id: 'case-id',
+		reference: 'PLAN/123456',
+		planTitle: 'Southshire Local Plan',
+		planType: 'local-plan',
+		lpas: [{ lpaCode: 'lpa-1' }, { lpaCode: 'lpa-2' }],
+		caseOfficer: 'officer-1'
+	};
+
+	it('renders delete-case.njk with user-facing case details', async () => {
 		const service = createService();
-		const currentCase = {
-			reference: 'PLAN/123456',
-			planTitle: 'Southshire Local Plan',
-			planType: 'Local Plan',
-			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-			caseOfficer: 'John Doe'
-		};
 		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-		const render = mock.fn();
-		const status = mock.fn(() => ({ render }));
-		const res = {
-			locals: {},
-			render,
-			status
-		} as unknown as Response;
+		const res = createResponse();
 		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
 
 		await getDeleteCase(service)(req, res);
 
-		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
-	}),
-		it('sets deletedDate when delete is confirmed', async () => {
-			const service = createService();
-			const currentCase = {
-				reference: 'PLAN/123456',
-				planTitle: 'Southshire Local Plan',
-				planType: 'Local Plan',
-				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-				caseOfficer: 'John Doe'
-			};
-			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-			const redirect = mock.fn();
-			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+		assert.equal(res.render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
+		assert.deepEqual(res.render.mock.calls[0].arguments[1], {
+			rows: [
+				[{ text: 'Case reference' }, { text: 'PLAN/123456' }],
+				[{ text: 'Plan title' }, { text: 'Southshire Local Plan' }],
+				[{ text: 'Plan type' }, { text: 'Local Plan' }],
+				[{ text: 'LPA' }, { text: 'Local Planning Authority 1, Local Planning Authority 2' }],
+				[{ text: 'Case officer' }, { text: 'Case Officer 1' }]
+			]
+		});
+	});
 
-			await postMarkAsDeleteCase(service)(req, res);
+	it('sets deletedDate when delete is confirmed', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+		const redirect = mock.fn();
+		const res = { redirect } as unknown as Response;
+		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
 
-			assert.equal(service.db.case.update.mock.callCount(), 1);
+		await postMarkAsDeleteCase(service)(req, res);
 
-			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
+		assert.equal(service.db.case.update.mock.callCount(), 1);
 
-			assert.ok(args.data.deletedDate instanceof Date);
-		}),
-		it('redirects to all cases when delete is confirmed', async () => {
-			const service = createService();
-			const currentCase = {
-				reference: 'PLAN/123456',
-				planTitle: 'Southshire Local Plan',
-				planType: 'Local Plan',
-				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-				caseOfficer: 'John Doe'
-			};
-			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-			const redirect = mock.fn();
-			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+		const args = service.db.case.update.mock.calls[0].arguments[0] as any;
 
-			await postMarkAsDeleteCase(service)(req, res);
+		assert.deepEqual(args.where, { id: currentCase.id });
+		assert.ok(args.data.deletedDate instanceof Date);
+	});
 
-			assert.equal(redirect.mock.calls[0].arguments[0], '/');
-		}));
+	it('redirects to all cases when delete is confirmed', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+		const redirect = mock.fn();
+		const res = { redirect } as unknown as Response;
+		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+		await postMarkAsDeleteCase(service)(req, res);
+
+		assert.equal(redirect.mock.calls[0].arguments[0], '/');
+	});
 });

@@ -175,7 +175,12 @@ describe('Case overview updates', () => {
 		caseOverviewPage.navigateToDeletePage();
 
 		deleteCasePage.verifyLoaded();
-		deleteCasePage.verifyFixtureCaseData('Cypress Test Plan', 'local-plan', 'lpa-1, lpa-2', 'officer-1');
+		deleteCasePage.verifyCaseDetails(
+			planTitle,
+			'Local Plan',
+			'Local Planning Authority 1, Local Planning Authority 2',
+			'Case Officer 1'
+		);
 		deleteCasePage.deleteCase();
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
 	});

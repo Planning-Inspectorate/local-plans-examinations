@@ -127,7 +127,10 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyDeleteCaseButton() {
-		this.deleteCaseButton.should('be.visible');
+		this.deleteCaseButton
+			.should('be.visible')
+			.and('have.attr', 'href')
+			.and('match', /^\/case\/.+\/delete-case$/);
 	}
 
 	verifyExaminationWebsiteHyperlink(hyperlink: string) {
@@ -138,7 +141,7 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	navigateToDeletePage() {
-		this.deleteCaseButton.click();
+		this.deleteCaseButton.should('be.visible').click();
 	}
 }
 

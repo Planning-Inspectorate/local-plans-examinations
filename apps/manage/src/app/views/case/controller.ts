@@ -4,6 +4,7 @@ import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic
 import type { Request, Response } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
+import { questions } from './questions.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -564,9 +565,9 @@ export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 		const rows = [
 			[{ text: 'Case reference' }, { text: currentCase.reference }],
 			[{ text: 'Plan title' }, { text: currentCase.planTitle }],
-			[{ text: 'Plan type' }, { text: currentCase.planType }],
-			[{ text: 'LPA' }, { text: currentCase.lpas.map((lpa) => lpa.lpaCode).join(', ') }],
-			[{ text: 'Case officer' }, { text: currentCase.caseOfficer }]
+			[{ text: 'Plan type' }, { text: getOptionText('planType', currentCase.planType) }],
+			[{ text: 'LPA' }, { text: currentCase.lpas.map((lpa) => getOptionText('lpa', lpa.lpaCode)).join(', ') }],
+			[{ text: 'Case officer' }, { text: getOptionText('caseOfficer', currentCase.caseOfficer) }]
 		];
 
 		res.render('views/layouts/delete-case.njk', {
@@ -598,4 +599,12 @@ export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandle
 async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: string }): Promise<void> {
 	await db.case.update({ where: { id: id }, data: { deletedDate: new Date() } });
 	return;
+}
+
+function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: string | null) {
+	const option = questions[question].options?.find(
+		({ value: optionValue }: { value: string }) => optionValue === value
+	);
+
+	return option?.text ?? `${value ?? ''}`;
 }

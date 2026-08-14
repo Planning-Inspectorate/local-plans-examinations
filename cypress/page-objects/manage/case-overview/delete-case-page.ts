@@ -22,27 +22,26 @@ export class DeleteCasePage extends BasePage {
 		);
 	}
 
-	verifyFixtureCaseData(...values: string[]) {
+	caseDetailRow(label: string) {
+		return this.table.contains('tr', label);
+	}
+
+	verifyCaseDetails(planTitle: string, planType: string, localPlanningAuthority: string, caseOfficer: string) {
 		this.verifyCaseReference();
-		this.table.within(() => {
-			values.forEach((value) => {
-				cy.get('.govuk-table__row').should('contain.text', value);
-			});
-		});
+		this.caseDetailRow('Plan title').should('contain.text', planTitle);
+		this.caseDetailRow('Plan type').should('contain.text', planType);
+		this.caseDetailRow('LPA').should('contain.text', localPlanningAuthority);
+		this.caseDetailRow('Case officer').should('contain.text', caseOfficer);
 	}
 
 	verifyCaseReference() {
-		this.table.within(() => {
-			cy.get('.govuk-table__row')
-				.first()
-				.should('be.visible')
-				.invoke('text')
-				.should('match', /PLAN\/\d/);
-		});
+		this.caseDetailRow('Case reference')
+			.invoke('text')
+			.should('match', /PLAN\/\d+/);
 	}
 
 	deleteCase() {
-		this.deleteCaseButton.click();
+		this.deleteCaseButton.should('be.visible').click();
 	}
 }
 
