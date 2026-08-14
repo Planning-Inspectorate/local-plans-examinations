@@ -7,6 +7,9 @@ import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { loadUploadedDocuments, getDocumentSetIdsByFolderName } from './documents.ts';
+import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { fileUploadQuestionProperties } from './questions.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -135,10 +138,27 @@ type Gateway2Session = Request['session'] &
 		forms?: Record<string, unknown>;
 	};
 
-type Gateway2Request = Request & {
+export type UploadDocumentRequest = Request & {
 	currentCase?: CaseModel;
 	session: Gateway2Session;
 };
+
+// The Gateway 2 upload routes are shared by all of the document questions.
+// Keep the question configs in a couple of route-friendly shapes so the URL in
+// `:question` decides which field, validation rules and document set are used.
+export type FileUploadQuestion = FileUploaderQuestionProps & {
+	fieldName: string;
+	url: string;
+};
+
+// Ordered list for loading each persisted upload when the case page opens.
+export const fileUploadQuestionConfigs = fileUploadQuestionProperties as FileUploadQuestion[];
+// URL list for the file uploader middleware to recognise upload pages.
+export const fileUploadQuestionUrls = fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
+// Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
+export const fileUploadQuestionsByUrl = new Map(
+	fileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
+);
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
@@ -439,13 +459,8 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		if (!currentCase) return res.status(404).render('views/errors/404.njk');
 		res.locals.planTitle = currentCase.planTitle;
 		res.locals.reference = reference;
-		const request = req as Gateway2Request;
-		request.currentCase = currentCase;
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
-		console.log('journey router called');
-		console.log(req.url);
-		console.log(currentPage);
 		switch (currentPage) {
 			case 'overview': {
 				const overviewData = await getOverviewData(db, reference);
@@ -490,6 +505,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-2': {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: reference } });
+				await addUploadedDocumentDetailsToAnswers(service, currentCase, req, journey2Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				if (next) next();
 				return;
@@ -518,6 +534,41 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				logger.error(`Unknown page ${currentPage} for case ${reference}`);
 		}
 	};
+}
+
+async function addUploadedDocumentDetailsToAnswers(
+	service: ManageService,
+	currentCase: any,
+	req: Request,
+	answers: any
+) {
+	const request = req as UploadDocumentRequest;
+	request.currentCase = currentCase;
+	const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
+		service,
+		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+	);
+	for (const questionConfig of fileUploadQuestionConfigs) {
+		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
+		if (!documentSetId) {
+			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
+		}
+
+		const uploadedFiles = await loadUploadedDocuments(service, currentCase.id, documentSetId);
+		req.session.fileUploader = {
+			...request.session.fileUploader,
+			[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]: {
+				uploadedFiles
+			}
+		};
+		if (uploadedFiles.length > 0) {
+			console.log('adding answers');
+			answers[questionConfig.fieldName] = uploadedFiles;
+			console.log(answers);
+		} else {
+			delete answers[questionConfig.fieldName];
+		}
+	}
 }
 
 /** Adds the case section navigation to locals for the case routes. */
@@ -642,6 +693,7 @@ function formatCaseHistoryValue(value: unknown) {
 
 	return `${value ?? ''}`;
 }
+
 export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
 		const reference = getParam(req.params.reference);
@@ -701,4 +753,29 @@ function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: stri
 	);
 
 	return option?.text ?? `${value ?? ''}`;
+
+export function getRouteQuestionUrl(req: Request): string | undefined {
+	const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
+	return questionUrl || undefined;
+}
+
+export function getRouteFileUploadQuestion(req: Request): FileUploadQuestion {
+	const questionUrl = getRouteQuestionUrl(req);
+	const questionConfig = questionUrl ? fileUploadQuestionsByUrl.get(questionUrl) : undefined;
+	if (!questionConfig) {
+		throw new Error(`No Gateway 2 file upload question configured for "${questionUrl ?? ''}"`);
+	}
+
+	return questionConfig;
+}
+
+// Retrieves the plan reference from the params and creates the file upload session key.
+// Example format: LP-TEST-001:gateway2CoverLetter.
+export function fileUploaderCaseSessionKey(req: Request) {
+	const questionConfig = getRouteFileUploadQuestion(req);
+	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
+}
+
+export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
+	return `${req.params.planReference}:${fieldName}`;
 }

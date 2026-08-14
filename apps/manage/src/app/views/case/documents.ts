@@ -47,15 +47,6 @@ export async function loadGateway2Documents(
 	documentSetFolderName: string
 ): Promise<UploadedFile[]> {
 	const documentSetId = await getDocumentSetIdByFolderName(service, documentSetFolderName);
-	return loadGateway2DocumentsByDocumentSetId(service, caseId, documentSetId);
-}
-
-// Loads the saved files for a Gateway 2 upload question with a known document set ID.
-export async function loadGateway2DocumentsByDocumentSetId(
-	service: ManageService,
-	caseId: string,
-	documentSetId: string
-): Promise<UploadedFile[]> {
 	return loadUploadedDocuments(service, caseId, documentSetId);
 }
 
@@ -82,7 +73,7 @@ export async function saveGateway2Documents(
 }
 
 // Reads active documents from the database.
-async function loadUploadedDocuments(
+export async function loadUploadedDocuments(
 	service: ManageService,
 	caseId: string,
 	documentSetId: string
