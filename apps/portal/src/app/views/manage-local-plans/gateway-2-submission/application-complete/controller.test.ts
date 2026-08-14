@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildGetApplicationCompletePage } from './controller.ts';
 
-const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-submited/index.njk';
+const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-complete/index.njk';
 
 function createReq(overrides: { params?: Record<string, string> } = {}) {
 	const req = {
-		params: { reference: 'PLAN-001', ...overrides.params }
+		params: { planReference: 'PLAN-001', ...overrides.params }
 	} as unknown as Request;
 
 	const renderCalls: Array<[string, unknown?]> = [];
