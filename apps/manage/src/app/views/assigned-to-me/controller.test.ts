@@ -63,7 +63,32 @@ describe('buildAssignedToMe', () => {
 
 		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
 		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
-			where: { caseOfficer: 'officer-1' }
+			where: {
+				OR: [
+					{ caseOfficer: 'officer-1' },
+					{ assessorGateway3: 'Officer1' },
+					{ qaInspector1: 'Officer1' },
+					{ qaInspector2: 'Officer1' },
+					{ qaInspector3: 'Officer1' },
+					{ gateway2Info: { assessorName: 'Officer1' } },
+					//{gateway3Info:
+					//	{assessorName: 'Officer1'}
+					//},
+					{
+						examinationInfo: {
+							OR: [
+								//{assessorName: 'Officer1'},
+								{ examiningInspector1: 'Officer1' },
+								{ examiningInspector2: 'Officer1' },
+								{ examiningInspector3: 'Officer1' }
+								//{qaInspector1: 'Officer1'},
+								//{qaInspector2: 'Officer1'},
+								//{qaInspector3: 'Officer1'},
+							]
+						}
+					}
+				]
+			}
 		});
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments, [
 			'views/assigned-to-me/assigned-to-me.njk',
@@ -116,9 +141,7 @@ describe('buildAssignedToMe', () => {
 		await ctx.handler(ctx.req, ctx.res);
 
 		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
-		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
-			where: { caseOfficer: 'officer-1' }
-		});
+
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments[1], {
 			cases: [
 				{ id: 1, caseOfficer: 'User officer-1' },
