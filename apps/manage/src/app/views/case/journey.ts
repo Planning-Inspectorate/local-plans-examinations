@@ -91,7 +91,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.workshopVenue)
 				.addQuestion(questions.reportIssuedDate)
 				.addQuestion(questions.reportPublishedDate),
-			new Section('Workshop documents', 'workshop-documents').addQuestion(questions.workshopDocument)
+			new Section('Workshop documents', 'workshop-documents').addQuestion(questions.workshopDocuments)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
