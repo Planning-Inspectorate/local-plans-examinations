@@ -35,7 +35,9 @@
     "cy:manage:smoke": "cross-env TEST_TARGET=manage npx cypress run --expose grepTags=smoke --spec='cypress/e2e/manage/**/*'",
     "cy:manage:regression": "cross-env TEST_TARGET=manage npx cypress run --expose grepTags=regression --spec='cypress/e2e/manage/**/*'",
     "cy:manage:all": "cross-env TEST_TARGET=manage npx cypress run --spec='cypress/e2e/manage/**/*'",
-    "cy:open:manage": "cross-env TEST_TARGET=manage npx cypress open"
+    "cy:open:manage": "cross-env TEST_TARGET=manage npx cypress open",
+    "cy:cross-service:all": "cross-env TEST_TARGET=cross-service npx cypress run --spec='cypress/e2e/cross-service/**/*'",
+    "cy:open:cross-service": "cross-env TEST_TARGET=cross-service npx cypress open"
   },
   "dependencies": {
     "@azure/functions": "^4.16.2",

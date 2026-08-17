@@ -17,12 +17,12 @@ export class CaseOverviewProgrammeOfficerPage extends BasePage {
 		return cy.get('input[name="programmeOfficerEmail"]');
 	}
 
-	verifyLoaded() {
+	verifyLoaded(firstName = '', lastName = '', email = '') {
 		super.verifyLoaded();
 		this.verifyHeading('Programme Officer details');
-		this.programmeOfficerFirstNameInput.should('be.visible').and('have.value', '');
-		this.programmeOfficerLastNameInput.should('be.visible').and('have.value', '');
-		this.programmeOfficerEmailInput.should('be.visible').and('have.value', '');
+		this.programmeOfficerFirstNameInput.should('be.visible').and('have.value', firstName);
+		this.programmeOfficerLastNameInput.should('be.visible').and('have.value', lastName);
+		this.programmeOfficerEmailInput.should('be.visible').and('have.value', email);
 		this.verifySaveAndContinueVisible();
 	}
 

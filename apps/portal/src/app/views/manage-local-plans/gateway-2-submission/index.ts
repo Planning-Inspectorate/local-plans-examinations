@@ -45,6 +45,9 @@ import {
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import { getRoutePlanReference } from './utils.ts';
+import { createApplicationCompleteRoutes } from './application-complete/index.ts';
+import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -74,6 +77,7 @@ const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((qu
 const gateway2FileUploadQuestionsByUrl = new Map(
 	gateway2FileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
 );
+const GATEWAY_2_SUBMIT_ERROR = 'Add at least one document before submitting';
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
@@ -86,6 +90,9 @@ type Gateway2Request = Request & {
 	session: Gateway2Session;
 };
 
+// TODO: This shared Multer middleware uses the largest Gateway 2 question
+// upload limit because the upload routes are shared and the current question is
+// resolved later.
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
@@ -115,6 +122,8 @@ function redirectAfterCaseQuestionEdit(saveDataToCase: ReturnType<typeof buildSa
 	};
 }
 
+// TODO: Move this to a shared manage-local-plans utility when Gateway 3 or
+// other manage workflow sections use the same check answers redirect pattern.
 // Reads the check answers redirect query and converts it to true or false.
 function getCheckAnswersRedirect(req: Request): boolean | undefined {
 	const redirect = Array.isArray(req.query?.[CHECK_ANSWERS_REDIRECT_QUERY])
@@ -132,7 +141,8 @@ function getCheckAnswersRedirect(req: Request): boolean | undefined {
 
 // Builds the URL for the current file upload question.
 function redirectToFileUploaderQuestion(req: Request) {
-	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
+	const planReference = getRoutePlanReference(req);
+	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
 	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
 }
 
@@ -217,6 +227,80 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 	};
 }
 
+function setGateway2CheckAnswersViewData(req: Request, res: Response, next: NextFunction) {
+	setGateway2CheckAnswersViewLocals(req, res);
+	next();
+}
+
+function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
+	const request = req as Gateway2Request;
+	const planReference = getRoutePlanReference(req);
+	const currentCase = request.currentCase;
+
+	res.locals.pageTitle = 'Gateway 2 submission';
+	res.locals.pageHeading = 'Gateway 2 submission';
+	res.locals.pageCaption = currentCase?.planTitle;
+
+	if (planReference) {
+		const encodedPlanReference = encodeURIComponent(planReference);
+		res.locals.backLinkUrl = `/manage-local-plans/${encodedPlanReference}`;
+		res.locals.saveAndComeBackUrl = `/manage-local-plans/${encodedPlanReference}`;
+	}
+
+	if (currentCase?.gateway2Date) {
+		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
+	}
+}
+
+function buildGateway2CheckAnswersList(): RequestHandler {
+	return (req, res, next) => {
+		const request = req as Gateway2Request;
+
+		return buildList({
+			pageCaption: request.currentCase?.planTitle
+		})(req, res, next);
+	};
+}
+
+function validateGateway2Submission(): RequestHandler {
+	return (req, res, next) => {
+		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		const answers = journeyResponse?.answers ?? {};
+		const hasAnsweredQuestion = gateway2FileUploadQuestionConfigs.some((questionConfig) => {
+			const answer = answers[questionConfig.fieldName];
+			return Array.isArray(answer) && answer.length > 0;
+		});
+
+		if (hasAnsweredQuestion) {
+			return next();
+		}
+
+		setGateway2CheckAnswersViewLocals(req, res);
+		res.status(400);
+		res.locals.errors = {
+			submit: {
+				text: GATEWAY_2_SUBMIT_ERROR
+			}
+		};
+		res.locals.errorSummary = [
+			{
+				text: GATEWAY_2_SUBMIT_ERROR,
+				href: '#procedural-documents'
+			}
+		];
+
+		return buildGateway2CheckAnswersList()(req, res, next);
+	};
+}
+
+function formatDisplayDate(date: Date) {
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
+}
+
 // Saves case-scoped answers into the session.
 function buildSaveDataToCase(): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
@@ -282,32 +366,9 @@ export function syncGateway2UploadAnswer(req: Request, fieldName: string, upload
 	delete answers[fieldName];
 }
 
-// Reads the plan reference from the route params.
-function getRoutePlanReference(req: Request): string | undefined {
-	const planReference = Array.isArray(req.params.planReference)
-		? req.params.planReference[0]
-		: req.params.planReference;
-
-	return planReference || undefined;
-}
-
-// Gets the plan reference in the format used by the database.
+// Gets the decoded plan reference in the format used by the database.
 function getPlanReference(req: Request): string | undefined {
-	const planReference = getRoutePlanReference(req);
-	return normalisePlanReferenceForLookup(planReference);
-}
-
-// Converts route references like PLAN-123 to database references like PLAN/123.
-export function normalisePlanReferenceForLookup(planReference: string | undefined): string | undefined {
-	if (!planReference) {
-		return undefined;
-	}
-
-	if (/^PLAN-\d+$/.test(planReference)) {
-		return planReference.replace('PLAN-', 'PLAN/');
-	}
-
-	return planReference;
+	return getRoutePlanReference(req);
 }
 
 // Renders the standard page not found screen.
@@ -547,19 +608,40 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		)
 	);
 
-	router.get('/gateway-2-submission', getJourneyResponse, getJourney, setAsEditingFromCya, buildList());
+	router.get(
+		'/gateway-2-submission',
+		getJourneyResponse,
+		getJourney,
+		setAsEditingFromCya,
+		setGateway2CheckAnswersViewData,
+		buildGateway2CheckAnswersList()
+	);
 
-	router.post('/gateway-2-submission', getJourneyResponse, getJourney, saveToDatabase);
+	router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission(), saveToDatabase);
+
+	router.use(
+		'/:planReference/gateway-2-submission/application-declaration',
+		createApplicationDeclarationRoutes(service)
+	);
+
+	router.use('/:planReference/gateway-2-submission/application-complete', createApplicationCompleteRoutes());
 
 	router.get(
 		'/:planReference/gateway-2-submission',
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,
-		buildList()
+		setGateway2CheckAnswersViewData,
+		buildGateway2CheckAnswersList()
 	);
 
-	router.post('/:planReference/gateway-2-submission', getJourneyResponseFromCase, getJourney, saveToDatabase);
+	router.post(
+		'/:planReference/gateway-2-submission',
+		getJourneyResponseFromCase,
+		getJourney,
+		validateGateway2Submission(),
+		saveToDatabase
+	);
 
 	router.post(
 		'/:planReference/gateway-2-submission/:section/:question/upload-documents',
