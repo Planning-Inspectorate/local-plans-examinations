@@ -1,0 +1,167 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block pageTitle %}Gateway 3 submission{% endblock %}
+
+{# Temporary placeholder rows. Remove these macros when the remaining Gateway 3 items are converted to dynamic components. #}
+{% macro placeholderRow(text, dataCy) %}
+    <tr class="govuk-table__row">
+        <td class="govuk-table__cell">{{ text }}</td>
+        <td class="govuk-table__cell">Not added</td>
+        <td class="govuk-table__cell">
+            <a href="#" class="govuk-link" data-cy="{{ dataCy }}">Add</a>
+        </td>
+    </tr>
+{% endmacro %}
+
+{% macro placeholderTable(heading, id, rows) %}
+    <div class="govuk-!-margin-bottom-8" data-cy="{{ id }}-section">
+        <h2 class="govuk-heading-m" id="{{ id }}">{{ heading }}</h2>
+
+        <table class="govuk-table" data-cy="{{ id }}-table">
+            <thead class="govuk-table__head">
+                <tr class="govuk-table__row">
+                    <th scope="col" class="govuk-table__header govuk-visually-hidden">Document</th>
+                    <th scope="col" class="govuk-table__header govuk-visually-hidden">Status</th>
+                    <th scope="col" class="govuk-table__header govuk-visually-hidden">Action</th>
+                </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+                {% for row in rows %}
+                    {{ placeholderRow(row.text, row.dataCy) }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds app-grid-column--80">
+        {{ govukInsetText({
+            text: "Your target submission date is " + (targetDate or "") + ". A Gateway 3 assessment usually takes about 6 weeks."
+        }) }}
+
+        {% if saveAndComeBackUrl %}
+            <p class="govuk-body">
+                <a href="{{ saveAndComeBackUrl }}" class="govuk-link" data-cy="save-and-come-back">Save and come back later</a>
+            </p>
+            <hr class="govuk-section-break govuk-section-break--visible app-section-break">
+        {% endif %}
+
+        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
+
+        {% for section in summaryListData.sections %}
+            {% if section.list.rows.length %}
+                <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
+                    {% if errors and errors.submit %}
+                        <p class="govuk-error-message" data-cy="submit-error">
+                            <span class="govuk-visually-hidden">Error:</span> {{ errors.submit.text }}
+                        </p>
+                    {% endif %}
+
+                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+
+                    <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Document</th>
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Status</th>
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="govuk-table__body">
+                            {% for row in section.list.rows %}
+                                <tr class="govuk-table__row">
+                                    <td class="govuk-table__cell">{{ row.key.text }}</td>
+                                    <td class="govuk-table__cell">
+                                        {% if row.value.html %}
+                                            {{ row.value.html | safe }}
+                                        {% else %}
+                                            {{ row.value.text }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="govuk-table__cell">
+                                        {% if row.actions and row.actions.items %}
+                                            {% for action in row.actions.items %}
+                                                <a href="{{ action.href }}" class="govuk-link" data-cy="add-{{ row.key.text | lower | replace(' ', '-') }}">
+                                                    {{ action.text }}
+                                                    {% if action.visuallyHiddenText %}
+                                                        <span class="govuk-visually-hidden"> {{ action.visuallyHiddenText }}</span>
+                                                    {% endif %}
+                                                </a>{% if not loop.last %}<br>{% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            {% if section.heading | lower == "procedural documents" %}
+                                {# Temporary placeholder rows. Remove when these items are converted to dynamic components. #}
+                                {{ placeholderRow("Draft statement of compliance", "add-draft-statement-of-compliance") }}
+                                {{ placeholderRow("Draft statement of soundness", "add-draft-statement-of-soundness") }}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        {# Temporary placeholder sections. Remove when these items are converted to dynamic components. #}
+        {{ placeholderTable("Consultation Documents", "consultation-documents", [
+            {
+                text: "Notice of Intention to commence local plan preparation",
+                dataCy: "add-notice-of-intention"
+            },
+            {
+                text: "Scoping consultation documents",
+                dataCy: "add-scoping-consultation-documents"
+            },
+            {
+                text: "Consultation summary of feedback to scoping consultation",
+                dataCy: "add-consultation-summary-scoping"
+            },
+            {
+                text: "Gateway 1 - Self Assessment of Readiness",
+                dataCy: "add-gateway-1-self-assessment"
+            },
+            {
+                text: "Consultation on proposed local plan content and evidence documents",
+                dataCy: "add-consultation-proposed-content"
+            },
+            {
+                text: "Consultation summary for proposed local plan content and evidence documents",
+                dataCy: "add-consultation-summary-proposed-content"
+            }
+        ]) }}
+
+        {{ placeholderTable("Additional documents", "additional-documents", [
+            {
+                text: "Subsequent work towards a draft Plan",
+                dataCy: "add-subsequent-work"
+            }
+        ]) }}
+
+        {{ placeholderTable("Workshop preferences", "workshop-preferences", [
+            {
+                text: "Suggested workshop venue",
+                dataCy: "add-workshop-venue"
+            },
+            {
+                text: "Suggested workshop dates",
+                dataCy: "add-workshop-dates"
+            }
+        ]) }}
+
+        <form method="post" novalidate>
+            <input type="hidden" name="_csrf" value="{{ _csrf }}">
+            {{ govukButton({
+                text: "Submit for Gateway 3 assessment",
+                attributes: { "data-cy": "submit-gateway-3" }
+            }) }}
+        </form>
+
+    </div>
+</div>
+{% endblock %}

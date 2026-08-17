@@ -23,9 +23,10 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const planStatus = statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
 		const encodedPlanRef = encodeURIComponent(plan.refNum);
-		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
-		const currentApplicationLink = `${applicationBase}/application-declaration`;
-		const applicationLink = () => applicationBase;
+		const gateway2ApplicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
+		const gateway3ApplicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
+		const currentApplicationBase = plan.stage === STAGE.Gateway3 ? gateway3ApplicationBase : gateway2ApplicationBase;
+		const currentApplicationLink = `${currentApplicationBase}/application-declaration`;
 
 		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
 
@@ -40,20 +41,17 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 		switch (plan.stage) {
 			case STAGE.Gateway2:
-				hrefG2 = applicationLink();
+				hrefG2 = gateway2ApplicationBase;
 				tagG2 = planStatus;
 				break;
 			case STAGE.Gateway3:
 				dateTextG2 = 'Completed on:';
-				hrefG2 = applicationLink();
-				hrefG3 = applicationLink();
+				hrefG3 = gateway3ApplicationBase;
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
 				break;
 			case STAGE.Examination:
-				hrefG2 = applicationLink();
-				hrefG3 = applicationLink();
-				hrefE = applicationLink();
+				hrefE = gateway2ApplicationBase;
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
 					tagG2 = tagG3 = tagE = 'Completed';
