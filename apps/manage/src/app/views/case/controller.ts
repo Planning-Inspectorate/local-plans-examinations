@@ -757,6 +757,7 @@ function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: stri
 	);
 
 	return option?.text ?? `${value ?? ''}`;
+}
 
 /**
  * Return the url for the question
