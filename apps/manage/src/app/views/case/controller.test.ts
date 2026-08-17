@@ -745,9 +745,6 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
 			where: {
 				reference: REFERENCE
-			},
-			select: {
-				planTitle: true
 			}
 		});
 
