@@ -40,6 +40,14 @@ function createService(): any {
 			examinationInfo: {
 				upsert: mock.fn(async () => ({})),
 				findUnique: mock.fn(async () => null)
+			},
+			documentSet: {
+				upsert: mock.fn(async () => ({})),
+				findMany: mock.fn(async () => [])
+			},
+			document: {
+				upsert: mock.fn(async () => ({})),
+				findMany: mock.fn(async () => [])
 			}
 		},
 		logger: {
@@ -720,6 +728,9 @@ describe('buildGetJourneyMiddleware', () => {
 			url,
 			params: {
 				reference
+			},
+			session: {
+				fileUploader: null
 			}
 		};
 		const res = createResponse();
@@ -811,8 +822,7 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 2);
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
-			where: { reference: 'PLAN/123456' },
-			select: { planTitle: true }
+			where: { reference: 'PLAN/123456' }
 		});
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[1].arguments[0], {
@@ -955,6 +965,8 @@ describe('buildGetJourneyMiddleware', () => {
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: 'somecase',
+			reference: 'some reference',
 			planTitle: 'Southshire Local Plan'
 		}));
 
@@ -962,6 +974,14 @@ describe('buildGetJourneyMiddleware', () => {
 			caseId: REFERENCE,
 			assessorName: 'Alex Assessor'
 		}));
+
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
+			{
+				id: '1',
+				folderName: 'gateway-2-workshop-document'
+			}
+		]);
+		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
