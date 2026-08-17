@@ -8,10 +8,12 @@ try { loadEnvFile(); } catch {/* ignore errors*/}
 
 const target = process.env.TEST_TARGET || 'portal';
 const baseUrls: Record<string, string> = {
+	'cross-service': process.env.MANAGE_BASE_URL || 'http://localhost:8090',
 	manage: process.env.MANAGE_BASE_URL || 'http://localhost:8090',
 	portal: process.env.PORTAL_BASE_URL || 'http://localhost:8080'
 };
 const specPatterns: Record<string, string> = {
+	'cross-service': 'cypress/e2e/cross-service/**/*',
 	manage: 'cypress/e2e/manage/**/*',
 	portal: 'cypress/e2e/portal/**/*'
 };
@@ -47,6 +49,10 @@ export default defineConfig({
 
 	e2e: {
 		baseUrl,
+		env: {
+			manageBaseUrl: baseUrls.manage,
+			portalBaseUrl: baseUrls.portal
+		},
 		specPattern,
 		screenshotsFolder: 'cypress/reports/screenshots',
 		async setupNodeEvents(on, config) {
@@ -59,6 +65,10 @@ export default defineConfig({
 			on('task', {
 				seedDb: async () => {
 					await runCommand('node packages/database/src/seed/seed-cy.ts');
+					return null;
+				},
+				seedStaticData: async () => {
+					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;
 				},
 				seedCase: async () => {
