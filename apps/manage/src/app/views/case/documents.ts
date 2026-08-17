@@ -29,7 +29,7 @@ type DocumentRow = {
 	latestDocumentVersion: DocumentVersionRow | null;
 };
 
-type SyncGateway2DocumentsParams = {
+type SyncDocumentsParams = {
 	caseId: string;
 	documentSetId: string;
 	uploadedFiles: UploadedFile[];
@@ -40,18 +40,14 @@ type DocumentSetRow = {
 	folderName: string;
 };
 
-// Loads the saved files for this Gateway 2 upload question.
-export async function loadGateway2Documents(
-	service: ManageService,
-	caseId: string,
-	documentSetFolderName: string
-): Promise<UploadedFile[]> {
-	const documentSetId = await getDocumentSetIdByFolderName(service, documentSetFolderName);
-	return loadUploadedDocuments(service, caseId, documentSetId);
-}
-
-// Saves the current Gateway 2 upload state.
-export async function saveGateway2Documents(
+/**
+ * Saves the current upload state.
+ * @param service The manage service
+ * @param req The request object
+ * @param documentSetFolderName The document set folder name
+ * @param uploadedFiles An array of uploaded files
+ */
+export async function saveDocuments(
 	service: ManageService,
 	req: Request,
 	documentSetFolderName: string,
@@ -60,19 +56,25 @@ export async function saveGateway2Documents(
 	console.log('attemping to save document');
 	const caseId = (req as RequestWithCurrentCase).currentCase?.id;
 	if (!caseId) {
-		throw new Error('Cannot save Gateway 2 documents without a loaded case');
+		throw new Error('Cannot save documents without a loaded case');
 	}
 
 	const documentSetId = await getDocumentSetIdByFolderName(service, documentSetFolderName);
 
-	await syncGateway2Documents(service, {
+	await syncDocuments(service, {
 		caseId,
 		documentSetId,
 		uploadedFiles
 	});
 }
 
-// Reads active documents from the database.
+/**
+ * Reads active documents from the database.
+ * @param service The manage service
+ * @param caseId The case to load the documents for
+ * @param documentSetId The specific document set to load
+ * @returns An array of uploaded file details
+ */
 export async function loadUploadedDocuments(
 	service: ManageService,
 	caseId: string,
@@ -95,10 +97,14 @@ export async function loadUploadedDocuments(
 	return documents.map(mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 }
 
-// Makes the database match the uploaded file list.
-async function syncGateway2Documents(
+/**
+ * Makes the database match the uploaded file list
+ * @param service The manage service
+ * @param param1 An object that holds the case id, documentSet id and an array of uploaded files
+ */
+async function syncDocuments(
 	service: ManageService,
-	{ caseId, documentSetId, uploadedFiles }: SyncGateway2DocumentsParams
+	{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
 ): Promise<void> {
 	const existingDocuments = (await service.db.document.findMany({
 		where: {
@@ -145,7 +151,11 @@ async function syncGateway2Documents(
 	});
 }
 
-// Converts a document row into the uploader shape.
+/**
+ * Converts document details into a structure that the FileUpload component accepts
+ * @param document An answer that holds documenr details
+ * @returns Reformatted answer details into a structure that the FileUpload component accepts
+ */
 function mapDocumentToUploadedFile(document: DocumentRow): UploadedFile | undefined {
 	const version = document.latestDocumentVersion;
 	if (!version || version.isDeleted) {
@@ -171,13 +181,22 @@ function mapDocumentToUploadedFile(document: DocumentRow): UploadedFile | undefi
 	};
 }
 
-// Gets the storage id used by the uploader.
+/**
+ * Gets the storage id used by the uploader.
+ * @param document The document details
+ * @returns The storage id of the document's storage location
+ */
 function getDocumentUploadedFileId(document: DocumentRow): string | undefined {
 	const version = document.latestDocumentVersion;
 	return version?.blobStoragePath ?? version?.documentURI ?? document.name;
 }
 
-// Finds document set reference data for all configured question URLs/folder names.
+/**
+ * Finds document set reference data for all configured question URLs/folder names.
+ * @param service The manage service
+ * @param documentSetFolderNames Array of folder names to load
+ * @returns
+ */
 export async function getDocumentSetIdsByFolderName(
 	service: ManageService,
 	documentSetFolderNames: string[]
@@ -208,7 +227,12 @@ export async function getDocumentSetIdsByFolderName(
 	return documentSetIdsByFolderName;
 }
 
-// Finds the document set reference data from the question URL/folder name.
+/**
+ * Finds the document set reference data from the question URL/folder name.
+ * @param service The manage service
+ * @param documentSetFolderName The name of the document set folder to load
+ * @returns The document set's id
+ */
 async function getDocumentSetIdByFolderName(service: ManageService, documentSetFolderName: string): Promise<string> {
 	const documentSet = await service.db.documentSet.findFirst({
 		where: {
@@ -228,7 +252,11 @@ async function getDocumentSetIdByFolderName(service: ManageService, documentSetF
 	return documentSet.id;
 }
 
-// Creates the document and its first version.
+/**
+ * Creates the document and its first version.
+ * @param tx A database transaction client
+ * @param param1 An object of case id, documentSet id and the uploaded file details
+ */
 async function createDocument(
 	tx: TransactionClient,
 	{ caseId, documentSetId, file }: { caseId: string; documentSetId: string; file: UploadedFile }
@@ -271,7 +299,11 @@ async function createDocument(
 	});
 }
 
-// Marks a document and all versions as deleted.
+/**
+ * Marks a document and all versions as deleted.
+ * @param tx A database transaction client
+ * @param documentGuid The guid of the document to soft delete
+ */
 async function softDeleteDocument(tx: TransactionClient, documentGuid: string) {
 	await tx.document.update({
 		where: {
@@ -292,7 +324,11 @@ async function softDeleteDocument(tx: TransactionClient, documentGuid: string) {
 	});
 }
 
-// Brings a previously deleted document back.
+/**
+ * Brings a previously deleted document back.
+ * @param tx A database transaction client
+ * @param document The document details
+ */
 async function restoreDocument(tx: TransactionClient, document: DocumentRow) {
 	await tx.document.update({
 		where: {

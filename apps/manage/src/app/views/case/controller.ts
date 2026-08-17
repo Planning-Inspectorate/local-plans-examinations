@@ -132,7 +132,7 @@ const caseHistoryLabels: Record<string, string> = {
 	approvedForCILDate: 'Approved for CIL date'
 };
 
-type Gateway2Session = Request['session'] &
+type FileUploadSession = Request['session'] &
 	FileUploaderSession & {
 		editingFromCheckAnswers?: boolean;
 		forms?: Record<string, unknown>;
@@ -140,10 +140,10 @@ type Gateway2Session = Request['session'] &
 
 export type UploadDocumentRequest = Request & {
 	currentCase?: CaseModel;
-	session: Gateway2Session;
+	session: FileUploadSession;
 };
 
-// The Gateway 2 upload routes are shared by all of the document questions.
+// The file upload routes are shared by all of the document questions.
 // Keep the question configs in a couple of route-friendly shapes so the URL in
 // `:question` decides which field, validation rules and document set are used.
 export type FileUploadQuestion = FileUploaderQuestionProps & {
@@ -556,6 +556,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 	};
 }
 
+/**
+ * Load the documents for the given case and prepopulate the answer fields with their names
+ * @param service The manage service
+ * @param currentCase The case from the database
+ * @param req The request object
+ * @param answers The answers that the details should be added to
+ */
 async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
@@ -772,11 +779,21 @@ function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: stri
 
 	return option?.text ?? `${value ?? ''}`;
 
+/**
+ * Return the url for the question
+ * @param req The request that holds the question
+ * @returns The first question if the question is an array, just the question itself if it is a string, or undefined if not found
+ */
 export function getRouteQuestionUrl(req: Request): string | undefined {
 	const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
 	return questionUrl || undefined;
 }
 
+/**
+ * Load the question details for the given question
+ * @param req The request that holds the question
+ * @returns The config for the question as defined in questions.ts
+ */
 export function getRouteFileUploadQuestion(req: Request): FileUploadQuestion {
 	const questionUrl = getRouteQuestionUrl(req);
 	const questionConfig = questionUrl ? fileUploadQuestionsByUrl.get(questionUrl) : undefined;
@@ -787,13 +804,25 @@ export function getRouteFileUploadQuestion(req: Request): FileUploadQuestion {
 	return questionConfig;
 }
 
-// Retrieves the plan reference from the params and creates the file upload session key.
+/**
+ * Retrieves the plan reference from the params and creates the file upload session key.
+ * Example format: LP-TEST-001:gateway2CoverLetter.
+ * @param req The request that holds the question
+ * @returns A URL segment of the form `planReference:fieldName`
+ */
+//
 // Example format: LP-TEST-001:gateway2CoverLetter.
 export function fileUploaderCaseSessionKey(req: Request) {
 	const questionConfig = getRouteFileUploadQuestion(req);
 	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
 }
 
+/**
+ * Return a URL segment for the given request and fieldName
+ * @param req The request object which holds the session details
+ * @param fieldName The field to generate the URL segment for
+ * @returns A string of the form `planReference:fieldName`
+ */
 export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
 	return `${req.params.planReference}:${fieldName}`;
 }

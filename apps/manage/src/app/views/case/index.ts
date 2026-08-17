@@ -43,15 +43,9 @@ import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
 	fileUploaderQuestionMiddleware,
-	//FileUploaderQuestion,
-	//type FileUploaderSession,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import {
-	//getDocumentSetIdsByFolderName,
-	//loadGateway2DocumentsByDocumentSetId,
-	saveGateway2Documents
-} from './documents.ts';
+import { saveDocuments } from './documents.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -146,59 +140,6 @@ function registerCaseJourney(
 		? `/${path}/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}`
 		: `/${path}/:section/:question`;
 
-	// File upload
-	const fileUploaderStorage = () => service.createFileStorage(journeyId);
-	const uploadDocumentRoute = buildFileUploadRouteHandler(
-		new Map(
-			fileUploadQuestionConfigs.map((questionConfig) => [
-				questionConfig.url,
-				createFileUploaderUploadController({
-					fieldName: questionConfig.fieldName,
-					question: questionConfig,
-					storage: fileUploaderStorage,
-					destination: (req) => ({
-						folderPath: `${req.sessionID ?? 'session'}/${questionConfig.url}`,
-						metadata: {
-							journeyId: journeyId,
-							fieldName: questionConfig.fieldName,
-							documentSetFolderName: questionConfig.url
-						}
-					}),
-					onFilesChange: async ({ req, uploadedFiles }) => {
-						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
-						syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
-						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
-					},
-					onUploadError: ({ req, errors, error }) =>
-						logGateway2UploadFailed(service, req, questionConfig, { errors, error }),
-					onUploadCleanupError: ({ req, file, error }) =>
-						logGateway2UploadCleanupFailed(service, req, questionConfig, file, error),
-					redirect: redirectToFileUploaderQuestion
-				})
-			])
-		)
-	);
-	const deleteDocumentRoute = buildFileUploadRouteHandler(
-		new Map(
-			fileUploadQuestionConfigs.map((questionConfig) => [
-				questionConfig.url,
-				createFileUploaderDeleteController({
-					fieldName: questionConfig.fieldName,
-					question: questionConfig,
-					storage: fileUploaderStorage,
-					onFilesChange: async ({ req, uploadedFiles }) => {
-						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
-						syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
-						logGateway2Deleted(service, req, questionConfig, uploadedFiles);
-					},
-					onDeleteError: ({ req, fileId, error }) =>
-						logGateway2DeleteFailed(service, req, questionConfig, fileId, error),
-					redirect: redirectToFileUploaderQuestion
-				})
-			])
-		)
-	);
-
 	// List view
 	router.get(
 		`/${path}`,
@@ -233,12 +174,61 @@ function registerCaseJourney(
 		buildSave(updateCase, true)
 	);
 	if (supportsFileUpload) {
+		const fileUploaderStorage = () => service.createFileStorage(journeyId);
+		const uploadDocumentRoute = buildFileUploadRouteHandler(
+			new Map(
+				fileUploadQuestionConfigs.map((questionConfig) => [
+					questionConfig.url,
+					createFileUploaderUploadController({
+						fieldName: questionConfig.fieldName,
+						question: questionConfig,
+						storage: fileUploaderStorage,
+						destination: (req) => ({
+							folderPath: `${req.sessionID ?? 'session'}/${questionConfig.url}`,
+							metadata: {
+								journeyId: journeyId,
+								fieldName: questionConfig.fieldName,
+								documentSetFolderName: questionConfig.url
+							}
+						}),
+						onFilesChange: async ({ req, uploadedFiles }) => {
+							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
+							logFileUploaded(service, req, questionConfig, uploadedFiles);
+						},
+						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
+						onUploadCleanupError: ({ req, file, error }) =>
+							logUploadCleanupFailed(service, req, questionConfig, file, error),
+						redirect: redirectToFileUploaderQuestion
+					})
+				])
+			)
+		);
+		const deleteDocumentRoute = buildFileUploadRouteHandler(
+			new Map(
+				fileUploadQuestionConfigs.map((questionConfig) => [
+					questionConfig.url,
+					createFileUploaderDeleteController({
+						fieldName: questionConfig.fieldName,
+						question: questionConfig,
+						storage: fileUploaderStorage,
+						onFilesChange: async ({ req, uploadedFiles }) => {
+							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
+							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
+						},
+						onDeleteError: ({ req, fileId, error }) =>
+							logDocumentDeleteFailed(service, req, questionConfig, fileId, error),
+						redirect: redirectToFileUploaderQuestion
+					})
+				])
+			)
+		);
 		router.post(
 			`${questionPath}/upload-documents`,
 			getJourneyResponse,
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
-			//buildSave(updateCase, true),
 			upload.array('files[]'),
 			uploadDocumentRoute
 		);
@@ -247,12 +237,16 @@ function registerCaseJourney(
 			getJourneyResponse,
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
-			//buildSave(updateCase, true),
 			deleteDocumentRoute
 		);
 	}
 }
 
+/**
+ * Create a route handler
+ * @param handlersByQuestionUrl A map of question to the underlying handler object
+ * @returns The result of the request handler
+ */
 function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestHandler>): RequestHandler {
 	return (req, res, next) => {
 		const questionUrl = getRouteQuestionUrl(req);
@@ -265,7 +259,13 @@ function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestH
 	};
 }
 
-// Keeps a file upload answer in sync with uploaded files.
+/**
+ * Keeps a file upload answer in sync with uploaded files.
+ * @param journeyId The id of the journey
+ * @param req The request that holds the session details
+ * @param fieldName The field that the uploaded file belongs to
+ * @param uploadedFiles An array of uploaded files
+ */
 export function syncUploadAnswer(journeyId: string, req: Request, fieldName: string, uploadedFiles: UploadedFile[]) {
 	if (!req.session) {
 		return;
@@ -287,7 +287,7 @@ export function syncUploadAnswer(journeyId: string, req: Request, fieldName: str
 	delete answers[fieldName];
 }
 
-function logGateway2Uploaded(
+function logFileUploaded(
 	service: ManageService,
 	req: Request,
 	questionConfig: FileUploadQuestion,
@@ -295,33 +295,33 @@ function logGateway2Uploaded(
 ) {
 	service.logger.info(
 		{
-			...gateway2UploadLogContext(req, questionConfig),
+			...uploadLogContext(req, questionConfig),
 			fileCount: uploadedFiles.length
 		},
-		'Gateway 2 document uploaded'
+		'Document uploaded'
 	);
 }
 
-function logGateway2UploadFailed(
+function logUploadFailed(
 	service: ManageService,
 	req: Request,
 	questionConfig: FileUploadQuestion,
 	{ errors, error }: { errors?: Array<{ text: string; href: string }>; error?: unknown }
 ) {
 	const context = {
-		...gateway2UploadLogContext(req, questionConfig),
+		...uploadLogContext(req, questionConfig),
 		errorCount: errors?.length ?? 0
 	};
 
 	if (error) {
-		service.logger.error({ ...context, error }, 'Gateway 2 document upload failed');
+		service.logger.error({ ...context, error }, 'Document upload failed');
 		return;
 	}
 
 	service.logger.warn(context, 'Gateway 2 document upload failed');
 }
 
-function logGateway2UploadCleanupFailed(
+function logUploadCleanupFailed(
 	service: ManageService,
 	req: Request,
 	questionConfig: FileUploadQuestion,
@@ -330,11 +330,11 @@ function logGateway2UploadCleanupFailed(
 ) {
 	service.logger.error(
 		{
-			...gateway2UploadLogContext(req, questionConfig),
+			...uploadLogContext(req, questionConfig),
 			fileId: file.id,
 			error
 		},
-		'Gateway 2 document upload cleanup failed'
+		'Document upload cleanup failed'
 	);
 }
 
@@ -357,7 +357,7 @@ function getRoutePlanReference(req: Request): string | undefined {
 	return planReference || undefined;
 }
 
-function gateway2UploadLogContext(req: Request, questionConfig: FileUploadQuestion) {
+function uploadLogContext(req: Request, questionConfig: FileUploadQuestion) {
 	const request = req as UploadDocumentRequest;
 	return {
 		planReference: getRoutePlanReference(req),
@@ -367,7 +367,7 @@ function gateway2UploadLogContext(req: Request, questionConfig: FileUploadQuesti
 	};
 }
 
-function logGateway2Deleted(
+function logDocumentDeleted(
 	service: ManageService,
 	req: Request,
 	questionConfig: FileUploadQuestion,
@@ -375,15 +375,15 @@ function logGateway2Deleted(
 ) {
 	service.logger.info(
 		{
-			...gateway2UploadLogContext(req, questionConfig),
+			...uploadLogContext(req, questionConfig),
 			fileId: req.params.fileId,
 			remainingFileCount: uploadedFiles.length
 		},
-		'Gateway 2 document deleted'
+		'Document deleted'
 	);
 }
 
-function logGateway2DeleteFailed(
+function logDocumentDeleteFailed(
 	service: ManageService,
 	req: Request,
 	questionConfig: FileUploadQuestion,
@@ -392,11 +392,11 @@ function logGateway2DeleteFailed(
 ) {
 	service.logger.error(
 		{
-			...gateway2UploadLogContext(req, questionConfig),
+			...uploadLogContext(req, questionConfig),
 			fileId,
 			error
 		},
-		'Gateway 2 document delete failed'
+		'Document delete failed'
 	);
 }
 
