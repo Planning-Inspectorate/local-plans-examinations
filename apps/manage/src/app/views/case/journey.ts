@@ -6,6 +6,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
+export const GATEWAY_3_JOURNEY_ID = 'gateway-3';
 export const EXAMINATION_JOURNEY_ID = 'examination';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -47,6 +48,32 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 	});
 
 	return getBacklinks(journey, overviewUrl);
+}
+
+export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway3Url = req.baseUrl + '/gateway-3';
+
+	const journey = new Journey({
+		journeyId: GATEWAY_3_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 3', 'gateway-3')
+				.addQuestion(questions.gateway3EstimatedDate)
+				.addQuestion(questions.gateway3ActualDate)
+				.addQuestion(questions.gateway3AssessorsName)
+				.addQuestion(questions.gateway3AssessorDateOfAppointment)
+				.addQuestion(questions.programmeOfficerDetails)
+				.addQuestion(questions.gateway3CompletionDate)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Gateway 3',
+		returnToListing: false,
+		makeBaseUrl: () => gateway3Url,
+		initialBackLink: gateway3Url,
+		response
+	});
+
+	return getBacklinks(journey, gateway3Url);
 }
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {

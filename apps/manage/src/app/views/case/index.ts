@@ -22,9 +22,11 @@ import {
 	createOverviewJourney,
 	createGateway1Journey,
 	createGateway2Journey,
+	createGateway3Journey,
 	createExaminationJourney,
 	GATEWAY_1_JOURNEY_ID,
 	GATEWAY_2_JOURNEY_ID,
+	GATEWAY_3_JOURNEY_ID,
 	OVERVIEW_JOURNEY_ID,
 	EXAMINATION_JOURNEY_ID
 } from './journey.ts';
@@ -57,6 +59,11 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
 		supportsManageList: true
+	},
+	{
+		path: 'gateway-3',
+		journeyId: GATEWAY_3_JOURNEY_ID,
+		createJourney: createGateway3Journey
 	},
 	{
 		path: 'examination',

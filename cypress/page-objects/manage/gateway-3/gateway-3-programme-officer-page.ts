@@ -1,8 +1,8 @@
 import { BasePage } from '../../base-page.ts';
 
-export class CaseOverviewProgrammeOfficerPage extends BasePage {
+export class Gateway3ProgrammeOfficerPage extends BasePage {
 	constructor() {
-		super(/^\/case\/.+\/overview\/contacts\/programme-officer$/);
+		super(/^\/case\/.+\/gateway-3\/gateway-3\/programme-officer$/);
 	}
 
 	get programmeOfficerFirstNameInput() {
@@ -34,4 +34,4 @@ export class CaseOverviewProgrammeOfficerPage extends BasePage {
 	}
 }
 
-export const caseOverviewProgrammeOfficerPage = new CaseOverviewProgrammeOfficerPage();
+export const gateway3ProgrammeOfficerPage = new Gateway3ProgrammeOfficerPage();
