@@ -63,7 +63,6 @@
   <div class="govuk-grid-row govuk-!-margin-top-6">
           <div class="govuk-grid-column-full">
               {% for section in summaryListData.sections %}
-              <h3>DEBUG: {{ section.heading }}</h3>
                   {% set formattedRows = [] %}
                   {% for row in section.list.rows %}
                     {% if row %}
