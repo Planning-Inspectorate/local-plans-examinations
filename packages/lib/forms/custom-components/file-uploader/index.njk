@@ -44,25 +44,6 @@
 				<p class="govuk-body">{{ question.text.totalUploadSizeText }}</p>
 			{% endif %}
 
-			{% if uploadedFiles and uploadedFiles.length %}
-				<dl class="govuk-summary-list">
-					{% for file in uploadedFiles %}
-						<div class="govuk-summary-list__row">
-							<dt class="govuk-summary-list__value">{{ file.fileName }}</dt>
-							<dd class="govuk-summary-list__actions">
-								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
-									<input type="hidden" name="_csrf" value="{{ _csrf }}">
-									<button class="govuk-link govuk-!-font-size-19" type="submit">
-										{{ question.text.removeLinkText or "Remove" }}
-										<span class="govuk-visually-hidden">{{ file.fileName }}</span>
-									</button>
-								</form>
-							</dd>
-						</div>
-					{% endfor %}
-				</dl>
-			{% endif %}
-
 			<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents">
 				<input type="hidden" name="_csrf" value="{{ _csrf }}">
 				{{ govukFileUpload({
@@ -85,6 +66,25 @@
 				}) }}
 				{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files" }) }}
 			</form>
+
+			{% if uploadedFiles and uploadedFiles.length %}
+				<dl class="govuk-summary-list">
+					{% for file in uploadedFiles %}
+						<div class="govuk-summary-list__row">
+							<dt class="govuk-summary-list__value">{{ file.fileName }}</dt>
+							<dd class="govuk-summary-list__actions">
+								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
+									<input type="hidden" name="_csrf" value="{{ _csrf }}">
+									<button class="app-link-button govuk-!-font-size-19" type="submit">
+										{{ question.text.removeLinkText or "Remove" }}
+										<span class="govuk-visually-hidden">{{ file.fileName }}</span>
+									</button>
+								</form>
+							</dd>
+						</div>
+					{% endfor %}
+				</dl>
+			{% endif %}
 
 			<form action="" method="post" novalidate>
 				<input type="hidden" name="_csrf" value="{{ _csrf }}">
