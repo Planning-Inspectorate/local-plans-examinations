@@ -1,6 +1,7 @@
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
+import { gateway3ProgrammeOfficerAnswer } from '../../../../fixtures/manage/gateway-3.ts';
 
 describe('Case overview', () => {
 	beforeEach(() => {
@@ -53,7 +54,12 @@ describe('Case overview', () => {
 			'Johnson',
 			'bob@lpa.gov.uk'
 		);
-		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
+		caseOverviewPage.verifySummaryRowContains(
+			'Programme Officer details',
+			gateway3ProgrammeOfficerAnswer.firstName,
+			gateway3ProgrammeOfficerAnswer.lastName,
+			gateway3ProgrammeOfficerAnswer.email
+		);
 		caseOverviewPage.verifyExpectedActionLinkHrefs();
 		caseOverviewPage.verifyDeleteCaseButton();
 	});

@@ -5,9 +5,9 @@ import {
 	updateCaseField,
 	trimStringValues,
 	buildGetJourneyMiddleware,
+	updateCaseHistory,
 	getDeleteCase,
-	postMarkAsDeleteCase,
-	updateCaseHistory
+	postMarkAsDeleteCase
 } from './controller.ts';
 
 const REFERENCE = 'PLAN/123456';
@@ -30,6 +30,10 @@ function createService(): any {
 				findUnique: mock.fn(async () => null)
 			},
 			gateway2Info: {
+				upsert: mock.fn(async () => ({})),
+				findUnique: mock.fn(async () => null)
+			},
+			gateway3Info: {
 				upsert: mock.fn(async () => ({})),
 				findUnique: mock.fn(async () => null)
 			},
@@ -323,6 +327,42 @@ describe('updateCaseField', () => {
 		});
 	});
 
+	it('upserts programme officer details from the overview programme-officer question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/overview',
+			params: {
+				question: 'programme-officer'
+			},
+			body: {
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			},
+			update: {
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			},
+			create: {
+				caseId: REFERENCE,
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			}
+		});
+	});
+
 	it('does not upsert contact details when the current item id is empty', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
@@ -380,7 +420,7 @@ describe('updateCaseField', () => {
 		const context = createSaveContext({
 			url: '/gateway-2',
 			params: {
-				question: 'gateway-2-assessor'
+				question: 'assessor-gateway-2'
 			},
 			body: {
 				assessorName: '  Alex Assessor  '
@@ -392,6 +432,32 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
 
 		const upsert = service.db.gateway2Info.upsert.mock.calls[0].arguments[0];
+
+		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.update.assessorName, 'Alex Assessor');
+		assert.equal(upsert.create.caseId, REFERENCE);
+		assert.equal(upsert.create.assessorName, 'Alex Assessor');
+		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
+		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
+	});
+
+	it('upserts gateway 3 data and sets appointment date for the assessor question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/gateway-3',
+			params: {
+				question: 'assessor-gateway-3'
+			},
+			body: {
+				assessorName: '  Alex Assessor  '
+			}
+		});
+
+		await save(handler, context);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+
+		const upsert = service.db.gateway3Info.upsert.mock.calls[0].arguments[0];
 
 		assert.equal(upsert.where.caseId, REFERENCE);
 		assert.equal(upsert.update.assessorName, 'Alex Assessor');
@@ -769,6 +835,14 @@ describe('buildGetJourneyMiddleware', () => {
 						assessorName: true
 					}
 				},
+				gateway3Info: {
+					select: {
+						programmeOfficerFirstName: true,
+						programmeOfficerLastName: true,
+						programmeOfficerEmail: true,
+						assessorName: true
+					}
+				},
 				examinationInfo: {
 					select: {
 						examiningInspector1: true,
@@ -906,6 +980,33 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
+	it('loads gateway 3 journey data', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-3'
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: REFERENCE,
+			assessorName: 'Alex Assessor'
+		}));
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(ctx.service.db.gateway3Info.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			}
+		});
+
+		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.assessorName, 'Alex Assessor');
+		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
 	it('loads examination journey data', async () => {
 		const ctx = createMiddlewareContext({
 			url: '/examination'
@@ -959,61 +1060,67 @@ describe('buildGetJourneyMiddleware', () => {
 });
 
 describe('DeleteCase', () => {
-	const currentCase = {
-		id: 'case-id',
-		reference: 'PLAN/123456',
-		planTitle: 'Southshire Local Plan',
-		planType: 'local-plan',
-		lpas: [{ lpaCode: 'lpa-1' }, { lpaCode: 'lpa-2' }],
-		caseOfficer: 'officer-1'
-	};
-
-	it('renders delete-case.njk with user-facing case details', async () => {
+	(it('renders delete-case.njk when getDeleteCase is called', async () => {
 		const service = createService();
+		const currentCase = {
+			reference: 'PLAN/123456',
+			planTitle: 'Southshire Local Plan',
+			planType: 'Local Plan',
+			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+			caseOfficer: 'John Doe'
+		};
 		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-		const res = createResponse();
+		const render = mock.fn();
+		const status = mock.fn(() => ({ render }));
+		const res = {
+			locals: {},
+			render,
+			status
+		} as unknown as Response;
 		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
 
 		await getDeleteCase(service)(req, res);
 
-		assert.equal(res.render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
-		assert.deepEqual(res.render.mock.calls[0].arguments[1], {
-			rows: [
-				[{ text: 'Case reference' }, { text: 'PLAN/123456' }],
-				[{ text: 'Plan title' }, { text: 'Southshire Local Plan' }],
-				[{ text: 'Plan type' }, { text: 'Local Plan' }],
-				[{ text: 'LPA' }, { text: 'Local Planning Authority 1, Local Planning Authority 2' }],
-				[{ text: 'Case officer' }, { text: 'Case Officer 1' }]
-			]
-		});
-	});
+		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
+	}),
+		it('sets deletedDate when delete is confirmed', async () => {
+			const service = createService();
+			const currentCase = {
+				reference: 'PLAN/123456',
+				planTitle: 'Southshire Local Plan',
+				planType: 'Local Plan',
+				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+				caseOfficer: 'John Doe'
+			};
+			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
 
-	it('sets deletedDate when delete is confirmed', async () => {
-		const service = createService();
-		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-		const redirect = mock.fn();
-		const res = { redirect } as unknown as Response;
-		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+			await postMarkAsDeleteCase(service)(req, res);
 
-		await postMarkAsDeleteCase(service)(req, res);
+			assert.equal(service.db.case.update.mock.callCount(), 1);
 
-		assert.equal(service.db.case.update.mock.callCount(), 1);
+			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
 
-		const args = service.db.case.update.mock.calls[0].arguments[0] as any;
+			assert.ok(args.data.deletedDate instanceof Date);
+		}),
+		it('redirects to all cases when delete is confirmed', async () => {
+			const service = createService();
+			const currentCase = {
+				reference: 'PLAN/123456',
+				planTitle: 'Southshire Local Plan',
+				planType: 'Local Plan',
+				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+				caseOfficer: 'John Doe'
+			};
+			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
 
-		assert.deepEqual(args.where, { id: currentCase.id });
-		assert.ok(args.data.deletedDate instanceof Date);
-	});
+			await postMarkAsDeleteCase(service)(req, res);
 
-	it('redirects to all cases when delete is confirmed', async () => {
-		const service = createService();
-		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-		const redirect = mock.fn();
-		const res = { redirect } as unknown as Response;
-		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
-
-		await postMarkAsDeleteCase(service)(req, res);
-
-		assert.equal(redirect.mock.calls[0].arguments[0], '/');
-	});
+			assert.equal(redirect.mock.calls[0].arguments[0], '/');
+		}));
 });

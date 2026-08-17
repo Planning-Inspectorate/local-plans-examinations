@@ -4,7 +4,7 @@ import { gateway2AssessorAnswer } from '../../../fixtures/manage/gateway-2.ts';
 export class Gateway2AssessorPage extends SmartLookupPage {
 	constructor() {
 		super(
-			/^\/case\/.+\/gateway-2\/gateway-2\/gateway-2-assessor$/,
+			/^\/case\/.+\/gateway-2\/gateway-2\/assessor-gateway-2$/,
 			gateway2AssessorAnswer.inputField,
 			gateway2AssessorAnswer.heading
 		);

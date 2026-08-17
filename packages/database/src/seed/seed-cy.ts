@@ -80,7 +80,14 @@ async function run() {
 				},
 				gateway3Info: {
 					create: {
-						estimatedDate: now
+						estimatedDate: new Date('2026-07-21T12:00:00.000Z'),
+						actualDate: new Date('2026-08-01T12:00:00.000Z'),
+						assessorName: 'assessor-1',
+						assessorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
+						programmeOfficerFirstName: 'Albert',
+						programmeOfficerLastName: 'Einstien',
+						programmeOfficerEmail: 'gateway3.officer@test.com',
+						completionDate: new Date('2026-12-01T12:00:00.000Z')
 					}
 				},
 				examinationInfo: {

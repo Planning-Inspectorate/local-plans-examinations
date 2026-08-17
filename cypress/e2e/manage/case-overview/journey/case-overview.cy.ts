@@ -13,6 +13,7 @@ import {
 } from '../../../../page-objects/manage/case-overview/index.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
+import { gateway3ProgrammeOfficerAnswer } from '../../../../fixtures/manage/gateway-3.ts';
 
 const planTitle = seededCase.planTitle;
 
@@ -74,32 +75,39 @@ describe('Case overview updates', () => {
 		);
 	});
 
-	it(
-		'answers an empty overview question (Programme Officer) and updates the overview row',
-		{ tags: ['regression'] },
-		() => {
-			const programmeOfficerFirstName = 'Programme';
-			const programmeOfficerLastName = 'Officer 1';
-			const programmeOfficerEmail = 'programme.officer1@example.com';
+	it('updates the Programme Officer details overview row', { tags: ['regression'] }, () => {
+		const programmeOfficerFirstName = 'Programme';
+		const programmeOfficerLastName = 'Officer 1';
+		const programmeOfficerEmail = 'programme.officer1@example.com';
 
-			caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
-			caseOverviewPage.openActionLinkFor('Programme Officer');
-			caseOverviewProgrammeOfficerPage.verifyLoaded();
-			caseOverviewProgrammeOfficerPage.enterProgrammeOfficerDetails(
-				programmeOfficerFirstName,
-				programmeOfficerLastName,
-				programmeOfficerEmail
-			);
+		caseOverviewPage.verifySummaryRowContains(
+			'Programme Officer details',
+			gateway3ProgrammeOfficerAnswer.firstName,
+			gateway3ProgrammeOfficerAnswer.lastName,
+			gateway3ProgrammeOfficerAnswer.email
+		);
 
-			caseOverviewPage.verifyLoaded(planTitle);
-			caseOverviewPage.verifySummaryRowContains(
-				'Programme Officer',
-				programmeOfficerFirstName,
-				programmeOfficerLastName,
-				programmeOfficerEmail
-			);
-		}
-	);
+		caseOverviewPage.openActionLinkFor('Programme Officer details');
+		caseOverviewProgrammeOfficerPage.verifyLoaded(
+			gateway3ProgrammeOfficerAnswer.firstName,
+			gateway3ProgrammeOfficerAnswer.lastName,
+			gateway3ProgrammeOfficerAnswer.email
+		);
+
+		caseOverviewProgrammeOfficerPage.enterProgrammeOfficerDetails(
+			programmeOfficerFirstName,
+			programmeOfficerLastName,
+			programmeOfficerEmail
+		);
+
+		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifySummaryRowContains(
+			'Programme Officer details',
+			programmeOfficerFirstName,
+			programmeOfficerLastName,
+			programmeOfficerEmail
+		);
+	});
 
 	it('returns to overview from the back links', { tags: ['regression', 'smoke'] }, () => {
 		caseOverviewPage.openActionLinkFor('Plan band');
