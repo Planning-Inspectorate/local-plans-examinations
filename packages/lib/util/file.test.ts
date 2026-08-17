@@ -60,6 +60,9 @@ describe('formatFileExtensionsIntoHumanReadableList', () => {
 	it('Can format an empty list', () => {
 		assert.equal(formatFileExtensionsIntoHumanReadableList([]), '');
 	});
+	it('Can format a list with a single extension', () => {
+		assert.equal(formatFileExtensionsIntoHumanReadableList(['CSV']), 'CSV');
+	});
 	it('Can format a list of extensions', () => {
 		const extensions = ['csv', 'pdf', 'docx'];
 		assert.equal(formatFileExtensionsIntoHumanReadableList(extensions), 'CSV, PDF or DOCX');
