@@ -3,7 +3,6 @@ import {
 	addCaseNavigation,
 	buildGetJourneyMiddleware,
 	updateCaseField,
-	type Gateway2Request,
 	getDeleteCase,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
