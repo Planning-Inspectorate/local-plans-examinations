@@ -66,6 +66,12 @@ Coverage levels:
 | COV-POR-016 | Gateway 2 submission | Journey      | Back link navigates to plan details page; save and come back later link navigates to plan details page                             | `portal/gw2-application/journey/gateway-2-application.cy.ts`      | Uses seeded plan data                                                      |
 | COV-POR-017 | Gateway 2 submission | Validation   | Error shown when submit is clicked with no documents added                                                                         | `portal/gw2-application/validation/gateway-2-application.cy.ts`   | Minimum one document required before submission                            |
 
+## Cross-service
+
+| ID            | Area            | Level      | Coverage                                                                                    | Specs                               | Notes                                                                                                                           |
+| ------------- | --------------- | ---------- | ------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| COV-CROSS-001 | Manage → Portal | Regression | A case created in Manage can be opened in the DB-backed Portal Gateway 2 submission journey | `cross-service/manage-portal.cy.ts` | Starts both apps against the same database. Stronger plan list/detail journeys are blocked until Portal plan data is DB-backed. |
+
 ## Known gaps
 
 | Area                                                | Status             | Notes                                                                                                                                                                                                                                                                                  |
