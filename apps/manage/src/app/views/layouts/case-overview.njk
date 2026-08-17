@@ -71,7 +71,7 @@
                         {% set formattedRow = {
                           key: row.key, 
                           value: row.value, 
-                          actions: {items: [{href: row.actions.items.href, text: "Add"}]} 
+                          actions: {items: [{href: row.actions.items[0].href, text: "Add"}]} 
                         } %}
                       {% else %}
                         {% set formattedRow = {
