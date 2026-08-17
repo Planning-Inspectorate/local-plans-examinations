@@ -66,10 +66,30 @@
   <div class="govuk-grid-row govuk-!-margin-top-6">
           <div class="govuk-grid-column-full">
               {% for section in summaryListData.sections %}
+              <h3>DEBUG: {{ section.heading }}</h3>
+                  {% set formattedRows = [] %}
+                  {% for row in section.list.rows %}
+                    {% if row %}
+                      {% if row.actions.items[0].text == "Answer" %}
+                        {% set formattedRow = {
+                          key: row.key, 
+                          value: row.value, 
+                          actions: {items: [{href: row.actions.items.href, text: "Add"}]} 
+                        } %}
+                      {% else %}
+                        {% set formattedRow = {
+                          key: row.key, 
+                          value: row.value, 
+                          actions: row.actions
+                        } %}
+                      {% endif %}
+                    {% set _ = formattedRows.push(formattedRow) %}
+                    {% endif %}
+                  {% endfor %}
                   {% if section.list.rows.length %}
                     <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                     {{ govukSummaryList({
-                          rows: section.list.rows
+                          rows: formattedRows
                       }) }}
                   {% endif %}
               {% endfor %}
