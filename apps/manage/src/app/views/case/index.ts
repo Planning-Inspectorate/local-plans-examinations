@@ -182,14 +182,20 @@ function registerCaseJourney(
 						fieldName: questionConfig.fieldName,
 						question: questionConfig,
 						storage: fileUploaderStorage,
-						destination: (req) => ({
-							folderPath: `${req.sessionID ?? 'session'}/${questionConfig.url}`,
-							metadata: {
-								journeyId: journeyId,
-								fieldName: questionConfig.fieldName,
-								documentSetFolderName: questionConfig.url
-							}
-						}),
+						sessionKey: fileUploaderCaseSessionKey,
+						destination: (req) => {
+							const request = req as UploadDocumentRequest;
+							return {
+								folderPath: `${request.currentCase?.id ?? req.params.planReference}/${questionConfig.url}`,
+								metadata: {
+									journeyId: journeyId,
+									caseId: request.currentCase?.id,
+									caseReference: req.params.planReference,
+									fieldName: questionConfig.fieldName,
+									documentSetFolderName: questionConfig.url
+								}
+							};
+						},
 						onFilesChange: async ({ req, uploadedFiles }) => {
 							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
@@ -211,6 +217,7 @@ function registerCaseJourney(
 						fieldName: questionConfig.fieldName,
 						question: questionConfig,
 						storage: fileUploaderStorage,
+						sessionKey: fileUploaderCaseSessionKey,
 						onFilesChange: async ({ req, uploadedFiles }) => {
 							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
