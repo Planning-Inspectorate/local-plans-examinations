@@ -91,7 +91,7 @@ describe('gateway3Journey', () => {
 	it('links Gateway 3 question pages back to the Gateway 3 page', () => {
 		const journey = createGateway3JourneyForTest();
 		const gateway3Questions = [
-			'gateway-3-estimated-date',
+			'gateway-3-expected-date',
 			'gateway-3-actual-date',
 			'cgateway-3-assessor-name',
 			'gateway-3-assessor-date-of-appointment',
