@@ -79,6 +79,7 @@ Manage:
 npm run cy:manage:smoke
 npm run cy:manage:regression
 npm run cy:manage:all
+npm run cy:manage:accessibility
 npm run cy:open:manage
 ```
 
@@ -88,6 +89,7 @@ Portal:
 npm run cy:portal:smoke
 npm run cy:portal:regression
 npm run cy:portal:all
+npm run cy:portal:accessibility
 npm run cy:open:portal
 ```
 
@@ -101,6 +103,10 @@ npm run cy:open:cross-service
 The target app is controlled by `TEST_TARGET` in `cypress.config.ts`. If no target is set, Cypress defaults to `portal`.
 
 Reports are written to `cypress/reports`.
+
+Accessibility checks use `cypress-axe` on a small set of Manage and Portal pages. The checks only run the WCAG A/AA tags. Passing these tests does not prove the service is fully compliant - it just helps catch issues axe can spot. The external audit still covers the wider checks.
+
+If axe finds a new violation, treat it like any other failing quality gate. 
 
 ## Test data
 
@@ -186,6 +192,8 @@ The pipeline uses `.azure/pipelines/steps/run-local-e2e.yml` as the shared runne
 - wait for the `/health` endpoint
 - run Cypress against the target
 - publish Cypress reports on failure
+
+The accessibility specs live under the existing Manage and Portal Cypress folders, so they run in the normal PR/main E2E jobs whenever those suites run. There is no separate accessibility pipeline job.
 
 The PR/main E2E pipeline also runs the small cross-service suite through the same runner. Cross-service starts both Manage and Portal against the same database and checks service-level behaviour across the app boundary.
 
