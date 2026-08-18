@@ -1,5 +1,6 @@
 import { openSeededExaminationPage } from '../../../flows/manage/examination-flow.ts';
 import { seededCase } from '../../../fixtures/manage/case.ts';
+import { caseHistoryPage } from '../../../page-objects/manage/case-history/index.ts';
 import { caseOverviewPage, deleteCasePage } from '../../../page-objects/manage/case-overview/index.ts';
 import {
 	caseOfficerPage,
@@ -87,6 +88,19 @@ describe('Manage accessibility', () => {
 		manageHomePage.visit();
 		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
 		caseOverviewPage.verifyLoaded(seededCase.planTitle);
+
+		cy.checkAccessibility();
+	});
+
+	it('checks the case history page', { tags: ['accessibility'] }, () => {
+		cy.task('seedDb');
+
+		manageHomePage.visit();
+		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
+		caseOverviewPage.verifyLoaded(seededCase.planTitle);
+		caseOverviewPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyTableHeadings();
 
 		cy.checkAccessibility();
 	});
