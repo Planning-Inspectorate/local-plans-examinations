@@ -462,9 +462,9 @@ describe('updateCaseField', () => {
 
 		const upsert = service.db.gateway3Info.upsert.mock.calls[0].arguments[0];
 
-		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.where.caseId, CASE_ID);
 		assert.equal(upsert.update.assessorName, 'Alex Assessor');
-		assert.equal(upsert.create.caseId, REFERENCE);
+		assert.equal(upsert.create.caseId, CASE_ID);
 		assert.equal(upsert.create.assessorName, 'Alex Assessor');
 		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
 		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
@@ -995,8 +995,10 @@ describe('buildGetJourneyMiddleware', () => {
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
 			planTitle: 'Southshire Local Plan'
 		}));
+
 		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
