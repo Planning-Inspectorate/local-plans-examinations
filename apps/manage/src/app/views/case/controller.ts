@@ -93,7 +93,7 @@ interface ExaminationInput {
 }
 
 interface Gateway3Input {
-	estimatedDate?: Date;
+	expectedDate?: Date;
 	actualDate?: Date;
 	assessorName?: string;
 	assessorAppointmentDate?: Date;

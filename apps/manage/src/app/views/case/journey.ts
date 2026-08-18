@@ -57,7 +57,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		journeyId: GATEWAY_3_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 3', 'gateway-3')
-				.addQuestion(questions.gateway3EstimatedDate)
+				.addQuestion(questions.gateway3ExpectedDate)
 				.addQuestion(questions.gateway3ActualDate)
 				.addQuestion(questions.gateway3AssessorsName)
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)

@@ -498,7 +498,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	},
 	//gateway 3
-	gateway3EstimatedDate: {
+	gateway3ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'What is the expected Gateway 3 date?',
 		fieldName: 'expectedDate',
