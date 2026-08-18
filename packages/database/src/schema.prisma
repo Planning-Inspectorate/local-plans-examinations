@@ -82,7 +82,7 @@ model Gateway3Info {
   id                        String    @id @default(uuid()) @db.UniqueIdentifier
   case                      Case      @relation(fields: [caseId], references: [reference])
   caseId                    String    @unique
-  expectedDate             DateTime? @db.DateTime2
+  expectedDate              DateTime? @db.DateTime2
   actualDate                DateTime? @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
