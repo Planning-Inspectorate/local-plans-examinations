@@ -351,7 +351,7 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
 		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			},
 			update: {
 				programmeOfficerFirstName: 'Pat',
@@ -359,7 +359,7 @@ describe('updateCaseField', () => {
 				programmeOfficerEmail: 'pat.officer@example.com'
 			},
 			create: {
-				caseId: REFERENCE,
+				caseId: CASE_ID,
 				programmeOfficerFirstName: 'Pat',
 				programmeOfficerLastName: 'Officer',
 				programmeOfficerEmail: 'pat.officer@example.com'
@@ -998,7 +998,7 @@ describe('buildGetJourneyMiddleware', () => {
 			planTitle: 'Southshire Local Plan'
 		}));
 		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
-			caseId: REFERENCE,
+			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
 		}));
 
@@ -1006,7 +1006,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.gateway3Info.findUnique.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			}
 		});
 

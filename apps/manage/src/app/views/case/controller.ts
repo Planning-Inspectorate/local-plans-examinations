@@ -343,7 +343,9 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseRefe
 	return true;
 }
 
-async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseId: string, question?: string) {
+async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseReference: string, question?: string) {
+	const caseId = await resolveCaseIdFromReference(db, caseReference);
+
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
@@ -490,7 +492,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 
 			case 'gateway-3': {
-				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: reference } });
+				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				if (next) next();
 				return;
