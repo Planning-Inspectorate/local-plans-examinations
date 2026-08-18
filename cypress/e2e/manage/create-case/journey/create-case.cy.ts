@@ -58,6 +58,28 @@ describe('Create a case', () => {
 		});
 	});
 
+	it('clears create case answers when leaving before submission', { tags: ['regression'] }, () => {
+		loadCreateCaseData().then((data) => {
+			manageHomePage.visit();
+			manageHomePage.startCreateCase();
+			caseOfficerPage.verifyLoaded();
+			caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
+
+			planTitlePage.verifyLoaded();
+			planTitlePage.enterPlanTitle(data.planTitle);
+			planTypePage.verifyLoaded();
+
+			manageHomePage.visit();
+			manageHomePage.startCreateCase();
+			caseOfficerPage.verifyLoaded();
+			caseOfficerPage.verifyNoCaseOfficerSelected();
+			caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
+
+			planTitlePage.verifyLoaded();
+			planTitlePage.verifyTitleEmpty();
+		});
+	});
+
 	it(
 		'allows Local Planning Authorities opened from check your answers to add another item',
 		{ tags: ['regression'] },

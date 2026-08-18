@@ -1,12 +1,17 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
+const gateway2SubmissionRows = ['Gateway 2 cover letter', 'Local plan timetable', 'Project initiation document'];
+const gateway2SubmissionHeading = 'Gateway 2 submission';
+const notAddedStatus = 'Not added';
+const submitButtonText = 'Submit for Gateway 2 assessment';
+
 export class Gateway2ApplicationPage extends PortalPlanBasePage {
 	constructor() {
-		super(/^\/manage-local-plans\/[^/]+\/gateway-2-application$/);
+		super(/^\/manage-local-plans\/[^/]+\/gateway-2-submission$/);
 	}
 
 	pathFor(planReference: string) {
-		return `/manage-local-plans/${planReference}/gateway-2-application`;
+		return `/manage-local-plans/${planReference}/gateway-2-submission`;
 	}
 
 	get saveAndComeBackLink() {
@@ -35,7 +40,30 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('Gateway 2 submission');
+		this.verifyHeading(gateway2SubmissionHeading);
+	}
+
+	// Cross-service tests start in Manage, so these Portal assertions need to run inside cy.origin().
+	openForCrossServiceAndVerify(planReference: string, planTitle: string) {
+		const path = this.pathFor(planReference);
+
+		cy.origin(
+			Cypress.env('portalBaseUrl'),
+			{
+				args: { path, planTitle, gateway2SubmissionRows, gateway2SubmissionHeading, notAddedStatus, submitButtonText }
+			},
+			({ path, planTitle, gateway2SubmissionRows, gateway2SubmissionHeading, notAddedStatus, submitButtonText }) => {
+				cy.visit(path);
+				cy.location('pathname').should('eq', path);
+				cy.contains('h1', gateway2SubmissionHeading).should('be.visible').and('contain.text', planTitle);
+
+				gateway2SubmissionRows.forEach((row) => {
+					cy.contains('tr', row).should('be.visible').and('contain.text', notAddedStatus);
+				});
+
+				cy.contains('button', submitButtonText).should('be.visible');
+			}
+		);
 	}
 
 	verifySaveAndComeBackLink(href: string) {

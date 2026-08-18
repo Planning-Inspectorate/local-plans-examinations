@@ -1,0 +1,43 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block backLink %}
+  {{ govukBackLink({
+    href: baseUrl + "/overview",
+    attributes: {
+      "data-cy": "back-link"
+    }
+  }) }}
+{% endblock %}
+
+{% block pageContent %}
+  <h1 class="govuk-heading-l">Are you sure you want to delete this case?</h1>
+  <p class="govuk-body">This will mark the case as deleted. It will no longer appear in the system but will still be available for audit purposes.</p>
+
+  <h1 class="govuk-heading-m">Case details</h1>
+
+    {{ govukTable({
+    attributes: {
+      "data-cy": "delete-case-details"
+    },
+    rows: rows
+    }) }}
+
+    <form method="post">
+        <div class="govuk-button-group">
+            {{ govukButton({
+            text: "Yes, delete this case",
+            classes: "govuk-button--warning",
+            attributes: {
+              "data-cy": "confirm-delete-button"
+            }
+            }) }}
+
+            <a class="govuk-link" href="{{ baseUrl }}/overview">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

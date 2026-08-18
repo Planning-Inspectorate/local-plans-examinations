@@ -1,6 +1,14 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { updateCaseField, trimStringValues, buildGetJourneyMiddleware, updateCaseHistory } from './controller.ts';
+import type { Request, Response } from 'express';
+import {
+	updateCaseField,
+	trimStringValues,
+	buildGetJourneyMiddleware,
+	updateCaseHistory,
+	getDeleteCase,
+	postMarkAsDeleteCase
+} from './controller.ts';
 
 const REFERENCE = 'PLAN/123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -22,6 +30,10 @@ function createService(): any {
 				findUnique: mock.fn(async () => null)
 			},
 			gateway2Info: {
+				upsert: mock.fn(async () => ({})),
+				findUnique: mock.fn(async () => null)
+			},
+			gateway3Info: {
 				upsert: mock.fn(async () => ({})),
 				findUnique: mock.fn(async () => null)
 			},
@@ -226,7 +238,8 @@ describe('updateCaseField', () => {
 					programmeOfficerLastName: 'Officer',
 					programmeOfficerEmail: 'pat.officer@example.com',
 					examinationWebsite: 'https://example.com',
-					examiningInspector1: 'Insp One'
+					examiningInspector1: 'Insp One',
+					qaInspector1: 'Insp One'
 				}
 			});
 
@@ -242,6 +255,7 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.programmeOfficerLastName, 'Officer');
 			assert.equal(args.data.programmeOfficerEmail, 'pat.officer@example.com');
 			assert.equal(args.data.examiningInspector1, 'Insp One');
+			assert.equal(args.data.qaInspector1, 'Insp One');
 			// no contact or lpa fields -> undefined
 			assert.equal(args.data.contacts, undefined);
 			assert.equal(args.data.lpas, undefined);
@@ -313,6 +327,42 @@ describe('updateCaseField', () => {
 		});
 	});
 
+	it('upserts programme officer details from the overview programme-officer question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/overview',
+			params: {
+				question: 'programme-officer'
+			},
+			body: {
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			}
+		});
+
+		await save(handler, context);
+
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			},
+			update: {
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			},
+			create: {
+				caseId: REFERENCE,
+				programmeOfficerFirstName: 'Pat',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'pat.officer@example.com'
+			}
+		});
+	});
+
 	it('does not upsert contact details when the current item id is empty', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
@@ -370,7 +420,7 @@ describe('updateCaseField', () => {
 		const context = createSaveContext({
 			url: '/gateway-2',
 			params: {
-				question: 'gateway-2-assessor'
+				question: 'assessor-gateway-2'
 			},
 			body: {
 				assessorName: '  Alex Assessor  '
@@ -382,6 +432,32 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
 
 		const upsert = service.db.gateway2Info.upsert.mock.calls[0].arguments[0];
+
+		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.update.assessorName, 'Alex Assessor');
+		assert.equal(upsert.create.caseId, REFERENCE);
+		assert.equal(upsert.create.assessorName, 'Alex Assessor');
+		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
+		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
+	});
+
+	it('upserts gateway 3 data and sets appointment date for the assessor question', async () => {
+		const service = createService();
+		const handler = updateCaseField(service);
+		const context = createSaveContext({
+			url: '/gateway-3',
+			params: {
+				question: 'assessor-gateway-3'
+			},
+			body: {
+				assessorName: '  Alex Assessor  '
+			}
+		});
+
+		await save(handler, context);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+
+		const upsert = service.db.gateway3Info.upsert.mock.calls[0].arguments[0];
 
 		assert.equal(upsert.where.caseId, REFERENCE);
 		assert.equal(upsert.update.assessorName, 'Alex Assessor');
@@ -544,6 +620,43 @@ describe('updateCaseHistory', () => {
 		assert.equal(entries[3].event, 'Fact Check received back from LPA updated to 9 January 2026');
 		assert.equal(entries[4].event, 'Final report issue date updated to 10 January 2026');
 	});
+
+	it('uses readable copy for Important Dates updates', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service.db,
+			{
+				planPauseStartDate: null,
+				planPauseEndDate: null,
+				withdrawnDate: null,
+				isSound: null,
+				soundUnsoundDate: null,
+				adoptionDate: null,
+				approvedForCILDate: null
+			},
+			{
+				planPauseStartDate: new Date('2026-01-06T12:00:00.000Z'),
+				planPauseEndDate: new Date('2026-01-07T12:00:00.000Z'),
+				withdrawnDate: new Date('2026-01-08T12:00:00.000Z'),
+				isSound: false,
+				soundUnsoundDate: new Date('2026-01-09T12:00:00.000Z'),
+				adoptionDate: new Date('2026-01-10T12:00:00.000Z'),
+				approvedForCILDate: new Date('2026-01-11T12:00:00.000Z')
+			},
+			REFERENCE
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+
+		assert.equal(entries[0].event, 'Plan pause date updated to 6 January 2026');
+		assert.equal(entries[1].event, 'Plan pause end date updated to 7 January 2026');
+		assert.equal(entries[2].event, 'Withdrawn date updated to 8 January 2026');
+		assert.equal(entries[3].event, 'Sound / unsound updated to Unsound');
+		assert.equal(entries[4].event, 'Sound / unsound date updated to 9 January 2026');
+		assert.equal(entries[5].event, 'Adoption date updated to 10 January 2026');
+		assert.equal(entries[6].event, 'Approved for CIL date updated to 11 January 2026');
+	});
 });
 
 describe('trimStringValues', () => {
@@ -682,7 +795,10 @@ describe('buildGetJourneyMiddleware', () => {
 					examiningInspector1: 'Inspector Goole',
 					examiningInspector2: 'Inspector gadget',
 					examiningInspector3: null,
-					examinationWebsite: 'some website'
+					examinationWebsite: 'some website',
+					qaInspector1: 'Inspector Goole',
+					qaInspector2: 'Inspector Goolish',
+					qaInspector3: 'Inspector Goolishish'
 				}
 			]
 		};
@@ -719,12 +835,23 @@ describe('buildGetJourneyMiddleware', () => {
 						assessorName: true
 					}
 				},
+				gateway3Info: {
+					select: {
+						programmeOfficerFirstName: true,
+						programmeOfficerLastName: true,
+						programmeOfficerEmail: true,
+						assessorName: true
+					}
+				},
 				examinationInfo: {
 					select: {
 						examiningInspector1: true,
 						examiningInspector2: true,
 						examiningInspector3: true,
-						examinationWebsite: true
+						examinationWebsite: true,
+						qaInspector1: true,
+						qaInspector2: true,
+						qaInspector3: true
 					}
 				}
 			}
@@ -763,7 +890,10 @@ describe('buildGetJourneyMiddleware', () => {
 				examiningInspector1: 'Inspector Goole',
 				examiningInspector2: 'Inspector gadget',
 				examiningInspector3: null,
-				examinationWebsite: 'some website'
+				examinationWebsite: 'some website',
+				qaInspector1: 'Inspector Goole',
+				qaInspector2: 'Inspector Goolish',
+				qaInspector3: 'Inspector Goolishish'
 			}
 		]);
 
@@ -850,6 +980,33 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
+	it('loads gateway 3 journey data', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-3'
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: REFERENCE,
+			assessorName: 'Alex Assessor'
+		}));
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(ctx.service.db.gateway3Info.findUnique.mock.calls[0].arguments[0], {
+			where: {
+				caseId: REFERENCE
+			}
+		});
+
+		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
+		assert.equal(ctx.res.locals.reference, REFERENCE);
+		assert.equal(ctx.res.locals.journeyResponse.answers.assessorName, 'Alex Assessor');
+		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
 	it('loads examination journey data', async () => {
 		const ctx = createMiddlewareContext({
 			url: '/examination'
@@ -900,4 +1057,70 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.status.mock.callCount(), 0);
 		assert.equal(ctx.res.render.mock.callCount(), 0);
 	});
+});
+
+describe('DeleteCase', () => {
+	(it('renders delete-case.njk when getDeleteCase is called', async () => {
+		const service = createService();
+		const currentCase = {
+			reference: 'PLAN/123456',
+			planTitle: 'Southshire Local Plan',
+			planType: 'Local Plan',
+			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+			caseOfficer: 'John Doe'
+		};
+		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+		const render = mock.fn();
+		const status = mock.fn(() => ({ render }));
+		const res = {
+			locals: {},
+			render,
+			status
+		} as unknown as Response;
+		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+		await getDeleteCase(service)(req, res);
+
+		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
+	}),
+		it('sets deletedDate when delete is confirmed', async () => {
+			const service = createService();
+			const currentCase = {
+				reference: 'PLAN/123456',
+				planTitle: 'Southshire Local Plan',
+				planType: 'Local Plan',
+				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+				caseOfficer: 'John Doe'
+			};
+			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(service.db.case.update.mock.callCount(), 1);
+
+			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
+
+			assert.ok(args.data.deletedDate instanceof Date);
+		}),
+		it('redirects to all cases when delete is confirmed', async () => {
+			const service = createService();
+			const currentCase = {
+				reference: 'PLAN/123456',
+				planTitle: 'Southshire Local Plan',
+				planType: 'Local Plan',
+				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
+				caseOfficer: 'John Doe'
+			};
+			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(redirect.mock.calls[0].arguments[0], '/');
+		}));
 });

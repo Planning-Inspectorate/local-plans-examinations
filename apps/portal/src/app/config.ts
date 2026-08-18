@@ -16,6 +16,8 @@ export type Config = BaseConfig & {
 			authCode: string;
 		};
 	};
+	// Microsoft Clarity tracking id (optional, set via CLARITY_ID)
+	clarityId?: string;
 };
 
 // cache the config
@@ -47,7 +49,8 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
-		BLOB_STORE_ACCOUNT_URL
+		BLOB_STORE_ACCOUNT_URL,
+		CLARITY_ID
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -75,20 +78,25 @@ export function loadConfig(): Config {
 	}
 
 	config = {
+		// the cache control max age for static assets
 		cacheControl: {
 			maxAge: CACHE_CONTROL_MAX_AGE || '1d'
 		},
+		// the database connection string
 		database: {
 			connectionString: SQL_CONNECTION_STRING
 		},
+		// the git sha of the current build
 		gitSha: GIT_SHA,
 		// the log level to use
 		logLevel: LOG_LEVEL || 'info',
+		// the node environment to use
 		NODE_ENV: NODE_ENV || 'development',
 		// the HTTP port to listen on
 		httpPort: httpPort,
 		// the src directory
 		srcDir: buildConfig.srcDir,
+		// the session configuration
 		session: {
 			redisPrefix: 'portal:',
 			redis: MANAGED_REDIS_URL,
@@ -96,19 +104,23 @@ export function loadConfig(): Config {
 		},
 		// the static directory to serve assets from (images, css, etc..)
 		staticDir: buildConfig.staticDir,
+		// blob storage configuration for storing uploaded files
 		blobStorage: {
 			containerName: BLOB_STORE_CONTAINER || 'uploads',
 			connectionString:
 				BLOB_STORE_CONNECTION_STRING || (shouldUseDevelopmentStorage ? 'UseDevelopmentStorage=true' : undefined),
 			accountUrl: blobStoreAccountUrl
 		},
+		// Gov Notify configuration for sending emails
 		govNotify: {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',
 			templateIds: {
 				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || ''
 			}
-		}
+		},
+		// Microsoft Clarity id for analytics tracking (optional)
+		clarityId: CLARITY_ID || undefined
 	};
 
 	return config;

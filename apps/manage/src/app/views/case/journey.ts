@@ -6,6 +6,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
+export const GATEWAY_3_JOURNEY_ID = 'gateway-3';
 export const EXAMINATION_JOURNEY_ID = 'examination';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -49,6 +50,32 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 	return getBacklinks(journey, overviewUrl);
 }
 
+export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway3Url = req.baseUrl + '/gateway-3';
+
+	const journey = new Journey({
+		journeyId: GATEWAY_3_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 3', 'gateway-3')
+				.addQuestion(questions.gateway3EstimatedDate)
+				.addQuestion(questions.gateway3ActualDate)
+				.addQuestion(questions.gateway3AssessorsName)
+				.addQuestion(questions.gateway3AssessorDateOfAppointment)
+				.addQuestion(questions.programmeOfficerDetails)
+				.addQuestion(questions.gateway3CompletionDate)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Gateway 3',
+		returnToListing: false,
+		makeBaseUrl: () => gateway3Url,
+		initialBackLink: gateway3Url,
+		response
+	});
+
+	return getBacklinks(journey, gateway3Url);
+}
+
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
 	const journey = new Journey({
@@ -67,7 +94,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
-		journeyTitle: 'Manage case',
+		journeyTitle: 'Gateway 2',
 		returnToListing: false,
 		makeBaseUrl: () => gateway2Url,
 		initialBackLink: gateway2Url,
@@ -121,12 +148,27 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
+			new Section('QA', 'QA')
+				.addQuestion(questions.qaDate)
+				.addQuestion(questions.qaInspector1)
+				.addQuestion(questions.qaInspector2)
+				.addQuestion(questions.qaInspector3)
+				.addQuestion(questions.sentToPanelDate)
+				.addQuestion(questions.panelResponseSentToInspector),
 			new Section('Fact Check', 'fact-check')
 				.addQuestion(questions.factCheckDateReceivedFromInspector)
 				.addQuestion(questions.factCheckDueDate)
 				.addQuestion(questions.factCheckActualDate)
 				.addQuestion(questions.factCheckReceivedBackFromLPADate)
-				.addQuestion(questions.finalReportIssueDate)
+				.addQuestion(questions.finalReportIssueDate),
+			new Section('Important dates for this plan', 'important-dates')
+				.addQuestion(questions.planPauseStartDate)
+				.addQuestion(questions.planPauseEndDate)
+				.addQuestion(questions.withdrawnDate)
+				.addQuestion(questions.isSound)
+				.addQuestion(questions.soundUnsoundDate)
+				.addQuestion(questions.adoptionDate)
+				.addQuestion(questions.approvedForCILDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',

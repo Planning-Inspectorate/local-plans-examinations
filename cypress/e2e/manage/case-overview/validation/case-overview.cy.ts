@@ -1,7 +1,8 @@
 import { caseOverviewPage, caseOverviewQAInspector3Page } from '../../../../page-objects/manage/case-overview/index.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
-const planTitle = 'Cypress Test Plan';
+const planTitle = seededCase.planTitle;
 
 const openSeededCase = () => {
 	cy.task('seedDb');

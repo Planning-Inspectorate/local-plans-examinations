@@ -5,11 +5,22 @@ import { createErrorRoutes } from './views/static/error/index.ts';
 import { createNotifyRoutes } from './notify/router.ts';
 import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
 import type { ManageService } from '#service';
-import type { IRouter } from 'express';
+import type { IRouter, NextFunction, Response, Request } from 'express';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
 import { createAssignedToMeRoutes } from './views/assigned-to-me/index.ts';
 import { createACaseRoutes } from './views/create-a-case/index.ts';
 import { caseRouter } from './views/case/index.ts';
+import { clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
+import { JOURNEY_ID } from './views/create-a-case/journey.ts';
+
+function clearCreateCaseWhenLeaving(req: Request, _: Response, next: NextFunction) {
+	if (req.session?.currentJourney === JOURNEY_ID && !req.path.startsWith('/create-a-case')) {
+		clearDataFromSession({ req, journeyId: JOURNEY_ID });
+		delete req.session.currentJourney;
+		delete req.session.editingFromCheckAnswers;
+	}
+	next();
+}
 
 /**
  * Main app router
@@ -19,6 +30,7 @@ export function buildRouter(service: ManageService): IRouter {
 	const monitoringRoutes = createMonitoringRoutes(service);
 	const { router: authRoutes, guards: authGuards } = createAuthRoutesAndGuards(service);
 
+	router.use(clearCreateCaseWhenLeaving);
 	router.use('/', monitoringRoutes);
 
 	// don't cache responses, note no-cache allows some caching, but with revalidation

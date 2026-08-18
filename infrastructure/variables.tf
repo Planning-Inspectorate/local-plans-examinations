@@ -71,6 +71,12 @@ variable "common_config" {
   })
 }
 
+variable "clarity_id" {
+  description = "Microsoft Clarity id for portal app (per-environment)"
+  type        = string
+  default     = ""
+}
+
 variable "documents_config" {
   description = "Config for document blob storage"
   type = object({

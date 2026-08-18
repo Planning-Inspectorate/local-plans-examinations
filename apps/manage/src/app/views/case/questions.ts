@@ -206,10 +206,11 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'assessor-3', text: 'Assessor 3' },
 			{ value: 'assessor-4', text: 'Assessor 4' }
 		],
-		fieldName: 'assessorGateway3',
+		fieldName: 'gateway3AssessorName',
 		url: 'assessor-gateway-3',
 		title: 'Assessor Gateway 3',
-		validators: [new RequiredValidator('Input Assessor Gateway 3')]
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
 	},
 	examiningInspector1: {
 		type: COMPONENT_TYPES.SELECT,
@@ -269,7 +270,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'qaInspector1',
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
-		validators: [new RequiredValidator('Input QA Inspector 1')]
+		validators: [new RequiredValidator('Input QA Inspector 1')],
+		inputAttributes: { 'data-cy': 'inspector-qa-1' }
 	},
 	qaInspector2: {
 		type: COMPONENT_TYPES.SELECT,
@@ -284,7 +286,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'qaInspector2',
 		url: 'qa-inspector-2',
 		title: 'QA Inspector 2',
-		validators: [new RequiredValidator('Input QA Inspector 2')]
+		validators: [new RequiredValidator('Input QA Inspector 2')],
+		inputAttributes: { 'data-cy': 'inspector-qa-2' }
 	},
 	qaInspector3: {
 		type: COMPONENT_TYPES.SELECT,
@@ -299,7 +302,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'qaInspector3',
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
-		validators: [new RequiredValidator('Input QA Inspector 3')]
+		validators: [new RequiredValidator('Input QA Inspector 3')],
+		inputAttributes: { 'data-cy': 'inspector-qa-3' }
 	},
 	//gateway 1
 	noticeOfIntentionPublishDate: {
@@ -349,10 +353,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	dsaCheck: {
 		type: COMPONENT_TYPES.RADIO,
-		question: 'Does the LPA have a Digital Sharing Agreement (DSA)?',
+		question: 'Does the LPA have a Data Sharing Agreement (DSA)?',
 		fieldName: 'dsaChecked',
 		url: 'dsa-checked',
-		title: 'Digital Sharing Agreement (DSA) check',
+		title: 'Data Sharing Agreement (DSA) check',
 		options: [
 			{ value: 'yes', text: 'Yes' },
 			{ value: 'no', text: 'No' }
@@ -402,7 +406,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Programme Officer details',
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer',
-		title: 'Programme Officer'
+		title: 'Programme Officer details'
 	},
 	//gateway 2
 	gateway2EstimatedDate: {
@@ -443,7 +447,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'assessor-4', text: 'Assessor 4' }
 		],
 		fieldName: 'assessorName',
-		url: 'gateway-2-assessor',
+		url: 'assessor-gateway-2',
 		title: 'Gateway 2 assessor name',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
@@ -493,6 +497,59 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	},
+	//gateway 3
+	gateway3EstimatedDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the estimated Gateway 3 date?',
+		fieldName: 'estimatedDate',
+		url: 'gateway-3-estimated-date',
+		title: 'Gateway 3 estimated date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-estimated-date' }
+	},
+	gateway3ActualDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was Gateway 3 completed?',
+		fieldName: 'actualDate',
+		url: 'gateway-3-actual-date',
+		title: 'Gateway 3 actual date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-actual-date' }
+	},
+	gateway3AssessorsName: {
+		type: COMPONENT_TYPES.SELECT,
+		question: 'Who is the Gateway 3 assessor?',
+		options: [
+			{ value: '', text: '' },
+			{ value: 'assessor-1', text: 'Assessor 1' },
+			{ value: 'assessor-2', text: 'Assessor 2' },
+			{ value: 'assessor-3', text: 'Assessor 3' },
+			{ value: 'assessor-4', text: 'Assessor 4' }
+		],
+		fieldName: 'assessorName',
+		url: 'gateway-3-assessor-name',
+		title: 'Gateway 3 assessor name',
+		validators: [new RequiredValidator('Select a name')],
+		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
+	},
+	gateway3AssessorDateOfAppointment: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the Gateway 3 assessor appointed?',
+		fieldName: 'assessorAppointmentDate',
+		url: 'gateway-3-assessor-date-of-appointment',
+		title: 'Gateway 3 assessor date of appointment',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
+	},
+	gateway3CompletionDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the Gateway 3 completion date?',
+		fieldName: 'completionDate',
+		url: 'gateway-3-completion-date',
+		title: 'Gateway 3 completion date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
+	},
 	// Examination
 	estimatedSubmissionForExaminationDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -539,6 +596,33 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'letter-issue-date' }
 	},
+	qaDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the date of QA?',
+		fieldName: 'QADate',
+		url: 'qa-date',
+		title: 'QA date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'qa-date' }
+	},
+	sentToPanelDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the report sent to the panel?',
+		fieldName: 'reportSentToPanelDate',
+		url: 'report-sent-to-panel-date',
+		title: 'Sent to panel date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'report-sent-to-panel-date' }
+	},
+	panelResponseSentToInspector: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the panel send its QA response to the Inspector?',
+		fieldName: 'panelResponseToInspectorDate',
+		url: 'panel-response-to-inspector-date',
+		title: 'QA panel response sent to Inspector',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'rpanel-response-to-inspector-date' }
+	},
 	factCheckDateReceivedFromInspector: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When did the Inspector issue the Fact Check?',
@@ -583,6 +667,81 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Final report issue date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'final-report-issue-date' }
+	},
+	planPauseStartDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the plan pause start?',
+		fieldName: 'planPauseStartDate',
+		url: 'plan-pause-start-date',
+		title: 'Plan pause date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'plan-pause-start-date' }
+	},
+	planPauseEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When did the plan pause end?',
+		fieldName: 'planPauseEndDate',
+		url: 'plan-pause-end-date',
+		title: 'Plan pause end date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'plan-pause-end-date' }
+	},
+	withdrawnDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan withdrawn?',
+		fieldName: 'withdrawnDate',
+		url: 'withdrawn-date',
+		title: 'Withdrawn date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'withdrawn-date-date' }
+	},
+	isSound: {
+		type: COMPONENT_TYPES.BOOLEAN,
+		options: [
+			{
+				text: 'Sound',
+				value: 'yes',
+				attributes: { 'data-cy': 'answer-yes' }
+			},
+			{
+				text: 'Unsound',
+				value: 'no',
+				attributes: { 'data-cy': 'answer-no' }
+			}
+		],
+		question: 'Was the plan found to be sound or unsound?',
+		fieldName: 'isSound',
+		url: 'is-sound',
+		title: 'Sound / unsound',
+		validators: [new RequiredValidator('Please select an option')],
+		inputAttributes: { 'data-cy': 'is-sound' }
+	},
+	soundUnsoundDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan confirmed as sound or unsound?',
+		fieldName: 'soundUnsoundDate',
+		url: 'sound-unsound-date',
+		title: 'Sound / unsound date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'sound-unsound-date' }
+	},
+	adoptionDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan adopted?',
+		fieldName: 'adoptionDate',
+		url: 'adoption-date',
+		title: 'Adoption date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'adoption-date-date' }
+	},
+	approvedForCILDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the plan approved for CIL?',
+		fieldName: 'approvedForCILDate',
+		url: 'approved-for-cil-date',
+		title: 'Approved for CIL date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
 	}
 };
 

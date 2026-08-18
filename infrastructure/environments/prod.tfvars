@@ -116,3 +116,6 @@ web_domains = {
   manage = "<tbc>.planninginspectorate.gov.uk"
   portal = "<tbc>.planninginspectorate.gov.uk"
 }
+
+# Microsoft Clarity id for portal in this environment
+clarity_id = ""

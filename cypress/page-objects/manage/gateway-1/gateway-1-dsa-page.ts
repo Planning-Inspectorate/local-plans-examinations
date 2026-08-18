@@ -1,34 +1,12 @@
-import { GatewayBasePage } from '../base/gateway-page.ts';
+import { gateway1DsaAnswer } from '../../../fixtures/manage/gateway-1.ts';
+import { RadioQuestionPage } from '../base/index.ts';
 
-export class Gateway1DsaPage extends GatewayBasePage {
-	constructor() {
-		super(/^\/case\/.+\/gateway-1\/gateway-1\/dsa-checked$/);
-	}
-
-	dsaOption(value: string) {
-		return cy.get(`input[name="dsaChecked"][value="${value}"]`);
-	}
-
-	dsaOptionLabel(value: string) {
-		return this.dsaOption(value).siblings('label');
-	}
-
-	verifyLoaded(value?: string) {
-		super.verifyLoaded();
-		this.verifyHeading('Does the LPA have a Digital Sharing Agreement (DSA)?');
-		this.dsaOptionLabel('yes').should('be.visible').and('contain.text', 'Yes');
-		this.dsaOptionLabel('no').should('be.visible').and('contain.text', 'No');
-		this.verifySaveAndContinueVisible();
-
-		if (value) {
-			this.dsaOption(value).should('be.checked');
-		}
-	}
-
-	selectAnswer(value: string) {
-		this.dsaOption(value).check({ force: true });
-		this.saveAndContinue();
-	}
-}
-
-export const gateway1DsaPage = new Gateway1DsaPage();
+export const gateway1DsaPage = new RadioQuestionPage(
+	/^\/case\/.+\/gateway-1\/gateway-1\/dsa-checked$/,
+	'dsaChecked',
+	'Does the LPA have a Data Sharing Agreement (DSA)?',
+	[
+		{ value: gateway1DsaAnswer.value, text: gateway1DsaAnswer.display },
+		{ value: gateway1DsaAnswer.updatedValue, text: gateway1DsaAnswer.updatedDisplay }
+	]
+);

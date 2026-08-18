@@ -27,11 +27,25 @@ Run these commands from the repo root.
    cp apps/portal/.env.example apps/portal/.env
    ```
 
-4. For local back office testing, either add the real `AUTH_*` values to `apps/manage/.env` or set:
+4. For local back office testing, set `AUTH_DISABLED` in `apps/manage/.env` depending on what you're testing:
 
-   ```text
-   AUTH_DISABLED=true
-   ```
+   - **Most manual and automated tests**: leave auth disabled, no sign-in required:
+
+     ```text
+     AUTH_DISABLED=true
+     ```
+
+   - **Testing user sign-in specifically** (for example, confirming a user's name is recorded against a case): enable real sign-in and populate the `AUTH_*` fields with real values:
+   (`AUTH_CLIENT_ID`, 
+   `AUTH_CLIENT_SECRET`, 
+   `AUTH_TENANT_ID`, 
+   `AUTH_GROUP_APPLICATION_ACCESS`, 
+   `ENTRA_GROUP_ID_CASE_OFFICERS`, 
+   `ENTRA_GROUP_ID_INSPECTORS`) 
+
+     ```text
+     AUTH_DISABLED=false
+     ```
 
 5. Start SQL Server and apply migrations:
 
@@ -75,6 +89,13 @@ npm run cy:portal:smoke
 npm run cy:portal:regression
 npm run cy:portal:all
 npm run cy:open:portal
+```
+
+Cross-service:
+
+```bash
+npm run cy:cross-service:all
+npm run cy:open:cross-service
 ```
 
 The target app is controlled by `TEST_TARGET` in `cypress.config.ts`. If no target is set, Cypress defaults to `portal`.
@@ -152,21 +173,27 @@ It runs on PRs and main when relevant files change, including:
 
 Older PR runs are cancelled when a new commit is pushed.
 
-The pipeline uses `.azure/pipelines/steps/run-local-e2e.yml` to:
+The pipeline uses `.azure/pipelines/steps/run-local-e2e.yml` as the shared runner for Manage, Portal and cross-service E2E. The runner is given a target and then:
 
-- detect whether manage, portal or both test areas need to run
-- install Node 22
+- detects whether that target needs to run
+- install Node 24
 - run `npm ci`
 - generate the Prisma client
-- build the relevant app
+- build the relevant app or apps
 - start local SQL Server with Docker Compose
 - apply migrations
 - start the relevant local app
 - wait for the `/health` endpoint
-- run Cypress against the local app
+- run Cypress against the target
 - publish Cypress reports on failure
 
+The PR/main E2E pipeline also runs the small cross-service suite through the same runner. Cross-service starts both Manage and Portal against the same database and checks service-level behaviour across the app boundary.
+
 Tests are split across two shards so the E2E feedback comes back quicker.
+
+The dedicated cross-service E2E pipeline also runs `cypress/e2e/cross-service/**/*`. This is for scheduled/manual service-level checks, not for repeating the full Manage and Portal UI suites.
+
+It can be manually triggered when needed and also runs on the weekday morning schedule.
 
 ## Common issues
 

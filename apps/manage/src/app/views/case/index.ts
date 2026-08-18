@@ -1,5 +1,11 @@
 import { type IRouter, type Request, Router as createRouter } from 'express';
-import { addCaseNavigation, buildGetJourneyMiddleware, updateCaseField } from './controller.ts';
+import {
+	addCaseNavigation,
+	buildGetJourneyMiddleware,
+	updateCaseField,
+	getDeleteCase,
+	postMarkAsDeleteCase
+} from './controller.ts';
 import type { ManageService } from '#service';
 import {
 	buildGetJourney,
@@ -16,13 +22,15 @@ import {
 	createOverviewJourney,
 	createGateway1Journey,
 	createGateway2Journey,
+	createGateway3Journey,
 	createExaminationJourney,
 	GATEWAY_1_JOURNEY_ID,
 	GATEWAY_2_JOURNEY_ID,
+	GATEWAY_3_JOURNEY_ID,
 	OVERVIEW_JOURNEY_ID,
 	EXAMINATION_JOURNEY_ID
 } from './journey.ts';
-import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
+import { buildCaseOfficerOptions, buildInspectorOptions } from '../../util/options-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -53,6 +61,11 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		supportsManageList: true
 	},
 	{
+		path: 'gateway-3',
+		journeyId: GATEWAY_3_JOURNEY_ID,
+		createJourney: createGateway3Journey
+	},
+	{
 		path: 'examination',
 		journeyId: EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
@@ -61,6 +74,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 ];
 
 export function caseRouter(service: ManageService): IRouter {
+	console.log('Building case router');
 	const router = createRouter({ mergeParams: true });
 	const updateCase = updateCaseField(service);
 
@@ -69,6 +83,12 @@ export function caseRouter(service: ManageService): IRouter {
 	for (const config of CASE_JOURNEYS) {
 		registerCaseJourney(router, service, config, updateCase);
 	}
+
+	/**
+	 * Delete case
+	 */
+	router.get('/delete-case', getDeleteCase(service));
+	router.post('/delete-case', postMarkAsDeleteCase(service));
 
 	return router;
 }
@@ -89,16 +109,31 @@ function registerCaseJourney(
 		: `/${path}/:section/:question`;
 
 	// List view
-	router.get(`/${path}`, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, buildList());
+	router.get(
+		`/${path}`,
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
+		getJourney,
+		buildList()
+	);
 
 	// Single question view
-	router.get(questionPath, getJourneyResponse, buildCaseOfficerOptions(service, questions), getJourney, question);
+	router.get(
+		questionPath,
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
+		getJourney,
+		question
+	);
 
 	// Save answer
 	router.post(
 		questionPath,
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
 		getJourney,
 		validate,
 		validationErrorHandler,

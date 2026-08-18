@@ -11,7 +11,7 @@ export class KeyStageDatesPage extends BasePage {
 		this.verifyDateInputValues('gateway1Date', dates.gateway1Date);
 		this.verifyDateInputValues('gateway2Date', dates.gateway2Date);
 		this.verifyDateInputValues('gateway3Date', dates.gateway3Date);
-		this.verifyDateInputValues('submissionDate', dates.submissionDate);
+		this.verifyDateInputValues('estimatedSubmissionForExaminationDate', dates.estimatedSubmissionForExaminationDate);
 	}
 
 	verifyLoaded() {
@@ -22,13 +22,13 @@ export class KeyStageDatesPage extends BasePage {
 			'Gateway 1 estimated date',
 			'Gateway 2 estimated date',
 			'Gateway 3 estimated date',
-			'Submission for examination date'
+			'Estimated submission for examination date'
 		);
 		this.verifyDateInputsVisible('intentionToCommenceDate');
 		this.verifyDateInputsVisible('gateway1Date');
 		this.verifyDateInputsVisible('gateway2Date');
 		this.verifyDateInputsVisible('gateway3Date');
-		this.verifyDateInputsVisible('submissionDate');
+		this.verifyDateInputsVisible('estimatedSubmissionForExaminationDate');
 		this.verifySaveAndContinueVisible();
 	}
 
@@ -37,7 +37,7 @@ export class KeyStageDatesPage extends BasePage {
 		this.enterDateAnswer('gateway1Date', dates.gateway1Date);
 		this.enterDateAnswer('gateway2Date', dates.gateway2Date);
 		this.enterDateAnswer('gateway3Date', dates.gateway3Date);
-		this.enterDateAnswer('submissionDate', dates.submissionDate);
+		this.enterDateAnswer('estimatedSubmissionForExaminationDate', dates.estimatedSubmissionForExaminationDate);
 		this.saveAndContinue();
 	}
 }

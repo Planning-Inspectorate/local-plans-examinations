@@ -13,11 +13,15 @@ export class CaseCreatedPage extends BasePage {
 		this.createdPanel.should('be.visible').and('contain.text', 'New case has been created');
 	}
 
-	verifyReferenceFormat() {
-		this.caseReference
+	getReference() {
+		return this.caseReference
 			.should('be.visible')
 			.invoke('text')
-			.should('match', /^PLAN\/\d+$/);
+			.then((reference) => reference.trim());
+	}
+
+	verifyReferenceFormat() {
+		this.getReference().should('match', /^PLAN\/\d+$/);
 	}
 }
 

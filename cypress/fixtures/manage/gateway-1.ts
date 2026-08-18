@@ -59,7 +59,7 @@ export const gateway1DateAnswers = {
 } as const satisfies Record<string, Gateway1DateAnswer>;
 
 export const gateway1DsaAnswer = {
-	row: 'Digital Sharing Agreement (DSA) check',
+	row: 'Data Sharing Agreement (DSA) check',
 	path: 'dsa-checked',
 	value: 'yes',
 	display: 'Yes',

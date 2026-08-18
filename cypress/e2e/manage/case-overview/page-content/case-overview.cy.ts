@@ -1,5 +1,7 @@
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
+import { gateway3ProgrammeOfficerAnswer } from '../../../../fixtures/manage/gateway-3.ts';
 
 describe('Case overview', () => {
 	beforeEach(() => {
@@ -26,14 +28,14 @@ describe('Case overview', () => {
 		cy.task('seedDb');
 
 		manageHomePage.visit();
-		manageHomePage.openCaseByPlanTitle('Cypress Test Plan');
+		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
 
-		caseOverviewPage.verifyLoaded('Cypress Test Plan');
+		caseOverviewPage.verifyLoaded(seededCase.planTitle);
 		caseOverviewPage.verifyBackLink('/');
 		caseOverviewPage.verifyExpectedServiceNavigation();
 		caseOverviewPage.verifyExpectedSectionHeadings();
 		caseOverviewPage.verifyExpectedSummaryRows();
-		caseOverviewPage.verifySummaryRowContains('Plan title', 'Cypress Test Plan');
+		caseOverviewPage.verifySummaryRowContains('Plan title', seededCase.planTitle);
 		caseOverviewPage.verifySummaryRowContains('Plan type', 'Local Plan');
 		caseOverviewPage.verifySummaryRowContains(
 			'Local Planning Authority',
@@ -52,7 +54,12 @@ describe('Case overview', () => {
 			'Johnson',
 			'bob@lpa.gov.uk'
 		);
-		caseOverviewPage.verifySummaryRowContains('Programme Officer', 'Not started');
+		caseOverviewPage.verifySummaryRowContains(
+			'Programme Officer details',
+			gateway3ProgrammeOfficerAnswer.firstName,
+			gateway3ProgrammeOfficerAnswer.lastName,
+			gateway3ProgrammeOfficerAnswer.email
+		);
 		caseOverviewPage.verifyExpectedActionLinkHrefs();
 		caseOverviewPage.verifyDeleteCaseButton();
 	});

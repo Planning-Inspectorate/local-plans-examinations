@@ -28,6 +28,10 @@ export class CaseOfficerPage extends BasePage {
 	verifyCaseOfficerSelected(value: string) {
 		this.caseOfficerOption(value).should('have.attr', 'selected');
 	}
+
+	verifyNoCaseOfficerSelected() {
+		this.caseOfficerSelect.should('have.value', '');
+	}
 }
 
 export const caseOfficerPage = new CaseOfficerPage();

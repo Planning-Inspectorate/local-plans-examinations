@@ -30,7 +30,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 	gateway1Date?: string;
 	gateway2Date?: string;
 	gateway3Date?: string;
-	submissionDate?: string;
+	estimatedSubmissionForExaminationDate?: string;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 export function buildSaveController(service: ManageService): RequestHandler {
 	return async (req, res) => {
 		const account = authSession.getAccount(req.session);
-		const currentUser = account?.username ?? 'Unknown';
+		const currentUser = account?.name ?? 'Unknown';
 
 		if (!res.locals || !res.locals.journeyResponse) {
 			throw new Error('journey response required');
@@ -163,8 +163,8 @@ async function saveDataToDatabase(
 			tx.examinationInfo.create({
 				data: {
 					caseId: answers.reference,
-					...(answers.submissionDate && {
-						submissionForExaminationDate: parseDate(answers.submissionDate)
+					...(answers.estimatedSubmissionForExaminationDate && {
+						estimatedSubmissionForExaminationDate: parseDate(answers.estimatedSubmissionForExaminationDate)
 					})
 				}
 			})

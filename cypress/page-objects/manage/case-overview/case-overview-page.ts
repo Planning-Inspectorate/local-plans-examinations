@@ -17,7 +17,7 @@ const summaryRows = [
 	'Case officer',
 	'Plan band',
 	'Contact details',
-	'Programme Officer',
+	'Programme Officer details',
 	'Examination website',
 	'Assessor Gateway 2',
 	'Assessor Gateway 3',
@@ -36,7 +36,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	['Case officer', /^\/case\/.+\/overview\/case-details\/case-officer$/],
 	['Plan band', /^\/case\/.+\/overview\/case-details\/plan-band$/],
 	['Contact details', /^\/case\/.+\/overview\/contacts\/check-contact-details$/],
-	['Programme Officer', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
+	['Programme Officer details', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
 	['Examination website', /^\/case\/.+\/overview\/contacts\/examination-website$/],
 	['Assessor Gateway 2', /^\/case\/.+\/overview\/contacts\/assessor-gateway-2$/],
 	['Assessor Gateway 3', /^\/case\/.+\/overview\/contacts\/assessor-gateway-3$/],
@@ -55,6 +55,10 @@ export class CaseOverviewPage extends BasePage {
 
 	get serviceNavigation() {
 		return cy.getByData('service-navigation');
+	}
+
+	get deleteCaseButton() {
+		return cy.getByData('delete-case-button');
 	}
 
 	sectionHeading(text: string) {
@@ -123,7 +127,10 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyDeleteCaseButton() {
-		cy.contains('button.govuk-button', 'Delete case').should('be.visible');
+		this.deleteCaseButton
+			.should('be.visible')
+			.and('have.attr', 'href')
+			.and('match', /^\/case\/.+\/delete-case$/);
 	}
 
 	verifyExaminationWebsiteHyperlink(hyperlink: string) {
@@ -131,6 +138,10 @@ export class CaseOverviewPage extends BasePage {
 			.should('be.visible')
 			.and('have.attr', 'href', `${hyperlink}`)
 			.and('have.attr', 'target', '_blank');
+	}
+
+	navigateToDeletePage() {
+		this.deleteCaseButton.should('be.visible').click();
 	}
 }
 
