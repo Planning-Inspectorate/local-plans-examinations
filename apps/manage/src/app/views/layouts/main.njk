@@ -1,6 +1,7 @@
 {% extends "govuk/template.njk" %}
 
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/skip-link/macro.njk" import govukSkipLink %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "views/layouts/components/header.njk" import header %}
 {% from "ui/footer/pins-footer.njk" import pinsFooter %}
@@ -25,17 +26,30 @@
 	{{ header(config.headerTitle) }}
 {% endblock %}
 
+{% block skipLink %}
+	<nav aria-label="Skip link">
+		{{ govukSkipLink({
+			href: '#main-content',
+			text: 'Skip to main content'
+		}) }}
+	</nav>
+{% endblock %}
+
 {% block beforeContent %}
 	<script {% if cspNonce %}nonce={{ cspNonce }}{% endif %}>
 		document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');
 	</script>
 	{% block backLink %}
-		{% if backLinkUrl and backLinkText %}
-			{{ govukBackLink({ text: backLinkText, href: backLinkUrl, attributes: { "data-cy": "back-link" } }) }}
-		{% elseif backLinkUrl %}
-			{{ govukBackLink({ href: backLinkUrl, attributes: { "data-cy": "back-link" } }) }}
-		{% elseif backLink %} {# used by the dynamic forms #}
-			{{ govukBackLink({ href: backLink, attributes: { "data-cy": "back-link" } }) }}
+		{% if backLinkUrl or backLink %}
+			<nav aria-label="Back">
+				{% if backLinkUrl and backLinkText %}
+					{{ govukBackLink({ text: backLinkText, href: backLinkUrl, attributes: { "data-cy": "back-link" } }) }}
+				{% elseif backLinkUrl %}
+					{{ govukBackLink({ href: backLinkUrl, attributes: { "data-cy": "back-link" } }) }}
+				{% elseif backLink %} {# used by the dynamic forms #}
+					{{ govukBackLink({ href: backLink, attributes: { "data-cy": "back-link" } }) }}
+				{% endif %}
+			</nav>
 		{% endif %}
 	{% endblock %}
 	{% block error_summary %}
