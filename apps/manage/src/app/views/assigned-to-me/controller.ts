@@ -30,10 +30,10 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 									//{assessorName: caseOfficerText},		****to be implemented****
 									{ examiningInspector1: caseOfficerText },
 									{ examiningInspector2: caseOfficerText },
-									{ examiningInspector3: caseOfficerText }
-									//{qaInspector1: caseOfficerText},		****to be implemented****
-									//{qaInspector2: caseOfficerText},		****to be implemented****
-									//{qaInspector3: caseOfficerText},		****to be implemented****
+									{ examiningInspector3: caseOfficerText },
+									{ qaInspector1: caseOfficerText },
+									{ qaInspector2: caseOfficerText },
+									{ qaInspector3: caseOfficerText }
 								]
 							}
 						}
