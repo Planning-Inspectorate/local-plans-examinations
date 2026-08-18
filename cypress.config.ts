@@ -63,6 +63,14 @@ export default defineConfig({
 			cypressGrepPlugin(config);
 
 			on('task', {
+				log: (message: string) => {
+					console.log(message);
+					return null;
+				},
+				table: (message: unknown) => {
+					console.table(message);
+					return null;
+				},
 				seedDb: async () => {
 					await runCommand('node packages/database/src/seed/seed-cy.ts');
 					return null;

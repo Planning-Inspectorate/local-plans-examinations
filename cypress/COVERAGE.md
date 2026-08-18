@@ -11,6 +11,7 @@ Coverage levels:
 - Validation: checks user-facing validation behaviour
 - Journey: checks a meaningful end-to-end user flow
 - Regression: protects a known bug or higher-risk edge case
+- Accessibility: automated axe regression checks for the supported WCAG A/AA rule tags against representative pages
 - Unit-only: intentionally covered below Cypress level
 - Manual-only: intentionally not automated
 - Gap: not yet covered
@@ -66,6 +67,13 @@ Coverage levels:
 | COV-POR-016 | Gateway 2 submission | Journey      | Back link navigates to plan details page; save and come back later link navigates to plan details page                             | `portal/gw2-application/journey/gateway-2-application.cy.ts`      | Uses seeded plan data                                                      |
 | COV-POR-017 | Gateway 2 submission | Validation   | Error shown when submit is clicked with no documents added                                                                         | `portal/gw2-application/validation/gateway-2-application.cy.ts`   | Minimum one document required before submission                            |
 
+## Accessibility
+
+| ID           | Area                        | Level         | Coverage                                                                                                                                         | Specs                               | Notes                                                                                                                          |
+| ------------ | --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| COV-A11Y-001 | Manage representative pages | Accessibility | axe scans Manage home, create-case pages through Check your answers, a validation state, seeded case overview, delete case and Examination pages | `manage/accessibility/manage.cy.ts` | Uses supported WCAG A/AA axe tags only; external audit remains the source for full WCAG 2.2 AA/manual/assistive-tech assurance |
+| COV-A11Y-002 | Portal representative pages | Accessibility | axe scans Portal login, OTP, Your plans, plan details, Gateway 2 submission validation, declaration and application complete pages               | `portal/accessibility/portal.cy.ts` | Uses supported WCAG A/AA axe tags only; external audit remains the source for full WCAG 2.2 AA/manual/assistive-tech assurance |
+
 ## Cross-service
 
 | ID            | Area            | Level      | Coverage                                                                                    | Specs                               | Notes                                                                                                                           |
@@ -90,3 +98,4 @@ Coverage levels:
 | Examination case history labels                     | Gap                | New Examination fields (dates, Inspectors, Website) aren't in `caseHistoryLabels`, so case history shows raw field name/value instead of readable text; tests assert current fallback behaviour                                                                                        |
 | Tests for AUTH_DISABLED=false configuration         | Gap                | Currently all tests for BO run with authentication disabled. Tests will be implemented with a flag turned on to test BO user sign in                                                                                                                                                   |
 | Gateway 3 case history labels                       | Gap                | New Gateway 3 fields (dates, assessor, Programme Officer details) aren't in `caseHistoryLabels`, so case history shows raw field name/value instead of readable text; tests assert current fallback behaviour, partial match for dates since raw Date.toString() is timezone-dependent |
+| Automated accessibility coverage                    | Partial            | Cypress axe checks cover representative pages only and are limited to the supported WCAG A/AA rule tags in the installed axe-core version. Passing axe does not demonstrate full WCAG 2.2 AA compliance - the external audit remains the source for primary assurance.                 |
