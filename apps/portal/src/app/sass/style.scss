@@ -45,3 +45,32 @@
 		text-align: right;
 	}
 }
+
+.govuk-file-upload-button.govuk-file-upload-button--empty {
+	border-style: dashed;
+	border-color: govuk.$govuk-link-colour;
+	background-color: #fff;
+}
+
+.app-link-button {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	color: govuk.$govuk-link-colour;
+	text-decoration: underline;
+	font-family: inherit;
+
+	&:hover {
+		color: govuk.$govuk-link-hover-colour;
+		text-decoration: underline;
+	}
+
+	&:active {
+		color: govuk.$govuk-link-active-colour;
+	}
+}
+
+.govuk-grid-column-two-thirds > h1.govuk-heading-l + p.govuk-body {
+	font-weight: 700;
+}

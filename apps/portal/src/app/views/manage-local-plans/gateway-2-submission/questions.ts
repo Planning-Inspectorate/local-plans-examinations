@@ -86,11 +86,6 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	text: {
 		caption: 'Procedural documents',
 		introduction: 'Your cover letter should set out:',
-		bulletList: [
-			'a summary of where you are in preparing the plan, including what additional activities have been undertaken since the consultation on the proposed local plan content and evidence',
-			'a description of up to 5 main soundness issues which you are seeking advice on',
-			'any issues from the consultation on your proposed local plan content and evidence you want to highlight to the gateway assessor, if relevant and not already covered in other submitted documents'
-		],
 		fileRequirementsText:
 			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
 		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
