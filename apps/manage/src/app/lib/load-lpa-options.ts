@@ -1,25 +1,33 @@
-import { readFile } from 'fs/promises';
-import path from 'path';
+import type { ManageService } from '#service';
 
-type LpaOption = { value: string; text: string };
+type LpaOption = { id: string; name: string; pinsCode: string; status: string };
 
-export async function loadLpaOptions(): Promise<LpaOption[]> {
-	const jsonPath = process.env.LPA_DATA_JSON_PATH || path.join(process.cwd(), 'data-authorities-prod-list.json');
+export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
+	const { db } = service;
 
-	try {
-		const raw = await readFile(jsonPath, 'utf8');
-		const arr = JSON.parse(raw);
+	const authorities = await db.authority.findMany({});
 
-		if (!Array.isArray(arr)) return [];
+	return authorities.map((authority) => ({
+		id: authority.id,
+		name: authority.name,
+		pinsCode: authority.pinsCode,
+		status: authority.status
+	}));
 
-		return arr
-			.map((item: any) => ({
-				value: String(item.pinsCode || '').trim(),
-				text: String(item.name || '').trim()
-			}))
-			.filter((option) => option.value && option.text)
-			.sort((a, b) => a.text.localeCompare(b.text));
-	} catch {
-		return [];
-	}
+	// try {
+	// 	const raw = await readFile(jsonPath, 'utf8');
+	// 	const arr = JSON.parse(raw);
+
+	// 	if (!Array.isArray(arr)) return [];
+
+	// 	return arr
+	// 		.map((item: any) => ({
+	// 			value: String(item.pinsCode || '').trim(),
+	// 			text: String(item.name || '').trim()
+	// 		}))
+	// 		.filter((option) => option.value && option.text)
+	// 		.sort((a, b) => a.text.localeCompare(b.text));
+	// } catch {
+	// 	return [];
+	// }
 }
