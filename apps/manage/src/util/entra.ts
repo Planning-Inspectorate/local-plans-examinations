@@ -17,6 +17,10 @@ export interface GroupMember {
 	displayName: string;
 }
 
+export interface User {
+	id: string;
+	displayName: string;
+}
 export class EntraClient {
 	#client: Client;
 
@@ -55,16 +59,6 @@ export class EntraClient {
 		return members;
 	}
 
-	async getUserDisplayName(guid: string): Promise<string | undefined> {
-		const res = await this.#client.api(`users/${guid}`).select(['id', 'displayName']).get();
-
-		if (!res?.id || typeof res?.displayName !== 'string') {
-			return undefined;
-		}
-
-		return res.displayName;
-	}
-
 	/**
 	 * Get a skip token out of an '@odata.nextLink' value
 	 */
@@ -78,5 +72,9 @@ export class EntraClient {
 				return v;
 			}
 		}
+	}
+	async getUserDisplayName(userId: string): Promise<string> {
+		const user: User = await this.#client.api(`/users/${userId}`).select(['id', 'displayName']).top(1).get();
+		return String(user.displayName);
 	}
 }
