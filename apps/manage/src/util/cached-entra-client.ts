@@ -54,17 +54,4 @@ export class CachedEntraClient {
 		this.#cache.set(groupId, members);
 		return members;
 	}
-
-	/**
-	 * Fetch all group members - direct and indirect - of an Entra group, up to a maximum of 5000
-	 */
-	async getUserDisplayName(guid: string): Promise<GroupMember | undefined> {
-		let member = this.#cache.get(guid);
-		if (!member) {
-			member = await this.#client.getUserDisplayName(guid);
-			this.#cache.set(guid, member);
-		}
-
-		return member;
-	}
 }
