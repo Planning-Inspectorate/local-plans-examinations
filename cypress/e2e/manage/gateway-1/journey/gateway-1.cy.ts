@@ -1,6 +1,6 @@
 import {
 	gateway1DsaPage,
-	gateway1EstimatedDatePage,
+	gateway1ExpectedDatePage,
 	gateway1Page,
 	noticeOfIntentionPublishDatePage
 } from '../../../../page-objects/manage/gateway-1/index.ts';
@@ -39,9 +39,9 @@ describe('Gateway 1 updates', () => {
 	});
 
 	it('returns to Gateway 1 from Gateway 1 answer page back links', () => {
-		gateway1Page.openActionLinkFor(gateway1DateAnswers.estimatedGateway1Date.row);
-		gateway1EstimatedDatePage.verifyLoaded(gateway1DateAnswers.estimatedGateway1Date.input);
-		gateway1EstimatedDatePage.goBack();
+		gateway1Page.openActionLinkFor(gateway1DateAnswers.expectedGateway1Date.row);
+		gateway1ExpectedDatePage.verifyLoaded(gateway1DateAnswers.expectedGateway1Date.input);
+		gateway1ExpectedDatePage.goBack();
 
 		gateway1Page.verifyLoaded(seededCase.planTitle);
 

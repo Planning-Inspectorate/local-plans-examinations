@@ -4,12 +4,14 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block backLink %}
-  {{ govukBackLink({
-    href: baseUrl + "/overview",
-    attributes: {
-      "data-cy": "back-link"
-    }
-  }) }}
+  <nav aria-label="Back">
+    {{ govukBackLink({
+      href: baseUrl + "/overview",
+      attributes: {
+        "data-cy": "back-link"
+      }
+    }) }}
+  </nav>
 {% endblock %}
 
 {% block pageContent %}
@@ -40,4 +42,3 @@
     </form>
 </div>
 {% endblock %}
-

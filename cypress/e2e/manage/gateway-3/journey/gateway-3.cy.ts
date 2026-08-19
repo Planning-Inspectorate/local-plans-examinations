@@ -3,7 +3,7 @@ import {
 	gateway3AssessorPage,
 	gateway3ProgrammeOfficerPage,
 	gateway3ActualDatePage,
-	gateway3EstimatedDatePage
+	gateway3ExpectedDatePage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { openSeededGateway3Page } from '../../../../flows/manage/gateway-3-flow.ts';
@@ -12,7 +12,7 @@ import {
 	gateway3AssessorAnswer,
 	gateway3DateAnswers,
 	gateway3ProgrammeOfficerAnswer,
-	updatedGateway3EstimatedDateAnswer
+	updatedGateway3ExpectedDateAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 
 const today = new Date();
@@ -32,21 +32,21 @@ describe('Gateway 3 updates', () => {
 	// after(() => cy.task('clearDb'));
 
 	it('updates a Gateway 3 date answer and records case history', { tags: ['regression'] }, () => {
-		gateway3Page.openActionLinkFor(gateway3DateAnswers.gateway3EstimatedDate.row);
+		gateway3Page.openActionLinkFor(gateway3DateAnswers.gateway3ExpectedDate.row);
 
-		gateway3EstimatedDatePage.verifyLoaded(gateway3DateAnswers.gateway3EstimatedDate.input);
-		gateway3EstimatedDatePage.enterDate(updatedGateway3EstimatedDateAnswer.input);
+		gateway3ExpectedDatePage.verifyLoaded(gateway3DateAnswers.gateway3ExpectedDate.input);
+		gateway3ExpectedDatePage.enterDate(updatedGateway3ExpectedDateAnswer.input);
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 		gateway3Page.verifySummaryRowContains(
-			gateway3DateAnswers.gateway3EstimatedDate.row,
-			updatedGateway3EstimatedDateAnswer.display
+			gateway3DateAnswers.gateway3ExpectedDate.row,
+			updatedGateway3ExpectedDateAnswer.display
 		);
 
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		// Known gap: Gateway 3 fields aren't in caseHistoryLabels; asserting only the prefix since raw Date.toString() is timezone dependent
-		caseHistoryPage.verifyHistoryEvent('Updated estimatedDate from');
+		caseHistoryPage.verifyHistoryEvent('Updated expectedDate from');
 	});
 
 	it('updates the Gateway 3 assessor name answer', { tags: ['regression'] }, () => {

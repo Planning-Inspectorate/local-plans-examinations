@@ -30,7 +30,7 @@ export interface CreateCaseAnswers extends JourneyAnswers {
 	gateway1Date?: string;
 	gateway2Date?: string;
 	gateway3Date?: string;
-	estimatedSubmissionForExaminationDate?: string;
+	expectedSubmissionForExaminationDate?: string;
 }
 
 /**
@@ -101,7 +101,7 @@ async function saveDataToDatabase(
 	currentUser: string
 ): Promise<void> {
 	await service.db.$transaction(async (tx) => {
-		await tx.case.create({
+		const createdCase = await tx.case.create({
 			data: {
 				reference: answers.reference,
 				email: answers.email,
@@ -135,36 +135,36 @@ async function saveDataToDatabase(
 		await Promise.all([
 			tx.gateway1Info.create({
 				data: {
-					caseId: answers.reference,
+					caseId: createdCase.id,
 					...(answers.intentionToCommenceDate && {
 						noticeOfIntention: parseDate(answers.intentionToCommenceDate)
 					}),
 					...(answers.gateway1Date && {
-						estimatedGateway1Date: parseDate(answers.gateway1Date)
+						expectedGateway1Date: parseDate(answers.gateway1Date)
 					})
 				}
 			}),
 			tx.gateway2Info.create({
 				data: {
-					caseId: answers.reference,
+					caseId: createdCase.id,
 					...(answers.gateway2Date && {
-						estimatedDate: parseDate(answers.gateway2Date)
+						expectedDate: parseDate(answers.gateway2Date)
 					})
 				}
 			}),
 			tx.gateway3Info.create({
 				data: {
-					caseId: answers.reference,
+					caseId: createdCase.id,
 					...(answers.gateway3Date && {
-						estimatedDate: parseDate(answers.gateway3Date)
+						expectedDate: parseDate(answers.gateway3Date)
 					})
 				}
 			}),
 			tx.examinationInfo.create({
 				data: {
-					caseId: answers.reference,
-					...(answers.estimatedSubmissionForExaminationDate && {
-						estimatedSubmissionForExaminationDate: parseDate(answers.estimatedSubmissionForExaminationDate)
+					caseId: createdCase.id,
+					...(answers.expectedSubmissionForExaminationDate && {
+						expectedSubmissionForExaminationDate: parseDate(answers.expectedSubmissionForExaminationDate)
 					})
 				}
 			})

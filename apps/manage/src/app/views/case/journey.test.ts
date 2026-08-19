@@ -70,7 +70,7 @@ describe('gateway1Journey', () => {
 		const journey = createGateway1JourneyForTest();
 		const gateway1Questions = [
 			'notice-of-intention-publish-date',
-			'estimated-gateway-1-date',
+			'expected-gateway-1-date',
 			'completed-gateway-1-date',
 			'sla-sent-date',
 			'sla-received-date',
@@ -91,7 +91,7 @@ describe('gateway3Journey', () => {
 	it('links Gateway 3 question pages back to the Gateway 3 page', () => {
 		const journey = createGateway3JourneyForTest();
 		const gateway3Questions = [
-			'gateway-3-estimated-date',
+			'gateway-3-expected-date',
 			'gateway-3-actual-date',
 			'cgateway-3-assessor-name',
 			'gateway-3-assessor-date-of-appointment',

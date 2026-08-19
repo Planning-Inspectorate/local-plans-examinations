@@ -3,7 +3,7 @@ import {
 	workshopVenuePage,
 	gateway2AssessorPage,
 	gateway2ActualDatePage,
-	gateway2EstimatedDatePage
+	gateway2ExpectedDatePage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
 import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
@@ -11,7 +11,7 @@ import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
 	workshopVenueAnswer,
-	updatedGateway2EstimatedDateAnswer
+	updatedGateway2ExpectedDateAnswer
 } from '../../../../fixtures/manage/gateway-2.ts';
 
 describe('Gateway 2 updates', () => {
@@ -22,15 +22,15 @@ describe('Gateway 2 updates', () => {
 	after(() => cy.task('clearDb'));
 
 	it('updates a Gateway 2 date answer', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2EstimatedDate.row);
+		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2ExpectedDate.row);
 
-		gateway2EstimatedDatePage.verifyLoaded(gateway2DateAnswers.gateway2EstimatedDate.input);
-		gateway2EstimatedDatePage.enterDate(updatedGateway2EstimatedDateAnswer.input);
+		gateway2ExpectedDatePage.verifyLoaded(gateway2DateAnswers.gateway2ExpectedDate.input);
+		gateway2ExpectedDatePage.enterDate(updatedGateway2ExpectedDateAnswer.input);
 
 		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.verifySummaryRowContains(
-			gateway2DateAnswers.gateway2EstimatedDate.row,
-			updatedGateway2EstimatedDateAnswer.display
+			gateway2DateAnswers.gateway2ExpectedDate.row,
+			updatedGateway2ExpectedDateAnswer.display
 		);
 	});
 

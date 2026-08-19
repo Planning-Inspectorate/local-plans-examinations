@@ -12,13 +12,17 @@ import {
 
 const REFERENCE = 'PLAN/123456';
 const JOURNEY_ID = 'edit-case-overview';
+const CASE_ID = '11111111-1111-1111-1111-111111111111';
+const CURRENT_USER = 'Joe Bloggs';
 
 function createService(): any {
 	return {
 		db: {
 			case: {
 				update: mock.fn(async () => ({})),
-				findUnique: mock.fn(async () => null)
+				findUnique: mock.fn(async () => ({
+					id: CASE_ID
+				}))
 			},
 			contact: {
 				update: mock.fn(async () => ({})),
@@ -347,7 +351,7 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
 		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			},
 			update: {
 				programmeOfficerFirstName: 'Pat',
@@ -355,7 +359,7 @@ describe('updateCaseField', () => {
 				programmeOfficerEmail: 'pat.officer@example.com'
 			},
 			create: {
-				caseId: REFERENCE,
+				caseId: CASE_ID,
 				programmeOfficerFirstName: 'Pat',
 				programmeOfficerLastName: 'Officer',
 				programmeOfficerEmail: 'pat.officer@example.com'
@@ -400,14 +404,14 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.gateway1Info.upsert.mock.callCount(), 1);
 		assert.deepEqual(service.db.gateway1Info.upsert.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			},
 			update: {
 				noticeOfIntention: date,
 				dsaChecked: 'yes'
 			},
 			create: {
-				caseId: REFERENCE,
+				caseId: CASE_ID,
 				noticeOfIntention: date,
 				dsaChecked: 'yes'
 			}
@@ -433,9 +437,8 @@ describe('updateCaseField', () => {
 
 		const upsert = service.db.gateway2Info.upsert.mock.calls[0].arguments[0];
 
-		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.where.caseId, CASE_ID);
 		assert.equal(upsert.update.assessorName, 'Alex Assessor');
-		assert.equal(upsert.create.caseId, REFERENCE);
 		assert.equal(upsert.create.assessorName, 'Alex Assessor');
 		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
 		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
@@ -459,9 +462,9 @@ describe('updateCaseField', () => {
 
 		const upsert = service.db.gateway3Info.upsert.mock.calls[0].arguments[0];
 
-		assert.equal(upsert.where.caseId, REFERENCE);
+		assert.equal(upsert.where.caseId, CASE_ID);
 		assert.equal(upsert.update.assessorName, 'Alex Assessor');
-		assert.equal(upsert.create.caseId, REFERENCE);
+		assert.equal(upsert.create.caseId, CASE_ID);
 		assert.equal(upsert.create.assessorName, 'Alex Assessor');
 		assert.ok(upsert.update.assessorAppointmentDate instanceof Date);
 		assert.ok(upsert.create.assessorAppointmentDate instanceof Date);
@@ -485,14 +488,14 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
 		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			},
 			update: {
 				letterSentToMHCLGDate,
 				letterIssueDate
 			},
 			create: {
-				caseId: REFERENCE,
+				caseId: CASE_ID,
 				letterSentToMHCLGDate,
 				letterIssueDate
 			}
@@ -523,7 +526,7 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
 		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			},
 			update: {
 				factCheckDateReceivedFromInspector,
@@ -533,7 +536,7 @@ describe('updateCaseField', () => {
 				finalReportIssueDate
 			},
 			create: {
-				caseId: REFERENCE,
+				caseId: CASE_ID,
 				factCheckDateReceivedFromInspector,
 				factCheckDueDate,
 				factCheckActualDate,
@@ -581,7 +584,8 @@ describe('updateCaseHistory', () => {
 				letterSentToMHCLGDate: new Date('2026-10-03T23:00:00.000Z'),
 				letterIssueDate: new Date('2026-10-04T23:00:00.000Z')
 			},
-			REFERENCE
+			REFERENCE,
+			CURRENT_USER
 		);
 
 		const entries = db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
@@ -609,7 +613,8 @@ describe('updateCaseHistory', () => {
 				factCheckReceivedBackFromLPADate: new Date('2026-01-09T12:00:00.000Z'),
 				finalReportIssueDate: new Date('2026-01-10T12:00:00.000Z')
 			},
-			REFERENCE
+			REFERENCE,
+			CURRENT_USER
 		);
 
 		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
@@ -644,7 +649,8 @@ describe('updateCaseHistory', () => {
 				adoptionDate: new Date('2026-01-10T12:00:00.000Z'),
 				approvedForCILDate: new Date('2026-01-11T12:00:00.000Z')
 			},
-			REFERENCE
+			REFERENCE,
+			CURRENT_USER
 		);
 
 		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
@@ -747,6 +753,7 @@ describe('buildGetJourneyMiddleware', () => {
 				reference: REFERENCE
 			},
 			select: {
+				id: true,
 				planTitle: true
 			}
 		});
@@ -806,7 +813,7 @@ describe('buildGetJourneyMiddleware', () => {
 		let caseFindCount = 0;
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => {
 			caseFindCount += 1;
-			return caseFindCount === 1 ? { planTitle: 'Southshire Local Plan' } : overviewData;
+			return caseFindCount === 1 ? { id: CASE_ID, planTitle: 'Southshire Local Plan' } : overviewData;
 		});
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
@@ -815,7 +822,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
 			where: { reference: 'PLAN/123456' },
-			select: { planTitle: true }
+			select: { id: true, planTitle: true }
 		});
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[1].arguments[0], {
@@ -930,11 +937,12 @@ describe('buildGetJourneyMiddleware', () => {
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
 			planTitle: 'Southshire Local Plan'
 		}));
 
 		ctx.service.db.gateway1Info.findUnique.mock.mockImplementation(async () => ({
-			caseId: REFERENCE,
+			caseId: CASE_ID,
 			dsaChecked: 'yes'
 		}));
 
@@ -942,7 +950,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.gateway1Info.findUnique.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			}
 		});
 
@@ -958,11 +966,12 @@ describe('buildGetJourneyMiddleware', () => {
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
 			planTitle: 'Southshire Local Plan'
 		}));
 
 		ctx.service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
-			caseId: REFERENCE,
+			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
 		}));
 
@@ -970,7 +979,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.gateway2Info.findUnique.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			}
 		});
 
@@ -986,10 +995,12 @@ describe('buildGetJourneyMiddleware', () => {
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
 			planTitle: 'Southshire Local Plan'
 		}));
+
 		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
-			caseId: REFERENCE,
+			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
 		}));
 
@@ -997,7 +1008,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.gateway3Info.findUnique.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			}
 		});
 
@@ -1015,11 +1026,12 @@ describe('buildGetJourneyMiddleware', () => {
 		const factCheckDueDate = new Date('2026-01-07T12:00:00.000Z');
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
 			planTitle: 'Southshire Local Plan'
 		}));
 
 		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
-			caseId: REFERENCE,
+			caseId: CASE_ID,
 			letterSentToMHCLGDate,
 			factCheckDueDate
 		}));
@@ -1028,7 +1040,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
 			where: {
-				caseId: REFERENCE
+				caseId: CASE_ID
 			}
 		});
 
@@ -1045,6 +1057,7 @@ describe('buildGetJourneyMiddleware', () => {
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
 			planTitle: 'Southshire Local Plan'
 		}));
 

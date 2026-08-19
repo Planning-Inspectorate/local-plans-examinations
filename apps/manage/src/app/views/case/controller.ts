@@ -42,7 +42,7 @@ interface CaseOverviewInput {
 
 interface Gateway1Input {
 	noticeOfIntention?: Date;
-	estimatedGateway1Date?: Date;
+	expectedGateway1Date?: Date;
 	completedGateway1Date?: Date;
 	slaSentDate?: Date;
 	slaReceivedDate?: Date;
@@ -50,7 +50,7 @@ interface Gateway1Input {
 }
 
 interface Gateway2Input {
-	estimatedDate?: Date;
+	expectedDate?: Date;
 	actualDate?: Date;
 	validDate?: Date;
 	assessorName?: string;
@@ -93,7 +93,7 @@ interface ExaminationInput {
 }
 
 interface Gateway3Input {
-	estimatedDate?: Date;
+	expectedDate?: Date;
 	actualDate?: Date;
 	assessorName?: string;
 	assessorAppointmentDate?: Date;
@@ -201,18 +201,18 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 async function updateOverview(
 	db: PrismaClient,
 	answers: CaseOverviewInput,
-	caseId: string,
+	reference: string,
 	action?: string,
 	section?: string,
 	currentItemId?: string,
 	question?: string
 ) {
 	if (question === 'assessor-gateway-2' || question === 'assessor-gateway-2') {
-		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
+		await updateGateway2(db, { assessorName: answers.assessorName }, reference, question);
 		return true;
 	}
 	if (question === 'assessor-gateway-3') {
-		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, caseId, question);
+		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, reference, question);
 		return true;
 	}
 	if (question === 'programme-officer') {
@@ -223,7 +223,7 @@ async function updateOverview(
 				programmeOfficerLastName: answers.programmeOfficerLastName,
 				programmeOfficerEmail: answers.programmeOfficerEmail
 			},
-			caseId
+			reference
 		);
 		return true;
 	}
@@ -240,7 +240,7 @@ async function updateOverview(
 	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
 	if (question === 'check-lpas' && answers.lpa) {
 		await db.case.update({
-			where: { reference: caseId },
+			where: { reference: reference },
 			data: {
 				lpas: {
 					connectOrCreate: {
@@ -265,7 +265,7 @@ async function updateOverview(
 			where: { id: currentItemId },
 			create: {
 				...contactData,
-				cases: { connect: { reference: caseId } }
+				cases: { connect: { reference: reference } }
 			},
 			update: contactData
 		});
@@ -273,39 +273,54 @@ async function updateOverview(
 	}
 
 	if (question === 'examining-inspector-1') {
-		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, caseId, question);
+		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, reference, question);
 	}
 	if (question === 'examining-inspector-2') {
-		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, caseId, question);
+		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, reference, question);
 	}
 	if (question === 'examining-inspector-3') {
-		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, caseId, question);
+		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, reference, question);
 	}
 	if (question === 'examination-website') {
-		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId, question);
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, reference, question);
 	}
 
 	if (question === 'qa-inspector-1') {
-		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, caseId, question);
+		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, reference, question);
 	}
 	if (question === 'qa-inspector-2') {
-		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, caseId, question);
+		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, reference, question);
 	}
 	if (question === 'qa-inspector-3') {
-		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, caseId, question);
+		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, reference, question);
 	}
 
 	// Updating case (scalar) details + any newly added contact / LPA
 	const { ...scalars } = answers;
 
 	await db.case.update({
-		where: { reference: caseId },
+		where: { reference: reference },
 		data: scalars
 	});
 	return true;
 }
 
-async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: string) {
+async function resolveCaseIdFromReference(db: PrismaClient, reference: string): Promise<string> {
+	const caseRecord = await db.case.findUnique({
+		where: { reference },
+		select: { id: true }
+	});
+
+	if (!caseRecord) {
+		throw new Error(`Case not found for reference "${reference}"`);
+	}
+
+	return caseRecord.id;
+}
+
+async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseReference: string) {
+	const caseId = await resolveCaseIdFromReference(db, caseReference);
+
 	await db.gateway1Info.upsert({
 		where: { caseId },
 		update: { ...answers },
@@ -314,8 +329,10 @@ async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseId: 
 	return true;
 }
 
-async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: string, question?: string) {
-	if (question === 'assessor-gateway-2' || question === 'assessor-gateway-2') {
+async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseReference: string, question?: string) {
+	const caseId = await resolveCaseIdFromReference(db, caseReference);
+
+	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
 	await db.gateway2Info.upsert({
@@ -326,7 +343,9 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseId: 
 	return true;
 }
 
-async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseId: string, question?: string) {
+async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseReference: string, question?: string) {
+	const caseId = await resolveCaseIdFromReference(db, caseReference);
+
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
@@ -340,7 +359,8 @@ async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseId: 
 	return true;
 }
 
-async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseId: string, question: string) {
+async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseReference: string, question: string) {
+	const caseId = await resolveCaseIdFromReference(db, caseReference);
 	const inspectorQuestions = ['examining-inspector-1', 'examining-inspector-2', 'examining-inspector-3'];
 	if (inspectorQuestions.includes(question)) {
 		answers.examiningInspectorAppointmentDate = new Date();
@@ -413,12 +433,12 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		const { db, logger } = service;
 		const reference = getParam(req.params.reference);
 
-		const planTitle = await db.case.findUnique({
+		const caseRecord = await db.case.findUnique({
 			where: { reference },
-			select: { planTitle: true }
+			select: { id: true, planTitle: true }
 		});
-		if (!planTitle) return res.status(404).render('views/errors/404.njk');
-		res.locals.planTitle = planTitle.planTitle;
+		if (!caseRecord) return res.status(404).render('views/errors/404.njk');
+		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
@@ -458,28 +478,28 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 
 			case 'gateway-1': {
-				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: reference } });
+				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 				if (next) next();
 				return;
 			}
 
 			case 'gateway-2': {
-				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: reference } });
+				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				if (next) next();
 				return;
 			}
 
 			case 'gateway-3': {
-				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: reference } });
+				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				if (next) next();
 				return;
 			}
 
 			case 'examination': {
-				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: reference } });
+				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
 				let isSound: string | null = null;
 				if (typeof journey4Data?.isSound === 'boolean') {

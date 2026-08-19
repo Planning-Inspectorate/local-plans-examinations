@@ -6,12 +6,14 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block backLink %}
-  {{ govukBackLink({
-    href: "/",
-    attributes: {
-      "data-cy": "back-link"
-    }
-  }) }}
+  <nav aria-label="Back">
+    {{ govukBackLink({
+      href: "/",
+      attributes: {
+        "data-cy": "back-link"
+      }
+    }) }}
+  </nav>
 {% endblock %}
 
 {% block pageContent %}
@@ -20,6 +22,7 @@
 
 {{ govukServiceNavigation({
   navigation: navigation,
+  navigationLabel: "Case sections",
   attributes: {
     "id": "service-navigation",
     "data-cy": "service-navigation"
@@ -85,4 +88,3 @@
 {% endif %}
 
 {% endblock %}
-

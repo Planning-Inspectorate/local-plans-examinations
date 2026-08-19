@@ -57,7 +57,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		journeyId: GATEWAY_3_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 3', 'gateway-3')
-				.addQuestion(questions.gateway3EstimatedDate)
+				.addQuestion(questions.gateway3ExpectedDate)
 				.addQuestion(questions.gateway3ActualDate)
 				.addQuestion(questions.gateway3AssessorsName)
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)
@@ -82,7 +82,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 2', 'gateway-2')
-				.addQuestion(questions.gateway2EstimatedDate)
+				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2AssessorsName)
@@ -112,7 +112,7 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 		sections: [
 			new Section('Gateway 1', 'gateway-1')
 				.addQuestion(questions.noticeOfIntentionPublishDate)
-				.addQuestion(questions.gateway1estimatedDate)
+				.addQuestion(questions.gateway1ExpectedDate)
 				.addQuestion(questions.gateway1ActualDate)
 				.addQuestion(questions.slaSentDate)
 				.addQuestion(questions.slaReceivedDate)
@@ -137,7 +137,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		journeyId: EXAMINATION_JOURNEY_ID,
 		sections: [
 			new Section('Examination', 'examination')
-				.addQuestion(questions.estimatedSubmissionForExaminationDate)
+				.addQuestion(questions.expectedSubmissionForExaminationDate)
 				.addQuestion(questions.submissionForExaminationDate),
 			new Section('Inspectors', 'inspectors')
 				.addQuestion(questions.examiningInspector1)

@@ -75,7 +75,7 @@ export class CheckYourAnswersPage extends BasePage {
 					data.dates.gateway1Date.display,
 					data.dates.gateway2Date.display,
 					data.dates.gateway3Date.display,
-					data.dates.estimatedSubmissionForExaminationDate.display
+					data.dates.expectedSubmissionForExaminationDate.display
 				],
 				changeHref: '/create-a-case/dates/key-stage-dates'
 			}

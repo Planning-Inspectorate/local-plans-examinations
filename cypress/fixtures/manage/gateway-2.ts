@@ -11,11 +11,11 @@ type Gateway2DateAnswer = {
 };
 
 export const gateway2DateAnswers = {
-	gateway2EstimatedDate: {
-		row: 'Gateway 2 estimated date',
-		heading: 'What is the estimated Gateway 2 date?',
-		fieldName: 'estimatedDate',
-		path: 'gateway-2-estimated-date',
+	gateway2ExpectedDate: {
+		row: 'Gateway 2 expected date',
+		heading: 'What is the expected Gateway 2 date?',
+		fieldName: 'expectedDate',
+		path: 'gateway-2-expected-date',
 		seedDate: '2026-06-01T12:00:00.000Z',
 		input: { day: '1', month: '6', year: '2026' },
 		display: '1 June 2026'
@@ -96,7 +96,7 @@ export const workshopVenueAnswer = {
 	display: 'Workshop venue'
 } as const;
 
-export const updatedGateway2EstimatedDateAnswer = {
+export const updatedGateway2ExpectedDateAnswer = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'
 } as const;

@@ -58,7 +58,7 @@ async function run() {
 				gateway1Info: {
 					create: {
 						noticeOfIntention: new Date('2026-05-01T12:00:00.000Z'),
-						estimatedGateway1Date: new Date('2026-06-01T12:00:00.000Z'),
+						expectedGateway1Date: new Date('2026-06-01T12:00:00.000Z'),
 						completedGateway1Date: new Date('2026-07-01T12:00:00.000Z'),
 						slaSentDate: new Date('2026-08-01T12:00:00.000Z'),
 						slaReceivedDate: new Date('2026-09-01T12:00:00.000Z'),
@@ -67,7 +67,7 @@ async function run() {
 				},
 				gateway2Info: {
 					create: {
-						estimatedDate: new Date('2026-06-01T12:00:00.000Z'),
+						expectedDate: new Date('2026-06-01T12:00:00.000Z'),
 						actualDate: new Date('2026-07-01T12:00:00.000Z'),
 						validDate: new Date('2026-08-01T12:00:00.000Z'),
 						assessorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
@@ -80,7 +80,7 @@ async function run() {
 				},
 				gateway3Info: {
 					create: {
-						estimatedDate: new Date('2026-07-21T12:00:00.000Z'),
+						expectedDate: new Date('2026-07-21T12:00:00.000Z'),
 						actualDate: new Date('2026-08-01T12:00:00.000Z'),
 						assessorName: 'assessor-1',
 						assessorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
@@ -92,7 +92,7 @@ async function run() {
 				},
 				examinationInfo: {
 					create: {
-						estimatedSubmissionForExaminationDate: now,
+						expectedSubmissionForExaminationDate: now,
 						submissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 						examiningInspector1: 'inspector-1',
 						examiningInspector2: 'inspector-2',
