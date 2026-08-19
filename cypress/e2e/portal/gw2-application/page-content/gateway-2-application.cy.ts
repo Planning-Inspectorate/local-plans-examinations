@@ -31,14 +31,14 @@ describe('Gateway 2 application page content', () => {
 	it('Shows Procedural Documents', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubHeading('Procedural Documents');
 		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.proceduralDocumentsTable, [
-			{ document: 'Gateway 2 cover letter', status: 'Not added', addCy: 'add-gateway-2-cover-letter' },
+			{ document: 'Gateway 2 covering letter', status: 'Not added', addCy: 'add-gateway-2-covering-letter' },
 			{ document: 'Local plan timetable', status: 'Not added', addCy: 'add-local-plan-timetable' },
 			{ document: 'Project initiation document', status: 'Not added', addCy: 'add-project-initiation-document' },
 			{ document: 'Draft statement of compliance', status: 'Not added', addCy: 'add-draft-statement-of-compliance' },
 			{ document: 'Draft statement of soundness', status: 'Not added', addCy: 'add-draft-statement-of-soundness' }
 		]);
 		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.proceduralDocumentsTable, [
-			'Gateway 2 cover letter',
+			'Gateway 2 covering letter',
 			'Local plan timetable',
 			'Project initiation document',
 			'Draft statement of compliance',

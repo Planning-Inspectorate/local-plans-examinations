@@ -6,6 +6,7 @@ export type FileValidationOptions = {
 	allowedFileExtensions: string[];
 	allowedMimeTypes?: string[];
 	maxFileSizeBytes: number;
+	maxFileSizeLabel?: string;
 	maxFilesPerUpload: number;
 	maxTotalUploadSizeBytes: number;
 	uploadFormHref?: string;
@@ -49,16 +50,17 @@ export function validateFiles(
 
 	for (const file of files) {
 		const extension = getFileExtension(file.originalname);
-		if (!allowedExtensions.includes(extension)) {
-			errors.push({ text: `${file.originalname} must be an allowed file type`, href });
-		}
+		const isAllowedExtension = allowedExtensions.includes(extension);
+		const isAllowedMimeType = allowedMimeTypes.length === 0 || allowedMimeTypes.includes(file.mimetype);
 
-		if (allowedMimeTypes.length > 0 && !allowedMimeTypes.includes(file.mimetype)) {
-			errors.push({ text: `${file.originalname} is not an allowed file type`, href });
+		if (!isAllowedExtension || !isAllowedMimeType) {
+			const extensionList = options.allowedFileExtensions.map((ext) => ext.toUpperCase()).join(', ');
+			errors.push({ text: `The selected file must be ${extensionList}`, href });
 		}
 
 		if (file.size > options.maxFileSizeBytes) {
-			errors.push({ text: `${file.originalname} must be smaller than the maximum file size`, href });
+			const sizeLabel = options.maxFileSizeLabel ?? formatBytes(options.maxFileSizeBytes);
+			errors.push({ text: `The selected file must be smaller than ${sizeLabel}`, href });
 		}
 	}
 
@@ -76,4 +78,17 @@ export function validateFiles(
 	}
 
 	return errors;
+}
+
+function formatBytes(bytes: number): string {
+	if (bytes >= 1024 * 1024 * 1024) {
+		return `${Math.round(bytes / (1024 * 1024 * 1024))}GB`;
+	}
+	if (bytes >= 1024 * 1024) {
+		return `${Math.round(bytes / (1024 * 1024))}MB`;
+	}
+	if (bytes >= 1024) {
+		return `${Math.round(bytes / 1024)}KB`;
+	}
+	return `${bytes}B`;
 }

@@ -45,10 +45,9 @@ describe('file uploader validation', () => {
 
 			assert.deepEqual(errors, [
 				{ text: 'You can only upload up to 1 files at a time', href: '#upload-form' },
-				{ text: 'cover-letter.exe must be an allowed file type', href: '#upload-form' },
-				{ text: 'cover-letter.exe is not an allowed file type', href: '#upload-form' },
-				{ text: 'cover-letter.exe must be smaller than the maximum file size', href: '#upload-form' },
-				{ text: 'report.docx must be an allowed file type', href: '#upload-form' }
+				{ text: 'The selected file must be PDF, DOC', href: '#upload-form' },
+				{ text: 'The selected file must be smaller than 1000B', href: '#upload-form' },
+				{ text: 'The selected file must be PDF, DOC', href: '#upload-form' }
 			]);
 		});
 

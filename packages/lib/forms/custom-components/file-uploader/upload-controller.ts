@@ -15,7 +15,12 @@ export type FileUploaderControllerOptions = {
 	storage: FileUploadStorageAdapterFactory;
 	question: Pick<
 		FileUploaderQuestionConfig,
-		'allowedFileExtensions' | 'allowedMimeTypes' | 'maxFileSizeBytes' | 'maxFilesPerUpload' | 'maxTotalUploadSizeBytes'
+		| 'allowedFileExtensions'
+		| 'allowedMimeTypes'
+		| 'maxFileSizeBytes'
+		| 'maxFileSizeLabel'
+		| 'maxFilesPerUpload'
+		| 'maxTotalUploadSizeBytes'
 	>;
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
@@ -66,6 +71,7 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 			allowedFileExtensions: options.question.allowedFileExtensions,
 			allowedMimeTypes: options.question.allowedMimeTypes,
 			maxFileSizeBytes: options.question.maxFileSizeBytes,
+			maxFileSizeLabel: options.question.maxFileSizeLabel,
 			maxFilesPerUpload: options.question.maxFilesPerUpload ?? 3,
 			maxTotalUploadSizeBytes: options.question.maxTotalUploadSizeBytes ?? 1024 * 1024 * 1024
 		});
