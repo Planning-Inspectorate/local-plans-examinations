@@ -71,24 +71,23 @@ export type CheckAnswersRedirect = (typeof CHECK_ANSWERS_REDIRECTS)[keyof typeof
 
 export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-	title: 'Gateway 2 cover letter',
-	question: 'Upload Gateway 2 cover letter',
+	title: 'Gateway 2 covering letter',
+	question: 'Upload your Gateway 2 covering letter',
 	fieldName: 'gateway2CoverLetter',
-	url: 'gateway-2-cover-letter',
+	url: 'covering-letter',
 	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
 	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
 	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
-	maxFilesPerUpload: 1,
+	maxFilesPerUpload: UNLIMITED_FILES,
 	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
-	multiple: false,
+	multiple: true,
 	text: {
 		caption: 'Procedural documents',
-		introduction: 'Your cover letter should set out:',
+		introduction: 'Drag and drop or choose files',
 		fileRequirementsText:
-			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
-		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+			'Each file must be a DOC, DOCX, PDF, TIF, JPG or PNG and be smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
 		dropInstructionText: 'or drop files',
 		continueButtonText: 'Save and return'

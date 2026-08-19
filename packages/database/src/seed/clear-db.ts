@@ -15,6 +15,10 @@ async function run() {
 		await dbClient.gateway2Info.deleteMany({});
 		await dbClient.gateway3Info.deleteMany({});
 		await dbClient.examinationInfo.deleteMany({});
+		await dbClient.documentVersionAvScan.deleteMany({}); // if it references documentVersion
+		await dbClient.document.updateMany({ data: { latestVersionId: null } });
+		await dbClient.documentVersion.deleteMany({});
+		await dbClient.document.deleteMany({});
 		await dbClient.case.deleteMany({});
 		await dbClient.contact.deleteMany({});
 		await dbClient.lPA.deleteMany({});

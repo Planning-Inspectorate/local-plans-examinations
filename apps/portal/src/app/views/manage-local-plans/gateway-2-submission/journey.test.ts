@@ -24,8 +24,8 @@ describe('createJourney', () => {
 			'views/manage-local-plans/gateway-2-submission/check-your-answers.njk'
 		);
 		assert.strictEqual(
-			journey.getCurrentQuestionUrl('procedural', 'gateway-2-cover-letter'),
-			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/procedural/gateway-2-cover-letter'
+			journey.getCurrentQuestionUrl('procedural', 'covering-letter'),
+			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/procedural/covering-letter'
 		);
 	});
 

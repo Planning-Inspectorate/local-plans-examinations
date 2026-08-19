@@ -1,6 +1,6 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
-const gateway2SubmissionRows = ['Gateway 2 cover letter', 'Local plan timetable', 'Project initiation document'];
+const gateway2SubmissionRows = ['Gateway 2 covering letter', 'Local plan timetable', 'Project initiation document'];
 const gateway2SubmissionHeading = 'Gateway 2 submission';
 const notAddedStatus = 'Not added';
 const submitButtonText = 'Submit for Gateway 2 assessment';

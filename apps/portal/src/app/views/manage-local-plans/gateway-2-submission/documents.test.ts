@@ -287,7 +287,7 @@ describe('saveGateway2Documents', () => {
 				saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 					buildUploadedFile()
 				]),
-			/Missing document set reference data for "gateway-2-cover-letter"/
+			/Missing document set reference data for "covering-letter"/
 		);
 		assert.equal(service.db.$transaction.mock.callCount(), 0);
 	});

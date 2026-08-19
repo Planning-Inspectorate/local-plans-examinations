@@ -100,6 +100,22 @@ const upload = multer({
 	}
 });
 
+function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {
+	if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+		const questionUrl = getRouteQuestionUrl(req);
+		const questionConfig = questionUrl ? gateway2FileUploadQuestionsByUrl.get(questionUrl) : undefined;
+		const sizeLabel = questionConfig?.maxFileSizeLabel ?? '250MB';
+		const session = req.session as unknown as {
+			errors?: Record<string, { msg: string }>;
+			errorSummary?: Array<{ text: string; href: string }>;
+		};
+		session.errors = { 'upload-form': { msg: 'Errors encountered during file upload' } };
+		session.errorSummary = [{ text: `The selected file must be smaller than ${sizeLabel}`, href: '#upload-form' }];
+		return res.redirect(redirectToFileUploaderQuestion(req));
+	}
+	return next(err);
+}
+
 // Marks the user as editing from the check answers page.
 function setAsEditingFromCya(req: Request, _: Response, next: NextFunction) {
 	const request = req as Gateway2Request;
@@ -648,7 +664,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
-		uploadGateway2DocumentForCase
+		uploadGateway2DocumentForCase,
+		handleMulterFileSizeError
 	);
 
 	router.post(
@@ -663,7 +680,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		upload.array('files[]'),
-		uploadGateway2Document
+		uploadGateway2Document,
+		handleMulterFileSizeError
 	);
 
 	router.post(
