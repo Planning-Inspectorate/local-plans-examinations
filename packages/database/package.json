@@ -11,6 +11,7 @@
     "generate": "npx prisma generate",
     "reset": "npx prisma migrate reset --force",
     "seed": "npx prisma db seed",
+    "seed-prod": "npm run generate && node src/seed/seed-prod.ts",
     "read-lpa-data": "node src/seed/data-authorities-prod-read.ts"
   },
   "license": "MIT",

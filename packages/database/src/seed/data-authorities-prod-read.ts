@@ -80,7 +80,7 @@ function toCreateInput(lpa: Record<string, string>) {
 		id: lpa[HEADERS.PINS_LPA_CODE],
 		name: lpa[HEADERS.AUTHORITY_NAME],
 		pinsCode: lpa[HEADERS.PINS_LPA_CODE],
-		statusId: Object.values(AUTHORITY_STATUS_ID).includes(lpa[HEADERS.STATUS])
+		status: Object.values(AUTHORITY_STATUS_ID).includes(lpa[HEADERS.STATUS])
 			? lpa[HEADERS.STATUS]
 			: AUTHORITY_STATUS_ID.UNKNOWN
 	};
