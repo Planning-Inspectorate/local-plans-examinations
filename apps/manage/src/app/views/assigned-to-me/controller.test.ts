@@ -80,10 +80,10 @@ describe('buildAssignedToMe', () => {
 								//{assessorName: 'Officer1'},
 								{ examiningInspector1: 'Officer1' },
 								{ examiningInspector2: 'Officer1' },
-								{ examiningInspector3: 'Officer1' }
-								//{qaInspector1: 'Officer1'},
-								//{qaInspector2: 'Officer1'},
-								//{qaInspector3: 'Officer1'},
+								{ examiningInspector3: 'Officer1' },
+								{ qaInspector1: 'Officer1' },
+								{ qaInspector2: 'Officer1' },
+								{ qaInspector3: 'Officer1' }
 							]
 						}
 					}
