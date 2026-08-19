@@ -48,7 +48,7 @@ const GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES = 25 * 1000 * 1000; // 25MB
+const GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
@@ -58,7 +58,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'planTitle',
 		url: 'plan-title',
 		title: 'Plan title',
-		validators: [new RequiredValidator('Input a plan title')]
+		validators: [new RequiredValidator('Input a plan title')],
+		continueButtonText: 'Save and continue'
 	},
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,
@@ -71,7 +72,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'planBand',
 		url: 'plan-band',
 		title: 'Plan band',
-		validators: [new RequiredValidator('Select a plan band')]
+		validators: [new RequiredValidator('Select a plan band')],
+		continueButtonText: 'Save and continue'
 	},
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
@@ -83,7 +85,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'planType',
 		url: 'plan-type',
 		title: 'Plan type',
-		validators: [new RequiredValidator('Select a plan type')]
+		validators: [new RequiredValidator('Select a plan type')],
+		continueButtonText: 'Save and continue'
 	},
 	lpa: {
 		type: COMPONENT_TYPES.SELECT,
@@ -99,7 +102,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'select-lpa',
 		title: 'Local Planning Authority',
 		validators: [new RequiredValidator('Select a Local Planning Authority')],
-		disableAccessibleAutocomplete: true
+		disableAccessibleAutocomplete: true,
+		continueButtonText: 'Save and continue'
 	},
 	checkLpas: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
@@ -115,7 +119,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				minimumAnswers: 1,
 				errorMessages: { minimumAnswers: 'You must add at least one Local Planning Authority' }
 			})
-		]
+		],
+		continueButtonText: 'Save and continue'
 	},
 	caseOfficer: {
 		type: COMPONENT_TYPES.SELECT,
@@ -130,7 +135,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'case-officer',
 		title: 'Case officer',
 		validators: [new RequiredValidator('Select a case officer')],
-		disableAccessibleAutocomplete: true
+		disableAccessibleAutocomplete: true,
+		continueButtonText: 'Save and continue'
 	},
 	contactDetails: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
@@ -187,7 +193,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What are the main contact details for the Local Planning Authority?',
 		fieldName: 'contactDetails',
 		url: 'contact-details',
-		title: 'Contact details'
+		title: 'Contact details',
+		continueButtonText: 'Save and continue'
 	},
 	checkContactDetails: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
@@ -203,7 +210,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				minimumAnswers: 1,
 				errorMessages: { minimumAnswers: 'You must add at least one contact' }
 			})
-		]
+		],
+		continueButtonText: 'Save and continue'
 	},
 	examinationWebsite: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -211,7 +219,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'examinationWebsite',
 		url: 'examination-website',
 		title: 'Examination website',
-		validators: [new RequiredValidator('Input an examination website')]
+		validators: [new RequiredValidator('Input an examination website')],
+		continueButtonText: 'Save and continue'
 	},
 	assessorGateway2: {
 		type: COMPONENT_TYPES.SELECT,
@@ -227,7 +236,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'assessor-gateway-2',
 		title: 'Assessor Gateway 2',
 		validators: [new RequiredValidator('Select a name')],
-		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
+		inputAttributes: { 'data-cy': 'gateway-2-assessor' },
+		continueButtonText: 'Save and continue'
 	},
 	assessorGateway3: {
 		type: COMPONENT_TYPES.SELECT,
@@ -243,7 +253,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'assessor-gateway-3',
 		title: 'Assessor Gateway 3',
 		validators: [new RequiredValidator('Select a name')],
-		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
+		inputAttributes: { 'data-cy': 'gateway-3-assessor' },
+		continueButtonText: 'Save and continue'
 	},
 	examiningInspector1: {
 		type: COMPONENT_TYPES.SELECT,
@@ -258,7 +269,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'examiningInspector1',
 		url: 'examining-inspector-1',
 		title: 'Examining Inspector 1',
-		validators: [new RequiredValidator('Input Examining Inspector 1')]
+		validators: [new RequiredValidator('Input Examining Inspector 1')],
+		continueButtonText: 'Save and continue'
 	},
 	examiningInspector2: {
 		type: COMPONENT_TYPES.SELECT,
@@ -273,7 +285,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'examiningInspector2',
 		url: 'examining-inspector-2',
 		title: 'Examining Inspector 2',
-		validators: [new RequiredValidator('Input Examining Inspector 2')]
+		validators: [new RequiredValidator('Input Examining Inspector 2')],
+		continueButtonText: 'Save and continue'
 	},
 	examiningInspector3: {
 		type: COMPONENT_TYPES.SELECT,
@@ -288,7 +301,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'examiningInspector3',
 		url: 'examining-inspector-3',
 		title: 'Examining Inspector 3',
-		validators: [new RequiredValidator('Input Examining Inspector 3')]
+		validators: [new RequiredValidator('Input Examining Inspector 3')],
+		continueButtonText: 'Save and continue'
 	},
 	qaInspector1: {
 		type: COMPONENT_TYPES.SELECT,
@@ -304,7 +318,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'qa-inspector-1',
 		title: 'QA Inspector 1',
 		validators: [new RequiredValidator('Input QA Inspector 1')],
-		inputAttributes: { 'data-cy': 'inspector-qa-1' }
+		inputAttributes: { 'data-cy': 'inspector-qa-1' },
+		continueButtonText: 'Save and continue'
 	},
 	qaInspector2: {
 		type: COMPONENT_TYPES.SELECT,
@@ -320,7 +335,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'qa-inspector-2',
 		title: 'QA Inspector 2',
 		validators: [new RequiredValidator('Input QA Inspector 2')],
-		inputAttributes: { 'data-cy': 'inspector-qa-2' }
+		inputAttributes: { 'data-cy': 'inspector-qa-2' },
+		continueButtonText: 'Save and continue'
 	},
 	qaInspector3: {
 		type: COMPONENT_TYPES.SELECT,
@@ -336,7 +352,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'qa-inspector-3',
 		title: 'QA Inspector 3',
 		validators: [new RequiredValidator('Input QA Inspector 3')],
-		inputAttributes: { 'data-cy': 'inspector-qa-3' }
+		inputAttributes: { 'data-cy': 'inspector-qa-3' },
+		continueButtonText: 'Save and continue'
 	},
 	//gateway 1
 	noticeOfIntentionPublishDate: {
@@ -346,7 +363,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'notice-of-intention-publish-date',
 		title: 'Notice of Intention publish date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'notice-of-intention-publish-date' }
+		inputAttributes: { 'data-cy': 'notice-of-intention-publish-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway1estimatedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -355,7 +373,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'estimated-gateway-1-date',
 		title: 'Gateway 1 estimated date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'estimated-gateway-1-date' }
+		inputAttributes: { 'data-cy': 'estimated-gateway-1-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway1ActualDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -364,7 +383,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'completed-gateway-1-date',
 		title: 'Gateway 1 actual date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'completed-gateway-1-date' }
+		inputAttributes: { 'data-cy': 'completed-gateway-1-date' },
+		continueButtonText: 'Save and continue'
 	},
 	slaSentDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -373,7 +393,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'sla-sent-date',
 		title: 'SLA sent date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'sla-sent-date' }
+		inputAttributes: { 'data-cy': 'sla-sent-date' },
+		continueButtonText: 'Save and continue'
 	},
 	slaReceivedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -382,7 +403,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'sla-received-date',
 		title: 'SLA received date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'sla-received-date' }
+		inputAttributes: { 'data-cy': 'sla-received-date' },
+		continueButtonText: 'Save and continue'
 	},
 	dsaCheck: {
 		type: COMPONENT_TYPES.RADIO,
@@ -394,7 +416,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'yes', text: 'Yes' },
 			{ value: 'no', text: 'No' }
 		],
-		validators: [new RequiredValidator('Select an option')]
+		validators: [new RequiredValidator('Select an option')],
+		continueButtonText: 'Save and continue'
 	},
 	programmeOfficerDetails: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
@@ -439,7 +462,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Programme Officer details',
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer',
-		title: 'Programme Officer details'
+		title: 'Programme Officer details',
+		continueButtonText: 'Save and continue'
 	},
 	//gateway 2
 	gateway2EstimatedDate: {
@@ -449,7 +473,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-estimated-date',
 		title: 'Gateway 2 estimated date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-estimated-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-estimated-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway2ActualDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -458,7 +483,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-actual-date',
 		title: 'Gateway 2 actual date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-actual-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-actual-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway2ValidDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -467,7 +493,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-valid-date',
 		title: 'Gateway 2 valid date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-valid-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway2AssessorsName: {
 		type: COMPONENT_TYPES.SELECT,
@@ -483,7 +510,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'assessor-gateway-2',
 		title: 'Gateway 2 assessor name',
 		validators: [new RequiredValidator('Select a name')],
-		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
+		inputAttributes: { 'data-cy': 'gateway-2-assessor' },
+		continueButtonText: 'Save and continue'
 	},
 	assessorDateOfAppointment: {
 		type: COMPONENT_TYPES.DATE,
@@ -492,7 +520,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-assessor-appointed',
 		title: 'Assessor date of appointment',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
+		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' },
+		continueButtonText: 'Save and continue'
 	},
 	workshopDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -501,7 +530,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-workshop-date',
 		title: 'Workshop date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' },
+		continueButtonText: 'Save and continue'
 	},
 	workshopVenue: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -510,7 +540,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-workshop-venue',
 		title: 'Workshop venue',
 		validators: [new RequiredValidator('Enter a venue name')],
-		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' }
+		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' },
+		continueButtonText: 'Save and continue'
 	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -519,7 +550,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-report-issued-date',
 		title: 'Report issued date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-report-issued-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-report-issued-date' },
+		continueButtonText: 'Save and continue'
 	},
 	reportPublishedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -528,7 +560,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-2-report-published-date',
 		title: 'Report published by LPA date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
+		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' },
+		continueButtonText: 'Save and continue'
 	},
 	workshopDocuments: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
@@ -554,7 +587,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
-		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
+		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')],
+		continueButtonText: 'Continue'
 	},
 	//gateway 3
 	gateway3EstimatedDate: {
@@ -564,7 +598,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-3-estimated-date',
 		title: 'Gateway 3 estimated date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-3-estimated-date' }
+		inputAttributes: { 'data-cy': 'gateway-3-estimated-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway3ActualDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -573,7 +608,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-3-actual-date',
 		title: 'Gateway 3 actual date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-3-actual-date' }
+		inputAttributes: { 'data-cy': 'gateway-3-actual-date' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway3AssessorsName: {
 		type: COMPONENT_TYPES.SELECT,
@@ -589,7 +625,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-3-assessor-name',
 		title: 'Gateway 3 assessor name',
 		validators: [new RequiredValidator('Select a name')],
-		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
+		inputAttributes: { 'data-cy': 'gateway-3-assessor' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway3AssessorDateOfAppointment: {
 		type: COMPONENT_TYPES.DATE,
@@ -598,7 +635,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-3-assessor-date-of-appointment',
 		title: 'Gateway 3 assessor date of appointment',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
+		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' },
+		continueButtonText: 'Save and continue'
 	},
 	gateway3CompletionDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -607,7 +645,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'gateway-3-completion-date',
 		title: 'Gateway 3 completion date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
+		inputAttributes: { 'data-cy': 'gateway-3-completion-date' },
+		continueButtonText: 'Save and continue'
 	},
 	// Examination
 	estimatedSubmissionForExaminationDate: {
@@ -617,7 +656,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-estimated-submission-date',
 		title: 'Estimated submission date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' }
+		inputAttributes: { 'data-cy': 'examination-estimated-submission-date' },
+		continueButtonText: 'Save and continue'
 	},
 	submissionForExaminationDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -626,7 +666,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-actual-submission-date',
 		title: 'Actual submission date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'examination-actual-submission-date' }
+		inputAttributes: { 'data-cy': 'examination-actual-submission-date' },
+		continueButtonText: 'Save and continue'
 	},
 	examiningInspectorAppointmentDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -635,7 +676,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-examining-inspector-appointment-date',
 		title: 'Examining Inspector(s) appointment date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
+		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' },
+		continueButtonText: 'Save and continue'
 	},
 	letterSentToMHCLGDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -644,7 +686,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'letter-sent-to-mhclg-date',
 		title: 'Letter sent to MHCLG date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'letter-sent-to-mhclg-date' }
+		inputAttributes: { 'data-cy': 'letter-sent-to-mhclg-date' },
+		continueButtonText: 'Save and continue'
 	},
 	letterIssueDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -653,7 +696,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'letter-issue-date',
 		title: 'Letter issue date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'letter-issue-date' }
+		inputAttributes: { 'data-cy': 'letter-issue-date' },
+		continueButtonText: 'Save and continue'
 	},
 	qaDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -662,7 +706,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'qa-date',
 		title: 'QA date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'qa-date' }
+		inputAttributes: { 'data-cy': 'qa-date' },
+		continueButtonText: 'Save and continue'
 	},
 	sentToPanelDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -671,7 +716,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'report-sent-to-panel-date',
 		title: 'Sent to panel date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'report-sent-to-panel-date' }
+		inputAttributes: { 'data-cy': 'report-sent-to-panel-date' },
+		continueButtonText: 'Save and continue'
 	},
 	panelResponseSentToInspector: {
 		type: COMPONENT_TYPES.DATE,
@@ -680,7 +726,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'panel-response-to-inspector-date',
 		title: 'QA panel response sent to Inspector',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'rpanel-response-to-inspector-date' }
+		inputAttributes: { 'data-cy': 'rpanel-response-to-inspector-date' },
+		continueButtonText: 'Save and continue'
 	},
 	factCheckDateReceivedFromInspector: {
 		type: COMPONENT_TYPES.DATE,
@@ -689,7 +736,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'fact-check-date-received-from-inspector',
 		title: 'Fact Check date received from Inspector',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'fact-check-date-received-from-inspector' }
+		inputAttributes: { 'data-cy': 'fact-check-date-received-from-inspector' },
+		continueButtonText: 'Save and continue'
 	},
 	factCheckDueDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -698,7 +746,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'fact-check-due-date',
 		title: 'Fact Check due date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'fact-check-due-date' }
+		inputAttributes: { 'data-cy': 'fact-check-due-date' },
+		continueButtonText: 'Save and continue'
 	},
 	factCheckActualDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -707,7 +756,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'fact-check-actual-date',
 		title: 'Fact Check actual date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'fact-check-actual-date' }
+		inputAttributes: { 'data-cy': 'fact-check-actual-date' },
+		continueButtonText: 'Save and continue'
 	},
 	factCheckReceivedBackFromLPADate: {
 		type: COMPONENT_TYPES.DATE,
@@ -716,7 +766,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'fact-check-received-back-from-lpa-date',
 		title: 'Fact Check received back from LPA',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'fact-check-received-back-from-lpa-date' }
+		inputAttributes: { 'data-cy': 'fact-check-received-back-from-lpa-date' },
+		continueButtonText: 'Save and continue'
 	},
 	finalReportIssueDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -725,7 +776,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'final-report-issue-date',
 		title: 'Final report issue date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'final-report-issue-date' }
+		inputAttributes: { 'data-cy': 'final-report-issue-date' },
+		continueButtonText: 'Save and continue'
 	},
 	planPauseStartDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -734,7 +786,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'plan-pause-start-date',
 		title: 'Plan pause date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-start-date' }
+		inputAttributes: { 'data-cy': 'plan-pause-start-date' },
+		continueButtonText: 'Save and continue'
 	},
 	planPauseEndDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -743,7 +796,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'plan-pause-end-date',
 		title: 'Plan pause end date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-end-date' }
+		inputAttributes: { 'data-cy': 'plan-pause-end-date' },
+		continueButtonText: 'Save and continue'
 	},
 	withdrawnDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -752,7 +806,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'withdrawn-date',
 		title: 'Withdrawn date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'withdrawn-date-date' }
+		inputAttributes: { 'data-cy': 'withdrawn-date-date' },
+		continueButtonText: 'Save and continue'
 	},
 	isSound: {
 		type: COMPONENT_TYPES.BOOLEAN,
@@ -773,7 +828,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'is-sound',
 		title: 'Sound / unsound',
 		validators: [new RequiredValidator('Please select an option')],
-		inputAttributes: { 'data-cy': 'is-sound' }
+		inputAttributes: { 'data-cy': 'is-sound' },
+		continueButtonText: 'Save and continue'
 	},
 	soundUnsoundDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -782,7 +838,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'sound-unsound-date',
 		title: 'Sound / unsound date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'sound-unsound-date' }
+		inputAttributes: { 'data-cy': 'sound-unsound-date' },
+		continueButtonText: 'Save and continue'
 	},
 	adoptionDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -791,7 +848,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'adoption-date',
 		title: 'Adoption date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'adoption-date-date' }
+		inputAttributes: { 'data-cy': 'adoption-date-date' },
+		continueButtonText: 'Save and continue'
 	},
 	approvedForCILDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -800,7 +858,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'approved-for-cil-date',
 		title: 'Approved for CIL date',
 		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
+		inputAttributes: { 'data-cy': 'approved-for-cil-date' },
+		continueButtonText: 'Save and continue'
 	}
 };
 
@@ -808,12 +867,7 @@ export const fileUploadQuestionProperties = Object.values(caseQuestions).filter(
 	(v) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER
 ) as FileUploaderQuestionProps[];
 
-export const questions = createQuestions(
-	caseQuestions,
-	allQuestionClasses,
-	{},
-	{ continueButtonText: 'Save and continue' }
-);
+export const questions = createQuestions(caseQuestions, allQuestionClasses, {});
 
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 	// Prepend https:// to the answer if it doesn't already start with http:// or https://
