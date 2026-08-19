@@ -201,18 +201,18 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 async function updateOverview(
 	db: PrismaClient,
 	answers: CaseOverviewInput,
-	caseId: string,
+	reference: string,
 	action?: string,
 	section?: string,
 	currentItemId?: string,
 	question?: string
 ) {
 	if (question === 'assessor-gateway-2' || question === 'assessor-gateway-2') {
-		await updateGateway2(db, { assessorName: answers.assessorName }, caseId, question);
+		await updateGateway2(db, { assessorName: answers.assessorName }, reference, question);
 		return true;
 	}
 	if (question === 'assessor-gateway-3') {
-		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, caseId, question);
+		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, reference, question);
 		return true;
 	}
 	if (question === 'programme-officer') {
@@ -223,7 +223,7 @@ async function updateOverview(
 				programmeOfficerLastName: answers.programmeOfficerLastName,
 				programmeOfficerEmail: answers.programmeOfficerEmail
 			},
-			caseId
+			reference
 		);
 		return true;
 	}
@@ -240,7 +240,7 @@ async function updateOverview(
 	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
 	if (question === 'check-lpas' && answers.lpa) {
 		await db.case.update({
-			where: { reference: caseId },
+			where: { reference: reference },
 			data: {
 				lpas: {
 					connectOrCreate: {
@@ -265,7 +265,7 @@ async function updateOverview(
 			where: { id: currentItemId },
 			create: {
 				...contactData,
-				cases: { connect: { reference: caseId } }
+				cases: { connect: { reference: reference } }
 			},
 			update: contactData
 		});
@@ -273,33 +273,33 @@ async function updateOverview(
 	}
 
 	if (question === 'examining-inspector-1') {
-		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, caseId, question);
+		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, reference, question);
 	}
 	if (question === 'examining-inspector-2') {
-		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, caseId, question);
+		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, reference, question);
 	}
 	if (question === 'examining-inspector-3') {
-		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, caseId, question);
+		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, reference, question);
 	}
 	if (question === 'examination-website') {
-		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseId, question);
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, reference, question);
 	}
 
 	if (question === 'qa-inspector-1') {
-		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, caseId, question);
+		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, reference, question);
 	}
 	if (question === 'qa-inspector-2') {
-		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, caseId, question);
+		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, reference, question);
 	}
 	if (question === 'qa-inspector-3') {
-		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, caseId, question);
+		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, reference, question);
 	}
 
 	// Updating case (scalar) details + any newly added contact / LPA
 	const { ...scalars } = answers;
 
 	await db.case.update({
-		where: { reference: caseId },
+		where: { reference: reference },
 		data: scalars
 	});
 	return true;
