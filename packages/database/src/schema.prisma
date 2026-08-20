@@ -145,7 +145,7 @@ model Contact {
 }
 
 model Authority {
-  id       String @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  id       String @id @default(uuid()) @db.UniqueIdentifier
   name     String
   pinsCode String
   status   String
