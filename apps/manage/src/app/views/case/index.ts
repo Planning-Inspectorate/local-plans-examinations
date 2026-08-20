@@ -3,6 +3,7 @@ import {
 	addCaseNavigation,
 	buildGetJourneyMiddleware,
 	updateCaseField,
+	updateGateway2,
 	getDeleteCase,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
@@ -12,7 +13,8 @@ import {
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
 	buildCheckWorkshopDocumentMiddleware,
-	downloadDocument
+	downloadDocument,
+	getParam
 } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -223,6 +225,8 @@ function registerCaseJourney(
 							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
+							// Update gateway 2 separately because updateCaseField causes the dynamic forms to consume the request
+							updateGateway2(service.db, {}, getParam(req.params.reference), questionConfig.url);
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
 						onUploadCleanupError: ({ req, file, error }) =>
@@ -259,8 +263,7 @@ function registerCaseJourney(
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
 			upload.array('files[]'),
-			uploadDocumentRoute,
-			buildSave(updateCase, true)
+			uploadDocumentRoute
 		);
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
