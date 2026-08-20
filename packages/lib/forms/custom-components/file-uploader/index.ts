@@ -1,6 +1,5 @@
 export { FILE_UPLOADER_COMPONENT_TYPE } from './types.ts';
 export { default as FileUploaderQuestion } from './question.ts';
-export { default as FileUploadRequiredValidator } from './required-validator.ts';
 export { createFileUploaderDeleteController, createFileUploaderUploadController } from './upload-controller.ts';
 export { fileUploaderQuestionMiddleware } from './upload-middleware.ts';
 export { validateFiles, sanitiseFileName } from './validation.ts';

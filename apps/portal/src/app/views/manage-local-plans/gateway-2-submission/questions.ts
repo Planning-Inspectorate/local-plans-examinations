@@ -12,10 +12,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
-import {
-	type FileUploaderQuestionProps,
-	FileUploadRequiredValidator
-} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -121,7 +118,7 @@ export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 		dropInstructionText: 'or drop files',
 		continueButtonText: 'Save and return'
 	},
-	validators: [new FileUploadRequiredValidator('localPlanTimetable', 'Upload local plan timetable')]
+	validators: []
 };
 
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
