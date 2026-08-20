@@ -121,6 +121,29 @@ export class BlobFileStorageAdapter implements FileUploadStorageAdapter {
 		}
 		return blobs;
 	}
+
+	/**
+	 * Download a specific blob from Azure
+	 * @param blobPath The path of the blob to download
+	 * @param response A Response object to download the blob into
+	 * @returns The blob bytes
+	 */
+	async downloadToExpressResponse(blobPath: string, response: any) {
+		const containerClient = this.client.getContainerClient(this.config.containerName);
+		const blobClient = containerClient.getBlobClient(blobPath);
+		const downloadResponse = await blobClient.download();
+		if (downloadResponse.errorCode || !downloadResponse?.readableStreamBody) {
+			throw Error(`Unable to download blob at path '${blobPath}'`);
+		}
+		const blobName = blobPath.split('/').at(-1);
+		const properties = await blobClient.getProperties();
+		response.setHeader('Content-Type', properties.contentType || 'application/octet-stream');
+		response.setHeader('Content-Disposition', `attachment; filename="${blobName}"`);
+		if (properties.contentLength) {
+			response.setHeader('Content-Length', properties.contentLength.toString());
+		}
+		downloadResponse.readableStreamBody.pipe(response);
+	}
 }
 
 /**

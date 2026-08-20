@@ -93,6 +93,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.reportPublishedDate),
 			new Section('Workshop documents', 'workshop-documents').addQuestion(questions.workshopDocuments)
 		],
+		//taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Gateway 2',

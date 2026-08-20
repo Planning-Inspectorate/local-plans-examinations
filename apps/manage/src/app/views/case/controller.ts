@@ -7,7 +7,7 @@ import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { loadUploadedDocuments, getDocumentSetIdsByFolderName } from './documents.ts';
+import { loadUploadedDocuments, getDocumentSetIdsByFolderName, getLatestDocumentBlobDetails } from './documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 
@@ -66,6 +66,7 @@ interface Gateway2Input {
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
 	workshopDocuments?: any;
+	workshopDocumentUploadedDate?: Date;
 }
 
 interface ExaminationInput {
@@ -369,6 +370,9 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseRefe
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
+	if (question == 'gateway-2-workshop-document') {
+		answers.workshopDocumentUploadedDate = new Date();
+	}
 	const fileUploadQuestions = new Set(['gateway-2-workshop-document']);
 	if (fileUploadQuestions.has(String(question))) {
 		// Documents are saved automatically by the file upload component
@@ -527,6 +531,16 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'gateway-2-workshop-document' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					// TODO need to check if there are documents - only redirect if there are documents
+					res.redirect(303, 'gateway-2-workshop-document/check');
+					return;
+				}
+
 				if (next) next();
 				return;
 			}
@@ -556,6 +570,23 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 	};
 }
 
+export function buildCheckWorkshopDocumentMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const uploadedFiles =
+			req.session.fileUploader[fileUploaderCaseSessionKeyForField(req, 'workshopDocuments')].uploadedFiles;
+		const caseReference = getParam(req.params.reference);
+		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
+		res.render('views/layouts/workshop-document-check-your-answers.njk', {
+			uploadedFiles: uploadedFiles,
+			caseReference: caseReference,
+			journeyId: journeyId,
+			section: 'workshop-documents',
+			question: 'gateway-2-workshop-document',
+			backLink: backLinkUrl
+		});
+		return;
+	};
+}
 /**
  * Load the documents for the given case and prepopulate the answer fields with their names
  * @param service The manage service
@@ -826,4 +857,17 @@ export function fileUploaderCaseSessionKey(req: Request) {
  */
 export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
 	return `${req.params.planReference}:${fieldName}`;
+}
+
+export function downloadDocument(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const documentId = getParam(req.params.documentId);
+		if (!documentId) {
+			throw Error(`Missing a documentId from the download-case-document endpoint`);
+		}
+		const blobDetails = await getLatestDocumentBlobDetails(service, documentId);
+		const blobPath = blobDetails.blobPath;
+		const blobStorageUtil = service.createFileStorage(blobPath);
+		await blobStorageUtil.downloadToExpressResponse(blobPath, res);
+	};
 }
