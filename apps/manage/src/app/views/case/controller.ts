@@ -10,6 +10,7 @@ import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-com
 import { loadUploadedDocuments, getDocumentSetIdsByFolderName } from './documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
+import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -109,9 +110,21 @@ interface Gateway3Input {
 	programmeOfficerEmail?: string;
 }
 
-const caseHistoryLabels = Object.fromEntries(
-	Object.values(questions).map((value) => [value.fieldName, value.title])
-) as Record<string, string>;
+// Generate a map of <fieldName: field title>
+const caseHistoryLabels = {
+	// Expand regular questyions
+	...(Object.fromEntries(Object.values(questions).map((value) => [value.fieldName, value.title])) as Record<
+		string,
+		string
+	>),
+	// Expand inputFields from CUSTOM_MULTI_FIELD_INPUT questions
+	...(Object.fromEntries(
+		Object.values(questions)
+			.filter((value) => value instanceof CUSTOM_COMPONENT_CLASSES[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT])
+			.flatMap((entry) => entry.inputFields)
+			.map((inputField) => [inputField.fieldName, inputField.title])
+	) as Record<string, string>)
+};
 
 type FileUploadSession = Request['session'] &
 	FileUploaderSession & {
