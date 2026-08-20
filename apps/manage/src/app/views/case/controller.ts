@@ -50,6 +50,7 @@ interface Gateway1Input {
 	expectedGateway1Date?: Date;
 	completedGateway1Date?: Date;
 	slaSentDate?: Date;
+	signedSla?: any;
 	slaReceivedDate?: Date;
 	dsaChecked?: string;
 }
