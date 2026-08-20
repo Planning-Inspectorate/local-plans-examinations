@@ -10,7 +10,9 @@ import {
 	fileUploadQuestionUrls,
 	type FileUploadQuestion,
 	getRouteQuestionUrl,
-	fileUploaderCaseSessionKey
+	fileUploaderCaseSessionKey,
+	buildCheckWorkshopDocumentMiddleware,
+	downloadDocument
 } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -117,7 +119,14 @@ export function caseRouter(service: ManageService): IRouter {
 	router.get('/delete-case', getDeleteCase(service));
 	router.post('/delete-case', postMarkAsDeleteCase(service));
 
+	router.get('/download-case-document/:documentId', downloadDocument(service));
+
 	return router;
+}
+
+function setAsEditingFromCya(req: any, _: any, next: any) {
+	req.session.editingFromCheckAnswers = true;
+	next();
 }
 
 function registerCaseJourney(
@@ -159,6 +168,20 @@ function registerCaseJourney(
 		buildInspectorOptions(service, questions),
 		getJourney,
 		fileUploadMiddleware,
+		question
+	);
+	console.log(`cya url: '${questionPath}/check`);
+
+	// Check answers for question
+	router.get(
+		`/${path}/:section/:question/check`,
+		getJourneyResponse,
+		buildCaseOfficerOptions(service, questions),
+		buildInspectorOptions(service, questions),
+		buildCheckWorkshopDocumentMiddleware(service, journeyId),
+		//getJourney,
+		//fileUploadMiddleware,
+		setAsEditingFromCya,
 		question
 	);
 
@@ -237,7 +260,8 @@ function registerCaseJourney(
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
 			upload.array('files[]'),
-			uploadDocumentRoute
+			uploadDocumentRoute,
+			buildSave(updateCase, true)
 		);
 		router.post(
 			`${questionPath}/delete-document/:fileId`,

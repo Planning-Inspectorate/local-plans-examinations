@@ -1,0 +1,89 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+
+{% block backLink %}
+  {{ govukBackLink({
+    href: backLink,
+    attributes: {
+      "data-cy": "back-link"
+    }
+  }) }}
+{% endblock %}
+
+{% block pageContent %}
+
+<main class="govuk-main-wrapper" id="main-content">
+          
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    <span class="govuk-caption-l">{{ caseReference }}</span>
+    <h1 class="govuk-heading-l">Check workshop documents and issue notification</h1>
+
+    
+	{% if uploadedFiles and uploadedFiles.length %}
+		{% for file in uploadedFiles %}
+        <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">
+              Document {{ loop.index }}
+            </dt>
+            <dd class="govuk-summary-list__value">
+              <a class="govuk-hint" href="/case/{{ caseReference | urlencode }}/download-case-document/{{ file.metadata.documentGuid }}" download>{{ file.fileName }}</a>
+            </dd>
+            <dd class="govuk-summary-list__actions">
+              <span class="app-no-wrap">
+                <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ question | urlencode }}">Change<span class="govuk-visually-hidden"> dummy.pdf</span></a>
+              </span>
+            </dd>
+          </div></dl>
+		  {% endfor %}
+    {% endif %}
+
+     <details class="govuk-details" data-cy="preview-email-to-lpa">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      Preview notification to LPA
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+    <div class="pins-notify-preview-border"> 
+      <h3>Notification details</h3>
+
+      <div class="govuk-inset-text">
+      Plan reference {{ caseReference }} <br>
+      </div>
+      <h3> Workshop documents</h3>
+
+      <p>Enclosed are the workshop documents.</p>
+
+      <p><a href="#" class="govuk-link">Sign in to our service</a> to view the documents.</p>
+
+      <h3> Feedback</h3>
+
+      <p>We welcome your feedback on our Plans Examination service. Tell us on this short <a href="#" class="govuk-link">feedback form</a>.</p>
+
+      <p>The Planning Inspectorate</p>
+      <p>enquiries@planninginspectorate.gov.uk</p> 
+    </div>
+  </div>
+</details>
+
+    <p class="govuk-body">We'll send a notification to the LPA to tell them that the workshop documents are available.</p>
+
+      <form method="post" action="/projects/back-office/manage/GW2/v4/upload/v1/check-answers">
+        <input type="hidden" name="returnTo" value="gateway-2">
+        
+<button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">
+  Issue documents
+</button>
+
+      </form>
+    
+
+  </div>
+</div>
+
+</main>
+{% endblock %}

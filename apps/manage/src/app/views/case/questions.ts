@@ -609,6 +609,30 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
 	},
+	checkWorkshopDocuments: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
+		title: 'Workshop documents',
+		titleSingular: 'Workshop Document',
+		showManageListQuestions: true,
+		fieldName: 'workshopDocuments',
+		url: 'check-workshop-documents',
+		showAnswersInSummary: false,
+		question: 'Check workshop documents',
+		validators: [
+			new ManageListValidator({
+				minimumAnswers: 1,
+				errorMessages: { minimumAnswers: 'You must add at least one workshop document' }
+			})
+		]
+	},
+	workshopDocumentUploadedDate: {
+		// This is a hidden field that is tied to workshopDocument
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the workshop document uploaded',
+		fieldName: 'workshopDocumentUploadedDate',
+		title: 'Workshop document upload date',
+		showManageListQuestions: true
+	},
 	//gateway 3
 	gateway3ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
