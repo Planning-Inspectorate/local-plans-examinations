@@ -130,7 +130,7 @@ function registerCaseJourney(
 	const { path, journeyId, createJourney, supportsManageList, supportsFileUpload } = config;
 
 	const buildLpaOptions = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions();
+		const loaded = await loadLpaOptions(service);
 		if (loaded.length > 0) {
 			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
 		}

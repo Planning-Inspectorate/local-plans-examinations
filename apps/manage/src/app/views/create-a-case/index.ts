@@ -49,7 +49,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
 	const buildLpaOptions = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions();
+		const loaded = await loadLpaOptions(service);
 		if (loaded.length > 0) {
 			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
 		}
