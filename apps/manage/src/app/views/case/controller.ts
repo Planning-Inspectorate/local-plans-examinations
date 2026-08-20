@@ -369,19 +369,21 @@ async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseRefe
 	return true;
 }
 
-async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseReference: string, question?: string) {
+export async function updateGateway2(
+	db: PrismaClient,
+	answers: Gateway2Input,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
+	console.log('updateGateway2 called');
 
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
 	if (question == 'gateway-2-workshop-document') {
+		console.log('Setting workshopDocumentUploadedDate');
 		answers.workshopDocumentUploadedDate = new Date();
-	}
-	const fileUploadQuestions = new Set(['gateway-2-workshop-document']);
-	if (fileUploadQuestions.has(String(question))) {
-		// Documents are saved automatically by the file upload component
-		return true;
 	}
 	await db.gateway2Info.upsert({
 		where: { caseId },
@@ -461,7 +463,7 @@ function lpaConnectOrCreate(lpaCode: string): Prisma.LPACreateOrConnectWithoutCo
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
-function getParam(value: string | string[] | undefined): string {
+export function getParam(value: string | string[] | undefined): string {
 	if (Array.isArray(value)) return value[0] ?? '';
 	return value ?? '';
 }
@@ -582,13 +584,37 @@ export function buildCheckWorkshopDocumentMiddleware(service: ManageService, jou
 			req.session.fileUploader[fileUploaderCaseSessionKeyForField(req, 'workshopDocuments')].uploadedFiles;
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
+		const workshopDocumentUploadedDateEntry = await service.db.case.findFirst({
+			select: {
+				gateway2Info: {
+					select: {
+						workshopDocumentUploadedDate: true
+					}
+				}
+			},
+			where: {
+				reference: caseReference
+			}
+		});
+		if (!workshopDocumentUploadedDateEntry?.gateway2Info) {
+			throw Error(`gateway2Info could not be found for case with reference '${caseReference}'`);
+		}
+		const workshopDocumentUploadedDate = workshopDocumentUploadedDateEntry.gateway2Info.workshopDocumentUploadedDate;
 		res.render('views/layouts/workshop-document-check-your-answers.njk', {
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: 'workshop-documents',
 			question: 'gateway-2-workshop-document',
-			backLink: backLinkUrl
+			backLink: backLinkUrl,
+			workshopDocumentUploadedDate: workshopDocumentUploadedDate
+				? new Intl.DateTimeFormat('en-GB', {
+						day: 'numeric',
+						month: 'long',
+						timeZone: 'Europe/London',
+						year: 'numeric'
+					}).format(workshopDocumentUploadedDate)
+				: null
 		});
 		return;
 	};
