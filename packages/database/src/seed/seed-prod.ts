@@ -1,7 +1,7 @@
 import { newDatabaseClient } from '../index.ts';
 import { seedStaticData } from './data-static.ts';
 import { loadConfig } from '../configuration/config.ts';
-import { seedProdAuthorities } from './data-authorities-prod.ts';
+import { seedProdAuthorities } from './data-authorities.ts';
 
 async function run() {
 	const config = loadConfig();
