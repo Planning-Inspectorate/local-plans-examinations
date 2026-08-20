@@ -8,7 +8,7 @@ import { configureNunjucks } from '../../../nunjucks.ts';
 import { gateway2CoverLetterQuestion } from './questions.ts';
 
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
-	'Each file must be a DOC, DOCX, PDF, TIF, JPG or PNG and be smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
+	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
 
 describe('Gateway 2 covering letter upload page', () => {
 	it('renders file requirements and total upload size guidance as one paragraph', () => {
@@ -28,7 +28,9 @@ describe('Gateway 2 covering letter upload page', () => {
 			}
 		});
 
-		const bodyParagraphs = [...html.matchAll(/<p class="govuk-body">([^<]+)<\/p>/g)].map((match) => match[1].trim());
+		const bodyParagraphs = [...html.matchAll(/<p class="govuk-body"[^>]*>([^<]+)<\/p>/g)].map((match) =>
+			match[1].trim()
+		);
 
 		assert.ok(
 			bodyParagraphs.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE),
