@@ -77,7 +77,6 @@ function toCreateInput(lpa: Record<string, string>) {
 	}
 
 	return {
-		id: lpa[HEADERS.PINS_LPA_CODE],
 		name: lpa[HEADERS.AUTHORITY_NAME],
 		pinsCode: lpa[HEADERS.PINS_LPA_CODE],
 		status: Object.values(AUTHORITY_STATUS_ID).includes(lpa[HEADERS.STATUS])

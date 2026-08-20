@@ -43,7 +43,14 @@ async function seedAuthority(
 		// If it doesn't exist, create it
 		if (!existing) {
 			console.log('Creating authority with pinsCode:', authority.pinsCode);
-			await $tx.authority.create({ data: authority });
+
+			await $tx.authority.create({
+				data: {
+					name: authority.name,
+					pinsCode: authority.pinsCode,
+					status: authority.status
+				}
+			});
 			return true; // created
 		}
 
@@ -54,7 +61,7 @@ async function seedAuthority(
 				where: { id: existing.id },
 				data: {
 					name: authority.name,
-					statusId: authority.status
+					status: authority.status
 				}
 			});
 			return false; // updated
