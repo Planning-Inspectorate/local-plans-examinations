@@ -3,6 +3,7 @@ export { default as FileUploaderQuestion } from './question.ts';
 export { createFileUploaderDeleteController, createFileUploaderUploadController } from './upload-controller.ts';
 export { fileUploaderQuestionMiddleware } from './upload-middleware.ts';
 export { validateFiles, sanitiseFileName } from './validation.ts';
+export { default as FileUploadRequiredValidator } from './required-validator.ts';
 export {
 	ALLOWED_EXTENSIONS,
 	ALLOWED_MIME_TYPES,
