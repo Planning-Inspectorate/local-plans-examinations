@@ -5,14 +5,17 @@ import {
 	type CrownQuestionProps
 } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import {
-	type FileUploaderQuestionProps,
+	ALLOWED_EXTENSIONS,
+	ALLOWED_MIME_TYPES,
 	SINGLE_FILE_UPLOAD_LIMIT,
-	TOTAL_FILE_UPLOAD_LIMIT
-} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import {
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import {
+	type FileUploaderQuestionProps,
+	FileUploadRequiredValidator
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -98,19 +101,27 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 	title: 'Local plan timetable',
-	question: 'Upload your local plan timetable',
+	question: 'Upload local plan timetable',
 	fieldName: 'localPlanTimetable',
 	url: 'local-plan-timetable',
-	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
-	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
-	maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
-	maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
-	maxFilesPerUpload: 3,
+	allowedFileExtensions: ALLOWED_EXTENSIONS,
+	allowedMimeTypes: ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 	multiple: true,
-	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
-	validators: []
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
+		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: [new FileUploadRequiredValidator('localPlanTimetable', 'Upload local plan timetable')]
 };
 
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
