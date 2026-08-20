@@ -1,5 +1,5 @@
 import type { PrismaClient, Prisma } from '@pins/local-plans-database/src/client/client.ts';
-import PROD_AUTHORITIES from './data-authorities-prod-list.json' with { type: 'json' };
+import PROD_AUTHORITIES from './data-authorities-list.json' with { type: 'json' };
 
 export const AUTHORITIES: Prisma.AuthorityUncheckedCreateInput[] = PROD_AUTHORITIES;
 
