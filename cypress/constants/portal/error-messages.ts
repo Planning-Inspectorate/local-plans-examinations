@@ -23,5 +23,11 @@ export const ERROR_MESSAGES = {
 
 	//Gateway 2 application page
 
-	ADD_ONE_DOCUMENT: 'Add at least one document before submitting'
+	ADD_ONE_DOCUMENT: 'Add at least one document before submitting',
+
+	// Gateway 2 document upload page
+
+	FILE_TOO_LARGE: 'The selected file must be smaller than 250MB',
+	INVALID_FILE_FORMAT: 'The selected file must be PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF, TIFF',
+	NO_FILE_UPLOADED: 'Choose a file to upload'
 };

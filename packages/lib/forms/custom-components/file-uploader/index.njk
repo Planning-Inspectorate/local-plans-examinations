@@ -37,7 +37,7 @@
 			{% endif %}
 
 			{% if question.text.fileRequirementsText %}
-				<p class="govuk-body">{{ question.text.fileRequirementsText }}</p>
+				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText }}</p>
 			{% endif %}
 
 			{% if question.text.totalUploadSizeText %}
