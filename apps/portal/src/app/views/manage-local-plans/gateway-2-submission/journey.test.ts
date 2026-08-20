@@ -43,9 +43,9 @@ describe('createJourney', () => {
 		assert.strictEqual(journey.initialBackLink, '/');
 	});
 
-	it('treats Gateway 2 procedural documents as optional in the journey', () => {
-		assert.strictEqual(createTestJourney({}).isComplete(), true);
-		assert.strictEqual(createTestJourney({ gateway2CoverLetter: [] }).isComplete(), true);
+	it('is incomplete until a local plan timetable has been uploaded', () => {
+		assert.strictEqual(createTestJourney({}).isComplete(), false);
+		assert.strictEqual(createTestJourney({ localPlanTimetable: [] }).isComplete(), false);
 		assert.strictEqual(createTestJourney(buildUploadedDocumentAnswers()).isComplete(), true);
 	});
 });
