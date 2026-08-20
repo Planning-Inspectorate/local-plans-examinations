@@ -403,7 +403,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'programmeOfficerFirstName',
 				label: 'First name',
-				title: 'Programme officer first name',
+				title: 'Programme Officer first name',
 				attributes: { 'data-cy': 'programme-officer-first-name' }
 			},
 			{
