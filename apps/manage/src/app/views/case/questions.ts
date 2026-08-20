@@ -403,18 +403,21 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'programmeOfficerFirstName',
 				label: 'First name',
+				title: 'Programme fficer first name',
 				attributes: { 'data-cy': 'programme-officer-first-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'programmeOfficerLastName',
 				label: 'Last name',
+				title: 'Programme Officer last name',
 				attributes: { 'data-cy': 'programme-officer-last-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'programmeOfficerEmail',
 				label: 'Email address',
+				title: 'Programme Officer email address',
 				attributes: { 'data-cy': 'programme-officer-email' }
 			}
 		],

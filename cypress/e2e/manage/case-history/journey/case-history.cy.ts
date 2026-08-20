@@ -83,7 +83,7 @@ describe('Case history', () => {
 
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(
-			`Digital Sharing Agreement (DSA) check updated from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
+			`Data Sharing Agreement (DSA) check updated from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
 		);
 	});
 
