@@ -87,7 +87,7 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 		caption: 'Procedural documents',
 		introduction: 'Drag and drop or choose files',
 		fileRequirementsText:
-			'Each file must be a DOC, DOCX, PDF, TIF, JPG or PNG and be smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
 		dropInstructionText: 'or drop files',
 		continueButtonText: 'Save and return'

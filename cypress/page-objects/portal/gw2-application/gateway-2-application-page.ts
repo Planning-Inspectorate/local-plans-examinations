@@ -99,6 +99,15 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		});
 	}
 
+	verifyDocumentRowContains(table: Cypress.Chainable, document: string, ...fileNames: string[]) {
+		table.within(() => {
+			const row = cy.contains('tr', document);
+			fileNames.forEach((fileName) => {
+				row.should('contain.text', fileName);
+			});
+		});
+	}
+
 	verifyTableRowsInOrder(table: Cypress.Chainable, documents: string[]) {
 		table.within(() => {
 			cy.get('tbody tr').should('have.length', documents.length);
@@ -106,6 +115,10 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 				cy.get('tbody tr').eq(index).should('contain.text', document);
 			});
 		});
+	}
+
+	clickAddLink(addCy: string) {
+		cy.getByData(addCy).should('be.visible').click();
 	}
 }
 
