@@ -64,18 +64,19 @@ model Gateway1Info {
 }
 
 model Gateway2Info {
-  id                      String    @id @default(uuid()) @db.UniqueIdentifier
-  case                    Case      @relation(fields: [caseId], references: [id])
-  caseId                  String    @unique @db.UniqueIdentifier
-  expectedDate            DateTime? @db.DateTime2
-  actualDate              DateTime? @db.DateTime2
-  validDate               DateTime? @db.DateTime2
-  assessorName            String?
-  assessorAppointmentDate DateTime? @db.DateTime2
-  workshopDate            DateTime? @db.DateTime2
-  workshopVenue           String?
-  reportIssuedDate        DateTime? @db.DateTime2
-  reportPublishedByLPA    DateTime? @db.DateTime2
+  id                           String    @id @default(uuid()) @db.UniqueIdentifier
+  case                         Case      @relation(fields: [caseId], references: [id])
+  caseId                       String    @unique @db.UniqueIdentifier
+  expectedDate                 DateTime? @db.DateTime2
+  actualDate                   DateTime? @db.DateTime2
+  validDate                    DateTime? @db.DateTime2
+  assessorName                 String?
+  assessorAppointmentDate      DateTime? @db.DateTime2
+  workshopDate                 DateTime? @db.DateTime2
+  workshopVenue                String?
+  reportIssuedDate             DateTime? @db.DateTime2
+  reportPublishedByLPA         DateTime? @db.DateTime2
+  workshopDocumentUploadedDate DateTime?
 }
 
 model Gateway3Info {
