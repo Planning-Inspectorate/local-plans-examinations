@@ -85,13 +85,13 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		caseHistoryPage.verifyHistoryEvent(
-			`Programme fficer first name updated from ${gateway3ProgrammeOfficerAnswer.firstName} to Updated`
+			`Programme officer first name updated from ${gateway3ProgrammeOfficerAnswer.firstName} to Updated`
 		);
 		caseHistoryPage.verifyHistoryEvent(
-			`Programme fficer last name updated from ${gateway3ProgrammeOfficerAnswer.lastName} to Officer`
+			`Programme officer last name updated from ${gateway3ProgrammeOfficerAnswer.lastName} to Officer`
 		);
 		caseHistoryPage.verifyHistoryEvent(
-			`Programme fficer email address updated from ${gateway3ProgrammeOfficerAnswer.email} to updated.officer@test.com`
+			`Programme officer email address updated from ${gateway3ProgrammeOfficerAnswer.email} to updated.officer@test.com`
 		);
 	});
 
