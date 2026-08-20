@@ -1,7 +1,6 @@
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
-import { gateway3ProgrammeOfficerAnswer } from '../../../../fixtures/manage/gateway-3.ts';
 
 describe('Case overview', () => {
 	beforeEach(() => {
@@ -35,31 +34,7 @@ describe('Case overview', () => {
 		caseOverviewPage.verifyExpectedServiceNavigation();
 		caseOverviewPage.verifyExpectedSectionHeadings();
 		caseOverviewPage.verifyExpectedSummaryRows();
-		caseOverviewPage.verifySummaryRowContains('Plan title', seededCase.planTitle);
-		caseOverviewPage.verifySummaryRowContains('Plan type', 'Local Plan');
-		caseOverviewPage.verifySummaryRowContains(
-			'Local Planning Authority',
-			'Local Planning Authority 1',
-			'Local Planning Authority 2'
-		);
-		caseOverviewPage.verifySummaryRowContains('Case officer', 'Case Officer 1');
-		caseOverviewPage.verifySummaryRowContains('Plan band', 'Not started');
-		caseOverviewPage.verifySummaryRowContains(
-			'Contact details',
-			'Jane',
-			'Smith',
-			'jane@lpa.gov.uk',
-			'01234567890',
-			'Bob',
-			'Johnson',
-			'bob@lpa.gov.uk'
-		);
-		caseOverviewPage.verifySummaryRowContains(
-			'Programme Officer details',
-			gateway3ProgrammeOfficerAnswer.firstName,
-			gateway3ProgrammeOfficerAnswer.lastName,
-			gateway3ProgrammeOfficerAnswer.email
-		);
+		caseOverviewPage.verifyExpectedSeededAnswers();
 		caseOverviewPage.verifyExpectedActionLinkHrefs();
 		caseOverviewPage.verifyDeleteCaseButton();
 	});

@@ -1,51 +1,61 @@
 import { SmartLookupPage } from '../base/index.ts';
+import {
+	assessorGateway2,
+	assessorGateway3,
+	examiningInspector1,
+	examiningInspector2,
+	examiningInspector3,
+	qaInspector1,
+	qaInspector2,
+	qaInspector3
+} from '../../../fixtures/manage/overview.ts';
 
 const contactQuestionPath = (path: string) => new RegExp(`^/case/.+/overview/contacts/${path}$`);
 
 export const caseOverviewGateway2AssessorPage = new SmartLookupPage(
-	contactQuestionPath('assessor-gateway-2'),
-	'assessorName',
-	'Who is the Gateway 2 assessor?'
+	contactQuestionPath(assessorGateway2.path),
+	assessorGateway2.field,
+	assessorGateway2.heading
 );
 
 export const caseOverviewGateway3AssessorPage = new SmartLookupPage(
-	contactQuestionPath('assessor-gateway-3'),
-	'assessorGateway3',
-	'Who is the Gateway 3 assessor?'
+	contactQuestionPath(assessorGateway3.path),
+	assessorGateway3.field,
+	assessorGateway3.heading
 );
 
 export const caseOverviewExaminingInspector1Page = new SmartLookupPage(
-	contactQuestionPath('examining-inspector-1'),
-	'examiningInspector1',
-	'Which Inspector is assigned for Examination?'
+	contactQuestionPath(examiningInspector1.path),
+	examiningInspector1.field,
+	examiningInspector1.heading
 );
 
 export const caseOverviewExaminingInspector2Page = new SmartLookupPage(
-	contactQuestionPath('examining-inspector-2'),
-	'examiningInspector2',
-	'Which Inspector is assigned for Examination?'
+	contactQuestionPath(examiningInspector2.path),
+	examiningInspector2.field,
+	examiningInspector2.heading
 );
 
 export const caseOverviewExaminingInspector3Page = new SmartLookupPage(
-	contactQuestionPath('examining-inspector-3'),
-	'examiningInspector3',
-	'Which Inspector is assigned for Examination?'
+	contactQuestionPath(examiningInspector3.path),
+	examiningInspector3.field,
+	examiningInspector3.heading
 );
 
 export const caseOverviewQAInspector1Page = new SmartLookupPage(
-	contactQuestionPath('qa-inspector-1'),
-	'qaInspector1',
-	'Which Inspector is assigned for QA?'
+	contactQuestionPath(qaInspector1.path),
+	qaInspector1.field,
+	qaInspector1.heading
 );
 
 export const caseOverviewQAInspector2Page = new SmartLookupPage(
-	contactQuestionPath('qa-inspector-2'),
-	'qaInspector2',
-	'Which Inspector is assigned for QA?'
+	contactQuestionPath(qaInspector2.path),
+	qaInspector2.field,
+	qaInspector2.heading
 );
 
 export const caseOverviewQAInspector3Page = new SmartLookupPage(
-	contactQuestionPath('qa-inspector-3'),
-	'qaInspector3',
-	'Which Inspector is assigned for QA?'
+	contactQuestionPath(qaInspector3.path),
+	qaInspector3.field,
+	qaInspector3.heading
 );

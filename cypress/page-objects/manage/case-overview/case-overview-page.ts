@@ -1,3 +1,9 @@
+import {
+	localPlanningAuthority,
+	overviewExpectedAnswers,
+	overviewSummaryRows,
+	programmeOfficer
+} from '../../../fixtures/manage/overview.ts';
 import { BasePage } from '../../base-page.ts';
 
 const serviceNavigationItems = [
@@ -8,25 +14,6 @@ const serviceNavigationItems = [
 	'Gateway 3',
 	'Examination',
 	'Case History'
-];
-
-const summaryRows = [
-	'Plan title',
-	'Plan type',
-	'Local Planning Authority',
-	'Case officer',
-	'Plan band',
-	'Contact details',
-	'Programme Officer details',
-	'Examination website',
-	'Assessor Gateway 2',
-	'Assessor Gateway 3',
-	'Examining Inspector 1',
-	'Examining Inspector 2',
-	'Examining Inspector 3',
-	'QA Inspector 1',
-	'QA Inspector 2',
-	'QA Inspector 3'
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
@@ -109,7 +96,39 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyExpectedSummaryRows() {
-		this.verifySummaryRows(...summaryRows);
+		overviewSummaryRows.forEach(({ row }) => {
+			this.verifySummaryRows(row);
+		});
+	}
+
+	verifyExpectedSeededAnswers() {
+		overviewExpectedAnswers.forEach(({ row, display }) => {
+			this.verifySummaryRowContains(row, display);
+		});
+
+		this.verifySummaryRowContains(
+			localPlanningAuthority.row,
+			localPlanningAuthority.lpa1Value,
+			localPlanningAuthority.lpa2Value
+		);
+
+		this.verifySummaryRowContains(
+			'Contact details',
+			'Jane',
+			'Smith',
+			'jane@lpa.gov.uk',
+			'01234567890',
+			'Bob',
+			'Johnson',
+			'bob@lpa.gov.uk'
+		);
+
+		this.verifySummaryRowContains(
+			programmeOfficer.row,
+			programmeOfficer.values.firstName,
+			programmeOfficer.values.lastName,
+			programmeOfficer.values.email
+		);
 	}
 
 	verifyActionLinkHref(key: string, pathPattern: RegExp) {
