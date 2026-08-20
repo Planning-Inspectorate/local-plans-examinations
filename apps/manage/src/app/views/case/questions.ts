@@ -50,6 +50,28 @@ const GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS = [
 
 const GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES = 25 * 1000 * 1000; // 25MB
 
+const SIGNED_SLA_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'mpeg',
+	'mp3',
+	'mp4',
+	'mov',
+	'png',
+	'tif',
+	'tiff'
+];
+
+const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 1000 * 1000; // 25MB
+
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
 	planTitle: {
@@ -374,6 +396,32 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'SLA sent date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'sla-sent-date' }
+	},
+	signedSla: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Signed SLA',
+		question: 'Upload signed SLA',
+		fieldName: 'signedSla',
+		url: 'signed-sla',
+		allowedFileExtensions: SIGNED_SLA_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => SIGNED_SLA_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Signed SLA',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(SIGNED_SLA_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES)}`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
+		validators: [new FileUploadRequiredValidator('signedSla', 'Upload signed sla file')]
 	},
 	slaReceivedDate: {
 		type: COMPONENT_TYPES.DATE,

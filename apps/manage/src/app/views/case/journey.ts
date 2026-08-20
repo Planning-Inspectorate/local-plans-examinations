@@ -116,6 +116,7 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway1ExpectedDate)
 				.addQuestion(questions.gateway1ActualDate)
 				.addQuestion(questions.slaSentDate)
+				.addQuestion(questions.signedSla)
 				.addQuestion(questions.slaReceivedDate)
 				.addQuestion(questions.dsaCheck)
 		],

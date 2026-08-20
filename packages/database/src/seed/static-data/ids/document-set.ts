@@ -1,5 +1,6 @@
 export const DOCUMENT_SET_ID = {
 	// Procedural
+	SIGNED_SLA: 'signed-sla',
 	G2_COVER_LETTER: 'g2-cover-letter',
 	G2_LOCAL_PLAN_TIMETABLE: 'g2-timetable',
 	G2_PROJ_INIT_DOC: 'g2-init-doc',
@@ -17,6 +18,7 @@ export const DOCUMENT_SET_ID = {
 };
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
+	SIGNED_SLA: 'signed-sla',
 	G2_COVER_LETTER: 'covering-letter',
 	G2_LOCAL_PLAN_TIMETABLE: 'local-plan-timetable',
 	G2_PROJ_INIT_DOC: 'project-initiation-document',
