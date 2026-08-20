@@ -46,7 +46,7 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		// Known gap: Gateway 3 fields aren't in caseHistoryLabels; asserting only the prefix since raw Date.toString() is timezone dependent
-		caseHistoryPage.verifyHistoryEvent('Updated expectedDate from');
+		caseHistoryPage.verifyHistoryEvent('Gateway 3 expected date updated from');
 	});
 
 	it('updates the Gateway 3 assessor name answer', { tags: ['regression'] }, () => {
@@ -61,7 +61,7 @@ describe('Gateway 3 updates', () => {
 
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('Updated assessorName from assessor-1 to assessor-2');
+		caseHistoryPage.verifyHistoryEvent('Gateway 3 assessor name updated from assessor-1 to assessor-2');
 	});
 
 	it('updates the programme officer details answer and records case history', { tags: ['regression'] }, () => {
@@ -85,13 +85,13 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		caseHistoryPage.verifyHistoryEvent(
-			`Updated programmeOfficerFirstName from ${gateway3ProgrammeOfficerAnswer.firstName} to Updated`
+			`Programme Officer first name updated from ${gateway3ProgrammeOfficerAnswer.firstName} to Updated`
 		);
 		caseHistoryPage.verifyHistoryEvent(
-			`Updated programmeOfficerLastName from ${gateway3ProgrammeOfficerAnswer.lastName} to Officer`
+			`Programme Officer last name updated from ${gateway3ProgrammeOfficerAnswer.lastName} to Officer`
 		);
 		caseHistoryPage.verifyHistoryEvent(
-			`Updated programmeOfficerEmail from ${gateway3ProgrammeOfficerAnswer.email} to updated.officer@test.com`
+			`Programme Officer email address updated from ${gateway3ProgrammeOfficerAnswer.email} to updated.officer@test.com`
 		);
 	});
 

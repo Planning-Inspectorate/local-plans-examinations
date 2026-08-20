@@ -5,6 +5,7 @@ import type { Request, Response } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
+import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -103,27 +104,20 @@ interface Gateway3Input {
 	programmeOfficerEmail?: string;
 }
 
-const caseHistoryLabels: Record<string, string> = {
-	letterSentToMHCLGDate: 'Letter sent to MHCLG date',
-	letterIssueDate: 'Letter issue date',
-	factCheckDateReceivedFromInspector: 'Fact Check date received from Inspector',
-	factCheckDueDate: 'Fact Check due date',
-	factCheckActualDate: 'Fact Check actual date',
-	factCheckReceivedBackFromLPADate: 'Fact Check received back from LPA',
-	finalReportIssueDate: 'Final report issue date',
-	qaInspector1: 'QA Inspector 1',
-	qaInspector2: 'QA Inspector 2',
-	qaInspector3: 'QA Inspector 3',
-	QADate: 'QA Date',
-	reportSentToPanelDate: 'Sent to panel date',
-	panelResponseToInspectorDate: 'QA panel response sent to inspector',
-	planPauseStartDate: 'Plan pause date',
-	planPauseEndDate: 'Plan pause end date',
-	withdrawnDate: 'Withdrawn date',
-	isSound: 'Sound / unsound',
-	soundUnsoundDate: 'Sound / unsound date',
-	adoptionDate: 'Adoption date',
-	approvedForCILDate: 'Approved for CIL date'
+// Generate a map of <fieldName: field title>
+const caseHistoryLabels = {
+	// Expand regular questyions
+	...(Object.fromEntries(Object.values(questions).map((value) => [value.fieldName, value.title])) as Record<
+		string,
+		string
+	>),
+	// Expand inputFields from CUSTOM_MULTI_FIELD_INPUT questions
+	...(Object.fromEntries(
+		Object.values(questions)
+			.filter((value) => value instanceof CUSTOM_COMPONENT_CLASSES[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT])
+			.flatMap((entry) => entry.inputFields)
+			.map((inputField) => [inputField.fieldName, inputField.title])
+	) as Record<string, string>)
 };
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -193,7 +187,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 
-			await updateCaseHistory(db, oldValues, data.answers, reference, currentUser);
+			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
 		}
 	};
 }
@@ -593,6 +587,8 @@ async function getOverviewData(db: PrismaClient, reference: string) {
 }
 
 export async function updateCaseHistory(
+	service: ManageService,
+	req: Request,
 	db: PrismaClient,
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
@@ -603,26 +599,34 @@ export async function updateCaseHistory(
 		where: { reference },
 		data: {
 			caseHistories: {
-				create: Object.entries(previousValues).map(([key, oldValue]) => ({
-					event: formatCaseHistoryEvent(key, oldValue, newValues[key]),
-					username: currentUser
-				}))
+				create: await Promise.all(
+					Object.entries(previousValues).map(async ([key, oldValue]) => ({
+						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key]),
+						// TODO: Get user once authentication is implemented
+						username: currentUser
+					}))
+				)
 			}
 		}
 	});
 }
 
-function formatCaseHistoryEvent(key: string, oldValue: unknown, newValue: unknown) {
-	const label = caseHistoryLabels[key];
-
-	if (label) {
-		return `${label} updated to ${formatCaseHistoryValue(newValue)}`;
+async function formatCaseHistoryEvent(
+	service: ManageService,
+	req: Request,
+	key: string,
+	oldValue: unknown,
+	newValue: unknown
+) {
+	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
+	let oldValueText = 'updated to';
+	if (oldValue != null && oldValue != '') {
+		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;
 	}
-
-	return `Updated ${key} from ${oldValue} to ${newValue}`;
+	return `${label} ${oldValueText} ${await formatCaseHistoryValue(service, req, key, newValue)}`;
 }
 
-function formatCaseHistoryValue(value: unknown) {
+async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
 	if (value instanceof Date) {
 		return new Intl.DateTimeFormat('en-GB', {
 			day: 'numeric',
@@ -632,8 +636,40 @@ function formatCaseHistoryValue(value: unknown) {
 		}).format(value);
 	}
 
+	if (question == 'isSound') {
+		if (typeof value === 'boolean') {
+			return value ? 'Sound' : 'Unsound';
+		}
+		if (typeof value === 'string') {
+			return value == 'yes' ? 'Sound' : 'Unsound';
+		}
+		return value;
+	}
+
 	if (typeof value === 'boolean') {
-		return value ? 'Sound' : 'Unsound';
+		return value;
+	}
+	const entraUserQuestions = new Set([
+		'caseOfficer',
+		'examiningInspector1',
+		'examiningInspector2',
+		'examiningInspector3'
+	]);
+	console.log('fetched question');
+	console.log(question);
+	if (entraUserQuestions.has(question)) {
+		console.log('is an entra question');
+		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+		console.log('entraClient');
+		console.log(entraClient);
+		if (entraClient) {
+			const fetchedDisplayName = await entraClient.getUserDisplayName(String(value));
+			if (fetchedDisplayName) {
+				console.log('fetchedDisplayName');
+				console.log(fetchedDisplayName);
+				return fetchedDisplayName;
+			}
+		}
 	}
 
 	return `${value ?? ''}`;
