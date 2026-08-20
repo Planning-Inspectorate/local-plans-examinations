@@ -84,6 +84,38 @@ export async function loadUploadedDocuments(
 	return documents.map(mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 }
 
+export async function getLatestDocumentBlobDetails(service: ManageService, documentId: string) {
+	const latestDocument = await service.db.document.findFirst({
+		select: {
+			latestDocumentVersion: {
+				select: {
+					blobStorageContainer: true,
+					blobStoragePath: true
+				}
+			}
+		},
+		where: {
+			guid: documentId,
+			isDeleted: false
+		}
+	});
+	if (!latestDocument || !latestDocument.latestDocumentVersion) {
+		throw new Error(`Could not find an active document version for '${documentId}'`);
+	}
+	const containerName = latestDocument.latestDocumentVersion.blobStorageContainer;
+	const blobPath = latestDocument.latestDocumentVersion.blobStoragePath;
+	if (!containerName) {
+		throw new Error(`blobStorageContainer is null for the latest version of document '${documentId}'`);
+	}
+	if (!blobPath) {
+		throw new Error(`blobStoragePath is null for the latest version of document '${documentId}'`);
+	}
+	return {
+		containerName: containerName,
+		blobPath: blobPath
+	};
+}
+
 // Makes the database match the uploaded file list.
 async function syncDocuments(
 	service: ManageService,
