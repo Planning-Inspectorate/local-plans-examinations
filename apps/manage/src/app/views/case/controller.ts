@@ -5,6 +5,7 @@ import type { Request, Response } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
+import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -103,9 +104,21 @@ interface Gateway3Input {
 	programmeOfficerEmail?: string;
 }
 
-const caseHistoryLabels = Object.fromEntries(
-	Object.values(questions).map((value) => [value.fieldName, value.title])
-) as Record<string, string>;
+// Generate a map of <fieldName: field title>
+const caseHistoryLabels = {
+	// Expand regular questyions
+	...(Object.fromEntries(Object.values(questions).map((value) => [value.fieldName, value.title])) as Record<
+		string,
+		string
+	>),
+	// Expand inputFields from CUSTOM_MULTI_FIELD_INPUT questions
+	...(Object.fromEntries(
+		Object.values(questions)
+			.filter((value) => value instanceof CUSTOM_COMPONENT_CLASSES[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT])
+			.flatMap((entry) => entry.inputFields)
+			.map((inputField) => [inputField.fieldName, inputField.title])
+	) as Record<string, string>)
+};
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
