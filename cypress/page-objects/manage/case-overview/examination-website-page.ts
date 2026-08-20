@@ -1,16 +1,17 @@
 import { BasePage } from '../../base-page.ts';
+import { examinationWebsite } from '../../../fixtures/manage/overview.ts';
 
 export class CaseOverviewExaminationWebsitePage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/overview\/contacts\/examination-website$/);
 	}
 	get examinationWebsiteInput() {
-		return cy.get('input[name="examinationWebsite"]');
+		return cy.get(`input[name="${examinationWebsite.field}"]`);
 	}
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('What is the address of the examination website?');
+		this.verifyHeading(examinationWebsite.heading);
 		this.examinationWebsiteInput.should('be.visible').and('have.value', '');
 		this.verifySaveAndContinueVisible();
 	}
