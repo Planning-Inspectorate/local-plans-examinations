@@ -198,7 +198,8 @@ describe('updateCaseField', () => {
 							lpaCode: 'E60000001'
 						},
 						create: {
-							lpaCode: 'E60000001'
+							lpaCode: 'E60000001',
+							lpaName: ''
 						}
 					}
 				}
@@ -231,7 +232,8 @@ describe('updateCaseField', () => {
 				lpaCode: 'E60000002'
 			},
 			create: {
-				lpaCode: 'E60000002'
+				lpaCode: 'E60000002',
+				lpaName: ''
 			}
 		});
 	});
@@ -310,7 +312,8 @@ describe('updateCaseField', () => {
 							lpaCode: 'E60000001'
 						},
 						create: {
-							lpaCode: 'E60000001'
+							lpaCode: 'E60000001',
+							lpaName: ''
 						}
 					}
 				},
@@ -331,7 +334,8 @@ describe('updateCaseField', () => {
 							lpaCode: 'E60000001'
 						},
 						create: {
-							lpaCode: 'E60000001'
+							lpaCode: 'E60000001',
+							lpaName: ''
 						}
 					}
 				}

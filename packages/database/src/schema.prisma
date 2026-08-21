@@ -127,6 +127,7 @@ model ExaminationInfo {
 
 model LPA {
   lpaCode  String    @id
+  lpaName  String    @db.NVarChar(200)
   contacts Contact[]
   cases    Case[]
 }
@@ -140,6 +141,13 @@ model Contact {
   lpaCode     String
   cases       Case[]
   lpa         LPA    @relation(fields: [lpaCode], references: [lpaCode])
+}
+
+model Authority {
+  id       String @id @default(uuid()) @db.UniqueIdentifier
+  name     String
+  pinsCode String
+  status   String
 }
 
 model OneTimePassword {
