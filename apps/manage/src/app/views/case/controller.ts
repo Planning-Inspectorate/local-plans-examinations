@@ -965,13 +965,27 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 		});
 		if (!existingGatewayDetails?.reportIssuedDate) {
 			// Try to update the reportIssuedDate
+			const reportIssuedDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
 			await updateGateway2(
 				service.db,
 				{
-					reportIssuedDate: new Date()
+					reportIssuedDate: reportIssuedDate
 				},
 				caseReference,
 				'gateway-2-report-issued-date'
+			);
+			await updateCaseHistory(
+				service.db,
+				{
+					reportIssuedDate: null
+				},
+				{
+					reportIssuedDate: reportIssuedDate
+				},
+				caseReference,
+				currentUser
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report issued';
