@@ -14,7 +14,8 @@ import {
 	fileUploaderCaseSessionKey,
 	buildCheckWorkshopDocumentMiddleware,
 	downloadDocument,
-	getParam
+	getParam,
+	issueWorkshopDocuments
 } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -171,7 +172,6 @@ function registerCaseJourney(
 		fileUploadMiddleware,
 		question
 	);
-	console.log(`cya url: '${questionPath}/check`);
 
 	// Check answers for question
 	router.get(
@@ -185,6 +185,7 @@ function registerCaseJourney(
 		setAsEditingFromCya,
 		question
 	);
+	router.post(`/${path}/:section/:question/check`, issueWorkshopDocuments(service, journeyId));
 
 	// Save answer
 	router.post(
