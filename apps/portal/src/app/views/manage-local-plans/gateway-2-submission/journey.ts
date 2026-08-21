@@ -21,6 +21,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.gateway2CoverLetter)
 				.addQuestion(questions.localPlanTimetable)
 				.addQuestion(questions.projectInitiationDocument)
+				.addQuestion(questions.draftStatementOfCompliance)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
