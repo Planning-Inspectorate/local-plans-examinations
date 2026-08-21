@@ -20,7 +20,7 @@
 {% block pageContent %}
   {% if alertMessage %}
     {{ govukNotificationBanner({
-      type: "success",
+      type: alertMessageStatus,
       text: alertMessage
     }) }}
   {% endif %}

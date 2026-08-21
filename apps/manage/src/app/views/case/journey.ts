@@ -86,7 +86,8 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment)
+				.addQuestion(questions.assessorDateOfAppointment),
+			new Section('Workshop', 'workshop')
 				.addQuestion(questions.workshopDate)
 				.addQuestion(questions.workshopVenue)
 				.addQuestion(questions.reportIssuedDate)
