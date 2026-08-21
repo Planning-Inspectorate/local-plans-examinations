@@ -48,6 +48,7 @@ describe('createJourney', () => {
 		assert.strictEqual(createTestJourney({ draftStatementOfCompliance: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ projectInitiationDocument: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ localPlanTimetable: [] }).isComplete(), true);
+		assert.strictEqual(createTestJourney({ draftStatementOfSoundness: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney(buildUploadedDocumentAnswers()).isComplete(), true);
 	});
 });
