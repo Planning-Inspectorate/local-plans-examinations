@@ -116,10 +116,6 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			});
 		});
 	}
-
-	clickAddLink(addCy: string) {
-		cy.getByData(addCy).should('be.visible').click();
-	}
 }
 
 export const gateway2ApplicationPage = new Gateway2ApplicationPage();
