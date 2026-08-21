@@ -90,7 +90,8 @@ export async function getLatestDocumentBlobDetails(service: BaseService, documen
 			latestDocumentVersion: {
 				select: {
 					blobStorageContainer: true,
-					blobStoragePath: true
+					blobStoragePath: true,
+					fileName: true
 				}
 			}
 		},
@@ -104,15 +105,20 @@ export async function getLatestDocumentBlobDetails(service: BaseService, documen
 	}
 	const containerName = latestDocument.latestDocumentVersion.blobStorageContainer;
 	const blobPath = latestDocument.latestDocumentVersion.blobStoragePath;
+	const fileName = latestDocument.latestDocumentVersion.fileName;
 	if (!containerName) {
 		throw new Error(`blobStorageContainer is null for the latest version of document '${documentId}'`);
 	}
 	if (!blobPath) {
 		throw new Error(`blobStoragePath is null for the latest version of document '${documentId}'`);
 	}
+	if (!fileName) {
+		throw new Error(`fileName is null for the latest version of document '${documentId}'`);
+	}
 	return {
 		containerName: containerName,
-		blobPath: blobPath
+		blobPath: blobPath,
+		fileName: fileName
 	};
 }
 
@@ -344,8 +350,9 @@ export async function downloadDocumentToResponse(service: BaseService, documentI
 	}
 	const blobDetails = await getLatestDocumentBlobDetails(service, documentId);
 	const blobPath = blobDetails.blobPath;
+	const fileName = blobDetails.fileName;
 	const blobStorageUtil = service.createFileStorage(blobPath);
-	await blobStorageUtil.downloadToExpressResponse(blobPath, res);
+	await blobStorageUtil.downloadToExpressResponse(blobPath, fileName, res);
 }
 
 type TransactionClient = Omit<

@@ -897,6 +897,7 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 		if (!documentId) {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
+		// Todo add error handling for if the file is not found
 		await downloadDocumentToResponse(service, documentId, res);
 	};
 }
