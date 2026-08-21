@@ -5,8 +5,6 @@ import {
 	type CrownQuestionProps
 } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import {
-	ALLOWED_EXTENSIONS,
-	ALLOWED_MIME_TYPES,
 	SINGLE_FILE_UPLOAD_LIMIT,
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 	TOTAL_FILE_UPLOAD_LIMIT,
@@ -140,8 +138,8 @@ export const draftStatementOfComplianceQuestion: FileUploaderQuestionProps = {
 	question: 'Upload draft statement of compliance',
 	fieldName: 'draftStatementOfCompliance',
 	url: 'draft-stat-compliance',
-	allowedFileExtensions: ALLOWED_EXTENSIONS,
-	allowedMimeTypes: ALLOWED_MIME_TYPES,
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
 	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 	maxFilesPerUpload: UNLIMITED_FILES,
@@ -152,8 +150,7 @@ export const draftStatementOfComplianceQuestion: FileUploaderQuestionProps = {
 		caption: 'Procedural documents',
 		introduction: 'Drag and drop or choose files',
 		fileRequirementsText:
-			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB.',
-		totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 		chooseFilesButtonText: 'Choose files',
 		dropInstructionText: 'or drop files',
 		continueButtonText: 'Save and return'
