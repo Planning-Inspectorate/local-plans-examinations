@@ -490,6 +490,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		if (!caseRecord) return res.status(404).render('views/errors/404.njk');
 		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;
+		if (req.session.alertMessage) {
+			res.locals.alertMessage = req.session.alertMessage;
+			delete req.session.alertMessage;
+		}
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
 		switch (currentPage) {
@@ -943,5 +947,15 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 		const blobPath = blobDetails.blobPath;
 		const blobStorageUtil = service.createFileStorage(blobPath);
 		await blobStorageUtil.downloadToExpressResponse(blobPath, res);
+	};
+}
+
+export function issueWorkshopDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		// TODO add logic to actually sent the documents somwhere, to be implemented at a later date
+		// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+		req.session.alertMessage = 'Gateway 2 report issued';
+		res.redirect(`/case/${encodeURIComponent(getParam(req.params.reference))}/${journeyId}`);
+		return;
 	};
 }

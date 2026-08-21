@@ -4,6 +4,7 @@
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% block backLink %}
   <nav aria-label="Back">
@@ -17,6 +18,12 @@
 {% endblock %}
 
 {% block pageContent %}
+  {% if alertMessage %}
+    {{ govukNotificationBanner({
+      type: "success",
+      text: alertMessage
+    }) }}
+  {% endif %}
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
 
