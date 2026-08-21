@@ -971,6 +971,14 @@ describe('buildGetJourneyMiddleware', () => {
 			dsaChecked: 'yes'
 		}));
 
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
+			{
+				id: '1',
+				folderName: 'signed-sla'
+			}
+		]);
+		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
+
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.gateway1Info.findUnique.mock.calls[0].arguments[0], {
