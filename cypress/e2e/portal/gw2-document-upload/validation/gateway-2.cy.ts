@@ -14,17 +14,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		portalLogin();
 	});
 
-	afterEach(() => cy.task('clearDb'));
-
-	it.skip('Shows error message when the covering letter file is over 250MB', { tags: ['regression'] }, () => {
-		loadPlanDetails().then((plan) => {
-			const page = gateway2CoverLetterPage;
-			openGateway2DocumentUploadPage(plan, page);
-			gateway2CoverLetterPage.uploadFile('test-document-over-250MB.xlsx');
-			gateway2CoverLetterPage.clickUploadFiles();
-			gateway2CoverLetterPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.FILE_TOO_LARGE);
-		});
-	});
+	after(() => cy.task('clearDb'));
 
 	it('Shows error message when the covering letter file type is not allowed', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {

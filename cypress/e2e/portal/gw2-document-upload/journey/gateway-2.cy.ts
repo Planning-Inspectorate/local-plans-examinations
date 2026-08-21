@@ -14,7 +14,7 @@ describe('Gateway 2 document upload journeys', () => {
 		portalLogin();
 	});
 
-	afterEach(() => cy.task('clearDb'));
+	after(() => cy.task('clearDb'));
 
 	it('Adds a covering letter using drag and drop, then replaces it with new document', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
