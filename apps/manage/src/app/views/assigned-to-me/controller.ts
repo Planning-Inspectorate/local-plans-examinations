@@ -14,26 +14,27 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 		try {
 			const unmappedCases = await db.case.findMany({
 				where: {
+					deletedDate: null,
 					OR: [
 						{ caseOfficer },
-						{ assessorGateway3: caseOfficerText },
-						{ qaInspector1: caseOfficerText },
-						{ qaInspector2: caseOfficerText },
-						{ qaInspector3: caseOfficerText },
-						{ gateway2Info: { assessorName: caseOfficerText } },
+						{ assessorGateway3: caseOfficer },
+						//{ qaInspector1: caseOfficer },
+						//{ qaInspector2: caseOfficer },
+						//{ qaInspector3: caseOfficerText },
+						{ gateway2Info: { assessorName: caseOfficer } },
 						//{gateway3Info: 							****to be implemented****
-						//	{assessorName: caseOfficerText}			****to be implemented****
+						//	{assessorName: caseOfficer}			****to be implemented****
 						//},
 						{
 							examinationInfo: {
 								OR: [
-									//{assessorName: caseOfficerText},		****to be implemented****
-									{ examiningInspector1: caseOfficerText },
-									{ examiningInspector2: caseOfficerText },
-									{ examiningInspector3: caseOfficerText },
-									{ qaInspector1: caseOfficerText },
-									{ qaInspector2: caseOfficerText },
-									{ qaInspector3: caseOfficerText }
+									//{assessorName: caseOfficer},		****to be implemented****
+									{ examiningInspector1: caseOfficer },
+									{ examiningInspector2: caseOfficer },
+									{ examiningInspector3: caseOfficer }
+									//{ qaInspector1: caseOfficer },
+									//{ qaInspector2: caseOfficer },
+									//{ qaInspector3: caseOfficer }
 								]
 							}
 						}
