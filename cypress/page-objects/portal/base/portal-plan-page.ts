@@ -12,4 +12,8 @@ export class PortalPlanBasePage extends BasePage {
 	verifyPathForPlan(planReference: string) {
 		this.verifyPath(this.pathFor(planReference));
 	}
+
+	clickAddLink(addCy: string) {
+		cy.getByData(addCy).should('be.visible').click();
+	}
 }

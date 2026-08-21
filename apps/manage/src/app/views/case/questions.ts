@@ -9,6 +9,17 @@ import {
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
+import {
+	FileUploadRequiredValidator,
+	type FileUploaderQuestionProps,
+	TOTAL_FILE_UPLOAD_LIMIT
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { MAX_NO_OF_FILES_TO_UPLOAD } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import {
+	MIME_TYPE_MAP,
+	formatByteCountIntoHumanReadableMemoryUnit,
+	formatFileExtensionsIntoHumanReadableList
+} from '@pins/local-plans-lib/util/file.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -16,6 +27,28 @@ const allQuestionClasses = {
 	...questionClasses,
 	...CUSTOM_COMPONENT_CLASSES
 };
+
+const GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'mpeg',
+	'mp3',
+	'mp4',
+	'mov',
+	'png',
+	'tif',
+	'tiff'
+];
+
+const GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES = 25 * 1000 * 1000; // 25MB
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
@@ -497,6 +530,32 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	},
+	workshopDocuments: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Workshop documents',
+		question: 'Upload documents',
+		fieldName: 'workshopDocuments',
+		url: 'gateway-2-workshop-document',
+		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Workshop documents',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES)}`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
+		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
+	},
 	//gateway 3
 	gateway3ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -744,6 +803,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
 	}
 };
+
+export const fileUploadQuestionProperties = Object.values(caseQuestions).filter(
+	(v) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER
+) as FileUploaderQuestionProps[];
 
 export const questions = createQuestions(
 	caseQuestions,

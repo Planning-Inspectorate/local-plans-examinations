@@ -5,15 +5,18 @@ import type { Config } from './config.ts';
 import { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
 import { buildInitEntraClient } from '#util/cached-entra-client.ts';
 import type { InitEntraClient } from '#util/cached-entra-client.ts';
+import { BlobFileStorageAdapter } from '@pins/local-plans-lib/storage/index.ts';
 
 export class ManageService extends BaseService {
 	#config: Config;
 	readonly notifyClient: GovNotifyClient | null;
 	readonly getEntraClient: InitEntraClient;
+	readonly #blobStorage: Config['blobStorage'];
 
 	constructor(config: Config) {
 		super(config);
 		this.#config = config;
+		this.#blobStorage = config.blobStorage;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 		const entraGroupCache = new MapCache(config.entra.cacheTtl);
 		const entraUserCache = new MapCache(config.entra.cacheTtl);
@@ -38,5 +41,12 @@ export class ManageService extends BaseService {
 
 	get notifyCallbackEnabled(): boolean {
 		return this.#config.notifyCallbackEnabled;
+	}
+
+	createFileStorage(basePath?: string): BlobFileStorageAdapter {
+		return new BlobFileStorageAdapter({
+			...this.#blobStorage,
+			basePath
+		});
 	}
 }

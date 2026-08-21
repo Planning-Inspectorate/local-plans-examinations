@@ -24,8 +24,8 @@ describe('createJourney', () => {
 			'views/manage-local-plans/gateway-2-submission/check-your-answers.njk'
 		);
 		assert.strictEqual(
-			journey.getCurrentQuestionUrl('procedural', 'gateway-2-cover-letter'),
-			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/procedural/gateway-2-cover-letter'
+			journey.getCurrentQuestionUrl('procedural', 'covering-letter'),
+			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/procedural/covering-letter'
 		);
 	});
 
@@ -45,7 +45,7 @@ describe('createJourney', () => {
 
 	it('treats Gateway 2 procedural documents as optional in the journey', () => {
 		assert.strictEqual(createTestJourney({}).isComplete(), true);
-		assert.strictEqual(createTestJourney({ gateway2CoverLetter: [] }).isComplete(), true);
+		assert.strictEqual(createTestJourney({ localPlanTimetable: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney(buildUploadedDocumentAnswers()).isComplete(), true);
 	});
 });

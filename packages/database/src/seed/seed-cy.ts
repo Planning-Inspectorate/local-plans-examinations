@@ -2,6 +2,7 @@ import path from 'path';
 import { loadEnvFile } from 'node:process';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
+import { seedStaticData } from './data-static.ts';
 
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
@@ -29,6 +30,8 @@ async function run() {
 		}
 	];
 	try {
+		await seedStaticData(dbClient);
+
 		await dbClient.case.create({
 			data: {
 				reference: `PLAN/${Date.now()}`,

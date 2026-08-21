@@ -1,5 +1,5 @@
 import { BasePage } from '../../base-page.ts';
-
+import { planBand } from '../../../fixtures/manage/overview.ts';
 export class CaseOverviewPlanBandPage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/overview\/case-details\/plan-band$/);
@@ -7,7 +7,7 @@ export class CaseOverviewPlanBandPage extends BasePage {
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('What is the plan band?');
+		this.verifyHeading(planBand.heading);
 	}
 }
 

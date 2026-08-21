@@ -1,4 +1,5 @@
 import { BasePage } from '../../base-page.ts';
+import { programmeOfficer } from '../../../fixtures/manage/overview.ts';
 
 export class CaseOverviewProgrammeOfficerPage extends BasePage {
 	constructor() {
@@ -6,20 +7,20 @@ export class CaseOverviewProgrammeOfficerPage extends BasePage {
 	}
 
 	get programmeOfficerFirstNameInput() {
-		return cy.get('input[name="programmeOfficerFirstName"]');
+		return cy.get(`input[name="${programmeOfficer.fieldFirstName}"]`);
 	}
 
 	get programmeOfficerLastNameInput() {
-		return cy.get('input[name="programmeOfficerLastName"]');
+		return cy.get(`input[name="${programmeOfficer.fieldLastName}"]`);
 	}
 
 	get programmeOfficerEmailInput() {
-		return cy.get('input[name="programmeOfficerEmail"]');
+		return cy.get(`input[name="${programmeOfficer.fieldEmail}"]`);
 	}
 
 	verifyLoaded(firstName = '', lastName = '', email = '') {
 		super.verifyLoaded();
-		this.verifyHeading('Programme Officer details');
+		this.verifyHeading(programmeOfficer.heading);
 		this.programmeOfficerFirstNameInput.should('be.visible').and('have.value', firstName);
 		this.programmeOfficerLastNameInput.should('be.visible').and('have.value', lastName);
 		this.programmeOfficerEmailInput.should('be.visible').and('have.value', email);

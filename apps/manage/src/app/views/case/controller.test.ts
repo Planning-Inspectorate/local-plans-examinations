@@ -44,6 +44,14 @@ function createService(): any {
 			examinationInfo: {
 				upsert: mock.fn(async () => ({})),
 				findUnique: mock.fn(async () => null)
+			},
+			documentSet: {
+				upsert: mock.fn(async () => ({})),
+				findMany: mock.fn(async () => [])
+			},
+			document: {
+				upsert: mock.fn(async () => ({})),
+				findMany: mock.fn(async () => [])
 			}
 		},
 		logger: {
@@ -726,6 +734,9 @@ describe('buildGetJourneyMiddleware', () => {
 			url,
 			params: {
 				reference
+			},
+			session: {
+				fileUploader: null
 			}
 		};
 		const res = createResponse();
@@ -967,6 +978,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
 			id: CASE_ID,
+			reference: 'some reference',
 			planTitle: 'Southshire Local Plan'
 		}));
 
@@ -974,6 +986,14 @@ describe('buildGetJourneyMiddleware', () => {
 			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
 		}));
+
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
+			{
+				id: '1',
+				folderName: 'gateway-2-workshop-document'
+			}
+		]);
+		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 

@@ -5,6 +5,11 @@ import type { Request, Response } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
+import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { loadUploadedDocuments, getDocumentSetIdsByFolderName } from './documents.ts';
+import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { fileUploadQuestionProperties } from './questions.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -60,6 +65,7 @@ interface Gateway2Input {
 	workshopVenue?: string;
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
+	workshopDocuments?: any;
 }
 
 interface ExaminationInput {
@@ -125,6 +131,34 @@ const caseHistoryLabels: Record<string, string> = {
 	adoptionDate: 'Adoption date',
 	approvedForCILDate: 'Approved for CIL date'
 };
+
+type FileUploadSession = Request['session'] &
+	FileUploaderSession & {
+		editingFromCheckAnswers?: boolean;
+		forms?: Record<string, unknown>;
+	};
+
+export type UploadDocumentRequest = Request & {
+	currentCase?: CaseModel;
+	session: FileUploadSession;
+};
+
+// The file upload routes are shared by all of the document questions.
+// Keep the question configs in a couple of route-friendly shapes so the URL in
+// `:question` decides which field, validation rules and document set are used.
+export type FileUploadQuestion = FileUploaderQuestionProps & {
+	fieldName: string;
+	url: string;
+};
+
+// Ordered list for loading each persisted upload when the case page opens.
+export const fileUploadQuestionConfigs = fileUploadQuestionProperties as FileUploadQuestion[];
+// URL list for the file uploader middleware to recognise upload pages.
+export const fileUploadQuestionUrls = fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
+// Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
+export const fileUploadQuestionsByUrl = new Map(
+	fileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
+);
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
@@ -335,6 +369,11 @@ async function updateGateway2(db: PrismaClient, answers: Gateway2Input, caseRefe
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
+	const fileUploadQuestions = new Set(['gateway-2-workshop-document']);
+	if (fileUploadQuestions.has(String(question))) {
+		// Documents are saved automatically by the file upload component
+		return true;
+	}
 	await db.gateway2Info.upsert({
 		where: { caseId },
 		update: { ...answers },
@@ -486,6 +525,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-2': {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				if (next) next();
 				return;
@@ -514,6 +554,46 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				logger.error(`Unknown page ${currentPage} for case ${reference}`);
 		}
 	};
+}
+
+/**
+ * Load the documents for the given case and prepopulate the answer fields with their names
+ * @param service The manage service
+ * @param currentCase The case from the database
+ * @param req The request object
+ * @param answers The answers that the details should be added to
+ */
+async function addUploadedDocumentDetailsToAnswers(
+	service: ManageService,
+	currentCase: any,
+	req: Request,
+	answers: any
+) {
+	const request = req as UploadDocumentRequest;
+	request.currentCase = currentCase;
+	const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
+		service,
+		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+	);
+	for (const questionConfig of fileUploadQuestionConfigs) {
+		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
+		if (!documentSetId) {
+			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
+		}
+
+		const uploadedFiles = await loadUploadedDocuments(service, currentCase.id, documentSetId);
+		req.session.fileUploader = {
+			...request.session.fileUploader,
+			[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]: {
+				uploadedFiles
+			}
+		};
+		if (uploadedFiles.length > 0) {
+			answers[questionConfig.fieldName] = uploadedFiles;
+		} else {
+			delete answers[questionConfig.fieldName];
+		}
+	}
 }
 
 /** Adds the case section navigation to locals for the case routes. */
@@ -638,6 +718,7 @@ function formatCaseHistoryValue(value: unknown) {
 
 	return `${value ?? ''}`;
 }
+
 export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
 		const reference = getParam(req.params.reference);
@@ -697,4 +778,52 @@ function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: stri
 	);
 
 	return option?.text ?? `${value ?? ''}`;
+}
+
+/**
+ * Return the url for the question
+ * @param req The request that holds the question
+ * @returns The first question if the question is an array, just the question itself if it is a string, or undefined if not found
+ */
+export function getRouteQuestionUrl(req: Request): string | undefined {
+	const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
+	return questionUrl || undefined;
+}
+
+/**
+ * Load the question details for the given question
+ * @param req The request that holds the question
+ * @returns The config for the question as defined in questions.ts
+ */
+export function getRouteFileUploadQuestion(req: Request): FileUploadQuestion {
+	const questionUrl = getRouteQuestionUrl(req);
+	const questionConfig = questionUrl ? fileUploadQuestionsByUrl.get(questionUrl) : undefined;
+	if (!questionConfig) {
+		throw new Error(`No Gateway 2 file upload question configured for "${questionUrl ?? ''}"`);
+	}
+
+	return questionConfig;
+}
+
+/**
+ * Retrieves the plan reference from the params and creates the file upload session key.
+ * Example format: LP-TEST-001:gateway2CoverLetter.
+ * @param req The request that holds the question
+ * @returns A URL segment of the form `planReference:fieldName`
+ */
+//
+// Example format: LP-TEST-001:gateway2CoverLetter.
+export function fileUploaderCaseSessionKey(req: Request) {
+	const questionConfig = getRouteFileUploadQuestion(req);
+	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
+}
+
+/**
+ * Return a URL segment for the given request and fieldName
+ * @param req The request object which holds the session details
+ * @param fieldName The field to generate the URL segment for
+ * @returns A string of the form `planReference:fieldName`
+ */
+export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
+	return `${req.params.planReference}:${fieldName}`;
 }

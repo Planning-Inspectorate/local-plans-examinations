@@ -1,25 +1,25 @@
 import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { describe, it, mock } from 'node:test';
-import type { PortalService } from '#service';
+import type { ManageService } from '#service';
 import {
 	DOCUMENT_SET_FOLDER_NAME,
 	DOCUMENT_SET_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { getDocumentSetIdsByFolderName, loadGateway2Documents, saveGateway2Documents } from './documents.ts';
+import { getDocumentSetIdsByFolderName, loadUploadedDocuments, saveDocuments } from './documents.ts';
 
-const GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
+const COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
 const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G2_COVER_LETTER;
 
-describe('loadGateway2Documents', () => {
+describe('loadUploadedDocuments', () => {
 	it('loads documents as uploaded files', async () => {
 		const service = createMockService({
 			existingDocuments: [
 				{
 					guid: 'document-1',
 					name: 'stored-file',
-					documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
+					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 					isDeleted: false,
 					latestDocumentVersion: {
 						version: 1,
@@ -36,20 +36,12 @@ describe('loadGateway2Documents', () => {
 			]
 		});
 
-		const files = await loadGateway2Documents(
-			service as unknown as PortalService,
+		const files = await loadUploadedDocuments(
+			service as unknown as ManageService,
 			'case-1',
-			TEST_DOCUMENT_SET_FOLDER_NAME
+			COVER_LETTER_DOCUMENT_SET_ID
 		);
 
-		assert.deepEqual(service.db.documentSet.findFirst.mock.calls[0].arguments[0], {
-			where: {
-				folderName: TEST_DOCUMENT_SET_FOLDER_NAME
-			},
-			select: {
-				id: true
-			}
-		});
 		assert.deepEqual(files, [
 			{
 				id: 'document-1',
@@ -62,7 +54,7 @@ describe('loadGateway2Documents', () => {
 				url: 'http://storage/cover-letter.pdf',
 				metadata: {
 					documentGuid: 'document-1',
-					documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
+					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 					version: 1
 				}
 			}
@@ -70,7 +62,7 @@ describe('loadGateway2Documents', () => {
 		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
 			where: {
 				caseId: 'case-1',
-				documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
+				documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 				isDeleted: false
 			},
 			include: {
@@ -87,21 +79,21 @@ describe('getDocumentSetIdsByFolderName', () => {
 	it('loads document set IDs for folder names in one query', async () => {
 		const service = createMockService({
 			documentSets: [
-				{ id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME },
-				{ id: 'g2-timetable', folderName: 'local-plan-timetable' }
+				{ id: COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME },
+				{ id: DOCUMENT_SET_ID.G2_LOCAL_PLAN_TIMETABLE, folderName: DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE }
 			]
 		});
 
-		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(service as unknown as PortalService, [
+		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(service as unknown as ManageService, [
 			TEST_DOCUMENT_SET_FOLDER_NAME,
-			'local-plan-timetable',
+			DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE,
 			TEST_DOCUMENT_SET_FOLDER_NAME
 		]);
 
 		assert.deepEqual(service.db.documentSet.findMany.mock.calls[0].arguments[0], {
 			where: {
 				folderName: {
-					in: [TEST_DOCUMENT_SET_FOLDER_NAME, 'local-plan-timetable']
+					in: [TEST_DOCUMENT_SET_FOLDER_NAME, DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE]
 				}
 			},
 			select: {
@@ -109,33 +101,36 @@ describe('getDocumentSetIdsByFolderName', () => {
 				folderName: true
 			}
 		});
-		assert.equal(documentSetIdsByFolderName.get(TEST_DOCUMENT_SET_FOLDER_NAME), GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID);
-		assert.equal(documentSetIdsByFolderName.get('local-plan-timetable'), 'g2-timetable');
+		assert.equal(documentSetIdsByFolderName.get(TEST_DOCUMENT_SET_FOLDER_NAME), COVER_LETTER_DOCUMENT_SET_ID);
+		assert.equal(
+			documentSetIdsByFolderName.get(DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE),
+			DOCUMENT_SET_ID.G2_LOCAL_PLAN_TIMETABLE
+		);
 	});
 
 	it('rejects when any requested document set is missing', async () => {
 		const service = createMockService({
-			documentSets: [{ id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }]
+			documentSets: [{ id: COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }]
 		});
 
 		await assert.rejects(
 			() =>
-				getDocumentSetIdsByFolderName(service as unknown as PortalService, [
+				getDocumentSetIdsByFolderName(service as unknown as ManageService, [
 					TEST_DOCUMENT_SET_FOLDER_NAME,
-					'local-plan-timetable'
+					DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE
 				]),
 			/Missing document set reference data for "local-plan-timetable"/
 		);
 	});
 });
 
-describe('saveGateway2Documents', () => {
+describe('saveDocuments', () => {
 	it('creates a document and version for a new uploaded file', async () => {
 		const tx = createTransactionClient();
 		const service = createMockService({ tx });
 		const uploadedFile = buildUploadedFile();
 
-		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 			uploadedFile
 		]);
 
@@ -147,7 +142,7 @@ describe('saveGateway2Documents', () => {
 		const documentCreateData = tx.document.create.mock.calls[0].arguments[0].data;
 		assert.equal(documentCreateData.name, uploadedFile.id);
 		assert.equal(documentCreateData.caseId, 'case-1');
-		assert.equal(documentCreateData.documentSetId, GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID);
+		assert.equal(documentCreateData.documentSetId, COVER_LETTER_DOCUMENT_SET_ID);
 
 		assert.deepEqual(tx.documentVersion.create.mock.calls[0].arguments[0].data, {
 			documentGuid: documentCreateData.guid,
@@ -179,7 +174,7 @@ describe('saveGateway2Documents', () => {
 			existingDocuments: [buildDocumentRow({ guid: 'document-1' })]
 		});
 
-		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, []);
+		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, []);
 
 		assert.deepEqual(tx.document.update.mock.calls[0].arguments[0], {
 			where: {
@@ -222,7 +217,7 @@ describe('saveGateway2Documents', () => {
 			]
 		});
 
-		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 			buildUploadedFile({ id: 'document-1' })
 		]);
 
@@ -262,7 +257,7 @@ describe('saveGateway2Documents', () => {
 			]
 		});
 
-		await saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 			buildUploadedFile({ id: 'document-1' })
 		]);
 
@@ -284,7 +279,7 @@ describe('saveGateway2Documents', () => {
 
 		await assert.rejects(
 			() =>
-				saveGateway2Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+				saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 					buildUploadedFile()
 				]),
 			/Missing document set reference data for "covering-letter"/
@@ -297,18 +292,18 @@ describe('saveGateway2Documents', () => {
 
 		await assert.rejects(
 			() =>
-				saveGateway2Documents(service as unknown as PortalService, {} as Request, TEST_DOCUMENT_SET_FOLDER_NAME, [
+				saveDocuments(service as unknown as ManageService, {} as Request, TEST_DOCUMENT_SET_FOLDER_NAME, [
 					buildUploadedFile()
 				]),
-			/Cannot save Gateway 2 documents without a loaded case/
+			/Cannot save documents without a loaded case/
 		);
 		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 0);
 	});
 });
 
 function createMockService({
-	documentSet = { id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID },
-	documentSets = [{ id: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }],
+	documentSet = { id: COVER_LETTER_DOCUMENT_SET_ID },
+	documentSets = [{ id: COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }],
 	existingDocuments = [],
 	tx = createTransactionClient()
 }: {
@@ -371,7 +366,7 @@ function buildDocumentRow(overrides: Record<string, unknown> = {}) {
 	return {
 		guid: 'document-1',
 		name: 'gateway-2/cover-letter.pdf',
-		documentSetId: GATEWAY_2_COVER_LETTER_DOCUMENT_SET_ID,
+		documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 		isDeleted: false,
 		latestDocumentVersion: {
 			version: 1,

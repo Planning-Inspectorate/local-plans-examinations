@@ -11,18 +11,30 @@ import {
 	caseOverviewQAInspector1Page,
 	deleteCasePage
 } from '../../../../page-objects/manage/case-overview/index.ts';
+import {
+	planTitle,
+	planBand,
+	planType,
+	caseOfficer,
+	contactDetails,
+	assessorGateway2,
+	qaInspector1,
+	examinationWebsite,
+	examiningInspector1,
+	localPlanningAuthority,
+	programmeOfficer
+} from '../../../../fixtures/manage/overview.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
-import { gateway3ProgrammeOfficerAnswer } from '../../../../fixtures/manage/gateway-3.ts';
 
-const planTitle = seededCase.planTitle;
+const seededPlanTitle = seededCase.planTitle;
 
 const openSeededCase = () => {
 	cy.task('seedDb');
 
 	manageHomePage.visit();
-	manageHomePage.openCaseByPlanTitle(planTitle);
-	caseOverviewPage.verifyLoaded(planTitle);
+	manageHomePage.openCaseByPlanTitle(seededPlanTitle);
+	caseOverviewPage.verifyLoaded(seededPlanTitle);
 };
 
 describe('Case overview updates', () => {
@@ -34,149 +46,134 @@ describe('Case overview updates', () => {
 	after(() => cy.task('clearDb'));
 
 	it('updates the plan title from the overview change link', { tags: ['regression'] }, () => {
-		const updatedPlanTitle = `Updated ${planTitle}`;
+		caseOverviewPage.openActionLinkFor(planTitle.row);
+		caseOverviewPlanTitlePage.verifyLoaded(planTitle.value);
+		caseOverviewPlanTitlePage.enterPlanTitle(planTitle.updatedValue);
 
-		caseOverviewPage.openActionLinkFor('Plan title');
-		caseOverviewPlanTitlePage.verifyLoaded(planTitle);
-		caseOverviewPlanTitlePage.enterPlanTitle(updatedPlanTitle);
-
-		caseOverviewPage.verifyLoaded(updatedPlanTitle);
-		caseOverviewPage.verifySummaryRowContains('Plan title', updatedPlanTitle);
+		caseOverviewPage.verifyLoaded(planTitle.updatedValue);
+		caseOverviewPage.verifySummaryRowContains(planTitle.row, planTitle.updatedValue);
 	});
 
 	it('updates the plan type from the overview change link', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor('Plan type');
+		caseOverviewPage.openActionLinkFor(planType.row);
 		caseOverviewPlanTypePage.verifyLoaded();
-		caseOverviewPlanTypePage.selectPlanType('other');
+		caseOverviewPlanTypePage.selectPlanType(planType.updatedValue);
 
-		caseOverviewPage.verifyLoaded(planTitle);
-		caseOverviewPage.verifySummaryRowContains('Plan type', 'Other');
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.verifySummaryRowContains(planType.row, planType.updatedDisplay);
 	});
 
 	it('updates contact details from the overview change link', { tags: ['regression'] }, () => {
-		const updatedContact = {
-			firstName: 'Updated',
-			lastName: 'Contact',
-			email: 'updated.contact@example.com',
-			phone: '02079460001'
-		};
-
-		caseOverviewPage.openActionLinkFor('Contact details');
+		caseOverviewPage.openActionLinkFor(contactDetails.row);
 		caseOverviewContactDetailsListPage.verifyLoaded();
-		caseOverviewContactDetailsListPage.changeContact(updatedContact);
+		caseOverviewContactDetailsListPage.changeContact(contactDetails.updatedContactDetails);
 
-		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
 		caseOverviewPage.verifySummaryRowContains(
-			'Contact details',
-			updatedContact.firstName,
-			updatedContact.lastName,
-			updatedContact.email,
-			updatedContact.phone
+			contactDetails.row,
+			contactDetails.updatedContactDetails.email,
+			contactDetails.updatedContactDetails.firstName,
+			contactDetails.updatedContactDetails.lastName,
+			contactDetails.updatedContactDetails.phone
 		);
 	});
 
 	it('updates the Programme Officer details overview row', { tags: ['regression'] }, () => {
-		const programmeOfficerFirstName = 'Programme';
-		const programmeOfficerLastName = 'Officer 1';
-		const programmeOfficerEmail = 'programme.officer1@example.com';
-
 		caseOverviewPage.verifySummaryRowContains(
-			'Programme Officer details',
-			gateway3ProgrammeOfficerAnswer.firstName,
-			gateway3ProgrammeOfficerAnswer.lastName,
-			gateway3ProgrammeOfficerAnswer.email
+			programmeOfficer.row,
+			programmeOfficer.values.firstName,
+			programmeOfficer.values.lastName,
+			programmeOfficer.values.email
 		);
 
 		caseOverviewPage.openActionLinkFor('Programme Officer details');
 		caseOverviewProgrammeOfficerPage.verifyLoaded(
-			gateway3ProgrammeOfficerAnswer.firstName,
-			gateway3ProgrammeOfficerAnswer.lastName,
-			gateway3ProgrammeOfficerAnswer.email
+			programmeOfficer.values.firstName,
+			programmeOfficer.values.lastName,
+			programmeOfficer.values.email
 		);
 
 		caseOverviewProgrammeOfficerPage.enterProgrammeOfficerDetails(
-			programmeOfficerFirstName,
-			programmeOfficerLastName,
-			programmeOfficerEmail
+			programmeOfficer.updatedValues.firstName,
+			programmeOfficer.updatedValues.lastName,
+			programmeOfficer.updatedValues.email
 		);
 
-		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
 		caseOverviewPage.verifySummaryRowContains(
-			'Programme Officer details',
-			programmeOfficerFirstName,
-			programmeOfficerLastName,
-			programmeOfficerEmail
+			programmeOfficer.row,
+			programmeOfficer.updatedValues.firstName,
+			programmeOfficer.updatedValues.lastName,
+			programmeOfficer.updatedValues.email
 		);
 	});
 
 	it('returns to overview from the back links', { tags: ['regression', 'smoke'] }, () => {
-		caseOverviewPage.openActionLinkFor('Plan band');
+		caseOverviewPage.openActionLinkFor(planBand.row);
 		caseOverviewPlanBandPage.verifyLoaded();
 		caseOverviewPlanBandPage.goBack();
-		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
 
-		caseOverviewPage.openActionLinkFor('Assessor Gateway 2');
+		caseOverviewPage.openActionLinkFor(assessorGateway2.row);
 		caseOverviewGateway2AssessorPage.verifyLoaded();
 		caseOverviewGateway2AssessorPage.goBack();
-		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
 
-		caseOverviewPage.openActionLinkFor('Examining Inspector 1');
+		caseOverviewPage.openActionLinkFor(examiningInspector1.row);
 		caseOverviewExaminingInspector1Page.verifyLoaded();
 		caseOverviewExaminingInspector1Page.goBack();
-		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
 
-		caseOverviewPage.openActionLinkFor('QA Inspector 1');
+		caseOverviewPage.openActionLinkFor(qaInspector1.row);
 		caseOverviewQAInspector1Page.verifyLoaded();
 		caseOverviewQAInspector1Page.goBack();
 
-		caseOverviewPage.verifyLoaded(planTitle);
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
 	});
 
 	it(
 		'answers an empty overview question (Examination website) and checks the hyperlink created',
 		{ tags: ['regression'] },
 		() => {
-			const examinationWebsiteLink = 'https://www.gov.uk/';
-
-			caseOverviewPage.openActionLinkFor('Examination website');
+			caseOverviewPage.openActionLinkFor(examinationWebsite.row);
 
 			caseOverviewExaminationWebsitePage.verifyLoaded();
-			caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebsiteLink);
+			caseOverviewExaminationWebsitePage.enterExaminationWebsiteLink(examinationWebsite.value);
 
-			caseOverviewPage.verifyLoaded(planTitle);
-			caseOverviewPage.verifySummaryRowContains('Examination website', examinationWebsiteLink);
-			caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebsiteLink);
+			caseOverviewPage.verifyLoaded(seededPlanTitle);
+			caseOverviewPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.value);
+			caseOverviewPage.verifyExaminationWebsiteHyperlink(examinationWebsite.value);
 		}
 	);
 
 	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor('Assessor Gateway 2');
+		caseOverviewPage.openActionLinkFor(assessorGateway2.row);
 
 		caseOverviewGateway2AssessorPage.verifyLoaded();
-		caseOverviewGateway2AssessorPage.enterLookupAnswer('Assessor 1');
+		caseOverviewGateway2AssessorPage.enterLookupAnswer(assessorGateway2.value);
 
-		caseOverviewPage.verifyLoaded(planTitle);
-		caseOverviewPage.verifySummaryRowContains('Assessor Gateway 2', 'Assessor 1');
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.verifySummaryRowContains(assessorGateway2.row, assessorGateway2.value);
 	});
 
 	it('updates the Examining inspector 1 name answer', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor('Examining Inspector 1');
+		caseOverviewPage.openActionLinkFor(examiningInspector1.row);
 
 		caseOverviewExaminingInspector1Page.verifyLoaded();
-		caseOverviewExaminingInspector1Page.enterLookupAnswer('Inspector 1');
+		caseOverviewExaminingInspector1Page.enterLookupAnswer(examiningInspector1.value);
 
-		caseOverviewPage.verifyLoaded(planTitle);
-		caseOverviewPage.verifySummaryRowContains('Examining Inspector 1', 'Inspector 1');
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.value);
 	});
 
 	it('updates the QA inspector 1 name answer', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor('QA Inspector 1');
+		caseOverviewPage.openActionLinkFor(qaInspector1.row);
 
 		caseOverviewQAInspector1Page.verifyLoaded();
-		caseOverviewQAInspector1Page.enterLookupAnswer('Inspector 1');
+		caseOverviewQAInspector1Page.enterLookupAnswer(qaInspector1.value);
 
-		caseOverviewPage.verifyLoaded(planTitle);
-		caseOverviewPage.verifySummaryRowContains('QA Inspector 1', 'Inspector 1');
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.verifySummaryRowContains(qaInspector1.row, qaInspector1.value);
 	});
 
 	it('deletes a case from the case overview', { tags: ['regression'] }, () => {
@@ -184,10 +181,10 @@ describe('Case overview updates', () => {
 
 		deleteCasePage.verifyLoaded();
 		deleteCasePage.verifyCaseDetails(
-			planTitle,
-			'Local Plan',
-			'Local Planning Authority 1, Local Planning Authority 2',
-			'Case Officer 1'
+			seededPlanTitle,
+			planType.display,
+			`${localPlanningAuthority.lpa1Value}, ${localPlanningAuthority.lpa2Value}`,
+			caseOfficer.display
 		);
 		deleteCasePage.deleteCase();
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');

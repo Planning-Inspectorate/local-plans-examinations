@@ -165,6 +165,24 @@ Use the folders by intent:
 - `fixtures`: reusable test data
 - `support`: Cypress commands and global setup
 
+### File uploads (Azurite)
+
+Portal document upload screens store files in Azure Blob Storage. Locally this is emulated with [Azurite]
+
+Install it globally:
+
+```bash
+npm install -g azurite
+```
+
+Then run it in a separate terminal before testing uploads:
+
+```bash
+azurite --skipApiVersionCheck
+```
+
+Azurite creates local files (`AzuriteConfig`, `__azurite_db_*__.json`, `__blobstorage__/`) into whichever directory you run it from — these are gitignored.
+
 ## Pipeline
 
 The E2E pipeline is `.azure/pipelines/e2e.yml`.

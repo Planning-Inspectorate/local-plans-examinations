@@ -24,6 +24,11 @@ export interface Config extends BaseConfig {
 			inspectors: string;
 		};
 	};
+	blobStorage: {
+		containerName: string;
+		connectionString?: string;
+		accountUrl?: string;
+	};
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;
@@ -83,10 +88,15 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_DISABLED,
 		GOV_NOTIFY_API_KEY,
 		GOV_NOTIFY_WEBHOOK_TOKEN,
-		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED
+		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED,
+		BLOB_STORE_CONTAINER,
+		BLOB_STORE_CONNECTION_STRING,
+		BLOB_STORE_ACCOUNT_URL
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
+	const blobStoreAccountUrl = BLOB_STORE_ACCOUNT_URL || undefined;
+	const shouldUseDevelopmentStorage = !blobStoreAccountUrl && NODE_ENV !== 'production';
 
 	if (!SESSION_SECRET) {
 		throw new Error('SESSION_SECRET is required');
@@ -174,6 +184,12 @@ export function loadConfig(): Config {
 		},
 		// the static directory to serve assets from (images, css, etc..)
 		staticDir: buildConfig.staticDir,
+		blobStorage: {
+			containerName: BLOB_STORE_CONTAINER || 'uploads',
+			connectionString:
+				BLOB_STORE_CONNECTION_STRING || (shouldUseDevelopmentStorage ? 'UseDevelopmentStorage=true' : undefined),
+			accountUrl: blobStoreAccountUrl
+		},
 		govNotify: {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',

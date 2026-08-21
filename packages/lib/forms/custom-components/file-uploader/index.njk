@@ -6,7 +6,7 @@
 
 {% block before_content %}
 	{% if backLink %}
-		<a href="{{ backLink }}" class="govuk-back-link">Back</a>
+		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
 	{% endif %}
 	{% if errorSummary %}
 		{{ govukErrorSummary({
@@ -37,14 +37,14 @@
 			{% endif %}
 
 			{% if question.text.fileRequirementsText %}
-				<p class="govuk-body">{{ question.text.fileRequirementsText }}</p>
+				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText }}</p>
 			{% endif %}
 
 			{% if question.text.totalUploadSizeText %}
 				<p class="govuk-body">{{ question.text.totalUploadSizeText }}</p>
 			{% endif %}
 
-			<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents">
+			<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents" data-cy="upload-form">
 				<input type="hidden" name="_csrf" value="{{ _csrf }}">
 				{{ govukFileUpload({
 					id: question.fieldName,
@@ -64,7 +64,7 @@
 						text: errors["upload-form"].msg
 					}
 				}) }}
-				{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files" }) }}
+				{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files", attributes: { "data-cy": "upload-files-button" } }) }}
 			</form>
 
 			{% if uploadedFiles and uploadedFiles.length %}
@@ -75,7 +75,7 @@
 							<dd class="govuk-summary-list__actions">
 								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
 									<input type="hidden" name="_csrf" value="{{ _csrf }}">
-									<button class="app-link-button govuk-!-font-size-19" type="submit">
+									<button class="app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
 										{{ question.text.removeLinkText or "Remove" }}
 										<span class="govuk-visually-hidden">{{ file.fileName }}</span>
 									</button>
@@ -91,13 +91,14 @@
 				<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
 				{{ govukButton({
 					text: question.text.continueButtonText or continueButtonText or "Continue",
-					type: "submit"
+					type: "submit",
+					attributes: { "data-cy": "save-and-return-button" }
 				}) }}
 			</form>
 
 			{% if question.text.returnLink %}
 				<p class="govuk-body">
-					<a class="govuk-link" href="{{ question.text.returnLink.href }}">{{ question.text.returnLink.text }}</a>
+					<a class="govuk-link" href="{{ question.text.returnLink.href }}" data-cy="return-link">{{ question.text.returnLink.text }}</a>
 				</p>
 			{% endif %}
 		</div>

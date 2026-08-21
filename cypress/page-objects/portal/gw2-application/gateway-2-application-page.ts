@@ -1,6 +1,6 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
-const gateway2SubmissionRows = ['Gateway 2 cover letter', 'Local plan timetable', 'Project initiation document'];
+const gateway2SubmissionRows = ['Gateway 2 covering letter', 'Local plan timetable', 'Project initiation document'];
 const gateway2SubmissionHeading = 'Gateway 2 submission';
 const notAddedStatus = 'Not added';
 const submitButtonText = 'Submit for Gateway 2 assessment';
@@ -95,6 +95,15 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 				row.should('be.visible');
 				row.should('contain.text', status);
 				cy.getByData(addCy).should('be.visible');
+			});
+		});
+	}
+
+	verifyDocumentRowContains(table: Cypress.Chainable, document: string, ...fileNames: string[]) {
+		table.within(() => {
+			const row = cy.contains('tr', document);
+			fileNames.forEach((fileName) => {
+				row.should('contain.text', fileName);
 			});
 		});
 	}
