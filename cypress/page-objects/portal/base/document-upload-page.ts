@@ -1,15 +1,32 @@
 import { PortalPlanBasePage } from '../../../page-objects/portal/base/portal-plan-page.ts';
-
 export class DocumentUploadPage extends PortalPlanBasePage {
 	private readonly fieldName: string;
 	private readonly heading: string;
 	private readonly caption: string;
+	private readonly section: string;
+	private readonly docPath: string;
+	readonly addCy: string;
 
-	constructor(path: string | RegExp, fieldName: string, heading: string, caption: string) {
+	constructor(
+		path: string | RegExp,
+		fieldName: string,
+		heading: string,
+		caption: string,
+		addCy: string,
+		section: string,
+		docPath: string
+	) {
 		super(path);
 		this.fieldName = fieldName;
 		this.heading = heading;
 		this.caption = caption;
+		this.addCy = addCy;
+		this.section = section;
+		this.docPath = docPath;
+	}
+
+	pathFor(planReference: string) {
+		return `/manage-local-plans/${planReference}/gateway-2-submission/${this.section}/${this.docPath}`;
 	}
 
 	get fileInput() {
@@ -72,8 +89,12 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.mainContent.should('not.contain.text', fileName);
 	}
 
-	uploadFile(fileName: string) {
-		this.fileInput.selectFile(`cypress/fixtures/portal/files/${fileName}`, { force: true });
+	uploadFile(fileNames: string | string[]) {
+		const files = Array.isArray(fileNames) ? fileNames : [fileNames];
+		this.fileInput.selectFile(
+			files.map((fileName) => `cypress/fixtures/portal/files/${fileName}`),
+			{ force: true }
+		);
 	}
 
 	verifyFileFormatHintText() {
@@ -95,8 +116,10 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.saveAndReturnButton.should('be.visible').click();
 	}
 
-	verifyFileUploaded(fileName: string) {
-		this.uploadedFileNames.should('contain.text', fileName);
+	verifyFileUploaded(...fileNames: string[]) {
+		fileNames.forEach((fileName) => {
+			this.uploadedFileNames.should('contain.text', fileName);
+		});
 	}
 
 	verifyCaption(text: string) {
