@@ -49,7 +49,7 @@ import {
 	fileUploaderQuestionMiddleware,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { saveDocuments } from './documents.ts';
+import { saveDocuments } from '@pins/local-plans-lib/util/documents.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 

@@ -7,7 +7,11 @@ import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { loadUploadedDocuments, getDocumentSetIdsByFolderName, getLatestDocumentBlobDetails } from './documents.ts';
+import {
+	loadUploadedDocuments,
+	getDocumentSetIdsByFolderName,
+	downloadDocumentToResponse
+} from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
@@ -941,10 +945,7 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 		if (!documentId) {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
-		const blobDetails = await getLatestDocumentBlobDetails(service, documentId);
-		const blobPath = blobDetails.blobPath;
-		const blobStorageUtil = service.createFileStorage(blobPath);
-		await blobStorageUtil.downloadToExpressResponse(blobPath, res);
+		await downloadDocumentToResponse(service, documentId, res);
 	};
 }
 

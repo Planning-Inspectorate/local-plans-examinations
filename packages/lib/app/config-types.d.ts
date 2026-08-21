@@ -18,4 +18,9 @@ export interface BaseConfig {
 		secret: string;
 	};
 	staticDir: string;
+	blobStorage: {
+		containerName: string;
+		connectionString?: string;
+		accountUrl?: string;
+	};
 }
