@@ -496,6 +496,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			res.locals.alertMessage = req.session.alertMessage;
 			delete req.session.alertMessage;
 		}
+		if (req.session.alertMessageStatus) {
+			res.locals.alertMessageStatus = req.session.alertMessageStatus;
+			delete req.session.alertMessageStatus;
+		}
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
 		switch (currentPage) {
@@ -588,6 +592,7 @@ export function buildCheckWorkshopDocumentMiddleware(service: ManageService, jou
 	return async (req, res) => {
 		const uploadedFiles =
 			req.session.fileUploader[fileUploaderCaseSessionKeyForField(req, 'workshopDocuments')].uploadedFiles;
+		// Todo need to add error handling for 0 files - no flow defined right now
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
 		const workshopDocumentUploadedDateEntry = await service.db.case.findFirst({
