@@ -110,9 +110,27 @@ export default class CustomMultiFieldInputQuestion extends Question {
 			if (inputField.type === 'date') {
 				const dateValue = answers[inputField.fieldName];
 				const items = [
-					{ name: 'day', value: '', classes: 'govuk-input--width-2' },
-					{ name: 'month', value: '', classes: 'govuk-input--width-2' },
-					{ name: 'year', value: '', classes: 'govuk-input--width-4' }
+					{
+						name: `${inputField.fieldName}_day`,
+						id: `${inputField.fieldName}_day`,
+						label: 'Day',
+						value: '',
+						classes: 'govuk-input--width-2'
+					},
+					{
+						name: `${inputField.fieldName}_month`,
+						id: `${inputField.fieldName}_month`,
+						label: 'Month',
+						value: '',
+						classes: 'govuk-input--width-2'
+					},
+					{
+						name: `${inputField.fieldName}_year`,
+						id: `${inputField.fieldName}_year`,
+						label: 'Year',
+						value: '',
+						classes: 'govuk-input--width-4'
+					}
 				];
 
 				if (dateValue) {
@@ -160,9 +178,9 @@ export default class CustomMultiFieldInputQuestion extends Question {
 			let value = req.body[inputField.fieldName];
 
 			if (inputField.type === 'date') {
-				const day = req.body[`${inputField.fieldName}-day`];
-				const month = req.body[`${inputField.fieldName}-month`];
-				const year = req.body[`${inputField.fieldName}-year`];
+				const day = req.body[`${inputField.fieldName}_day`];
+				const month = req.body[`${inputField.fieldName}_month`];
+				const year = req.body[`${inputField.fieldName}_year`];
 
 				if (day && month && year) {
 					value = `${day}/${month}/${year}`;
