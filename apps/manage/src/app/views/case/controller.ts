@@ -579,15 +579,21 @@ async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
 	req: Request,
-	answers: any
+	answers: any,
+	question?: any
 ) {
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
+
+	const questionConfigs = question
+		? fileUploadQuestionConfigs.filter((questionConfig) => questionConfig.url === question)
+		: fileUploadQuestionConfigs;
+
 	const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
 		service,
-		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+		questionConfigs.map((questionConfig) => questionConfig.url)
 	);
-	for (const questionConfig of fileUploadQuestionConfigs) {
+	for (const questionConfig of questionConfigs) {
 		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
 		if (!documentSetId) {
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
