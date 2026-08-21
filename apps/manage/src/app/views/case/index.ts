@@ -126,11 +126,6 @@ export function caseRouter(service: ManageService): IRouter {
 	return router;
 }
 
-function setAsEditingFromCya(req: any, _: any, next: any) {
-	req.session.editingFromCheckAnswers = true;
-	next();
-}
-
 function registerCaseJourney(
 	router: IRouter,
 	service: ManageService,
@@ -180,9 +175,6 @@ function registerCaseJourney(
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
 		buildCheckWorkshopDocumentMiddleware(service, journeyId),
-		//getJourney,
-		//fileUploadMiddleware,
-		setAsEditingFromCya,
 		question
 	);
 	router.post(`/${path}/:section/:question/check`, issueWorkshopDocuments(service, journeyId));
