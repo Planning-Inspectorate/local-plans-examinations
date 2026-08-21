@@ -191,7 +191,12 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				);
 				break;
 			case 'gateway-1':
-				updated = await updateGateway1(db, trimStringValues(data.answers as Gateway1Input), reference);
+				updated = await updateGateway1(
+					db,
+					trimStringValues(data.answers as Gateway1Input),
+					reference,
+					req.params.question as string
+				);
 				break;
 			case 'gateway-2':
 				updated = await updateGateway2(
@@ -353,9 +358,14 @@ async function resolveCaseIdFromReference(db: PrismaClient, reference: string): 
 	return caseRecord.id;
 }
 
-async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseReference: string) {
+async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseReference: string, question?: string) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
+	const fileUploadQuestions = new Set(['signed-sla']);
+	if (fileUploadQuestions.has(String(question))) {
+		// Documents are saved automatically by the file upload component
+		return true;
+	}
 	await db.gateway1Info.upsert({
 		where: { caseId },
 		update: { ...answers },
@@ -519,6 +529,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-1': {
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 				if (next) next();
 				return;

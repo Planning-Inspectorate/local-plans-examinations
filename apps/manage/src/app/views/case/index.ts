@@ -76,7 +76,8 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-1',
 		journeyId: GATEWAY_1_JOURNEY_ID,
 		createJourney: createGateway1Journey,
-		supportsFileUpload: false
+		supportsManageList: true,
+		supportsFileUpload: true
 	},
 	{
 		path: 'gateway-2',
@@ -350,6 +351,9 @@ function redirectToFileUploaderQuestion(req: Request) {
 	// Any questions that need to route to new subjourneys can be defined here
 	if (req.params.question == 'gateway-2-workshop-document') {
 		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+	}
+	if (req.params.question == 'signed-sla') {
+		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
