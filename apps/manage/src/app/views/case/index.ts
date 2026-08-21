@@ -12,10 +12,10 @@ import {
 	type FileUploadQuestion,
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
-	buildCheckWorkshopDocumentMiddleware,
+	buildCheckGateway2ReportMiddleware,
 	downloadDocument,
 	getParam,
-	issueWorkshopDocuments
+	issueGateway2Report
 } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -174,10 +174,10 @@ function registerCaseJourney(
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
-		buildCheckWorkshopDocumentMiddleware(service, journeyId),
+		buildCheckGateway2ReportMiddleware(service, journeyId),
 		question
 	);
-	router.post(`/${path}/:section/:question/check`, issueWorkshopDocuments(service, journeyId));
+	router.post(`/${path}/:section/:question/check`, issueGateway2Report(service, journeyId));
 
 	// Save answer
 	router.post(
@@ -368,7 +368,7 @@ function logUploadCleanupFailed(
 function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	// Any questions that need to route to new subjourneys can be defined here
-	if (req.params.question == 'gateway-2-workshop-document') {
+	if (req.params.question == 'gateway-2-report') {
 		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];

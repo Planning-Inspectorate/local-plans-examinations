@@ -91,11 +91,11 @@ export const DOCUMENT_SET = [
 		displayOrder: 15
 	},
 	{
-		id: DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENT,
+		id: DOCUMENT_SET_ID.G2_REPORT,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Gateway 2 Workshop Document',
-		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP_DOCUMENT,
+		displayName: 'Gateway 2 Issue Report',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_REPORT,
 		displayOrder: 16
 	}
 ];
