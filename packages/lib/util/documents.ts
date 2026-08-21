@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { Request } from 'express';
-import type { ManageService } from '#service';
+import type { Request, Response } from 'express';
+import type { BaseService } from '@pins/local-plans-lib/app/base-service.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 type RequestWithCurrentCase = Request & {
@@ -42,7 +42,7 @@ type DocumentSetRow = {
 
 // Saves the current upload state.
 export async function saveDocuments(
-	service: ManageService,
+	service: BaseService,
 	req: Request,
 	documentSetFolderName: string,
 	uploadedFiles: UploadedFile[]
@@ -63,7 +63,7 @@ export async function saveDocuments(
 
 // Reads active documents from the database.
 export async function loadUploadedDocuments(
-	service: ManageService,
+	service: BaseService,
 	caseId: string,
 	documentSetId: string
 ): Promise<UploadedFile[]> {
@@ -84,7 +84,7 @@ export async function loadUploadedDocuments(
 	return documents.map(mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 }
 
-export async function getLatestDocumentBlobDetails(service: ManageService, documentId: string) {
+export async function getLatestDocumentBlobDetails(service: BaseService, documentId: string) {
 	const latestDocument = await service.db.document.findFirst({
 		select: {
 			latestDocumentVersion: {
@@ -118,7 +118,7 @@ export async function getLatestDocumentBlobDetails(service: ManageService, docum
 
 // Makes the database match the uploaded file list.
 async function syncDocuments(
-	service: ManageService,
+	service: BaseService,
 	{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
 ): Promise<void> {
 	const existingDocuments = (await service.db.document.findMany({
@@ -197,7 +197,7 @@ function getDocumentUploadedFileId(document: DocumentRow): string | undefined {
 
 // Finds document set reference data for all configured question URLs/folder names.
 export async function getDocumentSetIdsByFolderName(
-	service: ManageService,
+	service: BaseService,
 	documentSetFolderNames: string[]
 ): Promise<Map<string, string>> {
 	const uniqueFolderNames = [...new Set(documentSetFolderNames)];
@@ -227,7 +227,7 @@ export async function getDocumentSetIdsByFolderName(
 }
 
 // Finds the document set reference data from the question URL/folder name.
-async function getDocumentSetIdByFolderName(service: ManageService, documentSetFolderName: string): Promise<string> {
+async function getDocumentSetIdByFolderName(service: BaseService, documentSetFolderName: string): Promise<string> {
 	const documentSet = await service.db.documentSet.findFirst({
 		where: {
 			folderName: documentSetFolderName
@@ -338,7 +338,17 @@ async function restoreDocument(tx: TransactionClient, document: DocumentRow) {
 	});
 }
 
+export async function downloadDocumentToResponse(service: BaseService, documentId: string, res: Response) {
+	if (!documentId) {
+		throw Error(`Missing a documentId`);
+	}
+	const blobDetails = await getLatestDocumentBlobDetails(service, documentId);
+	const blobPath = blobDetails.blobPath;
+	const blobStorageUtil = service.createFileStorage(blobPath);
+	await blobStorageUtil.downloadToExpressResponse(blobPath, res);
+}
+
 type TransactionClient = Omit<
-	ManageService['db'],
+	BaseService['db'],
 	'$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
 >;

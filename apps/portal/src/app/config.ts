@@ -4,11 +4,6 @@ import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
 
 export type Config = BaseConfig & {
-	blobStorage: {
-		containerName: string;
-		connectionString?: string;
-		accountUrl?: string;
-	};
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;
