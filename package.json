@@ -58,16 +58,16 @@
     "date-fns-tz": "^3.2.0",
     "eslint-plugin-check-file": "^3.3.1",
     "express": "^5.1.0",
-    "express-rate-limit": "^8.5.2",
+    "express-rate-limit": "^8.6.2",
     "express-session": "^1.19.0",
     "express-validator": "^7.3.2",
     "govuk-frontend": "^6.4.0",
-    "helmet": "^8.2.0",
+    "helmet": "^8.3.0",
     "multer": "^2.2.0",
     "nunjucks": "^3.2.4",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.2",
-    "redis": "^6.2.0"
+    "redis": "^6.2.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
@@ -80,7 +80,7 @@
     "@types/express": "^5.0.5",
     "@types/express-session": "^1.19.0",
     "@types/multer": "^2.2.0",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/nunjucks": "^3.2.6",
     "axe-core": "^4.13.0",
     "cookie-parser": "^1.4.7",
