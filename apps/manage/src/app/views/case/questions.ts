@@ -583,12 +583,12 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	},
-	workshopDocuments: {
+	gateway2Report: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-		title: 'Workshop documents',
-		question: 'Upload documents',
-		fieldName: 'workshopDocuments',
-		url: 'gateway-2-workshop-document',
+		title: 'Issue Gateway 2 report',
+		question: 'Issue Gateway 2 report',
+		fieldName: 'gateway2Report',
+		url: 'gateway-2-report',
 		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
 			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS.includes(key))
@@ -601,37 +601,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
 		text: {
-			caption: 'Workshop documents',
+			caption: 'Issue report',
 			introduction: 'Upload a file',
 			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES)}`,
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
-		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
-	},
-	checkWorkshopDocuments: {
-		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
-		title: 'Workshop documents',
-		titleSingular: 'Workshop Document',
-		showManageListQuestions: true,
-		fieldName: 'workshopDocuments',
-		url: 'check-workshop-documents',
-		showAnswersInSummary: false,
-		question: 'Check workshop documents',
-		validators: [
-			new ManageListValidator({
-				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one workshop document' }
-			})
-		]
-	},
-	workshopDocumentUploadedDate: {
-		// This is a hidden field that is tied to workshopDocument
-		type: COMPONENT_TYPES.DATE,
-		question: 'When was the workshop document uploaded',
-		fieldName: 'workshopDocumentUploadedDate',
-		title: 'Workshop document upload date',
-		showManageListQuestions: true
+		validators: [new FileUploadRequiredValidator('gateway2Report', 'Upload gateway 2 workshop file')]
 	},
 	//gateway 3
 	gateway3ExpectedDate: {
