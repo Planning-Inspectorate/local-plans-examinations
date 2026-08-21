@@ -64,26 +64,27 @@ describe('buildAssignedToMe', () => {
 		assert.equal(ctx.service.db.case.findMany.mock.callCount(), 1);
 		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
 			where: {
+				deletedDate: null,
 				OR: [
 					{ caseOfficer: 'officer-1' },
-					{ assessorGateway3: 'Officer1' },
-					{ qaInspector1: 'Officer1' },
-					{ qaInspector2: 'Officer1' },
-					{ qaInspector3: 'Officer1' },
-					{ gateway2Info: { assessorName: 'Officer1' } },
+					{ assessorGateway3: 'officer-1' },
+					//{ qaInspector1: 'officer-1' },
+					//{ qaInspector2: 'officer-1' },
+					//{ qaInspector3: 'officer-1' },
+					{ gateway2Info: { assessorName: 'officer-1' } },
 					//{gateway3Info:
-					//	{assessorName: 'Officer1'}
+					//	{assessorName: 'officer-1'}
 					//},
 					{
 						examinationInfo: {
 							OR: [
-								//{assessorName: 'Officer1'},
-								{ examiningInspector1: 'Officer1' },
-								{ examiningInspector2: 'Officer1' },
-								{ examiningInspector3: 'Officer1' },
-								{ qaInspector1: 'Officer1' },
-								{ qaInspector2: 'Officer1' },
-								{ qaInspector3: 'Officer1' }
+								//{assessorName: 'officer-1'},
+								{ examiningInspector1: 'officer-1' },
+								{ examiningInspector2: 'officer-1' },
+								{ examiningInspector3: 'officer-1' }
+								//{ qaInspector1: 'officer-1-1' },
+								//{ qaInspector2: 'officer-1' },
+								//{ qaInspector3: 'officer-1' }
 							]
 						}
 					}
