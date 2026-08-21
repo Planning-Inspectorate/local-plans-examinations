@@ -371,13 +371,11 @@ export async function updateGateway2(
 	question?: string
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
-	console.log('updateGateway2 called');
 
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
 	if (question == 'gateway-2-workshop-document') {
-		console.log('Setting workshopDocumentUploadedDate');
 		answers.workshopDocumentUploadedDate = new Date();
 	}
 	await db.gateway2Info.upsert({
@@ -904,10 +902,35 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 
 export function issueWorkshopDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
-		// TODO add logic to actually sent the documents somwhere, to be implemented at a later date
-		// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-		req.session.alertMessage = 'Gateway 2 report issued';
-		res.redirect(`/case/${encodeURIComponent(getParam(req.params.reference))}/${journeyId}`);
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway2Info.findUnique({
+			select: {
+				reportIssuedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.reportIssuedDate) {
+			// Try to update the reportIssuedDate
+			await updateGateway2(
+				service.db,
+				{
+					reportIssuedDate: new Date()
+				},
+				caseReference,
+				'gateway-2-report-issued-date'
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 2 report issued';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 2 report already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
 		return;
 	};
 }
