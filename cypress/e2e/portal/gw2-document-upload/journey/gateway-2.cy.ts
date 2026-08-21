@@ -11,6 +11,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Gateway 2 document upload journeys', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin();
 	});
 
