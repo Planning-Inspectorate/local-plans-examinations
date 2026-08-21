@@ -46,17 +46,6 @@ const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
 	'image/tiff',
 	'application/octet-stream'
 ];
-const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT = 25 * 1024 * 1024;
-const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL = '25MB';
-const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
-	caption: 'Procedural documents',
-	introduction: 'Upload a file',
-	fileRequirementsText:
-		'The file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and be smaller than 25MB',
-	chooseFilesButtonText: 'Choose files',
-	dropInstructionText: 'or drop files',
-	continueButtonText: 'Save and return'
-};
 const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
 
 export const CHECK_ANSWERS_REDIRECT_QUERY = 'checkAnswersRedirect';
@@ -121,18 +110,25 @@ export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 	title: 'Project initiation document',
-	question: 'Upload your project initiation document',
+	question: 'Upload project initiation document',
 	fieldName: 'projectInitiationDocument',
 	url: 'project-initiation-document',
 	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
 	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
-	maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
-	maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
-	maxFilesPerUpload: UNLIMITED_FILES,
-	maxTotalUploadSizeBytes: Number.MAX_SAFE_INTEGER,
-	maxTotalUploadSizeLabel: 'unlimited',
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 	multiple: true,
-	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
 	validators: []
 };
 
