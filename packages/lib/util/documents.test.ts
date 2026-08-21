@@ -7,7 +7,12 @@ import {
 	DOCUMENT_SET_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { getDocumentSetIdsByFolderName, loadUploadedDocuments, saveDocuments } from './documents.ts';
+import {
+	getDocumentSetIdsByFolderName,
+	getLatestDocumentBlobDetails,
+	loadUploadedDocuments,
+	saveDocuments
+} from './documents.ts';
 
 const COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
 const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G2_COVER_LETTER;
@@ -301,6 +306,111 @@ describe('saveDocuments', () => {
 	});
 });
 
+describe('getLatestDocumentBlobDetails', () => {
+	it('can extract the blob details from the latest document', async () => {
+		const documentId = 'document-1';
+		const service = createMockService({
+			existingDocuments: [
+				buildDocumentRow({
+					guid: documentId,
+					isDeleted: false,
+					latestDocumentVersion: {
+						blobStorageContainer: 'some-blob-container',
+						blobStoragePath: 'a/path/to/myblob.txt',
+						fileName: 'myblob.txt'
+					}
+				})
+			]
+		});
+		const expectedBlobDetails = {
+			containerName: 'some-blob-container',
+			blobPath: 'a/path/to/myblob.txt',
+			fileName: 'myblob.txt'
+		};
+		const actualBlobDetails = await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		assert.deepEqual(actualBlobDetails, expectedBlobDetails);
+	});
+	it('rejects queries that cannot find a document', async () => {
+		const documentId = 'document-1';
+		const service = createMockService({});
+		assert.rejects(async () => {
+			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		}, /Could not find an active document version for 'document-1'/);
+	});
+	it('rejects queries that have no latest version of the document', async () => {
+		const documentId = 'document-1';
+		const service = createMockService({
+			existingDocuments: [
+				buildDocumentRow({
+					guid: documentId,
+					isDeleted: false,
+					latestDocumentVersion: null
+				})
+			]
+		});
+		assert.rejects(async () => {
+			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		});
+	});
+	it('rejects cases where the container name is missing from the latest document version', async () => {
+		const documentId = 'document-1';
+		const service = createMockService({
+			existingDocuments: [
+				buildDocumentRow({
+					guid: documentId,
+					isDeleted: false,
+					latestDocumentVersion: {
+						blobStorageContainer: undefined,
+						blobStoragePath: 'a/path/to/myblob.txt',
+						fileName: 'myblob.txt'
+					}
+				})
+			]
+		});
+		assert.rejects(async () => {
+			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		});
+	});
+	it('rejects cases where the blob path is missing from the latest document version', async () => {
+		const documentId = 'document-1';
+		const service = createMockService({
+			existingDocuments: [
+				buildDocumentRow({
+					guid: documentId,
+					isDeleted: false,
+					latestDocumentVersion: {
+						blobStorageContainer: 'some-blob-container',
+						blobStoragePath: undefined,
+						fileName: 'myblob.txt'
+					}
+				})
+			]
+		});
+		assert.rejects(async () => {
+			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		});
+	});
+	it('rejects cases where the file name is missing from the latest document version', async () => {
+		const documentId = 'document-1';
+		const service = createMockService({
+			existingDocuments: [
+				buildDocumentRow({
+					guid: documentId,
+					isDeleted: false,
+					latestDocumentVersion: {
+						blobStorageContainer: 'some-blob-container',
+						blobStoragePath: 'a/path/to/myblob.txt',
+						fileName: undefined
+					}
+				})
+			]
+		});
+		assert.rejects(async () => {
+			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		});
+	});
+});
+
 function createMockService({
 	documentSet = { id: COVER_LETTER_DOCUMENT_SET_ID },
 	documentSets = [{ id: COVER_LETTER_DOCUMENT_SET_ID, folderName: TEST_DOCUMENT_SET_FOLDER_NAME }],
@@ -319,7 +429,8 @@ function createMockService({
 				findMany: mock.fn(async () => documentSets)
 			},
 			document: {
-				findMany: mock.fn(async () => existingDocuments)
+				findMany: mock.fn(async () => existingDocuments),
+				findFirst: mock.fn(async () => existingDocuments[0])
 			},
 			$transaction: mock.fn(async (callback: (tx: typeof tx) => unknown) => callback(tx))
 		}
