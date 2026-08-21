@@ -158,11 +158,38 @@ export const draftStatementOfComplianceQuestion: FileUploaderQuestionProps = {
 	validators: []
 };
 
+export const noticeOfIntentionQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Notice of intention to commence local plan preparation',
+	question: 'Upload your notice of intention to commence local plan preparation',
+	fieldName: 'noticeOfIntention',
+	url: 'notice-of-intent',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: []
+};
+
 export const gateway2FileUploadQuestions = {
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: localPlanTimetableQuestion,
 	projectInitiationDocument: projectInitiationDocumentQuestion,
-	draftStatementOfCompliance: draftStatementOfComplianceQuestion
+	draftStatementOfCompliance: draftStatementOfComplianceQuestion,
+	noticeOfIntention: noticeOfIntentionQuestion
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(
