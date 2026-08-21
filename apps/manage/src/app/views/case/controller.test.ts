@@ -974,7 +974,7 @@ describe('buildGetJourneyMiddleware', () => {
 		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
 			{
 				id: '1',
-				folderName: 'gateway-2-workshop-document'
+				folderName: 'gateway-2-report'
 			},
 			{
 				id: '2',
@@ -1016,7 +1016,7 @@ describe('buildGetJourneyMiddleware', () => {
 		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
 			{
 				id: '1',
-				folderName: 'gateway-2-workshop-document'
+				folderName: 'gateway-2-report'
 			},
 			{
 				id: '2',

@@ -71,8 +71,7 @@ interface Gateway2Input {
 	workshopVenue?: string;
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
-	workshopDocuments?: any;
-	workshopDocumentUploadedDate?: Date;
+	gateway2Report?: any;
 }
 
 interface ExaminationInput {
@@ -384,9 +383,6 @@ export async function updateGateway2(
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	if (question == 'gateway-2-workshop-document') {
-		answers.workshopDocumentUploadedDate = new Date();
-	}
 	await db.gateway2Info.upsert({
 		where: { caseId },
 		update: { ...answers },
@@ -551,11 +547,11 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-2-workshop-document' &&
+					req.params.question == 'gateway-2-report' &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
 					// TODO need to check if there are documents - only redirect if there are documents
-					res.redirect(303, 'gateway-2-workshop-document/check');
+					res.redirect(303, 'gateway-2-report/check');
 					return;
 				}
 
@@ -588,18 +584,18 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 	};
 }
 
-export function buildCheckWorkshopDocumentMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function buildCheckGateway2ReportMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const uploadedFiles =
-			req.session.fileUploader[fileUploaderCaseSessionKeyForField(req, 'workshopDocuments')].uploadedFiles;
+			req.session.fileUploader[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')].uploadedFiles;
 		// Todo need to add error handling for 0 files - no flow defined right now
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		const workshopDocumentUploadedDateEntry = await service.db.case.findFirst({
+		const reportIssuedDateEntry = await service.db.case.findFirst({
 			select: {
 				gateway2Info: {
 					select: {
-						workshopDocumentUploadedDate: true
+						reportIssuedDate: true
 					}
 				}
 			},
@@ -607,24 +603,24 @@ export function buildCheckWorkshopDocumentMiddleware(service: ManageService, jou
 				reference: caseReference
 			}
 		});
-		if (!workshopDocumentUploadedDateEntry?.gateway2Info) {
+		if (!reportIssuedDateEntry?.gateway2Info) {
 			throw Error(`gateway2Info could not be found for case with reference '${caseReference}'`);
 		}
-		const workshopDocumentUploadedDate = workshopDocumentUploadedDateEntry.gateway2Info.workshopDocumentUploadedDate;
-		res.render('views/layouts/workshop-document-check-your-answers.njk', {
+		const reportIssuedDate = reportIssuedDateEntry.gateway2Info.reportIssuedDate;
+		res.render('views/layouts/gateway2-report-check-your-answers.njk', {
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,
 			journeyId: journeyId,
-			section: 'workshop-documents',
-			question: 'gateway-2-workshop-document',
+			section: 'report',
+			question: 'gateway-2-report',
 			backLink: backLinkUrl,
-			workshopDocumentUploadedDate: workshopDocumentUploadedDate
+			reportIssuedDateDate: reportIssuedDate
 				? new Intl.DateTimeFormat('en-GB', {
 						day: 'numeric',
 						month: 'long',
 						timeZone: 'Europe/London',
 						year: 'numeric'
-					}).format(workshopDocumentUploadedDate)
+					}).format(reportIssuedDate)
 				: null
 		});
 		return;
@@ -955,7 +951,7 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 	};
 }
 
-export function issueWorkshopDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function issueGateway2Report(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
@@ -981,6 +977,8 @@ export function issueWorkshopDocuments(service: ManageService, journeyId: string
 			req.session.alertMessage = 'Gateway 2 report issued';
 			req.session.alertMessageStatus = 'success';
 		} else {
+			console.log('existingGatewayDetails?.reportIssuedDate value');
+			console.log(existingGatewayDetails?.reportIssuedDate);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report already issued';
 			req.session.alertMessageStatus = 'important';
