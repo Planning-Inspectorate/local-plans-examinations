@@ -5,6 +5,7 @@ import type { BaseConfig } from './config-types.d.ts';
 import type { Logger } from 'pino';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import type { RedisClient } from '../redis/redis-client.ts';
+import { BlobFileStorageAdapter } from '@pins/local-plans-lib/storage/index.ts';
 
 /**
  * This class encapsulates all the services and clients for the application
@@ -14,6 +15,7 @@ export class BaseService {
 	logger: Logger;
 	dbClient: PrismaClient;
 	redisClient: RedisClient | null;
+	readonly #blobStorage: BaseConfig['blobStorage'];
 
 	constructor(config: BaseConfig) {
 		this.#config = config;
@@ -21,6 +23,7 @@ export class BaseService {
 		this.logger = logger;
 		this.dbClient = initDatabaseClient(config, logger);
 		this.redisClient = initRedis(config.session, logger);
+		this.#blobStorage = config.blobStorage;
 	}
 
 	get cacheControl() {
@@ -34,6 +37,13 @@ export class BaseService {
 	 */
 	get db() {
 		return this.dbClient;
+	}
+
+	createFileStorage(basePath?: string): BlobFileStorageAdapter {
+		return new BlobFileStorageAdapter({
+			...this.#blobStorage,
+			basePath
+		});
 	}
 
 	get gitSha() {
