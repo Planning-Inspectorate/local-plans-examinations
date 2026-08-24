@@ -70,7 +70,7 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 1000 * 1000; // 25MB
+const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
@@ -417,7 +417,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		text: {
 			caption: 'Signed SLA',
 			introduction: 'Upload a file',
-			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(SIGNED_SLA_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES)}`,
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(SIGNED_SLA_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES)}.`,
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},

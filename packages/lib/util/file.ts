@@ -68,7 +68,7 @@ export function formatByteCountIntoHumanReadableMemoryUnit(
 	const metricMultiplier = usebaseTen ? 1000 : 1024;
 	const unitIndex = Math.min(Math.floor(Math.log(Math.abs(bytes)) / Math.log(metricMultiplier)), units.length - 1);
 	const formattedValue = (bytes / Math.pow(metricMultiplier, unitIndex)).toFixed(precision);
-	return `${formattedValue} ${units[unitIndex]}`;
+	return `${formattedValue}${units[unitIndex]}`;
 }
 
 export function formatFileExtensionsIntoHumanReadableList(extensions: string[]) {
