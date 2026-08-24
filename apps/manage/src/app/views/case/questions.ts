@@ -585,8 +585,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	gateway2Report: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-		title: 'Issue Gateway 2 report',
-		question: 'Issue Gateway 2 report',
+		title: 'Report issued',
+		question: 'Upload Gateway 2 report',
 		fieldName: 'gateway2Report',
 		url: 'gateway-2-report',
 		allowedFileExtensions: GATEWAY_2_REPORT_ALLOWED_EXTENSIONS,
