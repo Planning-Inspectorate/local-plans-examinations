@@ -614,7 +614,7 @@ export function buildCheckGateway2ReportMiddleware(service: ManageService, journ
 			section: 'report',
 			question: 'gateway-2-report',
 			backLink: backLinkUrl,
-			reportIssuedDateDate: reportIssuedDate
+			reportIssuedDate: reportIssuedDate
 				? new Intl.DateTimeFormat('en-GB', {
 						day: 'numeric',
 						month: 'long',
@@ -977,6 +977,8 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 				'gateway-2-report-issued-date'
 			);
 			await updateCaseHistory(
+				service,
+				req,
 				service.db,
 				{
 					reportIssuedDate: null
@@ -991,8 +993,6 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			req.session.alertMessage = 'Gateway 2 report issued';
 			req.session.alertMessageStatus = 'success';
 		} else {
-			console.log('existingGatewayDetails?.reportIssuedDate value');
-			console.log(existingGatewayDetails?.reportIssuedDate);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report already issued';
 			req.session.alertMessageStatus = 'important';
