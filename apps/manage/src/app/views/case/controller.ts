@@ -591,22 +591,7 @@ export function buildCheckGateway2ReportMiddleware(service: ManageService, journ
 		// Todo need to add error handling for 0 files - no flow defined right now
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		const reportIssuedDateEntry = await service.db.case.findFirst({
-			select: {
-				gateway2Info: {
-					select: {
-						reportIssuedDate: true
-					}
-				}
-			},
-			where: {
-				reference: caseReference
-			}
-		});
-		if (!reportIssuedDateEntry?.gateway2Info) {
-			throw Error(`gateway2Info could not be found for case with reference '${caseReference}'`);
-		}
-		const reportIssuedDate = reportIssuedDateEntry.gateway2Info.reportIssuedDate;
+		const reportIssuedDate = uploadedFiles[0]?.dateCreated ?? undefined;
 		res.render('views/layouts/gateway2-report-check-your-answers.njk', {
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,

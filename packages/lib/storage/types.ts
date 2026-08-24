@@ -12,6 +12,7 @@ export type UploadedFile = {
 	containerName?: string;
 	path?: string;
 	url?: string;
+	dateCreated?: Date;
 	metadata?: Record<string, unknown>;
 };
 
