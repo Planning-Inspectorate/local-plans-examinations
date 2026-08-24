@@ -1,7 +1,10 @@
-import { openGateway2CoverLetterUploadPage } from '../../../../flows/portal/gateway-2-upload-flow.ts';
+import { openGateway2DocumentUploadPage } from '../../../../flows/portal/gateway-2-upload-flow.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
-import { gateway2CoverLetterPage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+import {
+	gateway2CoverLetterPage,
+	localPlanTimetablePage
+} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
@@ -13,7 +16,8 @@ describe('Gateway 2 document upload page content', () => {
 
 	it('Verifying page content for the covering letter upload page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			openGateway2CoverLetterUploadPage(plan);
+			const page = gateway2CoverLetterPage;
+			openGateway2DocumentUploadPage(plan, page);
 			gateway2CoverLetterPage.verifyLoaded();
 			gateway2CoverLetterPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			gateway2CoverLetterPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
@@ -23,6 +27,22 @@ describe('Gateway 2 document upload page content', () => {
 			gateway2CoverLetterPage.verifyFileFormatHintText();
 			gateway2CoverLetterPage.verifyUploadFilesButtonVisible();
 			gateway2CoverLetterPage.verifySaveAndReturnButton();
+		});
+	});
+
+	it('Verifying page content for the local plan timetable upload page', { tags: ['regression'] }, () => {
+		loadPlanDetails().then((plan) => {
+			const page = localPlanTimetablePage;
+			openGateway2DocumentUploadPage(plan, page);
+			localPlanTimetablePage.verifyLoaded();
+			localPlanTimetablePage.verifyBackLink(gateway2CoverLetterPage.pathFor(plan.urlReference));
+			localPlanTimetablePage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			localPlanTimetablePage.verifyMainContains('Drag and drop or choose files');
+			localPlanTimetablePage.verifyNoFileChosen();
+			localPlanTimetablePage.verifyUploadFormVisible();
+			localPlanTimetablePage.verifyFileFormatHintText();
+			localPlanTimetablePage.verifyUploadFilesButtonVisible();
+			localPlanTimetablePage.verifySaveAndReturnButton();
 		});
 	});
 });

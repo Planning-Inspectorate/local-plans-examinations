@@ -5,14 +5,12 @@ import {
 	type CrownQuestionProps
 } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import {
-	type FileUploaderQuestionProps,
 	SINGLE_FILE_UPLOAD_LIMIT,
-	TOTAL_FILE_UPLOAD_LIMIT
-} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import {
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -48,17 +46,6 @@ const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
 	'image/tiff',
 	'application/octet-stream'
 ];
-const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT = 25 * 1024 * 1024;
-const MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL = '25MB';
-const MINIMAL_PROCEDURAL_UPLOAD_TEXT = {
-	caption: 'Procedural documents',
-	introduction: 'Upload a file',
-	fileRequirementsText:
-		'The file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and be smaller than 25MB',
-	chooseFilesButtonText: 'Choose files',
-	dropInstructionText: 'or drop files',
-	continueButtonText: 'Save and return'
-};
 const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
 
 export const CHECK_ANSWERS_REDIRECT_QUERY = 'checkAnswersRedirect';
@@ -98,43 +85,84 @@ export const gateway2CoverLetterQuestion: FileUploaderQuestionProps = {
 export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 	title: 'Local plan timetable',
-	question: 'Upload your local plan timetable',
+	question: 'Upload local plan timetable',
 	fieldName: 'localPlanTimetable',
 	url: 'local-plan-timetable',
 	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
 	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
-	maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
-	maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
-	maxFilesPerUpload: 3,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 	multiple: true,
-	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
 	validators: []
 };
 
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 	title: 'Project initiation document',
-	question: 'Upload your project initiation document',
+	question: 'Upload project initiation document',
 	fieldName: 'projectInitiationDocument',
 	url: 'project-initiation-document',
 	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
 	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
-	maxFileSizeBytes: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT,
-	maxFileSizeLabel: MINIMAL_PROCEDURAL_FILE_UPLOAD_LIMIT_LABEL,
-	maxFilesPerUpload: UNLIMITED_FILES,
-	maxTotalUploadSizeBytes: Number.MAX_SAFE_INTEGER,
-	maxTotalUploadSizeLabel: 'unlimited',
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 	multiple: true,
-	text: MINIMAL_PROCEDURAL_UPLOAD_TEXT,
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: []
+};
+
+export const draftStatementOfComplianceQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Draft statement of compliance',
+	question: 'Upload draft statement of compliance',
+	fieldName: 'draftStatementOfCompliance',
+	url: 'draft-stat-compliance',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
 	validators: []
 };
 
 export const gateway2FileUploadQuestions = {
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: localPlanTimetableQuestion,
-	projectInitiationDocument: projectInitiationDocumentQuestion
+	projectInitiationDocument: projectInitiationDocumentQuestion,
+	draftStatementOfCompliance: draftStatementOfComplianceQuestion
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(

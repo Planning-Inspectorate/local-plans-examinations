@@ -4,6 +4,7 @@ type Gateway2UploadAnswer = {
 	fieldName: string;
 	path: string;
 	section: string;
+	addCy: string;
 };
 
 export const gateway2UploadAnswers = {
@@ -12,6 +13,15 @@ export const gateway2UploadAnswers = {
 		caption: 'Procedural documents',
 		fieldName: 'gateway2CoverLetter',
 		path: 'covering-letter',
-		section: 'procedural'
+		section: 'procedural',
+		addCy: 'add-gateway-2-covering-letter'
+	},
+	localPlanTimetable: {
+		heading: 'Upload local plan timetable',
+		caption: 'Procedural documents',
+		fieldName: 'localPlanTimetable',
+		path: 'local-plan-timetable',
+		section: 'procedural',
+		addCy: 'add-local-plan-timetable'
 	}
 } as const satisfies Record<string, Gateway2UploadAnswer>;

@@ -66,9 +66,7 @@ describe('Case history', () => {
 
 		openCaseHistory();
 
-		// Due to a known bug the update history displays the raw value names.
-		// When fixed, these should be changed to their appropriate display names.
-		caseHistoryPage.verifyHistoryEvent(`Updated planType from ${originalPlanTypeName} to ${planTypeSelectionValue}`);
+		caseHistoryPage.verifyHistoryEvent(`Plan type updated from ${originalPlanTypeName} to ${planTypeSelectionValue}`);
 	});
 
 	it('shows case history after a Gateway 1 update', { tags: ['regression'] }, () => {
@@ -85,7 +83,7 @@ describe('Case history', () => {
 
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(
-			`Updated dsaChecked from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
+			`Data Sharing Agreement (DSA) check updated from ${gateway1DsaAnswer.value} to ${gateway1DsaAnswer.updatedValue}`
 		);
 	});
 
@@ -104,7 +102,7 @@ describe('Case history', () => {
 
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(
-			`Updated workshopVenue from ${workshopVenueAnswer.value} to ${workshopVenueAnswer.updatedValue}`
+			`Workshop venue updated from ${workshopVenueAnswer.value} to ${workshopVenueAnswer.updatedValue}`
 		);
 	});
 });
