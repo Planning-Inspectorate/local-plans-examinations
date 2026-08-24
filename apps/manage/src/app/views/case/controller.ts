@@ -1,7 +1,7 @@
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
 import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
@@ -15,6 +15,7 @@ import {
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
+import multer from 'multer';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -985,4 +986,34 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
 		return;
 	};
+}
+
+// Builds the URL for the current file upload question.
+export function redirectToFileUploaderQuestion(req: Request) {
+	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
+	// Any questions that need to route to new subjourneys can be defined here
+	if (req.params.question == 'gateway-2-report') {
+		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+	}
+	if (req.params.question == 'signed-sla') {
+		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
+	}
+	const journey = req.url.split(String(req.params.section))[0];
+	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
+}
+
+export function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {
+	if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+		const questionUrl = getRouteQuestionUrl(req);
+		const questionConfig = questionUrl ? fileUploadQuestionsByUrl.get(questionUrl) : undefined;
+		const sizeLabel = questionConfig?.maxFileSizeLabel ?? '250MB';
+		const session = req.session as unknown as {
+			errors?: Record<string, { msg: string }>;
+			errorSummary?: Array<{ text: string; href: string }>;
+		};
+		session.errors = { 'upload-form': { msg: 'Errors encountered during file upload' } };
+		session.errorSummary = [{ text: `The selected file must be smaller than ${sizeLabel}`, href: '#upload-form' }];
+		return res.redirect(redirectToFileUploaderQuestion(req));
+	}
+	return next(err);
 }
