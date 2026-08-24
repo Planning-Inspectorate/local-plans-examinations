@@ -604,7 +604,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			introduction: 'Upload a file',
 			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_REPORT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES)}`,
 			chooseFilesButtonText: 'Choose files',
-			dropInstructionText: 'or drop files'
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
 		},
 		validators: [new FileUploadRequiredValidator('gateway2Report', 'Upload gateway 2 workshop file')]
 	},
