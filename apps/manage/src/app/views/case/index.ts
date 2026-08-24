@@ -15,7 +15,9 @@ import {
 	buildCheckGateway2ReportMiddleware,
 	downloadDocument,
 	getParam,
-	issueGateway2Report
+	issueGateway2Report,
+	redirectToFileUploaderQuestion,
+	handleMulterFileSizeError
 } from './controller.ts';
 import type { ManageService } from '#service';
 import {
@@ -257,14 +259,16 @@ function registerCaseJourney(
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
 			upload.array('files[]'),
-			uploadDocumentRoute
+			uploadDocumentRoute,
+			handleMulterFileSizeError
 		);
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
-			deleteDocumentRoute
+			deleteDocumentRoute,
+			handleMulterFileSizeError
 		);
 	}
 }
@@ -365,19 +369,6 @@ function logUploadCleanupFailed(
 	);
 }
 
-// Builds the URL for the current file upload question.
-function redirectToFileUploaderQuestion(req: Request) {
-	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
-	// Any questions that need to route to new subjourneys can be defined here
-	if (req.params.question == 'gateway-2-report') {
-		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
-	}
-	if (req.params.question == 'signed-sla') {
-		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
-	}
-	const journey = req.url.split(String(req.params.section))[0];
-	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
-}
 
 function getRoutePlanReference(req: Request): string | undefined {
 	const planReference = Array.isArray(req.params.planReference)
