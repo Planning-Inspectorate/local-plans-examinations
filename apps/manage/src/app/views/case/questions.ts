@@ -14,7 +14,6 @@ import {
 	type FileUploaderQuestionProps,
 	TOTAL_FILE_UPLOAD_LIMIT
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { MAX_NO_OF_FILES_TO_UPLOAD } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -596,7 +595,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			.flat(),
 		maxFileSizeBytes: GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxFilesPerUpload: 1,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
