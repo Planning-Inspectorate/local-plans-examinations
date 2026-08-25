@@ -7,8 +7,10 @@ import {
 	buildGetJourneyMiddleware,
 	updateCaseHistory,
 	getDeleteCase,
-	postMarkAsDeleteCase
+	postMarkAsDeleteCase,
+	downloadDocument
 } from './controller.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 const REFERENCE = 'PLAN/123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -1186,4 +1188,30 @@ describe('DeleteCase', () => {
 
 			assert.equal(redirect.mock.calls[0].arguments[0], '/');
 		}));
+});
+
+describe('downloadDocument', () => {
+	it('downloads a document to a response object', async () => {
+		const service = createService();
+		const mockDownload = mock.method(DocumentUtil, 'downloadDocumentToResponse', async () => {});
+		const req = {
+			params: {
+				documentId: 'some-document'
+			}
+		};
+		const res = {};
+		await downloadDocument(service)(req as unknown as Request, res as Response);
+		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res]);
+	});
+	it('rejects when the documentId is not found in the request', async () => {
+		const service = createService();
+		const mockDownload = mock.method(DocumentUtil, 'downloadDocumentToResponse', async () => {});
+		const req = {
+			params: {}
+		};
+		const res = {};
+		assert.rejects(async () => {
+			await downloadDocument(service)(req as unknown as Request, res as Response);
+		}, /Missing a documentId from the download-case-document endpoint/);
+	});
 });
