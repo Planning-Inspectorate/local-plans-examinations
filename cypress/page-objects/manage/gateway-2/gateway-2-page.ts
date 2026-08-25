@@ -13,9 +13,9 @@ const gateway2Rows = [
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
-	...Object.values(gateway2DateAnswers).map(({ row, path }): [string, RegExp] => [
+	...Object.values(gateway2DateAnswers).map(({ row, section, path }): [string, RegExp] => [
 		row,
-		new RegExp(`^/case/.+/gateway-2/gateway-2/${path}$`)
+		new RegExp(`^/case/.+/gateway-2/${section}/${path}$`)
 	]),
 	[workshopVenueAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${workshopVenueAnswer.path}$`)],
 	[gateway2AssessorAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${gateway2AssessorAnswer.path}$`)]

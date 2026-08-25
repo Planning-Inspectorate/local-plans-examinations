@@ -3,6 +3,7 @@ import type { DateAnswer } from '../../types/date.ts';
 type Gateway2DateAnswer = {
 	row: string;
 	heading: string;
+	section: string;
 	fieldName: string;
 	path: string;
 	seedDate: string;
@@ -14,6 +15,7 @@ export const gateway2DateAnswers = {
 	gateway2ExpectedDate: {
 		row: 'Gateway 2 expected date',
 		heading: 'What is the expected Gateway 2 date?',
+		section: 'gateway-2',
 		fieldName: 'expectedDate',
 		path: 'gateway-2-expected-date',
 		seedDate: '2026-06-01T12:00:00.000Z',
@@ -23,6 +25,7 @@ export const gateway2DateAnswers = {
 	gateway2ActualDate: {
 		row: 'Gateway 2 actual date',
 		heading: 'When was Gateway 2 completed?',
+		section: 'gateway-2',
 		fieldName: 'actualDate',
 		path: 'gateway-2-actual-date',
 		seedDate: '2026-07-01T12:00:00.000Z',
@@ -32,6 +35,7 @@ export const gateway2DateAnswers = {
 	gateway2ValidDate: {
 		row: 'Gateway 2 valid date',
 		heading: 'What is the Gateway 2 valid date?',
+		section: 'gateway-2',
 		fieldName: 'validDate',
 		path: 'gateway-2-valid-date',
 		seedDate: '2026-08-01T12:00:00.000Z',
@@ -41,6 +45,7 @@ export const gateway2DateAnswers = {
 	assessorDateOfAppointment: {
 		row: 'Assessor date of appointment',
 		heading: 'When was the Gateway 2 assessor appointed?',
+		section: 'gateway-2',
 		fieldName: 'assessorAppointmentDate',
 		path: 'gateway-2-assessor-appointed',
 		seedDate: '2026-09-01T12:00:00.000Z',
@@ -50,6 +55,7 @@ export const gateway2DateAnswers = {
 	workshopDate: {
 		row: 'Workshop date',
 		heading: 'When is the Gateway 2 workshop?',
+		section: 'gateway-2',
 		fieldName: 'workshopDate',
 		path: 'gateway-2-workshop-date',
 		seedDate: '2026-09-01T12:00:00.000Z',
@@ -59,6 +65,7 @@ export const gateway2DateAnswers = {
 	reportPublishedDate: {
 		row: 'Report published by LPA date',
 		heading: 'When was the report published by the LPA?',
+		section: 'report',
 		fieldName: 'reportPublishedByLPA',
 		path: 'gateway-2-report-published-date',
 		seedDate: '2026-09-01T12:00:00.000Z',
