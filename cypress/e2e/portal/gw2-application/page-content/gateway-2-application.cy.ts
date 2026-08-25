@@ -50,11 +50,15 @@ describe('Gateway 2 application page content', () => {
 		gateway2ApplicationPage.verifySubHeading('Consultation Documents');
 		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.consultationDocumentsTable, [
 			{
-				document: 'Notice of Intention to commence local plan preparation',
+				document: 'Notice of intention to commence local plan preparation',
 				status: 'Not added',
-				addCy: 'add-notice-of-intention'
+				addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
 			},
-			{ document: 'Scoping consultation documents', status: 'Not added', addCy: 'add-scoping-consultation-documents' },
+			{
+				document: 'Scoping consultation documents',
+				status: 'Not added',
+				addCy: 'add-scoping-consultation-documents'
+			},
 			{
 				document: 'Consultation summary of feedback to scoping consultation',
 				status: 'Not added',
@@ -77,7 +81,7 @@ describe('Gateway 2 application page content', () => {
 			}
 		]);
 		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
-			'Notice of Intention to commence local plan preparation',
+			'Notice of intention to commence local plan preparation',
 			'Scoping consultation documents',
 			'Consultation summary of feedback to scoping consultation',
 			'Gateway 1 - Self Assessment of Readiness',

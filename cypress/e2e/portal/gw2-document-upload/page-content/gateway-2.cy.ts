@@ -3,7 +3,9 @@ import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import {
 	gateway2CoverLetterPage,
-	localPlanTimetablePage
+	localPlanTimetablePage,
+	noticeOfIntentionToCommenceLocalPlanPage,
+	draftStatementOfSoundnessPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -43,6 +45,22 @@ describe('Gateway 2 document upload page content', () => {
 			localPlanTimetablePage.verifyFileFormatHintText();
 			localPlanTimetablePage.verifyUploadFilesButtonVisible();
 			localPlanTimetablePage.verifySaveAndReturnButton();
+		});
+	});
+
+	it('Verifying page content for the notice of intention to commence local plan', { tags: ['regression'] }, () => {
+		loadPlanDetails().then((plan) => {
+			const page = noticeOfIntentionToCommenceLocalPlanPage;
+			openGateway2DocumentUploadPage(plan, page);
+			noticeOfIntentionToCommenceLocalPlanPage.verifyLoaded();
+			noticeOfIntentionToCommenceLocalPlanPage.verifyBackLink(draftStatementOfSoundnessPage.pathFor(plan.urlReference));
+			noticeOfIntentionToCommenceLocalPlanPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			noticeOfIntentionToCommenceLocalPlanPage.verifyMainContains('Drag and drop or choose files');
+			noticeOfIntentionToCommenceLocalPlanPage.verifyNoFileChosen();
+			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFormVisible();
+			noticeOfIntentionToCommenceLocalPlanPage.verifyFileFormatHintText();
+			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFilesButtonVisible();
+			noticeOfIntentionToCommenceLocalPlanPage.verifySaveAndReturnButton();
 		});
 	});
 });

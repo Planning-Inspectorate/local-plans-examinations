@@ -3,7 +3,8 @@ import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import {
 	gateway2CoverLetterPage,
-	localPlanTimetablePage
+	localPlanTimetablePage,
+	noticeOfIntentionToCommenceLocalPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -93,23 +94,80 @@ describe('Gateway 2 document upload journeys', () => {
 		}
 	);
 
+	it('Shows all uploaded local plan timetable files on the Gateway 2 submission page', { tags: ['regression'] }, () => {
+		loadPlanDetails().then((plan) => {
+			const page = localPlanTimetablePage;
+			openGateway2DocumentUploadPage(plan, page);
+			localPlanTimetablePage.uploadFile(['test-document.pdf', 'test-document.docx', 'test-document.xlsx']);
+			localPlanTimetablePage.clickUploadFiles();
+			localPlanTimetablePage.verifyFileUploaded('test-document.pdf', 'test-document.docx', 'test-document.xlsx');
+
+			localPlanTimetablePage.saveAndReturn();
+			gateway2ApplicationPage.verifyLoaded();
+
+			gateway2ApplicationPage.verifyDocumentRowContains(
+				gateway2ApplicationPage.proceduralDocumentsTable,
+				'Local plan timetable',
+				'test-document.pdf',
+				'test-document.docx',
+				'test-document.xlsx'
+			);
+		});
+	});
+
 	it(
-		'Shows both uploaded local plan timetable files on the Gateway 2 submission page',
+		'Adds a notice of intention to commence local plan using drag and drop, then replaces it with new document',
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = localPlanTimetablePage;
+				const page = noticeOfIntentionToCommenceLocalPlanPage;
 				openGateway2DocumentUploadPage(plan, page);
-				localPlanTimetablePage.uploadFile(['test-document.pdf', 'test-document.docx', 'test-document.xlsx']);
-				localPlanTimetablePage.clickUploadFiles();
-				localPlanTimetablePage.verifyFileUploaded('test-document.pdf', 'test-document.docx', 'test-document.xlsx');
+				noticeOfIntentionToCommenceLocalPlanPage.dragAndDropFile('test-document.pdf');
+				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.pdf');
 
-				localPlanTimetablePage.saveAndReturn();
+				noticeOfIntentionToCommenceLocalPlanPage.saveAndReturn();
+				gateway2ApplicationPage.verifyLoaded();
+
+				noticeOfIntentionToCommenceLocalPlanPage.clickAddLink(page.addCy);
+				noticeOfIntentionToCommenceLocalPlanPage.verifyLoaded();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.pdf');
+
+				noticeOfIntentionToCommenceLocalPlanPage.removeFile();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyFileNotUploaded('test-document.pdf');
+
+				noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document.docx');
+				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.docx');
+			});
+		}
+	);
+
+	it(
+		'Shows all uploaded notice of intention to commence local plan files on the Gateway 2 submission page',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = noticeOfIntentionToCommenceLocalPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				noticeOfIntentionToCommenceLocalPlanPage.uploadFile([
+					'test-document.pdf',
+					'test-document.docx',
+					'test-document.xlsx'
+				]);
+				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded(
+					'test-document.pdf',
+					'test-document.docx',
+					'test-document.xlsx'
+				);
+
+				noticeOfIntentionToCommenceLocalPlanPage.saveAndReturn();
 				gateway2ApplicationPage.verifyLoaded();
 
 				gateway2ApplicationPage.verifyDocumentRowContains(
-					gateway2ApplicationPage.proceduralDocumentsTable,
-					'Local plan timetable',
+					gateway2ApplicationPage.consultationDocumentsTable,
+					'Notice of intention to commence local plan preparation',
 					'test-document.pdf',
 					'test-document.docx',
 					'test-document.xlsx'

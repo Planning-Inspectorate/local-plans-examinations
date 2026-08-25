@@ -37,6 +37,29 @@
     </div>
 {% endmacro %}
 
+{% set consultationDocumentPlaceholderRows = [
+    {
+        text: "Scoping consultation documents",
+        dataCy: "add-scoping-consultation-documents"
+    },
+    {
+        text: "Consultation summary of feedback to scoping consultation",
+        dataCy: "add-consultation-summary-scoping"
+    },
+    {
+        text: "Gateway 1 - Self Assessment of Readiness",
+        dataCy: "add-gateway-1-self-assessment"
+    },
+    {
+        text: "Consultation on proposed local plan content and evidence documents",
+        dataCy: "add-consultation-proposed-content"
+    },
+    {
+        text: "Consultation summary for proposed local plan content and evidence documents",
+        dataCy: "add-consultation-summary-proposed-content"
+    }
+] %}
+
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds app-grid-column--80">
@@ -97,42 +120,17 @@
                                     </td>
                                 </tr>
                             {% endfor %}
-                            {% if section.heading | lower == "procedural documents" %}
+                            {% if section.heading | lower == "consultation documents" %}
                                 {# Temporary placeholder rows. Remove when these items are converted to dynamic components. #}
+                                {% for row in consultationDocumentPlaceholderRows %}
+                                    {{ placeholderRow(row.text, row.dataCy) }}
+                                {% endfor %}
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
             {% endif %}
         {% endfor %}
-
-        {# Temporary placeholder sections. Remove when these items are converted to dynamic components. #}
-        {{ placeholderTable("Consultation Documents", "consultation-documents", [
-            {
-                text: "Notice of Intention to commence local plan preparation",
-                dataCy: "add-notice-of-intention"
-            },
-            {
-                text: "Scoping consultation documents",
-                dataCy: "add-scoping-consultation-documents"
-            },
-            {
-                text: "Consultation summary of feedback to scoping consultation",
-                dataCy: "add-consultation-summary-scoping"
-            },
-            {
-                text: "Gateway 1 - Self Assessment of Readiness",
-                dataCy: "add-gateway-1-self-assessment"
-            },
-            {
-                text: "Consultation on proposed local plan content and evidence documents",
-                dataCy: "add-consultation-proposed-content"
-            },
-            {
-                text: "Consultation summary for proposed local plan content and evidence documents",
-                dataCy: "add-consultation-summary-proposed-content"
-            }
-        ]) }}
 
         {{ placeholderTable("Additional documents", "additional-documents", [
             {
