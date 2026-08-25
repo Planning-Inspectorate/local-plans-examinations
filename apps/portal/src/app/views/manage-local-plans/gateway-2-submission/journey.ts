@@ -25,6 +25,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.draftStatementOfSoundness),
 			new Section('Consultation Documents', 'consultation')
 				.addQuestion(questions.noticeOfIntention)
+				.addQuestion(questions.scopingConsultationDocuments)
 				.addQuestion(questions.consultationSummaryFeedbackScoping)
 		],
 		taskListUrl: '',
