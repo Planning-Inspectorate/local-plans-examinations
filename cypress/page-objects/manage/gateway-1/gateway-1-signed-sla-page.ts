@@ -5,7 +5,7 @@ const gateway1QuestionPath = (path: string) => new RegExp(`^/case/.+/gateway-1/g
 
 export const gateway1SignedSLAPage = new DocumentUploadPage(
 	gateway1QuestionPath(signedSLA.path),
-	signedSLA.field,
+	signedSLA.fieldName,
 	signedSLA.heading,
 	signedSLA.caption
 );

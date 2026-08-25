@@ -132,10 +132,6 @@ export class BasePage {
 		link.should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 
-	verifySummaryRowValue(key: string) {
-		cy.get('.govuk-summary-list__value').should('contain', key);
-	}
-
 	listItemRemoveLink(index = 1) {
 		return cy.getByData(`remove-list-item-${index}`);
 	}
@@ -312,7 +308,7 @@ export class BasePage {
 
 	verifyFileUploaded(...fileNames: string[]) {
 		fileNames.forEach((fileName) => {
-			this.verifySummaryRowValue(fileName);
+			cy.get('.govuk-summary-list__value').should('contain', fileName);
 		});
 	}
 
