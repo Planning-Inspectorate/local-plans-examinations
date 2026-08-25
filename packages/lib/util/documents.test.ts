@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { describe, it, mock } from 'node:test';
 import type { ManageService } from '#service';
 import {
@@ -7,15 +7,14 @@ import {
 	DOCUMENT_SET_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import {
-	getDocumentSetIdsByFolderName,
-	getLatestDocumentBlobDetails,
-	loadUploadedDocuments,
-	saveDocuments
-} from './documents.ts';
+import { DocumentUtil } from './documents.ts';
 
 const COVER_LETTER_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G2_COVER_LETTER;
 const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G2_COVER_LETTER;
+const DOCUMENT_CREATED_DATE = new Date();
+const MOCK_BLOB_STORAGE_UTIL = {
+	downloadToExpressResponse: mock.fn(async () => null)
+};
 
 describe('loadUploadedDocuments', () => {
 	it('loads documents as uploaded files', async () => {
@@ -35,13 +34,14 @@ describe('loadUploadedDocuments', () => {
 						blobStorageContainer: 'local-planning-documents',
 						blobStoragePath: 'gateway-2/cover-letter.pdf',
 						documentURI: 'http://storage/cover-letter.pdf',
-						isDeleted: false
+						isDeleted: false,
+						dateCreated: DOCUMENT_CREATED_DATE
 					}
 				}
 			]
 		});
 
-		const files = await loadUploadedDocuments(
+		const files = await DocumentUtil.loadUploadedDocuments(
 			service as unknown as ManageService,
 			'case-1',
 			COVER_LETTER_DOCUMENT_SET_ID
@@ -57,6 +57,7 @@ describe('loadUploadedDocuments', () => {
 				containerName: 'local-planning-documents',
 				path: 'gateway-2/cover-letter.pdf',
 				url: 'http://storage/cover-letter.pdf',
+				dateCreated: DOCUMENT_CREATED_DATE,
 				metadata: {
 					documentGuid: 'document-1',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
@@ -89,11 +90,10 @@ describe('getDocumentSetIdsByFolderName', () => {
 			]
 		});
 
-		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(service as unknown as ManageService, [
-			TEST_DOCUMENT_SET_FOLDER_NAME,
-			DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE,
-			TEST_DOCUMENT_SET_FOLDER_NAME
-		]);
+		const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
+			service as unknown as ManageService,
+			[TEST_DOCUMENT_SET_FOLDER_NAME, DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE, TEST_DOCUMENT_SET_FOLDER_NAME]
+		);
 
 		assert.deepEqual(service.db.documentSet.findMany.mock.calls[0].arguments[0], {
 			where: {
@@ -120,7 +120,7 @@ describe('getDocumentSetIdsByFolderName', () => {
 
 		await assert.rejects(
 			() =>
-				getDocumentSetIdsByFolderName(service as unknown as ManageService, [
+				DocumentUtil.getDocumentSetIdsByFolderName(service as unknown as ManageService, [
 					TEST_DOCUMENT_SET_FOLDER_NAME,
 					DOCUMENT_SET_FOLDER_NAME.G2_LOCAL_PLAN_TIMETABLE
 				]),
@@ -135,9 +135,12 @@ describe('saveDocuments', () => {
 		const service = createMockService({ tx });
 		const uploadedFile = buildUploadedFile();
 
-		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			uploadedFile
-		]);
+		await DocumentUtil.saveDocuments(
+			service as unknown as ManageService,
+			buildRequest(),
+			TEST_DOCUMENT_SET_FOLDER_NAME,
+			[uploadedFile]
+		);
 
 		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 1);
 		assert.equal(tx.document.create.mock.callCount(), 1);
@@ -179,7 +182,12 @@ describe('saveDocuments', () => {
 			existingDocuments: [buildDocumentRow({ guid: 'document-1' })]
 		});
 
-		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, []);
+		await DocumentUtil.saveDocuments(
+			service as unknown as ManageService,
+			buildRequest(),
+			TEST_DOCUMENT_SET_FOLDER_NAME,
+			[]
+		);
 
 		assert.deepEqual(tx.document.update.mock.calls[0].arguments[0], {
 			where: {
@@ -222,9 +230,12 @@ describe('saveDocuments', () => {
 			]
 		});
 
-		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			buildUploadedFile({ id: 'document-1' })
-		]);
+		await DocumentUtil.saveDocuments(
+			service as unknown as ManageService,
+			buildRequest(),
+			TEST_DOCUMENT_SET_FOLDER_NAME,
+			[buildUploadedFile({ id: 'document-1' })]
+		);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);
 		assert.equal(tx.documentVersion.create.mock.callCount(), 0);
@@ -262,9 +273,12 @@ describe('saveDocuments', () => {
 			]
 		});
 
-		await saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			buildUploadedFile({ id: 'document-1' })
-		]);
+		await DocumentUtil.saveDocuments(
+			service as unknown as ManageService,
+			buildRequest(),
+			TEST_DOCUMENT_SET_FOLDER_NAME,
+			[buildUploadedFile({ id: 'document-1' })]
+		);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);
 		assert.equal(tx.documentVersion.create.mock.callCount(), 0);
@@ -284,7 +298,7 @@ describe('saveDocuments', () => {
 
 		await assert.rejects(
 			() =>
-				saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
+				DocumentUtil.saveDocuments(service as unknown as ManageService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 					buildUploadedFile()
 				]),
 			/Missing document set reference data for "covering-letter"/
@@ -297,7 +311,7 @@ describe('saveDocuments', () => {
 
 		await assert.rejects(
 			() =>
-				saveDocuments(service as unknown as ManageService, {} as Request, TEST_DOCUMENT_SET_FOLDER_NAME, [
+				DocumentUtil.saveDocuments(service as unknown as ManageService, {} as Request, TEST_DOCUMENT_SET_FOLDER_NAME, [
 					buildUploadedFile()
 				]),
 			/Cannot save documents without a loaded case/
@@ -327,14 +341,17 @@ describe('getLatestDocumentBlobDetails', () => {
 			blobPath: 'a/path/to/myblob.txt',
 			fileName: 'myblob.txt'
 		};
-		const actualBlobDetails = await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+		const actualBlobDetails = await DocumentUtil.getLatestDocumentBlobDetails(
+			service as unknown as ManageService,
+			documentId
+		);
 		assert.deepEqual(actualBlobDetails, expectedBlobDetails);
 	});
 	it('rejects queries that cannot find a document', async () => {
 		const documentId = 'document-1';
 		const service = createMockService({});
 		assert.rejects(async () => {
-			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+			await DocumentUtil.getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
 		}, /Could not find an active document version for 'document-1'/);
 	});
 	it('rejects queries that have no latest version of the document', async () => {
@@ -349,7 +366,7 @@ describe('getLatestDocumentBlobDetails', () => {
 			]
 		});
 		assert.rejects(async () => {
-			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+			await DocumentUtil.getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
 		});
 	});
 	it('rejects cases where the container name is missing from the latest document version', async () => {
@@ -368,7 +385,7 @@ describe('getLatestDocumentBlobDetails', () => {
 			]
 		});
 		assert.rejects(async () => {
-			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+			await DocumentUtil.getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
 		});
 	});
 	it('rejects cases where the blob path is missing from the latest document version', async () => {
@@ -387,7 +404,7 @@ describe('getLatestDocumentBlobDetails', () => {
 			]
 		});
 		assert.rejects(async () => {
-			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+			await DocumentUtil.getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
 		});
 	});
 	it('rejects cases where the file name is missing from the latest document version', async () => {
@@ -406,8 +423,26 @@ describe('getLatestDocumentBlobDetails', () => {
 			]
 		});
 		assert.rejects(async () => {
-			await getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
+			await DocumentUtil.getLatestDocumentBlobDetails(service as unknown as ManageService, documentId);
 		});
+	});
+});
+
+describe('downloadDocumentToResponse', () => {
+	const service = createMockService();
+	const blobDetails = {
+		blobPath: 'some/blob/path',
+		fileName: 'somefilename'
+	};
+	const res = {};
+	it('can download blob data to a response object', async () => {
+		mock.method(DocumentUtil, 'getLatestDocumentBlobDetails', async () => blobDetails);
+		await DocumentUtil.downloadDocumentToResponse(service as unknown as ManageService, '1', res as unknown as Response);
+		assert.deepStrictEqual(MOCK_BLOB_STORAGE_UTIL.downloadToExpressResponse.mock.calls[0].arguments, [
+			blobDetails.blobPath,
+			blobDetails.fileName,
+			res
+		]);
 	});
 });
 
@@ -433,7 +468,8 @@ function createMockService({
 				findFirst: mock.fn(async () => existingDocuments[0])
 			},
 			$transaction: mock.fn(async (callback: (tx: typeof tx) => unknown) => callback(tx))
-		}
+		},
+		createFileStorage: mock.fn(() => MOCK_BLOB_STORAGE_UTIL)
 	};
 }
 
@@ -488,7 +524,8 @@ function buildDocumentRow(overrides: Record<string, unknown> = {}) {
 			blobStorageContainer: 'local-planning-documents',
 			blobStoragePath: 'gateway-2/cover-letter.pdf',
 			documentURI: 'http://storage/cover-letter.pdf',
-			isDeleted: false
+			isDeleted: false,
+			dateCreated: DOCUMENT_CREATED_DATE
 		},
 		...overrides
 	};

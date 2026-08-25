@@ -51,7 +51,7 @@ import {
 	fileUploaderQuestionMiddleware,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { saveDocuments } from '@pins/local-plans-lib/util/documents.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -218,7 +218,7 @@ function registerCaseJourney(
 							};
 						},
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Update gateway 2 separately because updateCaseField causes the dynamic forms to consume the request
@@ -242,7 +242,7 @@ function registerCaseJourney(
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
 						},

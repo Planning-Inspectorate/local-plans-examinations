@@ -7,11 +7,7 @@ import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import {
-	loadUploadedDocuments,
-	getDocumentSetIdsByFolderName,
-	downloadDocumentToResponse
-} from '@pins/local-plans-lib/util/documents.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
@@ -627,7 +623,7 @@ async function addUploadedDocumentDetailsToAnswers(
 ) {
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
-	const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
+	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 		service,
 		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
 	);
@@ -637,7 +633,7 @@ async function addUploadedDocumentDetailsToAnswers(
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
 		}
 
-		const uploadedFiles = await loadUploadedDocuments(service, currentCase.id, documentSetId);
+		const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
 		req.session.fileUploader = {
 			...request.session.fileUploader,
 			[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]: {
@@ -933,7 +929,7 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
 		// Todo add error handling for if the file is not found
-		await downloadDocumentToResponse(service, documentId, res);
+		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
 	};
 }
 
