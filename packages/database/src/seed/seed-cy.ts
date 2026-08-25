@@ -14,6 +14,16 @@ async function run() {
 	const now = new Date(Date.now());
 	const dbClient = newDatabaseClient(config.db);
 	const lpaCodes = ['lpa-1', 'lpa-2'];
+	const lpas = [
+		{
+			lpaCode: 'lpa-1',
+			lpaName: 'Local Planning Authority 1'
+		},
+		{
+			lpaCode: 'lpa-2',
+			lpaName: 'Local Planning Authority 2'
+		}
+	];
 	const contactDetails = [
 		{
 			firstName: 'Jane',
@@ -46,7 +56,7 @@ async function run() {
 				lpas: {
 					connectOrCreate: lpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
-						create: { lpaCode }
+						create: lpas.find((lpa) => lpa.lpaCode === lpaCode) || { lpaCode, lpaName: 'Unknown LPA' }
 					}))
 				},
 				contacts: {
