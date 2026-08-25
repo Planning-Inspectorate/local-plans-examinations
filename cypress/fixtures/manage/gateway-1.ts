@@ -67,6 +67,15 @@ export const gateway1DsaAnswer = {
 	updatedDisplay: 'No'
 } as const;
 
+export const signedSLA = {
+	row: 'Signed SLA',
+	heading: 'Upload signed SLA',
+	caption: 'Signed SLA',
+	path: 'signed-sla',
+	field: 'signedSla',
+	display: 'Not started'
+} as const;
+
 export const updatedNoticeOfIntention = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'
@@ -74,5 +83,6 @@ export const updatedNoticeOfIntention = {
 
 export const gateway1ExpectedAnswers = [
 	...Object.values(gateway1DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway1DsaAnswer.row, display: gateway1DsaAnswer.display }
+	{ row: gateway1DsaAnswer.row, display: gateway1DsaAnswer.display },
+	{ row: signedSLA.row, display: signedSLA.display }
 ];

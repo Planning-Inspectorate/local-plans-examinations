@@ -421,7 +421,9 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
-		validators: [new FileUploadRequiredValidator('signedSla', 'Upload signed sla file')]
+		validators: [
+			new FileUploadRequiredValidator('signedSla', 'Upload at least one signed SLA document before continuing')
+		]
 	},
 	slaReceivedDate: {
 		type: COMPONENT_TYPES.DATE,
