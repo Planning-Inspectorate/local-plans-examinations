@@ -199,6 +199,32 @@ export const draftStatementOfSoundnessQuestion: FileUploaderQuestionProps = {
 	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 	multiple: true,
 	text: {
+		caption: 'Procedural documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: []
+};
+
+export const consultationSummaryFeedbackScopingQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Consultation summary of feedback to scoping consultation',
+	question: 'Upload consultation summary of feedback to scoping consultation documents',
+	fieldName: 'consultationSummaryFeedbackScoping',
+	url: 'cons-summ',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
 		caption: 'Consultation documents',
 		introduction: 'Drag and drop or choose files',
 		fileRequirementsText:
@@ -216,7 +242,8 @@ export const gateway2FileUploadQuestions = {
 	projectInitiationDocument: projectInitiationDocumentQuestion,
 	draftStatementOfCompliance: draftStatementOfComplianceQuestion,
 	noticeOfIntention: noticeOfIntentionQuestion,
-	draftStatementOfSoundness: draftStatementOfSoundnessQuestion
+	draftStatementOfSoundness: draftStatementOfSoundnessQuestion,
+	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(
