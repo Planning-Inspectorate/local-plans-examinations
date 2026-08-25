@@ -262,6 +262,32 @@ export const consultationSummaryFeedbackScopingQuestion: FileUploaderQuestionPro
 	validators: []
 };
 
+export const consultationSummaryProposedContentQuestion: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Summary of consultation for proposed local plan content and evidence',
+	question: 'Upload your summary of consultation for proposed local plan content and evidence',
+	fieldName: 'consultationSummaryProposedContent',
+	url: 'summary-of-consultation',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
+		caption: 'Consultation documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: []
+};
+
 export const gateway2FileUploadQuestions = {
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: localPlanTimetableQuestion,
@@ -270,7 +296,8 @@ export const gateway2FileUploadQuestions = {
 	noticeOfIntention: noticeOfIntentionQuestion,
 	draftStatementOfSoundness: draftStatementOfSoundnessQuestion,
 	scopingConsultationDocuments: scopingConsultationDocumentsQuestion,
-	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion
+	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion,
+	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(

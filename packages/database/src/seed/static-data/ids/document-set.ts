@@ -32,5 +32,5 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_CONSULTATION_SUMMARY: 'cons-summ',
 	G2_G1_SELF_ASSESSMENT: 'g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'cons-of-proposed',
-	G2_SUMMARY_OF_CONSULTATION: 'sum-of-cons'
+	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation'
 };

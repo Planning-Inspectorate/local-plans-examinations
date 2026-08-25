@@ -27,6 +27,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.noticeOfIntention)
 				.addQuestion(questions.scopingConsultationDocuments)
 				.addQuestion(questions.consultationSummaryFeedbackScoping)
+				.addQuestion(questions.consultationSummaryProposedContent)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
