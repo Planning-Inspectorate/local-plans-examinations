@@ -55,6 +55,11 @@ describe('Gateway 2 application page content', () => {
 				addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
 			},
 			{
+				document: 'Summary of consultation for proposed local plan content and evidence',
+				status: 'Not added',
+				addCy: 'add-summary-of-consultation-for-proposed-local-plan-content-and-evidence'
+			},
+			{
 				document: 'Scoping consultation documents',
 				status: 'Not added',
 				addCy: 'add-scoping-consultation-documents'
@@ -73,23 +78,16 @@ describe('Gateway 2 application page content', () => {
 				document: 'Consultation on proposed local plan content and evidence documents',
 				status: 'Not added',
 				addCy: 'add-consultation-proposed-content'
-			},
-			{
-				document: 'Consultation summary for proposed local plan content and evidence documents',
-				status: 'Not added',
-				addCy: 'add-consultation-summary-proposed-content'
 			}
 		]);
-		// gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
-		// 	'Notice of intention to commence local plan preparation',
-		// 	'Scoping consultation documents',
-		// 	'Consultation summary of feedback to scoping consultation',
-		// 	'Gateway 1 - Self Assessment of Readiness',
-		// 	'Consultation on proposed local plan content and evidence documents',
-		// 	'Consultation summary for proposed local plan content and evidence documents'
-		// ]);
-
-		// Update this after all consultation documents have been merged to main //
+		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
+			'Notice of intention to commence local plan preparation',
+			'Scoping consultation documents',
+			'Consultation summary of feedback to scoping consultation',
+			'Summary of consultation for proposed local plan content and evidence',
+			'Gateway 1 - Self Assessment of Readiness',
+			'Consultation on proposed local plan content and evidence documents'
+		]);
 	});
 
 	it('Shows Additional Documents', { tags: ['regression'] }, () => {
