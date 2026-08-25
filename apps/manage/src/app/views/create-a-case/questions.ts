@@ -185,6 +185,7 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'keyStageDates',
 		url: 'key-stage-dates',
 		title: 'Dates',
+		listSeparate: true,
 		validators: [
 			new MultiFieldInputValidator({
 				fields: [
