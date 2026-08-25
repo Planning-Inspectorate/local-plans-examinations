@@ -56,15 +56,6 @@ export const gateway2DateAnswers = {
 		input: { day: '1', month: '9', year: '2026' },
 		display: '1 September 2026'
 	},
-	reportIssuedDate: {
-		row: 'Report issued date',
-		heading: 'When was the report issued?',
-		fieldName: 'reportIssuedDate',
-		path: 'gateway-2-report-issued-date',
-		seedDate: '2026-09-01T12:00:00.000Z',
-		input: { day: '1', month: '9', year: '2026' },
-		display: '1 September 2026'
-	},
 	reportPublishedDate: {
 		row: 'Report published by LPA date',
 		heading: 'When was the report published by the LPA?',
