@@ -12,7 +12,8 @@ import MultiFieldInputValidator from '../validators/multi-field-input-validator.
 import {
 	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
-	TOTAL_FILE_UPLOAD_LIMIT
+	TOTAL_FILE_UPLOAD_LIMIT,
+	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
 	MIME_TYPE_MAP,
