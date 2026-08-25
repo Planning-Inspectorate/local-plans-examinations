@@ -33,12 +33,6 @@ export const workshopDatePage = new DateQuestionPage(
 	gateway2DateAnswers.workshopDate.heading
 );
 
-export const reportIssuedDatePage = new DateQuestionPage(
-	gateway2QuestionPath(gateway2DateAnswers.reportIssuedDate.path),
-	gateway2DateAnswers.reportIssuedDate.fieldName,
-	gateway2DateAnswers.reportIssuedDate.heading
-);
-
 export const reportPublishedByLPADatePage = new DateQuestionPage(
 	gateway2QuestionPath(gateway2DateAnswers.reportPublishedDate.path),
 	gateway2DateAnswers.reportPublishedDate.fieldName,
