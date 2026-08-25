@@ -132,6 +132,10 @@ export class BasePage {
 		link.should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 
+	verifySummaryRowValue(key: string) {
+		cy.get('.govuk-summary-list__value').should('contain', key);
+	}
+
 	listItemRemoveLink(index = 1) {
 		return cy.getByData(`remove-list-item-${index}`);
 	}
@@ -294,5 +298,25 @@ export class BasePage {
 
 	smartLookUpPopulated(fieldID: string, item: string) {
 		return cy.get(`input[id="${fieldID}"]`).should('have.value', item);
+	}
+
+	dragAndDropFile(fileName: string, chooseFilesButtonField: string) {
+		cy.get(`#${chooseFilesButtonField}`).selectFile(`cypress/fixtures/portal/files/${fileName}`, {
+			action: 'drag-drop'
+		});
+	}
+
+	removeFile(fileName: string) {
+		cy.contains('.govuk-summary-list', fileName).find("[data-cy='remove-file-button']").should('be.visible').click();
+	}
+
+	verifyFileUploaded(...fileNames: string[]) {
+		fileNames.forEach((fileName) => {
+			this.verifySummaryRowValue(fileName);
+		});
+	}
+
+	verifyFileNotUploaded(fileName: string) {
+		this.mainContent.should('not.contain.text', fileName);
 	}
 }
