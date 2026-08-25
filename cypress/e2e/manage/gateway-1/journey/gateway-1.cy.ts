@@ -44,14 +44,14 @@ describe('Gateway 1 updates', () => {
 		gateway1Page.openActionLinkFor(signedSLA.row);
 		gateway1SignedSLAPage.verifyLoaded();
 
-		gateway1SignedSLAPage.dragAndDropFile('test-document.pdf', signedSLA.field);
+		gateway1SignedSLAPage.dragAndDropFile('test-document.pdf', signedSLA.fieldName);
 		gateway1SignedSLAPage.clickUploadFiles();
 		gateway1SignedSLAPage.verifyFileUploaded('test-document.pdf');
 
 		gateway1SignedSLAPage.removeFile('test-document.pdf');
 		gateway1SignedSLAPage.verifyFileNotUploaded('test-document.pdf');
 
-		gateway1SignedSLAPage.dragAndDropFile('test-document.docx', signedSLA.field);
+		gateway1SignedSLAPage.dragAndDropFile('test-document.docx', signedSLA.fieldName);
 		gateway1SignedSLAPage.clickUploadFiles();
 		gateway1SignedSLAPage.verifyFileUploaded('test-document.docx');
 		gateway1SignedSLAPage.saveAndReturn();

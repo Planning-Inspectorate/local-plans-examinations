@@ -72,7 +72,7 @@ export const signedSLA = {
 	heading: 'Upload signed SLA',
 	caption: 'Signed SLA',
 	path: 'signed-sla',
-	field: 'signedSla',
+	fieldName: 'signedSla',
 	display: 'Not started'
 } as const;
 

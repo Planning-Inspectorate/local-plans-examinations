@@ -28,7 +28,7 @@ describe('Gateway 1 validation', () => {
 	it('shows an error when an incorrect file type is uploaded to signed SLA', { tags: ['regression'] }, () => {
 		gateway1Page.openActionLinkFor(signedSLA.row);
 		gateway1SignedSLAPage.verifyLoaded();
-		gateway1SignedSLAPage.dragAndDropFile('test-document-invalid.txt', 'signedSla');
+		gateway1SignedSLAPage.dragAndDropFile('test-document-invalid.txt', signedSLA.fieldName);
 		gateway1SignedSLAPage.clickUploadFiles();
 
 		gateway1SignedSLAPage.verifyLoaded();
