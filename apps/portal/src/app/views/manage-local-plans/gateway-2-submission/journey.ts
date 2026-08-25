@@ -23,7 +23,9 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.projectInitiationDocument)
 				.addQuestion(questions.draftStatementOfCompliance)
 				.addQuestion(questions.draftStatementOfSoundness),
-			new Section('Consultation Documents', 'consultation').addQuestion(questions.noticeOfIntention)
+			new Section('Consultation Documents', 'consultation')
+				.addQuestion(questions.noticeOfIntention)
+				.addQuestion(questions.consultationSummaryFeedbackScoping)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
