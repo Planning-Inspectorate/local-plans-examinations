@@ -2,7 +2,8 @@ import { openGateway2DocumentUploadPage } from '../../../../flows/portal/gateway
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import {
 	gateway2CoverLetterPage,
-	localPlanTimetablePage
+	localPlanTimetablePage,
+	noticeOfIntentionToCommenceLocalPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { ERROR_MESSAGES } from 'cypress/constants/portal/error-messages.ts';
@@ -46,7 +47,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		});
 	});
 
-	it('Shows error message when no file is uploaded to the covering letter', { tags: ['regression'] }, () => {
+	it('Shows error message when no file is uploaded to the local plan timetable', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			const page = localPlanTimetablePage;
 			openGateway2DocumentUploadPage(plan, page);
@@ -54,4 +55,37 @@ describe('Gateway 2 document upload validation tests', () => {
 			localPlanTimetablePage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.NO_FILE_UPLOADED);
 		});
 	});
+
+	it(
+		'Shows error message when the notice of intention to commence local plan file type is not allowed',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = noticeOfIntentionToCommenceLocalPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document-invalid.txt');
+				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyErrorSummary(
+					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+					ERROR_MESSAGES.INVALID_FILE_FORMAT
+				);
+			});
+		}
+	);
+
+	it(
+		'Shows error message when no file is uploaded to the notice of intention to commence local plan',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = noticeOfIntentionToCommenceLocalPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyErrorSummary(
+					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+					ERROR_MESSAGES.NO_FILE_UPLOADED
+				);
+			});
+		}
+	);
 });

@@ -23,3 +23,29 @@ export const localPlanTimetablePage = new DocumentUploadPage(
 	gateway2UploadAnswers.localPlanTimetable.section,
 	gateway2UploadAnswers.localPlanTimetable.path
 );
+
+export const noticeOfIntentionToCommenceLocalPlanPage = new DocumentUploadPage(
+	gateway2UploadPath(
+		gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.section,
+		gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.path
+	),
+	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.fieldName,
+	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.heading,
+	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.caption,
+	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.addCy,
+	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.section,
+	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.path
+);
+
+export const draftStatementOfSoundnessPage = new DocumentUploadPage(
+	gateway2UploadPath(
+		gateway2UploadAnswers.draftStatementOfSoundness.section,
+		gateway2UploadAnswers.draftStatementOfSoundness.path
+	),
+	gateway2UploadAnswers.draftStatementOfSoundness.fieldName,
+	gateway2UploadAnswers.draftStatementOfSoundness.heading,
+	gateway2UploadAnswers.draftStatementOfSoundness.caption,
+	gateway2UploadAnswers.draftStatementOfSoundness.addCy,
+	gateway2UploadAnswers.draftStatementOfSoundness.section,
+	gateway2UploadAnswers.draftStatementOfSoundness.path
+);

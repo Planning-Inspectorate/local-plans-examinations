@@ -23,5 +23,21 @@ export const gateway2UploadAnswers = {
 		path: 'local-plan-timetable',
 		section: 'procedural',
 		addCy: 'add-local-plan-timetable'
+	},
+	draftStatementOfSoundness: {
+		heading: 'Upload your draft statement of soundness',
+		caption: 'Consultation documents',
+		fieldName: 'draftStatementOfSoundness',
+		path: 'draft-stat-soundness',
+		section: 'procedural',
+		addCy: 'add-draft-statement-of-soundness'
+	},
+	noticeOfIntentionToCommenceLocalPlan: {
+		heading: 'Upload your notice of intention to commence local plan preparation',
+		caption: 'Consultation documents',
+		fieldName: 'noticeOfIntention',
+		path: 'notice-of-intent',
+		section: 'consultation',
+		addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
 	}
 } as const satisfies Record<string, Gateway2UploadAnswer>;

@@ -43,11 +43,13 @@ describe('createJourney', () => {
 		assert.strictEqual(journey.initialBackLink, '/');
 	});
 
-	it('treats Gateway 2 procedural documents as optional in the journey', () => {
+	it('treats Gateway 2 documents as optional in the journey', () => {
 		assert.strictEqual(createTestJourney({}).isComplete(), true);
+		assert.strictEqual(createTestJourney({ gateway2CoverLetter: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ draftStatementOfCompliance: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ projectInitiationDocument: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ localPlanTimetable: [] }).isComplete(), true);
+		assert.strictEqual(createTestJourney({ noticeOfIntention: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ draftStatementOfSoundness: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney(buildUploadedDocumentAnswers()).isComplete(), true);
 	});
