@@ -86,8 +86,9 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment),
-			new Section('Workshop', 'workshop').addQuestion(questions.workshopDate).addQuestion(questions.workshopVenue),
+				.addQuestion(questions.assessorDateOfAppointment)
+				.addQuestion(questions.workshopDate)
+				.addQuestion(questions.workshopVenue),
 			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],
 		//taskListUrl: 'check-your-answers',
