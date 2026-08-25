@@ -369,7 +369,6 @@ function logUploadCleanupFailed(
 	);
 }
 
-
 function getRoutePlanReference(req: Request): string | undefined {
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
