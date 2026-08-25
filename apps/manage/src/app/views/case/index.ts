@@ -18,7 +18,14 @@ import {
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError
 } from './controller.ts';
-import { type IRouter, type NextFunction, type Response, type Request, Router as createRouter } from 'express';
+import {
+	type IRouter,
+	type NextFunction,
+	type Response,
+	type Request,
+	Router as createRouter,
+	type RequestHandler
+} from 'express';
 import type { ManageService } from '#service';
 import {
 	buildGetJourney,
