@@ -1,6 +1,6 @@
 $font-family: arial, helvetica, sans-serif;
 
-//Main gov styles
+// Main gov styles
 @use 'node_modules/govuk-frontend/dist/govuk/index' with (
 	// don't use the GDS Transport font, this service is not on GOV.UK
 	// https://www.gov.uk/service-manual/design/making-your-service-look-like-govuk#if-your-service-isnt-on-govuk
@@ -10,11 +10,12 @@ $font-family: arial, helvetica, sans-serif;
 @use 'node_modules/@pins/local-plans-lib/ui/footer/pins-footer';
 
 // set font-family for any autocomplete menu items
+/* stylelint-disable-next-line selector-class-pattern */
 .autocomplete__menu {
 	font-family: $font-family;
 }
 
-@media (min-width: 1440px) {
+@media (width >= 1440px) {
 	.pins-container-wide {
 		max-width: 1280px;
 	}
@@ -22,13 +23,4 @@ $font-family: arial, helvetica, sans-serif;
 
 .pins-white-space-pre-wrap {
 	white-space: pre-wrap;
-}
-
-.status-tag-width {
-	max-width: 250px !important;
-}
-
-#service-navigation,
-#service-navigation \* {
-	background-color: #fff;
 }

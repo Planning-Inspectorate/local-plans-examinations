@@ -75,7 +75,7 @@
 							<dd class="govuk-summary-list__actions">
 								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
 									<input type="hidden" name="_csrf" value="{{ _csrf }}">
-									<button class="app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
+									<button class="pins-app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
 										{{ question.text.removeLinkText or "Remove" }}
 										<span class="govuk-visually-hidden">{{ file.fileName }}</span>
 									</button>
