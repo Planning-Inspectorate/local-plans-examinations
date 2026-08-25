@@ -51,6 +51,7 @@ describe('createJourney', () => {
 		assert.strictEqual(createTestJourney({ localPlanTimetable: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ noticeOfIntention: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ draftStatementOfSoundness: [] }).isComplete(), true);
+		assert.strictEqual(createTestJourney({ scopingConsultationDocuments: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney({ consultationSummaryFeedbackScoping: [] }).isComplete(), true);
 		assert.strictEqual(createTestJourney(buildUploadedDocumentAnswers()).isComplete(), true);
 	});
