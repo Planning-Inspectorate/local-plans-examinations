@@ -58,8 +58,9 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	inputAttributes: Record<string, string>;
 	inputFields: (InputField | RadioField | HiddenField | BooleanFieldInput | DateField)[];
 	label: string;
+	listSeparate: boolean;
 
-	constructor({ label = '', inputAttributes = {}, inputFields = [], ...params }) {
+	constructor({ label = '', inputAttributes = {}, inputFields = [], listSeparate = false, ...params }) {
 		super({
 			...params,
 			viewFolder: 'views/layouts/custom-multi-field-input',
@@ -69,6 +70,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 		});
 		this.label = label;
 		this.inputAttributes = inputAttributes;
+		this.listSeparate = listSeparate;
 
 		if (!inputFields || inputFields.length === 0) {
 			throw new Error('inputFields are mandatory');
@@ -215,18 +217,38 @@ export default class CustomMultiFieldInputQuestion extends Question {
 			return answer ? acc + (field.formatPrefix || '') + answer + (field.formatJoinString || '\n') : acc;
 		}, '');
 
-		const formattedAnswer = this.#allQuestionsUnanswered(journey) ? this.notStartedText : summaryDetails || '';
+		const questionsSplit =
+			this.listSeparate === true
+				? journey.sections.find((section: any) => section.segment === sectionSegment).questions[0].inputFields
+				: [this.title];
 
-		return [
-			{
-				key: `${this.title}`,
+		const formattedQuestions = [];
+		for (const q of questionsSplit) {
+			let formattedAnswer;
+			if (this.listSeparate === true) {
+				if (q.type === 'boolean' || q.type === 'radio') {
+					formattedAnswer =
+						q.options.find((opt: any) => opt.value === journey.response.answers[q.fieldName])?.text || '';
+				} else {
+					formattedAnswer = this.#formatValue(
+						String(journey.response.answers[q.fieldName] || 'Not provided'),
+						q.formatTextFunction
+					);
+				}
+			} else {
+				formattedAnswer = this.#allQuestionsUnanswered(journey) ? this.notStartedText : summaryDetails || '';
+			}
+
+			formattedQuestions.push({
+				key: q.label,
 				value: this.isInManageListSection
 					? // Avoid double <br> at the end of answer in manage list section
 						escape(formattedAnswer).replace(/\n(?!$)/g, '<br>')
 					: nl2br(escape(formattedAnswer)),
 				action: this.getAction(sectionSegment, journey, summaryDetails)
-			}
-		];
+			});
+		}
+		return formattedQuestions;
 	}
 
 	/**
