@@ -42,6 +42,13 @@ export type FileUploaderText = {
 	};
 };
 
+export type FileUploaderValidationMessages = {
+	noFile?: string;
+	incompatibleFileType?: string;
+	fileTooLarge?: string;
+	totalFileSizeTooLarge?: string;
+};
+
 export type FileUploaderQuestionConfig = {
 	type: typeof FILE_UPLOADER_COMPONENT_TYPE;
 	allowedFileExtensions: string[];
@@ -53,6 +60,7 @@ export type FileUploaderQuestionConfig = {
 	maxTotalUploadSizeLabel?: string;
 	multiple?: boolean;
 	text?: FileUploaderText;
+	validationMessages?: FileUploaderValidationMessages;
 };
 
 export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {

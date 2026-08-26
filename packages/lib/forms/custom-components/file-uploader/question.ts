@@ -28,6 +28,7 @@ export default class FileUploaderQuestion extends Question {
 		maxTotalUploadSizeLabel = TOTAL_FILE_UPLOAD_LIMIT_LABEL,
 		multiple = true,
 		text = {},
+		validationMessages = {},
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
@@ -45,7 +46,8 @@ export default class FileUploaderQuestion extends Question {
 			maxTotalUploadSizeBytes,
 			maxTotalUploadSizeLabel,
 			multiple,
-			text
+			text,
+			validationMessages
 		};
 	}
 

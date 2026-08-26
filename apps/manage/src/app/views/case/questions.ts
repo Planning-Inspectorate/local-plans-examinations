@@ -585,7 +585,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	gateway2Report: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-		title: 'Report issued',
+		title: 'Issue Gateway 2 report',
 		question: 'Upload Gateway 2 report',
 		fieldName: 'gateway2Report',
 		url: 'gateway-2-report',
@@ -603,12 +603,19 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		text: {
 			caption: 'Issue report',
 			introduction: 'Upload a file',
-			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_REPORT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES)}`,
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_REPORT_ALLOWED_EXTENSIONS)} and smaller than 250MB.`,
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files',
 			continueButtonText: 'Continue'
 		},
-		validators: [new FileUploadRequiredValidator('gateway2Report', 'Upload gateway 2 workshop file')]
+		validationMessages: {
+			noFile: 'Please upload your Gateway 2 report',
+			incompatibleFileType: 'Please upload a compatible file type',
+			fileTooLarge: 'File too large',
+			totalFileSizeTooLarge: 'Total file size is too large'
+		},
+		validators: [new FileUploadRequiredValidator('gateway2Report', 'Please upload your Gateway 2 report')]
 	},
 	//gateway 3
 	gateway3ExpectedDate: {

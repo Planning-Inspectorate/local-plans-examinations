@@ -1007,8 +1007,15 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
 			errors?: Record<string, { msg: string }>;
 			errorSummary?: Array<{ text: string; href: string }>;
 		};
-		session.errors = { 'upload-form': { msg: 'Errors encountered during file upload' } };
-		session.errorSummary = [{ text: `The selected file must be smaller than ${sizeLabel}`, href: '#upload-form' }];
+		const message =
+			questionConfig?.validationMessages?.fileTooLarge ?? `The selected file must be smaller than ${sizeLabel}`;
+		session.errors = { 'upload-form': { msg: message } };
+		session.errorSummary = [
+			{
+				text: message,
+				href: '#upload-form'
+			}
+		];
 		return res.redirect(redirectToFileUploaderQuestion(req));
 	}
 	return next(err);

@@ -21,6 +21,7 @@ export type FileUploaderControllerOptions = {
 		| 'maxFileSizeLabel'
 		| 'maxFilesPerUpload'
 		| 'maxTotalUploadSizeBytes'
+		| 'validationMessages'
 	>;
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
@@ -73,11 +74,12 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 			maxFileSizeBytes: options.question.maxFileSizeBytes,
 			maxFileSizeLabel: options.question.maxFileSizeLabel,
 			maxFilesPerUpload: options.question.maxFilesPerUpload ?? 3,
-			maxTotalUploadSizeBytes: options.question.maxTotalUploadSizeBytes ?? 1024 * 1024 * 1024
+			maxTotalUploadSizeBytes: options.question.maxTotalUploadSizeBytes ?? 1024 * 1024 * 1024,
+			validationMessages: options.question.validationMessages
 		});
 
 		if (errors.length > 0) {
-			session.errors = { 'upload-form': { msg: 'Errors encountered during file upload' } };
+			session.errors = { 'upload-form': { msg: errors[0]?.text ?? 'Errors encountered during file upload' } };
 			session.errorSummary = errors;
 			await options.onUploadError?.({
 				req: request,
