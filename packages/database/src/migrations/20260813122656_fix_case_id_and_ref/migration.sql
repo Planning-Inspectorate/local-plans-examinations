@@ -35,26 +35,78 @@ ALTER TABLE [dbo].[Gateway2Info] DROP CONSTRAINT [Gateway2Info_caseId_key];
 -- DropIndex
 ALTER TABLE [dbo].[Gateway3Info] DROP CONSTRAINT [Gateway3Info_caseId_key];
 
--- Backfill caseId values from Case.reference to Case.id before changing the column type.
+-- Validate and backfill caseId values from Case.reference to Case.id before changing the column type.
+IF EXISTS (
+    SELECT 1
+    FROM [dbo].[ExaminationInfo] AS [examinationInfo]
+    LEFT JOIN [dbo].[Case] AS [caseByReference] ON [examinationInfo].[caseId] = [caseByReference].[reference]
+    LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [examinationInfo].[caseId]) = [caseById].[id]
+    WHERE [caseByReference].[id] IS NULL
+    AND [caseById].[id] IS NULL
+)
+BEGIN
+    THROW 51000, 'ExaminationInfo.caseId contains values that do not match Case.reference or Case.id.', 1;
+END;
+
+IF EXISTS (
+    SELECT 1
+    FROM [dbo].[Gateway1Info] AS [gateway1Info]
+    LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway1Info].[caseId] = [caseByReference].[reference]
+    LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway1Info].[caseId]) = [caseById].[id]
+    WHERE [caseByReference].[id] IS NULL
+    AND [caseById].[id] IS NULL
+)
+BEGIN
+    THROW 51000, 'Gateway1Info.caseId contains values that do not match Case.reference or Case.id.', 1;
+END;
+
+IF EXISTS (
+    SELECT 1
+    FROM [dbo].[Gateway2Info] AS [gateway2Info]
+    LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway2Info].[caseId] = [caseByReference].[reference]
+    LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway2Info].[caseId]) = [caseById].[id]
+    WHERE [caseByReference].[id] IS NULL
+    AND [caseById].[id] IS NULL
+)
+BEGIN
+    THROW 51000, 'Gateway2Info.caseId contains values that do not match Case.reference or Case.id.', 1;
+END;
+
+IF EXISTS (
+    SELECT 1
+    FROM [dbo].[Gateway3Info] AS [gateway3Info]
+    LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway3Info].[caseId] = [caseByReference].[reference]
+    LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway3Info].[caseId]) = [caseById].[id]
+    WHERE [caseByReference].[id] IS NULL
+    AND [caseById].[id] IS NULL
+)
+BEGIN
+    THROW 51000, 'Gateway3Info.caseId contains values that do not match Case.reference or Case.id.', 1;
+END;
+
 UPDATE [examinationInfo]
-SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+SET [caseId] = CONVERT(NVARCHAR(36), COALESCE([caseByReference].[id], [caseById].[id]))
 FROM [dbo].[ExaminationInfo] AS [examinationInfo]
-INNER JOIN [dbo].[Case] AS [case] ON [examinationInfo].[caseId] = [case].[reference];
+LEFT JOIN [dbo].[Case] AS [caseByReference] ON [examinationInfo].[caseId] = [caseByReference].[reference]
+LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [examinationInfo].[caseId]) = [caseById].[id];
 
 UPDATE [gateway1Info]
-SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+SET [caseId] = CONVERT(NVARCHAR(36), COALESCE([caseByReference].[id], [caseById].[id]))
 FROM [dbo].[Gateway1Info] AS [gateway1Info]
-INNER JOIN [dbo].[Case] AS [case] ON [gateway1Info].[caseId] = [case].[reference];
+LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway1Info].[caseId] = [caseByReference].[reference]
+LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway1Info].[caseId]) = [caseById].[id];
 
 UPDATE [gateway2Info]
-SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+SET [caseId] = CONVERT(NVARCHAR(36), COALESCE([caseByReference].[id], [caseById].[id]))
 FROM [dbo].[Gateway2Info] AS [gateway2Info]
-INNER JOIN [dbo].[Case] AS [case] ON [gateway2Info].[caseId] = [case].[reference];
+LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway2Info].[caseId] = [caseByReference].[reference]
+LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway2Info].[caseId]) = [caseById].[id];
 
 UPDATE [gateway3Info]
-SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+SET [caseId] = CONVERT(NVARCHAR(36), COALESCE([caseByReference].[id], [caseById].[id]))
 FROM [dbo].[Gateway3Info] AS [gateway3Info]
-INNER JOIN [dbo].[Case] AS [case] ON [gateway3Info].[caseId] = [case].[reference];
+LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway3Info].[caseId] = [caseByReference].[reference]
+LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway3Info].[caseId]) = [caseById].[id];
 
 -- AlterTable
 ALTER TABLE [dbo].[ExaminationInfo] ALTER COLUMN [caseId] UNIQUEIDENTIFIER NOT NULL;
