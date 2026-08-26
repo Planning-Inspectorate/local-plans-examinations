@@ -201,7 +201,7 @@ function registerCaseJourney(
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
-	router.post(`/${path}/gateway-2/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 
 	// Save answer
