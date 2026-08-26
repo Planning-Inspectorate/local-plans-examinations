@@ -612,18 +612,52 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
 		const documentUploadDate = uploadedFiles[0]?.dateCreated ?? undefined;
-		const titleMap: Record<string, string> = {
-			'gateway-2-report': 'Check Gateway 2 report details and issue notification',
-			'signed-sla': 'Check signed SLA and issue notification'
+		// Extra details needed to render the inner notification on the page
+		const questionDetailsMap: Record<
+			string,
+			{ title: string; dbInfo: any; completeIndicatorFieldName: string; submitButtonText: string }
+		> = {
+			'signed-sla': {
+				title: 'Check signed SLA and issue notification',
+				dbInfo: service.db.gateway1Info,
+				completeIndicatorFieldName: 'slaSentDate',
+				submitButtonText: 'Confirm and issue notification'
+			},
+			'gateway-2-report': {
+				title: 'Check Gateway 2 report details and issue notification',
+				dbInfo: service.db.gateway2Info,
+				completeIndicatorFieldName: 'reportIssuedDate',
+				submitButtonText: 'Issue report'
+			}
 		};
+		const questionDetails = questionDetailsMap[questionConfig.url];
+		if (!questionDetails) {
+			throw new Error(
+				`Could not find details for question '${questionConfig.url}' in buildCheckReportMiddleware::questionDetailsMap`
+			);
+		}
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const completeIndicatorFieldName = questionDetails.completeIndicatorFieldName;
+		const existingGatewayDetails = await questionDetails.dbInfo.findUnique({
+			select: {
+				[completeIndicatorFieldName]: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		const alreadyComplete = existingGatewayDetails?.[completeIndicatorFieldName];
+		const notificationPreviewTemplate = questionUrl + (alreadyComplete ? '-complete' : '');
 		res.render('views/layouts/submit-documents-check-your-answers', {
-			titleHeading: titleMap[questionConfig.url],
+			titleHeading: questionDetails.title,
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,
 			question: questionUrl,
 			backLink: backLinkUrl,
+			notificationPreviewTemplate: notificationPreviewTemplate,
+			submitButtonText: questionDetails.submitButtonText,
 			documentUploadDate: documentUploadDate
 				? new Intl.DateTimeFormat('en-GB', {
 						day: 'numeric',
