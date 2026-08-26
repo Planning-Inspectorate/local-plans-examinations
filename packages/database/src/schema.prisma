@@ -128,7 +128,7 @@ model ExaminationInfo {
 
 model LPA {
   lpaCode  String    @id
-  lpaName  String    @db.NVarChar(200)
+  lpaName  String    @default("") @db.NVarChar(200)
   contacts Contact[]
   cases    Case[]
 }
