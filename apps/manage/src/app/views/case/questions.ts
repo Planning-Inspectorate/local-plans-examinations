@@ -12,8 +12,7 @@ import MultiFieldInputValidator from '../validators/multi-field-input-validator.
 import {
 	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
-	TOTAL_FILE_UPLOAD_LIMIT,
-	MAX_NO_OF_FILES_TO_UPLOAD
+	TOTAL_FILE_UPLOAD_LIMIT
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
 	MIME_TYPE_MAP,
@@ -410,7 +409,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			.flat(),
 		maxFileSizeBytes: SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxFilesPerUpload: 1,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
@@ -419,7 +418,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			introduction: 'Upload a file',
 			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(SIGNED_SLA_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES)}.`,
 			chooseFilesButtonText: 'Choose files',
-			dropInstructionText: 'or drop files'
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
 		},
 		validators: [
 			new FileUploadRequiredValidator('signedSla', 'Upload at least one signed SLA document before continuing')
