@@ -1,4 +1,4 @@
-import type { UploadedFile, UploadedRequestFile } from './types.ts';
+import type { FileUploaderValidationMessages, UploadedFile, UploadedRequestFile } from './types.ts';
 import { sanitiseFileName } from '../../../storage/index.ts';
 export { sanitiseFileName } from '../../../storage/index.ts';
 
@@ -10,6 +10,7 @@ export type FileValidationOptions = {
 	maxFilesPerUpload: number;
 	maxTotalUploadSizeBytes: number;
 	uploadFormHref?: string;
+	validationMessages?: FileUploaderValidationMessages;
 };
 
 export type FileValidationError = {
@@ -34,12 +35,13 @@ export function validateFiles(
 	options: FileValidationOptions
 ): FileValidationError[] {
 	const href = options.uploadFormHref ?? DEFAULT_UPLOAD_FORM_HREF;
+	const messages = options.validationMessages ?? {};
 	const errors: FileValidationError[] = [];
 	const allowedExtensions = options.allowedFileExtensions.map(normaliseExtension);
 	const allowedMimeTypes = options.allowedMimeTypes ?? [];
 
 	if (files.length === 0) {
-		errors.push({ text: 'Choose a file to upload', href });
+		errors.push({ text: messages.noFile ?? 'Choose a file to upload', href });
 	}
 
 	if (files.length > options.maxFilesPerUpload) {
@@ -55,12 +57,12 @@ export function validateFiles(
 
 		if (!isAllowedExtension || !isAllowedMimeType) {
 			const extensionList = options.allowedFileExtensions.map((ext) => ext.toUpperCase()).join(', ');
-			errors.push({ text: `The selected file must be ${extensionList}`, href });
+			errors.push({ text: messages.incompatibleFileType ?? `The selected file must be ${extensionList}`, href });
 		}
 
 		if (file.size > options.maxFileSizeBytes) {
 			const sizeLabel = options.maxFileSizeLabel ?? formatBytes(options.maxFileSizeBytes);
-			errors.push({ text: `The selected file must be smaller than ${sizeLabel}`, href });
+			errors.push({ text: messages.fileTooLarge ?? `The selected file must be smaller than ${sizeLabel}`, href });
 		}
 	}
 
@@ -74,7 +76,7 @@ export function validateFiles(
 	const totalUploadedSize = existingFiles.reduce((sum, file) => sum + file.size, 0);
 	const totalNewSize = files.reduce((sum, file) => sum + file.size, 0);
 	if (totalUploadedSize + totalNewSize > options.maxTotalUploadSizeBytes) {
-		errors.push({ text: 'The total size of uploaded files is too large', href });
+		errors.push({ text: messages.totalFileSizeTooLarge ?? 'The total size of uploaded files is too large', href });
 	}
 
 	return errors;

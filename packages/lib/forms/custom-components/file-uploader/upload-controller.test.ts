@@ -90,7 +90,7 @@ describe('file uploader upload controller', () => {
 				errors: [{ text: 'Choose a file to upload', href: '#upload-form' }]
 			}
 		]);
-		assert.deepEqual(req.session.errors, { 'upload-form': { msg: 'Errors encountered during file upload' } });
+		assert.deepEqual(req.session.errors, { 'upload-form': { msg: 'Choose a file to upload' } });
 		assert.deepEqual(req.session.errorSummary, [{ text: 'Choose a file to upload', href: '#upload-form' }]);
 		// Commented out due to GH security alert, will look at removing / resolving with the cover letter release
 		// assert.deepEqual(res.redirect.mock.calls[0].arguments, ['/case/gateway-2']);

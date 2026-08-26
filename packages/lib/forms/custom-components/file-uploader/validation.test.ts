@@ -93,6 +93,38 @@ describe('file uploader validation', () => {
 
 			assert.deepEqual(errors, [{ text: 'The total size of uploaded files is too large', href: '#documents' }]);
 		});
+
+		it('uses custom validation messages when provided', () => {
+			const noFileErrors = validateFiles(
+				[],
+				[],
+				buildValidationOptions({
+					validationMessages: {
+						noFile: 'Please upload your Gateway 2 report'
+					}
+				})
+			);
+			const errors = validateFiles(
+				[buildRequestFile({ originalname: 'cover-letter.exe', mimetype: 'application/x-msdownload', size: 2000 })],
+				[buildUploadedFile({ fileName: 'existing.pdf', size: 500 })],
+				buildValidationOptions({
+					maxFileSizeBytes: 1000,
+					maxTotalUploadSizeBytes: 1000,
+					validationMessages: {
+						incompatibleFileType: 'Please upload a compatible file type',
+						fileTooLarge: 'File too large',
+						totalFileSizeTooLarge: 'Total file size is too large'
+					}
+				})
+			);
+
+			assert.deepEqual(noFileErrors, [{ text: 'Please upload your Gateway 2 report', href: '#upload-form' }]);
+			assert.deepEqual(errors, [
+				{ text: 'Please upload a compatible file type', href: '#upload-form' },
+				{ text: 'File too large', href: '#upload-form' },
+				{ text: 'Total file size is too large', href: '#upload-form' }
+			]);
+		});
 	});
 });
 
