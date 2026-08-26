@@ -2,7 +2,9 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { createRoutesAndGuards } from './router.ts';
+import { authRateLimitOptions } from './rate-limit.ts';
 import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import { TestServer } from '@pins/local-plans-lib/testing/test-server.ts';
 
@@ -63,12 +65,10 @@ describe('auth', () => {
 				next();
 			});
 			app.use('/unauthenticated', (req, res) => res.send('Unauthenticated'));
+			app.use(rateLimit(authRateLimitOptions));
 			app.use('/auth', authRoutes);
 
-			// check logged in
-			app.use(authGuards.assertIsAuthenticated);
-			// check group membership
-			app.use(authGuards.assertGroupAccess);
+			app.use(authGuards.assertIsAuthenticated, authGuards.assertGroupAccess);
 			app.get('/home', (req, res) => {
 				res.status(200);
 			});

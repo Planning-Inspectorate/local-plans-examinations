@@ -1,5 +1,7 @@
 import { Router as createRouter } from 'express';
+import rateLimit from 'express-rate-limit';
 import { createRoutesAndGuards as createAuthRoutesAndGuards } from './auth/router.ts';
+import { authRateLimitOptions } from './auth/rate-limit.ts';
 import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createNotifyRoutes } from './notify/router.ts';
@@ -41,14 +43,11 @@ export function buildRouter(service: ManageService): IRouter {
 
 	if (!service.authDisabled) {
 		service.logger.info('registering auth routes');
+		router.use(rateLimit(authRateLimitOptions));
 		router.use('/auth', authRoutes);
 
 		// all subsequent routes require auth
-
-		// check logged in
-		router.use(authGuards.assertIsAuthenticated);
-		// check group membership
-		router.use(authGuards.assertGroupAccess);
+		router.use(authGuards.assertIsAuthenticated, authGuards.assertGroupAccess);
 	} else {
 		service.logger.warn('auth disabled; auth routes and guards skipped');
 	}
