@@ -12,7 +12,8 @@ import MultiFieldInputValidator from '../validators/multi-field-input-validator.
 import {
 	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
-	TOTAL_FILE_UPLOAD_LIMIT
+	TOTAL_FILE_UPLOAD_LIMIT,
+	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
 	MIME_TYPE_MAP,
@@ -409,7 +410,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			.flat(),
 		maxFileSizeBytes: SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: 1,
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
