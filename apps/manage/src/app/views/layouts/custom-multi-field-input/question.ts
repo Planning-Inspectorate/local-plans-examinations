@@ -224,8 +224,10 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 		const formattedQuestions = [];
 		for (const q of questionsSplit) {
+			let key;
 			let formattedAnswer;
 			if (this.listSeparate === true) {
+				key = q.label;
 				if (q.type === 'boolean' || q.type === 'radio') {
 					formattedAnswer =
 						q.options.find((opt: any) => opt.value === journey.response.answers[q.fieldName])?.text || '';
@@ -236,11 +238,12 @@ export default class CustomMultiFieldInputQuestion extends Question {
 					);
 				}
 			} else {
+				key = this.title;
 				formattedAnswer = this.#allQuestionsUnanswered(journey) ? this.notStartedText : summaryDetails || '';
 			}
 
 			formattedQuestions.push({
-				key: q.label,
+				key: key,
 				value: this.isInManageListSection
 					? // Avoid double <br> at the end of answer in manage list section
 						escape(formattedAnswer).replace(/\n(?!$)/g, '<br>')
