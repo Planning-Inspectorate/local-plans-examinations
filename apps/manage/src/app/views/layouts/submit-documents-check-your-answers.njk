@@ -20,7 +20,7 @@
   <div class="govuk-grid-column-two-thirds">
 
     <span class="govuk-caption-l">{{ caseReference }}</span>
-    <h1 class="govuk-heading-l">Check Gateway 2 report details and issue notification</h1>
+    <h1 class="govuk-heading-l">{{ titleHeading }}</h1>
 
     
 	{% if uploadedFiles and uploadedFiles.length %}
@@ -43,7 +43,7 @@
     <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Date uploaded</dt>
       <dd class="govuk-summary-list__value">
-        <a class="govuk-hint">{{ reportIssuedDate }}</a>
+        <a class="govuk-hint">{{ documentUploadDate }}</a>
       </dd>
     </dl>
      <details class="govuk-details" data-cy="preview-email-to-lpa">

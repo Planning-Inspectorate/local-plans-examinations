@@ -11,10 +11,11 @@ import {
 	type FileUploadQuestion,
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
-	buildCheckGateway2ReportMiddleware,
+	buildCheckReportMiddleware,
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
+	issueGateway1SLA,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError
 } from './controller.ts';
@@ -197,10 +198,11 @@ function registerCaseJourney(
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
-		buildCheckGateway2ReportMiddleware(service, journeyId),
+		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
-	router.post(`/${path}/:section/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-2/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 
 	// Save answer
 	router.post(

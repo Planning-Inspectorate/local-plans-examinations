@@ -537,6 +537,15 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'signed-sla' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					// TODO need to check if there are documents - only redirect if there are documents
+					res.redirect(303, 'signed-sla/check');
+					return;
+				}
 				if (next) next();
 				return;
 			}
@@ -588,27 +597,40 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 	};
 }
 
-export function buildCheckGateway2ReportMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function buildCheckReportMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
+		const section = getParam(req.params.section);
+		const questionUrl = getParam(req.params.question);
+		const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == questionUrl);
+		if (!questionConfig) {
+			throw new Error(`Could not find question config for question url '${questionUrl}'`);
+		}
+		const questionFieldName = questionConfig.fieldName;
 		const uploadedFiles =
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionFieldName)]?.uploadedFiles ?? [];
+		// Todo need to add error handling for 0 files - no flow defined right now
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		const reportIssuedDate = uploadedFiles[0]?.dateCreated ?? undefined;
-		res.render('views/layouts/gateway2-report-check-your-answers.njk', {
+		const documentUploadDate = uploadedFiles[0]?.dateCreated ?? undefined;
+		const titleMap: Record<string, string> = {
+			'gateway-2-report': 'Check Gateway 2 report details and issue notification',
+			'signed-sla': 'Check signed SLA and issue notification'
+		};
+		res.render('views/layouts/submit-documents-check-your-answers', {
+			titleHeading: titleMap[questionConfig.url],
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,
 			journeyId: journeyId,
-			section: 'report',
-			question: 'gateway-2-report',
+			section: section,
+			question: questionUrl,
 			backLink: backLinkUrl,
-			reportIssuedDate: reportIssuedDate
+			documentUploadDate: documentUploadDate
 				? new Intl.DateTimeFormat('en-GB', {
 						day: 'numeric',
 						month: 'long',
 						timeZone: 'Europe/London',
 						year: 'numeric'
-					}).format(reportIssuedDate)
+					}).format(documentUploadDate)
 				: null
 		});
 		return;
@@ -983,6 +1005,57 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		return;
+	};
+}
+
+export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway1Info.findUnique({
+			select: {
+				slaSentDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.slaSentDate) {
+			// Try to update the slaSentDate
+			const slaSentDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await updateGateway1(
+				service.db,
+				{
+					slaSentDate: slaSentDate
+				},
+				caseReference,
+				'sla-sent-date'
+			);
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					slaSentDate: null
+				},
+				{
+					slaSentDate: slaSentDate
+				},
+				caseReference,
+				currentUser
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Signed SLA uploaded. LPA can proceed to Gateway 2 submission';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'SLA already issued';
 			req.session.alertMessageStatus = 'important';
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
