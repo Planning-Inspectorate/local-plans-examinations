@@ -3,13 +3,16 @@ import {
 	workshopVenuePage,
 	gateway2AssessorPage,
 	gateway2ActualDatePage,
-	gateway2ExpectedDatePage
+	gateway2ExpectedDatePage,
+	gateway2ReportCheckPage,
+	gateway2ReportPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
 import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
+	gateway2Report,
 	workshopVenueAnswer,
 	updatedGateway2ExpectedDateAnswer
 } from '../../../../fixtures/manage/gateway-2.ts';
@@ -54,6 +57,22 @@ describe('Gateway 2 updates', () => {
 
 		gateway2Page.verifyLoaded(seededCase.planTitle);
 		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
+	});
+
+	it('uploads the Gateway 2 report', { tags: ['regression'] }, () => {
+		gateway2Page.openActionLinkFor(gateway2Report.row);
+		gateway2ReportPage.verifyLoaded();
+
+		gateway2ReportPage.dragAndDropFile(gateway2Report.fileName, gateway2Report.fieldName);
+		gateway2ReportPage.clickUploadFiles();
+		gateway2ReportPage.verifyFileUploaded(gateway2Report.fileName);
+		gateway2ReportPage.saveAndReturn();
+
+		gateway2ReportCheckPage.verifyLoaded(gateway2Report.fileName);
+		gateway2ReportCheckPage.issueReport();
+
+		gateway2Page.verifyLoaded(seededCase.planTitle);
+		gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
 	});
 
 	it('returns to Gateway 2 from Gateway 2 answer page back links', { tags: ['regression'] }, () => {

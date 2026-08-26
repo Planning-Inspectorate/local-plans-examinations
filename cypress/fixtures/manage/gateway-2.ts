@@ -94,6 +94,16 @@ export const workshopVenueAnswer = {
 	display: 'Workshop venue'
 } as const;
 
+export const gateway2Report = {
+	row: 'Issue Gateway 2 report',
+	heading: 'Upload Gateway 2 report',
+	fieldName: 'gateway2Report',
+	path: 'gateway-2-report',
+	caption: 'Issue report',
+	fileName: 'test-document.pdf',
+	validationMessage: 'Please upload your Gateway 2 report'
+} as const;
+
 export const updatedGateway2ExpectedDateAnswer = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'

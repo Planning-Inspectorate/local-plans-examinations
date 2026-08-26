@@ -2,13 +2,15 @@ import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.
 import {
 	gateway2DateAnswers,
 	workshopVenueAnswer,
-	gateway2AssessorAnswer
+	gateway2AssessorAnswer,
+	gateway2Report
 } from '../../../../fixtures/manage/gateway-2.ts';
 import {
 	gateway2Page,
 	gateway2ActualDatePage,
 	workshopVenuePage,
-	gateway2AssessorPage
+	gateway2AssessorPage,
+	gateway2ReportPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
 
 describe('Gateway 2 validation', () => {
@@ -50,5 +52,14 @@ describe('Gateway 2 validation', () => {
 
 		gateway2AssessorPage.verifyLoaded();
 		gateway2AssessorPage.verifyValidationError('Select a name');
+	});
+
+	it('shows an error when the Gateway 2 report is not uploaded', { tags: ['regression'] }, () => {
+		gateway2Page.openActionLinkFor(gateway2Report.row);
+		gateway2ReportPage.verifyLoaded();
+		gateway2ReportPage.saveAndReturn();
+
+		gateway2ReportPage.verifyLoaded();
+		gateway2ReportPage.verifyValidationError(gateway2Report.validationMessage);
 	});
 });

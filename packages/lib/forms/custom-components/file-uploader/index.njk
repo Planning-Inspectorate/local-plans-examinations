@@ -44,6 +44,8 @@
 				<p class="govuk-body">{{ question.text.totalUploadSizeText }}</p>
 			{% endif %}
 
+			{% set uploadError = errors["upload-form"] or errors[question.fieldName] %}
+
 			<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents" data-cy="upload-form">
 				<input type="hidden" name="_csrf" value="{{ _csrf }}">
 				{{ govukFileUpload({
@@ -60,8 +62,8 @@
 					attributes: {
 						accept: question.allowedMimeTypes | join(", ")
 					},
-					errorMessage: errors["upload-form"] and {
-						text: errors["upload-form"].msg
+					errorMessage: uploadError and {
+						text: uploadError.msg
 					}
 				}) }}
 				{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files", attributes: { "data-cy": "upload-files-button" } }) }}

@@ -547,9 +547,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					req.params.question == 'gateway-2-report' &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
-					// TODO need to check if there are documents - only redirect if there are documents
-					res.redirect(303, 'gateway-2-report/check');
-					return;
+					const uploadedGateway2Reports =
+						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
+
+					if (uploadedGateway2Reports.length > 0) {
+						res.redirect(303, 'gateway-2-report/check');
+						return;
+					}
 				}
 
 				if (next) next();
@@ -584,8 +588,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 export function buildCheckGateway2ReportMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const uploadedFiles =
-			req.session.fileUploader[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')].uploadedFiles;
-		// Todo need to add error handling for 0 files - no flow defined right now
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
 		const reportIssuedDate = uploadedFiles[0]?.dateCreated ?? undefined;
