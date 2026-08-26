@@ -56,6 +56,7 @@
     "@redis/entraid": "^6.2.0",
     "@types/escape-html": "^1.0.4",
     "accessible-autocomplete": "^3.0.1",
+    "azurite": "^3.37.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.3.0",
     "connect-redis": "^10.0.0",
