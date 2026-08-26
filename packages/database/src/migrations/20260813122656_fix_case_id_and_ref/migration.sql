@@ -90,6 +90,7 @@ ALTER TABLE [dbo].[Gateway1Info] ADD [caseId_new] UNIQUEIDENTIFIER;
 ALTER TABLE [dbo].[Gateway2Info] ADD [caseId_new] UNIQUEIDENTIFIER;
 ALTER TABLE [dbo].[Gateway3Info] ADD [caseId_new] UNIQUEIDENTIFIER;
 
+EXEC(N'
 UPDATE [examinationInfo]
 SET [caseId_new] = COALESCE([caseByReference].[id], [caseById].[id])
 FROM [dbo].[ExaminationInfo] AS [examinationInfo]
@@ -113,26 +114,29 @@ SET [caseId_new] = COALESCE([caseByReference].[id], [caseById].[id])
 FROM [dbo].[Gateway3Info] AS [gateway3Info]
 LEFT JOIN [dbo].[Case] AS [caseByReference] ON [gateway3Info].[caseId] = [caseByReference].[reference]
 LEFT JOIN [dbo].[Case] AS [caseById] ON TRY_CONVERT(UNIQUEIDENTIFIER, [gateway3Info].[caseId]) = [caseById].[id];
+');
 
+EXEC(N'
 IF EXISTS (SELECT 1 FROM [dbo].[ExaminationInfo] WHERE [caseId_new] IS NULL)
 BEGIN
-    THROW 51000, 'ExaminationInfo.caseId_new could not be populated from Case.reference or Case.id.', 1;
+    THROW 51000, ''ExaminationInfo.caseId_new could not be populated from Case.reference or Case.id.'', 1;
 END;
 
 IF EXISTS (SELECT 1 FROM [dbo].[Gateway1Info] WHERE [caseId_new] IS NULL)
 BEGIN
-    THROW 51000, 'Gateway1Info.caseId_new could not be populated from Case.reference or Case.id.', 1;
+    THROW 51000, ''Gateway1Info.caseId_new could not be populated from Case.reference or Case.id.'', 1;
 END;
 
 IF EXISTS (SELECT 1 FROM [dbo].[Gateway2Info] WHERE [caseId_new] IS NULL)
 BEGIN
-    THROW 51000, 'Gateway2Info.caseId_new could not be populated from Case.reference or Case.id.', 1;
+    THROW 51000, ''Gateway2Info.caseId_new could not be populated from Case.reference or Case.id.'', 1;
 END;
 
 IF EXISTS (SELECT 1 FROM [dbo].[Gateway3Info] WHERE [caseId_new] IS NULL)
 BEGIN
-    THROW 51000, 'Gateway3Info.caseId_new could not be populated from Case.reference or Case.id.', 1;
+    THROW 51000, ''Gateway3Info.caseId_new could not be populated from Case.reference or Case.id.'', 1;
 END;
+');
 
 -- Replace the old text caseId columns with populated UNIQUEIDENTIFIER columns.
 ALTER TABLE [dbo].[ExaminationInfo] DROP COLUMN [caseId];
