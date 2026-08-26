@@ -16,6 +16,10 @@ class Gateway2ReportCheckPage extends BasePage {
 		super(/^\/case\/.+\/gateway-2\/report\/gateway-2-report\/check$/);
 	}
 
+	get previewDropDown() {
+		return cy.getByData('preview-email-to-lpa');
+	}
+
 	get issueReportButton() {
 		return cy.contains('button', 'Issue report');
 	}
@@ -24,6 +28,7 @@ class Gateway2ReportCheckPage extends BasePage {
 		super.verifyLoaded();
 		this.verifyHeading('Check Gateway 2 report details and issue notification');
 		this.issueReportButton.should('be.visible');
+		this.previewDropDown.should('be.visible');
 
 		if (fileName) {
 			this.verifySummaryRowContains('Document 1', fileName);
