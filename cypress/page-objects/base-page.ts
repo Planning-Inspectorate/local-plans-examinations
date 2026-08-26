@@ -315,4 +315,10 @@ export class BasePage {
 	verifyFileNotUploaded(fileName: string) {
 		this.mainContent.should('not.contain.text', fileName);
 	}
+
+	verifyDateInputValidationError(fieldName: string, dateInput: DateAnswer, errorMessage: string) {
+		this.enterDateAnswer(fieldName, dateInput);
+		this.saveAndContinue();
+		this.verifyErrorSummaryContains(errorMessage);
+	}
 }
