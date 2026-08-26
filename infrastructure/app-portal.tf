@@ -49,7 +49,7 @@ module "app_portal" {
     auth_tenant_endpoint = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/v2.0"
     allowed_applications = var.auth_config_portal.application_id
     allowed_audiences    = "https://${var.web_domains.portal}/.auth/login/aad/callback"
-    excluded_paths       = []
+    excluded_paths       = var.environment == "test" ? ["/"] : []
   }
 
   app_settings = {

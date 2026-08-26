@@ -125,6 +125,13 @@ variable "monitoring_config" {
   })
 }
 
+variable "performance_test_auth_token" {
+  description = "Token used by the Test-only performance smoke request"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "sql_config" {
   description = "Config for SQL Server and DB"
   type = object({

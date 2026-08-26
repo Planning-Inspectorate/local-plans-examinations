@@ -22,6 +22,7 @@
     "db-reset": "npm run reset --workspace @pins/local-plans-database",
     "db-seed": "npm run seed --workspace @pins/local-plans-database",
     "db-seed-prod": "npm run seed:prod --workspace @pins/local-plans-database",
+    "perf:local": "bash performance/scripts/run-local.sh",
     "format": "npm run format-prettier && npm run format-css",
     "format-css": "stylelint \"**/*.{css,scss}\" --fix",
     "format-prettier": "prettier --write .",
