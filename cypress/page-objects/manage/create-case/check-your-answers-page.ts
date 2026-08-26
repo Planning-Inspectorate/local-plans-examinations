@@ -69,14 +69,28 @@ export class CheckYourAnswersPage extends BasePage {
 				changeHref: '/create-a-case/contact-details/check-contact-details'
 			},
 			{
-				key: 'Dates',
-				values: [
-					data.dates.intentionToCommenceDate.display,
-					data.dates.gateway1Date.display,
-					data.dates.gateway2Date.display,
-					data.dates.gateway3Date.display,
-					data.dates.expectedSubmissionForExaminationDate.display
-				],
+				key: 'Date the Notice of Intention to Commence Plan Making was published',
+				values: [data.dates.intentionToCommenceDate.display],
+				changeHref: '/create-a-case/dates/key-stage-dates'
+			},
+			{
+				key: 'Gateway 1 expected date',
+				values: [data.dates.gateway1Date.display],
+				changeHref: '/create-a-case/dates/key-stage-dates'
+			},
+			{
+				key: 'Gateway 2 expected date',
+				values: [data.dates.gateway2Date.display],
+				changeHref: '/create-a-case/dates/key-stage-dates'
+			},
+			{
+				key: 'Gateway 3 expected date',
+				values: [data.dates.gateway3Date.display],
+				changeHref: '/create-a-case/dates/key-stage-dates'
+			},
+			{
+				key: 'Expected submission for examination date',
+				values: [data.dates.expectedSubmissionForExaminationDate.display],
 				changeHref: '/create-a-case/dates/key-stage-dates'
 			}
 		];

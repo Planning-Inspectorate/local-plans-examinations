@@ -30,7 +30,7 @@ describe('Create a case', () => {
 			checkYourAnswersPage.verifyLoaded();
 			checkYourAnswersPage.verifyAnswers(data);
 			checkYourAnswersPage.verifyChangeLinksNavigateToExpectedPages(data);
-			checkYourAnswersPage.openChangeLinkFor('Dates');
+			checkYourAnswersPage.openChangeLinkFor('Gateway 1 expected date');
 			keyStageDatesPage.verifyLoaded();
 			keyStageDatesPage.verifyKeyStageDatesPopulated(data.dates);
 			cy.go('back');
