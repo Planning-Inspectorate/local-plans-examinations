@@ -35,6 +35,27 @@ ALTER TABLE [dbo].[Gateway2Info] DROP CONSTRAINT [Gateway2Info_caseId_key];
 -- DropIndex
 ALTER TABLE [dbo].[Gateway3Info] DROP CONSTRAINT [Gateway3Info_caseId_key];
 
+-- Backfill caseId values from Case.reference to Case.id before changing the column type.
+UPDATE [examinationInfo]
+SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+FROM [dbo].[ExaminationInfo] AS [examinationInfo]
+INNER JOIN [dbo].[Case] AS [case] ON [examinationInfo].[caseId] = [case].[reference];
+
+UPDATE [gateway1Info]
+SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+FROM [dbo].[Gateway1Info] AS [gateway1Info]
+INNER JOIN [dbo].[Case] AS [case] ON [gateway1Info].[caseId] = [case].[reference];
+
+UPDATE [gateway2Info]
+SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+FROM [dbo].[Gateway2Info] AS [gateway2Info]
+INNER JOIN [dbo].[Case] AS [case] ON [gateway2Info].[caseId] = [case].[reference];
+
+UPDATE [gateway3Info]
+SET [caseId] = CONVERT(NVARCHAR(36), [case].[id])
+FROM [dbo].[Gateway3Info] AS [gateway3Info]
+INNER JOIN [dbo].[Case] AS [case] ON [gateway3Info].[caseId] = [case].[reference];
+
 -- AlterTable
 ALTER TABLE [dbo].[ExaminationInfo] ALTER COLUMN [caseId] UNIQUEIDENTIFIER NOT NULL;
 
