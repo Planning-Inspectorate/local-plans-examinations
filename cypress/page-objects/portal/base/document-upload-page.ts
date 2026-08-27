@@ -92,7 +92,7 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 	uploadFile(fileNames: string | string[]) {
 		const files = Array.isArray(fileNames) ? fileNames : [fileNames];
 		this.fileInput.selectFile(
-			files.map((fileName) => `cypress/fixtures/portal/files/${fileName}`),
+			files.map((fileName) => `cypress/fixtures/files/${fileName}`),
 			{ force: true }
 		);
 	}
@@ -105,7 +105,7 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 	}
 
 	dragAndDropFile(fileName: string) {
-		this.chooseFilesButton.selectFile(`cypress/fixtures/portal/files/${fileName}`, { action: 'drag-drop' });
+		this.chooseFilesButton.selectFile(`cypress/fixtures/files/${fileName}`, { action: 'drag-drop' });
 	}
 
 	verifySaveAndReturnButton() {

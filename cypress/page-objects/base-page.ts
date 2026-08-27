@@ -297,7 +297,7 @@ export class BasePage {
 	}
 
 	dragAndDropFile(fileName: string, chooseFilesButtonField: string) {
-		cy.get(`#${chooseFilesButtonField}`).selectFile(`cypress/fixtures/portal/files/${fileName}`, {
+		cy.get(`#${chooseFilesButtonField}`).selectFile(`cypress/fixtures/files/${fileName}`, {
 			action: 'drag-drop'
 		});
 	}
