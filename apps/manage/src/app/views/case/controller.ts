@@ -434,7 +434,7 @@ export async function updateExamination(
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 	const inspectorQuestions = ['examining-inspector-1', 'examining-inspector-2', 'examining-inspector-3'];
-	if (inspectorQuestions.includes(question)) {
+	if (question && inspectorQuestions.includes(question)) {
 		answers.examiningInspectorAppointmentDate = new Date();
 	}
 	if (answers) {
