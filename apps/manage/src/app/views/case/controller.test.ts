@@ -8,9 +8,11 @@ import {
 	updateCaseHistory,
 	getDeleteCase,
 	postMarkAsDeleteCase,
-	downloadDocument
+	downloadDocument,
+	buildCheckReportMiddleware
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
+import { build } from 'pino-pretty';
 
 const REFERENCE = 'PLAN/123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -1217,5 +1219,230 @@ describe('downloadDocument', () => {
 		assert.rejects(async () => {
 			await downloadDocument(service)(req as unknown as Request, res as Response);
 		}, /Missing a documentId from the download-case-document endpoint/);
+	});
+});
+
+describe('buildCheckReportMiddleware', () => {
+	const service = createService();
+	const caseId = 'some-case-id';
+	const caseReference = 'some-case-reference';
+	const journeyId = 'some-journey-id';
+	service.db.case.findUnique.mock.mockImplementation(async () => ({
+		caseId: caseId
+	}));
+	const dateCreated = new Date(2026, 0, 1);
+	it('can handle signed-sla for gateway 1 with an sla that has not been submitted yet', async () => {
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {
+				fileUploader: {
+					[`${caseReference}:signedSla`]: {
+						uploadedFiles: [
+							{
+								dateCreated: dateCreated
+							}
+						]
+					}
+				}
+			},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'signed-sla',
+				section: 'gateway-1'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		service.db.gateway1Info.findUnique.mock.mockImplementation(async () => ({
+			slaSentDate: null
+		}));
+		await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
+		const expected_call_args = [
+			'views/layouts/submit-documents-check-your-answers',
+			{
+				backLink: 'url-to-redirect-do',
+				caseReference: 'some-case-reference',
+				documentUploadDate: '1 January 2026',
+				journeyId: 'some-journey-id',
+				notificationPreviewTemplate: 'signed-sla',
+				question: 'signed-sla',
+				section: 'gateway-1',
+				submitButtonText: 'Confirm and issue notification',
+				titleHeading: 'Check signed SLA and issue notification',
+				uploadedFiles: [
+					{
+						dateCreated: dateCreated
+					}
+				]
+			}
+		];
+		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
+	});
+	it('can handle signed-sla for gateway 1 with sla that has already been submitted', async () => {
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {
+				fileUploader: {
+					[`${caseReference}:signedSla`]: {
+						uploadedFiles: [
+							{
+								dateCreated: dateCreated
+							}
+						]
+					}
+				}
+			},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'signed-sla',
+				section: 'gateway-1'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		service.db.gateway1Info.findUnique.mock.mockImplementation(async () => ({
+			slaSentDate: new Date()
+		}));
+		await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
+		const expected_call_args = [
+			'views/layouts/submit-documents-check-your-answers',
+			{
+				backLink: 'url-to-redirect-do',
+				caseReference: 'some-case-reference',
+				documentUploadDate: '1 January 2026',
+				journeyId: 'some-journey-id',
+				notificationPreviewTemplate: 'signed-sla-complete',
+				question: 'signed-sla',
+				section: 'gateway-1',
+				submitButtonText: 'Confirm and issue notification',
+				titleHeading: 'Check signed SLA and issue notification',
+				uploadedFiles: [
+					{
+						dateCreated: dateCreated
+					}
+				]
+			}
+		];
+		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
+	});
+	it('can handle gateway-2-report for gateway 2 with a report that has not been submitted yet', async () => {
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {
+				fileUploader: {
+					[`${caseReference}:gateway2Report`]: {
+						uploadedFiles: [
+							{
+								dateCreated: dateCreated
+							}
+						]
+					}
+				}
+			},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'gateway-2-report',
+				section: 'gateway-2'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			reportIssuedDate: null
+		}));
+		await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
+		const expected_call_args = [
+			'views/layouts/submit-documents-check-your-answers',
+			{
+				backLink: 'url-to-redirect-do',
+				caseReference: 'some-case-reference',
+				documentUploadDate: '1 January 2026',
+				journeyId: 'some-journey-id',
+				notificationPreviewTemplate: 'gateway-2-report',
+				question: 'gateway-2-report',
+				section: 'gateway-2',
+				submitButtonText: 'Issue report',
+				titleHeading: 'Check Gateway 2 report details and issue notification',
+				uploadedFiles: [
+					{
+						dateCreated: dateCreated
+					}
+				]
+			}
+		];
+		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
+	});
+	it('can handle gateway-2-report for gateway 2 with a report that has already been submitted', async () => {
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {
+				fileUploader: {
+					[`${caseReference}:gateway2Report`]: {
+						uploadedFiles: [
+							{
+								dateCreated: dateCreated
+							}
+						]
+					}
+				}
+			},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'gateway-2-report',
+				section: 'gateway-2'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			reportIssuedDate: new Date()
+		}));
+		await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
+		const expected_call_args = [
+			'views/layouts/submit-documents-check-your-answers',
+			{
+				backLink: 'url-to-redirect-do',
+				caseReference: 'some-case-reference',
+				documentUploadDate: '1 January 2026',
+				journeyId: 'some-journey-id',
+				notificationPreviewTemplate: 'gateway-2-report-complete',
+				question: 'gateway-2-report',
+				section: 'gateway-2',
+				submitButtonText: 'Issue report',
+				titleHeading: 'Check Gateway 2 report details and issue notification',
+				uploadedFiles: [
+					{
+						dateCreated: dateCreated
+					}
+				]
+			}
+		];
+		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
+	});
+	it('rejects when there is an unexpected question', async () => {
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		assert.rejects(async () => {
+			await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
+		}, /Could not find question config for question url/);
 	});
 });
