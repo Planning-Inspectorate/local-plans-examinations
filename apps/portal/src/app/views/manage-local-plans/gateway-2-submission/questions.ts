@@ -325,12 +325,12 @@ export const gateway2FileUploadQuestions = {
 	projectInitiationDocument: projectInitiationDocumentQuestion,
 	draftStatementOfCompliance: draftStatementOfComplianceQuestion,
 	noticeOfIntention: noticeOfIntentionQuestion,
+	gateway1SelfAssessment: gateway1SelfAssessmentQuestion,
+	consultationOnProposedContent: consultationOnProposedContentQuestion,
 	draftStatementOfSoundness: draftStatementOfSoundnessQuestion,
 	scopingConsultationDocuments: scopingConsultationDocumentsQuestion,
 	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion,
-	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion,
-	gateway1SelfAssessment: gateway1SelfAssessmentQuestion,
-	consultationOnProposedContent: consultationOnProposedContentQuestion
+	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(
