@@ -662,6 +662,44 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
 	},
+	gateway3Documents: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Gateway 3 documents',
+		question: 'Upload documents',
+		fieldName: 'gateway3Documents',
+		url: 'gateway-2-workshop-document',
+		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Workshop documents',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES)}`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
+		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
+	},
+	gateway3Decision: {
+		type: COMPONENT_TYPES.RADIO,
+		options: [
+			{ value: '1', text: '1' },
+			{ value: '2', text: '2' }
+		],
+		question: 'What is the plan band?',
+		fieldName: 'planBand',
+		url: 'plan-band',
+		title: 'Plan band',
+		validators: [new RequiredValidator('Select a plan band')]
+	},
 	gateway3CompletionDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'What is the Gateway 3 completion date?',
