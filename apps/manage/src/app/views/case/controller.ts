@@ -110,6 +110,7 @@ interface Gateway3Input {
 	programmeOfficerFirstName?: string;
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
+	examinationWebsite?: string;
 }
 
 // Generate a map of <fieldName: field title>
@@ -412,7 +413,9 @@ export async function updateGateway3(
 	question?: string
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
-
+	if (question === 'examination-website') {
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseReference, question);
+	}
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
@@ -600,7 +603,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-3': {
 				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
+				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 				if (next) next();
 				return;
 			}
