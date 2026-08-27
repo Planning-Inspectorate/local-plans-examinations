@@ -47,28 +47,6 @@ const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
 	'image/tiff',
 	'application/octet-stream'
 ];
-const CONSULTATION_DOCUMENT_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'csv', 'jpg', 'jpeg', 'png'];
-const CONSULTATION_DOCUMENT_ALLOWED_MIME_TYPES = [
-	'application/msword',
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	'application/pdf',
-	'text/csv',
-	'application/csv',
-	'application/vnd.ms-excel',
-	'image/jpeg',
-	'image/png',
-	'application/octet-stream'
-];
-const PROPOSED_CONTENT_DOCUMENT_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'tif', 'jpg', 'png'];
-const PROPOSED_CONTENT_DOCUMENT_ALLOWED_MIME_TYPES = [
-	'application/msword',
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	'application/pdf',
-	'image/tiff',
-	'image/jpeg',
-	'image/png',
-	'application/octet-stream'
-];
 const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
 
 export const CHECK_ANSWERS_REDIRECT_QUERY = 'checkAnswersRedirect';
@@ -209,30 +187,31 @@ export const noticeOfIntentionQuestion: FileUploaderQuestionProps = {
 
 export const gateway1SelfAssessmentQuestion: FileUploaderQuestionProps = createFileUploadQuestion({
 	title: 'Gateway 1 - Self Assessment of Readiness',
-	question: 'Upload your Gateway 1 - Self assessment of readiness',
+	question: 'Upload your Gateway 1 - Self Assessment of Readiness',
 	fieldName: 'gateway1SelfAssessment',
 	url: 'g1-self-assess',
-	allowedFileExtensions: CONSULTATION_DOCUMENT_ALLOWED_EXTENSIONS,
-	allowedMimeTypes: CONSULTATION_DOCUMENT_ALLOWED_MIME_TYPES,
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 	text: {
 		caption: 'Consultation documents',
-		introduction: 'Upload files',
-		fileRequirementsText: 'The file must be smaller than 250MB and be in DOC, DOCX, PDF, CSV, JPG or PNG format'
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
 	}
 });
 
 export const consultationOnProposedContentQuestion: FileUploaderQuestionProps = createFileUploadQuestion({
 	title: 'Consultation on proposed local plan content and evidence documents',
-	question: 'Upload your consultation on proposed local plan content and evidence documents',
+	question: 'Upload your Consultation on proposed local plan content and evidence documents',
 	fieldName: 'consultationOnProposedContent',
 	url: 'cons-of-proposed',
-	allowedFileExtensions: PROPOSED_CONTENT_DOCUMENT_ALLOWED_EXTENSIONS,
-	allowedMimeTypes: PROPOSED_CONTENT_DOCUMENT_ALLOWED_MIME_TYPES,
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 	text: {
 		caption: 'Consultation documents',
 		introduction: 'Drag and drop or choose files',
 		fileRequirementsText:
-			'Each file must be a DOC, DOCX, PDF, TIF, JPG or PNG and be smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
 	}
 });
 
