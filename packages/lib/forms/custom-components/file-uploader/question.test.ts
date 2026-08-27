@@ -57,10 +57,7 @@ describe('FileUploaderQuestion', () => {
 			{ id: 'file-3', fileName: 'bullfrog.jpg' }
 		]);
 
-		assert.equal(
-			row.value,
-			'<ul class="govuk-list govuk-list--bullet"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>'
-		);
+		assert.equal(row.value, '<ul class="govuk-list"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>');
 	});
 
 	it('escapes uploaded file names before rendering summary HTML', () => {
@@ -73,7 +70,7 @@ describe('FileUploaderQuestion', () => {
 
 		assert.equal(
 			row.value,
-			'<ul class="govuk-list govuk-list--bullet"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
+			'<ul class="govuk-list"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
 		);
 	});
 });
