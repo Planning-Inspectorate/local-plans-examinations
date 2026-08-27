@@ -834,7 +834,8 @@ export async function updateCaseHistory(
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
 	reference: string,
-	currentUser: string
+	currentUser: string,
+	overrideLabels: Record<string, string> = {}
 ) {
 	await db.case.update({
 		where: { reference },
@@ -842,7 +843,7 @@ export async function updateCaseHistory(
 			caseHistories: {
 				create: await Promise.all(
 					Object.entries(previousValues).map(async ([key, oldValue]) => ({
-						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key]),
+						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key], overrideLabels[key]),
 						// TODO: Get user once authentication is implemented
 						username: currentUser
 					}))
@@ -857,8 +858,12 @@ async function formatCaseHistoryEvent(
 	req: Request,
 	key: string,
 	oldValue: unknown,
-	newValue: unknown
+	newValue: unknown,
+	overrideLabel: string | undefined
 ) {
+	if (overrideLabel) {
+		return overrideLabel;
+	}
 	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
 	let oldValueText = 'updated to';
 	if (oldValue != null && oldValue != '') {
@@ -1066,13 +1071,14 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 				req,
 				service.db,
 				{
-					reportIssuedDate: null
+					gateway2Report: null // Will be overridden by overrideLabels
 				},
-				{
-					reportIssuedDate: reportIssuedDate
-				},
+				{},
 				caseReference,
-				currentUser
+				currentUser,
+				{
+					gateway2Report: `Gateway 2 report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
+				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report issued';
