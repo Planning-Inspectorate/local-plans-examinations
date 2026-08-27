@@ -160,7 +160,7 @@ function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: st
 	}
 
 	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
-	return `<ul class="govuk-list">${listItems}</ul>`;
+	return `<ul class="govuk-list govuk-list--bullet">${listItems}</ul>`;
 }
 
 function readUploadedFiles(value: unknown): UploadedFile[] {
