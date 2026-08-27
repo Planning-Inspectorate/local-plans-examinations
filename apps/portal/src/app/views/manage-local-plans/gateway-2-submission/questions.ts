@@ -11,6 +11,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { createFileUploadQuestion } from './utils.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -44,6 +45,28 @@ const MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES = [
 	'image/jpeg',
 	'image/png',
 	'image/tiff',
+	'application/octet-stream'
+];
+const CONSULTATION_DOCUMENT_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'csv', 'jpg', 'jpeg', 'png'];
+const CONSULTATION_DOCUMENT_ALLOWED_MIME_TYPES = [
+	'application/msword',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'application/pdf',
+	'text/csv',
+	'application/csv',
+	'application/vnd.ms-excel',
+	'image/jpeg',
+	'image/png',
+	'application/octet-stream'
+];
+const PROPOSED_CONTENT_DOCUMENT_ALLOWED_EXTENSIONS = ['doc', 'docx', 'pdf', 'tif', 'jpg', 'png'];
+const PROPOSED_CONTENT_DOCUMENT_ALLOWED_MIME_TYPES = [
+	'application/msword',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'application/pdf',
+	'image/tiff',
+	'image/jpeg',
+	'image/png',
 	'application/octet-stream'
 ];
 const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
@@ -184,6 +207,35 @@ export const noticeOfIntentionQuestion: FileUploaderQuestionProps = {
 	validators: []
 };
 
+export const gateway1SelfAssessmentQuestion: FileUploaderQuestionProps = createFileUploadQuestion({
+	title: 'Gateway 1 - Self Assessment of Readiness',
+	question: 'Upload your Gateway 1 - Self assessment of readiness',
+	fieldName: 'gateway1SelfAssessment',
+	url: 'g1-self-assess',
+	allowedFileExtensions: CONSULTATION_DOCUMENT_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: CONSULTATION_DOCUMENT_ALLOWED_MIME_TYPES,
+	text: {
+		caption: 'Consultation documents',
+		introduction: 'Upload files',
+		fileRequirementsText: 'The file must be smaller than 250MB and be in DOC, DOCX, PDF, CSV, JPG or PNG format'
+	}
+});
+
+export const consultationOnProposedContentQuestion: FileUploaderQuestionProps = createFileUploadQuestion({
+	title: 'Consultation on proposed local plan content and evidence documents',
+	question: 'Upload your consultation on proposed local plan content and evidence documents',
+	fieldName: 'consultationOnProposedContent',
+	url: 'cons-of-proposed',
+	allowedFileExtensions: PROPOSED_CONTENT_DOCUMENT_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: PROPOSED_CONTENT_DOCUMENT_ALLOWED_MIME_TYPES,
+	text: {
+		caption: 'Consultation documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a DOC, DOCX, PDF, TIF, JPG or PNG and be smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+	}
+});
+
 export const draftStatementOfSoundnessQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 	title: 'Draft statement of soundness',
@@ -297,7 +349,9 @@ export const gateway2FileUploadQuestions = {
 	draftStatementOfSoundness: draftStatementOfSoundnessQuestion,
 	scopingConsultationDocuments: scopingConsultationDocumentsQuestion,
 	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion,
-	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion
+	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion,
+	gateway1SelfAssessment: gateway1SelfAssessmentQuestion,
+	consultationOnProposedContent: consultationOnProposedContentQuestion
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(

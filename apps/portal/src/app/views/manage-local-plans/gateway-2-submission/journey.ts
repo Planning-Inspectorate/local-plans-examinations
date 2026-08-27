@@ -28,6 +28,8 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.scopingConsultationDocuments)
 				.addQuestion(questions.consultationSummaryFeedbackScoping)
 				.addQuestion(questions.consultationSummaryProposedContent)
+				.addQuestion(questions.gateway1SelfAssessment)
+				.addQuestion(questions.consultationOnProposedContent)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
