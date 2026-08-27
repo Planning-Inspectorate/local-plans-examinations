@@ -35,6 +35,12 @@ export class DocumentUploadPage extends BasePage {
 		cy.get('.govuk-caption-l').should('be.visible').and('contain.text', text);
 	}
 
+	uploadAndVerifyFile(fileName: string, fieldName: string) {
+		this.dragAndDropFile(fileName, fieldName);
+		this.clickUploadFiles();
+		this.verifyFileUploaded(fileName);
+	}
+
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(this.heading);
