@@ -54,7 +54,7 @@ describe('Gateway 1 updates', () => {
 		gateway1SignedSLAPage.dragAndDropFile('test-document.docx', signedSLA.fieldName);
 		gateway1SignedSLAPage.clickUploadFiles();
 		gateway1SignedSLAPage.verifyFileUploaded('test-document.docx');
-		gateway1SignedSLAPage.saveAndReturn();
+		gateway1SignedSLAPage.goBack();
 
 		gateway1Page.verifySummaryRowContains(signedSLA.row, 'test-document.docx');
 	});
