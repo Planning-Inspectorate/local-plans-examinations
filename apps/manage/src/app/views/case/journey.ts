@@ -62,6 +62,10 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway3AssessorsName)
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)
 				.addQuestion(questions.programmeOfficerDetails)
+				.addQuestion(questions.examinationWebsite),
+			new Section('Gateway 3 submission', 'gateway-3-submission', { subHeading: true })
+				.addQuestion(questions.gateway3Documents)
+				.addQuestion(questions.gateway3Decision)
 				.addQuestion(questions.gateway3CompletionDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
