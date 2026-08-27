@@ -356,19 +356,31 @@ async function resolveCaseIdFromReference(db: PrismaClient, reference: string): 
 	return caseRecord.id;
 }
 
-async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseReference: string, question?: string) {
+export type UpdateFunction = (
+	db: PrismaClient,
+	answers: any,
+	caseReference: string,
+	question?: string
+) => Promise<boolean>;
+
+export async function updateGateway1(
+	db: PrismaClient,
+	answers: Gateway1Input,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
-	const fileUploadQuestions = new Set(['signed-sla']);
-	if (fileUploadQuestions.has(String(question))) {
-		// Documents are saved automatically by the file upload component
-		return true;
+	if (question == 'signed-sla') {
+		answers.slaReceivedDate = new Date();
 	}
-	await db.gateway1Info.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
+	if (answers) {
+		await db.gateway1Info.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
@@ -383,41 +395,55 @@ export async function updateGateway2(
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	await db.gateway2Info.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
+	if (answers) {
+		await db.gateway2Info.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
-async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseReference: string, question?: string) {
+export async function updateGateway3(
+	db: PrismaClient,
+	answers: Gateway3Input,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
-
-	await db.gateway3Info.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
-
+	if (answers) {
+		await db.gateway3Info.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
-async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseReference: string, question: string) {
+export async function updateExamination(
+	db: PrismaClient,
+	answers: ExaminationInput,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 	const inspectorQuestions = ['examining-inspector-1', 'examining-inspector-2', 'examining-inspector-3'];
 	if (inspectorQuestions.includes(question)) {
 		answers.examiningInspectorAppointmentDate = new Date();
 	}
-	await db.examinationInfo.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
+	if (answers) {
+		await db.examinationInfo.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
@@ -611,23 +637,30 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		// Todo need to add error handling for 0 files - no flow defined right now
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		const documentUploadDate = uploadedFiles[0]?.dateCreated ?? undefined;
 		// Extra details needed to render the inner notification on the page
 		const questionDetailsMap: Record<
 			string,
-			{ title: string; dbInfo: any; completeIndicatorFieldName: string; submitButtonText: string }
+			{
+				title: string;
+				dbInfo: any;
+				completeIndicatorFieldName: string;
+				submitButtonText: string;
+				dateUploadedQuestion: string | undefined;
+			}
 		> = {
 			'signed-sla': {
 				title: 'Check signed SLA and issue notification',
 				dbInfo: service.db.gateway1Info,
 				completeIndicatorFieldName: 'slaSentDate',
-				submitButtonText: 'Confirm and issue notification'
+				submitButtonText: 'Confirm and issue notification',
+				dateUploadedQuestion: 'slaReceivedDate'
 			},
 			'gateway-2-report': {
 				title: 'Check Gateway 2 report details and issue notification',
 				dbInfo: service.db.gateway2Info,
 				completeIndicatorFieldName: 'reportIssuedDate',
-				submitButtonText: 'Issue report'
+				submitButtonText: 'Issue report',
+				dateUploadedQuestion: undefined
 			}
 		};
 		const questionDetails = questionDetailsMap[questionConfig.url];
@@ -636,11 +669,15 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 				`Could not find details for question '${questionConfig.url}' in buildCheckReportMiddleware::questionDetailsMap`
 			);
 		}
+		const dateUploadedQuestion = questionDetails.dateUploadedQuestion
+			? questions[questionDetails.dateUploadedQuestion]
+			: undefined;
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
 		const completeIndicatorFieldName = questionDetails.completeIndicatorFieldName;
 		const existingGatewayDetails = await questionDetails.dbInfo.findUnique({
 			select: {
-				[completeIndicatorFieldName]: true
+				[completeIndicatorFieldName]: true,
+				...(questionDetails.dateUploadedQuestion ? { [questionDetails.dateUploadedQuestion]: true } : {})
 			},
 			where: {
 				caseId: caseId
@@ -648,6 +685,9 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		});
 		const alreadyComplete = existingGatewayDetails?.[completeIndicatorFieldName];
 		const notificationPreviewTemplate = questionUrl + (alreadyComplete ? '-complete' : '');
+		const documentUploadDate = questionDetails.dateUploadedQuestion
+			? existingGatewayDetails[questionDetails.dateUploadedQuestion]
+			: (uploadedFiles[0]?.dateCreated ?? undefined);
 		res.render('views/layouts/submit-documents-check-your-answers', {
 			titleHeading: questionDetails.title,
 			uploadedFiles: uploadedFiles,
@@ -665,7 +705,8 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 						timeZone: 'Europe/London',
 						year: 'numeric'
 					}).format(documentUploadDate)
-				: null
+				: null,
+			documentUploadDateModificationUrl: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
 		});
 		return;
 	};

@@ -1241,7 +1241,7 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:signedSla`]: {
 						uploadedFiles: [
 							{
-								dateCreated: dateCreated
+								dateCreated: new Date(2025, 0, 1)
 							}
 						]
 					}
@@ -1256,7 +1256,8 @@ describe('buildCheckReportMiddleware', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		service.db.gateway1Info.findUnique.mock.mockImplementation(async () => ({
-			slaSentDate: null
+			slaSentDate: null,
+			slaReceivedDate: dateCreated
 		}));
 		await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
 		const expected_call_args = [
@@ -1265,6 +1266,7 @@ describe('buildCheckReportMiddleware', () => {
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
 				documentUploadDate: '1 January 2026',
+				documentUploadDateModificationUrl: 'sla-received-date',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla',
 				question: 'signed-sla',
@@ -1273,7 +1275,7 @@ describe('buildCheckReportMiddleware', () => {
 				titleHeading: 'Check signed SLA and issue notification',
 				uploadedFiles: [
 					{
-						dateCreated: dateCreated
+						dateCreated: new Date(2025, 0, 1)
 					}
 				]
 			}
@@ -1290,7 +1292,7 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:signedSla`]: {
 						uploadedFiles: [
 							{
-								dateCreated: dateCreated
+								dateCreated: new Date(2025, 0, 1)
 							}
 						]
 					}
@@ -1305,7 +1307,8 @@ describe('buildCheckReportMiddleware', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		service.db.gateway1Info.findUnique.mock.mockImplementation(async () => ({
-			slaSentDate: new Date()
+			slaSentDate: new Date(),
+			slaReceivedDate: dateCreated
 		}));
 		await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
 		const expected_call_args = [
@@ -1314,6 +1317,7 @@ describe('buildCheckReportMiddleware', () => {
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
 				documentUploadDate: '1 January 2026',
+				documentUploadDateModificationUrl: 'sla-received-date',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla-complete',
 				question: 'signed-sla',
@@ -1322,7 +1326,7 @@ describe('buildCheckReportMiddleware', () => {
 				titleHeading: 'Check signed SLA and issue notification',
 				uploadedFiles: [
 					{
-						dateCreated: dateCreated
+						dateCreated: new Date(2025, 0, 1)
 					}
 				]
 			}
@@ -1363,6 +1367,7 @@ describe('buildCheckReportMiddleware', () => {
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
 				documentUploadDate: '1 January 2026',
+				documentUploadDateModificationUrl: undefined,
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report',
 				question: 'gateway-2-report',
@@ -1412,6 +1417,7 @@ describe('buildCheckReportMiddleware', () => {
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
 				documentUploadDate: '1 January 2026',
+				documentUploadDateModificationUrl: undefined,
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report-complete',
 				question: 'gateway-2-report',

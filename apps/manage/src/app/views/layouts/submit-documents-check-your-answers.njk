@@ -45,6 +45,13 @@
       <dd class="govuk-summary-list__value">
         <a class="govuk-hint">{{ documentUploadDate }}</a>
       </dd>
+      {% if documentUploadDateModificationUrl %}
+      <dd class="govuk-summary-list__actions">
+        <span class="app-no-wrap">
+          <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ documentUploadDateModificationUrl | urlencode }}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
+        </span>
+      </dd>
+      {% endif %}
     </dl>
      <details class="govuk-details" data-cy="preview-email-to-lpa">
   <summary class="govuk-details__summary">
