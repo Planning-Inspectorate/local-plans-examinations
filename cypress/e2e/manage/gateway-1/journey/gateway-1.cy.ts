@@ -3,7 +3,8 @@ import {
 	gateway1ExpectedDatePage,
 	gateway1Page,
 	noticeOfIntentionPublishDatePage,
-	gateway1SignedSLAPage
+	gateway1SignedSLAPage,
+	gateway1SignedSLACheckPage
 } from '../../../../page-objects/manage/gateway-1/index.ts';
 import { openSeededGateway1Page } from '../../../../flows/manage/gateway-1-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
@@ -44,19 +45,19 @@ describe('Gateway 1 updates', () => {
 		gateway1Page.openActionLinkFor(signedSLA.row);
 		gateway1SignedSLAPage.verifyLoaded();
 
-		gateway1SignedSLAPage.dragAndDropFile('test-document.pdf', signedSLA.fieldName);
-		gateway1SignedSLAPage.clickUploadFiles();
-		gateway1SignedSLAPage.verifyFileUploaded('test-document.pdf');
+		gateway1SignedSLAPage.uploadAndVerifyFile(signedSLA.fileName, signedSLA.fieldName);
 
-		gateway1SignedSLAPage.removeFile('test-document.pdf');
-		gateway1SignedSLAPage.verifyFileNotUploaded('test-document.pdf');
+		gateway1SignedSLAPage.removeFile(signedSLA.fileName);
+		gateway1SignedSLAPage.verifyFileNotUploaded(signedSLA.fileName);
 
-		gateway1SignedSLAPage.dragAndDropFile('test-document.docx', signedSLA.fieldName);
-		gateway1SignedSLAPage.clickUploadFiles();
-		gateway1SignedSLAPage.verifyFileUploaded('test-document.docx');
-		gateway1SignedSLAPage.goBack();
+		gateway1SignedSLAPage.uploadAndVerifyFile(signedSLA.updatedFileName, signedSLA.fieldName);
 
-		gateway1Page.verifySummaryRowContains(signedSLA.row, 'test-document.docx');
+		gateway1SignedSLAPage.saveAndReturn();
+		gateway1SignedSLACheckPage.verifyLoaded();
+		gateway1SignedSLACheckPage.issueNotification();
+
+		gateway1Page.verifyLoaded(seededCase.planTitle);
+		gateway1Page.verifySummaryRowContains(signedSLA.row, signedSLA.updatedFileName);
 	});
 
 	it('returns to Gateway 1 from Gateway 1 answer page back links', () => {
