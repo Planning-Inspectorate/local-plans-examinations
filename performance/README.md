@@ -6,7 +6,7 @@ It is intended to collect early performance evidence. It is not a full productio
 
 ## What It Runs
 
-The pipeline checks Manage and Portal `/health` before JMeter starts. Those checks are prerequisites, not load-test scenarios.
+The pipeline checks Manage `/health` and confirms the Portal home page is reachable before JMeter starts. Those checks are prerequisites, not load-test scenarios.
 
 The JMeter plan then runs two simple requests:
 
@@ -127,7 +127,7 @@ jmeter -n \
 It:
 
 - downloads Apache JMeter 5.6.3
-- checks Manage and Portal health
+- checks Manage health and Portal availability
 - reads `PERFORMANCE_TEST_AUTH_TOKEN` from the `pipeline_secrets` variable group
 - runs `performance/local-plans.jmx`
 - publishes the JTL and HTML report
