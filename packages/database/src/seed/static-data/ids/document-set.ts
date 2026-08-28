@@ -7,6 +7,7 @@ export const DOCUMENT_SET_ID = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'g2-draft-stat-comp',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'g2-draft-stat-sound',
 	G2_REPORT: 'g2-report',
+	G3_DOCUMENT: 'g3-document',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
@@ -26,6 +27,7 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'draft-stat-compliance',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'draft-stat-soundness',
 	G2_REPORT: 'gateway-2-report',
+	G3_DOCUMENT: 'gateway-3-document',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',

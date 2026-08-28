@@ -113,5 +113,13 @@ export const DOCUMENT_SET = [
 		displayName: 'Subsequent work towards draft plan',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
 		displayOrder: 17
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_DOCUMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Gateway 3 Document',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_DOCUMENT,
+		displayOrder: 18
 	}
 ];

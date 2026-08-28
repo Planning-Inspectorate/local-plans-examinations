@@ -115,6 +115,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-3',
 		journeyId: GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
+		supportsFileUpload: true,
 		updateFunction: updateGateway3
 	},
 	{
