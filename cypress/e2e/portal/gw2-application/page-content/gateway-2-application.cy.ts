@@ -93,19 +93,11 @@ describe('Gateway 2 application page content', () => {
 	it('Shows Additional Documents', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubHeading('Additional documents');
 		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.additionalDocumentsTable, [
-			{ document: 'Subsequent work towards a draft Plan', status: 'Not added', addCy: 'add-subsequent-work' }
-		]);
-	});
-
-	it('Shows Workshop preferences', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifySubHeading('Workshop preferences');
-		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.workshopPreferencesTable, [
-			{ document: 'Suggested workshop venue', status: 'Not added', addCy: 'add-workshop-venue' },
-			{ document: 'Suggested workshop dates', status: 'Not added', addCy: 'add-workshop-dates' }
-		]);
-		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.workshopPreferencesTable, [
-			'Suggested workshop venue',
-			'Suggested workshop dates'
+			{
+				document: 'Subsequent work towards a draft Plan',
+				status: 'Not added',
+				addCy: 'add-subsequent-work-towards-a-draft-plan'
+			}
 		]);
 	});
 

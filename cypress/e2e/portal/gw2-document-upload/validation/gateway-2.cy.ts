@@ -3,7 +3,8 @@ import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
-	noticeOfIntentionToCommenceLocalPlanPage
+	noticeOfIntentionToCommenceLocalPlanPage,
+	subsequentWorkTowardsDraftPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { ERROR_MESSAGES } from 'cypress/constants/portal/error-messages.ts';
@@ -82,6 +83,39 @@ describe('Gateway 2 document upload validation tests', () => {
 				openGateway2DocumentUploadPage(plan, page);
 				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
 				noticeOfIntentionToCommenceLocalPlanPage.verifyErrorSummary(
+					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+					ERROR_MESSAGES.NO_FILE_UPLOADED
+				);
+			});
+		}
+	);
+
+	it(
+		'Shows error message when the subsequent work towards a draft plan file type is not allowed',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = subsequentWorkTowardsDraftPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				subsequentWorkTowardsDraftPlanPage.uploadFile('test-document-invalid.txt');
+				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
+				subsequentWorkTowardsDraftPlanPage.verifyErrorSummary(
+					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
+					ERROR_MESSAGES.INVALID_FILE_FORMAT
+				);
+			});
+		}
+	);
+
+	it(
+		'Shows error message when no file is uploaded to the subsequent work towards a draft plan',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = subsequentWorkTowardsDraftPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
+				subsequentWorkTowardsDraftPlanPage.verifyErrorSummary(
 					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
 					ERROR_MESSAGES.NO_FILE_UPLOADED
 				);

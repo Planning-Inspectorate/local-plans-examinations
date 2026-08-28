@@ -39,5 +39,13 @@ export const gateway2UploadAnswers = {
 		path: 'notice-of-intent',
 		section: 'consultation',
 		addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
+	},
+	subsequentWorkTowardsDraftPlan: {
+		heading: 'Upload any subsequent work towards a draft plan',
+		caption: 'Additional documents',
+		fieldName: 'subsequentWorkTowardsADraftPlan',
+		path: 'subsequent-work-towards-a-draft-plan',
+		section: 'additional',
+		addCy: 'add-subsequent-work-towards-a-draft-plan'
 	}
 } as const satisfies Record<string, Gateway2UploadAnswer>;
