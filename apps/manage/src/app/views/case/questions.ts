@@ -667,7 +667,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Gateway 3 documents',
 		question: 'Upload documents',
 		fieldName: 'gateway3Documents',
-		url: 'gateway-2-workshop-document',
+		url: 'gateway-3-document',
 		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
 			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
@@ -680,13 +680,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
 		text: {
-			caption: 'Workshop documents',
+			caption: 'Gateway 3 documents',
 			introduction: 'Upload a file',
 			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
-		validators: [new FileUploadRequiredValidator('workshopDocuments', 'Upload gateway 2 workshop file')]
+		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')]
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
