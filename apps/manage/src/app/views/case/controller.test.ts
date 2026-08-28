@@ -14,7 +14,7 @@ import {
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { build } from 'pino-pretty';
 
-const REFERENCE = 'PLAN/123456';
+const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
 const CASE_ID = '11111111-1111-1111-1111-111111111111';
 const CURRENT_USER = 'Joe Bloggs';
@@ -269,7 +269,7 @@ describe('updateCaseField', () => {
 
 			assert.equal(service.db.case.update.mock.callCount(), 2);
 			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
-			assert.deepEqual(args.where, { reference: 'PLAN/123456' });
+			assert.deepEqual(args.where, { reference: 'PLAN-123456' });
 			assert.equal(args.data.planTitle, 'Southshire Local Plan');
 			assert.equal(args.data.planType, 'Local Plan');
 			assert.equal(args.data.caseOfficer, 'John Doe');
@@ -854,7 +854,7 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.service.db.case.findUnique.mock.callCount(), 2);
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
-			where: { reference: 'PLAN/123456' },
+			where: { reference: 'PLAN-123456' },
 			select: { id: true, planTitle: true }
 		});
 
@@ -1134,7 +1134,7 @@ describe('DeleteCase', () => {
 	(it('renders delete-case.njk when getDeleteCase is called', async () => {
 		const service = createService();
 		const currentCase = {
-			reference: 'PLAN/123456',
+			reference: 'PLAN-123456',
 			planTitle: 'Southshire Local Plan',
 			planType: 'Local Plan',
 			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
@@ -1148,7 +1148,7 @@ describe('DeleteCase', () => {
 			render,
 			status
 		} as unknown as Response;
-		const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+		const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
 
 		await getDeleteCase(service)(req, res);
 
@@ -1157,7 +1157,7 @@ describe('DeleteCase', () => {
 		it('sets deletedDate when delete is confirmed', async () => {
 			const service = createService();
 			const currentCase = {
-				reference: 'PLAN/123456',
+				reference: 'PLAN-123456',
 				planTitle: 'Southshire Local Plan',
 				planType: 'Local Plan',
 				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
@@ -1166,7 +1166,7 @@ describe('DeleteCase', () => {
 			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
 			const redirect = mock.fn();
 			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
 
 			await postMarkAsDeleteCase(service)(req, res);
 
@@ -1179,7 +1179,7 @@ describe('DeleteCase', () => {
 		it('redirects to all cases when delete is confirmed', async () => {
 			const service = createService();
 			const currentCase = {
-				reference: 'PLAN/123456',
+				reference: 'PLAN-123456',
 				planTitle: 'Southshire Local Plan',
 				planType: 'Local Plan',
 				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
@@ -1188,7 +1188,7 @@ describe('DeleteCase', () => {
 			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
 			const redirect = mock.fn();
 			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN/123456' } } as unknown as Request;
+			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
 
 			await postMarkAsDeleteCase(service)(req, res);
 

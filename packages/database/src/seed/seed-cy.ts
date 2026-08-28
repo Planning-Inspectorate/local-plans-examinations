@@ -44,7 +44,7 @@ async function run() {
 
 		await dbClient.case.create({
 			data: {
-				reference: `PLAN/${Date.now()}`,
+				reference: `PLAN-${Date.now()}`,
 				email: 'cypress@test.com',
 				caseOfficer: 'officer-1',
 				planTitle: 'Cypress Test Plan',
