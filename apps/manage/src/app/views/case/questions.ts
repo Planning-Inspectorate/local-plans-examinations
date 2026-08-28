@@ -28,7 +28,7 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const GATEWAY_2_REPORT_ALLOWED_EXTENSIONS = [
+const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
 	'docx',
@@ -48,7 +48,7 @@ const GATEWAY_2_REPORT_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'pdf',
@@ -590,13 +590,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload Gateway 2 report',
 		fieldName: 'gateway2Report',
 		url: 'gateway-2-report',
-		allowedFileExtensions: GATEWAY_2_REPORT_ALLOWED_EXTENSIONS,
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
-			.filter((key) => GATEWAY_2_REPORT_ALLOWED_EXTENSIONS.includes(key))
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
 			.map((key) => MIME_TYPE_MAP[key])
 			.flat(),
-		maxFileSizeBytes: GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES,
-		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
 		maxFilesPerUpload: 1,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
@@ -604,7 +604,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		text: {
 			caption: 'Issue report',
 			introduction: 'Upload a file',
-			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_REPORT_ALLOWED_EXTENSIONS)} and smaller than 250MB.`,
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and smaller than 250MB.`,
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files',
@@ -668,13 +668,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload documents',
 		fieldName: 'gateway3Documents',
 		url: 'gateway-2-workshop-document',
-		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS,
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
-			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS.includes(key))
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
 			.map((key) => MIME_TYPE_MAP[key])
 			.flat(),
-		maxFileSizeBytes: GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES,
-		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
 		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
@@ -682,7 +682,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		text: {
 			caption: 'Workshop documents',
 			introduction: 'Upload a file',
-			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENT_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENT_FILE_UPLOAD_LIMIT_BYTES)}`,
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
