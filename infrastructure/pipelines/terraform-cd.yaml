@@ -37,6 +37,6 @@ extends:
     containerPrefix: terraform-state-local-plans-
     workingDirectory: $(Build.Repository.LocalPath)/infrastructure
     environmentVarFilePath: $(Build.Repository.LocalPath)/infrastructure/environments
-    planStageExtraEnvironmentVariables:
+    extraEnvironmentVariables:
       - name: TF_VAR_performance_test_auth_token
         value: $(TF_VAR_performance_test_auth_token)
