@@ -1,6 +1,6 @@
 [
 	{
-		"refNum": "PLAN/001",
+		"refNum": "PLAN-001",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "East plan",
@@ -117,7 +117,7 @@
 		]
 	},
 	{
-		"refNum": "PLAN/002",
+		"refNum": "PLAN-002",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "West plan",
@@ -234,7 +234,7 @@
 		]
 	},
 	{
-		"refNum": "PLAN/003",
+		"refNum": "PLAN-003",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "West plan",
@@ -351,7 +351,7 @@
 		]
 	},
 	{
-		"refNum": "PLAN/004",
+		"refNum": "PLAN-004",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "West plan",
@@ -468,7 +468,7 @@
 		]
 	},
 	{
-		"refNum": "PLAN/005",
+		"refNum": "PLAN-005",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "West plan",
@@ -585,7 +585,7 @@
 		]
 	},
 	{
-		"refNum": "PLAN/006",
+		"refNum": "PLAN-006",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "West plan",
@@ -702,7 +702,7 @@
 		]
 	},
 	{
-		"refNum": "PLAN/007",
+		"refNum": "PLAN-007",
 		"leadLPA": "Southampton",
 		"linkedLPA": "Romsey Town Council",
 		"title": "West plan",

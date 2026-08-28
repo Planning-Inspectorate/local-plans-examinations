@@ -8,7 +8,7 @@ const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-dec
 
 function createReq(overrides: { params?: Record<string, string>; body?: Record<string, unknown> } = {}) {
 	const req = {
-		params: { planReference: 'PLAN/123456', ...overrides.params },
+		params: { planReference: 'PLAN-123456', ...overrides.params },
 		body: overrides.body ?? {}
 	} as unknown as Request;
 
@@ -54,7 +54,7 @@ describe('buildGetDeclarationPage', () => {
 		assert.equal(model.pageTitle, 'Review declaration');
 		assert.equal(model.pageHeading, 'Review declaration');
 		assert.equal(model.pageCaption, 'Your application');
-		assert.equal(model.backLinkUrl, '/manage-local-plans/PLAN%2F123456/gateway-2-submission');
+		assert.equal(model.backLinkUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
 	});
 });
 
@@ -69,7 +69,7 @@ describe('buildPostDeclarationPage', () => {
 		await handler(req, res);
 
 		assert.equal(redirectCalls.length, 1);
-		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN%2F123456/gateway-2-submission/application-complete');
+		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2-submission/application-complete');
 		assert.equal(renderCalls.length, 0);
 	});
 
