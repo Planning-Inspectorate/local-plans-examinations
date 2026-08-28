@@ -48,7 +48,7 @@ describe('landing page', () => {
 
 	it('should render plan data from service', async () => {
 		const plans = [
-			mockPlan({ refNum: 'PLAN/001', leadLPA: 'Southampton', title: 'East plan', documents: [mockApplicationDoc()] })
+			mockPlan({ refNum: 'PLAN-001', leadLPA: 'Southampton', title: 'East plan', documents: [mockApplicationDoc()] })
 		];
 		const { landingPage, mockRes, mockReq } = initialiseTest(plans);
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
@@ -57,7 +57,7 @@ describe('landing page', () => {
 
 		const refNum = data.plans[0][0].html.match(/>([^<]+)</)?.[1];
 
-		assert.deepStrictEqual(refNum, 'PLAN/001', `Expected PLAN/001 instead got ${refNum}`);
+		assert.deepStrictEqual(refNum, 'PLAN-001', `Expected PLAN-001 instead got ${refNum}`);
 	});
 
 	it('should warn if no plans found and display No plans available', async () => {
@@ -102,7 +102,7 @@ describe('landing page', () => {
 
 	it('should filter out incorrect plans and log error', async () => {
 		const invalidPlan = {
-			refNum: 'PLAN/BAD',
+			refNum: 'PLAN-BAD',
 			leadLPA: 'Test',
 			title: 'Bad plan',
 			stage: 1,
@@ -112,7 +112,7 @@ describe('landing page', () => {
 			documents: []
 		};
 		const validTestPlan = mockPlan({
-			refNum: 'PLAN/GOOD',
+			refNum: 'PLAN-GOOD',
 			leadLPA: 'Southampton',
 			title: 'Good plan',
 			documents: [mockApplicationDoc()]
@@ -123,9 +123,9 @@ describe('landing page', () => {
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
 		const html = nunjucks.render(view, data);
 
-		assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [{ planRef: 'PLAN/BAD' }, 'Invalid plan']);
-		assert.ok(!html.includes('PLAN/BAD'), 'expected invalid plan to be filtered out');
-		assert.ok(html.includes('PLAN/GOOD'), 'expected valid plan to be rendered');
+		assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [{ planRef: 'PLAN-BAD' }, 'Invalid plan']);
+		assert.ok(!html.includes('PLAN-BAD'), 'expected invalid plan to be filtered out');
+		assert.ok(html.includes('PLAN-GOOD'), 'expected valid plan to be rendered');
 	});
 
 	it('should render correct links', async () => {
