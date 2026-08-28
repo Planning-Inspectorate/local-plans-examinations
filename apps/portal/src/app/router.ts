@@ -10,6 +10,7 @@ import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monito
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
+import { checkIsAuthenticated } from './auth/guards.ts';
 
 /**
  * Main app router
@@ -26,6 +27,7 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use(cacheNoCacheMiddleware);
 	router.use('/login', createLoginRoutes(service));
 	router.use('/landingPage', createLandingPageRoutes(service));
+	router.use('/manage-local-plans', checkIsAuthenticated);
 	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', createPlanPageRoutes(service));
 	router.use('/manage-local-plans', gateway2SubmissionRoutes(service));
