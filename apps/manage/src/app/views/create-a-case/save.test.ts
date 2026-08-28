@@ -92,7 +92,7 @@ describe('buildSaveController', () => {
 		assert.strictEqual(caseData.caseOfficer, 'John Doe');
 		assert.strictEqual(caseData.planTitle, 'Development Plan 2024');
 		assert.strictEqual(caseData.planType, 'Local Plan');
-		assert.ok(caseData.reference.startsWith('PLAN/'));
+		assert.ok(caseData.reference.startsWith('PLAN-'));
 
 		assert.ok(caseData.lpas);
 		assert.ok(caseData.lpas.connectOrCreate);
