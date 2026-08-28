@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
 
 const MAX_ATTEMPTS = 3;
+const LOCAL_ONE_TIME_PASSWORD = '12345';
 
 export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
@@ -211,6 +212,15 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 		}
 
+		if (isOneTimePasswordBypass(service, req, otp)) {
+			req.session.isAuthenticated = true;
+			req.session.authenticatedEmail = email;
+			delete req.session.email;
+
+			logger.info({ email }, 'OTP bypass verification success');
+			return res.redirect('/manage-local-plans/your-plans');
+		}
+
 		try {
 			const otpRecord = await db.oneTimePassword.findUnique({
 				where: { email }
@@ -314,6 +324,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 				}
 			});
 
+			req.session.isAuthenticated = true;
+			req.session.authenticatedEmail = email;
 			delete req.session.email;
 
 			logger.info({ email }, 'OTP verification success');
@@ -331,6 +343,26 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 		}
 	};
+}
+
+function isOneTimePasswordBypass(service: PortalService, req: Request, otp: string): boolean {
+	const submittedOtp = otp.trim();
+	const environment = service.environment.trim().toLowerCase();
+
+	if (environment === 'prod') {
+		return false;
+	}
+
+	const configuredBypassCode = service.auth.otpBypassCode.trim();
+	if (configuredBypassCode) {
+		return submittedOtp === configuredBypassCode;
+	}
+
+	const host = req.get('host') ?? '';
+	const hostname = host.split(':')[0];
+	const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(hostname);
+
+	return process.env.NODE_ENV !== 'production' && isLocalHost && submittedOtp === LOCAL_ONE_TIME_PASSWORD;
 }
 
 export function buildRequestNewCode(service: PortalService): AsyncRequestHandler {

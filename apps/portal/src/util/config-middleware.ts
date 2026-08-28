@@ -24,7 +24,7 @@ export function addLocalsConfiguration(): Handler {
 		];
 
 		res.locals.config = {
-			styleFile: 'style-01f91e1b.css',
+			styleFile: 'style-1b528393.css',
 			cspNonce: res.locals.cspNonce,
 			headerTitle: 'Submit your plan for examination',
 			footerLinks: [

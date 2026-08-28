@@ -7,6 +7,10 @@ import { buildEnterEmailPage, buildEnterOtpPage, buildSubmitEmailPage, buildSubm
 
 function createMockService(overrides = {}) {
 	return {
+		environment: 'local',
+		auth: {
+			otpBypassCode: ''
+		},
 		logger: mockLogger(),
 		db: {
 			case: { findFirst: mock.fn() },
@@ -32,13 +36,13 @@ function createMockRes() {
 	return res;
 }
 
-function createMockReq(body = {}, session = {}) {
+function createMockReq(body = {}, session = {}, host = 'localhost:8080') {
 	return {
 		body,
 		session,
 		baseUrl: '/login',
 		protocol: 'http',
-		get: (header) => (header === 'host' ? 'localhost:8080' : undefined)
+		get: (header) => (header === 'host' ? host : undefined)
 	};
 }
 
@@ -262,6 +266,139 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 	});
 
+	it('should allow the configured OTP bypass outside prod', async () => {
+		const service = createMockService({
+			environment: 'test',
+			auth: { otpBypassCode: '12345' }
+		});
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' }, 'local-plans-portal-test.example.com');
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/manage-local-plans/your-plans');
+		assert.strictEqual(req.session.isAuthenticated, true);
+		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
+		assert.strictEqual(req.session.email, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
+	});
+
+	it('should allow the configured OTP bypass when NODE_ENV is production in non-prod Azure', async () => {
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'production';
+		const service = createMockService({
+			environment: 'training',
+			auth: { otpBypassCode: '12345' }
+		});
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq(
+			{ otp: '12345' },
+			{ email: 'test@example.com' },
+			'local-plans-portal-training.example.com'
+		);
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/manage-local-plans/your-plans');
+		assert.strictEqual(req.session.isAuthenticated, true);
+		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
+		assert.strictEqual(req.session.email, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
+		process.env.NODE_ENV = originalEnv;
+	});
+
+	it('should allow the local OTP fallback when running on localhost outside production', async () => {
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'development';
+		const service = createMockService();
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/manage-local-plans/your-plans');
+		assert.strictEqual(req.session.isAuthenticated, true);
+		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
+		assert.strictEqual(req.session.email, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
+		process.env.NODE_ENV = originalEnv;
+	});
+
+	it('should not allow the configured OTP bypass in prod', async () => {
+		const service = createMockService({
+			environment: 'prod',
+			auth: { otpBypassCode: '12345' }
+		});
+		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' }, 'local-plans-portal-prod.example.com');
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(req.session.isAuthenticated, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
+	});
+
+	it('should not allow the OTP bypass when no bypass code is configured for a non-localhost host', async () => {
+		const service = createMockService({
+			environment: 'test',
+			auth: { otpBypassCode: '' }
+		});
+		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' }, 'local-plans-portal-test.example.com');
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(req.session.isAuthenticated, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
+	});
+
+	it('should not allow the local OTP fallback in production', async () => {
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'production';
+		const service = createMockService();
+		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(req.session.isAuthenticated, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
+		process.env.NODE_ENV = originalEnv;
+	});
+
+	it('should not allow the local OTP for non-localhost hosts outside production', async () => {
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'development';
+		const service = createMockService();
+		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' }, 'example.com');
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(req.session.isAuthenticated, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
+		process.env.NODE_ENV = originalEnv;
+	});
+
 	it('should render error when no OTP record found in DB', async () => {
 		const service = createMockService();
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
@@ -412,6 +549,8 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		assertRedirect(res, '/manage-local-plans/your-plans');
+		assert.strictEqual(req.session.isAuthenticated, true);
+		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
 		assert.strictEqual(req.session.email, undefined);
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		const updateArgs = service.db.oneTimePassword.update.mock.calls[0].arguments[0];
