@@ -1123,13 +1123,14 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 				req,
 				service.db,
 				{
-					slaSentDate: null
+					signedSla: null // Will be overridden by overrideLabels
 				},
-				{
-					slaSentDate: slaSentDate
-				},
+				{},
 				caseReference,
-				currentUser
+				currentUser,
+				{
+					signedSla: `SLA sent date uploaded to ${await formatCaseHistoryValue(service, req, '', slaSentDate)}`
+				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Signed SLA uploaded. LPA can proceed to Gateway 2 submission';
