@@ -63,7 +63,6 @@
                     {% endif %}
 
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
-
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
@@ -109,24 +108,6 @@
                 </div>
             {% endif %}
         {% endfor %}
-
-        {{ placeholderTable("Additional documents", "additional-documents", [
-            {
-                text: "Subsequent work towards a draft Plan",
-                dataCy: "add-subsequent-work"
-            }
-        ]) }}
-
-        {{ placeholderTable("Workshop preferences", "workshop-preferences", [
-            {
-                text: "Suggested workshop venue",
-                dataCy: "add-workshop-venue"
-            },
-            {
-                text: "Suggested workshop dates",
-                dataCy: "add-workshop-dates"
-            }
-        ]) }}
 
         <form method="post" novalidate>
             <input type="hidden" name="_csrf" value="{{ _csrf }}">

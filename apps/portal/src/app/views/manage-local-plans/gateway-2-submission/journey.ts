@@ -14,7 +14,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 		? `${req.baseUrl}/${encodedPlanReference}/gateway-2-submission`
 		: `${req.baseUrl}/gateway-2-submission`;
 
-	return new Journey({
+	const journey = new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
 			new Section('Procedural Documents', 'procedural')
@@ -29,7 +29,8 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.consultationSummaryFeedbackScoping)
 				.addQuestion(questions.consultationSummaryProposedContent)
 				.addQuestion(questions.gateway1SelfAssessment)
-				.addQuestion(questions.consultationOnProposedContent)
+				.addQuestion(questions.consultationOnProposedContent),
+			new Section('Additional documents', 'additional').addQuestion(questions.subsequentWorkTowardsADraftPlan)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -40,4 +41,22 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 		initialBackLink: planReference ? baseUrl : '/',
 		response
 	});
+	return getBacklinks(journey, baseUrl);
+}
+
+function getBacklinks(journey: Journey, overviewUrl: string): Journey {
+	const getBackLink = journey.getBackLink.bind(journey);
+
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		const { params, manageListQuestion } = options;
+		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
+
+		if (!manageListQuestion && !isManageListStep) {
+			return overviewUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	return journey;
 }

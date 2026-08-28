@@ -4,7 +4,8 @@ import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-app
 import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
-	noticeOfIntentionToCommenceLocalPlanPage
+	noticeOfIntentionToCommenceLocalPlanPage,
+	subsequentWorkTowardsDraftPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -168,6 +169,67 @@ describe('Gateway 2 document upload journeys', () => {
 				gateway2ApplicationPage.verifyDocumentRowContains(
 					gateway2ApplicationPage.consultationDocumentsTable,
 					'Notice of intention to commence local plan preparation',
+					'test-document.pdf',
+					'test-document.docx',
+					'test-document.xlsx'
+				);
+			});
+		}
+	);
+
+	it(
+		'Adds subsequent work towards a draft plan using drag and drop, then replaces it with new document',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = subsequentWorkTowardsDraftPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				subsequentWorkTowardsDraftPlanPage.dragAndDropFile('test-document.pdf');
+				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
+				subsequentWorkTowardsDraftPlanPage.verifyFileUploaded('test-document.pdf');
+
+				subsequentWorkTowardsDraftPlanPage.saveAndReturn();
+				gateway2ApplicationPage.verifyLoaded();
+
+				subsequentWorkTowardsDraftPlanPage.clickAddLink(page.addCy);
+				subsequentWorkTowardsDraftPlanPage.verifyLoaded();
+				subsequentWorkTowardsDraftPlanPage.verifyFileUploaded('test-document.pdf');
+
+				subsequentWorkTowardsDraftPlanPage.removeFile();
+				subsequentWorkTowardsDraftPlanPage.verifyFileNotUploaded('test-document.pdf');
+
+				subsequentWorkTowardsDraftPlanPage.uploadFile('test-document.docx');
+				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
+				subsequentWorkTowardsDraftPlanPage.verifyFileUploaded('test-document.docx');
+			});
+		}
+	);
+
+	it(
+		'Shows all uploaded subsequent work towards a draft plan files on the Gateway 2 submission page',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = subsequentWorkTowardsDraftPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				subsequentWorkTowardsDraftPlanPage.uploadFile([
+					'test-document.pdf',
+					'test-document.docx',
+					'test-document.xlsx'
+				]);
+				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
+				subsequentWorkTowardsDraftPlanPage.verifyFileUploaded(
+					'test-document.pdf',
+					'test-document.docx',
+					'test-document.xlsx'
+				);
+
+				subsequentWorkTowardsDraftPlanPage.saveAndReturn();
+				gateway2ApplicationPage.verifyLoaded();
+
+				gateway2ApplicationPage.verifyDocumentRowContains(
+					gateway2ApplicationPage.additionalDocumentsTable,
+					'Subsequent work towards a draft Plan',
 					'test-document.pdf',
 					'test-document.docx',
 					'test-document.xlsx'

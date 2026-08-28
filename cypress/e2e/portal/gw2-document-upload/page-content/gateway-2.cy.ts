@@ -5,7 +5,7 @@ import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
-	draftStatementOfSoundnessPage
+	subsequentWorkTowardsDraftPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -37,7 +37,7 @@ describe('Gateway 2 document upload page content', () => {
 			const page = localPlanTimetablePage;
 			openGateway2DocumentUploadPage(plan, page);
 			localPlanTimetablePage.verifyLoaded();
-			localPlanTimetablePage.verifyBackLink(gateway2CoverLetterPage.pathFor(plan.urlReference));
+			localPlanTimetablePage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			localPlanTimetablePage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
 			localPlanTimetablePage.verifyMainContains('Drag and drop or choose files');
 			localPlanTimetablePage.verifyNoFileChosen();
@@ -53,7 +53,7 @@ describe('Gateway 2 document upload page content', () => {
 			const page = noticeOfIntentionToCommenceLocalPlanPage;
 			openGateway2DocumentUploadPage(plan, page);
 			noticeOfIntentionToCommenceLocalPlanPage.verifyLoaded();
-			noticeOfIntentionToCommenceLocalPlanPage.verifyBackLink(draftStatementOfSoundnessPage.pathFor(plan.urlReference));
+			noticeOfIntentionToCommenceLocalPlanPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			noticeOfIntentionToCommenceLocalPlanPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyMainContains('Drag and drop or choose files');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyNoFileChosen();
@@ -61,6 +61,22 @@ describe('Gateway 2 document upload page content', () => {
 			noticeOfIntentionToCommenceLocalPlanPage.verifyFileFormatHintText();
 			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFilesButtonVisible();
 			noticeOfIntentionToCommenceLocalPlanPage.verifySaveAndReturnButton();
+		});
+	});
+
+	it('Verifying page content for the subsequent work towards a draft plan', { tags: ['regression'] }, () => {
+		loadPlanDetails().then((plan) => {
+			const page = subsequentWorkTowardsDraftPlanPage;
+			openGateway2DocumentUploadPage(plan, page);
+			subsequentWorkTowardsDraftPlanPage.verifyLoaded();
+			subsequentWorkTowardsDraftPlanPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
+			subsequentWorkTowardsDraftPlanPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			subsequentWorkTowardsDraftPlanPage.verifyMainContains('Drag and drop or choose files');
+			subsequentWorkTowardsDraftPlanPage.verifyNoFileChosen();
+			subsequentWorkTowardsDraftPlanPage.verifyUploadFormVisible();
+			subsequentWorkTowardsDraftPlanPage.verifyFileFormatHintText();
+			subsequentWorkTowardsDraftPlanPage.verifyUploadFilesButtonVisible();
+			subsequentWorkTowardsDraftPlanPage.verifySaveAndReturnButton();
 		});
 	});
 });
