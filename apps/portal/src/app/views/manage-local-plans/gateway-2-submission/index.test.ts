@@ -5,7 +5,11 @@ import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components
 import { syncGateway2UploadAnswer } from './index.ts';
 import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
-import { gateway2CoverLetterQuestion } from './questions.ts';
+import {
+	consultationOnProposedContentQuestion,
+	gateway1SelfAssessmentQuestion,
+	gateway2CoverLetterQuestion
+} from './questions.ts';
 
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
 	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
@@ -18,7 +22,7 @@ describe('Gateway 2 covering letter upload page', () => {
 			question: gateway2CoverLetterQuestion,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
-			currentUrl: '/manage-local-plans/PLAN%2F001/gateway-2-submission/procedural/gateway-2-cover-letter',
+			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/procedural/gateway-2-cover-letter',
 			errors: {},
 			config: {
 				styleFile: 'style.css',
@@ -40,6 +44,56 @@ describe('Gateway 2 covering letter upload page', () => {
 			!bodyParagraphs.includes('The total size of your uploaded files must be smaller than 1GB.'),
 			'expected the total upload size guidance not to render as a separate paragraph'
 		);
+	});
+});
+
+describe('Gateway 1 self assessment upload page', () => {
+	it('renders the upload guidance for the consultation document question', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('forms/custom-components/file-uploader/index.njk', {
+			layoutTemplate: 'views/layouts/main.njk',
+			question: gateway1SelfAssessmentQuestion,
+			uploadedFiles: [],
+			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
+			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/consultation/g1-self-assess',
+			errors: {},
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('Consultation documents'));
+		assert.ok(html.includes('Upload your Gateway 1 - Self Assessment of Readiness'));
+		assert.ok(html.includes('Drag and drop or choose files'));
+		assert.ok(html.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE));
+	});
+});
+
+describe('Consultation on proposed content upload page', () => {
+	it('renders the upload guidance for the consultation document question', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('forms/custom-components/file-uploader/index.njk', {
+			layoutTemplate: 'views/layouts/main.njk',
+			question: consultationOnProposedContentQuestion,
+			uploadedFiles: [],
+			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
+			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/consultation/cons-of-proposed',
+			errors: {},
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('Consultation documents'));
+		assert.ok(html.includes('Upload your Consultation on proposed local plan content and evidence documents'));
+		assert.ok(html.includes('Drag and drop or choose files'));
+		assert.ok(html.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE));
 	});
 });
 

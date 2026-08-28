@@ -419,7 +419,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			introduction: 'Upload a file',
 			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(SIGNED_SLA_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES)}.`,
 			chooseFilesButtonText: 'Choose files',
-			dropInstructionText: 'or drop files'
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
 		},
 		validators: [
 			new FileUploadRequiredValidator('signedSla', 'Upload at least one signed SLA document before continuing')

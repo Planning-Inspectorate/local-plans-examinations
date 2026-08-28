@@ -5,6 +5,7 @@ import type { JourneyAnswers } from '@planning-inspectorate/dynamic-forms/src/jo
 import { JOURNEY_ID } from './journey.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { parseDate } from '../../util/date.ts';
+import { questions } from './questions.ts';
 
 /**
  * The structure of data for the journey answers
@@ -50,7 +51,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			throw new Error('answers should be an object');
 		}
 
-		answers.reference = `PLAN/${Math.floor(Math.random() * 1000000)}`;
+		answers.reference = `PLAN-${Math.floor(Math.random() * 1000000)}`;
 		answers.email = answers.contactDetails.at(0)!.email;
 
 		const allEmails = answers.contactDetails.map((contact) => contact.email);
@@ -101,6 +102,8 @@ async function saveDataToDatabase(
 	currentUser: string
 ): Promise<void> {
 	await service.db.$transaction(async (tx) => {
+		const nameFor = (code: string) => questions.lpa.options.find((opt: any) => opt.value === code)?.text || '';
+
 		const createdCase = await tx.case.create({
 			data: {
 				reference: answers.reference,
@@ -111,7 +114,7 @@ async function saveDataToDatabase(
 				lpas: {
 					connectOrCreate: uniqueLpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
-						create: { lpaCode }
+						create: { lpaCode, lpaName: nameFor(lpaCode) }
 					}))
 				},
 				contacts: {

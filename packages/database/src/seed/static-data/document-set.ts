@@ -105,5 +105,13 @@ export const DOCUMENT_SET = [
 		displayName: 'Gateway 2 Issue Report',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_REPORT,
 		displayOrder: 16
+	},
+	{
+		id: DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Subsequent work towards draft plan',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
+		displayOrder: 17
 	}
 ];

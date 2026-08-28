@@ -262,11 +262,13 @@ async function updateOverview(
 		);
 		return true;
 	}
+
+	const lpaName = (questions.lpa.options || []).find((opt: any) => opt.value === answers.lpa)?.text || '';
 	// Editing a contact's details (incl. changing that contact's LPA)
 	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
 		await db.contact.update({
 			where: { id: currentItemId },
-			data: buildContactData(answers)
+			data: buildContactData(answers, lpaName)
 		});
 		return true;
 	}
@@ -283,7 +285,8 @@ async function updateOverview(
 							lpaCode: answers.lpa
 						},
 						create: {
-							lpaCode: answers.lpa
+							lpaCode: answers.lpa,
+							lpaName: lpaName
 						}
 					},
 					disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
@@ -295,7 +298,7 @@ async function updateOverview(
 
 	if (question === 'check-contact-details') {
 		if (!currentItemId) return false;
-		const contactData = buildContactData(answers);
+		const contactData = buildContactData(answers, lpaName);
 		await db.contact.upsert({
 			where: { id: currentItemId },
 			create: {
@@ -353,19 +356,31 @@ async function resolveCaseIdFromReference(db: PrismaClient, reference: string): 
 	return caseRecord.id;
 }
 
-async function updateGateway1(db: PrismaClient, answers: Gateway1Input, caseReference: string, question?: string) {
+export type UpdateFunction = (
+	db: PrismaClient,
+	answers: any,
+	caseReference: string,
+	question?: string
+) => Promise<boolean>;
+
+export async function updateGateway1(
+	db: PrismaClient,
+	answers: Gateway1Input,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
-	const fileUploadQuestions = new Set(['signed-sla']);
-	if (fileUploadQuestions.has(String(question))) {
-		// Documents are saved automatically by the file upload component
-		return true;
+	if (question == 'signed-sla') {
+		answers.slaReceivedDate = new Date();
 	}
-	await db.gateway1Info.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
+	if (answers) {
+		await db.gateway1Info.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
@@ -380,41 +395,55 @@ export async function updateGateway2(
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	await db.gateway2Info.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
+	if (answers) {
+		await db.gateway2Info.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
-async function updateGateway3(db: PrismaClient, answers: Gateway3Input, caseReference: string, question?: string) {
+export async function updateGateway3(
+	db: PrismaClient,
+	answers: Gateway3Input,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
-
-	await db.gateway3Info.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
-
+	if (answers) {
+		await db.gateway3Info.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
-async function updateExamination(db: PrismaClient, answers: ExaminationInput, caseReference: string, question: string) {
+export async function updateExamination(
+	db: PrismaClient,
+	answers: ExaminationInput,
+	caseReference: string,
+	question?: string
+) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 	const inspectorQuestions = ['examining-inspector-1', 'examining-inspector-2', 'examining-inspector-3'];
-	if (inspectorQuestions.includes(question)) {
+	if (question && inspectorQuestions.includes(question)) {
 		answers.examiningInspectorAppointmentDate = new Date();
 	}
-	await db.examinationInfo.upsert({
-		where: { caseId },
-		update: { ...answers },
-		create: { caseId, ...answers }
-	});
+	if (answers) {
+		await db.examinationInfo.upsert({
+			where: { caseId },
+			update: { ...answers },
+			create: { caseId, ...answers }
+		});
+	}
 	return true;
 }
 
@@ -441,20 +470,20 @@ async function removeItem({
 }
 
 /** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(formData: CaseOverviewInput): Prisma.ContactCreateWithoutCasesInput {
+function buildContactData(formData: CaseOverviewInput, lpaName: string): Prisma.ContactCreateWithoutCasesInput {
 	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
 	return {
 		firstName,
 		lastName,
 		email,
 		phoneNumber: phone,
-		lpa: { connectOrCreate: lpaConnectOrCreate(lpaCode || lpaContact || '') }
+		lpa: { connectOrCreate: lpaConnectOrCreate(lpaCode || lpaContact || '', lpaName) }
 	};
 }
 
 /** A reusable `connectOrCreate` clause for an LPA by its code. */
-function lpaConnectOrCreate(lpaCode: string): Prisma.LPACreateOrConnectWithoutContactsInput {
-	return { where: { lpaCode }, create: { lpaCode } };
+function lpaConnectOrCreate(lpaCode: string, lpaName: string): Prisma.LPACreateOrConnectWithoutContactsInput {
+	return { where: { lpaCode }, create: { lpaCode, lpaName } };
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
@@ -534,6 +563,15 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'signed-sla' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					// TODO need to check if there are documents - only redirect if there are documents
+					res.redirect(303, 'signed-sla/check');
+					return;
+				}
 				if (next) next();
 				return;
 			}
@@ -585,28 +623,90 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 	};
 }
 
-export function buildCheckGateway2ReportMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function buildCheckReportMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
+		const section = getParam(req.params.section);
+		const questionUrl = getParam(req.params.question);
+		const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == questionUrl);
+		if (!questionConfig) {
+			throw new Error(`Could not find question config for question url '${questionUrl}'`);
+		}
+		const questionFieldName = questionConfig.fieldName;
 		const uploadedFiles =
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionFieldName)]?.uploadedFiles ?? [];
+		// Todo need to add error handling for 0 files - no flow defined right now
 		const caseReference = getParam(req.params.reference);
 		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		const reportIssuedDate = uploadedFiles[0]?.dateCreated ?? undefined;
-		res.render('views/layouts/gateway2-report-check-your-answers.njk', {
+		// Extra details needed to render the inner notification on the page
+		const questionDetailsMap: Record<
+			string,
+			{
+				title: string;
+				dbInfo: any;
+				completeIndicatorFieldName: string;
+				submitButtonText: string;
+				dateUploadedQuestion: string | undefined;
+			}
+		> = {
+			'signed-sla': {
+				title: 'Check signed SLA and issue notification',
+				dbInfo: service.db.gateway1Info,
+				completeIndicatorFieldName: 'slaSentDate',
+				submitButtonText: 'Confirm and issue notification',
+				dateUploadedQuestion: 'slaReceivedDate'
+			},
+			'gateway-2-report': {
+				title: 'Check Gateway 2 report details and issue notification',
+				dbInfo: service.db.gateway2Info,
+				completeIndicatorFieldName: 'reportIssuedDate',
+				submitButtonText: 'Issue report',
+				dateUploadedQuestion: undefined
+			}
+		};
+		const questionDetails = questionDetailsMap[questionConfig.url];
+		if (!questionDetails) {
+			throw new Error(
+				`Could not find details for question '${questionConfig.url}' in buildCheckReportMiddleware::questionDetailsMap`
+			);
+		}
+		const dateUploadedQuestion = questionDetails.dateUploadedQuestion
+			? questions[questionDetails.dateUploadedQuestion]
+			: undefined;
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const completeIndicatorFieldName = questionDetails.completeIndicatorFieldName;
+		const existingGatewayDetails = await questionDetails.dbInfo.findUnique({
+			select: {
+				[completeIndicatorFieldName]: true,
+				...(questionDetails.dateUploadedQuestion ? { [questionDetails.dateUploadedQuestion]: true } : {})
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		const alreadyComplete = existingGatewayDetails?.[completeIndicatorFieldName];
+		const notificationPreviewTemplate = questionUrl + (alreadyComplete ? '-complete' : '');
+		const documentUploadDate = questionDetails.dateUploadedQuestion
+			? existingGatewayDetails[questionDetails.dateUploadedQuestion]
+			: (uploadedFiles[0]?.dateCreated ?? undefined);
+		res.render('views/layouts/submit-documents-check-your-answers', {
+			titleHeading: questionDetails.title,
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,
 			journeyId: journeyId,
-			section: 'report',
-			question: 'gateway-2-report',
+			section: section,
+			question: questionUrl,
 			backLink: backLinkUrl,
-			reportIssuedDate: reportIssuedDate
+			notificationPreviewTemplate: notificationPreviewTemplate,
+			submitButtonText: questionDetails.submitButtonText,
+			documentUploadDate: documentUploadDate
 				? new Intl.DateTimeFormat('en-GB', {
 						day: 'numeric',
 						month: 'long',
 						timeZone: 'Europe/London',
 						year: 'numeric'
-					}).format(reportIssuedDate)
-				: null
+					}).format(documentUploadDate)
+				: null,
+			documentUploadDateModificationUrl: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
 		});
 		return;
 	};
@@ -734,7 +834,8 @@ export async function updateCaseHistory(
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
 	reference: string,
-	currentUser: string
+	currentUser: string,
+	overrideLabels: Record<string, string> = {}
 ) {
 	await db.case.update({
 		where: { reference },
@@ -742,7 +843,7 @@ export async function updateCaseHistory(
 			caseHistories: {
 				create: await Promise.all(
 					Object.entries(previousValues).map(async ([key, oldValue]) => ({
-						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key]),
+						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key], overrideLabels[key]),
 						// TODO: Get user once authentication is implemented
 						username: currentUser
 					}))
@@ -757,8 +858,12 @@ async function formatCaseHistoryEvent(
 	req: Request,
 	key: string,
 	oldValue: unknown,
-	newValue: unknown
+	newValue: unknown,
+	overrideLabel: string | undefined
 ) {
+	if (overrideLabel) {
+		return overrideLabel;
+	}
 	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
 	let oldValueText = 'updated to';
 	if (oldValue != null && oldValue != '') {
@@ -966,13 +1071,14 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 				req,
 				service.db,
 				{
-					reportIssuedDate: null
+					gateway2Report: null // Will be overridden by overrideLabels
 				},
-				{
-					reportIssuedDate: reportIssuedDate
-				},
+				{},
 				caseReference,
-				currentUser
+				currentUser,
+				{
+					gateway2Report: `Gateway 2 report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
+				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report issued';
@@ -980,6 +1086,58 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'Gateway 2 report already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		return;
+	};
+}
+
+export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway1Info.findUnique({
+			select: {
+				slaSentDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.slaSentDate) {
+			// Try to update the slaSentDate
+			const slaSentDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await updateGateway1(
+				service.db,
+				{
+					slaSentDate: slaSentDate
+				},
+				caseReference,
+				'sla-sent-date'
+			);
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					signedSla: null // Will be overridden by overrideLabels
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					signedSla: `Signed SLA uploaded on ${await formatCaseHistoryValue(service, req, '', slaSentDate)}`
+				}
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Signed SLA uploaded. LPA can proceed to Gateway 2 submission';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'SLA already issued';
 			req.session.alertMessageStatus = 'important';
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);

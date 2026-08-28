@@ -207,7 +207,7 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 });
 
 export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
-	refNum: 'PLAN/001', //Reference Number
+	refNum: 'PLAN-001', //Reference Number
 	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
 	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
 	title: 'East Borough Local Plan', //Plan Title
@@ -320,14 +320,14 @@ export function buildTestPlans(): unknown[] {
 
 	const testData: unknown[] = [
 		{
-			refNum: 'PLAN/001',
+			refNum: 'PLAN-001',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'East Borough Local Plan',
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
-			refNum: 'PLAN/002',
+			refNum: 'PLAN-002',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'West Local Plan',
@@ -335,7 +335,7 @@ export function buildTestPlans(): unknown[] {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
-			refNum: 'PLAN/003',
+			refNum: 'PLAN-003',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'Southside Local Plan',
@@ -344,7 +344,7 @@ export function buildTestPlans(): unknown[] {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
-			refNum: 'PLAN/004',
+			refNum: 'PLAN-004',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'North District Local Plan',
@@ -353,7 +353,7 @@ export function buildTestPlans(): unknown[] {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
-			refNum: 'PLAN/005',
+			refNum: 'PLAN-005',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'Seaside Local Plan',
@@ -362,7 +362,7 @@ export function buildTestPlans(): unknown[] {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
-			refNum: 'PLAN/006',
+			refNum: 'PLAN-006',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'Central City Local Plan',
@@ -371,7 +371,7 @@ export function buildTestPlans(): unknown[] {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		},
 		{
-			refNum: 'PLAN/007',
+			refNum: 'PLAN-007',
 			leadLPA: '',
 			linkedLPA: '',
 			title: 'Error Plan',
@@ -381,7 +381,7 @@ export function buildTestPlans(): unknown[] {
 			documents: []
 		},
 		{
-			refNum: 'PLAN/123456',
+			refNum: 'PLAN-123456',
 			leadLPA: 'Test LPA',
 			linkedLPA: 'Test Council',
 			title: 'Test plan',
@@ -395,7 +395,7 @@ export function buildTestPlans(): unknown[] {
 
 export const testPlan: unknown[] = [
 	{
-		refNum: 'PLAN/001',
+		refNum: 'PLAN-001',
 		leadLPA: 'Southampton',
 		linkedLPA: 'Romsey Town Council',
 		title: 'East plan',
@@ -422,7 +422,7 @@ export const testPlan: unknown[] = [
 		]
 	},
 	{
-		refNum: 'PLAN/123456',
+		refNum: 'PLAN-123456',
 		leadLPA: 'Test LPA',
 		linkedLPA: 'Test Council',
 		title: 'Test plan',

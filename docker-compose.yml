@@ -1,4 +1,15 @@
 services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.34.0
+    container_name: local-plans-azurite
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --skipApiVersionCheck
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    volumes:
+      - ${AZURITE_DATA_MOUNT:-./tmp/azurite-data}:/data
+
   mssql:
     image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: local-plans-mssql
@@ -17,5 +28,7 @@ services:
       - ${MSSQL_DATA_MOUNT:-./tmp/mssql-data}:/var/opt/mssql/data
 
 volumes:
+  azurite-data:
+    name: ${AZURITE_DATA_VOLUME:-local-plans-azurite-data}
   mssql-data:
     name: ${MSSQL_DATA_VOLUME:-local-plans-mssql-data}

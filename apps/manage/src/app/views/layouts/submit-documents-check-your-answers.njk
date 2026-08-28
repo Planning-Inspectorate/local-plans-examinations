@@ -20,7 +20,7 @@
   <div class="govuk-grid-column-two-thirds">
 
     <span class="govuk-caption-l">{{ caseReference }}</span>
-    <h1 class="govuk-heading-l">Check Gateway 2 report details and issue notification</h1>
+    <h1 class="govuk-heading-l">{{ titleHeading }}</h1>
 
     
 	{% if uploadedFiles and uploadedFiles.length %}
@@ -43,8 +43,15 @@
     <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Date uploaded</dt>
       <dd class="govuk-summary-list__value">
-        <a class="govuk-hint">{{ reportIssuedDate }}</a>
+        <a class="govuk-hint">{{ documentUploadDate }}</a>
       </dd>
+      {% if documentUploadDateModificationUrl %}
+      <dd class="govuk-summary-list__actions">
+        <span class="app-no-wrap">
+          <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ documentUploadDateModificationUrl | urlencode }}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
+        </span>
+      </dd>
+      {% endif %}
     </dl>
      <details class="govuk-details" data-cy="preview-email-to-lpa">
   <summary class="govuk-details__summary">
@@ -53,25 +60,7 @@
     </span>
   </summary>
   <div class="govuk-details__text">
-    <div class="pins-notify-preview-border"> 
-      <h3>Notification details</h3>
-
-      <div class="govuk-inset-text">
-      Plan reference {{ caseReference }} <br>
-      </div>
-      <h3> Gateway 2 report</h3>
-
-      <p>Enclosed is the Gateway 2 report.</p>
-
-      <p><a href="#" class="govuk-link">Sign in to our service</a> to view the report.</p>
-
-      <h3> Feedback</h3>
-
-      <p>We welcome your feedback on our Plans Examination service. Tell us on this short <a href="#" class="govuk-link">feedback form</a>.</p>
-
-      <p>The Planning Inspectorate</p>
-      <p>enquiries@planninginspectorate.gov.uk</p> 
-    </div>
+    {% include "views/layouts/notification-preview/" + notificationPreviewTemplate + ".njk" %}
   </div>
 </details>
 
@@ -81,7 +70,7 @@
         <input type="hidden" name="returnTo" value="gateway-2">
         
         <button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">
-          Issue report
+          {{ submitButtonText }}
         </button>
 
       </form>

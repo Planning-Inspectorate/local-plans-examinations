@@ -37,17 +37,6 @@
     </div>
 {% endmacro %}
 
-{% set consultationDocumentPlaceholderRows = [
-    {
-        text: "Gateway 1 - Self Assessment of Readiness",
-        dataCy: "add-gateway-1-self-assessment"
-    },
-    {
-        text: "Consultation on proposed local plan content and evidence documents",
-        dataCy: "add-consultation-proposed-content"
-    }
-] %}
-
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
@@ -74,7 +63,6 @@
                     {% endif %}
 
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
-
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
@@ -97,7 +85,14 @@
                                     <td class="govuk-table__cell">
                                         {% if row.actions and row.actions.items %}
                                             {% for action in row.actions.items %}
-                                                <a href="{{ action.href }}" class="govuk-link" data-cy="add-{{ row.key.text | lower | replace(' ', '-') }}">
+                                                {% set actionDataCy = "add-" + (row.key.text | lower | replace(' ', '-')) %}
+                                                {% if row.key.text == "Gateway 1 - Self Assessment of Readiness" %}
+                                                    {% set actionDataCy = "add-gateway-1-self-assessment" %}
+                                                {% endif %}
+                                                {% if row.key.text == "Consultation on proposed local plan content and evidence documents" %}
+                                                    {% set actionDataCy = "add-consultation-proposed-content" %}
+                                                {% endif %}
+                                                <a href="{{ action.href }}" class="govuk-link" data-cy="{{ actionDataCy }}">
                                                     {{ action.text }}
                                                     {% if action.visuallyHiddenText %}
                                                         <span class="govuk-visually-hidden"> {{ action.visuallyHiddenText }}</span>
@@ -108,35 +103,11 @@
                                     </td>
                                 </tr>
                             {% endfor %}
-                            {% if section.heading | lower == "consultation documents" %}
-                                {# Temporary placeholder rows. Remove when these items are converted to dynamic components. #}
-                                {% for row in consultationDocumentPlaceholderRows %}
-                                    {{ placeholderRow(row.text, row.dataCy) }}
-                                {% endfor %}
-                            {% endif %}
                         </tbody>
                     </table>
                 </div>
             {% endif %}
         {% endfor %}
-
-        {{ placeholderTable("Additional documents", "additional-documents", [
-            {
-                text: "Subsequent work towards a draft Plan",
-                dataCy: "add-subsequent-work"
-            }
-        ]) }}
-
-        {{ placeholderTable("Workshop preferences", "workshop-preferences", [
-            {
-                text: "Suggested workshop venue",
-                dataCy: "add-workshop-venue"
-            },
-            {
-                text: "Suggested workshop dates",
-                dataCy: "add-workshop-dates"
-            }
-        ]) }}
 
         <form method="post" novalidate>
             <input type="hidden" name="_csrf" value="{{ _csrf }}">

@@ -37,15 +37,15 @@ export const noticeOfIntentionToCommenceLocalPlanPage = new DocumentUploadPage(
 	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.path
 );
 
-export const draftStatementOfSoundnessPage = new DocumentUploadPage(
+export const subsequentWorkTowardsDraftPlanPage = new DocumentUploadPage(
 	gateway2UploadPath(
-		gateway2UploadAnswers.draftStatementOfSoundness.section,
-		gateway2UploadAnswers.draftStatementOfSoundness.path
+		gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.section,
+		gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.path
 	),
-	gateway2UploadAnswers.draftStatementOfSoundness.fieldName,
-	gateway2UploadAnswers.draftStatementOfSoundness.heading,
-	gateway2UploadAnswers.draftStatementOfSoundness.caption,
-	gateway2UploadAnswers.draftStatementOfSoundness.addCy,
-	gateway2UploadAnswers.draftStatementOfSoundness.section,
-	gateway2UploadAnswers.draftStatementOfSoundness.path
+	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.fieldName,
+	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.heading,
+	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.caption,
+	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.addCy,
+	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.section,
+	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.path
 );

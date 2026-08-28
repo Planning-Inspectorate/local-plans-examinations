@@ -73,7 +73,9 @@ export const signedSLA = {
 	caption: 'Signed SLA',
 	path: 'signed-sla',
 	fieldName: 'signedSla',
-	display: 'Not started'
+	display: 'Not started',
+	fileName: 'test-document.pdf',
+	updatedFileName: 'test-document.docx'
 } as const;
 
 export const updatedNoticeOfIntention = {

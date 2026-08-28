@@ -11,6 +11,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { createFileUploadQuestion } from './utils.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -184,6 +185,36 @@ export const noticeOfIntentionQuestion: FileUploaderQuestionProps = {
 	validators: []
 };
 
+export const gateway1SelfAssessmentQuestion: FileUploaderQuestionProps = createFileUploadQuestion({
+	title: 'Gateway 1 - Self Assessment of Readiness',
+	question: 'Upload your Gateway 1 - Self Assessment of Readiness',
+	fieldName: 'gateway1SelfAssessment',
+	url: 'g1-self-assess',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	text: {
+		caption: 'Consultation documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+	}
+});
+
+export const consultationOnProposedContentQuestion: FileUploaderQuestionProps = createFileUploadQuestion({
+	title: 'Consultation on proposed local plan content and evidence documents',
+	question: 'Upload your Consultation on proposed local plan content and evidence documents',
+	fieldName: 'consultationOnProposedContent',
+	url: 'cons-of-proposed',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	text: {
+		caption: 'Consultation documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+	}
+});
+
 export const draftStatementOfSoundnessQuestion: FileUploaderQuestionProps = {
 	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 	title: 'Draft statement of soundness',
@@ -288,16 +319,45 @@ export const consultationSummaryProposedContentQuestion: FileUploaderQuestionPro
 	validators: []
 };
 
+export const subsequentWorkTowardsADraftPlan: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Subsequent work towards a draft Plan',
+	question: 'Upload any subsequent work towards a draft plan',
+	fieldName: 'subsequentWorkTowardsADraftPlan',
+	url: 'subsequent-work-towards-a-draft-plan',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
+		caption: 'Additional documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: []
+};
+
 export const gateway2FileUploadQuestions = {
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: localPlanTimetableQuestion,
 	projectInitiationDocument: projectInitiationDocumentQuestion,
 	draftStatementOfCompliance: draftStatementOfComplianceQuestion,
 	noticeOfIntention: noticeOfIntentionQuestion,
+	gateway1SelfAssessment: gateway1SelfAssessmentQuestion,
+	consultationOnProposedContent: consultationOnProposedContentQuestion,
 	draftStatementOfSoundness: draftStatementOfSoundnessQuestion,
 	scopingConsultationDocuments: scopingConsultationDocumentsQuestion,
 	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion,
-	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion
+	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion,
+	subsequentWorkTowardsADraftPlan: subsequentWorkTowardsADraftPlan
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(
@@ -340,7 +400,7 @@ function addCheckAnswersRedirectToAction(question: Question, redirect: CheckAnsw
 
 // Appends a query parameter to a URL.
 // Example format: /plan-title?checkAnswersRedirect=check-your-answers.
-function appendQueryParam(url: string, key: string, value: string) {
+export function appendQueryParam(url: string, key: string, value: string) {
 	const separator = url.includes('?') ? '&' : '?';
 	return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }

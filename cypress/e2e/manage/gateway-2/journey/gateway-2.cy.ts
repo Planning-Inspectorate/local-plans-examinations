@@ -63,9 +63,7 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.openActionLinkFor(gateway2Report.row);
 		gateway2ReportPage.verifyLoaded();
 
-		gateway2ReportPage.dragAndDropFile(gateway2Report.fileName, gateway2Report.fieldName);
-		gateway2ReportPage.clickUploadFiles();
-		gateway2ReportPage.verifyFileUploaded(gateway2Report.fileName);
+		gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName, gateway2Report.fieldName);
 		gateway2ReportPage.saveAndReturn();
 
 		gateway2ReportCheckPage.verifyLoaded(gateway2Report.fileName);
