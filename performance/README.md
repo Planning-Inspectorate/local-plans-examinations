@@ -126,6 +126,7 @@ jmeter -n \
 
 It:
 
+- downloads Java 17 for JMeter
 - downloads Apache JMeter 5.6.3
 - checks Manage health and Portal availability
 - reads `PERFORMANCE_TEST_AUTH_TOKEN` from the `pipeline_secrets` variable group
