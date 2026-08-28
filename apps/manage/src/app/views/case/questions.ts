@@ -694,7 +694,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: '1', text: 'Proceed to examination' },
 			{ value: '2', text: 'Resubmission required' }
 		],
-		question: 'What is the plan band?',
+		question: 'What is the outcome of your Gateway 3 decision',
 		fieldName: 'decision',
 		url: 'gateway-3-decision',
 		title: 'Gateway 3 decision',
