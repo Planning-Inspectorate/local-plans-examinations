@@ -37,7 +37,7 @@ export class DeleteCasePage extends BasePage {
 	verifyCaseReference() {
 		this.caseDetailRow('Case reference')
 			.invoke('text')
-			.should('match', /PLAN\/\d+/);
+			.should('match', /PLAN-\d+/);
 	}
 
 	deleteCase() {
