@@ -419,6 +419,10 @@ export async function updateGateway3(
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
+	if (question === 'gateway-3-document') {
+		// For handling the save button
+		return true;
+	}
 	if (answers) {
 		await db.gateway3Info.upsert({
 			where: { caseId },
@@ -603,6 +607,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-3': {
 				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
