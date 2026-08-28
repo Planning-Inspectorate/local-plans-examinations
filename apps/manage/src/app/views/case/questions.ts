@@ -691,14 +691,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: '1', text: '1' },
-			{ value: '2', text: '2' }
+			{ value: '1', text: 'Proceed to examination' },
+			{ value: '2', text: 'Resubmission required' }
 		],
 		question: 'What is the plan band?',
-		fieldName: 'planBand',
-		url: 'plan-band',
-		title: 'Plan band',
-		validators: [new RequiredValidator('Select a plan band')]
+		fieldName: 'decision',
+		url: 'gateway-3-decision',
+		title: 'Gateway 3 decision',
+		validators: [new RequiredValidator('Select a decision')]
 	},
 	gateway3CompletionDate: {
 		type: COMPONENT_TYPES.DATE,
