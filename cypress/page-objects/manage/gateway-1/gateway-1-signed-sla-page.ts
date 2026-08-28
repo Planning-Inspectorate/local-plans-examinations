@@ -38,7 +38,7 @@ class Gateway1SignedSLACheckPage extends BasePage {
 
 	verifyChangeLinks() {
 		this.verifySummaryRowActionHref('Document 1', gateway1QuestionPath(signedSLA.path));
-		this.verifySummaryRowActionHref('Date uploaded', gateway1QuestionPath('sla-sent-date'));
+		this.verifySummaryRowActionHref('Date uploaded', gateway1QuestionPath('sla-received-date'));
 	}
 
 	issueNotification() {
