@@ -1129,7 +1129,7 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 				caseReference,
 				currentUser,
 				{
-					signedSla: `SLA sent date uploaded to ${await formatCaseHistoryValue(service, req, '', slaSentDate)}`
+					signedSla: `Signed SLA uploaded on ${await formatCaseHistoryValue(service, req, '', slaSentDate)}`
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
