@@ -12,12 +12,25 @@ import {
 	buildCheckReportMiddleware
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
-import { build } from 'pino-pretty';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
 const CASE_ID = '11111111-1111-1111-1111-111111111111';
 const CURRENT_USER = 'Joe Bloggs';
+const MOCK_DOCUMENT_SETS = [
+	{
+		id: '1',
+		folderName: 'gateway-2-report'
+	},
+	{
+		id: '2',
+		folderName: 'signed-sla'
+	},
+	{
+		id: '3',
+		folderName: 'gateway-3-document'
+	}
+];
 
 function createService(): any {
 	return {
@@ -979,16 +992,7 @@ describe('buildGetJourneyMiddleware', () => {
 			dsaChecked: 'yes'
 		}));
 
-		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
-			{
-				id: '1',
-				folderName: 'gateway-2-report'
-			},
-			{
-				id: '2',
-				folderName: 'signed-sla'
-			}
-		]);
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
 		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
@@ -1021,16 +1025,7 @@ describe('buildGetJourneyMiddleware', () => {
 			assessorName: 'Alex Assessor'
 		}));
 
-		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
-			{
-				id: '1',
-				folderName: 'gateway-2-report'
-			},
-			{
-				id: '2',
-				folderName: 'signed-sla'
-			}
-		]);
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
 		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
@@ -1061,6 +1056,7 @@ describe('buildGetJourneyMiddleware', () => {
 			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
 		}));
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
