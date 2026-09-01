@@ -13,6 +13,15 @@ export type SubmissionCheckData = {
 	additionalFields: { name: string; value: string | null; url: string | undefined | null }[];
 };
 
+/**
+ * Abstract class that can be used to generate the data for the `submit-documents-check-your-answers` page.
+ *
+ * ### Example usage
+ * ```
+ * const submissionCheck = SubmissionCheck(...);
+ * const submissionCheckData = await SubmissionCheck.generateDataForPage();
+ * ```
+ */
 export abstract class SubmissionCheck {
 	caseId: string;
 	caseReference: string;
@@ -46,6 +55,11 @@ export abstract class SubmissionCheck {
 	 */
 	public abstract generateDataForPage(): Promise<SubmissionCheckData>;
 
+	/**
+	 * Generate a back link url from the given url
+	 * @param url The url to parse
+	 * @returns A back url from the given url
+	 */
 	protected generateBackUrl(url: string): string {
 		return `${url.substring(0, url.lastIndexOf('/'))}`;
 	}
