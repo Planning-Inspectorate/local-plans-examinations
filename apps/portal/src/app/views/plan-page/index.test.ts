@@ -304,6 +304,26 @@ describe('plan page', () => {
 		}
 	});
 
+	it('should render Under review tag and Submitted hint text for GW2 when status is UnderReview', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway2,
+			status: STATUS.UnderReview,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		const expectedTag = '<strong class="govuk-tag govuk-tag--yellow">Under review</strong>';
+		assert.strictEqual(data.tagG2, expectedTag, `expected ${expectedTag} but got ${data.tagG2}`);
+		assert.strictEqual(data.tagG3, 'Cannot start yet', `expected 'Cannot start yet' but got ${data.tagG3}`);
+		assert.strictEqual(data.tagE, 'Cannot start yet', `expected 'Cannot start yet' but got ${data.tagE}`);
+
+		assert.strictEqual(data.dateTextG2, 'Submitted: ', `expected 'Submitted: ' but got ${data.dateTextG2}`);
+
+		assert.ok(html.includes('Submitted: 21 July 2026'), 'expected html to contain Submitted hint text with date');
+		assert.ok(html.includes(expectedTag), 'expected html to contain yellow Under review tag');
+	});
+
 	it('should render task table links correctly for case 2 (G1, G2 complete)', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
