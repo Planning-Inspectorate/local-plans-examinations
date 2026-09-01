@@ -13,9 +13,9 @@ const gateway3Rows = [
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
-	...Object.values(gateway3DateAnswers).map(({ row, path }): [string, RegExp] => [
+	...Object.values(gateway3DateAnswers).map(({ row, path, section }): [string, RegExp] => [
 		row,
-		new RegExp(`^/case/.+/gateway-3/gateway-3/${path}$`)
+		new RegExp(`^/case/.+/gateway-3/${section}/${path}$`)
 	]),
 	[gateway3AssessorAnswer.row, new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3AssessorAnswer.path}$`)],
 	[
