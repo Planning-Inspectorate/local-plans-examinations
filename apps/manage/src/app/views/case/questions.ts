@@ -687,7 +687,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
-		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')]
+		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')],
+		actionButtonVisibleInSummary: false
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
