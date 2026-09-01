@@ -611,6 +611,15 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'gateway-3-document' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					// TODO need to check if there are documents - only redirect if there are documents
+					res.redirect(303, 'gateway-3-document/check');
+					return;
+				}
 				if (next) next();
 				return;
 			}
@@ -670,6 +679,13 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 				dbInfo: service.db.gateway2Info,
 				completeIndicatorFieldName: 'reportIssuedDate',
 				submitButtonText: 'Issue report',
+				dateUploadedQuestion: undefined
+			},
+			'gateway-3-document': {
+				title: 'Check gateway 3 decision and report details',
+				dbInfo: service.db.gateway3Info,
+				completeIndicatorFieldName: 'completionDate',
+				submitButtonText: 'Issue decision',
 				dateUploadedQuestion: undefined
 			}
 		};
@@ -1148,6 +1164,58 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			req.session.alertMessage = 'SLA already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		return;
+	};
+}
+
+export function issueGateway3Document(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway3Info.findUnique({
+			select: {
+				completionDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.completionDate) {
+			// Try to update the reportIssuedDate
+			const completionDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await updateGateway3(
+				service.db,
+				{
+					completionDate: completionDate
+				},
+				caseReference,
+				'gateway-3-report-issued-date'
+			);
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					gateway3Documents: null // Will be overridden by overrideLabels
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					gateway3Documents: `Gateway 3 decision issued on ${await formatCaseHistoryValue(service, req, '', completionDate)}`
+				}
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 3 decision issued';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 3 decision already issued';
 			req.session.alertMessageStatus = 'important';
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);

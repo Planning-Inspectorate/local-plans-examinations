@@ -20,6 +20,7 @@ import {
 	getParam,
 	issueGateway2Report,
 	issueGateway1SLA,
+	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError
 } from './controller.ts';
@@ -214,8 +215,9 @@ function registerCaseJourney(
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
-	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-3-submission/:question/check`, issueGateway3Document(service, journeyId));
 
 	// Save answer
 	router.post(
