@@ -11,6 +11,7 @@ import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
+import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
 import multer from 'multer';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -666,110 +667,24 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 	return async (req, res) => {
 		const section = getParam(req.params.section);
 		const questionUrl = getParam(req.params.question);
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
 		const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == questionUrl);
 		if (!questionConfig) {
 			throw new Error(`Could not find question config for question url '${questionUrl}'`);
 		}
-		const questionFieldName = questionConfig.fieldName;
-		const uploadedFiles =
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionFieldName)]?.uploadedFiles ?? [];
-		// Todo need to add error handling for 0 files - no flow defined right now
-		const caseReference = getParam(req.params.reference);
-		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		// Extra details needed to render the inner notification on the page
-		const questionDetailsMap: Record<
-			string,
-			{
-				title: string;
-				dbInfo: any;
-				completeIndicatorFieldName: string;
-				submitButtonText: string;
-				dateUploadedQuestion: string | undefined;
-			}
-		> = {
-			'signed-sla': {
-				title: 'Check signed SLA and issue notification',
-				dbInfo: service.db.gateway1Info,
-				completeIndicatorFieldName: 'slaSentDate',
-				submitButtonText: 'Confirm and issue notification',
-				dateUploadedQuestion: 'slaReceivedDate'
-			},
-			'gateway-2-report': {
-				title: 'Check Gateway 2 report details and issue notification',
-				dbInfo: service.db.gateway2Info,
-				completeIndicatorFieldName: 'reportIssuedDate',
-				submitButtonText: 'Issue report',
-				dateUploadedQuestion: undefined
-			},
-			'gateway-3-document': {
-				title: 'Check gateway 3 decision and report details',
-				dbInfo: service.db.gateway3Info,
-				completeIndicatorFieldName: 'completionDate',
-				submitButtonText: 'Issue decision',
-				dateUploadedQuestion: undefined
-			}
-		};
-		const questionDetails = questionDetailsMap[questionConfig.url];
-		if (!questionDetails) {
-			throw new Error(
-				`Could not find details for question '${questionConfig.url}' in buildCheckReportMiddleware::questionDetailsMap`
-			);
-		}
-		const dateUploadedQuestion = questionDetails.dateUploadedQuestion
-			? questions[questionDetails.dateUploadedQuestion]
-			: undefined;
-		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
-		const completeIndicatorFieldName = questionDetails.completeIndicatorFieldName;
-		const existingGatewayDetails = await questionDetails.dbInfo.findUnique({
-			select: {
-				[completeIndicatorFieldName]: true,
-				...(questionDetails.dateUploadedQuestion ? { [questionDetails.dateUploadedQuestion]: true } : {})
-			},
-			where: {
-				caseId: caseId
-			}
-		});
-		const alreadyComplete = existingGatewayDetails?.[completeIndicatorFieldName];
-		const notificationPreviewTemplate = questionUrl + (alreadyComplete ? '-complete' : '');
-		const documentUploadDate = questionDetails.dateUploadedQuestion
-			? existingGatewayDetails[questionDetails.dateUploadedQuestion]
-			: (uploadedFiles[0]?.dateCreated ?? undefined);
-		const defaultAdditionalField: { name: string; value: string | null; url: string | undefined } = {
-			name: 'Date uploaded',
-			value: documentUploadDate
-				? new Intl.DateTimeFormat('en-GB', {
-						day: 'numeric',
-						month: 'long',
-						timeZone: 'Europe/London',
-						year: 'numeric'
-					}).format(documentUploadDate)
-				: null,
-			url: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
-		};
-		const additionalFieldsMap: Record<string, [{ name: string; value: string | null; url: string | undefined }]> = {
-			'signed-sla': [defaultAdditionalField],
-			'gateway-2-report': [defaultAdditionalField],
-			'gateway-3-document': [
-				{
-					name: 'Outcome',
-					value: 'Blank for now',
-					url: undefined
-				}
-			]
-		};
-		const additionalFields = additionalFieldsMap[questionConfig.url];
-		res.render('views/layouts/submit-documents-check-your-answers', {
-			titleHeading: questionDetails.title,
-			uploadedFiles: uploadedFiles,
-			caseReference: caseReference,
-			journeyId: journeyId,
-			section: section,
-			question: questionUrl,
-			backLink: backLinkUrl,
-			notificationPreviewTemplate: notificationPreviewTemplate,
-			submitButtonText: questionDetails.submitButtonText,
-			additionalFields: additionalFields
-		});
+		const submissionCheck = new (getSubmissionCheckForQuestion(questionUrl))(
+			caseId,
+			caseReference,
+			journeyId,
+			section,
+			questionUrl,
+			req.originalUrl,
+			service,
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
+		);
+		const submissionCheckData = await submissionCheck.generateDataForPage();
+		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
 	};
 }
