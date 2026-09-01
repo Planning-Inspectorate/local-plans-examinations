@@ -26,7 +26,9 @@ describe('Gateway 2 document upload page content', () => {
 			gateway2CoverLetterPage.verifyMainContains('Drag and drop or choose files');
 			gateway2CoverLetterPage.verifyNoFileChosen();
 			gateway2CoverLetterPage.verifyUploadFormVisible();
-			gateway2CoverLetterPage.verifyFileFormatHintText();
+			gateway2CoverLetterPage.verifyFileFormatHintText(
+				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+			);
 			gateway2CoverLetterPage.verifyUploadFilesButtonVisible();
 			gateway2CoverLetterPage.verifySaveAndReturnButton();
 		});
@@ -42,7 +44,9 @@ describe('Gateway 2 document upload page content', () => {
 			localPlanTimetablePage.verifyMainContains('Drag and drop or choose files');
 			localPlanTimetablePage.verifyNoFileChosen();
 			localPlanTimetablePage.verifyUploadFormVisible();
-			localPlanTimetablePage.verifyFileFormatHintText();
+			localPlanTimetablePage.verifyFileFormatHintText(
+				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+			);
 			localPlanTimetablePage.verifyUploadFilesButtonVisible();
 			localPlanTimetablePage.verifySaveAndReturnButton();
 		});
@@ -58,7 +62,9 @@ describe('Gateway 2 document upload page content', () => {
 			noticeOfIntentionToCommenceLocalPlanPage.verifyMainContains('Drag and drop or choose files');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyNoFileChosen();
 			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFormVisible();
-			noticeOfIntentionToCommenceLocalPlanPage.verifyFileFormatHintText();
+			noticeOfIntentionToCommenceLocalPlanPage.verifyFileFormatHintText(
+				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+			);
 			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFilesButtonVisible();
 			noticeOfIntentionToCommenceLocalPlanPage.verifySaveAndReturnButton();
 		});
@@ -74,7 +80,9 @@ describe('Gateway 2 document upload page content', () => {
 			subsequentWorkTowardsDraftPlanPage.verifyMainContains('Drag and drop or choose files');
 			subsequentWorkTowardsDraftPlanPage.verifyNoFileChosen();
 			subsequentWorkTowardsDraftPlanPage.verifyUploadFormVisible();
-			subsequentWorkTowardsDraftPlanPage.verifyFileFormatHintText();
+			subsequentWorkTowardsDraftPlanPage.verifyFileFormatHintText(
+				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
+			);
 			subsequentWorkTowardsDraftPlanPage.verifyUploadFilesButtonVisible();
 			subsequentWorkTowardsDraftPlanPage.verifySaveAndReturnButton();
 		});
