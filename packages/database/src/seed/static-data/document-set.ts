@@ -117,7 +117,7 @@ export const DOCUMENT_SET = [
 	{
 		id: DOCUMENT_SET_ID.G3_DOCUMENT,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
-		gatewayId: GATEWAY_ID.GATEWAY_2,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
 		displayName: 'Gateway 3 Document',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G3_DOCUMENT,
 		displayOrder: 18
