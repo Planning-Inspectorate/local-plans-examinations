@@ -734,6 +734,30 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		const documentUploadDate = questionDetails.dateUploadedQuestion
 			? existingGatewayDetails[questionDetails.dateUploadedQuestion]
 			: (uploadedFiles[0]?.dateCreated ?? undefined);
+		const defaultAdditionalField: { name: string; value: string | null; url: string | undefined } = {
+			name: 'Date uploaded',
+			value: documentUploadDate
+				? new Intl.DateTimeFormat('en-GB', {
+						day: 'numeric',
+						month: 'long',
+						timeZone: 'Europe/London',
+						year: 'numeric'
+					}).format(documentUploadDate)
+				: null,
+			url: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
+		};
+		const additionalFieldsMap: Record<string, [{ name: string; value: string | null; url: string | undefined }]> = {
+			'signed-sla': [defaultAdditionalField],
+			'gateway-2-report': [defaultAdditionalField],
+			'gateway-3-document': [
+				{
+					name: 'Outcome',
+					value: 'Blank for now',
+					url: undefined
+				}
+			]
+		};
+		const additionalFields = additionalFieldsMap[questionConfig.url];
 		res.render('views/layouts/submit-documents-check-your-answers', {
 			titleHeading: questionDetails.title,
 			uploadedFiles: uploadedFiles,
@@ -744,15 +768,7 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			backLink: backLinkUrl,
 			notificationPreviewTemplate: notificationPreviewTemplate,
 			submitButtonText: questionDetails.submitButtonText,
-			documentUploadDate: documentUploadDate
-				? new Intl.DateTimeFormat('en-GB', {
-						day: 'numeric',
-						month: 'long',
-						timeZone: 'Europe/London',
-						year: 'numeric'
-					}).format(documentUploadDate)
-				: null,
-			documentUploadDateModificationUrl: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
+			additionalFields: additionalFields
 		});
 		return;
 	};
