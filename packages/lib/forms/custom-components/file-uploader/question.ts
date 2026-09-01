@@ -29,6 +29,7 @@ export default class FileUploaderQuestion extends Question {
 		multiple = true,
 		text = {},
 		validationMessages = {},
+		actionButtonVisibleInSummary = true,
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
@@ -47,7 +48,8 @@ export default class FileUploaderQuestion extends Question {
 			maxTotalUploadSizeLabel,
 			multiple,
 			text,
-			validationMessages
+			validationMessages,
+			actionButtonVisibleInSummary
 		};
 	}
 
@@ -124,11 +126,31 @@ export default class FileUploaderQuestion extends Question {
 		return super.isAnswered(journeyResponse as never, fieldName);
 	}
 
-	formatAnswer(answer: unknown): string {
+	formatAnswerForSummary(
+		sectionSegment: string,
+		journey: any,
+		answer: unknown
+	): Array<{
+		key: string;
+		value: string;
+		action: { href: string; text: string; visuallyHiddenText: string } | undefined;
+	}> {
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 		const value = formatUploadedFilesForSummary(files, this.notStartedText);
-
-		return value;
+		const action = this.config.actionButtonVisibleInSummary
+			? (this.getAction(sectionSegment, journey, answer as never) as {
+					href: string;
+					text: string;
+					visuallyHiddenText: string;
+				})
+			: undefined;
+		return [
+			{
+				key: this.title,
+				value,
+				action: action
+			}
+		];
 	}
 }
 
