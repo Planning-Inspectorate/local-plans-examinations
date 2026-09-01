@@ -159,7 +159,8 @@ describe('landing page', () => {
 			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
 			{ className: 'govuk-tag govuk-tag--red', text: 'Action required' },
 			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },
-			{ className: 'govuk-body', text: 'Completed' }
+			{ className: 'govuk-body', text: 'Completed' },
+			{ className: 'govuk-tag govuk-tag--yellow', text: 'Under review' }
 		];
 
 		for (const plan of data.plans) {
