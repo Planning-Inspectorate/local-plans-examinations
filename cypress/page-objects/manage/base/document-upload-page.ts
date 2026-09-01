@@ -11,30 +11,6 @@ export class DocumentUploadPage extends BasePage {
 		this.caption = caption;
 	}
 
-	get chooseFilesButton() {
-		return cy.get(`#${this.fieldName}`);
-	}
-
-	get uploadFilesButton() {
-		return cy.getByData('upload-files-button');
-	}
-
-	get saveAndReturnButton() {
-		return cy.getByData('save-and-return-button');
-	}
-
-	clickUploadFiles() {
-		this.uploadFilesButton.should('be.visible').click();
-	}
-
-	saveAndReturn() {
-		this.saveAndReturnButton.should('be.visible').click();
-	}
-
-	verifyCaption(text: string) {
-		cy.get('.govuk-caption-l').should('be.visible').and('contain.text', text);
-	}
-
 	uploadAndVerifyFile(fileName: string, fieldName: string) {
 		this.dragAndDropFile(fileName, fieldName);
 		this.clickUploadFiles();
@@ -44,7 +20,7 @@ export class DocumentUploadPage extends BasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(this.heading);
-		this.verifyCaption(this.caption);
-		this.chooseFilesButton.should('be.visible');
+		this.verifyCaptionL(this.caption);
+		this.chooseFilesButton(this.fieldName).should('be.visible');
 	}
 }

@@ -34,7 +34,7 @@ describe('Gateway 2 document upload journeys', () => {
 			gateway2CoverLetterPage.verifyLoaded();
 			gateway2CoverLetterPage.verifyFileUploaded('test-document.pdf');
 
-			gateway2CoverLetterPage.removeFile();
+			gateway2CoverLetterPage.removeFile('test-document.pdf');
 			gateway2CoverLetterPage.verifyFileNotUploaded('test-document.pdf');
 
 			gateway2CoverLetterPage.uploadFile('test-document.docx');
@@ -85,7 +85,7 @@ describe('Gateway 2 document upload journeys', () => {
 				localPlanTimetablePage.verifyLoaded();
 				localPlanTimetablePage.verifyFileUploaded('test-document.xlsx');
 
-				localPlanTimetablePage.removeFile();
+				localPlanTimetablePage.removeFile('test-document.xlsx');
 				localPlanTimetablePage.verifyFileNotUploaded('test-document.xlsx');
 
 				localPlanTimetablePage.uploadFile('test-document.docx');
@@ -134,7 +134,7 @@ describe('Gateway 2 document upload journeys', () => {
 				noticeOfIntentionToCommenceLocalPlanPage.verifyLoaded();
 				noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.pdf');
 
-				noticeOfIntentionToCommenceLocalPlanPage.removeFile();
+				noticeOfIntentionToCommenceLocalPlanPage.removeFile('test-document.pdf');
 				noticeOfIntentionToCommenceLocalPlanPage.verifyFileNotUploaded('test-document.pdf');
 
 				noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document.docx');
@@ -195,7 +195,7 @@ describe('Gateway 2 document upload journeys', () => {
 				subsequentWorkTowardsDraftPlanPage.verifyLoaded();
 				subsequentWorkTowardsDraftPlanPage.verifyFileUploaded('test-document.pdf');
 
-				subsequentWorkTowardsDraftPlanPage.removeFile();
+				subsequentWorkTowardsDraftPlanPage.removeFile('test-document.pdf');
 				subsequentWorkTowardsDraftPlanPage.verifyFileNotUploaded('test-document.pdf');
 
 				subsequentWorkTowardsDraftPlanPage.uploadFile('test-document.docx');
