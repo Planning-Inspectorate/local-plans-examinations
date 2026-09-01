@@ -111,6 +111,7 @@ interface Gateway3Input {
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
 	examinationWebsite?: string;
+	decision?: string;
 }
 
 // Generate a map of <fieldName: field title>
@@ -160,6 +161,7 @@ export const fileUploadQuestionsByUrl = new Map(
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
+		console.log('updateCaseField called');
 		const { db, logger } = service;
 
 		const reference = getParam(req.params.reference);
@@ -611,6 +613,24 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				// Flow for uploading a gateway 3 document
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'gateway-3-decision' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					const caseReference = getParam(req.params.reference);
+					await updateGateway3(
+						db,
+						{
+							decision: req.body.decision
+						},
+						caseReference,
+						'gateway-3-decision'
+					);
+					res.redirect(303, 'gateway-3-document');
+					return;
+				}
 				if (
 					req.method === 'POST' &&
 					req.params.question == 'gateway-3-document' &&
