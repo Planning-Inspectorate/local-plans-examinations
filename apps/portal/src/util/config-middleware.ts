@@ -3,7 +3,7 @@ import type { Handler } from 'express';
 /**
  * Add configuration values to locals.
  */
-export function addLocalsConfiguration(): Handler {
+export function addLocalsConfiguration(clarityId?: string): Handler {
 	return (req, res, next) => {
 		const path = req.path;
 		const cookieConsent = req.cookies?.cookie_consent;
@@ -53,7 +53,8 @@ export function addLocalsConfiguration(): Handler {
 				const link = { current: false, ...l };
 				link.current = link.href === path;
 				return link;
-			})
+			}),
+			clarityId: cookieConsent === 'accept' ? clarityId : undefined
 		};
 
 		if (cookieConsent === 'accept' || cookieConsent === 'reject') {
