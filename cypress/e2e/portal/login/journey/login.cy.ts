@@ -52,8 +52,7 @@ describe('Portal login journey', () => {
 			planDetailsPage.verifyPathForPlan(encodeURIComponent(plan.reference));
 
 			portalLandingPage.visit();
-
-			planDetailsPage.verifyLoaded();
+			portalLandingPage.verifyLoaded();
 		});
 	});
 
