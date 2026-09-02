@@ -51,7 +51,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			throw new Error('answers should be an object');
 		}
 
-		answers.reference = `PLAN/${Math.floor(Math.random() * 1000000)}`;
+		answers.reference = `PLAN-${Math.floor(Math.random() * 1000000)}`;
 		answers.email = answers.contactDetails.at(0)!.email;
 
 		const allEmails = answers.contactDetails.map((contact) => contact.email);

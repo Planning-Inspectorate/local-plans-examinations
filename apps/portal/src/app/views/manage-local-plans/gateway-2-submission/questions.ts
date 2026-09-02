@@ -319,6 +319,32 @@ export const consultationSummaryProposedContentQuestion: FileUploaderQuestionPro
 	validators: []
 };
 
+export const subsequentWorkTowardsADraftPlan: FileUploaderQuestionProps = {
+	type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+	title: 'Subsequent work towards a draft Plan',
+	question: 'Upload any subsequent work towards a draft plan',
+	fieldName: 'subsequentWorkTowardsADraftPlan',
+	url: 'subsequent-work-towards-a-draft-plan',
+	allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
+	maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
+	maxFilesPerUpload: UNLIMITED_FILES,
+	maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+	maxTotalUploadSizeLabel: TOTAL_FILE_UPLOAD_LIMIT_LABEL,
+	multiple: true,
+	text: {
+		caption: 'Additional documents',
+		introduction: 'Drag and drop or choose files',
+		fileRequirementsText:
+			'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
+		chooseFilesButtonText: 'Choose files',
+		dropInstructionText: 'or drop files',
+		continueButtonText: 'Save and return'
+	},
+	validators: []
+};
+
 export const gateway2FileUploadQuestions = {
 	gateway2CoverLetter: gateway2CoverLetterQuestion,
 	localPlanTimetable: localPlanTimetableQuestion,
@@ -330,7 +356,8 @@ export const gateway2FileUploadQuestions = {
 	draftStatementOfSoundness: draftStatementOfSoundnessQuestion,
 	scopingConsultationDocuments: scopingConsultationDocumentsQuestion,
 	consultationSummaryFeedbackScoping: consultationSummaryFeedbackScopingQuestion,
-	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion
+	consultationSummaryProposedContent: consultationSummaryProposedContentQuestion,
+	subsequentWorkTowardsADraftPlan: subsequentWorkTowardsADraftPlan
 } satisfies Record<string, CrownQuestionProps>;
 
 export const questions = createQuestions(
@@ -373,7 +400,7 @@ function addCheckAnswersRedirectToAction(question: Question, redirect: CheckAnsw
 
 // Appends a query parameter to a URL.
 // Example format: /plan-title?checkAnswersRedirect=check-your-answers.
-function appendQueryParam(url: string, key: string, value: string) {
+export function appendQueryParam(url: string, key: string, value: string) {
 	const separator = url.includes('?') ? '&' : '?';
 	return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }

@@ -2,7 +2,11 @@ import {
 	addCaseNavigation,
 	buildGetJourneyMiddleware,
 	updateCaseField,
+	type UpdateFunction,
+	updateGateway1,
 	updateGateway2,
+	updateGateway3,
+	updateExamination,
 	getDeleteCase,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
@@ -11,10 +15,11 @@ import {
 	type FileUploadQuestion,
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
-	buildCheckGateway2ReportMiddleware,
+	buildCheckReportMiddleware,
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
+	issueGateway1SLA,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError
 } from './controller.ts';
@@ -77,6 +82,7 @@ interface CaseJourneyConfig {
 	createJourney: JourneyFactory;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
+	updateFunction?: UpdateFunction;
 }
 
 /** To add a new route, add a new object here **/
@@ -86,35 +92,42 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		journeyId: OVERVIEW_JOURNEY_ID,
 		createJourney: createOverviewJourney,
 		supportsManageList: true,
-		supportsFileUpload: false
+		supportsFileUpload: false,
+		updateFunction: undefined
 	},
 	{
 		path: 'gateway-1',
 		journeyId: GATEWAY_1_JOURNEY_ID,
 		createJourney: createGateway1Journey,
 		supportsManageList: true,
-		supportsFileUpload: true
+		supportsFileUpload: true,
+		updateFunction: updateGateway1
 	},
 	{
 		path: 'gateway-2',
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
 		supportsManageList: true,
-		supportsFileUpload: true
+		supportsFileUpload: true,
+		updateFunction: updateGateway2
 	},
 	{
 		path: 'gateway-3',
 		journeyId: GATEWAY_3_JOURNEY_ID,
-		createJourney: createGateway3Journey
+		createJourney: createGateway3Journey,
+		updateFunction: updateGateway3
 	},
 	{
 		path: 'examination',
 		journeyId: EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
-		supportsFileUpload: false
+		supportsFileUpload: false,
+		updateFunction: updateExamination
 	}
 ];
+
+const CASE_JOURNEY_MAP = Object.fromEntries(CASE_JOURNEYS.map((elem) => [elem.path, elem.updateFunction]));
 
 export function caseRouter(service: ManageService): IRouter {
 	console.log('Building case router');
@@ -197,10 +210,11 @@ function registerCaseJourney(
 		getJourneyResponse,
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
-		buildCheckGateway2ReportMiddleware(service, journeyId),
+		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
-	router.post(`/${path}/:section/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 
 	// Save answer
 	router.post(
@@ -242,8 +256,11 @@ function registerCaseJourney(
 							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
-							// Update gateway 2 separately because updateCaseField causes the dynamic forms to consume the request
-							updateGateway2(service.db, {}, getParam(req.params.reference), questionConfig.url);
+							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
+							const saveFunction = CASE_JOURNEY_MAP[journeyId];
+							if (saveFunction) {
+								saveFunction(service.db, {}, getParam(req.params.reference), questionConfig.url);
+							}
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
 						onUploadCleanupError: ({ req, file, error }) =>

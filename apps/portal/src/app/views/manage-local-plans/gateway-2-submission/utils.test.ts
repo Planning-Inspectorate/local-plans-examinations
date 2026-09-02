@@ -99,21 +99,21 @@ describe('getRoutePlanReference', () => {
 	it('returns the route plan reference when present', () => {
 		const req = {
 			params: {
-				planReference: 'PLAN/001'
+				planReference: 'PLAN-001'
 			}
 		} as unknown as Request;
 
-		assert.strictEqual(getRoutePlanReference(req), 'PLAN/001');
+		assert.strictEqual(getRoutePlanReference(req), 'PLAN-001');
 	});
 
 	it('returns the first route plan reference when Express provides an array', () => {
 		const req = {
 			params: {
-				planReference: ['PLAN/001', 'PLAN/002']
+				planReference: ['PLAN-001', 'PLAN-002']
 			}
 		} as unknown as Request;
 
-		assert.strictEqual(getRoutePlanReference(req), 'PLAN/001');
+		assert.strictEqual(getRoutePlanReference(req), 'PLAN-001');
 	});
 
 	it('returns undefined when the route plan reference is missing or empty', () => {

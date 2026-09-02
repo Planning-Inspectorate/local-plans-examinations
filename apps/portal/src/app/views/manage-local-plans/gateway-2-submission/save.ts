@@ -11,6 +11,7 @@ export interface Gateway2ApplicationAnswers {
 	localPlanTimetable: UploadedFile[];
 	projectInitiationDocument: UploadedFile[];
 	consultationSummaryProposedContent: UploadedFile[];
+	subsequentWorkTowardsADraftPlan: UploadedFile[];
 }
 
 // Creates the controller that handles the final Gateway 2 submission.

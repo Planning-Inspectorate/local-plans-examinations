@@ -297,7 +297,7 @@ export class BasePage {
 	}
 
 	dragAndDropFile(fileName: string, chooseFilesButtonField: string) {
-		cy.get(`#${chooseFilesButtonField}`).selectFile(`cypress/fixtures/portal/files/${fileName}`, {
+		cy.get(`#${chooseFilesButtonField}`).selectFile(`cypress/fixtures/files/${fileName}`, {
 			action: 'drag-drop'
 		});
 	}
@@ -320,5 +320,84 @@ export class BasePage {
 		this.enterDateAnswer(fieldName, dateInput);
 		this.saveAndContinue();
 		this.verifyErrorSummaryContains(errorMessage);
+	}
+
+	fileInput(fieldName: string) {
+		return cy.get(`#${fieldName}-input`);
+	}
+
+	chooseFilesButton(fieldName: string) {
+		return cy.get(`#${fieldName}`);
+	}
+
+	uploadStatusText(fieldName: string) {
+		return this.chooseFilesButton(fieldName).find('.govuk-file-upload-button__status');
+	}
+
+	chooseFilesButtonLabel(fieldName: string) {
+		return this.chooseFilesButton(fieldName).find('.govuk-file-upload-button__pseudo-button');
+	}
+
+	dropInstructionText(fieldName: string) {
+		return this.chooseFilesButton(fieldName).find('.govuk-file-upload-button__instruction');
+	}
+
+	get uploadFilesButton() {
+		return cy.getByData('upload-files-button');
+	}
+
+	get saveAndReturnButton() {
+		return cy.getByData('save-and-return-button');
+	}
+
+	get hintText() {
+		return cy.getByData('file-requirements-hint');
+	}
+
+	get uploadForm() {
+		return cy.getByData('upload-form');
+	}
+
+	clickUploadFiles() {
+		this.uploadFilesButton.should('be.visible').click();
+	}
+
+	verifyUploadFormVisible() {
+		this.uploadForm.should('be.visible');
+	}
+
+	verifyUploadFilesButtonVisible() {
+		this.uploadFilesButton.should('be.visible');
+	}
+
+	uploadFile(fieldName: string, fileNames: string | string[]) {
+		const files = Array.isArray(fileNames) ? fileNames : [fileNames];
+		this.fileInput(fieldName).selectFile(
+			files.map((fileName) => `cypress/fixtures/files/${fileName}`),
+			{ force: true }
+		);
+	}
+
+	verifyFileFormatHintText(text: string) {
+		this.hintText.should('have.text', text);
+	}
+
+	verifySaveAndReturnButton() {
+		this.saveAndReturnButton.should('be.visible').and('have.attr', 'type', 'submit');
+	}
+
+	saveAndReturn() {
+		this.saveAndReturnButton.should('be.visible').click();
+	}
+
+	verifyCaptionL(text: string) {
+		cy.get('.govuk-caption-l').should('be.visible').and('contain.text', text);
+	}
+
+	verifyNoFileChosen(fieldName: string) {
+		this.chooseFilesButton(fieldName).should('be.visible');
+		this.uploadStatusText(fieldName).should('have.text', 'No file chosen');
+		this.chooseFilesButtonLabel(fieldName).should('contain.text', 'Choose files');
+		this.dropInstructionText(fieldName).should('contain.text', 'or drop files');
 	}
 }

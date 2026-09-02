@@ -14,5 +14,12 @@ export const DOCUMENT_CATEGORY = [
 		displayName: 'Consultation',
 		folderName: 'consultation',
 		displayOrder: 2
+	},
+	{
+		id: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Additional',
+		folderName: 'additional',
+		displayOrder: 3
 	}
 ];

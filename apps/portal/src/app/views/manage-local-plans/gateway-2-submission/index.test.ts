@@ -22,7 +22,7 @@ describe('Gateway 2 covering letter upload page', () => {
 			question: gateway2CoverLetterQuestion,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
-			currentUrl: '/manage-local-plans/PLAN%2F001/gateway-2-submission/procedural/gateway-2-cover-letter',
+			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/procedural/gateway-2-cover-letter',
 			errors: {},
 			config: {
 				styleFile: 'style.css',
@@ -55,7 +55,7 @@ describe('Gateway 1 self assessment upload page', () => {
 			question: gateway1SelfAssessmentQuestion,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
-			currentUrl: '/manage-local-plans/PLAN%2F001/gateway-2-submission/consultation/g1-self-assess',
+			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/consultation/g1-self-assess',
 			errors: {},
 			config: {
 				styleFile: 'style.css',
@@ -80,7 +80,7 @@ describe('Consultation on proposed content upload page', () => {
 			question: consultationOnProposedContentQuestion,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
-			currentUrl: '/manage-local-plans/PLAN%2F001/gateway-2-submission/consultation/cons-of-proposed',
+			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/consultation/cons-of-proposed',
 			errors: {},
 			config: {
 				styleFile: 'style.css',

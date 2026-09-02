@@ -21,7 +21,7 @@ export class CaseCreatedPage extends BasePage {
 	}
 
 	verifyReferenceFormat() {
-		this.getReference().should('match', /^PLAN\/\d+$/);
+		this.getReference().should('match', /^PLAN-\d+$/);
 	}
 }
 

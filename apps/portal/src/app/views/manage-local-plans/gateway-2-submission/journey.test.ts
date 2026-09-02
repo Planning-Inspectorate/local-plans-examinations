@@ -11,29 +11,29 @@ describe('createJourney', () => {
 		const req = {
 			baseUrl: '/manage-local-plans',
 			params: {
-				planReference: 'PLAN/123456'
+				planReference: 'PLAN-123456'
 			}
 		} as unknown as Request;
 
 		const journey = createJourney(req, response, questions);
 
-		assert.strictEqual(journey.baseUrl, '/manage-local-plans/PLAN%2F123456/gateway-2-submission');
-		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/PLAN%2F123456/gateway-2-submission');
+		assert.strictEqual(journey.baseUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
+		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
 		assert.strictEqual(
 			journey.taskListTemplate,
 			'views/manage-local-plans/gateway-2-submission/check-your-answers.njk'
 		);
 		assert.strictEqual(
 			journey.getCurrentQuestionUrl('procedural', 'covering-letter'),
-			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/procedural/covering-letter'
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/procedural/covering-letter'
 		);
 		assert.strictEqual(
 			journey.getCurrentQuestionUrl('consultation', 'g1-self-assess'),
-			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/consultation/g1-self-assess'
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/consultation/g1-self-assess'
 		);
 		assert.strictEqual(
 			journey.getCurrentQuestionUrl('consultation', 'cons-of-proposed'),
-			'/manage-local-plans/PLAN%2F123456/gateway-2-submission/consultation/cons-of-proposed'
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/consultation/cons-of-proposed'
 		);
 	});
 
