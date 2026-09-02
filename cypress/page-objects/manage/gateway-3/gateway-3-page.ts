@@ -3,13 +3,19 @@ import {
 	gateway3DateAnswers,
 	gateway3AssessorAnswer,
 	gateway3ProgrammeOfficerAnswer,
-	gateway3ExpectedAnswers
+	gateway3ExpectedAnswers,
+	gateway3ExaminationWebsite,
+	gateway3Documents,
+	gateway3Decision
 } from '../../../fixtures/manage/gateway-3.ts';
 
 const gateway3Rows = [
 	...Object.values(gateway3DateAnswers).map(({ row }) => row),
 	gateway3AssessorAnswer.row,
-	gateway3ProgrammeOfficerAnswer.row
+	gateway3ProgrammeOfficerAnswer.row,
+	gateway3ExaminationWebsite.row,
+	gateway3Documents.row,
+	gateway3Decision.row
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
@@ -21,7 +27,9 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	[
 		gateway3ProgrammeOfficerAnswer.row,
 		new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ProgrammeOfficerAnswer.path}$`)
-	]
+	],
+	[gateway3ExaminationWebsite.row, new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ExaminationWebsite.path}$`)],
+	[gateway3Decision.row, new RegExp(`^/case/.+/gateway-3/gateway-3-submission/${gateway3Decision.path}$`)]
 ];
 
 export class Gateway3Page extends GatewayBasePage {

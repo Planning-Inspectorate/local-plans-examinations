@@ -132,6 +132,12 @@ export class BasePage {
 		link.should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 
+	verifySummaryRowValueLinkHref(key: string, href: string | RegExp) {
+		const assertion = typeof href === 'string' ? 'eq' : 'match';
+
+		this.summaryRowValue(key).find('a').should('be.visible').should('have.attr', 'href').and(assertion, href);
+	}
+
 	listItemRemoveLink(index = 1) {
 		return cy.getByData(`remove-list-item-${index}`);
 	}
@@ -258,14 +264,21 @@ export class BasePage {
 		this.errorSummaryList.should('contain.text', linkText);
 	}
 
+	serviceNavigationLink(item: string) {
+		return this.serviceNavigation
+			.find('a')
+			.filter((_, link) => link.textContent?.trim() === item)
+			.first();
+	}
+
 	verifyServiceNavigation(...links: string[]) {
 		links.forEach((link) => {
-			this.serviceNavigation.contains('a', link).should('be.visible');
+			this.serviceNavigationLink(link).should('be.visible');
 		});
 	}
 
 	openServiceNavigationItem(item: string) {
-		this.serviceNavigation.contains('a', item).should('be.visible').click();
+		this.serviceNavigationLink(item).should('be.visible').click();
 	}
 
 	verifyCaption(reference: string) {
