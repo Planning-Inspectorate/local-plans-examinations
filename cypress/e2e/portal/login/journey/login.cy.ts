@@ -1,4 +1,4 @@
-import { portalLoginEmailPage } from 'cypress/page-objects/portal/login/email-page.ts';
+import { portalLoginEmailPage } from '../../../../page-objects/portal/login/email-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
 import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-page.ts';
@@ -38,7 +38,7 @@ describe('Portal login journey', () => {
 	});
 
 	it('user is redirected to /login page when trying to access Portal urls directly', { tags: ['regression'] }, () => {
-		cy.visit('/manage-local-plans/your-plans');
+		portalLandingPage.visit();
 		portalLoginEmailPage.verifyLoaded();
 	});
 
@@ -51,7 +51,7 @@ describe('Portal login journey', () => {
 			portalLandingPage.openPlan(plan.reference);
 			planDetailsPage.verifyPathForPlan(encodeURIComponent(plan.reference));
 
-			cy.visit('/manage-local-plans/your-plans');
+			portalLandingPage.visit();
 
 			planDetailsPage.verifyLoaded();
 		});

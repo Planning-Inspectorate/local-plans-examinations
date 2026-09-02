@@ -24,8 +24,6 @@ export const portalLogin = () => {
 };
 
 export const manageToPortalLogin = () => {
-	cy.task('seedCase');
-
 	cy.origin(Cypress.env('portalBaseUrl'), { args: { email: TEST_EMAIL } }, ({ email }) => {
 		cy.visit('/login');
 		cy.setCookie('cookie_consent', 'accept');
