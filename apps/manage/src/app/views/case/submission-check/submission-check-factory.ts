@@ -2,21 +2,8 @@ import { type SubmissionCheck } from './submission-check.ts';
 import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
-import { type ManageService } from '#service';
 
-const OPTIONS: Record<
-	string,
-	new (
-		caseId: string,
-		caseReference: string,
-		journeyId: string,
-		section: string,
-		questionUrl: string,
-		originalUrl: string,
-		service: ManageService,
-		uploadedFiles: any
-	) => SubmissionCheck
-> = {
+const OPTIONS: Record<string, new () => SubmissionCheck> = {
 	'signed-sla': SignedSLASubmissionCheck,
 	'gateway-2-report': Gateway2ReportSubmissionCheck,
 	'gateway-3-document': Gateway3SubmissionCheck

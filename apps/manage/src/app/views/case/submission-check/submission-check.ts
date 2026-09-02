@@ -23,15 +23,10 @@ export type SubmissionCheckData = {
  * ```
  */
 export abstract class SubmissionCheck {
-	caseId: string;
-	caseReference: string;
-	journeyId: string;
-	section: string;
-	questionUrl: string;
-	originalUrl: string;
-	service: ManageService;
-	uploadedFiles: any;
-	constructor(
+	/**
+	 * Generate an object that contains the details for the submit-documents-check-your-answers page
+	 */
+	public abstract generateDataForPage(
 		caseId: string,
 		caseReference: string,
 		journeyId: string,
@@ -40,20 +35,7 @@ export abstract class SubmissionCheck {
 		originalUrl: string,
 		service: ManageService,
 		uploadedFiles: any
-	) {
-		this.caseId = caseId;
-		this.caseReference = caseReference;
-		this.journeyId = journeyId;
-		this.section = section;
-		this.questionUrl = questionUrl;
-		this.originalUrl = originalUrl;
-		this.service = service;
-		this.uploadedFiles = uploadedFiles;
-	}
-	/**
-	 * Generate an object that contains the details for the submit-documents-check-your-answers page
-	 */
-	public abstract generateDataForPage(): Promise<SubmissionCheckData>;
+	): Promise<SubmissionCheckData>;
 
 	/**
 	 * Generate a back link url from the given url
