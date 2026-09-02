@@ -62,6 +62,7 @@ export type FileUploaderQuestionConfig = {
 	text?: FileUploaderText;
 	validationMessages?: FileUploaderValidationMessages;
 	actionButtonVisibleInSummary: boolean;
+	valueDisplayFormat: string;
 };
 
 export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
@@ -84,6 +85,7 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 		}[];
 	}) => string | undefined;
 	actionButtonVisibleInSummary: boolean;
+	valueDisplayFormat?: string;
 };
 
 export type FileUploaderViewModel = QuestionViewModel & {

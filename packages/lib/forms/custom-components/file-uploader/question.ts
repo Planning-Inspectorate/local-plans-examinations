@@ -14,6 +14,10 @@ type RequestWithFileUploaderCustomViewData = CheckForValidationErrorsParams[0] &
 	fileUploaderSessionKey?: string;
 	session?: FileUploaderCustomViewData & { fileUploader?: FileUploaderCustomViewData['fileUploader'] };
 };
+const FORMATTER_FUNCTION_MAP: Record<string, (files: UploadedFile[], notStartedText: string) => string> = {
+	items: bulletListFormat,
+	count: countFormat
+};
 
 export default class FileUploaderQuestion extends Question {
 	readonly config: FileUploaderQuestionConfig;
@@ -30,12 +34,17 @@ export default class FileUploaderQuestion extends Question {
 		text = {},
 		validationMessages = {},
 		actionButtonVisibleInSummary = true,
+		valueDisplayFormat = 'items',
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
 			...params,
 			viewFolder: 'forms/custom-components/file-uploader'
 		});
+		if (!(valueDisplayFormat in FORMATTER_FUNCTION_MAP)) {
+			// Default to showing the items
+			valueDisplayFormat = 'items';
+		}
 
 		this.config = {
 			type: 'file-uploader',
@@ -49,7 +58,8 @@ export default class FileUploaderQuestion extends Question {
 			multiple,
 			text,
 			validationMessages,
-			actionButtonVisibleInSummary
+			actionButtonVisibleInSummary,
+			valueDisplayFormat
 		};
 	}
 
@@ -135,8 +145,9 @@ export default class FileUploaderQuestion extends Question {
 		value: string;
 		action: { href: string; text: string; visuallyHiddenText: string } | undefined;
 	}> {
+		const formatterFunction = FORMATTER_FUNCTION_MAP[this.config.valueDisplayFormat];
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = formatUploadedFilesForSummary(files, this.notStartedText);
+		const value = formatterFunction(files, this.notStartedText);
 		const action = this.config.actionButtonVisibleInSummary
 			? (this.getAction(sectionSegment, journey, answer as never) as {
 					href: string;
@@ -154,7 +165,7 @@ export default class FileUploaderQuestion extends Question {
 	}
 }
 
-function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: string): string {
+function bulletListFormat(files: UploadedFile[], notStartedText: string): string {
 	if (files.length === 0) {
 		return notStartedText;
 	}
@@ -165,6 +176,11 @@ function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: st
 
 	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
 	return `<ul class="govuk-list">${listItems}</ul>`;
+}
+
+function countFormat(files: UploadedFile[]): string {
+	const pluralCharacter = files.length != 1 ? 's' : '';
+	return `<ul class="govuk-list">${files.length} document${pluralCharacter}</ul>`;
 }
 
 function readUploadedFiles(value: unknown): UploadedFile[] {
