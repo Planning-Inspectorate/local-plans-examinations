@@ -673,7 +673,8 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		if (!questionConfig) {
 			throw new Error(`Could not find question config for question url '${questionUrl}'`);
 		}
-		const submissionCheck = new (getSubmissionCheckForQuestion(questionUrl))(
+		const submissionCheck = new (getSubmissionCheckForQuestion(questionUrl))();
+		const submissionCheckData = await submissionCheck.generateDataForPage(
 			caseId,
 			caseReference,
 			journeyId,
@@ -683,7 +684,6 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			service,
 			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
 		);
-		const submissionCheckData = await submissionCheck.generateDataForPage();
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
 	};

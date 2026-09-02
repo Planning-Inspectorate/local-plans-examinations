@@ -1,14 +1,24 @@
 import { SubmissionCheck, type SubmissionCheckData } from './submission-check.ts';
+import { type ManageService } from '#service';
 
 export class Gateway3SubmissionCheck extends SubmissionCheck {
-	public async generateDataForPage(): Promise<SubmissionCheckData> {
-		const existingGatewayDetails = await this.service.db.gateway3Info.findUnique({
+	public async generateDataForPage(
+		caseId: string,
+		caseReference: string,
+		journeyId: string,
+		section: string,
+		questionUrl: string,
+		originalUrl: string,
+		service: ManageService,
+		uploadedFiles: any
+	): Promise<SubmissionCheckData> {
+		const existingGatewayDetails = await service.db.gateway3Info.findUnique({
 			select: {
 				completionDate: true,
 				decision: true
 			},
 			where: {
-				caseId: this.caseId
+				caseId: caseId
 			}
 		});
 		const complete = existingGatewayDetails?.completionDate;
@@ -17,18 +27,25 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 			'2': 'Resubmission required'
 		};
 		if (!existingGatewayDetails?.decision) {
-			throw Error('');
+			throw Error(
+				`A decision must be defined in the data for the case '${caseId}' when entering Gateway3SubmissionCheck`
+			);
 		}
-		const decisionText = existingGatewayDetails?.decision ? decisionMap[existingGatewayDetails?.decision] : '';
+		const decisionText = decisionMap[existingGatewayDetails?.decision] ?? null;
+		if (!decisionText) {
+			throw Error(
+				`Undefined decision number found for gateway3Info.decision value '${existingGatewayDetails?.decision}' in Gateway3SubmissionCheck`
+			);
+		}
 		return {
 			titleHeading: 'Check gateway 3 decision and report details',
-			uploadedFiles: this.uploadedFiles,
-			caseReference: this.caseReference,
-			journeyId: this.journeyId,
-			section: this.section,
-			question: this.questionUrl,
-			backLink: this.generateBackUrl(this.originalUrl),
-			notificationPreviewTemplate: this.questionUrl + (complete ? '-complete' : ''),
+			uploadedFiles: uploadedFiles,
+			caseReference: caseReference,
+			journeyId: journeyId,
+			section: section,
+			question: questionUrl,
+			backLink: this.generateBackUrl(originalUrl),
+			notificationPreviewTemplate: questionUrl + (complete ? '-complete' : ''),
 			submitButtonText: 'Issue decision',
 			additionalFields: [
 				{
