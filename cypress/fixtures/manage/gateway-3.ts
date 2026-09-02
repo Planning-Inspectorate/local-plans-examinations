@@ -74,6 +74,26 @@ export const gateway3ProgrammeOfficerAnswer = {
 	email: 'gateway3.officer@test.com'
 } as const;
 
+export const gateway3ExaminationWebsite = {
+	row: 'Examination website',
+	heading: 'What is the address of the examination website?',
+	fieldName: 'examinationWebsite',
+	path: 'examination-website',
+	display: 'Not started',
+	value: 'www.gateway-3-example.com',
+	href: 'https://www.gateway-3-example.com',
+	unsavedValue: 'www.unsaved-gateway-3-example.com'
+} as const;
+
+export const gateway3Documents = {
+	row: 'Gateway 3 documents'
+} as const;
+
+export const gateway3Decision = {
+	row: 'Gateway 3 decision',
+	path: 'gateway-3-decision'
+} as const;
+
 export const updatedGateway3ExpectedDateAnswer = {
 	input: { day: '21', month: '11', year: '2026' },
 	display: '21 November 2026'
@@ -81,5 +101,6 @@ export const updatedGateway3ExpectedDateAnswer = {
 
 export const gateway3ExpectedAnswers = [
 	...Object.values(gateway3DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway3AssessorAnswer.row, display: gateway3AssessorAnswer.display }
+	{ row: gateway3AssessorAnswer.row, display: gateway3AssessorAnswer.display },
+	{ row: gateway3ExaminationWebsite.row, display: gateway3ExaminationWebsite.display }
 ];

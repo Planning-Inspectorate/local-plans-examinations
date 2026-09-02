@@ -45,10 +45,10 @@ describe('Examination validation', () => {
 
 	it('shows an error when the Examination website is blank', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examinationWebsite.row);
-		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
+		examinationWebsitePage.verifyLoaded();
 		examinationWebsitePage.saveAndContinue();
 
-		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
+		examinationWebsitePage.verifyLoaded();
 		examinationWebsitePage.verifyValidationError('Input an examination website');
 	});
 
