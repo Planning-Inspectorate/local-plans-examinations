@@ -637,9 +637,17 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					req.params.question == 'gateway-3-document' &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
-					// TODO need to check if there are documents - only redirect if there are documents
-					res.redirect(303, 'gateway-3-document/check');
-					return;
+					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == 'gateway-3-document');
+					if (!questionConfig) {
+						throw new Error(`Could not find question config for question url 'gateway-3-document'`);
+					}
+					const uploadedFiles =
+						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
+							?.uploadedFiles;
+					if (uploadedFiles.length > 0) {
+						res.redirect(303, 'gateway-3-document/check');
+						return;
+					}
 				}
 				if (next) next();
 				return;
