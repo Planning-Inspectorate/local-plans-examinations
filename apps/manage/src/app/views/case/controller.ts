@@ -1065,7 +1065,7 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			req.session.alertMessage = 'Gateway 2 report already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};
 }
@@ -1117,7 +1117,7 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 			req.session.alertMessage = 'SLA already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};
 }
@@ -1169,7 +1169,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			req.session.alertMessage = 'Gateway 3 decision already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};
 }
