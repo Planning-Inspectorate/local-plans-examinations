@@ -8,7 +8,12 @@ import {
 import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { createFileUploadQuestion, getRoutePlanReference } from './utils.ts';
+import {
+	MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+	MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
+	createFileUploadQuestion,
+	getRoutePlanReference
+} from './utils.ts';
 
 describe('createFileUploadQuestion', () => {
 	it('creates a file upload question with default upload settings and text', () => {
@@ -17,12 +22,8 @@ describe('createFileUploadQuestion', () => {
 			question: 'Upload your Gateway 1 - Self assessment of readiness',
 			fieldName: 'gateway1SelfAssessment',
 			url: 'g1-self-assess',
-			allowedFileExtensions: ['pdf'],
-			allowedMimeTypes: ['application/pdf'],
 			text: {
-				caption: 'Consultation documents',
-				introduction: 'Upload files',
-				fileRequirementsText: 'The file must be smaller than 250MB and be in PDF format'
+				caption: 'Consultation documents'
 			}
 		});
 
@@ -32,8 +33,8 @@ describe('createFileUploadQuestion', () => {
 			question: 'Upload your Gateway 1 - Self assessment of readiness',
 			fieldName: 'gateway1SelfAssessment',
 			url: 'g1-self-assess',
-			allowedFileExtensions: ['pdf'],
-			allowedMimeTypes: ['application/pdf'],
+			allowedFileExtensions: MINIMAL_PROCEDURAL_ALLOWED_EXTENSIONS,
+			allowedMimeTypes: MINIMAL_PROCEDURAL_ALLOWED_MIME_TYPES,
 			maxFileSizeBytes: SINGLE_FILE_UPLOAD_LIMIT,
 			maxFileSizeLabel: SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 			maxFilesPerUpload: Number.MAX_SAFE_INTEGER,
@@ -42,8 +43,9 @@ describe('createFileUploadQuestion', () => {
 			multiple: true,
 			text: {
 				caption: 'Consultation documents',
-				introduction: 'Upload files',
-				fileRequirementsText: 'The file must be smaller than 250MB and be in PDF format',
+				introduction: 'Drag and drop or choose files',
+				fileRequirementsText:
+					'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 				chooseFilesButtonText: 'Choose files',
 				dropInstructionText: 'or drop files',
 				continueButtonText: 'Save and return'
