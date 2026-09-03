@@ -46,28 +46,30 @@
 
 			{% set uploadError = errors["upload-form"] or errors[question.fieldName] %}
 
-			<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents" data-cy="upload-form">
-				<input type="hidden" name="_csrf" value="{{ _csrf }}">
-				{{ govukFileUpload({
-					id: question.fieldName,
-					name: "files[]",
-					label: {
-						text: question.text.uploadLabel or "Upload files",
-						classes: "govuk-visually-hidden"
-					},
-					javascript: true,
-					multiple: question.multiple,
-					chooseFilesButtonText: question.text.chooseFilesButtonText or "Choose files",
-					dropInstructionText: question.text.dropInstructionText or "or drop files",
-					attributes: {
-						accept: question.allowedMimeTypes | join(", ")
-					},
-					errorMessage: uploadError and {
-						text: uploadError.msg
-					}
-				}) }}
-				{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files", attributes: { "data-cy": "upload-files-button" } }) }}
-			</form>
+			{% if question.editable %}
+				<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents" data-cy="upload-form">
+					<input type="hidden" name="_csrf" value="{{ _csrf }}">
+					{{ govukFileUpload({
+						id: question.fieldName,
+						name: "files[]",
+						label: {
+							text: question.text.uploadLabel or "Upload files",
+							classes: "govuk-visually-hidden"
+						},
+						javascript: true,
+						multiple: question.multiple,
+						chooseFilesButtonText: question.text.chooseFilesButtonText or "Choose files",
+						dropInstructionText: question.text.dropInstructionText or "or drop files",
+						attributes: {
+							accept: question.allowedMimeTypes | join(", ")
+						},
+						errorMessage: uploadError and {
+							text: uploadError.msg
+						}
+					}) }}
+					{{ govukButton({ text: question.text.uploadButtonText or "Upload selected files", attributes: { "data-cy": "upload-files-button" } }) }}
+				</form>
+			{% endif %}
 
 			{% if uploadedFiles and uploadedFiles.length %}
 				<dl class="govuk-summary-list">
@@ -75,28 +77,32 @@
 						<div class="govuk-summary-list__row">
 							<dt class="govuk-summary-list__value">{{ file.fileName }}</dt>
 							<dd class="govuk-summary-list__actions">
-								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
-									<input type="hidden" name="_csrf" value="{{ _csrf }}">
-									<button class="pins-app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
-										{{ question.text.removeLinkText or "Remove" }}
-										<span class="govuk-visually-hidden">{{ file.fileName }}</span>
-									</button>
-								</form>
+								{% if question.editable %}
+									<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
+										<input type="hidden" name="_csrf" value="{{ _csrf }}">
+										<button class="pins-app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
+											{{ question.text.removeLinkText or "Remove" }}
+											<span class="govuk-visually-hidden">{{ file.fileName }}</span>
+										</button>
+									</form>
+								{% endif %}
 							</dd>
 						</div>
 					{% endfor %}
 				</dl>
 			{% endif %}
 
-			<form action="" method="post" novalidate>
-				<input type="hidden" name="_csrf" value="{{ _csrf }}">
-				<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
-				{{ govukButton({
-					text: question.text.continueButtonText or continueButtonText or "Continue",
-					type: "submit",
-					attributes: { "data-cy": "save-and-return-button" }
-				}) }}
-			</form>
+			{% if question.editable %}
+				<form action="" method="post" novalidate>
+					<input type="hidden" name="_csrf" value="{{ _csrf }}">
+					<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
+					{{ govukButton({
+						text: question.text.continueButtonText or continueButtonText or "Continue",
+						type: "submit",
+						attributes: { "data-cy": "save-and-return-button" }
+					}) }}
+				</form>
+			{% endif %}
 
 			{% if question.text.returnLink %}
 				<p class="govuk-body">

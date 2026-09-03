@@ -29,11 +29,54 @@ import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const seededPlanTitle = seededCase.planTitle;
 
+const lookupUpdateChecks = [
+	{
+		name: 'Gateway 2 assessor name',
+		answer: assessorGateway2,
+		page: caseOverviewGateway2AssessorPage
+	},
+	{
+		name: 'Examining inspector 1 name',
+		answer: examiningInspector1,
+		page: caseOverviewExaminingInspector1Page
+	},
+	{
+		name: 'QA inspector 1 name',
+		answer: qaInspector1,
+		page: caseOverviewQAInspector1Page
+	}
+];
+
+const backLinkChecks = [
+	{ answer: planBand, page: caseOverviewPlanBandPage },
+	{ answer: assessorGateway2, page: caseOverviewGateway2AssessorPage },
+	{ answer: examiningInspector1, page: caseOverviewExaminingInspector1Page },
+	{ answer: qaInspector1, page: caseOverviewQAInspector1Page }
+];
+
 const openSeededCase = () => {
 	cy.task('seedDb');
 
 	manageHomePage.visit();
 	manageHomePage.openCaseByPlanTitle(seededPlanTitle);
+	caseOverviewPage.verifyLoaded(seededPlanTitle);
+};
+
+const updateLookupAnswer = ({ answer, page }: (typeof lookupUpdateChecks)[number]) => {
+	caseOverviewPage.openActionLinkFor(answer.row);
+
+	page.verifyLoaded();
+	page.enterLookupAnswer(answer.value);
+
+	caseOverviewPage.verifyLoaded(seededPlanTitle);
+	caseOverviewPage.verifySummaryRowContains(answer.row, answer.value);
+};
+
+const returnToOverviewFrom = ({ answer, page }: (typeof backLinkChecks)[number]) => {
+	caseOverviewPage.openActionLinkFor(answer.row);
+	page.verifyLoaded();
+	page.goBack();
+
 	caseOverviewPage.verifyLoaded(seededPlanTitle);
 };
 
@@ -109,26 +152,7 @@ describe('Case overview updates', () => {
 	});
 
 	it('returns to overview from the back links', { tags: ['regression', 'smoke'] }, () => {
-		caseOverviewPage.openActionLinkFor(planBand.row);
-		caseOverviewPlanBandPage.verifyLoaded();
-		caseOverviewPlanBandPage.goBack();
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
-
-		caseOverviewPage.openActionLinkFor(assessorGateway2.row);
-		caseOverviewGateway2AssessorPage.verifyLoaded();
-		caseOverviewGateway2AssessorPage.goBack();
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
-
-		caseOverviewPage.openActionLinkFor(examiningInspector1.row);
-		caseOverviewExaminingInspector1Page.verifyLoaded();
-		caseOverviewExaminingInspector1Page.goBack();
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
-
-		caseOverviewPage.openActionLinkFor(qaInspector1.row);
-		caseOverviewQAInspector1Page.verifyLoaded();
-		caseOverviewQAInspector1Page.goBack();
-
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		backLinkChecks.forEach(returnToOverviewFrom);
 	});
 
 	it(
@@ -146,34 +170,10 @@ describe('Case overview updates', () => {
 		}
 	);
 
-	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor(assessorGateway2.row);
-
-		caseOverviewGateway2AssessorPage.verifyLoaded();
-		caseOverviewGateway2AssessorPage.enterLookupAnswer(assessorGateway2.value);
-
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
-		caseOverviewPage.verifySummaryRowContains(assessorGateway2.row, assessorGateway2.value);
-	});
-
-	it('updates the Examining inspector 1 name answer', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor(examiningInspector1.row);
-
-		caseOverviewExaminingInspector1Page.verifyLoaded();
-		caseOverviewExaminingInspector1Page.enterLookupAnswer(examiningInspector1.value);
-
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
-		caseOverviewPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.value);
-	});
-
-	it('updates the QA inspector 1 name answer', { tags: ['regression'] }, () => {
-		caseOverviewPage.openActionLinkFor(qaInspector1.row);
-
-		caseOverviewQAInspector1Page.verifyLoaded();
-		caseOverviewQAInspector1Page.enterLookupAnswer(qaInspector1.value);
-
-		caseOverviewPage.verifyLoaded(seededPlanTitle);
-		caseOverviewPage.verifySummaryRowContains(qaInspector1.row, qaInspector1.value);
+	lookupUpdateChecks.forEach((check) => {
+		it(`updates the ${check.name} answer`, { tags: ['regression'] }, () => {
+			updateLookupAnswer(check);
+		});
 	});
 
 	it('deletes a case from the case overview', { tags: ['regression'] }, () => {

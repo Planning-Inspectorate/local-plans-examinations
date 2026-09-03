@@ -1,4 +1,5 @@
 import { Question } from '@planning-inspectorate/dynamic-forms';
+import { type Journey } from '@planning-inspectorate/dynamic-forms';
 import escape from 'escape-html';
 import type {
 	FileUploaderCustomViewData,
@@ -13,6 +14,10 @@ type CheckForValidationErrorsParams = Parameters<Question['checkForValidationErr
 type RequestWithFileUploaderCustomViewData = CheckForValidationErrorsParams[0] & {
 	fileUploaderSessionKey?: string;
 	session?: FileUploaderCustomViewData & { fileUploader?: FileUploaderCustomViewData['fileUploader'] };
+};
+const FORMATTER_FUNCTION_MAP: Record<string, (files: UploadedFile[], notStartedText: string) => string> = {
+	items: bulletListFormat,
+	count: countFormat
 };
 
 export default class FileUploaderQuestion extends Question {
@@ -29,12 +34,18 @@ export default class FileUploaderQuestion extends Question {
 		multiple = true,
 		text = {},
 		validationMessages = {},
+		actionButtonVisibleInSummary = true,
+		valueDisplayFormat = 'items',
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
 			...params,
 			viewFolder: 'forms/custom-components/file-uploader'
 		});
+		if (!(valueDisplayFormat in FORMATTER_FUNCTION_MAP)) {
+			// Default to showing the items
+			valueDisplayFormat = 'items';
+		}
 
 		this.config = {
 			type: 'file-uploader',
@@ -47,7 +58,9 @@ export default class FileUploaderQuestion extends Question {
 			maxTotalUploadSizeLabel,
 			multiple,
 			text,
-			validationMessages
+			validationMessages,
+			actionButtonVisibleInSummary,
+			valueDisplayFormat
 		};
 	}
 
@@ -61,7 +74,8 @@ export default class FileUploaderQuestion extends Question {
 
 		viewModel.question = {
 			...viewModel.question,
-			...this.config
+			...this.config,
+			editable: this.editable
 		};
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
@@ -131,11 +145,16 @@ export default class FileUploaderQuestion extends Question {
 	): Array<{
 		key: string;
 		value: string;
-		action: { href: string; text: string; visuallyHiddenText: string };
+		action: { href: string; text: string; visuallyHiddenText: string } | undefined;
 	}> {
+		const formatterFunction = this.config.valueDisplayFormat
+			? FORMATTER_FUNCTION_MAP[this.config.valueDisplayFormat]
+			: null;
+		if (!formatterFunction) {
+			throw Error(`No formatter function defined for '${this.config.valueDisplayFormat}' in FileUploaderQuestion`);
+		}
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = formatUploadedFilesForSummary(files, this.notStartedText);
-
+		const value = formatterFunction(files, this.notStartedText);
 		return [
 			{
 				key: this.title,
@@ -148,9 +167,31 @@ export default class FileUploaderQuestion extends Question {
 			}
 		];
 	}
+
+	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
+		if (this.actionLink) {
+			// show the override if its set
+			return {
+				href: this.actionLink.href,
+				text: this.actionLink.text,
+				visuallyHiddenText: this.question
+			};
+		}
+		if (!this.config.actionButtonVisibleInSummary) {
+			return;
+		}
+		// The editable condition from the parent method is removed - the question will always have a view action
+		const isAnswerProvided = answer !== null && answer !== undefined && answer !== '';
+
+		return {
+			href: journey.getCurrentQuestionUrl(sectionSegment, this.fieldName),
+			text: isAnswerProvided ? this.changeActionText : this.answerActionText,
+			visuallyHiddenText: this.question
+		};
+	}
 }
 
-function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: string): string {
+function bulletListFormat(files: UploadedFile[], notStartedText: string): string {
 	if (files.length === 0) {
 		return notStartedText;
 	}
@@ -161,6 +202,11 @@ function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: st
 
 	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
 	return `<ul class="govuk-list">${listItems}</ul>`;
+}
+
+function countFormat(files: UploadedFile[]): string {
+	const pluralCharacter = files.length != 1 ? 's' : '';
+	return `<ul class="govuk-list">${files.length} document${pluralCharacter}</ul>`;
 }
 
 function readUploadedFiles(value: unknown): UploadedFile[] {

@@ -9,15 +9,30 @@ import {
 	getDeleteCase,
 	postMarkAsDeleteCase,
 	downloadDocument,
-	buildCheckReportMiddleware
+	buildCheckReportMiddleware,
+	preprocessQuestionProperties,
+	issueGateway3Document
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
-import { build } from 'pino-pretty';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
 const CASE_ID = '11111111-1111-1111-1111-111111111111';
 const CURRENT_USER = 'Joe Bloggs';
+const MOCK_DOCUMENT_SETS = [
+	{
+		id: '1',
+		folderName: 'gateway-2-report'
+	},
+	{
+		id: '2',
+		folderName: 'signed-sla'
+	},
+	{
+		id: '3',
+		folderName: 'gateway-3-document'
+	}
+];
 
 function createService(): any {
 	return {
@@ -979,16 +994,7 @@ describe('buildGetJourneyMiddleware', () => {
 			dsaChecked: 'yes'
 		}));
 
-		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
-			{
-				id: '1',
-				folderName: 'gateway-2-report'
-			},
-			{
-				id: '2',
-				folderName: 'signed-sla'
-			}
-		]);
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
 		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
@@ -1021,16 +1027,7 @@ describe('buildGetJourneyMiddleware', () => {
 			assessorName: 'Alex Assessor'
 		}));
 
-		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => [
-			{
-				id: '1',
-				folderName: 'gateway-2-report'
-			},
-			{
-				id: '2',
-				folderName: 'signed-sla'
-			}
-		]);
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
 		ctx.service.db.document.findMany.mock.mockImplementation(async () => []);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
@@ -1061,6 +1058,7 @@ describe('buildGetJourneyMiddleware', () => {
 			caseId: CASE_ID,
 			assessorName: 'Alex Assessor'
 		}));
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
 
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
@@ -1263,10 +1261,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: 'sla-received-date',
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: 'sla-received-date',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla',
 				question: 'signed-sla',
@@ -1314,10 +1317,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: 'sla-received-date',
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: 'sla-received-date',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla-complete',
 				question: 'signed-sla',
@@ -1364,10 +1372,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: undefined,
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: undefined,
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report',
 				question: 'gateway-2-report',
@@ -1414,10 +1427,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: undefined,
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: undefined,
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report-complete',
 				question: 'gateway-2-report',
@@ -1450,5 +1468,150 @@ describe('buildCheckReportMiddleware', () => {
 		assert.rejects(async () => {
 			await buildCheckReportMiddleware(service, journeyId)(req as unknown as Request, res as unknown as Response);
 		}, /Could not find question config for question url/);
+	});
+});
+
+describe('preprocessQuestionProperties', () => {
+	const caseReference = 'some-case-reference';
+	const journeyId = 'gateway-3';
+	it('can preprocess gateway3 when the documents have not been submitted', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => ({ gateway3Info: { completionDate: undefined } }));
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		const questions: Record<string, any> = {
+			gateway3Decision: {},
+			gateway3Documents: {
+				config: {}
+			},
+			gateway3CompletionDate: {}
+		};
+		const expectedModifiedQuestions: Record<string, any> = {
+			gateway3Decision: {},
+			gateway3Documents: {
+				changeActionText: 'View',
+				editable: true,
+				config: {
+					actionButtonVisibleInSummary: false
+				}
+			},
+			gateway3CompletionDate: {
+				changeActionText: 'View',
+				editable: false
+			}
+		};
+		const myNextFunction = mock.fn(() => {});
+		const handler = preprocessQuestionProperties(service, journeyId, questions);
+		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
+		assert.equal(myNextFunction.mock.callCount(), 1);
+		assert.deepEqual(questions, expectedModifiedQuestions);
+	});
+	it('can preprocess gateway3 when the documents have submitted', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => ({
+			gateway3Info: { completionDate: new Date(2026, 0, 1) }
+		}));
+		const res = {
+			render: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		const questions: Record<string, any> = {
+			gateway3Decision: {},
+			gateway3Documents: {
+				config: {}
+			},
+			gateway3CompletionDate: {}
+		};
+		const expectedModifiedQuestions: Record<string, any> = {
+			gateway3Decision: {
+				actionLink: {
+					href: 'gateway-3/gateway-3-submission/gateway-3-document/check',
+					text: 'View'
+				}
+			},
+			gateway3Documents: {
+				changeActionText: 'View',
+				editable: false,
+				config: {
+					actionButtonVisibleInSummary: true
+				}
+			},
+			gateway3CompletionDate: {
+				changeActionText: 'View',
+				editable: true
+			}
+		};
+		const myNextFunction = mock.fn(() => {});
+		const handler = preprocessQuestionProperties(service, journeyId, questions);
+		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
+		assert.equal(myNextFunction.mock.callCount(), 1);
+		assert.deepEqual(questions, expectedModifiedQuestions);
+	});
+});
+describe('issueGateway3Document', () => {
+	const caseReference = 'some-case-reference';
+	it('issue document when created date is not already set', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			completionDate: undefined
+		}));
+		const handler = issueGateway3Document(service, 'some-journey');
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+	});
+	it('issue document when created date is already set', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			completionDate: new Date(2026, 1, 0)
+		}));
+		const handler = issueGateway3Document(service, 'some-journey');
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
 	});
 });

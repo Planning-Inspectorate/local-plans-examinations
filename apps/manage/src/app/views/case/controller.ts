@@ -1,16 +1,21 @@
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
-import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
+import { JourneyResponse, type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
-import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import {
+	type FileUploaderSession,
+	type FileUploaderQuestion
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
+import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
+import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import multer from 'multer';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -110,6 +115,8 @@ interface Gateway3Input {
 	programmeOfficerFirstName?: string;
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
+	examinationWebsite?: string;
+	decision?: string;
 }
 
 // Generate a map of <fieldName: field title>
@@ -159,6 +166,7 @@ export const fileUploadQuestionsByUrl = new Map(
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
+		console.log('updateCaseField called');
 		const { db, logger } = service;
 
 		const reference = getParam(req.params.reference);
@@ -412,9 +420,15 @@ export async function updateGateway3(
 	question?: string
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
-
+	if (question === 'examination-website') {
+		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseReference, question);
+	}
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
+	}
+	if (question === 'gateway-3-document') {
+		// For handling the save button
+		return true;
 	}
 	if (answers) {
 		await db.gateway3Info.upsert({
@@ -600,7 +614,49 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-3': {
 				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
+				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				if (req.params.question == 'gateway-3-document') {
+					console.log('setting document readonly');
+					//res.locals.journeyResponse.answers.gateway3Documents.readonly = true;
+				}
+				// Flow for uploading a gateway 3 document
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'gateway-3-decision' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					const caseReference = getParam(req.params.reference);
+					await updateGateway3(
+						db,
+						{
+							decision: req.body.decision
+						},
+						caseReference,
+						'gateway-3-decision'
+					);
+					res.redirect(303, 'gateway-3-document');
+					return;
+				}
+				if (
+					req.method === 'POST' &&
+					req.params.question == 'gateway-3-document' &&
+					req.originalUrl.endsWith(req.params.question)
+				) {
+					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == 'gateway-3-document');
+					if (!questionConfig) {
+						throw new Error(`Could not find question config for question url 'gateway-3-document'`);
+					}
+					const uploadedFiles =
+						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
+							?.uploadedFiles;
+					if (uploadedFiles.length > 0) {
+						res.redirect(303, 'gateway-3-document/check');
+						return;
+					}
+				}
 				if (next) next();
 				return;
 			}
@@ -627,87 +683,24 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 	return async (req, res) => {
 		const section = getParam(req.params.section);
 		const questionUrl = getParam(req.params.question);
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
 		const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == questionUrl);
 		if (!questionConfig) {
 			throw new Error(`Could not find question config for question url '${questionUrl}'`);
 		}
-		const questionFieldName = questionConfig.fieldName;
-		const uploadedFiles =
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionFieldName)]?.uploadedFiles ?? [];
-		// Todo need to add error handling for 0 files - no flow defined right now
-		const caseReference = getParam(req.params.reference);
-		const backLinkUrl = `${req.originalUrl.substring(0, req.originalUrl.lastIndexOf('/'))}`;
-		// Extra details needed to render the inner notification on the page
-		const questionDetailsMap: Record<
-			string,
-			{
-				title: string;
-				dbInfo: any;
-				completeIndicatorFieldName: string;
-				submitButtonText: string;
-				dateUploadedQuestion: string | undefined;
-			}
-		> = {
-			'signed-sla': {
-				title: 'Check signed SLA and issue notification',
-				dbInfo: service.db.gateway1Info,
-				completeIndicatorFieldName: 'slaSentDate',
-				submitButtonText: 'Confirm and issue notification',
-				dateUploadedQuestion: 'slaReceivedDate'
-			},
-			'gateway-2-report': {
-				title: 'Check Gateway 2 report details and issue notification',
-				dbInfo: service.db.gateway2Info,
-				completeIndicatorFieldName: 'reportIssuedDate',
-				submitButtonText: 'Issue report',
-				dateUploadedQuestion: undefined
-			}
-		};
-		const questionDetails = questionDetailsMap[questionConfig.url];
-		if (!questionDetails) {
-			throw new Error(
-				`Could not find details for question '${questionConfig.url}' in buildCheckReportMiddleware::questionDetailsMap`
-			);
-		}
-		const dateUploadedQuestion = questionDetails.dateUploadedQuestion
-			? questions[questionDetails.dateUploadedQuestion]
-			: undefined;
-		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
-		const completeIndicatorFieldName = questionDetails.completeIndicatorFieldName;
-		const existingGatewayDetails = await questionDetails.dbInfo.findUnique({
-			select: {
-				[completeIndicatorFieldName]: true,
-				...(questionDetails.dateUploadedQuestion ? { [questionDetails.dateUploadedQuestion]: true } : {})
-			},
-			where: {
-				caseId: caseId
-			}
-		});
-		const alreadyComplete = existingGatewayDetails?.[completeIndicatorFieldName];
-		const notificationPreviewTemplate = questionUrl + (alreadyComplete ? '-complete' : '');
-		const documentUploadDate = questionDetails.dateUploadedQuestion
-			? existingGatewayDetails[questionDetails.dateUploadedQuestion]
-			: (uploadedFiles[0]?.dateCreated ?? undefined);
-		res.render('views/layouts/submit-documents-check-your-answers', {
-			titleHeading: questionDetails.title,
-			uploadedFiles: uploadedFiles,
-			caseReference: caseReference,
-			journeyId: journeyId,
-			section: section,
-			question: questionUrl,
-			backLink: backLinkUrl,
-			notificationPreviewTemplate: notificationPreviewTemplate,
-			submitButtonText: questionDetails.submitButtonText,
-			documentUploadDate: documentUploadDate
-				? new Intl.DateTimeFormat('en-GB', {
-						day: 'numeric',
-						month: 'long',
-						timeZone: 'Europe/London',
-						year: 'numeric'
-					}).format(documentUploadDate)
-				: null,
-			documentUploadDateModificationUrl: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
-		});
+		const submissionCheck = new (getSubmissionCheckForQuestion(questionUrl))();
+		const submissionCheckData = await submissionCheck.generateDataForPage(
+			caseId,
+			caseReference,
+			journeyId,
+			section,
+			questionUrl,
+			req.originalUrl,
+			service,
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
+		);
+		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
 	};
 }
@@ -1088,7 +1081,7 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			req.session.alertMessage = 'Gateway 2 report already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};
 }
@@ -1140,7 +1133,59 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 			req.session.alertMessage = 'SLA already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		return;
+	};
+}
+
+export function issueGateway3Document(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway3Info.findUnique({
+			select: {
+				completionDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.completionDate) {
+			// Try to update the reportIssuedDate
+			const completionDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await updateGateway3(
+				service.db,
+				{
+					completionDate: completionDate
+				},
+				caseReference,
+				'gateway-3-report-issued-date'
+			);
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					gateway3Documents: null // Will be overridden by overrideLabels
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					gateway3Documents: `Gateway 3 decision issued on ${await formatCaseHistoryValue(service, req, '', completionDate)}`
+				}
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 3 decision issued';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 3 decision already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};
 }
@@ -1180,4 +1225,54 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
 		return res.redirect(redirectToFileUploaderQuestion(req));
 	}
 	return next(err);
+}
+
+/**
+ * Alter the properties of specific questions before they are rendered. This is useful for properties whose value is derived
+ * from a condition
+ * @param service The manage service
+ * @param journeyId The journey
+ * @param questions The questions from question.ts
+ * @returns An async handler for a router
+ */
+export function preprocessQuestionProperties(
+	service: ManageService,
+	journeyId: string,
+	questions: Record<string, Question>
+) {
+	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+		if (journeyId == 'gateway-3') {
+			// Toggle the visibility/editability of the gateway3Document question
+			const gateway3Details = await service.db.case.findUnique({
+				include: {
+					gateway3Info: {
+						select: {
+							completionDate: true
+						}
+					}
+				},
+				where: {
+					reference
+				}
+			});
+			questions.gateway3Documents.changeActionText = 'View';
+			questions.gateway3CompletionDate.changeActionText = 'View';
+			const gateway3Complete = !!gateway3Details?.gateway3Info?.completionDate;
+			questions.gateway3Documents.editable = !gateway3Complete;
+			(questions.gateway3Documents as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
+				gateway3Complete;
+			questions.gateway3CompletionDate.editable = gateway3Complete;
+			if (gateway3Complete) {
+				questions.gateway3Decision.actionLink = {
+					href: 'gateway-3/gateway-3-submission/gateway-3-document/check',
+					text: 'View'
+				};
+			} else {
+				// Reset for different journey
+				delete questions.gateway3Decision.actionLink;
+			}
+		}
+		next();
+	});
 }
