@@ -1259,10 +1259,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: 'slaReceivedDate',
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: 'sla-received-date',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla',
 				question: 'signed-sla',
@@ -1310,10 +1315,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: 'slaReceivedDate',
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: 'sla-received-date',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla-complete',
 				question: 'signed-sla',
@@ -1360,10 +1370,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: undefined,
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: undefined,
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report',
 				question: 'gateway-2-report',
@@ -1410,10 +1425,15 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						url: undefined,
+						value: '1 January 2026'
+					}
+				],
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
-				documentUploadDate: '1 January 2026',
-				documentUploadDateModificationUrl: undefined,
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report-complete',
 				question: 'gateway-2-report',
