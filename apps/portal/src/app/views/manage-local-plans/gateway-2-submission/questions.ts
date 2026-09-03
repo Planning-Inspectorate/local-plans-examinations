@@ -105,17 +105,6 @@ export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 		dropInstructionText: 'or drop files',
 		continueButtonText: 'Save and return'
 	}
-	// formatSummaryValue: ({
-	// 	formattedAnswer,
-	// 	answer
-	// }: {
-	// 	formattedAnswer: string;
-	// 	answer: { metadata: { documentGuid: string } }[];
-	// }) => {
-	// /:planReference/gateway-2-submission/download-document/:documentId
-	// get planReference
-	// 	return `<a href="/manage-local-plans/PLAN%2F001/gateway-2-submission/download-document/${answer[0].metadata.documentGuid}">${formattedAnswer}</a>`;
-	// }
 };
 
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
@@ -423,54 +412,7 @@ export function createGateway2Questions(planReference: string | undefined) {
 
 		localPlanTimetable: {
 			...localPlanTimetableQuestion,
-			formatSummaryValue: ({
-				formattedAnswer,
-				answer
-			}: {
-				formattedAnswer: string;
-				answer: {
-					fileName?: string;
-					metadata: { documentGuid: string };
-				}[];
-			}) => {
-				// const documentGuid = answer?.[0]?.metadata?.documentGuid;
-				//
-				// if (!encodedPlanReference || typeof documentGuid !== 'string') {
-				// 	return formattedAnswer;
-				// }
-				//
-				// return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
-				// 	documentGuid
-				// )}">${formattedAnswer}</a>`;
-
-				if (!encodedPlanReference || !Array.isArray(answer) || answer.length === 0) {
-					return formattedAnswer;
-				}
-
-				const linkedFiles = answer.map((file) => {
-					const documentGuid = file.metadata?.documentGuid;
-
-					if (typeof documentGuid !== 'string' || !documentGuid) {
-						return undefined;
-					}
-
-					const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
-
-					return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
-						documentGuid
-					)}">${fileName}</a>`;
-				});
-
-				if (linkedFiles.some((file) => file === undefined)) {
-					return formattedAnswer;
-				}
-
-				if (linkedFiles.length === 1) {
-					return linkedFiles[0];
-				}
-
-				return `<ul class="govuk-list">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
-			}
+			formatSummaryValue: createDownloadDocumentSummaryFormatter(encodedPlanReference)
 		}
 	} satisfies Record<string, FileUploaderQuestionProps>;
 
@@ -483,6 +425,49 @@ export function createGateway2Questions(planReference: string | undefined) {
 			answerActionText: 'Add'
 		}
 	) as Record<string, Question>;
+}
+
+function createDownloadDocumentSummaryFormatter(planReference: string | undefined) {
+	return ({
+		formattedAnswer,
+		answer
+	}: {
+		formattedAnswer: string;
+		answer: {
+			fileName?: string;
+			metadata?: {
+				documentGuid?: string;
+			};
+		}[];
+	}) => {
+		if (!planReference || !Array.isArray(answer) || answer.length === 0) {
+			return formattedAnswer;
+		}
+
+		const linkedFiles = answer.map((file) => {
+			const documentGuid = file.metadata?.documentGuid;
+
+			if (typeof documentGuid !== 'string' || !documentGuid) {
+				return undefined;
+			}
+
+			const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
+
+			return `<a href="/manage-local-plans/${planReference}/gateway-2-submission/download-document/${encodeURIComponent(
+				documentGuid
+			)}">${fileName}</a>`;
+		});
+
+		if (linkedFiles.some((file) => file === undefined)) {
+			return formattedAnswer;
+		}
+
+		if (linkedFiles.length === 1) {
+			return linkedFiles[0];
+		}
+
+		return `<ul class="govuk-list">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
+	};
 }
 
 function decodeFileName(fileName: string) {

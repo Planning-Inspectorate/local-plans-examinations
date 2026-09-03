@@ -77,8 +77,11 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 		answer
 	}: {
 		formattedAnswer: string;
-		answer: { metadata: { documentGuid: string } }[];
-	}) => string;
+		answer: {
+			fileName?: string;
+			metadata: { documentGuid: string };
+		}[];
+	}) => string | undefined;
 };
 
 export type FileUploaderViewModel = Record<string, unknown> & {
