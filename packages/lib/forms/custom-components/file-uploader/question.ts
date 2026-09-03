@@ -147,7 +147,12 @@ export default class FileUploaderQuestion extends Question {
 		value: string;
 		action: { href: string; text: string; visuallyHiddenText: string } | undefined;
 	}> {
-		const formatterFunction = FORMATTER_FUNCTION_MAP[this.config.valueDisplayFormat];
+		const formatterFunction = this.config.valueDisplayFormat
+			? FORMATTER_FUNCTION_MAP[this.config.valueDisplayFormat]
+			: null;
+		if (!formatterFunction) {
+			throw Error(`No formatter function defined for '${this.config.valueDisplayFormat}' in FileUploaderQuestion`);
+		}
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 		const value = formatterFunction(files, this.notStartedText);
 		return [
