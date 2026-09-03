@@ -2,7 +2,7 @@ import { type ManageService } from '#service';
 
 export type SubmissionCheckData = {
 	titleHeading: string;
-	uploadedFiles: string[];
+	uploadedFiles: any[];
 	caseReference: string;
 	journeyId: string;
 	section: string;

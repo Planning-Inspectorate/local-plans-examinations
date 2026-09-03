@@ -167,11 +167,17 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				questionUrl: 'my-question',
 				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
 				service: MockService,
-				uploadedFiles: ['fileA.txt', 'fileB.txt']
+				uploadedFiles: [
+					{ name: 'fileA.txt', dateCreated: new Date(2026, 0, 1) },
+					{ name: 'fileB.txt', dateCreated: new Date(2026, 0, 2) }
+				]
 			},
 			{
 				titleHeading: 'Check Gateway 2 report details and issue notification',
-				uploadedFiles: ['fileA.txt', 'fileB.txt'],
+				uploadedFiles: [
+					{ name: 'fileA.txt', dateCreated: new Date(2026, 0, 1) },
+					{ name: 'fileB.txt', dateCreated: new Date(2026, 0, 2) }
+				],
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
@@ -179,7 +185,13 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Issue report',
-				additionalFields: []
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						value: '1 January 2026',
+						url: undefined
+					}
+				]
 			}
 		);
 	});
@@ -199,11 +211,17 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				questionUrl: 'my-question',
 				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
 				service: MockService,
-				uploadedFiles: ['fileA.txt', 'fileB.txt']
+				uploadedFiles: [
+					{ name: 'fileA.txt', dateCreated: new Date(2026, 0, 1) },
+					{ name: 'fileB.txt', dateCreated: new Date(2026, 0, 2) }
+				]
 			},
 			{
 				titleHeading: 'Check Gateway 2 report details and issue notification',
-				uploadedFiles: ['fileA.txt', 'fileB.txt'],
+				uploadedFiles: [
+					{ name: 'fileA.txt', dateCreated: new Date(2026, 0, 1) },
+					{ name: 'fileB.txt', dateCreated: new Date(2026, 0, 2) }
+				],
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
@@ -211,7 +229,13 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question-complete',
 				submitButtonText: 'Issue report',
-				additionalFields: []
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						value: '1 January 2026',
+						url: undefined
+					}
+				]
 			}
 		);
 	});
@@ -322,7 +346,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				journeyId: 'some-journey',
 				section: 'some-section',
 				question: 'my-question',
-				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				backLink: '/PLAN-12345/some-journey', // Should go back to the journey
 				notificationPreviewTemplate: 'my-question-complete',
 				submitButtonText: 'Issue decision',
 				additionalFields: [

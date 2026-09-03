@@ -22,6 +22,7 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 			}
 		});
 		const receivedDate = existingGatewayDetails?.reportIssuedDate;
+		const fileUploadedDate = uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined;
 		return {
 			titleHeading: 'Check Gateway 2 report details and issue notification',
 			uploadedFiles: uploadedFiles,
@@ -32,7 +33,7 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 			backLink: this.generateBackUrl(originalUrl),
 			notificationPreviewTemplate: questionUrl + (receivedDate ? '-complete' : ''),
 			submitButtonText: 'Issue report',
-			additionalFields: []
+			additionalFields: this.generateAdditionalDateField(fileUploadedDate, undefined)
 		};
 	}
 }
