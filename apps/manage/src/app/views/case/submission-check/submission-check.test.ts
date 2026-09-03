@@ -64,7 +64,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 					{
 						name: 'Date uploaded',
 						value: null,
-						url: 'slaReceivedDate'
+						url: 'sla-received-date'
 					}
 				]
 			}
@@ -103,7 +103,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 					{
 						name: 'Date uploaded',
 						value: null,
-						url: 'slaReceivedDate'
+						url: 'sla-received-date'
 					}
 				]
 			}
@@ -142,7 +142,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 					{
 						name: 'Date uploaded',
 						value: '1 January 2026',
-						url: 'slaReceivedDate'
+						url: 'sla-received-date'
 					}
 				]
 			}

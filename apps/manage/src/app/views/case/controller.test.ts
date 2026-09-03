@@ -1264,7 +1264,7 @@ describe('buildCheckReportMiddleware', () => {
 				additionalFields: [
 					{
 						name: 'Date uploaded',
-						url: 'slaReceivedDate',
+						url: 'sla-received-date',
 						value: '1 January 2026'
 					}
 				],
@@ -1320,7 +1320,7 @@ describe('buildCheckReportMiddleware', () => {
 				additionalFields: [
 					{
 						name: 'Date uploaded',
-						url: 'slaReceivedDate',
+						url: 'sla-received-date',
 						value: '1 January 2026'
 					}
 				],
