@@ -1,4 +1,5 @@
 import { Question } from '@planning-inspectorate/dynamic-forms';
+import { type Journey } from '@planning-inspectorate/dynamic-forms';
 import escape from 'escape-html';
 import type {
 	FileUploaderCustomViewData,
@@ -73,7 +74,8 @@ export default class FileUploaderQuestion extends Question {
 
 		viewModel.question = {
 			...viewModel.question,
-			...this.config
+			...this.config,
+			editable: this.editable
 		};
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
@@ -148,20 +150,39 @@ export default class FileUploaderQuestion extends Question {
 		const formatterFunction = FORMATTER_FUNCTION_MAP[this.config.valueDisplayFormat];
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 		const value = formatterFunction(files, this.notStartedText);
-		const action = this.config.actionButtonVisibleInSummary
-			? (this.getAction(sectionSegment, journey, answer as never) as {
-					href: string;
-					text: string;
-					visuallyHiddenText: string;
-				})
-			: undefined;
 		return [
 			{
 				key: this.title,
 				value,
-				action: action
+				action: this.getAction(sectionSegment, journey, answer as never) as {
+					href: string;
+					text: string;
+					visuallyHiddenText: string;
+				}
 			}
 		];
+	}
+
+	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
+		if (this.actionLink) {
+			// show the override if its set
+			return {
+				href: this.actionLink.href,
+				text: this.actionLink.text,
+				visuallyHiddenText: this.question
+			};
+		}
+		if (!this.config.actionButtonVisibleInSummary) {
+			return;
+		}
+		// The editable condition from the parent method is removed - the question will always have a view action
+		const isAnswerProvided = answer !== null && answer !== undefined && answer !== '';
+
+		return {
+			href: journey.getCurrentQuestionUrl(sectionSegment, this.fieldName),
+			text: isAnswerProvided ? this.changeActionText : this.answerActionText,
+			visuallyHiddenText: this.question
+		};
 	}
 }
 
