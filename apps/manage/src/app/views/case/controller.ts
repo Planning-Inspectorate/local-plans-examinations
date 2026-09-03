@@ -1256,10 +1256,22 @@ export function preprocessQuestionProperties(
 					reference
 				}
 			});
+			questions.gateway3Documents.changeActionText = 'View';
+			questions.gateway3CompletionDate.changeActionText = 'View';
 			const gateway3Complete = !!gateway3Details?.gateway3Info?.completionDate;
 			questions.gateway3Documents.editable = !gateway3Complete;
 			(questions.gateway3Documents as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
 				gateway3Complete;
+			questions.gateway3CompletionDate.editable = gateway3Complete;
+			if (gateway3Complete) {
+				questions.gateway3Decision.actionLink = {
+					href: 'gateway-3/gateway-3-submission/gateway-3-document/check',
+					text: 'View'
+				};
+			} else {
+				// Reset for different journey
+				delete questions.gateway3Decision.actionLink;
+			}
 		}
 		next();
 	});
