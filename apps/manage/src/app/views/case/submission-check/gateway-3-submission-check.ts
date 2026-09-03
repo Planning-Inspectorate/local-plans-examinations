@@ -37,6 +37,7 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 				`Undefined decision number found for gateway3Info.decision value '${existingGatewayDetails?.decision}' in Gateway3SubmissionCheck`
 			);
 		}
+		const baseBackLink = this.generateBackUrl(originalUrl);
 		return {
 			titleHeading: 'Check gateway 3 decision and report details',
 			uploadedFiles: uploadedFiles,
@@ -44,7 +45,7 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 			journeyId: journeyId,
 			section: section,
 			question: questionUrl,
-			backLink: this.generateBackUrl(originalUrl),
+			backLink: complete ? this.generateBackUrl(this.generateBackUrl(baseBackLink)) : baseBackLink,
 			notificationPreviewTemplate: questionUrl + (complete ? '-complete' : ''),
 			submitButtonText: 'Issue decision',
 			additionalFields: [
