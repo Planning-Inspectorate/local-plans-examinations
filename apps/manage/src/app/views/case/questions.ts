@@ -688,7 +688,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			dropInstructionText: 'or drop files'
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')],
-		actionButtonVisibleInSummary: false,
 		valueDisplayFormat: 'count'
 	},
 	gateway3Decision: {
