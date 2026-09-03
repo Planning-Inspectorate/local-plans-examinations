@@ -86,6 +86,7 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 	}) => string | undefined;
 	actionButtonVisibleInSummary: boolean;
 	valueDisplayFormat?: string;
+	editable?: boolean;
 };
 
 export type FileUploaderViewModel = QuestionViewModel & {
