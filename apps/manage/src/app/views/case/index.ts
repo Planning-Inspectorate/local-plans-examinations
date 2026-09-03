@@ -22,7 +22,8 @@ import {
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	handleMulterFileSizeError
+	handleMulterFileSizeError,
+	preprocessQuestionProperties
 } from './controller.ts';
 import {
 	type IRouter,
@@ -186,6 +187,7 @@ function registerCaseJourney(
 	router.get(
 		`/${path}`,
 		getJourneyResponse,
+		preprocessQuestionProperties(service, journeyId, questions),
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
 		buildLpaOptions,
@@ -198,6 +200,7 @@ function registerCaseJourney(
 	router.get(
 		questionPath,
 		getJourneyResponse,
+		preprocessQuestionProperties(service, journeyId, questions),
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
 		buildLpaOptions,

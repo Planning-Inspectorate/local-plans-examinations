@@ -76,6 +76,7 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 	validators?: BaseValidator[];
 	actionButtonVisibleInSummary: boolean;
 	valueDisplayFormat?: string;
+	editable?: boolean;
 };
 
 export type FileUploaderViewModel = Record<string, unknown> & {

@@ -1,17 +1,21 @@
 import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import type { ManageService } from '#service';
-import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
+import { JourneyResponse, type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '../../auth/session.service.ts';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
-import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import {
+	type FileUploaderSession,
+	type FileUploaderQuestion
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
+import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
 import multer from 'multer';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -614,6 +618,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				if (req.params.question == 'gateway-3-document') {
+					console.log('setting document readonly');
+					//res.locals.journeyResponse.answers.gateway3Documents.readonly = true;
+				}
 				// Flow for uploading a gateway 3 document
 				if (
 					req.method === 'POST' &&
@@ -1217,4 +1225,42 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
 		return res.redirect(redirectToFileUploaderQuestion(req));
 	}
 	return next(err);
+}
+
+/**
+ * Alter the properties of specific questions before they are rendered. This is useful for properties whose value is derived
+ * from a condition
+ * @param service The manage service
+ * @param journeyId The journey
+ * @param questions The questions from question.ts
+ * @returns An async handler for a router
+ */
+export function preprocessQuestionProperties(
+	service: ManageService,
+	journeyId: string,
+	questions: Record<string, Question>
+) {
+	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+		if (journeyId == 'gateway-3') {
+			// Toggle the visibility/editability of the gateway3Document question
+			const gateway3Details = await service.db.case.findUnique({
+				include: {
+					gateway3Info: {
+						select: {
+							completionDate: true
+						}
+					}
+				},
+				where: {
+					reference
+				}
+			});
+			const gateway3Complete = !!gateway3Details?.gateway3Info?.completionDate;
+			questions.gateway3Documents.editable = !gateway3Complete;
+			(questions.gateway3Documents as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
+				gateway3Complete;
+		}
+		next();
+	});
 }
