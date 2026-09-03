@@ -523,6 +523,12 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
 	},
+	gateway2Documents: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_LIST,
+		title: 'Gateway 2 documents',
+		question: 'Submitted GW2 documents',
+		fieldName: 'gateway2Documents'
+	},
 	gateway2AssessorsName: {
 		type: COMPONENT_TYPES.SELECT,
 		question: 'Who is the Gateway 2 assessor?',
