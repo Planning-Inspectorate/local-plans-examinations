@@ -5,11 +5,7 @@ import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components
 import { syncGateway2UploadAnswer } from './index.ts';
 import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
-import {
-	consultationOnProposedContentQuestion,
-	gateway1SelfAssessmentQuestion,
-	gateway2CoverLetterQuestion
-} from './questions.ts';
+import { GW2QUESTIONS } from './questions.ts';
 
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
 	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
@@ -19,7 +15,7 @@ describe('Gateway 2 covering letter upload page', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('forms/custom-components/file-uploader/index.njk', {
 			layoutTemplate: 'views/layouts/main.njk',
-			question: gateway2CoverLetterQuestion,
+			question: GW2QUESTIONS.gateway2CoverLetter,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
 			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/procedural/gateway-2-cover-letter',
@@ -52,7 +48,7 @@ describe('Gateway 1 self assessment upload page', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('forms/custom-components/file-uploader/index.njk', {
 			layoutTemplate: 'views/layouts/main.njk',
-			question: gateway1SelfAssessmentQuestion,
+			question: GW2QUESTIONS.gateway1SelfAssessment,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
 			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/consultation/g1-self-assess',
@@ -77,7 +73,7 @@ describe('Consultation on proposed content upload page', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('forms/custom-components/file-uploader/index.njk', {
 			layoutTemplate: 'views/layouts/main.njk',
-			question: consultationOnProposedContentQuestion,
+			question: GW2QUESTIONS.consultationOnProposedContent,
 			uploadedFiles: [],
 			uploadedFilesEncoded: Buffer.from(JSON.stringify([]), 'utf-8').toString('base64'),
 			currentUrl: '/manage-local-plans/PLAN-001/gateway-2-submission/consultation/cons-of-proposed',

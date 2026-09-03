@@ -27,7 +27,8 @@ import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
 	createGateway2Questions,
-	gateway2FileUploadQuestions
+	// gateway2FileUploadQuestions,
+	GW2QUESTIONS
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import {
@@ -71,7 +72,7 @@ type Gateway2FileUploadQuestion = FileUploaderQuestionProps & {
 };
 
 // Ordered list for loading each persisted upload when the case page opens.
-const gateway2FileUploadQuestionConfigs = Object.values(gateway2FileUploadQuestions) as Gateway2FileUploadQuestion[];
+const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
 const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
 // Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
