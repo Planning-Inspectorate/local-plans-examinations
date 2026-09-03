@@ -50,7 +50,7 @@
     "@azure/functions": "^4.16.2",
     "@azure/identity": "^4.13.2",
     "@azure/msal-node": "^5.6.0",
-    "@planning-inspectorate/dynamic-forms": "^3.15.4",
+    "@planning-inspectorate/dynamic-forms": "^3.19.1",
     "@prisma/adapter-mssql": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@redis/entraid": "^6.2.0",

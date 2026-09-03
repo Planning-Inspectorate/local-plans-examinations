@@ -72,6 +72,13 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 	description?: string;
 	hint?: string;
 	validators?: BaseValidator[];
+	formatSummaryValue?: ({
+		formattedAnswer,
+		answer
+	}: {
+		formattedAnswer: string;
+		answer: { metadata: { documentGuid: string } }[];
+	}) => string;
 };
 
 export type FileUploaderViewModel = Record<string, unknown> & {

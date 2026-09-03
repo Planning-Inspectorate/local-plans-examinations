@@ -104,8 +104,18 @@ export const localPlanTimetableQuestion: FileUploaderQuestionProps = {
 		chooseFilesButtonText: 'Choose files',
 		dropInstructionText: 'or drop files',
 		continueButtonText: 'Save and return'
-	},
-	validators: []
+	}
+	// formatSummaryValue: ({
+	// 	formattedAnswer,
+	// 	answer
+	// }: {
+	// 	formattedAnswer: string;
+	// 	answer: { metadata: { documentGuid: string } }[];
+	// }) => {
+	// /:planReference/gateway-2-submission/download-document/:documentId
+	// get planReference
+	// 	return `<a href="/manage-local-plans/PLAN%2F001/gateway-2-submission/download-document/${answer[0].metadata.documentGuid}">${formattedAnswer}</a>`;
+	// }
 };
 
 export const projectInitiationDocumentQuestion: FileUploaderQuestionProps = {
@@ -403,4 +413,82 @@ function addCheckAnswersRedirectToAction(question: Question, redirect: CheckAnsw
 export function appendQueryParam(url: string, key: string, value: string) {
 	const separator = url.includes('?') ? '&' : '?';
 	return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
+export function createGateway2Questions(planReference: string | undefined) {
+	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+
+	const gateway2FileUploadQuestionsForRequest = {
+		...gateway2FileUploadQuestions,
+
+		localPlanTimetable: {
+			...localPlanTimetableQuestion,
+			formatSummaryValue: ({
+				formattedAnswer,
+				answer
+			}: {
+				formattedAnswer: string;
+				answer: {
+					fileName?: string;
+					metadata: { documentGuid: string };
+				}[];
+			}) => {
+				// const documentGuid = answer?.[0]?.metadata?.documentGuid;
+				//
+				// if (!encodedPlanReference || typeof documentGuid !== 'string') {
+				// 	return formattedAnswer;
+				// }
+				//
+				// return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
+				// 	documentGuid
+				// )}">${formattedAnswer}</a>`;
+
+				if (!encodedPlanReference || !Array.isArray(answer) || answer.length === 0) {
+					return formattedAnswer;
+				}
+
+				const linkedFiles = answer.map((file) => {
+					const documentGuid = file.metadata?.documentGuid;
+
+					if (typeof documentGuid !== 'string' || !documentGuid) {
+						return undefined;
+					}
+
+					const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
+
+					return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
+						documentGuid
+					)}">${fileName}</a>`;
+				});
+
+				if (linkedFiles.some((file) => file === undefined)) {
+					return formattedAnswer;
+				}
+
+				if (linkedFiles.length === 1) {
+					return linkedFiles[0];
+				}
+
+				return `<ul class="govuk-list">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
+			}
+		}
+	} satisfies Record<string, FileUploaderQuestionProps>;
+
+	return createQuestions(
+		gateway2FileUploadQuestionsForRequest,
+		allQuestionClasses,
+		{},
+		{
+			notStartedText: 'Not added',
+			answerActionText: 'Add'
+		}
+	) as Record<string, Question>;
+}
+
+function decodeFileName(fileName: string) {
+	try {
+		return decodeURIComponent(fileName);
+	} catch {
+		return fileName;
+	}
 }

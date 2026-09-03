@@ -26,8 +26,8 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
-	gateway2FileUploadQuestions,
-	questions
+	createGateway2Questions,
+	gateway2FileUploadQuestions
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import {
@@ -48,6 +48,7 @@ import type { CaseModel } from '@pins/local-plans-database/src/client/models/Cas
 import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
+import { downloadGateway2Document } from './download.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -271,7 +272,6 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 function buildGateway2CheckAnswersList(): RequestHandler {
 	return (req, res, next) => {
 		const request = req as Gateway2Request;
-
 		return buildList({
 			pageCaption: request.currentCase?.planTitle
 		})(req, res, next);
@@ -513,7 +513,9 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 
 	// read answers from the session
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
-	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+	const getJourney = buildGetJourney((req, journeyResponse) =>
+		createJourney(req, journeyResponse, createGateway2Questions(getRoutePlanReference(req)))
+	);
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
 	const saveDataToCase = buildSaveDataToCase();
@@ -689,6 +691,12 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		deleteGateway2Document
+	);
+
+	router.get(
+		'/:planReference/gateway-2-submission/download-document/:documentId',
+		getJourneyResponseFromCase,
+		asyncHandler(downloadGateway2Document(service))
 	);
 
 	router.get(
