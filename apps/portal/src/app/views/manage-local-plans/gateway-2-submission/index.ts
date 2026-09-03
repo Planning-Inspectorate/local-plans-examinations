@@ -27,7 +27,6 @@ import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
 	createGateway2Questions,
-	// gateway2FileUploadQuestions,
 	GW2QUESTIONS
 } from './questions.ts';
 import { buildSaveController } from './save.ts';

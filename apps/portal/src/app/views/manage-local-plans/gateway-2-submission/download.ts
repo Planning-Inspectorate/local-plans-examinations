@@ -8,9 +8,6 @@ export function downloadGateway2Document(service: PortalService): RequestHandler
 		if (!documentId || typeof documentId !== 'string') {
 			throw new Error('Missing documentId for download');
 		}
-		if (!documentId) {
-			throw new Error('Missing documentId for download');
-		}
 		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
 	};
 }
