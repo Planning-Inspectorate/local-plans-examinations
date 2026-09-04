@@ -219,7 +219,7 @@ export function createGateway2Questions(planReference: string | undefined) {
 	) as Record<string, Question>;
 }
 
-function createDownloadDocumentSummaryFormatter(planReference: string | undefined) {
+export function createDownloadDocumentSummaryFormatter(planReference: string | undefined) {
 	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
 	return ({
 		formattedAnswer,
@@ -263,7 +263,7 @@ function createDownloadDocumentSummaryFormatter(planReference: string | undefine
 	};
 }
 
-function decodeFileName(fileName: string) {
+export function decodeFileName(fileName: string) {
 	try {
 		return decodeURIComponent(fileName);
 	} catch {
