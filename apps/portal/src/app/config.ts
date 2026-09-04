@@ -13,6 +13,7 @@ export type Config = BaseConfig & {
 		apiKey: string;
 		templateIds: {
 			authCode: string;
+			gw2Submission: string;
 		};
 	};
 	// Microsoft Clarity tracking id (optional, set via CLARITY_ID)
@@ -46,6 +47,7 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_DISABLED,
 		GOV_NOTIFY_API_KEY,
 		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
@@ -67,6 +69,8 @@ export function loadConfig(): Config {
 		if (!GOV_NOTIFY_API_KEY) throw new Error('GOV_NOTIFY_API_KEY must be a non-empty string');
 		if (!GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID)
 			throw new Error('GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID must be a non-empty string');
+		if (!GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID)
+			throw new Error('GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID must be a non-empty string');
 	}
 
 	let httpPort = 8080;
@@ -121,7 +125,8 @@ export function loadConfig(): Config {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',
 			templateIds: {
-				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || ''
+				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || '',
+				gw2Submission: GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID || ''
 			}
 		},
 		// Microsoft Clarity id for analytics tracking (optional)
