@@ -259,7 +259,7 @@ function createDownloadDocumentSummaryFormatter(planReference: string | undefine
 			return linkedFiles[0];
 		}
 
-		return `<ul class="govuk-list">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
+		return `<ul class="govuk-list govuk-list--bullet">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
 	};
 }
 
