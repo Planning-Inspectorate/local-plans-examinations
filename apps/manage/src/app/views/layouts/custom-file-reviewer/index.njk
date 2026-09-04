@@ -28,9 +28,21 @@
           {% for document in group.documents %}
             {% if document.files.length %}
               {% for file in document.files %}
+                {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (file.id | urlencode) %}
+                {% set fileName = file.fileName | escape %}
+
                 {% set _ = rows.push({
                   key: { text: document.title },
-                  value: { text: file.fileName }
+                  value: {
+                    html: '<a class="govuk-link" href="' + downloadUrl + '">' + fileName + '</a>'
+                  },
+                  actions: {
+                    items: [{
+                      href: downloadUrl,
+                      text: "View",
+                      visuallyHiddenText: file.fileName
+                    }]
+                  }
                 }) %}
               {% endfor %}
             {% else %}
