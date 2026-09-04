@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import { gateway2FileUploadQuestions, questions } from './questions.ts';
+import { createGateway2Questions } from './questions.ts';
 
 describe('createJourney', () => {
 	it('builds scoped Gateway 2 submission URLs from a plan reference', () => {
@@ -15,7 +15,7 @@ describe('createJourney', () => {
 			}
 		} as unknown as Request;
 
-		const journey = createJourney(req, response, questions);
+		const journey = createJourney(req, response, createGateway2Questions('PLAN/123456'));
 
 		assert.strictEqual(journey.baseUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
 		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
@@ -44,7 +44,7 @@ describe('createJourney', () => {
 			params: {}
 		} as unknown as Request;
 
-		const journey = createJourney(req, response, questions);
+		const journey = createJourney(req, response, createGateway2Questions('PLAN/123456'));
 
 		assert.strictEqual(journey.baseUrl, '/manage-local-plans/gateway-2-submission');
 		assert.strictEqual(journey.taskListUrl, '/manage-local-plans/gateway-2-submission');
@@ -77,7 +77,10 @@ function buildUploadedDocumentAnswers() {
 	};
 
 	return Object.fromEntries(
-		Object.values(gateway2FileUploadQuestions).map((questionConfig) => [questionConfig.fieldName, [uploadedFile]])
+		Object.values(createGateway2Questions('PLAN/123456')).map((questionConfig) => [
+			questionConfig.fieldName,
+			[uploadedFile]
+		])
 	);
 }
 
@@ -88,5 +91,5 @@ function createTestJourney(answers: Record<string, unknown>) {
 		params: {}
 	} as unknown as Request;
 
-	return createJourney(req, response, questions);
+	return createJourney(req, response, createGateway2Questions('PLAN/123456'));
 }

@@ -8,7 +8,7 @@ export type {
 	UploadedFile,
 	UploadedRequestFile
 } from '../../../storage/index.ts';
-
+import type { QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
 export const FILE_UPLOADER_COMPONENT_TYPE = 'file-uploader' as const;
 
 export type FileUploaderStorageProvider = FileStorageProvider;
@@ -72,10 +72,20 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 	description?: string;
 	hint?: string;
 	validators?: BaseValidator[];
+	formatSummaryValue?: ({
+		formattedAnswer,
+		answer
+	}: {
+		formattedAnswer: string;
+		answer: {
+			fileName?: string;
+			metadata: { documentGuid: string };
+		}[];
+	}) => string | undefined;
 };
 
-export type FileUploaderViewModel = Record<string, unknown> & {
-	question: Record<string, unknown> & FileUploaderQuestionConfig;
+export type FileUploaderViewModel = QuestionViewModel & {
+	question: QuestionViewModel['question'] & FileUploaderQuestionConfig;
 	uploadedFiles: UploadedFile[];
 	uploadedFilesEncoded: string;
 	errors?: Record<string, { msg: string }>;

@@ -52,6 +52,11 @@ interface DateField extends BaseField {
 	attributes?: Record<string, string>;
 }
 
+type CustomMultiFieldQuestionViewData = QuestionViewModel['question'] & {
+	label?: string;
+	attributes?: Record<string, string>;
+};
+
 export const HIDDEN_TYPE = 'hidden';
 
 export default class CustomMultiFieldInputQuestion extends Question {
@@ -166,8 +171,10 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	}
 
 	addCustomDataToViewModel(viewModel: QuestionViewModel) {
-		viewModel.question.label = this.label;
-		viewModel.question.attributes = this.inputAttributes;
+		const question = viewModel.question as CustomMultiFieldQuestionViewData;
+
+		question.label = this.label;
+		question.attributes = this.inputAttributes;
 	}
 
 	/**

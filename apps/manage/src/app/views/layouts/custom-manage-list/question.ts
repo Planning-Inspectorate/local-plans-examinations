@@ -1,9 +1,12 @@
 import ManageListQuestion from '@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js';
 import nunjucks from 'nunjucks';
-import type { Journey } from '@planning-inspectorate/dynamic-forms/src/journey/journey.js';
-import type { Section } from '@planning-inspectorate/dynamic-forms/src/section.js';
-import type { QuestionViewModel } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
-import type { QuestionParameters } from '@planning-inspectorate/dynamic-forms';
+import type {
+	Journey,
+	JourneyResponse,
+	QuestionParameters,
+	QuestionViewModel,
+	Section
+} from '@planning-inspectorate/dynamic-forms';
 import type { ManageListQuestionParameters } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js';
 
 interface CustomManageListQuestionParameters extends QuestionParameters, ManageListQuestionParameters {
@@ -13,6 +16,11 @@ interface CustomManageListQuestionParameters extends QuestionParameters, ManageL
 	confirmRemoveButtonText?: string;
 	removalPrompt?: string;
 }
+
+type CustomManageListQuestionViewData = QuestionViewModel['question'] & {
+	hideRemoveButton?: boolean;
+	value?: unknown;
+};
 
 export default class CustomManageListQuestion extends ManageListQuestion {
 	#showAnswersInSummary: boolean;
@@ -37,12 +45,14 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	addCustomDataToViewModel(viewModel: QuestionViewModel) {
 		super.addCustomDataToViewModel(viewModel);
 
-		const hasMoreThanOneAnswer =
-			viewModel.question.value && Array.isArray(viewModel.question.value) && viewModel.question.value.length > 1;
-		viewModel.question.hideRemoveButton = !this.isAllowedEmpty && !hasMoreThanOneAnswer;
+		const question = viewModel.question as CustomManageListQuestionViewData;
+		const answers = Array.isArray(question.value) ? question.value : [];
+
+		const hasMoreThanOneAnswer = answers.length > 1;
+		question.hideRemoveButton = !this.isAllowedEmpty && !hasMoreThanOneAnswer;
 		viewModel.confirmRemoveButtonText = this.confirmRemoveButtonText;
 		viewModel.emptyListText = this.emptyListText;
-		viewModel.hideAddButton = this.maximumAnswers && viewModel.question.value.length >= this.maximumAnswers;
+		viewModel.hideAddButton = this.maximumAnswers !== null && answers.length >= this.maximumAnswers;
 		viewModel.removalPrompt = this.removalPrompt;
 	}
 
@@ -108,11 +118,16 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 			response: {
 				answers: answer
 			}
-		};
+		} as unknown as Journey;
+
+		const mockJourneyResponse = {
+			answers: answer
+		} as unknown as JourneyResponse;
+
 		return (
 			this.section.questions
 				// only show questions which should be displayed based on any conditional logic
-				.filter((question) => question.shouldDisplay({ answers: answer }))
+				.filter((question) => question.shouldDisplay(mockJourneyResponse))
 				.map((question) => {
 					const formatted = question
 						.formatAnswerForSummary('', mockJourney, answer[question.fieldName])
