@@ -17,13 +17,13 @@ const freeze = (obj: any): Readonly<any> => Object.freeze(obj);
 export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_MULTI_FIELD_INPUT: 'custom-multi-field-input',
 	CUSTOM_MANAGE_LIST: 'custom-manage-list',
-	CUSTOM_FILE_LIST: 'custom-file-list',
+	CUSTOM_FILE_REVIEWER: 'custom-file-reviewer',
 	...CUSTOM_DYNAMIC_FORM_COMPONENTS
 });
 
 export const CUSTOM_COMPONENT_CLASSES = freeze({
 	[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT]: CustomMultiFieldInputQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST]: CustomManageListQuestion,
-	[CUSTOM_COMPONENTS.CUSTOM_FILE_LIST]: CustomFileReviewerQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER]: CustomFileReviewerQuestion,
 	...CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES
 });

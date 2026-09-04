@@ -1,4 +1,5 @@
 {% extends layoutTemplate %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block before_content %}
 	{% if backLink %}
@@ -13,35 +14,35 @@
 {% endblock before_content %}
 
 {% block content %}
-<div class="govuk-grid-row govuk-!-margin-top-6">
-          <div class="govuk-grid-column-full">
-              {% for section in summaryListData.sections %}
-                  {% set formattedRows = [] %}
-                  {% for row in section.list.rows %}
-                    {% if row %}
-                      {% if row.actions.items[0].text == "Answer" %}
-                        {% set formattedRow = {
-                          key: row.key,
-                          value: row.value,
-                          actions: {items: [{href: row.actions.items[0].href, text: "Add"}]}
-                        } %}
-                      {% else %}
-                        {% set formattedRow = {
-                          key: row.key,
-                          value: row.value,
-                          actions: row.actions
-                        } %}
-                      {% endif %}
-                    {% set _ = formattedRows.push(formattedRow) %}
-                    {% endif %}
-                  {% endfor %}
-                  {% if section.list.rows.length %}
-                    <h2 class="govuk-heading-l">{{ section.heading }}</h2>
-                    {{ govukSummaryList({
-                          rows: formattedRows
-                      }) }}
-                  {% endif %}
+  <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        <span class="govuk-caption-l">{{ reference }}</span>
+        <h1 class="govuk-heading-l">{{ question.question }}</h1>
+        {% for group in documentGroups %}
+          <h2 class="govuk-heading-m">
+            {{ group.category | capitalize }} documents
+          </h2>
+
+          {% set rows = [] %}
+
+          {% for document in group.documents %}
+            {% if document.files.length %}
+              {% for file in document.files %}
+                {% set _ = rows.push({
+                  key: { text: document.title },
+                  value: { text: file.fileName }
+                }) %}
               {% endfor %}
-          </div>
+            {% else %}
+              {% set _ = rows.push({
+                key: { text: document.title },
+                value: { text: "Not provided" }
+              }) %}
+            {% endif %}
+          {% endfor %}
+
+          {{ govukSummaryList({ rows: rows }) }}
+        {% endfor %}
       </div>
+  </div>
 {% endblock content %}

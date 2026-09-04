@@ -524,7 +524,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
 	},
 	gateway2Documents: {
-		type: CUSTOM_COMPONENTS.CUSTOM_FILE_LIST,
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER,
 		title: 'Gateway 2 documents',
 		question: 'Submitted GW2 documents',
 		fieldName: 'gateway2Documents'
