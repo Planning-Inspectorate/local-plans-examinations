@@ -6,14 +6,15 @@ It is intended to collect early performance evidence. It is not a full productio
 
 ## What It Runs
 
-The pipeline checks Manage `/health` and confirms the Portal home page is reachable before JMeter starts. Those checks are prerequisites, not load-test scenarios.
+The pipeline confirms the Portal home page is reachable before JMeter starts. That check is a prerequisite, not a load-test scenario.
 
-The JMeter plan then runs two simple requests:
+The JMeter plan currently runs one simple request:
 
-- Manage home page
 - Portal home page
 
-These are deliberately light first checks. They hit the real app routes and prove both deployed apps can serve a DB-backed page under a small amount of repeated traffic.
+This is deliberately light first coverage. It hits a real deployed route and proves the Portal can serve a DB-backed page under a small amount of repeated traffic.
+
+Manage performance coverage is not included yet. Manage uses the normal MSAL/session/group guard flow, so it needs a signed-off machine-auth or browser-auth approach before it can be tested against deployed environments without bypassing authentication.
 
 ## Load Model
 
@@ -35,26 +36,15 @@ These are starter assumptions only. They should be replaced with agreed NFRs whe
 
 ## Auth
 
-The suite uses a Test-only performance auth token.
+The deployed Portal is protected by Easy Auth.
 
-JMeter sends the token as:
-
-- `X-Performance-Test-Auth: <token>`
-
-Manage only accepts the bypass in Test, for `GET /`, and only when the header matches the configured token.
-
-Portal keeps its existing Easy Auth setup, with the Test root path excluded so the home-page baseline request can run.
-
-The same token value is stored in two Azure DevOps places:
-
-- `PERFORMANCE_TEST_AUTH_TOKEN` in the `pipeline_secrets` variable group, used by `.azure/pipelines/performance.yml`
-- `TF_VAR_performance_test_auth_token` on the `Infrastructure CD` pipeline, used by Terraform to set the Test Manage app setting
-
-Terraform then exposes the token to the Test Manage app as:
+In the pipeline, Azure DevOps authenticates with Azure, requests an Entra access token for the Portal app registration, and JMeter sends it as:
 
 ```text
-PERFORMANCE_TEST_AUTH_TOKEN
+Authorization: Bearer <token>
 ```
+
+The pipeline uses `PORTAL_APP_REGISTRATION_ID` from the `pipeline_secrets` variable group as the token resource.
 
 ## Data
 
@@ -62,16 +52,10 @@ The suite does not seed or clean up data.
 
 ## Running Locally
 
-Install JMeter, start Manage on `8090` and Portal on `8080`, then run:
+Install JMeter, start Portal on `8080`, then run:
 
 ```bash
 npm run perf:local
-```
-
-For local runs, keep Manage auth disabled in `apps/manage/.env`:
-
-```text
-AUTH_DISABLED=true
 ```
 
 The local script uses one thread and a five second duration so it is quick when changing the JMeter plan. The defaults are in `performance/scripts/run-local.sh`.
@@ -84,13 +68,10 @@ jmeter -n \
   -l performance/results/local-plans-baseline.jtl \
   -e \
   -o performance/results/html-local \
-  -JmanageProtocol=http \
-  -JmanageHost=localhost \
-  -JmanagePort=8090 \
   -JportalProtocol=http \
   -JportalHost=localhost \
   -JportalPort=8080 \
-  -JperformanceAuthToken=local-performance-token \
+  -JportalAccessToken=local \
   -Jthreads=1 \
   -JrampSeconds=1 \
   -JdurationSeconds=5 \
@@ -99,21 +80,22 @@ jmeter -n \
 
 ## Running Against Test
 
-Install JMeter, set the Test auth token locally, then run:
+Install JMeter, sign in with Azure CLI, get a Portal access token, then run:
 
 ```bash
-export PERFORMANCE_TEST_AUTH_TOKEN="performance auth token"
+export PORTAL_ACCESS_TOKEN="$(az account get-access-token \
+  --resource "<portal app registration id>" \
+  --query accessToken \
+  -o tsv)"
 
 jmeter -n \
   -t performance/local-plans.jmx \
   -l performance/results/local-plans-baseline.jtl \
   -e \
   -o performance/results/html \
-  -JmanageProtocol=https \
-  -JmanageHost=local-plans-manage-test.planninginspectorate.gov.uk \
   -JportalProtocol=https \
   -JportalHost=local-plans-portal-test.planninginspectorate.gov.uk \
-  -JperformanceAuthToken="$PERFORMANCE_TEST_AUTH_TOKEN" \
+  -JportalAccessToken="$PORTAL_ACCESS_TOKEN" \
   -Jthreads=5 \
   -JrampSeconds=30 \
   -JdurationSeconds=300 \
@@ -128,8 +110,9 @@ It:
 
 - downloads Java 17 for JMeter
 - downloads Apache JMeter 5.6.3
-- checks Manage health and Portal availability
-- reads `PERFORMANCE_TEST_AUTH_TOKEN` from the `pipeline_secrets` variable group
+- authenticates to Azure
+- gets a Portal Entra access token
+- checks Portal availability
 - runs `performance/local-plans.jmx`
 - publishes the JTL and HTML report
 - fails if any JMeter sample/assertion fails

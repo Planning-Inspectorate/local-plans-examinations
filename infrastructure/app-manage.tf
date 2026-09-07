@@ -75,8 +75,6 @@ module "app_manage" {
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]
     SESSION_SECRET          = local.key_vault_refs["session-secret-manage"]
 
-    # performance tests
-    PERFORMANCE_TEST_AUTH_TOKEN = var.environment == "test" ? var.performance_test_auth_token : ""
   }
 
   providers = {
