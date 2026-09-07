@@ -237,4 +237,46 @@ describe('Gateway 2 document upload journeys', () => {
 			});
 		}
 	);
+
+	it('Downloads covering letter file when document link is clicked', { tags: ['regression'] }, () => {
+		loadPlanDetails().then((plan) => {
+			const page = gateway2CoverLetterPage;
+			openGateway2DocumentUploadPage(plan, page);
+			gateway2CoverLetterPage.uploadFile('test-document.pdf');
+			gateway2CoverLetterPage.clickUploadFiles();
+			gateway2CoverLetterPage.verifyFileUploaded('test-document.pdf');
+
+			gateway2CoverLetterPage.saveAndReturn();
+			gateway2ApplicationPage.verifyLoaded();
+
+			gateway2ApplicationPage.verifyDocumentDownloadLink(
+				gateway2ApplicationPage.proceduralDocumentsTable,
+				'Gateway 2 covering letter',
+				'test-document.pdf'
+			);
+		});
+	});
+
+	it(
+		'Downloads notice of intention to commence local plan file when document link is clicked',
+		{ tags: ['regression'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				const page = noticeOfIntentionToCommenceLocalPlanPage;
+				openGateway2DocumentUploadPage(plan, page);
+				noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document.docx');
+				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
+				noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.docx');
+
+				noticeOfIntentionToCommenceLocalPlanPage.saveAndReturn();
+				gateway2ApplicationPage.verifyLoaded();
+
+				gateway2ApplicationPage.verifyDocumentDownloadLink(
+					gateway2ApplicationPage.consultationDocumentsTable,
+					'Notice of intention to commence local plan preparation',
+					'test-document.docx'
+				);
+			});
+		}
+	);
 });

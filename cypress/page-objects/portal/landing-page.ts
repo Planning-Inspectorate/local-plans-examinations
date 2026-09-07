@@ -4,6 +4,10 @@ export class PortalLandingPage extends PortalPlanBasePage {
 		super('/manage-local-plans/your-plans');
 	}
 
+	visit() {
+		cy.visit('/manage-local-plans/your-plans');
+	}
+
 	openPlan(reference: string) {
 		cy.contains('[data-cy="plan-link"]', reference).should('be.visible').click();
 	}

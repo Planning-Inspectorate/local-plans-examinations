@@ -58,6 +58,7 @@ module "app_portal" {
     NODE_ENV                                   = var.apps_config.node_environment
     APP_HOSTNAME                               = var.web_domains.portal
     ENVIRONMENT                                = var.environment
+    OTP_BYPASS_CODE                            = var.environment == "prod" ? "" : "12345"
 
     # logging
     LOG_LEVEL = var.apps_config.logging.level

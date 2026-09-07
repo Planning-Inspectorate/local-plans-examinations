@@ -105,6 +105,26 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			fileNames.forEach((fileName) => {
 				row.should('contain.text', fileName);
 			});
+			if (fileNames.length > 1) {
+				row.find('ul.govuk-list--bullet li').should('have.length', fileNames.length);
+			}
+		});
+	}
+
+	verifyDocumentDownloadLink(table: Cypress.Chainable, document: string, fileName: string) {
+		table.within(() => {
+			const row = cy.contains('tr', document);
+			row
+				.contains('a', fileName)
+				.should('be.visible')
+				.invoke('attr', 'href')
+				.then((href) => {
+					cy.request(href as string).then((response) => {
+						expect(response.status).to.equal(200);
+						expect(response.headers['content-disposition']).to.include('attachment');
+						expect(response.headers['content-disposition']).to.include(fileName);
+					});
+				});
 		});
 	}
 

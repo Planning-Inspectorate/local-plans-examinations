@@ -33,7 +33,7 @@ describe('buildSaveController', () => {
 		assert.strictEqual(mockRequest.session.forms['LPE-TEST-001'][JOURNEY_ID], undefined);
 		assert.strictEqual(mockResponse.render.mock.callCount(), 0);
 		assert.deepStrictEqual(mockResponse.redirect.mock.calls[0].arguments, [
-			'/manage-local-plans/LPE-TEST-001/gateway-2-submission/application-complete'
+			'/manage-local-plans/LPE-TEST-001/gateway-2-submission/application-declaration'
 		]);
 	});
 });

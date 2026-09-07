@@ -6,6 +6,7 @@ import {
 	type CreateCaseData
 } from '../../page-objects/manage/create-case/index.ts';
 import { gateway2ApplicationPage } from '../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
+import { manageToPortalLogin } from '../../flows/portal/login-flow.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
 
@@ -27,6 +28,7 @@ describe('Cross-service Manage and Portal', () => {
 			caseCreatedPage.getReference().then((caseReference) => {
 				const portalPlanReference = toPortalPlanReference(caseReference);
 
+				manageToPortalLogin();
 				gateway2ApplicationPage.openForCrossServiceAndVerify(portalPlanReference, data.planTitle);
 			});
 		});

@@ -4,6 +4,10 @@ import { fileURLToPath } from 'url';
 import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
 
 export type Config = BaseConfig & {
+	environment: string;
+	auth: {
+		otpBypassCode: string;
+	};
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;
@@ -45,7 +49,9 @@ export function loadConfig(): Config {
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
-		CLARITY_ID
+		CLARITY_ID,
+		ENVIRONMENT,
+		OTP_BYPASS_CODE
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -80,6 +86,10 @@ export function loadConfig(): Config {
 		// the database connection string
 		database: {
 			connectionString: SQL_CONNECTION_STRING
+		},
+		environment: ENVIRONMENT || 'local',
+		auth: {
+			otpBypassCode: OTP_BYPASS_CODE || ''
 		},
 		// the git sha of the current build
 		gitSha: GIT_SHA,

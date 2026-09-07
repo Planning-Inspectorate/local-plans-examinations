@@ -6,7 +6,7 @@ import { loadConfig } from '../configuration/config.ts';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const TEST_OTP = 'CYPRESSTEST';
+const TEST_OTP = '12345';
 const SALT_ROUNDS = 10;
 
 async function run() {

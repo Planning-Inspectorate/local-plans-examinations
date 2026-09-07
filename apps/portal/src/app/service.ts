@@ -5,10 +5,16 @@ import type { Config } from './config.ts';
 import { buildTestPlans } from './types.ts';
 
 export class PortalService extends BaseService {
+	readonly clarityId: string | undefined;
+	readonly auth: Config['auth'];
+	readonly environment: Config['environment'];
 	readonly notifyClient: GovNotifyClient | null;
 
 	constructor(config: Config) {
 		super(config);
+		this.auth = config.auth;
+		this.environment = config.environment;
+		this.clarityId = config.clarityId;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
 
