@@ -1,8 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
-import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import type { JourneyAnswers } from '@planning-inspectorate/dynamic-forms/src/journey/journey-types.d.ts';
 import { JOURNEY_ID } from './journey.ts';
+import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import * as authSession from '../../auth/session.service.ts';
 import { parseDate } from '../../util/date.ts';
 import { questions } from './questions.ts';
@@ -11,7 +10,7 @@ import { questions } from './questions.ts';
  * The structure of data for the journey answers
  * depends on the fieldName for each question
  */
-export interface CreateCaseAnswers extends JourneyAnswers {
+export interface CreateCaseAnswers extends Record<string, unknown> {
 	email: string;
 	reference: string;
 	caseOfficer: string;
@@ -46,7 +45,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			throw new Error('journey response required');
 		}
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
-		const answers = journeyResponse.answers as CreateCaseAnswers;
+		const answers = journeyResponse.answers as unknown as CreateCaseAnswers;
 		if (typeof answers !== 'object') {
 			throw new Error('answers should be an object');
 		}
