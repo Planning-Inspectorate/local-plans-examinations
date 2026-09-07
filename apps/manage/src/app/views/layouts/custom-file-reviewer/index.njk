@@ -27,24 +27,34 @@
 
           {% for document in group.documents %}
             {% if document.files.length %}
+              {% set fileLinks = [] %}
+              {% set viewActions = [] %}
+
               {% for file in document.files %}
                 {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (file.id | urlencode) %}
                 {% set fileName = file.fileName | escape %}
 
-                {% set _ = rows.push({
-                  key: { text: document.title },
-                  value: {
-                    html: '<a class="govuk-link" href="' + downloadUrl + '">' + fileName + '</a>'
-                  },
-                  actions: {
-                    items: [{
-                      href: downloadUrl,
-                      text: "View",
-                      visuallyHiddenText: file.fileName
-                    }]
-                  }
+                {% set _ = fileLinks.push(
+                  '<a class="govuk-link" href="' + downloadUrl + '">' + fileName + '</a>'
+                ) %}
+
+                {% set _ = viewActions.push({
+                  href: downloadUrl,
+                  text: "View",
+                  visuallyHiddenText: file.fileName
                 }) %}
               {% endfor %}
+
+              {% set _ = rows.push({
+                key: { text: document.title },
+                value: {
+                  html: fileLinks | join("<br>")
+                },
+                actions: {
+                  classes: "custom-file-reviewer-actions",
+                  items: viewActions
+                }
+              }) %}
             {% else %}
               {% set _ = rows.push({
                 key: { text: document.title },
