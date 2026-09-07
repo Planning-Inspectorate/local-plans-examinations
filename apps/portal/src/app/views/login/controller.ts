@@ -1,4 +1,4 @@
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';

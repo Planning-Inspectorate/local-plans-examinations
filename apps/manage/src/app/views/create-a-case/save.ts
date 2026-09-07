@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import { JOURNEY_ID } from './journey.ts';
 import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import * as authSession from '../../auth/session.service.ts';
+import * as authSession from '@planning-inspectorate/core/auth';
 import { parseDate } from '../../util/date.ts';
 import { questions } from './questions.ts';
 

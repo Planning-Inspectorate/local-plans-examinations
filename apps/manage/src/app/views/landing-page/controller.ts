@@ -1,5 +1,5 @@
 import type { Response, Request } from 'express';
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 
 export function buildLandingPage(service: ManageService): AsyncRequestHandler {

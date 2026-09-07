@@ -1,7 +1,7 @@
 import { Client } from '@microsoft/microsoft-graph-client';
 import { EntraClient } from './entra.ts';
 import type { GroupMember } from './entra.ts';
-import type { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
+import type { MapCache } from '@planning-inspectorate/core/util';
 
 export type InitEntraClient = (session: AuthSession) => CachedEntraClient | null;
 
@@ -11,7 +11,14 @@ export interface AuthSession {
 	};
 }
 
-export function buildInitEntraClient(authEnabled: boolean, groupCache: MapCache, userCache: MapCache): InitEntraClient {
+export type GroupCache = MapCache<GroupMember[]>;
+export type UserCache = MapCache<string>;
+
+export function buildInitEntraClient(
+	authEnabled: boolean,
+	groupCache: GroupCache,
+	userCache: UserCache
+): InitEntraClient {
 	return (session: AuthSession) => {
 		if (!authEnabled) {
 			return null;
@@ -35,10 +42,10 @@ export function buildInitEntraClient(authEnabled: boolean, groupCache: MapCache,
  */
 export class CachedEntraClient {
 	#client: EntraClient;
-	#groupCache: MapCache;
-	#userCache: MapCache;
+	#groupCache: GroupCache;
+	#userCache: UserCache;
 
-	constructor(client: EntraClient, cache: MapCache, userCache: MapCache) {
+	constructor(client: EntraClient, cache: GroupCache, userCache: UserCache) {
 		this.#client = client;
 		this.#groupCache = cache;
 		this.#userCache = userCache;
