@@ -35,7 +35,7 @@ import {
 	loadGateway2DocumentsByDocumentSetId,
 	saveGateway2Documents
 } from './documents.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,

@@ -1,15 +1,16 @@
 import { buildRouter } from './router.ts';
 import { configureNunjucks } from './nunjucks.ts';
 import { addLocalsConfiguration } from '#util/config-middleware.ts';
-import { createBaseApp } from '@pins/local-plans-lib/app/app.ts';
+import { createBaseApp } from '@planning-inspectorate/core/app';
 import type { Express } from 'express';
 import type { PortalService } from '#service';
-import type { HelmetCspDirectives } from '@pins/local-plans-lib/middleware/csp-middleware.ts';
+import type { HelmetCspDirectives } from '@planning-inspectorate/core/middleware';
+import cookieParser from 'cookie-parser';
 
 const CLARITY_CSP_SOURCES = ['https://*.clarity.ms', 'https://c.bing.com'];
 
 const portalCspDirectives: HelmetCspDirectives = {
-	scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`, ...CLARITY_CSP_SOURCES],
+	scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals?.cspNonce}'`, ...CLARITY_CSP_SOURCES],
 	defaultSrc: ["'self'", ...CLARITY_CSP_SOURCES],
 	connectSrc: ["'self'", ...CLARITY_CSP_SOURCES],
 	fontSrc: ["'self'"],
@@ -27,7 +28,7 @@ export function createApp(service: PortalService): Express {
 		service,
 		configureNunjucks,
 		router,
-		middlewares: [addLocalsConfiguration(service.clarityId)],
+		middlewares: [cookieParser(), addLocalsConfiguration(service.clarityId)],
 		cspDirectives: service.clarityId ? portalCspDirectives : undefined
 	});
 }

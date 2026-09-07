@@ -65,7 +65,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
