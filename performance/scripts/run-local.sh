@@ -13,13 +13,10 @@ jmeter -n \
   -l "$jtl_file" \
   -e \
   -o "$html_dir" \
-  -JmanageProtocol=http \
-  -JmanageHost=localhost \
-  -JmanagePort=8090 \
   -JportalProtocol=http \
   -JportalHost=localhost \
   -JportalPort=8080 \
-  -JperformanceAuthToken=local-performance-token \
+  -JportalAccessToken=local \
   -Jthreads=1 \
   -JrampSeconds=1 \
   -JdurationSeconds=5 \

@@ -5,8 +5,6 @@ import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
 import { buildAssertGroupAccess, buildAssertIsAuthenticated } from './guards.ts';
 
 const originalEnvironment = process.env.ENVIRONMENT;
-const originalPerformanceToken = process.env.PERFORMANCE_TEST_AUTH_TOKEN;
-const performanceToken = 'performance-token';
 
 const mockRes = () => {
 	const res = {
@@ -22,12 +20,10 @@ const mockRes = () => {
 describe('auth guard', () => {
 	beforeEach(() => {
 		process.env.ENVIRONMENT = 'test';
-		process.env.PERFORMANCE_TEST_AUTH_TOKEN = performanceToken;
 	});
 
 	afterEach(() => {
 		restoreEnv('ENVIRONMENT', originalEnvironment);
-		restoreEnv('PERFORMANCE_TEST_AUTH_TOKEN', originalPerformanceToken);
 	});
 
 	describe('buildAssertGroupAccess', () => {
@@ -86,19 +82,6 @@ describe('auth guard', () => {
 			const res = mockRes();
 			const next = mock.fn();
 			handler(req, res, next);
-
-			assert.strictEqual(res.status.mock.callCount(), 0);
-			assert.strictEqual(res.render.mock.callCount(), 0);
-			assert.strictEqual(next.mock.callCount(), 1);
-		});
-
-		it('should call next for the performance auth token', () => {
-			const logger = mockLogger();
-			const handler = buildAssertGroupAccess(logger, 'group-a');
-			const res = mockRes();
-			const next = mock.fn();
-
-			handler(mockPerformanceReq(), res, next);
 
 			assert.strictEqual(res.status.mock.callCount(), 0);
 			assert.strictEqual(res.render.mock.callCount(), 0);
@@ -185,33 +168,8 @@ describe('auth guard', () => {
 			assert.strictEqual(res.redirect.mock.callCount(), 0);
 			assert.strictEqual(next.mock.callCount(), 1);
 		});
-
-		it('should call next for the performance auth token', async () => {
-			const logger = mockLogger();
-			const authService = mock.fn();
-			const handler = buildAssertIsAuthenticated(logger, authService);
-			const res = mockRes();
-			const next = mock.fn();
-
-			await handler(mockPerformanceReq(), res, next);
-
-			assert.strictEqual(res.redirect.mock.callCount(), 0);
-			assert.strictEqual(next.mock.callCount(), 1);
-		});
 	});
 });
-
-function mockPerformanceReq() {
-	return {
-		method: 'GET',
-		path: '/',
-		originalUrl: '/',
-		session: {},
-		get(name: string) {
-			return name === 'X-Performance-Test-Auth' ? performanceToken : undefined;
-		}
-	};
-}
 
 function restoreEnv(name: string, value: string | undefined) {
 	if (value === undefined) {

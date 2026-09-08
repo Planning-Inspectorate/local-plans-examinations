@@ -1,11 +1,9 @@
 import * as authSession from './session.service.ts';
-import { isPerformanceTestAuthBypassRequest } from '@pins/local-plans-lib/middleware/performance-auth-bypass.ts';
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import type { AuthService } from './auth-service.ts';
 import type { Logger } from 'pino';
 
 const _403View = 'views/errors/403';
-const performanceTestPaths = ['/'];
 
 /**
  * Assert the user is authenticated. As the web application depends on external
@@ -25,10 +23,6 @@ const performanceTestPaths = ['/'];
  */
 export function buildAssertIsAuthenticated(logger: Logger, authService: AuthService): RequestHandler {
 	return async (request, response, next) => {
-		if (isPerformanceTestAuthBypassRequest(request, performanceTestPaths)) {
-			return next();
-		}
-
 		const sessionAccount = authSession.getAccount(request.session);
 
 		if (!sessionAccount) {
@@ -73,10 +67,6 @@ export function assertIsUnauthenticated({ session }: Request, response: Response
  */
 export function buildAssertGroupAccess(logger: Logger, ...groupIds: string[]): RequestHandler {
 	return (req, res, next) => {
-		if (isPerformanceTestAuthBypassRequest(req, performanceTestPaths)) {
-			return next();
-		}
-
 		const account = authSession.getAccount(req.session);
 
 		if (Array.isArray(account?.idTokenClaims?.groups)) {
