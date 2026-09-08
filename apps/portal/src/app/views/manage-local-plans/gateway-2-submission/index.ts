@@ -45,6 +45,9 @@ import {
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
+
+type CaseWithGateway2Info = CaseModel & { gateway2Info?: Gateway2InfoModel | null };
 import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
@@ -87,7 +90,7 @@ type Gateway2Session = Request['session'] &
 	};
 
 type Gateway2Request = Request & {
-	currentCase?: CaseModel;
+	currentCase?: CaseWithGateway2Info;
 	session: Gateway2Session;
 };
 
@@ -200,7 +203,8 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		}
 
 		const currentCase = await service.db.case.findUnique({
-			where: { reference: planReference }
+			where: { reference: planReference },
+			include: { gateway2Info: true }
 		});
 
 		if (!currentCase) {
@@ -315,6 +319,50 @@ function formatDisplayDate(date: Date) {
 		month: 'long',
 		year: 'numeric'
 	});
+}
+
+function formatDisplayTime(date: Date) {
+	return date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
+}
+
+const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk';
+
+export function buildSubmittedGateway2View(): RequestHandler {
+	return (req, res, next) => {
+		const request = req as Gateway2Request;
+		const currentCase = request.currentCase;
+
+		if (!currentCase?.submissionDate) {
+			return next();
+		}
+
+		const journey = res.locals.journey;
+		if (journey) {
+			journey.taskListTemplate = SUBMITTED_TEMPLATE;
+		}
+
+		res.locals.submissionDate = formatDisplayDate(currentCase.submissionDate);
+		res.locals.submissionTime = formatDisplayTime(currentCase.submissionDate);
+		res.locals.submitter = currentCase.email;
+		delete res.locals.saveAndComeBackUrl;
+
+		const gw2Info = currentCase.gateway2Info;
+		if (gw2Info) {
+			if (gw2Info.workshopVenue) {
+				res.locals.workshopVenue = gw2Info.workshopVenue;
+			}
+			if (gw2Info.workshopDate) {
+				res.locals.workshopDateAndTime =
+					formatDisplayDate(gw2Info.workshopDate) + ' at ' + formatDisplayTime(gw2Info.workshopDate);
+			}
+		}
+
+		return next();
+	};
 }
 
 // Saves case-scoped answers into the session.
@@ -650,6 +698,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourney,
 		setAsEditingFromCya,
 		setGateway2CheckAnswersViewData,
+		buildSubmittedGateway2View(),
 		buildGateway2CheckAnswersList()
 	);
 

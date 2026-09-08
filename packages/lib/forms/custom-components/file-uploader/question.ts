@@ -17,6 +17,7 @@ type RequestWithFileUploaderCustomViewData = CheckForValidationErrorsParams[0] &
 
 export default class FileUploaderQuestion extends Question {
 	readonly config: FileUploaderQuestionConfig;
+	private readonly formatSummaryValue?: FileUploaderQuestionProps['formatSummaryValue'];
 
 	constructor({
 		allowedFileExtensions,
@@ -29,6 +30,7 @@ export default class FileUploaderQuestion extends Question {
 		multiple = true,
 		text = {},
 		validationMessages = {},
+		formatSummaryValue,
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
@@ -49,6 +51,7 @@ export default class FileUploaderQuestion extends Question {
 			text,
 			validationMessages
 		};
+		this.formatSummaryValue = formatSummaryValue;
 	}
 
 	toViewModel(options: any): FileUploaderViewModel {
@@ -124,11 +127,31 @@ export default class FileUploaderQuestion extends Question {
 		return super.isAnswered(journeyResponse as never, fieldName);
 	}
 
-	formatAnswer(answer: unknown): string {
+	formatAnswerForSummary(
+		sectionSegment: string,
+		journey: any,
+		answer: unknown
+	): Array<{
+		key: string;
+		value: string;
+		action: { href: string; text: string; visuallyHiddenText: string };
+	}> {
 		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = formatUploadedFilesForSummary(files, this.notStartedText);
+		const formattedAnswer = formatUploadedFilesForSummary(files, this.notStartedText);
 
-		return value;
+		const value = this.formatSummaryValue?.({ formattedAnswer, answer: files as any }) ?? formattedAnswer;
+
+		return [
+			{
+				key: this.title,
+				value,
+				action: this.getAction(sectionSegment, journey, answer as never) as {
+					href: string;
+					text: string;
+					visuallyHiddenText: string;
+				}
+			}
+		];
 	}
 }
 
