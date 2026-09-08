@@ -68,9 +68,9 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 
 		logger.info(`Declaration confirmed for case ${reference}`);
 		// get email address for LPA
-		let emails;
+		let cases;
 		try {
-			emails = await db.case.findUnique({
+			cases = await db.case.findUnique({
 				where: { reference },
 				select: { contacts: true }
 			});
@@ -78,15 +78,15 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			logger.error({ error }, `Failed to retrieve email address for case ${reference}`);
 			return res.status(500).send('Failed to retrieve email address');
 		}
-		if (!emails) {
+		if (!cases) {
 			logger.error(`No email address found for case ${reference}`);
 			return res.status(500).send('No email address found');
 		}
 		// send email to LPA using GOV.UK Notify
 		await Promise.allSettled(
-			emails.contacts.map(async (email) => {
+			cases.contacts.map(async (contact) => {
 				try {
-					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, email.email, {
+					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, contact.email, {
 						personalisation: {
 							planRef: reference,
 							lpaName: 'lpa name',
@@ -96,9 +96,9 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 							teamPhone: 'team phone'
 						}
 					});
-					logger.info({ email }, 'gateway 2 submission - email sent');
+					logger.info({ encodedReference }, 'gateway 2 submission - email sent');
 				} catch (error) {
-					logger.error({ error, email }, 'failed to send gateway 2 submission email');
+					logger.error({ error, encodedReference }, 'failed to send gateway 2 submission email');
 				}
 			})
 		);
