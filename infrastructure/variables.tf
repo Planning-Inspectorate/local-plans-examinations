@@ -106,6 +106,7 @@ variable "gov_notify" {
     templates = object({
       auth_id      = string
       case_created = string
+      gw2_submission_id = string
     })
   })
 }

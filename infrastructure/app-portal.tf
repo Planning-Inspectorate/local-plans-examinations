@@ -80,6 +80,7 @@ module "app_portal" {
     #Gov Notify
     GOV_NOTIFY_API_KEY               = local.key_vault_refs["localplans-gov-notify-api-key"]
     GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID = var.gov_notify.templates.auth_id
+    GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID = var.gov_notify.templates.gw2_submission_id
 
     # Microsoft Clarity tracking id (optional)
     CLARITY_ID = var.clarity_id
