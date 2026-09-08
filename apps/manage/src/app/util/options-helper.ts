@@ -33,10 +33,10 @@ export function buildInspectorOptions(service: ManageService, questions: Record<
 
 		const inspectors = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors) : [];
 
-		const options_map = [{ value: '', text: '' }, ...inspectors.map((m) => ({ value: m.id, text: m.displayName }))];
-		questions.examiningInspector1.options = options_map;
-		questions.examiningInspector2.options = options_map;
-		questions.examiningInspector3.options = options_map;
+		const optionsMap = [{ value: '', text: '' }, ...inspectors.map((m) => ({ value: m.id, text: m.displayName }))];
+		questions.examiningInspector1.options = optionsMap;
+		questions.examiningInspector2.options = optionsMap;
+		questions.examiningInspector3.options = optionsMap;
 		next();
 	});
 }
