@@ -10,7 +10,7 @@ import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monito
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
-import { checkIsAuthenticated } from './auth/guards.ts';
+import { checkIsAuthenticated, exposeAuthToViews } from './auth/guards.ts';
 
 /**
  * Main app router
@@ -25,6 +25,7 @@ export function buildRouter(service: PortalService): IRouter {
 	// don't cache responses, note no-cache allows some caching, but with revalidation
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
+	router.use(exposeAuthToViews);
 	router.use('/login', createLoginRoutes(service));
 	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', checkIsAuthenticated);
