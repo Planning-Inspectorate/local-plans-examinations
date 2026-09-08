@@ -344,6 +344,7 @@ export class DocumentUtil {
 
 		await tx.documentVersion.update({
 			where: {
+				// eslint-disable-next-line camelcase
 				documentGuid_version: {
 					documentGuid: document.guid,
 					version: document.latestDocumentVersion.version

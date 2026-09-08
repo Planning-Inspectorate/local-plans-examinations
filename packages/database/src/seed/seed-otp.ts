@@ -47,7 +47,7 @@ async function run() {
 		if (existingOtp) {
 			await dbClient.oneTimePassword.update({
 				where: { email },
-				data: { attempts: 0, locked_out_until: null }
+				data: { attempts: 0, lockedOutUntil: null }
 			});
 		}
 
