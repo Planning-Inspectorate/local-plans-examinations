@@ -14,7 +14,7 @@ async function run(): Promise<void> {
 
 	const config = loadBuildConfig();
 	const localsFile = path.join(config.srcDir, 'util', 'config-middleware.ts');
-	await runBuild({ staticDir: config.staticDir, srcDir: config.srcDir, repoRoot, localsFile });
+	await runBuild({ staticDir: config.staticDir, srcDir: config.srcDir, repoRoot, localsFile, stableStyleFile: true });
 
 	// copy cookie banner JS into static assets
 	const cookieBannerSrc = path.join(config.srcDir, 'app', 'views', 'layouts', 'components', 'cookie-banner.js');
