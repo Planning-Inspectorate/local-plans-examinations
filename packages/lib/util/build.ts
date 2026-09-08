@@ -15,6 +15,7 @@ interface SassOptions {
 	 * a file to update with the new css filename
 	 */
 	localsFile?: string;
+	stableStyleFile?: boolean;
 }
 
 /**
@@ -23,7 +24,13 @@ interface SassOptions {
  *
  * @see https://sass-lang.com/documentation/js-api/#md:usage
  */
-async function compileSass({ staticDir, srcDir, repoRoot, localsFile }: SassOptions): Promise<void> {
+async function compileSass({
+	staticDir,
+	srcDir,
+	repoRoot,
+	localsFile,
+	stableStyleFile = false
+}: SassOptions): Promise<void> {
 	const styleFile = path.join(srcDir, 'app', 'sass/style.scss');
 	const out = sass.compile(styleFile, {
 		// ensure scss can find the govuk-frontend folders
@@ -35,7 +42,8 @@ async function compileSass({ staticDir, srcDir, repoRoot, localsFile }: SassOpti
 	});
 	// cache-busting: generate a filename for the css based on the content
 	const hash = crypto.createHash('sha256').update(out.css).digest('hex').slice(0, 8);
-	const filename = `style-${hash}.css`;
+	const filename = stableStyleFile ? 'style.css' : `style-${hash}.css`;
+	const styleHref = stableStyleFile ? `${filename}?v=${hash}` : filename;
 	const outputPath = path.join(staticDir, filename);
 	// make sure the static directory exists
 	await fs.mkdir(staticDir, { recursive: true });
@@ -46,8 +54,8 @@ async function compileSass({ staticDir, srcDir, repoRoot, localsFile }: SassOpti
 		// update the given file with the new css filename
 		await replaceInFile(localsFile, [
 			{
-				replace: /'style(-[0-9a-f]{8})?\.css'/,
-				with: `'${filename}'`
+				replace: /'style(-[0-9a-f]{8})?\.css(\?v=[0-9a-f]{8})?'/,
+				with: `'${styleHref}'`
 			}
 		]);
 	}
@@ -126,6 +134,7 @@ interface BuildOptions {
 	repoRoot: string;
 	accessibleAutocompleteRoot?: string;
 	localsFile?: string;
+	stableStyleFile?: boolean;
 }
 
 interface Replacement {
@@ -159,9 +168,13 @@ export function runBuild({
 	srcDir,
 	repoRoot,
 	accessibleAutocompleteRoot,
-	localsFile
+	localsFile,
+	stableStyleFile
 }: BuildOptions): Promise<void[]> {
-	const tasks = [compileSass({ staticDir, srcDir, repoRoot, localsFile }), copyAssets({ staticDir, repoRoot })];
+	const tasks = [
+		compileSass({ staticDir, srcDir, repoRoot, localsFile, stableStyleFile }),
+		copyAssets({ staticDir, repoRoot })
+	];
 	if (accessibleAutocompleteRoot) {
 		tasks.push(copyAutocompleteAssets({ staticDir, root: accessibleAutocompleteRoot }));
 	}
