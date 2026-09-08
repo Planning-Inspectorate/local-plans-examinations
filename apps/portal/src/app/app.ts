@@ -29,6 +29,9 @@ export function createApp(service: PortalService): Express {
 		configureNunjucks,
 		router,
 		middlewares: [cookieParser(), addLocalsConfiguration(service.clarityId)],
-		cspDirectives: service.clarityId ? portalCspDirectives : undefined
+		cspDirectives: service.clarityId ? portalCspDirectives : undefined,
+		// skip CSRF checks for document uploads
+		// lusca csrf middleware is added after multer for these routes
+		multiPartFormRoutes: [/\/upload-documents$/]
 	});
 }
