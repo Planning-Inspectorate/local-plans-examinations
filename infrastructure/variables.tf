@@ -104,8 +104,8 @@ variable "gov_notify" {
   description = "IDs for Gov Notify template"
   type = object({
     templates = object({
-      auth_id      = string
-      case_created = string
+      auth_id           = string
+      case_created      = string
       gw2_submission_id = string
     })
   })
