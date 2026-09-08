@@ -28,6 +28,7 @@
     "express-rate-limit": "^8.6.2",
     "govuk-frontend": "*",
     "helmet": "*",
+    "lusca": "*",
     "multer": "^2.2.0",
     "nunjucks": "*",
     "pino": "*",
