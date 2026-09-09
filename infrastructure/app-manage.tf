@@ -1,6 +1,6 @@
 module "app_manage" {
   #checkov:skip=CKV_TF_1: Use of commit hash are not required for our Terraform modules
-  source = "github.com/Planning-Inspectorate/infrastructure-modules.git//modules/node-app-service?ref=1.55"
+  source = "github.com/Planning-Inspectorate/infrastructure-modules.git//modules/node-app-service?ref=1.56"
 
   resource_group_name = azurerm_resource_group.primary.name
   location            = module.primary_region.location
@@ -64,6 +64,10 @@ module "app_manage" {
     GOV_NOTIFY_WEBHOOK_TOKEN           = local.key_vault_refs["gov-notify-webhook-token"]
     GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = var.gov_notify.templates.case_created
 
+    # document storage
+    BLOB_STORE_ACCOUNT_URL = azurerm_storage_account.documents.primary_blob_endpoint
+    BLOB_STORE_CONTAINER   = azurerm_storage_container.local_planning_documents.name
+
     # retries
     RETRY_MAX_ATTEMPTS = "3"
     # got default retry codes
@@ -75,8 +79,6 @@ module "app_manage" {
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]
     SESSION_SECRET          = local.key_vault_refs["session-secret-manage"]
 
-    # performance tests
-    PERFORMANCE_TEST_AUTH_TOKEN = var.environment == "test" ? var.performance_test_auth_token : ""
   }
 
   providers = {
@@ -96,6 +98,20 @@ resource "azurerm_role_assignment" "app_manage_secrets_user" {
 resource "azurerm_role_assignment" "app_manage_web_staging_secrets_user" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets User"
+  principal_id         = module.app_manage.staging_principal_id
+}
+
+## RBAC for document storage
+resource "azurerm_role_assignment" "app_manage_documents_contributor" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = module.app_manage.principal_id
+}
+
+## RBAC for document storage (staging slot)
+resource "azurerm_role_assignment" "app_manage_staging_documents_contributor" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = module.app_manage.staging_principal_id
 }
 

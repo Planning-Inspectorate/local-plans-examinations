@@ -1,11 +1,10 @@
 import { Router as createRouter } from 'express';
 import rateLimit from 'express-rate-limit';
-import { createRoutesAndGuards as createAuthRoutesAndGuards } from './auth/router.ts';
-import { authRateLimitOptions } from './auth/rate-limit.ts';
-import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
+import { createRoutesAndGuards as createAuthRoutesAndGuards } from '@planning-inspectorate/core/auth';
+import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createNotifyRoutes } from './notify/router.ts';
-import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
+import { cacheNoCacheMiddleware } from '@planning-inspectorate/core/middleware';
 import type { ManageService } from '#service';
 import type { IRouter, NextFunction, Response, Request } from 'express';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
@@ -43,7 +42,7 @@ export function buildRouter(service: ManageService): IRouter {
 
 	if (!service.authDisabled) {
 		service.logger.info('registering auth routes');
-		router.use(rateLimit(authRateLimitOptions));
+		router.use(rateLimit(service.authRateLimitConfig));
 		router.use('/auth', authRoutes);
 
 		// all subsequent routes require auth

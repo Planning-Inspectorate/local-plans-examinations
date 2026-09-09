@@ -167,6 +167,12 @@ export default class FileUploaderQuestion extends Question {
 			}
 		];
 	}
+	formatAnswer(answer: unknown): string {
+		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
+		const value = formatUploadedFilesForSummary(files, this.notStartedText);
+
+		return value;
+	}
 
 	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
 		if (this.actionLink) {

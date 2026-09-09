@@ -1,4 +1,4 @@
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
@@ -79,8 +79,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			if (
 				process.env.NODE_ENV === 'production' &&
 				otpRecord &&
-				otpRecord.locked_out_until &&
-				otpRecord.locked_out_until.getTime() > Date.now()
+				otpRecord.lockedOutUntil &&
+				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt while locked out');
 				return res.render('views/login/enter-email-page.njk', {
@@ -94,10 +94,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 						{ text: 'You have been locked out for 24 hours due to too many failed attempts', href: '#email' }
 					]
 				});
-			} else if (otpRecord && otpRecord.locked_out_until && otpRecord.locked_out_until.getTime() < Date.now()) {
+			} else if (otpRecord && otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now()) {
 				await db.oneTimePassword.update({
 					where: { email: sanitisedEmail },
-					data: { attempts: 0, locked_out_until: null }
+					data: { attempts: 0, lockedOutUntil: null }
 				});
 			}
 
@@ -116,7 +116,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			if (
 				!otpRecord ||
 				otpRecord.attempts < MAX_ATTEMPTS ||
-				(otpRecord.locked_out_until && otpRecord.locked_out_until.getTime() < Date.now())
+				(otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now())
 			) {
 				await db.oneTimePassword.upsert({
 					where: { email: sanitisedEmail },
@@ -243,8 +243,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 			// user is locked out
 			if (
 				process.env.NODE_ENV === 'production' &&
-				otpRecord.locked_out_until &&
-				otpRecord.locked_out_until.getTime() > Date.now()
+				otpRecord.lockedOutUntil &&
+				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info({ email }, 'User is locked out - too many failed attempts');
 				return res.render('views/login/enter-otp.njk', {
@@ -261,10 +261,10 @@ export function buildSubmitOtpPage(service: PortalService) {
 			}
 
 			// reset lockout when lock out time has expired
-			if (otpRecord.locked_out_until) {
+			if (otpRecord.lockedOutUntil) {
 				await db.oneTimePassword.update({
 					where: { email },
-					data: { attempts: 0, locked_out_until: null }
+					data: { attempts: 0, lockedOutUntil: null }
 				});
 			}
 
@@ -292,7 +292,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				if (updateOtpAttempts.attempts >= MAX_ATTEMPTS) {
 					await db.oneTimePassword.update({
 						where: { email },
-						data: { locked_out_until: new Date(Date.now() + 24 * 60 * 60 * 1000) }
+						data: { lockedOutUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) }
 					});
 					return res.render('views/login/enter-otp.njk', {
 						pageTitle: 'Enter your one-time password',
@@ -320,7 +320,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				where: { email },
 				data: {
 					attempts: 0,
-					locked_out_until: null
+					lockedOutUntil: null
 				}
 			});
 

@@ -13,7 +13,8 @@
   "dependencies": {
     "@azure/functions": "*",
     "@pins/local-plans-database": "^0.0.0",
-    "@pins/local-plans-lib": "^0.0.0"
+    "@pins/local-plans-lib": "^0.0.0",
+    "@planning-inspectorate/core": "*"
   },
   "imports": {
     "#pins/local-plans-lib/*": "./src/packages/local-plans-lib/*",

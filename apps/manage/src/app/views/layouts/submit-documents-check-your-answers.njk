@@ -71,6 +71,7 @@
     <p class="govuk-body">We'll send a notification to the LPA to tell them that the report is available</p>
 
       <form method="post" action="">
+        {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
         <input type="hidden" name="returnTo" value="gateway-2">
         
         <button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">

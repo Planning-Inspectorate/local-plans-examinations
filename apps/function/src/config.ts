@@ -1,5 +1,5 @@
 import { loadEnvFile } from 'node:process';
-import type { DatabaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
+import type { DatabaseConfig } from '@planning-inspectorate/core/app';
 
 export interface Config {
 	database: DatabaseConfig;
