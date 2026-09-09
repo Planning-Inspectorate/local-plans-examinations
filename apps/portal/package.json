@@ -29,7 +29,7 @@
     "govuk-frontend": "*",
     "helmet": "*",
     "lusca": "*",
-    "multer": "^2.2.0",
+    "multer": "^2.3.0",
     "nunjucks": "*",
     "pino": "*",
     "pino-pretty": "*",
