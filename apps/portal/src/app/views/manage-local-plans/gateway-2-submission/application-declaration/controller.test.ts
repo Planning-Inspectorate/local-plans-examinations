@@ -104,6 +104,11 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(redirectCalls.length, 1);
 		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2-submission/application-complete');
 		assert.equal(renderCalls.length, 0);
+
+		assert.equal(service.sendCalls.length, 1);
+		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
+		assert.equal(service.sendCalls[0].to, 'lpa@example.com');
+		assert.equal(service.sendCalls[0].options.personalisation.planRef, 'PLAN-123456');
 	});
 
 	it('renders error when no checkboxes are checked', async () => {
