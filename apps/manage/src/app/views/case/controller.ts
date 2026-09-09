@@ -1265,7 +1265,7 @@ export function preprocessQuestionProperties(
 			questions.gateway3CompletionDate.editable = gateway3Complete;
 			if (gateway3Complete) {
 				questions.gateway3Decision.actionLink = {
-					href: 'gateway-3/gateway-3-submission/gateway-3-document/check',
+					href: `/case/${encodeURIComponent(reference)}/gateway-3/gateway-3-submission/gateway-3-decision/check`,
 					text: 'View'
 				};
 			} else {

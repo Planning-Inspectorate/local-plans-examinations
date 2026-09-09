@@ -1545,7 +1545,7 @@ describe('preprocessQuestionProperties', () => {
 		const expectedModifiedQuestions: Record<string, any> = {
 			gateway3Decision: {
 				actionLink: {
-					href: 'gateway-3/gateway-3-submission/gateway-3-document/check',
+					href: '/case/some-case-reference/gateway-3/gateway-3-submission/gateway-3-document/check',
 					text: 'View'
 				}
 			},
