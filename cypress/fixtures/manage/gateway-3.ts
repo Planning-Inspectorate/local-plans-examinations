@@ -41,18 +41,17 @@ export const gateway3DateAnswers = {
 		input: { day: '1', month: '9', year: '2026' },
 		display: '1 September 2026',
 		section: 'gateway-3'
-	},
-	gateway3CompletionDate: {
-		row: 'Gateway 3 completion date',
-		heading: 'What is the Gateway 3 completion date?',
-		fieldName: 'completionDate',
-		path: 'gateway-3-completion-date',
-		seedDate: '2026-12-01T12:00:00.000Z',
-		input: { day: '1', month: '12', year: '2026' },
-		display: '1 December 2026',
-		section: 'gateway-3-submission'
 	}
 } as const satisfies Record<string, Gateway3DateAnswer>;
+
+export const gateway3CompletionDate = {
+	row: 'Gateway 3 completion date',
+	heading: 'What is the Gateway 3 completion date?',
+	fieldName: 'completionDate',
+	path: 'gateway-3-completion-date',
+	display: Date.now(),
+	section: 'gateway-3-submission'
+} as const;
 
 export const gateway3AssessorAnswer = {
 	row: 'Gateway 3 assessor name',
