@@ -64,6 +64,10 @@ module "app_manage" {
     GOV_NOTIFY_WEBHOOK_TOKEN           = local.key_vault_refs["gov-notify-webhook-token"]
     GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = var.gov_notify.templates.case_created
 
+    # document storage
+    BLOB_STORE_ACCOUNT_URL = azurerm_storage_account.documents.primary_blob_endpoint
+    BLOB_STORE_CONTAINER   = azurerm_storage_container.local_planning_documents.name
+
     # retries
     RETRY_MAX_ATTEMPTS = "3"
     # got default retry codes
@@ -94,6 +98,20 @@ resource "azurerm_role_assignment" "app_manage_secrets_user" {
 resource "azurerm_role_assignment" "app_manage_web_staging_secrets_user" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets User"
+  principal_id         = module.app_manage.staging_principal_id
+}
+
+## RBAC for document storage
+resource "azurerm_role_assignment" "app_manage_documents_contributor" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = module.app_manage.principal_id
+}
+
+## RBAC for document storage (staging slot)
+resource "azurerm_role_assignment" "app_manage_staging_documents_contributor" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = module.app_manage.staging_principal_id
 }
 
