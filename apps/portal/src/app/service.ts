@@ -1,10 +1,10 @@
-import { BaseService } from '@pins/local-plans-lib/app/base-service.ts';
 import { initGovNotify } from '@pins/local-plans-lib/govnotify/index.ts';
 import type { GovNotifyClient } from '@pins/local-plans-lib/govnotify/index.ts';
 import type { Config } from './config.ts';
 import { buildTestPlans } from './types.ts';
+import { Service } from '@pins/local-plans-lib/app/service.ts';
 
-export class PortalService extends BaseService {
+export class PortalService extends Service {
 	readonly clarityId: string | undefined;
 	readonly auth: Config['auth'];
 	readonly environment: Config['environment'];

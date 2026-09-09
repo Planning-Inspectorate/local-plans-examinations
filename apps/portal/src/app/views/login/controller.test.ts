@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { mockLogger } from '@pins/local-plans-lib/testing/mock-logger.ts';
+import { mockLogger } from '@planning-inspectorate/core/testing';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { buildEnterEmailPage, buildEnterOtpPage, buildSubmitEmailPage, buildSubmitOtpPage } from './controller.ts';
@@ -132,7 +132,7 @@ describe('buildSubmitEmailPage', () => {
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
 			email: 'test@example.com',
-			lockedOutUntil: new Date(Date.now() + 60 * 60 * 1000),
+			locked_out_until: new Date(Date.now() + 60 * 60 * 1000),
 			attempts: 3
 		}));
 
@@ -156,7 +156,7 @@ describe('buildSubmitEmailPage', () => {
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
 			email: 'test@example.com',
-			lockedOutUntil: new Date(Date.now() - 1000),
+			locked_out_until: new Date(Date.now() - 1000),
 			attempts: 1
 		}));
 		service.db.oneTimePassword.update.mock.mockImplementation(async () => ({}));
@@ -171,7 +171,7 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		const updateArgs = service.db.oneTimePassword.update.mock.calls[0].arguments[0];
 		assert.strictEqual(updateArgs.data.attempts, 0);
-		assert.strictEqual(updateArgs.data.lockedOutUntil, null);
+		assert.strictEqual(updateArgs.data.locked_out_until, null);
 	});
 
 	it('should create OTP, set session email, send notification, and redirect on success', async () => {
@@ -423,7 +423,7 @@ describe('buildSubmitOtpPage', () => {
 			hashedOtp: 'hashed',
 			expiresAt: new Date(Date.now() + 60000),
 			attempts: 3,
-			lockedOutUntil: new Date(Date.now() + 60 * 60 * 1000)
+			locked_out_until: new Date(Date.now() + 60 * 60 * 1000)
 		}));
 
 		const originalEnv = process.env.NODE_ENV;
@@ -449,7 +449,7 @@ describe('buildSubmitOtpPage', () => {
 			hashedOtp: 'hashed',
 			expiresAt: new Date(Date.now() - 1000),
 			attempts: 0,
-			lockedOutUntil: null
+			locked_out_until: null
 		}));
 
 		const handler = buildSubmitOtpPage(service);
@@ -475,7 +475,7 @@ describe('buildSubmitOtpPage', () => {
 			hashedOtp,
 			expiresAt: new Date(Date.now() + 60000),
 			attempts: 0,
-			lockedOutUntil: null
+			locked_out_until: null
 		}));
 		service.db.oneTimePassword.update.mock.mockImplementation(async () => ({ attempts: 1 }));
 
@@ -503,7 +503,7 @@ describe('buildSubmitOtpPage', () => {
 			hashedOtp,
 			expiresAt: new Date(Date.now() + 60000),
 			attempts: 2,
-			lockedOutUntil: null
+			locked_out_until: null
 		}));
 		let updateCallCount = 0;
 		service.db.oneTimePassword.update.mock.mockImplementation(async () => {
@@ -538,7 +538,7 @@ describe('buildSubmitOtpPage', () => {
 			hashedOtp,
 			expiresAt: new Date(Date.now() + 60000),
 			attempts: 0,
-			lockedOutUntil: null
+			locked_out_until: null
 		}));
 		service.db.oneTimePassword.update.mock.mockImplementation(async () => ({}));
 
@@ -555,7 +555,7 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 1);
 		const updateArgs = service.db.oneTimePassword.update.mock.calls[0].arguments[0];
 		assert.strictEqual(updateArgs.data.attempts, 0);
-		assert.strictEqual(updateArgs.data.lockedOutUntil, null);
+		assert.strictEqual(updateArgs.data.locked_out_until, null);
 		assert.strictEqual(service.logger.info.mock.callCount(), 1);
 	});
 

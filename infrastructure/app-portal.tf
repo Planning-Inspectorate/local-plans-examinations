@@ -1,6 +1,13 @@
+locals {
+  portal_auth_excluded_paths = concat(
+    var.environment == "test" ? ["/"] : [],
+    contains(["dev", "test", "training"], var.environment) ? ["/style.css"] : []
+  )
+}
+
 module "app_portal" {
   #checkov:skip=CKV_TF_1: Use of commit hash are not required for our Terraform modules
-  source = "github.com/Planning-Inspectorate/infrastructure-modules.git//modules/node-app-service?ref=1.54"
+  source = "github.com/Planning-Inspectorate/infrastructure-modules.git//modules/node-app-service?ref=1.56"
 
   resource_group_name = azurerm_resource_group.primary.name
   location            = module.primary_region.location
@@ -49,6 +56,7 @@ module "app_portal" {
     auth_tenant_endpoint = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/v2.0"
     allowed_applications = var.auth_config_portal.application_id
     allowed_audiences    = "https://${var.web_domains.portal}/.auth/login/aad/callback"
+    excluded_paths       = local.portal_auth_excluded_paths
   }
 
   app_settings = {

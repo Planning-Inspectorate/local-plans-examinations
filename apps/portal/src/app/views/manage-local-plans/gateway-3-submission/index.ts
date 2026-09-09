@@ -14,7 +14,7 @@ import {
 	JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 
 type Gateway3Request = Request & {

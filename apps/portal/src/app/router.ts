@@ -1,5 +1,5 @@
 import { Router as createRouter } from 'express';
-import { cacheNoCacheMiddleware } from '@pins/local-plans-lib/middleware/cache.ts';
+import { cacheNoCacheMiddleware } from '@planning-inspectorate/core/middleware';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createCookiesRoutes } from './views/static/cookies/index.ts';
 import { createHomeRoutes } from './views/home/index.ts';
@@ -7,7 +7,7 @@ import { createLandingPageRoutes } from './views/landing-page/index.ts';
 import { createPlanPageRoutes } from './views/plan-page/index.ts';
 import { gateway2SubmissionRoutes } from './views/manage-local-plans/gateway-2-submission/index.ts';
 import { gateway3SubmissionRoutes } from './views/manage-local-plans/gateway-3-submission/index.ts';
-import { createMonitoringRoutes } from '@pins/local-plans-lib/controllers/monitoring.ts';
+import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';

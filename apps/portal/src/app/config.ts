@@ -1,9 +1,9 @@
 import { loadEnvFile } from 'node:process';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
-import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
+import type { ConfigWithBlob } from '@pins/local-plans-lib/app/config-types.d.ts';
 
-export type Config = BaseConfig & {
+export type Config = ConfigWithBlob & {
 	environment: string;
 	auth: {
 		otpBypassCode: string;

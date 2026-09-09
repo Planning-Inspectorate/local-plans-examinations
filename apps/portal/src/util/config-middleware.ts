@@ -24,7 +24,7 @@ export function addLocalsConfiguration(clarityId?: string): Handler {
 		];
 
 		res.locals.config = {
-			styleFile: 'style-1b528393.css',
+			styleFile: 'style.css?v=813b3ed5',
 			cspNonce: res.locals.cspNonce,
 			headerTitle: 'Submit your plan for examination',
 			footerLinks: [
