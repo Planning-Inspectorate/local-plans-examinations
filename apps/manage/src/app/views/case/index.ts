@@ -65,7 +65,8 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
+import lusca from 'lusca';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -297,6 +298,8 @@ function registerCaseJourney(
 			buildCaseOfficerOptions(service, questions),
 			getJourney,
 			upload.array('files[]'),
+			// Lusca CSRF check performed after Multer handles the multipart/form-data
+			lusca.csrf(),
 			uploadDocumentRoute,
 			handleMulterFileSizeError
 		);

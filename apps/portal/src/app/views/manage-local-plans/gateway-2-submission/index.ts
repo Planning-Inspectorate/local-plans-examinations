@@ -35,7 +35,7 @@ import {
 	loadGateway2DocumentsByDocumentSetId,
 	saveGateway2Documents
 } from './documents.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
@@ -52,6 +52,7 @@ import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
 import { downloadGateway2Document } from './download.ts';
+import lusca from 'lusca';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -715,6 +716,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
+		// Lusca CSRF check performed after Multer handles the multipart/form-data
+		lusca.csrf(),
 		uploadGateway2DocumentForCase,
 		handleMulterFileSizeError
 	);
@@ -731,6 +734,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		upload.array('files[]'),
+		// Lusca CSRF check performed after Multer handles the multipart/form-data
+		lusca.csrf(),
 		uploadGateway2Document,
 		handleMulterFileSizeError
 	);

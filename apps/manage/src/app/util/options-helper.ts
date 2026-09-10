@@ -1,6 +1,6 @@
 import { type NextFunction, type Response, type Request } from 'express';
-import type * as authSession from '../../../src/app/auth/session.service.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type * as authSession from '@planning-inspectorate/core/auth';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 
 export function buildCaseOfficerOptions(service: ManageService, questions: Record<string, any>) {

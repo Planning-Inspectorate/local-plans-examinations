@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
-import type { BaseService } from '@pins/local-plans-lib/app/base-service.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import type { Service } from '../app/service.ts';
 
 type RequestWithCurrentCase = Request & {
 	currentCase?: {
@@ -41,15 +41,12 @@ type DocumentSetRow = {
 	folderName: string;
 };
 
-type TransactionClient = Omit<
-	BaseService['db'],
-	'$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
->;
+type TransactionClient = Omit<Service['db'], '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
 
 export class DocumentUtil {
 	// Saves the current upload state.
 	public static async saveDocuments(
-		service: BaseService,
+		service: Service,
 		req: Request,
 		documentSetFolderName: string,
 		uploadedFiles: UploadedFile[]
@@ -70,7 +67,7 @@ export class DocumentUtil {
 
 	// Reads active documents from the database.
 	public static async loadUploadedDocuments(
-		service: BaseService,
+		service: Service,
 		caseId: string,
 		documentSetId: string
 	): Promise<UploadedFile[]> {
@@ -91,7 +88,7 @@ export class DocumentUtil {
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
-	public static async getLatestDocumentBlobDetails(service: BaseService, documentId: string) {
+	public static async getLatestDocumentBlobDetails(service: Service, documentId: string) {
 		const latestDocument = await service.db.document.findFirst({
 			select: {
 				latestDocumentVersion: {
@@ -131,7 +128,7 @@ export class DocumentUtil {
 
 	// Makes the database match the uploaded file list.
 	protected static async syncDocuments(
-		service: BaseService,
+		service: Service,
 		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
 	): Promise<void> {
 		const existingDocuments = (await service.db.document.findMany({
@@ -211,7 +208,7 @@ export class DocumentUtil {
 
 	// Finds document set reference data for all configured question URLs/folder names.
 	public static async getDocumentSetIdsByFolderName(
-		service: BaseService,
+		service: Service,
 		documentSetFolderNames: string[]
 	): Promise<Map<string, string>> {
 		const uniqueFolderNames = [...new Set(documentSetFolderNames)];
@@ -242,7 +239,7 @@ export class DocumentUtil {
 
 	// Finds the document set reference data from the question URL/folder name.
 	protected static async getDocumentSetIdByFolderName(
-		service: BaseService,
+		service: Service,
 		documentSetFolderName: string
 	): Promise<string> {
 		const documentSet = await service.db.documentSet.findFirst({
@@ -356,7 +353,7 @@ export class DocumentUtil {
 		});
 	}
 
-	public static async downloadDocumentToResponse(service: BaseService, documentId: string, res: Response) {
+	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {
 		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId);
 		const blobPath = blobDetails.blobPath;
 		const fileName = blobDetails.fileName;
