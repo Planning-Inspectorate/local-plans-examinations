@@ -616,8 +616,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				res.locals.journeyResponse = journeyResponse;
+				const body = req.body as { decision?: string };
 				if (req.params.question == 'gateway-3-document') {
 					console.log('setting document readonly');
 					//res.locals.journeyResponse.answers.gateway3Documents.readonly = true;
@@ -632,7 +634,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					await updateGateway3(
 						db,
 						{
-							decision: req.body.decision
+							decision: body.decision
 						},
 						caseReference,
 						'gateway-3-decision'

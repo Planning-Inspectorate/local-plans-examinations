@@ -74,8 +74,8 @@ export default class FileUploaderQuestion extends Question {
 
 		viewModel.question = {
 			...viewModel.question,
-			...this.config,
-			editable: this.editable
+			...this.config
+			//editable: this.editable
 		};
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
@@ -166,12 +166,6 @@ export default class FileUploaderQuestion extends Question {
 				}
 			}
 		];
-	}
-	formatAnswer(answer: unknown): string {
-		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = formatUploadedFilesForSummary(files, this.notStartedText);
-
-		return value;
 	}
 
 	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
