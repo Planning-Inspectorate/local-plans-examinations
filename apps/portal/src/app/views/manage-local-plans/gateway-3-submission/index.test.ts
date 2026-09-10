@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import type { Request, Response } from 'express';
 import { describe, it } from 'node:test';
-import { setGateway3ViewLocals } from './index.ts';
+import { setGateway3ViewLocals } from './controller.ts';
 
 describe('setGateway3ViewLocals', () => {
 	it('sets page title, heading, caption, back link, save link and status tag when case and plan reference exist', () => {
