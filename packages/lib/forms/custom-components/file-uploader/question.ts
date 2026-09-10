@@ -72,11 +72,12 @@ export default class FileUploaderQuestion extends Question {
 			options.customViewData?.fileUploader?.[sessionKey]?.uploadedFiles ??
 			readUploadedFiles(options.payload?.[fieldName]);
 
-		viewModel.question = {
+		const question = {
 			...viewModel.question,
 			...this.config,
 			editable: this.editable
-		};
+		} as typeof viewModel.question & { editable: boolean };
+		viewModel.question = question;
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
 		viewModel.currentUrl = options.customViewData?.currentUrl;
