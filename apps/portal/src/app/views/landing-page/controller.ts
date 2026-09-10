@@ -6,11 +6,10 @@ import type { Plan } from '../../types.ts';
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
-		const councilLocation = 'Southampton City Council'; //TO BE CHANGED
-
-		const rawPlans = await service.getPlans();
+		const rawPlans: unknown[] = await service.getPlans(req.session.authenticatedEmail);
 
 		let mappedPlans;
+		let pageCaption;
 		let noPlansFlag = false;
 
 		//check for if no plans
@@ -29,6 +28,8 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 					logger.warn({ planRef }, 'Invalid plan');
 				}
 			}
+
+			pageCaption = validPlans[0]?.leadLPA;
 
 			//maps tags to their classes and the text
 			mappedPlans = validPlans.map((plan) => [
@@ -55,7 +56,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 
 		//headings
 		return res.render('views/landing-page/view.njk', {
-			pageCaption: councilLocation,
+			pageCaption,
 			pageTitle: 'My plans',
 			...viewModel
 		});
