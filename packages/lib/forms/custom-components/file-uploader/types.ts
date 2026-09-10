@@ -8,6 +8,7 @@ export type {
 	UploadedFile,
 	UploadedRequestFile
 } from '../../../storage/index.ts';
+
 import type { QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
 export const FILE_UPLOADER_COMPONENT_TYPE = 'file-uploader' as const;
 
@@ -63,6 +64,7 @@ export type FileUploaderQuestionConfig = {
 	validationMessages?: FileUploaderValidationMessages;
 	actionButtonVisibleInSummary?: boolean;
 	valueDisplayFormat?: string;
+	editable?: boolean;
 };
 
 export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
