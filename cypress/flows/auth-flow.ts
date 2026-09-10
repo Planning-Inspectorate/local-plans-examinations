@@ -2,7 +2,7 @@ const truthyValues = ['1', 'true', 'yes'];
 const microsoftLoginOrigin = 'https://login.microsoftonline.com';
 
 const shouldUseRealAuth = () => {
-	return isTruthy(Cypress.env('useRealAuth'));
+	return isTruthy(getCypressEnv('useRealAuth'));
 };
 
 export function skipUnlessRealEnvironmentAuth(context: Mocha.Context) {
@@ -12,7 +12,7 @@ export function skipUnlessRealEnvironmentAuth(context: Mocha.Context) {
 }
 
 const shouldRunNotifySmoke = () => {
-	return isTruthy(Cypress.env('notifySmokeEnabled'));
+	return isTruthy(getCypressEnv('notifySmokeEnabled'));
 };
 
 export function skipUnlessNotifySmokeEnabled(context: Mocha.Context) {
@@ -37,11 +37,7 @@ function authenticateWithMicrosoftIfRequired(name: 'manage' | 'portal', signInPa
 	const username = getRequiredCypressEnv('authUsername');
 	const password = getRequiredCypressEnv('authPassword');
 
-	Cypress.on('uncaught:exception', (error) => {
-		if (error.message.includes('aadcdn.msauth.net') || error.message.includes('aadcdn.msftauth.net')) {
-			return false;
-		}
-	});
+	ignoreMicrosoftAuthCdnRetryErrors();
 
 	cy.session(
 		[name, Cypress.config('baseUrl'), username],
@@ -59,6 +55,12 @@ function authenticateWithMicrosoftIfRequired(name: 'manage' | 'portal', signInPa
 					microsoftLoginOrigin,
 					{ args: { loginUrl, password, username } },
 					({ loginUrl, password, username }) => {
+						Cypress.on('uncaught:exception', (error) => {
+							if (error.message.includes('aadcdn.msauth.net') || error.message.includes('aadcdn.msftauth.net')) {
+								return false;
+							}
+						});
+
 						cy.visit(loginUrl);
 
 						cy.get('input[type="email"], input[name="loginfmt"]', { timeout: 60000 })
@@ -86,8 +88,24 @@ function isTruthy(value: unknown) {
 	return truthyValues.includes(String(value).toLowerCase());
 }
 
+function ignoreMicrosoftAuthCdnRetryErrors() {
+	Cypress.on('uncaught:exception', (error) => {
+		if (error.message.includes('aadcdn.msauth.net') || error.message.includes('aadcdn.msftauth.net')) {
+			return false;
+		}
+	});
+}
+
+function getCypressEnv(name: string) {
+	return Cypress.env(name) ?? Cypress.env(toScreamingSnake(name));
+}
+
+function toScreamingSnake(name: string) {
+	return name.replace(/[A-Z]/g, (character) => `_${character}`).toUpperCase();
+}
+
 export function getRequiredCypressEnv(name: string) {
-	const value = Cypress.env(name);
+	const value = getCypressEnv(name);
 
 	if (!value || String(value).startsWith('$(')) {
 		throw new Error(`${name} is required`);
