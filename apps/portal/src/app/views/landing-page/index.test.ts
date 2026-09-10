@@ -9,14 +9,14 @@ import { buildTestPlans, mockPlan, mockApplicationDoc } from '../../types.ts';
 function initialiseTest(plans?: unknown[]) {
 	const nunjucks = configureNunjucks();
 	const mockRes = { render: mock.fn((view, data) => nunjucks.render(view, data)) };
-	const mockReq = { session: {} };
+	const mockReq = { session: { authenticatedEmail: 'user@example.com' } };
 	const logger = mockLogger();
 	const mockService = {
 		logger,
 		getPlans: mock.fn(async () => plans ?? buildTestPlans())
 	};
 	const landingPage = buildLandingPage(mockService);
-	return { landingPage, mockRes, mockReq, nunjucks, logger };
+	return { landingPage, mockRes, mockReq, mockService, nunjucks, logger };
 }
 
 describe('landing page', () => {
@@ -29,21 +29,35 @@ describe('landing page', () => {
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[0], 'views/landing-page/view.njk');
 	});
 
-	it('should render title and caption correctly', async () => {
-		const { landingPage, mockRes, mockReq } = initialiseTest();
+	it('should request plans for the authenticated email', async () => {
+		const { landingPage, mockRes, mockService, mockReq } = initialiseTest();
+
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		assert.strictEqual(mockService.getPlans.mock.calls[0].arguments[0], 'user@example.com');
+	});
+
+	it('should render title and dynamic local planning authority caption', async () => {
+		const plans = [
+			mockPlan({
+				refNum: 'PLAN-001',
+				leadLPA: 'Dynamic Borough Council',
+				title: 'East plan',
+				documents: [mockApplicationDoc()]
+			})
+		];
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest(plans);
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
 		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const html = nunjucks.render(view, data);
 
 		const expectedTitle = 'My plans';
-		const expectedCaption = 'Southampton City Council';
+		const expectedCaption = 'Dynamic Borough Council';
 
 		assert.strictEqual(data.pageTitle, expectedTitle, `Expected ${expectedTitle} instead got ${data.pageTitle}`);
-		assert.strictEqual(
-			data.pageCaption,
-			expectedCaption,
-			`Expected ${expectedCaption} instead got ${data.pageCaption}`
-		);
+		assert.strictEqual(data.pageCaption, expectedCaption);
+		assert.ok(html.includes(`<span class="govuk-caption-xl">${expectedCaption}</span>`));
 	});
 
 	it('should render plan data from service', async () => {
@@ -58,6 +72,7 @@ describe('landing page', () => {
 		const refNum = data.plans[0][0].html.match(/>([^<]+)</)?.[1];
 
 		assert.deepStrictEqual(refNum, 'PLAN-001', `Expected PLAN-001 instead got ${refNum}`);
+		assert.strictEqual(data.plans[0][1].text, 'Southampton');
 	});
 
 	it('should warn if no plans found and display No plans available', async () => {
@@ -124,6 +139,7 @@ describe('landing page', () => {
 		const html = nunjucks.render(view, data);
 
 		assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [{ planRef: 'PLAN-BAD' }, 'Invalid plan']);
+		assert.strictEqual(data.pageCaption, 'Southampton');
 		assert.ok(!html.includes('PLAN-BAD'), 'expected invalid plan to be filtered out');
 		assert.ok(html.includes('PLAN-GOOD'), 'expected valid plan to be rendered');
 	});
