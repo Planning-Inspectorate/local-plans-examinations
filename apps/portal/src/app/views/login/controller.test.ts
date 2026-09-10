@@ -85,9 +85,11 @@ describe('buildSubmitEmailPage', () => {
 
 		const data = assertRender(res, 'views/login/enter-email-page.njk');
 		assert.strictEqual(data.pageHeading, 'Sign-in');
-		assert.strictEqual(data.errors.email.msg, 'Enter your email address');
-		assert.strictEqual(data.errorSummaryTitle, 'You have not entered your email address');
-		assert.deepStrictEqual(data.errorSummary, [{ text: 'Enter your email address', href: '#email' }]);
+		assert.strictEqual(data.errors.email.msg, 'Enter an email address in the correct format, like name@example.com');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
+		assert.deepStrictEqual(data.errorSummary, [
+			{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }
+		]);
 		assert.strictEqual(service.db.case.findFirst.mock.callCount(), 0);
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 	});
@@ -102,8 +104,8 @@ describe('buildSubmitEmailPage', () => {
 
 		const data = assertRender(res, 'views/login/enter-email-page.njk');
 		assert.strictEqual(data.pageHeading, 'Sign-in');
-		assert.strictEqual(data.errors.email.msg, 'Enter your email address');
-		assert.strictEqual(data.errorSummaryTitle, 'You have not entered your email address');
+		assert.strictEqual(data.errors.email.msg, 'Enter an email address in the correct format, like name@example.com');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(service.db.case.findFirst.mock.callCount(), 0);
 	});
 
@@ -120,7 +122,7 @@ describe('buildSubmitEmailPage', () => {
 		const data = assertRender(res, 'views/login/enter-email-page.njk');
 		assert.strictEqual(data.pageHeading, 'Sign-in');
 		assert.strictEqual(data.errors.email.msg, 'Enter an email address linked to a case on this service');
-		assert.strictEqual(data.errorSummaryTitle, 'We did not recognise that email address');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 0);
 	});
@@ -262,7 +264,7 @@ describe('buildSubmitOtpPage', () => {
 		const data = assertRender(res, 'views/login/enter-otp.njk');
 		assert.strictEqual(data.pageHeading, 'Enter your one-time password');
 		assert.match(data.errors.otp.msg, /enter the code/i);
-		assert.strictEqual(data.errorSummaryTitle, 'You have not entered a code');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 	});
 
@@ -340,7 +342,7 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
-		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(req.session.isAuthenticated, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
 	});
@@ -358,7 +360,7 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
-		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(req.session.isAuthenticated, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
 	});
@@ -375,7 +377,7 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
-		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(req.session.isAuthenticated, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
 		process.env.NODE_ENV = originalEnv;
@@ -393,7 +395,7 @@ describe('buildSubmitOtpPage', () => {
 		await handler(req, res);
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
-		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(req.session.isAuthenticated, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
 		process.env.NODE_ENV = originalEnv;
@@ -412,7 +414,7 @@ describe('buildSubmitOtpPage', () => {
 		const data = assertRender(res, 'views/login/enter-otp.njk');
 		assert.strictEqual(data.pageHeading, 'Enter your one-time password');
 		assert.match(data.errors.otp.msg, /Enter the code we sent to your email address/i);
-		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 0);
 	});
 
@@ -489,8 +491,8 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(res.render.mock.callCount(), 1);
 		const [, data] = res.render.mock.calls[0].arguments;
 		assert.strictEqual(data.pageHeading, 'Enter your one-time password');
-		assert.match(data.errors.otp.msg, /Enter the code we sent to your email address/i);
-		assert.strictEqual(data.errorSummaryTitle, 'The code you entered is incorrect');
+		assert.match(data.errors.otp.msg, /Enter the code we sent to you/i);
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 	});
 
 	it('should lock out user after max failed attempts', async () => {
