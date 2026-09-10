@@ -20,8 +20,53 @@ async function run() {
 	const email = emailArg ? emailArg.split('=')[1] : 'test@planninginspectorate.gov.uk';
 	const caseOnly = process.argv.includes('--case-only');
 	const dbClient = newDatabaseClient(config.db);
+	const lpas = [
+		{ lpaCode: 'southampton', lpaName: 'Southampton City Council' },
+		{ lpaCode: 'romsey', lpaName: 'Romsey Town Council' }
+	];
+	const lpaRelations = {
+		set: lpas.map(({ lpaCode }) => ({ lpaCode }))
+	};
+	const planDates = {
+		gateway1Date: new Date('2026-05-07T12:00:00.000Z'),
+		gateway2Date: new Date('2026-07-21T12:00:00.000Z'),
+		gateway3Date: new Date('2026-08-01T12:00:00.000Z'),
+		submissionDate: new Date('2026-09-01T12:00:00.000Z')
+	};
+	const gateway2Info = {
+		upsert: {
+			update: {
+				reportIssuedDate: null
+			},
+			create: {
+				reportIssuedDate: null
+			}
+		}
+	};
+	const gateway3Info = {
+		upsert: {
+			update: {
+				actualDate: null,
+				completionDate: null
+			},
+			create: {
+				actualDate: null,
+				completionDate: null
+			}
+		}
+	};
 
 	try {
+		await Promise.all(
+			lpas.map((lpa) =>
+				dbClient.lPA.upsert({
+					where: { lpaCode: lpa.lpaCode },
+					update: { lpaName: lpa.lpaName },
+					create: lpa
+				})
+			)
+		);
+
 		// Ensure case record exists for the test email
 		await dbClient.case.upsert({
 			where: { reference: 'PLAN-001' },
@@ -30,7 +75,10 @@ async function run() {
 				caseOfficer: 'Test Officer',
 				planTitle: 'East Borough Local Plan',
 				planType: 'Local Plan',
-				gateway2Date: new Date('2026-07-21T12:00:00.000Z')
+				...planDates,
+				lpas: lpaRelations,
+				gateway2Info,
+				gateway3Info
 			},
 			create: {
 				reference: 'PLAN-001',
@@ -38,7 +86,16 @@ async function run() {
 				caseOfficer: 'Test Officer',
 				planTitle: 'East Borough Local Plan',
 				planType: 'Local Plan',
-				gateway2Date: new Date('2026-07-21T12:00:00.000Z')
+				...planDates,
+				gateway2Info: {
+					create: gateway2Info.upsert.create
+				},
+				gateway3Info: {
+					create: gateway3Info.upsert.create
+				},
+				lpas: {
+					connect: lpaRelations.set
+				}
 			}
 		});
 
