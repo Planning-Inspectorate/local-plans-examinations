@@ -84,7 +84,7 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 			metadata: { documentGuid: string };
 		}[];
 	}) => string | undefined;
-	actionButtonVisibleInSummary: boolean;
+	actionButtonVisibleInSummary?: boolean;
 	valueDisplayFormat?: string;
 	editable?: boolean;
 };
