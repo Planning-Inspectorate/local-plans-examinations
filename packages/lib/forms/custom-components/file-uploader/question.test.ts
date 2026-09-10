@@ -84,6 +84,27 @@ describe('FileUploaderQuestion', () => {
 			'<ul class="govuk-list"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
 		);
 	});
+
+	it('returns a view model when there are validation errors', () => {
+		const question = buildQuestion();
+		const viewModel = {};
+		question.toViewModel = () => viewModel as any;
+
+		const result = question.checkForValidationErrors(
+			{
+				body: {
+					errorSummary: ['error'],
+					errors: { documents: 'error' }
+				},
+				session: {},
+				originalUrl: '/documents',
+				params: {}
+			} as any,
+			'section',
+			buildJourney() as any
+		);
+		assert.equal(result, viewModel);
+	});
 });
 
 function buildJourney() {
