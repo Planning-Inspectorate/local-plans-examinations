@@ -25,6 +25,22 @@ export class CaseOfficerPage extends BasePage {
 		this.saveAndContinue();
 	}
 
+	selectFirstCaseOfficer() {
+		this.caseOfficerSelect
+			.should('be.visible')
+			.find('option')
+			.not('[value=""]')
+			.first()
+			.then(($option) => {
+				const value = $option.attr('value');
+				if (!value) {
+					throw new Error('No selectable case officer option was found');
+				}
+				this.caseOfficerSelect.select(value);
+				this.saveAndContinue();
+			});
+	}
+
 	verifyCaseOfficerSelected(value: string) {
 		this.caseOfficerOption(value).should('have.attr', 'selected');
 	}

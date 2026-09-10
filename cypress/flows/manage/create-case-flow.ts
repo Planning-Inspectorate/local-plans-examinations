@@ -12,8 +12,19 @@ import {
 } from '../../page-objects/manage/create-case/index.ts';
 import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 
-export const completeCaseDetails = (data: CreateCaseData) => {
-	caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
+type CaseOfficerSelection = 'fixture' | 'first-available';
+
+type CompleteCaseOptions = {
+	caseOfficer?: CaseOfficerSelection;
+};
+
+export const completeCaseDetails = (data: CreateCaseData, options: CompleteCaseOptions = {}) => {
+	if (options.caseOfficer === 'first-available') {
+		caseOfficerPage.selectFirstCaseOfficer();
+	} else {
+		caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
+	}
+
 	planTitlePage.verifyLoaded();
 	planTitlePage.enterPlanTitle(data.planTitle);
 	planTypePage.verifyLoaded();
@@ -36,12 +47,12 @@ export const addContactDetails = (contact: CreateCaseData['contact']) => {
 	contactDetailsListPage.verifyLoaded();
 };
 
-export const completeCreateCaseFlow = (data: CreateCaseData) => {
+export const completeCreateCaseFlow = (data: CreateCaseData, options: CompleteCaseOptions = {}) => {
 	manageHomePage.visit();
 	manageHomePage.startCreateCase();
 
 	caseOfficerPage.verifyLoaded();
-	completeCaseDetails(data);
+	completeCaseDetails(data, options);
 
 	for (const lpa of Object.values(data.lpa)) {
 		addLocalPlanningAuthority(lpa);

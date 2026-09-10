@@ -17,8 +17,16 @@ export class ManageHomePage extends BasePage {
 		return cy.getByData('casesTable');
 	}
 
+	get assignedToMeLink() {
+		return this.serviceNavigation.contains('a', 'Assigned to me');
+	}
+
 	startCreateCase() {
 		this.createCaseLink.should('be.visible').click();
+	}
+
+	openAssignedToMe() {
+		this.assignedToMeLink.should('be.visible').and('have.attr', 'href', '/assigned-to-me').click();
 	}
 
 	openCaseByPlanTitle(planTitle: string) {

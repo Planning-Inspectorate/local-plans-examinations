@@ -2,6 +2,7 @@ import { defineConfig } from 'cypress';
 import { loadEnvFile } from 'node:process';
 import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
+import { waitForNotifyEmailByReference } from './cypress/tasks/notify.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -37,6 +38,14 @@ const runCommand = (command: string): Promise<string> =>
 		});
 	});
 
+const validateCaseReference = (reference: unknown) => {
+	if (typeof reference !== 'string' || !/^PLAN-\d+$/.test(reference)) {
+		throw new Error('Expected a case reference like PLAN-123456');
+	}
+
+	return reference;
+};
+
 export default defineConfig({
 	reporter: 'cypress-mochawesome-reporter',
 	reporterOptions: {
@@ -50,8 +59,14 @@ export default defineConfig({
 	e2e: {
 		baseUrl,
 		env: {
+			authPassword: process.env.CYPRESS_AUTH_PASSWORD,
+			authUserId: process.env.CYPRESS_AUTH_USER_ID,
+			authUsername: process.env.CYPRESS_AUTH_USERNAME,
 			manageBaseUrl: baseUrls.manage,
-			portalBaseUrl: baseUrls.portal
+			notifySmokeEmail: process.env.CYPRESS_NOTIFY_SMOKE_EMAIL || process.env.E2E_NOTIFY_EMAIL,
+			notifySmokeEnabled: process.env.CYPRESS_NOTIFY_SMOKE_ENABLED === 'true',
+			portalBaseUrl: baseUrls.portal,
+			useRealAuth: process.env.CYPRESS_USE_REAL_AUTH === 'true'
 		},
 		specPattern,
 		screenshotsFolder: 'cypress/reports/screenshots',
@@ -84,6 +99,22 @@ export default defineConfig({
 					await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts --case-only');
 					return null;
 				},
+				seedAssignedToMeCase: async () => {
+					const stdout = await runCommand('node packages/database/src/seed/seed-assigned-to-me.ts');
+					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
+					if (!jsonLine) {
+						throw new Error('Assigned to me seed script did not return a result');
+					}
+					return JSON.parse(jsonLine);
+				},
+				softDeleteCaseByReference: async (reference: string) => {
+					const caseReference = validateCaseReference(reference);
+					await runCommand(
+						`SOFT_DELETE_CASE_REFERENCE=${caseReference} node packages/database/src/seed/soft-delete-case.ts`
+					);
+					return null;
+				},
+				waitForNotifyEmailByReference,
 				seedOtp: async () => {
 					const stdout = await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts');
 					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));

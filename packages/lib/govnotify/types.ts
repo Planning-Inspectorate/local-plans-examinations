@@ -19,3 +19,12 @@ export interface AuthCodePersonalisation {
 	authCode: string;
 	expiryMinutes: string;
 }
+
+export type NotifyEmail = {
+	id: string;
+	reference?: string;
+	status?: string;
+	template?: {
+		id?: string;
+	};
+};

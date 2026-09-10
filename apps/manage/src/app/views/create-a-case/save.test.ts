@@ -52,7 +52,7 @@ describe('buildSaveController', () => {
 					answers: {
 						caseOfficer: 'John Doe',
 						planTitle: 'Development Plan 2024',
-						planType: 'Local Plan',
+						planType: 'local-plan',
 						email: 'contact@lpa.gov.uk',
 						reference: '',
 						checkLpas: [{ lpa: 'lpa-1' }, { lpa: 'lpa-2' }],
@@ -91,7 +91,7 @@ describe('buildSaveController', () => {
 
 		assert.strictEqual(caseData.caseOfficer, 'John Doe');
 		assert.strictEqual(caseData.planTitle, 'Development Plan 2024');
-		assert.strictEqual(caseData.planType, 'Local Plan');
+		assert.strictEqual(caseData.planType, 'local-plan');
 		assert.ok(caseData.reference.startsWith('PLAN-'));
 
 		assert.ok(caseData.lpas);
@@ -103,6 +103,32 @@ describe('buildSaveController', () => {
 		assert.strictEqual(caseData.contacts.create.length, 2);
 
 		assert.strictEqual(mockService.notifyClient.sendEmail.mock.callCount(), 2);
+		assert.deepStrictEqual(mockService.notifyClient.sendEmail.mock.calls[0].arguments, [
+			'template-123',
+			'jane@lpa.gov.uk',
+			{
+				personalisation: {
+					plan_ref: caseData.reference,
+					lpa_name: 'Local Planning Authority 1, Local Planning Authority 2',
+					plan_type: 'Local Plan',
+					team_email_address: 'enquiries@planninginspectorate.gov.uk'
+				},
+				reference: `create-case:${caseData.reference}`
+			}
+		]);
+		assert.deepStrictEqual(mockService.notifyClient.sendEmail.mock.calls[1].arguments, [
+			'template-123',
+			'bob@lpa.gov.uk',
+			{
+				personalisation: {
+					plan_ref: caseData.reference,
+					lpa_name: 'Local Planning Authority 1, Local Planning Authority 2',
+					plan_type: 'Local Plan',
+					team_email_address: 'enquiries@planninginspectorate.gov.uk'
+				},
+				reference: `create-case:${caseData.reference}`
+			}
+		]);
 
 		assert.strictEqual(mockResponse.render.mock.callCount(), 1);
 		assert.strictEqual(mockResponse.render.mock.calls[0].arguments[0], 'views/layouts/success.njk');
