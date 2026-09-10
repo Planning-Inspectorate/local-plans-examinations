@@ -15,7 +15,7 @@ import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/cust
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -648,7 +648,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
-				res.locals.journeyResponse.answers.gateway2Documents = documentsByCategory;
+				const journeyResponse = res.locals.journeyResponse as JourneyResponse;
+				journeyResponse.answers.gateway2Documents = documentsByCategory;
+				res.locals.journeyResponse = journeyResponse;
 				if (
 					req.method === 'POST' &&
 					req.params.question == 'gateway-2-report' &&
@@ -671,11 +673,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-				res.locals.journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				res.locals.journeyResponse = journeyResponse;
+				const body = req.body as { decision?: string };
 				if (req.params.question == 'gateway-3-document') {
 					console.log('setting document readonly');
-					//res.locals.journeyResponse.answers.gateway3Documents.readonly = true;
+					//locals.journeyResponse.answers.gateway3Documents.readonly = true;
 				}
 				// Flow for uploading a gateway 3 document
 				if (
@@ -687,7 +691,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					await updateGateway3(
 						db,
 						{
-							decision: req.body.decision
+							decision: body.decision
 						},
 						caseReference,
 						'gateway-3-decision'
