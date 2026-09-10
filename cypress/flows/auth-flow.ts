@@ -2,7 +2,7 @@ const truthyValues = ['1', 'true', 'yes'];
 const microsoftLoginOrigin = 'https://login.microsoftonline.com';
 
 const shouldUseRealAuth = () => {
-	return isTruthy(getCypressEnv('useRealAuth'));
+	return isTruthy(getPublicCypressConfig('useRealAuth'));
 };
 
 export function skipUnlessRealEnvironmentAuth(context: Mocha.Context) {
@@ -12,7 +12,7 @@ export function skipUnlessRealEnvironmentAuth(context: Mocha.Context) {
 }
 
 const shouldRunNotifySmoke = () => {
-	return isTruthy(getCypressEnv('notifySmokeEnabled'));
+	return isTruthy(getPublicCypressConfig('notifySmokeEnabled'));
 };
 
 export function skipUnlessNotifySmokeEnabled(context: Mocha.Context) {
@@ -98,6 +98,10 @@ function ignoreMicrosoftAuthCdnRetryErrors() {
 
 function getCypressEnv(name: string) {
 	return Cypress.env(name) ?? Cypress.env(toScreamingSnake(name));
+}
+
+function getPublicCypressConfig(name: string) {
+	return Cypress.expose(name) ?? getCypressEnv(name);
 }
 
 function toScreamingSnake(name: string) {
