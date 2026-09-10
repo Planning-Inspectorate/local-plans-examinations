@@ -20,18 +20,21 @@ const JOURNEY_ID = 'edit-case-overview';
 const CASE_ID = '11111111-1111-1111-1111-111111111111';
 const CURRENT_USER = 'Joe Bloggs';
 const MOCK_DOCUMENT_SETS = [
-	{
-		id: '1',
-		folderName: 'gateway-2-report'
-	},
-	{
-		id: '2',
-		folderName: 'signed-sla'
-	},
-	{
-		id: '3',
-		folderName: 'gateway-3-document'
-	}
+	{ id: '1', folderName: 'covering-letter' },
+	{ id: '2', folderName: 'local-plan-timetable' },
+	{ id: '3', folderName: 'project-initiation-document' },
+	{ id: '4', folderName: 'draft-stat-compliance' },
+	{ id: '5', folderName: 'draft-stat-soundness' },
+	{ id: '6', folderName: 'notice-of-intent' },
+	{ id: '7', folderName: 'scoping-cons' },
+	{ id: '8', folderName: 'cons-summ' },
+	{ id: '9', folderName: 'g1-self-assess' },
+	{ id: '10', folderName: 'cons-of-proposed' },
+	{ id: '11', folderName: 'summary-of-consultation' },
+	{ id: '12', folderName: 'subsequent-work-towards-a-draft-plan' },
+	{ id: '13', folderName: 'gateway-2-report' },
+	{ id: '14', folderName: 'signed-sla' },
+	{ id: '15', folderName: 'gateway-3-document' }
 ];
 
 function createService(): any {
@@ -101,18 +104,20 @@ function createSaveContext({
 	params?: Record<string, unknown>;
 	body?: Record<string, unknown>;
 } = {}) {
-	return {
-		req: {
-			url,
-			params: {
-				reference: REFERENCE,
-				...params
-			},
-			body,
-			session: {
-				authEnabled: false
-			}
+	const req: any = {
+		url,
+		params: {
+			reference: REFERENCE,
+			...params
 		},
+		body,
+		session: {
+			authEnabled: false
+		}
+	};
+
+	return {
+		req: req as Request,
 		res: createResponse(),
 		data: {
 			answers: body
@@ -767,7 +772,9 @@ describe('buildGetJourneyMiddleware', () => {
 		reference?: unknown;
 	} = {}) {
 		const service = createService();
-		const req = {
+		service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
+
+		const req: any = {
 			url,
 			params: {
 				reference
