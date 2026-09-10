@@ -57,7 +57,10 @@ describe('FileUploaderQuestion', () => {
 			{ id: 'file-3', fileName: 'bullfrog.jpg' }
 		]);
 
-		assert.equal(row.value, '<ul class="govuk-list"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>');
+		assert.equal(
+			row.value,
+			'<ul class="govuk-list--bullet li"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>'
+		);
 	});
 	it('formats multiple uploaded files as a count of the files when valueDisplayFormat is set to count', () => {
 		const question = buildQuestion({ valueDisplayFormat: 'count' });
@@ -81,7 +84,7 @@ describe('FileUploaderQuestion', () => {
 
 		assert.equal(
 			row.value,
-			'<ul class="govuk-list"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
+			'<ul class="govuk-list--bullet li"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
 		);
 	});
 
