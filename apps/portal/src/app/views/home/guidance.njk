@@ -1,0 +1,87 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block content %}
+    <h1 class="govuk-heading-l">Guidance</h1>
+
+        <h2 class="govuk-tabs__title">Guidance</h2>
+
+            <table class="govuk-table">
+                <caption class="govuk-table__caption govuk-table__caption--m">Overview of assessment stages</caption>
+                <thead class="govuk-table__head">
+                <tr class="govuk-table__row">
+                    <th scope="col" class="govuk-table__header">Stage</th>
+                    <th scope="col" class="govuk-table__header">Typical durations</th>
+                    <th scope="col" class="govuk-table__header">Purpose</th>
+                </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                <tr class="govuk-table__row">
+                    <th scope="row" class="govuk-table__cell">Gateway 1</th>
+                    <td class="govuk-table__cell">Varies</td>
+                    <td class="govuk-table__cell">Self-assessment of readiness. No assessor involved.</td>
+                </tr>
+                <tr class="govuk-table__row">
+                    <th scope="row" class="govuk-table__cell">Gateway 2</th>
+                    <td class="govuk-table__cell">4 to 6 weeks</td>
+                    <td class="govuk-table__cell">Assessor provides advice on progress and emerging soundness issues.</td>
+                </tr>
+                <tr class="govuk-table__row">
+                    <th scope="row" class="govuk-table__cell">Gateway 3</th>
+                    <td class="govuk-table__cell">4 to 6 weeks</td>
+                    <td class="govuk-table__cell">Formal stop/go check before examination.</td>
+                </tr>
+                <tr class="govuk-table__row">
+                    <th scope="row" class="govuk-table__cell">Examination</th>
+                    <td class="govuk-table__cell">Up to 6 months</td>
+                    <td class="govuk-table__cell">Independent examination by an Inspector.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h2 class="govuk-heading-m">Document requirements</h2>
+
+            <div class="govuk-accordion" id="document-accordion" data-module="govuk-accordion">
+                <div class="govuk-accordion__section">
+                    <div class="govuk-accordion__section-header">
+                        <h3 class="govuk-accordion__section-heading">
+                            <span class="govuk-accordion__section-button">Gateway 2</span>
+                        </h3>
+                    </div>
+                    <div id="document-accordion-content-1" class="govuk-accordion__section-content" hidden>
+                        <p class="govuk-body">Placeholder: list documents required at Gateway 2. (Copy will be provided later.)</p>
+                    </div>
+                </div>
+
+                <div class="govuk-accordion__section">
+                    <div class="govuk-accordion__section-header">
+                        <h3 class="govuk-accordion__section-heading">
+                            <span class="govuk-accordion__section-button">Gateway 3</span>
+                        </h3>
+                    </div>
+                    <div id="document-accordion-content-2" class="govuk-accordion__section-content" hidden>
+                        <p class="govuk-body">Placeholder: list documents required at Gateway 3. (Copy will be provided later.)</p>
+                    </div>
+                </div>
+
+                <div class="govuk-accordion__section">
+                    <div class="govuk-accordion__section-header">
+                        <h3 class="govuk-accordion__section-heading">
+                            <span class="govuk-accordion__section-button">Examination</span>
+                        </h3>
+                    </div>
+                    <div id="document-accordion-content-3" class="govuk-accordion__section-content" hidden>
+                        <p class="govuk-body">Placeholder: list documents required for Examination. (Copy will be provided later.)</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="govuk-heading-m">Related content</h2>
+
+            <ul class="govuk-list">
+                <li><a class="govuk-link" href="https://www.gov.uk/guidance/procedural-guide-for-examinations-and-gateways-under-the-town-and-country-planning-local-planning-england-regulations-2026" target="_blank" rel="noopener">Planning Inspectorate procedural guide</a></li>
+                <li><a class="govuk-link" href="https://www.gov.uk/government/collections/create-or-update-a-local-plan-using-the-new-system" rel="noopener">Create or update a local plan using the new system</a></li>
+                <li><a class="govuk-link" href="https://www.gov.uk/guidance/gateway-2-assessment-for-local-plans-what-you-need-to-do" rel="noopener">Gateway 2 assessment for local plans: what you need to do</a></li>
+                <li><a class="govuk-link" href="https://www.gov.uk/guidance/gateway-3-for-local-plans-what-you-need-to-do" rel="noopener">Gateway 3 for local plans: what you need to do</a></li>
+            </ul>
+
+{% endblock %}
