@@ -134,17 +134,17 @@ These commands use the normal local auth-disabled setup unless real auth is swit
 
 ```text
 CYPRESS_USE_REAL_AUTH=true
-CYPRESS_AUTH_USERNAME=<from ADO pipeline_secrets>
+CYPRESS_AUTH_USERNAME=svc-localplansuser@planninginspectorate.gov.uk
 CYPRESS_AUTH_PASSWORD=<from ADO pipeline_secrets>
-CYPRESS_AUTH_USER_ID=<from ADO pipeline_secrets>
-CYPRESS_NOTIFY_SMOKE_EMAIL=<from ADO pipeline_secrets>
+CYPRESS_AUTH_USER_ID=7a502c20-3aad-41bf-9eac-3f602d7373ed
+CYPRESS_NOTIFY_SMOKE_EMAIL=svc-localplansuser@planninginspectorate.gov.uk
 CYPRESS_NOTIFY_SMOKE_ENABLED=true
 GOV_NOTIFY_API_KEY=<from Test Key Vault>
 MANAGE_BASE_URL=https://local-plans-manage-test.planninginspectorate.gov.uk
 PORTAL_BASE_URL=https://local-plans-portal-test.planninginspectorate.gov.uk
 ```
 
-The username, password, Entra object id and Notify smoke recipient are stored in Azure DevOps variable group `pipeline_secrets` as `E2E_AUTH_USERNAME`, `E2E_AUTH_PASSWORD`, `E2E_AUTH_USER_ID` and `E2E_NOTIFY_EMAIL`.
+The smoke test user email, Entra object id and Notify smoke recipient are normal pipeline variables because they are not secrets. The password is stored in Azure DevOps variable group `pipeline_secrets` as `E2E_AUTH_PASSWORD`.
 
 The smoke pipeline also fetches `local-plans-sql-app-connection-string` from the Test Key Vault so Cypress can seed the Assigned to me data and clean up Notify smoke data. It fetches `localplans-gov-notify-api-key` so Cypress can poll GOV.UK Notify for the create-case email.
 
