@@ -72,12 +72,11 @@ export default class FileUploaderQuestion extends Question {
 			options.customViewData?.fileUploader?.[sessionKey]?.uploadedFiles ??
 			readUploadedFiles(options.payload?.[fieldName]);
 
-		const question = {
+		viewModel.question = {
 			...viewModel.question,
 			...this.config,
 			editable: this.editable
-		} as typeof viewModel.question & { editable: boolean };
-		viewModel.question = question;
+		};
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
 		viewModel.currentUrl = options.customViewData?.currentUrl;
@@ -202,7 +201,7 @@ function bulletListFormat(files: UploadedFile[], notStartedText: string): string
 	}
 
 	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
-	return `<ul class="govuk-list">${listItems}</ul>`;
+	return `<ul class="govuk-list--bullet li">${listItems}</ul>`;
 }
 
 function countFormat(files: UploadedFile[]): string {
