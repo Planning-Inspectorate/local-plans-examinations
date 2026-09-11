@@ -81,9 +81,9 @@ Coverage levels:
 
 ## Cross-service
 
-| ID            | Area            | Level      | Coverage                                                                                    | Specs                               | Notes                                                                                                                                                                         |
-| ------------- | --------------- | ---------- | ------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| COV-CROSS-001 | Manage → Portal | Regression | A case created in Manage can be opened in the DB-backed Portal Gateway 2 submission journey | `cross-service/manage-portal.cy.ts` | Starts both apps against the same database. Portal plan data is now DB-backed (LP-861) — a stronger My plans/plan-details journey test through this spec could be added next. |
+| ID            | Area            | Level      | Coverage                                                                                    | Specs                               | Notes                                                                                                                                                                               |
+| ------------- | --------------- | ---------- | ------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| COV-CROSS-001 | Manage → Portal | Regression | A case created in Manage can be opened in the DB backed Portal Gateway 2 submission journey | `cross-service/manage-portal.cy.ts` | Starts both apps against the same database. Portal plan data is now DB backed (LP-861) meaning a stronger My plans/plan-details journey test through this spec could be added next. |
 
 ## Known gaps
 
