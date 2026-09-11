@@ -1,0 +1,113 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/accordion/macro.njk" import govukAccordion %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+    <h1 class="govuk-heading-l">Guidance</h1>
+
+    {{ govukTable({
+        caption: "Overview of assessment stages",
+        captionClasses: "govuk-table__caption--m",
+        firstCellIsHeader: true,
+        head: [
+            {
+                text: "Stage"
+            },
+            {
+                text: "Typical durations"
+            },
+            {
+                text: "Purpose"
+            }
+        ],
+        rows: [
+            [
+                {
+                    text: "Gateway 1"
+                },
+                {
+                    text: "Varies"
+                },
+                {
+                    text: "Self-assessment of readiness. No assessor involved."
+                }
+            ],
+            [
+                {
+                    text: "Gateway 2"
+                },
+                {
+                    text: "4 to 6 weeks"
+                },
+                {
+                    text: "Assessor provides advice on progress and emerging soundness issues."
+                }
+            ],
+            [
+                {
+                    text: "Gateway 3"
+                },
+                {
+                    text: "4 to 6 weeks"
+                },
+                {
+                    text: "Formal stop/go check before examination."
+                }
+            ],
+            [
+                {
+                    text: "Examination"
+                },
+                {
+                    text: "Up to 6 months"
+                },
+                {
+                    text: "Independent examination by an Inspector."
+                }
+            ]
+        ]
+    }) }}
+
+            <h2 class="govuk-heading-m">Document requirements</h2>
+
+
+    {{ govukAccordion({
+        id: "document-accordion",
+        items: [
+            {
+                heading: {
+                text: "Gateway 2"
+            },
+                content: {
+                text: 'Placeholder: list documents required at Gateway 2. (Copy will be provided later.)'
+            }
+            },
+            {
+                heading: {
+                text: "Gateway 3"
+            },
+                content: {
+                text: 'Placeholder: list documents required at Gateway 3. (Copy will be provided later.)'
+            }
+            },
+            {
+                heading: {
+                text: "Examination"
+            },
+                content: {
+                text: 'Placeholder: list documents required for Examination. (Copy will be provided later.)'
+            }
+            }
+        ]
+    }) }}
+
+            <h2 class="govuk-heading-m">Related content</h2>
+
+            <ul class="govuk-list">
+                <li><a class="govuk-link" href="https://www.gov.uk/guidance/procedural-guide-for-examinations-and-gateways-under-the-town-and-country-planning-local-planning-england-regulations-2026" target="_blank" rel="noopener">Planning Inspectorate procedural guide</a></li>
+                <li><a class="govuk-link" href="https://www.gov.uk/government/collections/create-or-update-a-local-plan-using-the-new-system" rel="noopener">Create or update a local plan using the new system</a></li>
+                <li><a class="govuk-link" href="https://www.gov.uk/guidance/gateway-2-assessment-for-local-plans-what-you-need-to-do" rel="noopener">Gateway 2 assessment for local plans: what you need to do</a></li>
+                <li><a class="govuk-link" href="https://www.gov.uk/guidance/gateway-3-for-local-plans-what-you-need-to-do" rel="noopener">Gateway 3 for local plans: what you need to do</a></li>
+            </ul>
+
+{% endblock %}

@@ -14,19 +14,15 @@ export function addLocalsConfiguration(clarityId?: string): Handler {
 				href: '/guidance'
 			},
 			{
-				text: 'Account settings',
-				href: '/accountSettings'
-			},
-			{
-				text: 'Manage users',
-				href: '/manageUsers'
+				text: 'Sign out',
+				href: '#'
 			}
 		];
 
 		res.locals.config = {
 			styleFile: 'style.css?v=813b3ed5',
 			cspNonce: res.locals.cspNonce,
-			headerTitle: 'Submit your plan for examination',
+			headerTitle: 'Submit development plans',
 			footerLinks: [
 				{
 					text: 'Terms and conditions',
