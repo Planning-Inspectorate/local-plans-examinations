@@ -23,7 +23,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	['Case officer', /^\/case\/.+\/overview\/case-details\/case-officer$/],
 	['Plan band', /^\/case\/.+\/overview\/case-details\/plan-band$/],
 	['Contact details', /^\/case\/.+\/overview\/contacts\/check-contact-details$/],
-	['Programme Officer details', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
+	['Programme officer', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
 	['Examination website', /^\/case\/.+\/overview\/contacts\/examination-website$/],
 	['Assessor Gateway 2', /^\/case\/.+\/overview\/contacts\/assessor-gateway-2$/],
 	['Assessor Gateway 3', /^\/case\/.+\/overview\/contacts\/assessor-gateway-3$/],

@@ -493,7 +493,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Programme Officer details',
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer',
-		title: 'Programme Officer details'
+		title: 'Programme officer'
 	},
 	//gateway 2
 	gateway2ExpectedDate: {
@@ -501,7 +501,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the expected Gateway 2 date?',
 		fieldName: 'expectedDate',
 		url: 'gateway-2-expected-date',
-		title: 'Gateway 2 expected date',
+		title: 'Expected',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-expected-date' }
 	},
@@ -510,7 +510,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was Gateway 2 completed?',
 		fieldName: 'actualDate',
 		url: 'gateway-2-actual-date',
-		title: 'Gateway 2 actual date',
+		title: 'Submission received',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-actual-date' }
 	},
@@ -535,7 +535,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		],
 		fieldName: 'assessorName',
 		url: 'assessor-gateway-2',
-		title: 'Gateway 2 assessor name',
+		title: 'Assessor',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
@@ -544,7 +544,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the Gateway 2 assessor appointed?',
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
-		title: 'Assessor date of appointment',
+		title: 'Appointed',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
 	},
@@ -624,7 +624,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the expected Gateway 3 date?',
 		fieldName: 'expectedDate',
 		url: 'gateway-3-expected-date',
-		title: 'Gateway 3 expected date',
+		title: 'Expected',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-expected-date' }
 	},
@@ -633,7 +633,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was Gateway 3 completed?',
 		fieldName: 'actualDate',
 		url: 'gateway-3-actual-date',
-		title: 'Gateway 3 actual date',
+		title: 'Submission received',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-actual-date' }
 	},
@@ -649,7 +649,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		],
 		fieldName: 'assessorName',
 		url: 'gateway-3-assessor-name',
-		title: 'Gateway 3 assessor name',
+		title: 'Assessor',
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
 	},
@@ -658,7 +658,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the Gateway 3 assessor appointed?',
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-3-assessor-date-of-appointment',
-		title: 'Gateway 3 assessor date of appointment',
+		title: 'Appointed',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
 	},
@@ -677,7 +677,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When is the expected examination date?',
 		fieldName: 'expectedSubmissionForExaminationDate',
 		url: 'examination-expected-submission-date',
-		title: 'Expected submission date',
+		title: 'Expected',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'examination-expected-submission-date' }
 	},
@@ -686,7 +686,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When is the actual examination date?',
 		fieldName: 'submissionForExaminationDate',
 		url: 'examination-actual-submission-date',
-		title: 'Actual submission date',
+		title: 'Submission received',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'examination-actual-submission-date' }
 	},
