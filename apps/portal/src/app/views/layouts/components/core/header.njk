@@ -9,8 +9,10 @@
 	</div>
 {% endif %}
 
+{% if (isAuthenticated) %}
 {{ govukServiceNavigation({
 	classes: 'pins-service-navigation',
 	serviceName: config.headerTitle,
 	navigation: config.primaryNavigationLinks
 }) }}
+{% endif %}
