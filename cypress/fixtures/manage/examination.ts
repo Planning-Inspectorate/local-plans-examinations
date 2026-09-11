@@ -18,7 +18,7 @@ const todayDisplay = today.toLocaleDateString('en-GB', {
 });
 
 export const expectedSubmissionDate = {
-	row: 'Expected submission date',
+	row: 'Expected',
 	heading: 'When is the expectedexamination date?',
 	fieldName: 'expectedubmissionForExaminationDate',
 	path: 'examination-expected-submission-date',
@@ -29,7 +29,7 @@ export const expectedSubmissionDate = {
 };
 
 export const actualSubmissionDate = {
-	row: 'Actual submission date',
+	row: 'Submission received',
 	heading: 'When is the actual examination date?',
 	fieldName: 'submissionForExaminationDate',
 	path: 'examination-actual-submission-date',

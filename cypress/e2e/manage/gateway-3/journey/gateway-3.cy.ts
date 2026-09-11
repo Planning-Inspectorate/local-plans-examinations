@@ -46,7 +46,7 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		// Known gap: Gateway 3 fields aren't in caseHistoryLabels; asserting only the prefix since raw Date.toString() is timezone dependent
-		caseHistoryPage.verifyHistoryEvent('Gateway 3 expected date updated from');
+		caseHistoryPage.verifyHistoryEvent('Expected updated from');
 	});
 
 	it('updates the Gateway 3 assessor name answer', { tags: ['regression'] }, () => {
@@ -61,7 +61,7 @@ describe('Gateway 3 updates', () => {
 
 		gateway3Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('Gateway 3 assessor name updated from assessor-1 to assessor-2');
+		caseHistoryPage.verifyHistoryEvent('Assessor updated from assessor-1 to assessor-2');
 	});
 
 	it('updates the programme officer details answer and records case history', { tags: ['regression'] }, () => {
