@@ -1,6 +1,7 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -34,12 +35,19 @@
 
         {% set rows = [] %}
         {% for case in cases %}
+          {% set headerStatusText = case.headerStatusText %}
+          {% set headerStatusClasses = case.headerStatusClasses %}
+
+          {% set statusHtml %}
+            {% include "../layouts/components/status-tag.njk" %}
+          {% endset %}
+
           {% set row = [
             { html: '<a href="/case/' + case.reference | urlencode + '/overview"' + '" class="govuk-link">' + case.reference | escape + '</a>' },
             { text: case.planTitle or '-' },
             { text: 'Local Plan' if case.planType == 'local-plan' else (case.planType or '-') },
             { text: case.caseOfficer or '-' },
-            { html: '<strong class="govuk-tag govuk-tag--blue">Submitted</strong>' }
+            { html: statusHtml }
           ] %}
           {% set _ = rows.push(row) %}
         {% endfor %}

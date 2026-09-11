@@ -1,0 +1,13 @@
+{% set resolvedHeaderStatus = headerStatus or {} %}
+{% set resolvedHeaderStatusText = headerStatusText or resolvedHeaderStatus.text or planStatus or (data and data.planStatus) or 'Ready to start' %}
+{% set resolvedHeaderStatusClasses = headerStatusClasses or resolvedHeaderStatus.classes or (data and data.planStatusClasses) %}
+{% set resolvedStatusClassMap = planStatusClassMap or (data and data.planStatusClassMap) or {} %}
+
+{% if not resolvedHeaderStatusClasses %}
+  {% set resolvedHeaderStatusClasses = resolvedStatusClassMap[resolvedHeaderStatusText] or 'govuk-tag--turquoise' %}
+{% endif %}
+
+{{ govukTag({
+  text: resolvedHeaderStatusText,
+  classes: resolvedHeaderStatusClasses
+}) }}
