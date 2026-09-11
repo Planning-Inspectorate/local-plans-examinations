@@ -27,6 +27,8 @@
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
 
+  {% include "../layouts/components/status-tag.njk" %}
+
 {{ govukServiceNavigation({
   navigation: navigation,
   navigationLabel: "Case sections",
