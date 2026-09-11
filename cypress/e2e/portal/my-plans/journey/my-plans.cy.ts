@@ -17,7 +17,7 @@ describe('My plans journey', () => {
 		myPlansPage.verifyPlanOrder(['PLAN-001', 'PLAN-002']);
 	});
 
-	it('does not plans for user with a different email address', { tags: ['regression'] }, () => {
+	it('does not show plans for user with a different email address', { tags: ['regression'] }, () => {
 		cy.setCookie('cookie_consent', 'accept');
 		startPortalOtpLogin(SECOND_TEST_EMAIL);
 		completePortalLogin();
