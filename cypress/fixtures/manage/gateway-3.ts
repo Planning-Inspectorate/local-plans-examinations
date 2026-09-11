@@ -12,7 +12,7 @@ type Gateway3DateAnswer = {
 
 export const gateway3DateAnswers = {
 	gateway3ExpectedDate: {
-		row: 'Gateway 3 expected date',
+		row: 'Expected',
 		heading: 'What is the expected Gateway 3 date?',
 		fieldName: 'expectedDate',
 		path: 'gateway-3-expected-date',
@@ -21,7 +21,7 @@ export const gateway3DateAnswers = {
 		display: '21 July 2026'
 	},
 	gateway3ActualDate: {
-		row: 'Gateway 3 actual date',
+		row: 'Submission received',
 		heading: 'When was Gateway 3 completed?',
 		fieldName: 'actualDate',
 		path: 'gateway-3-actual-date',
@@ -30,7 +30,7 @@ export const gateway3DateAnswers = {
 		display: '1 August 2026'
 	},
 	gateway3AssessorDateAppointment: {
-		row: 'Gateway 3 assessor date of appointment',
+		row: 'Appointed',
 		heading: 'When was the Gateway 3 assessor appointed?',
 		fieldName: 'assessorAppointmentDate',
 		path: 'gateway-3-assessor-date-of-appointment',
@@ -50,7 +50,7 @@ export const gateway3DateAnswers = {
 } as const satisfies Record<string, Gateway3DateAnswer>;
 
 export const gateway3AssessorAnswer = {
-	row: 'Gateway 3 assessor name',
+	row: 'Assessor',
 	path: 'gateway-3-assessor-name',
 	heading: 'Who is the Gateway 3 assessor?',
 	assessor1: 'Assessor 1',
@@ -61,7 +61,7 @@ export const gateway3AssessorAnswer = {
 } as const;
 
 export const gateway3ProgrammeOfficerAnswer = {
-	row: 'Programme Officer details',
+	row: 'Programme officer',
 	path: 'programme-officer',
 	heading: 'Programme Officer details',
 	firstName: 'Albert',

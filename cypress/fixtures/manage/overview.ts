@@ -47,7 +47,7 @@ export const contactDetails = {
 } as const;
 
 export const programmeOfficer = {
-	row: 'Programme Officer details',
+	row: 'Programme officer',
 	path: 'programme-officer',
 	heading: 'Programme Officer details',
 	fieldFirstName: 'programmeOfficerFirstName',
