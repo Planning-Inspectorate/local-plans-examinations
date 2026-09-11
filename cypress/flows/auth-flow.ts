@@ -1,3 +1,5 @@
+import { isMicrosoftAuthCdnError } from '../support/microsoft-auth-errors.js';
+
 const truthyValues = ['1', 'true', 'yes'];
 const microsoftLoginOrigin = 'https://login.microsoftonline.com';
 
@@ -56,7 +58,17 @@ function authenticateWithMicrosoftIfRequired(name: 'manage' | 'portal', signInPa
 					{ args: { loginUrl, password, username } },
 					({ loginUrl, password, username }) => {
 						Cypress.on('uncaught:exception', (error) => {
-							if (error.message.includes('aadcdn.msauth.net') || error.message.includes('aadcdn.msftauth.net')) {
+							const allowedHosts = new Set(['aadcdn.msauth.net', 'aadcdn.msftauth.net']);
+							const urls = error.message.match(/https?:\/\/[^\s)"']+/g) ?? [];
+							const isAllowedMicrosoftAuthCdnError = urls.some((url) => {
+								try {
+									return allowedHosts.has(new URL(url).hostname);
+								} catch {
+									return false;
+								}
+							});
+
+							if (isAllowedMicrosoftAuthCdnError) {
 								return false;
 							}
 						});
@@ -90,7 +102,7 @@ function isTruthy(value: unknown) {
 
 function ignoreMicrosoftAuthCdnRetryErrors() {
 	Cypress.on('uncaught:exception', (error) => {
-		if (error.message.includes('aadcdn.msauth.net') || error.message.includes('aadcdn.msftauth.net')) {
+		if (isMicrosoftAuthCdnError(error)) {
 			return false;
 		}
 	});

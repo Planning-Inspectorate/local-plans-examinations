@@ -2,11 +2,12 @@ import 'cypress-axe';
 import './commands.ts';
 import 'cypress-mochawesome-reporter/register';
 import { register as registerCypressGrep } from '@cypress/grep';
+import { isMicrosoftAuthCdnError } from './microsoft-auth-errors.js';
 
 registerCypressGrep();
 
 Cypress.on('uncaught:exception', (error) => {
-	if (error.message.includes('aadcdn.msauth.net') || error.message.includes('aadcdn.msftauth.net')) {
+	if (isMicrosoftAuthCdnError(error)) {
 		return false;
 	}
 });

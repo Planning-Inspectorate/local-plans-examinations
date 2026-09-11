@@ -96,9 +96,8 @@ function getRequiredAuthUserId() {
 }
 
 function assertSafeTargetDatabase(connectionString: string) {
-	const isRealAuthSmoke = process.env.CYPRESS_USE_REAL_AUTH === 'true';
 	const manageBaseUrl = process.env.MANAGE_BASE_URL || '';
-	const targetsDeployedManage = isRealAuthSmoke && manageBaseUrl && !isLocalUrl(manageBaseUrl);
+	const targetsDeployedManage = manageBaseUrl && !isLocalUrl(manageBaseUrl);
 
 	if (targetsDeployedManage && isLocalDatabaseConnectionString(connectionString)) {
 		throw new Error(
