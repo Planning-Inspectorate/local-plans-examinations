@@ -131,9 +131,7 @@ function getCheckAnswersRedirect(req: Request): boolean | undefined {
 
 // Builds the URL for the current file upload question.
 export function redirectToFileUploaderQuestion(req: Request) {
-	const planReference = getRoutePlanReference(req);
-	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
-	return `${req.baseUrl}${planPath}/gateway-2-submission/${req.params.section}/${req.params.question}`;
+	return `${req.baseUrl}/${req.params.section}/${req.params.question}`;
 }
 
 function getRouteQuestionUrl(req: Request): string | undefined {
