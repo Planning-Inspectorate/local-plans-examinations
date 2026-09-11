@@ -3,7 +3,7 @@ import type { PlanDetailsFixture } from '../../../fixtures/portal/types.ts';
 import { applicationCompletePage } from '../../../page-objects/portal/gw2-application/application-complete-page.ts';
 import { portalDeclarationPage } from '../../../page-objects/portal/gw2-application/declaration-page.ts';
 import { gateway2ApplicationPage } from '../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
-import { portalLandingPage } from '../../../page-objects/portal/landing-page.ts';
+import { myPlansPage } from '../../../page-objects/portal/my-plans-page.ts';
 import { portalLoginEmailPage } from '../../../page-objects/portal/login/email-page.ts';
 import { portalLoginOtpPage } from '../../../page-objects/portal/login/otp-page.ts';
 import { planDetailsPage } from '../../../page-objects/portal/plan-details/plan-details-page.ts';
@@ -35,7 +35,7 @@ describe('Portal accessibility', () => {
 
 	it('checks the Your plans page', { tags: ['accessibility'] }, () => {
 		portalLogin();
-		portalLandingPage.verifyLoaded();
+		myPlansPage.verifyLoaded();
 
 		cy.checkAccessibility();
 	});
@@ -44,7 +44,7 @@ describe('Portal accessibility', () => {
 		portalLogin();
 
 		loadPlanDetails().then((plan) => {
-			portalLandingPage.openPlan(plan.reference);
+			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyHeading(plan.title);
 

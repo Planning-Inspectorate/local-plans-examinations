@@ -2,7 +2,7 @@ import { applicationCompletePage } from '../../../../page-objects/portal/gw2-app
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
+import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { localPlanTimetablePage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
@@ -31,8 +31,8 @@ describe('Application complete page journeys', () => {
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				portalLandingPage.verifyLoaded();
-				portalLandingPage.openPlan(plan.reference);
+				myPlansPage.verifyLoaded();
+				myPlansPage.openPlan(plan.reference);
 				planDetailsPage.verifyLoaded();
 
 				planDetailsPage.gateway2Link.click();

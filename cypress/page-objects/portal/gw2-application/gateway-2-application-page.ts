@@ -80,14 +80,6 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			.and('have.attr', 'type', 'submit');
 	}
 
-	verifyTableHeaders(table: Cypress.Chainable, headers: string[]) {
-		table.within(() => {
-			headers.forEach((header) => {
-				cy.contains('th', header).should('be.visible');
-			});
-		});
-	}
-
 	verifyTableRows(table: Cypress.Chainable, rows: { document: string; status: string; addCy: string }[]) {
 		table.within(() => {
 			rows.forEach(({ document, status, addCy }) => {
