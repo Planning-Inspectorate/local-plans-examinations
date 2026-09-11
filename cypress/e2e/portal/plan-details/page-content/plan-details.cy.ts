@@ -1,6 +1,6 @@
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
+import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
@@ -9,7 +9,7 @@ describe('Plan details page content', () => {
 	beforeEach(() => {
 		portalLogin();
 		loadPlanDetails().then((plan) => {
-			portalLandingPage.openPlan(plan.reference);
+			myPlansPage.openPlan(plan.reference);
 		});
 	});
 
