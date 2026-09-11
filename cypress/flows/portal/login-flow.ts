@@ -2,6 +2,7 @@ import { portalLoginEmailPage } from '../../page-objects/portal/login/email-page
 import { portalLoginOtpPage } from '../../page-objects/portal/login/otp-page.ts';
 
 export const TEST_EMAIL = 'test@planninginspectorate.gov.uk';
+export const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
 
 export const startPortalOtpLogin = (email = TEST_EMAIL) => {
 	cy.task('seedCase');

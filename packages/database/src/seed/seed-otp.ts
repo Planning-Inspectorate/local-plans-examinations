@@ -8,6 +8,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const TEST_OTP = '12345';
 const SALT_ROUNDS = 10;
+const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
 
 async function run() {
 	const config = loadConfig();
@@ -56,37 +57,40 @@ async function run() {
 		}
 	};
 
-	try {
-		await Promise.all(
-			lpas.map((lpa) =>
-				dbClient.lPA.upsert({
-					where: { lpaCode: lpa.lpaCode },
-					update: { lpaName: lpa.lpaName },
-					create: lpa
-				})
-			)
-		);
-
-		// Ensure case record exists for the test email
-		await dbClient.case.upsert({
-			where: { reference: 'PLAN-001' },
+	// Upserts a case sharing the data dates/LPAs/gateway info above
+	// Test relies on createdAt to test cases are ordered correctly
+	function upsertCase({
+		reference,
+		caseEmail,
+		planTitle,
+		createdAt
+	}: {
+		reference: string;
+		caseEmail: string;
+		planTitle: string;
+		createdAt?: Date;
+	}) {
+		return dbClient.case.upsert({
+			where: { reference },
 			update: {
-				email,
+				email: caseEmail,
 				caseOfficer: 'Test Officer',
-				planTitle: 'East Borough Local Plan',
+				planTitle,
 				planType: 'Local Plan',
 				...planDates,
+				...(createdAt ? { createdAt } : {}),
 				lpas: lpaRelations,
 				gateway2Info,
 				gateway3Info
 			},
 			create: {
-				reference: 'PLAN-001',
-				email,
+				reference,
+				email: caseEmail,
 				caseOfficer: 'Test Officer',
-				planTitle: 'East Borough Local Plan',
+				planTitle,
 				planType: 'Local Plan',
 				...planDates,
+				...(createdAt ? { createdAt } : {}),
 				gateway2Info: {
 					create: gateway2Info.upsert.create
 				},
@@ -98,25 +102,52 @@ async function run() {
 				}
 			}
 		});
+	}
 
-		// Always reset OTP lockout to prevent lockout from previous test runs
-		const existingOtp = await dbClient.oneTimePassword.findUnique({ where: { email } });
-		if (existingOtp) {
-			await dbClient.oneTimePassword.update({
-				where: { email },
-				data: { attempts: 0, lockedOutUntil: null }
-			});
-		}
+	async function upsertOtp(otpEmail: string) {
+		const hashedOtp = await bcrypt.hash(TEST_OTP, SALT_ROUNDS);
+		const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+
+		await dbClient.oneTimePassword.upsert({
+			where: { email: otpEmail },
+			update: { hashedOtp, expiresAt, attempts: 0, lockedOutUntil: null },
+			create: { email: otpEmail, hashedOtp, expiresAt }
+		});
+	}
+
+	try {
+		await Promise.all(
+			lpas.map((lpa) =>
+				dbClient.lPA.upsert({
+					where: { lpaCode: lpa.lpaCode },
+					update: { lpaName: lpa.lpaName },
+					create: lpa
+				})
+			)
+		);
+
+		// Case for primary test email
+		await upsertCase({ reference: 'PLAN-001', caseEmail: email, planTitle: 'East Borough Local Plan' });
+
+		// Second case for the same user, date is before today so ordering on the My plans page
+		await upsertCase({
+			reference: 'PLAN-002',
+			caseEmail: email,
+			planTitle: 'West Local Plan',
+			createdAt: new Date('2026-01-01T09:00:00.000Z')
+		});
+
+		// Case for a second user, to prove one user's plans never appear for another user.
+		await upsertCase({
+			reference: 'PLAN-B01',
+			caseEmail: SECOND_TEST_EMAIL,
+			planTitle: 'User B Local Plan'
+		});
 
 		if (!caseOnly) {
-			// Seed OTP
-			const hashedOtp = await bcrypt.hash(TEST_OTP, SALT_ROUNDS);
-			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
-
-			await dbClient.oneTimePassword.update({
-				where: { email },
-				data: { hashedOtp, expiresAt }
-			});
+			// Seed the same known OTP for both test emails so either can log in during a test
+			await upsertOtp(email);
+			await upsertOtp(SECOND_TEST_EMAIL);
 
 			console.log(JSON.stringify({ otp: TEST_OTP }));
 		}
