@@ -1,5 +1,6 @@
 import { startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-page.ts';
+import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
 describe('Portal login OTP validation', () => {
 	beforeEach(() => {
@@ -9,15 +10,15 @@ describe('Portal login OTP validation', () => {
 	it('shows an error when no code is entered', { tags: ['regression'] }, () => {
 		portalLoginOtpPage.saveAndContinue();
 
-		portalLoginOtpPage.verifyErrorSummary('There is a problem', 'Enter the code we sent to you');
-		portalLoginOtpPage.verifyFieldErrorContains('Enter the code we sent to you');
+		portalLoginOtpPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.ENTER_CODE_SENT);
+		portalLoginOtpPage.verifyFieldErrorContains(ERROR_MESSAGES.ENTER_CODE_SENT);
 	});
 
 	it('shows an error for an incorrect code', { tags: ['regression'] }, () => {
 		portalLoginOtpPage.enterOtp('WRONGCODE');
 		portalLoginOtpPage.saveAndContinue();
 
-		portalLoginOtpPage.verifyErrorSummary('There is a problem', 'Enter the code we sent to you');
-		portalLoginOtpPage.verifyFieldErrorContains('Enter the code we sent to you');
+		portalLoginOtpPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.ENTER_CODE_SENT);
+		portalLoginOtpPage.verifyFieldErrorContains(ERROR_MESSAGES.ENTER_CODE_SENT);
 	});
 });
