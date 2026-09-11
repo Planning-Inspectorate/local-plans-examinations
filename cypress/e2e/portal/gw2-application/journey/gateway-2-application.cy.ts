@@ -1,5 +1,5 @@
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
-import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
+import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
@@ -13,8 +13,8 @@ describe('Gateway 2 application page journeys', () => {
 
 	it('Navigates to Plan Details page when the Back link is clicked', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
-			portalLandingPage.verifyLoaded();
-			portalLandingPage.openPlan(plan.reference);
+			myPlansPage.verifyLoaded();
+			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.gateway2Link.click();
 			gateway2ApplicationPage.verifyLoaded();
@@ -25,8 +25,8 @@ describe('Gateway 2 application page journeys', () => {
 
 	it('Navigates to Plan Details page when the Save and come back later link is clicked', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
-			portalLandingPage.verifyLoaded();
-			portalLandingPage.openPlan(plan.reference);
+			myPlansPage.verifyLoaded();
+			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.gateway2Link.click();
 			gateway2ApplicationPage.verifyLoaded();
