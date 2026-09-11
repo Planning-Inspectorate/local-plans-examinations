@@ -104,7 +104,51 @@ The target app is controlled by `TEST_TARGET` in `cypress.config.ts`. If no targ
 
 Reports are written to `cypress/reports`.
 
-Accessibility checks use `cypress-axe` on a small set of Manage and Portal pages. The checks only run the WCAG A/AA tags. Passing these tests does not prove the service is fully compliant - it just helps catch issues axe can spot. The external audit still covers the wider checks.
+## Test environment smoke
+
+The scheduled Test smoke pipeline runs a small subset against the deployed Test apps:
+
+```bash
+npm run cy:manage:test-smoke
+npm run cy:portal:test-smoke
+```
+
+Environment-only checks are tagged `environment-smoke`. The PR E2E pipeline excludes that tag, the normal `cy:*:smoke` scripts exclude it, and the `cy:*:test-smoke` scripts select it directly.
+
+Manage smoke covers home reachability, auth redirect/authorised access, Assigned to me case filtering for the signed-in test user, and a small Notify create-case email smoke when explicitly enabled. Real-auth Manage smoke starts through the Manage app auth route.
+
+Portal smoke starts through the Azure App Service Easy Auth route before opening Portal pages. Portal's own email/OTP login journey is covered separately and should be added to the scheduled smoke pack when stable seeded Test data is in place.
+
+The Assigned to me smoke test upserts deterministic Test database records:
+
+- one case assigned to the configured auth user
+- one control case assigned to another user, which should not appear
+
+This avoids relying on unstable shared Test environment data and does not create unbounded cases on repeated runs.
+
+The Notify smoke uses the real create-case journey, sends the create-case email to the configured smoke recipient, checks GOV.UK Notify by message reference, then soft-deletes the created case from Test. It checks that Notify accepted the email request; it does not scrape an inbox or prove every email template variant.
+
+If the Notify service is in trial mode, the smoke recipient must be a Notify team member or guest recipient.
+
+These commands use the normal local auth-disabled setup unless real auth is switched on. The pipeline sets:
+
+```text
+CYPRESS_USE_REAL_AUTH=true
+CYPRESS_AUTH_USERNAME=svc-localplansuser@planninginspectorate.gov.uk
+CYPRESS_AUTH_PASSWORD=<from ADO pipeline_secrets>
+CYPRESS_AUTH_USER_ID=7a502c20-3aad-41bf-9eac-3f602d7373ed
+CYPRESS_NOTIFY_SMOKE_EMAIL=svc-localplansuser@planninginspectorate.gov.uk
+CYPRESS_NOTIFY_SMOKE_ENABLED=true
+GOV_NOTIFY_API_KEY=<from Test Key Vault>
+MANAGE_BASE_URL=https://local-plans-manage-test.planninginspectorate.gov.uk
+PORTAL_BASE_URL=https://local-plans-portal-test.planninginspectorate.gov.uk
+```
+
+The smoke test user email, Entra object id and Notify smoke recipient are normal pipeline variables because they are not secrets. The password is stored in Azure DevOps variable group `pipeline_secrets` as `E2E_AUTH_PASSWORD`.
+
+The smoke pipeline also fetches `local-plans-sql-app-connection-string` from the Test Key Vault so Cypress can seed the Assigned to me data and clean up Notify smoke data. It fetches `localplans-gov-notify-api-key` so Cypress can poll GOV.UK Notify for the create-case email.
+
+Accessibility checks use `cypress-axe` on a small set of Manage and Portal pages. The checks only run the WCAG A/AA tags. Axe will not catch every accessibility issue. For example, a repeated `Add` link can pass if it has text, even if a screen reader user would not know what it adds. Passing these tests does not prove the service is fully compliant - it just helps catch issues axe can spot. The external audit still covers the wider checks.
 
 If axe finds a new violation, treat it like any other failing quality gate. 
 
@@ -122,7 +166,10 @@ Some Cypress specs also seed data through Cypress tasks, for example:
 
 - `seedDb`: creates case data for tests such as case overview
 - `seedCase`: creates a portal case without an OTP
+- `seedAssignedToMeCase`: upserts one case assigned to the configured auth user and one unassigned control case
 - `seedOtp`: creates portal login data and returns an OTP for the test
+- `softDeleteCaseByReference`: soft-deletes a created Test case after an environment smoke
+- `waitForNotifyEmailByReference`: polls GOV.UK Notify for the create-case smoke email
 - `clearDb`: clears the database between tests that need a clean state
 
 Journey tests should prefer creating data through the UI where that is the behaviour under test.

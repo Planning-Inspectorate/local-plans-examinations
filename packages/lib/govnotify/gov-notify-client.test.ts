@@ -8,6 +8,7 @@ import { GovNotifyClient } from './gov-notify-client.ts';
 type MockNotifyClient = {
 	sendEmail: ReturnType<typeof mock.fn>;
 	getNotificationById: ReturnType<typeof mock.fn>;
+	getNotifications: ReturnType<typeof mock.fn>;
 };
 
 type TestableGovNotifyClient = GovNotifyClient & {
@@ -17,7 +18,8 @@ type TestableGovNotifyClient = GovNotifyClient & {
 function createMockNotifyClient(): MockNotifyClient {
 	return {
 		sendEmail: mock.fn(),
-		getNotificationById: mock.fn()
+		getNotificationById: mock.fn(),
+		getNotifications: mock.fn()
 	};
 }
 
@@ -66,6 +68,8 @@ describe('GovNotifyClient', () => {
 			assert.strictEqual(logger.error.mock.callCount(), 1);
 			const logArgs = logger.error.mock.calls[0].arguments;
 			assert.strictEqual(logArgs[0].templateId, 'template-123');
+			assert.strictEqual(logArgs[0].message, 'API timeout');
+			assert.strictEqual(logArgs[0].error, undefined);
 		});
 
 		it('should log Notify API errors when present in response', async () => {
@@ -133,6 +137,48 @@ describe('GovNotifyClient', () => {
 			assert.strictEqual(logger.error.mock.callCount(), 1);
 			const logArgs = logger.error.mock.calls[0].arguments;
 			assert.strictEqual(logArgs[0].notificationId, 'notif-999');
+		});
+	});
+
+	describe('getEmailNotificationsByReference', () => {
+		it('should return email notifications for a reference', async () => {
+			const { logger, client, mockNotify } = createTestClient();
+			mockNotify.getNotifications.mock.mockImplementation(async () => ({
+				data: {
+					notifications: [{ id: 'notif-1', reference: 'create-case:PLAN-123456', status: 'delivered' }]
+				}
+			}));
+
+			const result = await client.getEmailNotificationsByReference('create-case:PLAN-123456');
+
+			assert.deepStrictEqual(result, [{ id: 'notif-1', reference: 'create-case:PLAN-123456', status: 'delivered' }]);
+			assert.deepStrictEqual(mockNotify.getNotifications.mock.calls[0].arguments, [
+				'email',
+				undefined,
+				'create-case:PLAN-123456'
+			]);
+			assert.strictEqual(logger.info.mock.callCount(), 1);
+		});
+
+		it('should throw and log when fetching email notifications fails', async () => {
+			const originalError = new Error('Notify unavailable');
+			const { logger, client, mockNotify } = createTestClient();
+			mockNotify.getNotifications.mock.mockImplementation(async () => {
+				throw originalError;
+			});
+
+			await assert.rejects(
+				() => client.getEmailNotificationsByReference('create-case:PLAN-123456'),
+				(err) => {
+					assert.match(err.message, /failed to fetch email notifications/);
+					assert.strictEqual(err.cause, originalError);
+					return true;
+				}
+			);
+
+			assert.strictEqual(logger.error.mock.callCount(), 1);
+			const logArgs = logger.error.mock.calls[0].arguments;
+			assert.strictEqual(logArgs[0].reference, 'create-case:PLAN-123456');
 		});
 	});
 });
