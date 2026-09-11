@@ -41,6 +41,33 @@ const factCheckUpdates = [
 	{ answer: finalReportIssueDate, page: finalReportIssueDatePage }
 ];
 
+const updateDateAnswer = (answer: typeof actualSubmissionDate, page: typeof actualSubmissionDatePage) => {
+	examinationPage.openActionLinkFor(answer.row);
+
+	page.verifyLoaded(answer.input);
+	page.enterDate(answer.updatedInput);
+
+	examinationPage.verifyLoaded(seededCase.planTitle);
+	examinationPage.verifySummaryRowContains(answer.row, answer.updatedDisplay);
+};
+
+const returnFromDatePage = (answer: typeof actualSubmissionDate, page: typeof actualSubmissionDatePage) => {
+	examinationPage.openActionLinkFor(answer.row);
+	page.verifyLoaded(answer.input);
+	page.goBack();
+
+	examinationPage.verifyLoaded(seededCase.planTitle);
+	examinationPage.verifySummaryRowContains(answer.row, answer.display);
+};
+
+const openCaseHistory = () => {
+	examinationPage.openServiceNavigationItem('Case History');
+	caseHistoryPage.verifyLoaded();
+};
+
+const historyEventFor = (answer: typeof actualSubmissionDate) =>
+	`${answer.row} updated from ${answer.display} to ${answer.updatedDisplay}`;
+
 describe('Examination updates', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
@@ -50,28 +77,14 @@ describe('Examination updates', () => {
 	after(() => cy.task('clearDb'));
 
 	it('updates an Examination date and records case history', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(actualSubmissionDate.row);
+		updateDateAnswer(actualSubmissionDate, actualSubmissionDatePage);
 
-		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
-		actualSubmissionDatePage.enterDate(actualSubmissionDate.updatedInput);
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(actualSubmissionDate.row, actualSubmissionDate.updatedDisplay);
-
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent(
-			`Actual submission date updated from ${actualSubmissionDate.display} to ${actualSubmissionDate.updatedDisplay}`
-		);
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(historyEventFor(actualSubmissionDate));
 	});
 
 	it('returns to Examination from an Examination date page back link', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(actualSubmissionDate.row);
-		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
-		actualSubmissionDatePage.goBack();
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(actualSubmissionDate.row, actualSubmissionDate.display);
+		returnFromDatePage(actualSubmissionDate, actualSubmissionDatePage);
 	});
 
 	it('updates an Examining Inspector and records case history', { tags: ['regression'] }, () => {
@@ -84,8 +97,7 @@ describe('Examination updates', () => {
 		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.updatedInput);
 
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
+		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent('Examining Inspector 1 updated from inspector-1 to inspector-4');
 	});
 
@@ -102,20 +114,19 @@ describe('Examination updates', () => {
 	it('updates the Examination website and records case history', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examinationWebsite.row);
 
-		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
-		examinationWebsitePage.enterExaminationWebsite(examinationWebsite.updatedValue);
+		examinationWebsitePage.verifyLoaded();
+		examinationWebsitePage.enterAnswer(examinationWebsite.updatedValue);
 
 		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.updatedValue);
 
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
+		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(`Examination website updated to ${examinationWebsite.updatedValue}`);
 	});
 
 	it('returns to Examination from an Examination website page back link', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examinationWebsite.row);
-		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
+		examinationWebsitePage.verifyLoaded();
 		examinationWebsitePage.goBack();
 
 		examinationPage.verifyLoaded(seededCase.planTitle);
@@ -123,59 +134,30 @@ describe('Examination updates', () => {
 	});
 
 	it('updates a Letter date and records case history', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(letterSentToMHCLGDate.row);
+		updateDateAnswer(letterSentToMHCLGDate, letterSentToMHCLGDatePage);
 
-		letterSentToMHCLGDatePage.verifyLoaded(letterSentToMHCLGDate.input);
-		letterSentToMHCLGDatePage.enterDate(letterSentToMHCLGDate.updatedInput);
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(letterSentToMHCLGDate.row, letterSentToMHCLGDate.updatedDisplay);
-
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent(
-			`Letter sent to MHCLG date updated from ${letterSentToMHCLGDate.display} to ${letterSentToMHCLGDate.updatedDisplay}`
-		);
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(historyEventFor(letterSentToMHCLGDate));
 	});
 
 	it('returns to Examination from a Letter date page back link', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(letterSentToMHCLGDate.row);
-		letterSentToMHCLGDatePage.verifyLoaded(letterSentToMHCLGDate.input);
-		letterSentToMHCLGDatePage.goBack();
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(letterSentToMHCLGDate.row, letterSentToMHCLGDate.display);
+		returnFromDatePage(letterSentToMHCLGDate, letterSentToMHCLGDatePage);
 	});
 
 	it('updates Fact Check dates and records case history', { tags: ['regression'] }, () => {
 		factCheckUpdates.forEach(({ answer, page }) => {
-			examinationPage.openActionLinkFor(answer.row);
-
-			page.verifyLoaded(answer.input);
-			page.enterDate(answer.updatedInput);
-
-			examinationPage.verifyLoaded(seededCase.planTitle);
-			examinationPage.verifySummaryRowContains(answer.row, answer.updatedDisplay);
+			updateDateAnswer(answer, page);
 		});
 
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
+		openCaseHistory();
 
 		factCheckUpdates.forEach(({ answer }) => {
-			caseHistoryPage.verifyHistoryEvent(`${answer.row} updated from ${answer.display} to ${answer.updatedDisplay}`);
+			caseHistoryPage.verifyHistoryEvent(historyEventFor(answer));
 		});
 	});
 
 	it('returns to Examination from a Fact Check date page back link', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(factCheckDateReceivedFromInspector.row);
-		factCheckDateReceivedFromInspectorPage.verifyLoaded(factCheckDateReceivedFromInspector.input);
-		factCheckDateReceivedFromInspectorPage.goBack();
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(
-			factCheckDateReceivedFromInspector.row,
-			factCheckDateReceivedFromInspector.display
-		);
+		returnFromDatePage(factCheckDateReceivedFromInspector, factCheckDateReceivedFromInspectorPage);
 	});
 
 	it('updates QA Inspector 1 question and records case history', { tags: ['regression'] }, () => {
@@ -190,8 +172,7 @@ describe('Examination updates', () => {
 			QAInspectorsAnswers.QAInspector1.updatedDisplay
 		);
 
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
+		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated from inspector-1 to inspector-2');
 	});
 
@@ -199,32 +180,15 @@ describe('Examination updates', () => {
 		'updates QA panel response sent to Inspector Date question and records case history',
 		{ tags: ['regression'] },
 		() => {
-			examinationPage.openActionLinkFor(QADateAnswers.QAPanelResponseDate.row);
+			updateDateAnswer(QADateAnswers.QAPanelResponseDate, QAPanelResponseDatePage);
 
-			QAPanelResponseDatePage.verifyLoaded(QADateAnswers.QAPanelResponseDate.input);
-			QAPanelResponseDatePage.enterDate(QADateAnswers.QAPanelResponseDate.updatedInput);
-
-			examinationPage.verifyLoaded(seededCase.planTitle);
-			examinationPage.verifySummaryRowContains(
-				QADateAnswers.QAPanelResponseDate.row,
-				QADateAnswers.QAPanelResponseDate.updatedDisplay
-			);
-
-			examinationPage.openServiceNavigationItem('Case History');
-			caseHistoryPage.verifyLoaded();
-			caseHistoryPage.verifyHistoryEvent(
-				`QA panel response sent to Inspector updated from ${QADateAnswers.QAPanelResponseDate.display} to ${QADateAnswers.QAPanelResponseDate.updatedDisplay}`
-			);
+			openCaseHistory();
+			caseHistoryPage.verifyHistoryEvent(historyEventFor(QADateAnswers.QAPanelResponseDate));
 		}
 	);
 
 	it('updates Important Dates and records case history', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(planPauseStartDate.row);
-		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
-		planPauseStartDatePage.enterDate(planPauseStartDate.updatedInput);
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.updatedDisplay);
+		updateDateAnswer(planPauseStartDate, planPauseStartDatePage);
 
 		examinationPage.openActionLinkFor(soundUnsound.row);
 		soundUnsoundPage.verifyLoaded(soundUnsound.value);
@@ -233,23 +197,15 @@ describe('Examination updates', () => {
 		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(soundUnsound.row, soundUnsound.updatedDisplay);
 
-		examinationPage.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
+		openCaseHistory();
 
-		caseHistoryPage.verifyHistoryEvent(
-			`${planPauseStartDate.row} updated from ${planPauseStartDate.display} to ${planPauseStartDate.updatedDisplay}`
-		);
+		caseHistoryPage.verifyHistoryEvent(historyEventFor(planPauseStartDate));
 		caseHistoryPage.verifyHistoryEvent(
 			`${soundUnsound.row} updated from ${soundUnsound.display} to ${soundUnsound.updatedDisplay}`
 		);
 	});
 
 	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
-		examinationPage.openActionLinkFor(planPauseStartDate.row);
-		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
-		planPauseStartDatePage.goBack();
-
-		examinationPage.verifyLoaded(seededCase.planTitle);
-		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.display);
+		returnFromDatePage(planPauseStartDate, planPauseStartDatePage);
 	});
 });

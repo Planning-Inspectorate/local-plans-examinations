@@ -12,11 +12,13 @@ The tests run against real local app instances:
 
 Run these commands from the repo root.
 
-1. Install Node 22 and Docker.
-2. Install dependencies:
+1. Install Node 24.18 or later and Docker Desktop.
+
+2. Make sure your branch is up to date:
 
    ```bash
-   npm i
+   git fetch origin
+   git pull --rebase
    ```
 
 3. Create local env files from the examples:
@@ -27,7 +29,13 @@ Run these commands from the repo root.
    cp apps/portal/.env.example apps/portal/.env
    ```
 
-4. For local back office testing, set `AUTH_DISABLED` in `apps/manage/.env` depending on what you're testing:
+4. Install dependencies:
+
+   ```bash
+   npm ci
+   ```
+
+5. For local back office testing, set `AUTH_DISABLED` in `apps/manage/.env` depending on what you're testing:
 
    - **Most manual and automated tests**: leave auth disabled, no sign-in required:
 
@@ -36,26 +44,28 @@ Run these commands from the repo root.
      ```
 
    - **Testing user sign-in specifically** (for example, confirming a user's name is recorded against a case): enable real sign-in and populate the `AUTH_*` fields with real values:
-   (`AUTH_CLIENT_ID`, 
-   `AUTH_CLIENT_SECRET`, 
-   `AUTH_TENANT_ID`, 
-   `AUTH_GROUP_APPLICATION_ACCESS`, 
-   `ENTRA_GROUP_ID_CASE_OFFICERS`, 
-   `ENTRA_GROUP_ID_INSPECTORS`) 
+     (`AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_TENANT_ID`, `AUTH_GROUP_APPLICATION_ACCESS`, `ENTRA_GROUP_ID_CASE_OFFICERS`, `ENTRA_GROUP_ID_INSPECTORS`)
 
      ```text
      AUTH_DISABLED=false
      ```
 
-5. Start SQL Server and apply migrations:
+6. Start the local Docker services:
 
    ```bash
-   docker compose up -d mssql
-   npm run db-generate
-   npm run db-migrate-dev
+   docker compose pull
+   docker compose up -d
    ```
 
-6. Start the app you want to test in a separate terminal:
+7. Apply migrations and seed Cypress test data:
+
+   ```bash
+   npm run db-migrate-dev
+   npm run db-clear
+   node packages/database/src/seed/seed-cy.ts
+   ```
+
+8. Start the app you want to test in a separate terminal:
 
    ```bash
    npm run dev --workspace=local-plans-manage
@@ -68,6 +78,16 @@ Run these commands from the repo root.
    ```
 
 If you change env values, restart the relevant app before rerunning tests.
+
+If Prisma says a migration was modified after it was applied, reset the local database and seed it again:
+
+```bash
+npm run db-reset
+npm run db-clear
+node packages/database/src/seed/seed-cy.ts
+```
+
+Only use `db-reset` against your local development database.
 
 ## Running tests
 
@@ -167,21 +187,13 @@ Use the folders by intent:
 
 ### File uploads (Azurite)
 
-Portal document upload screens store files in Azure Blob Storage. Locally this is emulated with [Azurite]
-
-Install it globally:
+Portal document upload screens store files in Azure Blob Storage. Locally this is emulated with Azurite from Docker Compose.
 
 ```bash
-npm install -g azurite
+docker compose up -d azurite
 ```
 
-Then run it in a separate terminal before testing uploads:
-
-```bash
-azurite --skipApiVersionCheck
-```
-
-Azurite creates local files (`AzuriteConfig`, `__azurite_db_*__.json`, `__blobstorage__/`) into whichever directory you run it from — these are gitignored.
+Azurite data is stored under `tmp/azurite-data` by default and is gitignored.
 
 ## Pipeline
 
@@ -231,5 +243,13 @@ npm run dev --workspace=local-plans-portal
 ```
 
 If migrations cannot reach SQL Server, wait a few seconds after `docker compose up -d mssql` and rerun `npm run db-migrate-dev`.
+
+If migrations say your local database needs to be reset:
+
+```bash
+npm run db-reset
+npm run db-clear
+node packages/database/src/seed/seed-cy.ts
+```
 
 If Notify is not part of the test you are running, keep `GOV_NOTIFY_DISABLED=true` locally to avoid noisy email errors.

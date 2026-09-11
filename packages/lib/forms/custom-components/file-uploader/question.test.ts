@@ -48,8 +48,8 @@ describe('FileUploaderQuestion', () => {
 		assert.equal(row.value, 'cover-letter.pdf');
 	});
 
-	it('formats multiple uploaded files as a bullet list', () => {
-		const question = buildQuestion();
+	it('formats multiple uploaded files as a bullet list when valueDisplayFormat is set to items', () => {
+		const question = buildQuestion({ valueDisplayFormat: 'items' });
 
 		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
 			{ id: 'file-1', fileName: 'beach.jpg' },
@@ -57,7 +57,21 @@ describe('FileUploaderQuestion', () => {
 			{ id: 'file-3', fileName: 'bullfrog.jpg' }
 		]);
 
-		assert.equal(row.value, '<ul class="govuk-list"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>');
+		assert.equal(
+			row.value,
+			'<ul class="govuk-list--bullet li"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>'
+		);
+	});
+	it('formats multiple uploaded files as a count of the files when valueDisplayFormat is set to count', () => {
+		const question = buildQuestion({ valueDisplayFormat: 'count' });
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
+			{ id: 'file-1', fileName: 'beach.jpg' },
+			{ id: 'file-2', fileName: 'bridge.jpg' },
+			{ id: 'file-3', fileName: 'bullfrog.jpg' }
+		]);
+
+		assert.equal(row.value, '<ul class="govuk-list">3 documents</ul>');
 	});
 
 	it('escapes uploaded file names before rendering summary HTML', () => {
@@ -70,8 +84,29 @@ describe('FileUploaderQuestion', () => {
 
 		assert.equal(
 			row.value,
-			'<ul class="govuk-list"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
+			'<ul class="govuk-list--bullet li"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
 		);
+	});
+
+	it('returns a view model when there are validation errors', () => {
+		const question = buildQuestion();
+		const viewModel = {};
+		question.toViewModel = () => viewModel as any;
+
+		const result = question.checkForValidationErrors(
+			{
+				body: {
+					errorSummary: ['error'],
+					errors: { documents: 'error' }
+				},
+				session: {},
+				originalUrl: '/documents',
+				params: {}
+			} as any,
+			'section',
+			buildJourney() as any
+		);
+		assert.equal(result, viewModel);
 	});
 });
 
@@ -81,7 +116,7 @@ function buildJourney() {
 	};
 }
 
-function buildQuestion() {
+function buildQuestion(overrides = {}) {
 	return new FileUploaderQuestion({
 		title: 'Documents',
 		question: 'Upload documents',
@@ -91,6 +126,9 @@ function buildQuestion() {
 		maxFileSizeBytes: 1000,
 		maxFileSizeLabel: '1KB',
 		maxTotalUploadSizeBytes: 2000,
-		maxTotalUploadSizeLabel: '2KB'
+		maxTotalUploadSizeLabel: '2KB',
+		valueDisplayFormat: 'items',
+		actionButtonVisibleInSummary: true,
+		...overrides
 	});
 }

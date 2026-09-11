@@ -79,8 +79,7 @@ describe('Examination page content', () => {
 
 		examinationPage.openActionLinkFor(examinationWebsite.row);
 
-		examinationWebsitePage.verifyLoaded(examinationWebsite.heading);
-		examinationWebsitePage.examinationWebsiteInput.should('have.value', '');
+		examinationWebsitePage.verifyLoaded('');
 	});
 
 	it('displays the Examination Letters content for a case', { tags: ['smoke', 'regression'] }, () => {
