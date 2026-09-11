@@ -108,10 +108,8 @@ describe('buildSaveController', () => {
 			'jane@lpa.gov.uk',
 			{
 				personalisation: {
-					plan_ref: caseData.reference,
-					lpa_name: 'Local Planning Authority 1, Local Planning Authority 2',
-					plan_type: 'Local Plan',
-					team_email_address: 'enquiries@planninginspectorate.gov.uk'
+					portalLoginURL: 'http://localhost:3000/login',
+					caseReference: caseData.reference
 				},
 				reference: `create-case:${caseData.reference}`
 			}
@@ -121,10 +119,8 @@ describe('buildSaveController', () => {
 			'bob@lpa.gov.uk',
 			{
 				personalisation: {
-					plan_ref: caseData.reference,
-					lpa_name: 'Local Planning Authority 1, Local Planning Authority 2',
-					plan_type: 'Local Plan',
-					team_email_address: 'enquiries@planninginspectorate.gov.uk'
+					portalLoginURL: 'http://localhost:3000/login',
+					caseReference: caseData.reference
 				},
 				reference: `create-case:${caseData.reference}`
 			}

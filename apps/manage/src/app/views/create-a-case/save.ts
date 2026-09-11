@@ -6,8 +6,6 @@ import * as authSession from '@planning-inspectorate/core/auth';
 import { parseDate } from '../../util/date.ts';
 import { questions } from './questions.ts';
 
-const DEFAULT_TEAM_EMAIL_ADDRESS = 'enquiries@planninginspectorate.gov.uk';
-
 /**
  * The structure of data for the journey answers
  * depends on the fieldName for each question
@@ -66,24 +64,22 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		if (!service.notifyClient) {
 			service.logger.warn('Notify client not configured');
 		} else {
+			const portalUrl = process.env.PORTAL_URL;
 			const templateID = process.env.GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID;
+			if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
 			if (!templateID) throw new Error('GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID environment variable is not set');
+			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 			const notifyReference = `create-case:${caseReference}`;
-			const lpaName = uniqueLpaCodes.map((lpaCode) => getOptionText('lpa', lpaCode)).join(', ');
-			const planType = getOptionText('planType', answers.planType);
-			const teamEmailAddress = process.env.TEAM_EMAIL_ADDRESS || DEFAULT_TEAM_EMAIL_ADDRESS;
-			const personalisation: Record<string, string> = {};
-			personalisation['plan_ref'] = caseReference;
-			personalisation['lpa_name'] = lpaName;
-			personalisation['plan_type'] = planType;
-			personalisation['team_email_address'] = teamEmailAddress;
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {
 					try {
 						await service.notifyClient?.sendEmail(templateID, email.trim(), {
-							personalisation,
+							personalisation: {
+								portalLoginURL,
+								caseReference
+							},
 							reference: notifyReference
 						});
 						service.logger.info({ email: email }, 'create a case - email sent');
@@ -178,6 +174,6 @@ async function saveDataToDatabase(
 	});
 }
 
-function getOptionText(question: 'lpa' | 'planType', value: string): string {
+function getOptionText(question: 'lpa', value: string): string {
 	return questions[question].options.find((option: any) => option.value === value)?.text || value;
 }
