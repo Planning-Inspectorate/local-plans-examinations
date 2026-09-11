@@ -13,7 +13,8 @@ export const STATUS = {
 	WithPINS: 2,
 	ActionNeeded: 3,
 	Invalid: 4,
-	Completed: 5
+	Completed: 5,
+	UnderReview: 6
 } as const;
 
 //state constants: the state of an individual document/section
@@ -28,7 +29,7 @@ export const STATE = {
 export const validStageTypes = [0, 1, 2, 3] as const;
 export type Stage = (typeof validStageTypes)[number];
 
-export const validStatusTypes = [0, 1, 2, 3, 4, 5] as const;
+export const validStatusTypes = [0, 1, 2, 3, 4, 5, 6] as const;
 export type Status = (typeof validStatusTypes)[number];
 
 export const validStates = [0, 1, 2] as const;
@@ -55,7 +56,8 @@ export const StatusLabel: Record<Status, string> = {
 	2: 'With PINS',
 	3: 'Action required',
 	4: 'Invalid',
-	5: 'Completed'
+	5: 'Completed',
+	6: 'Under review'
 };
 
 export const StateLabel: Record<State, string> = {
@@ -98,7 +100,8 @@ export const StatusTag = {
 	2: { label: 'With PINS', class: 'govuk-tag govuk-tag--yellow' },
 	3: { label: 'Action required', class: 'govuk-tag govuk-tag--red' },
 	4: { label: 'Invalid', class: 'govuk-tag govuk-tag--grey' },
-	5: { label: 'Completed', class: 'govuk-body' }
+	5: { label: 'Completed', class: 'govuk-body' },
+	6: { label: 'Under review', class: 'govuk-tag govuk-tag--yellow' }
 } as const;
 
 export const StateTag = {
@@ -388,6 +391,15 @@ export function buildTestPlans(): unknown[] {
 			stage: 1,
 			status: 2,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		},
+		{
+			refNum: 'PLAN-008',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'Riverside Local Plan',
+			stage: 1,
+			status: 6,
+			dates: { G1: '7 May 2026', G2: '1 September 2026', G3: '1 November 2026', E: '1 January 2027' }
 		}
 	];
 	return buildPlans(testData);
