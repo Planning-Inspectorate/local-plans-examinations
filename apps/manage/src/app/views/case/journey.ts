@@ -62,6 +62,10 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway3AssessorsName)
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)
 				.addQuestion(questions.programmeOfficerDetails)
+				.addQuestion(questions.examinationWebsite),
+			new Section('Gateway 3 submission', 'gateway-3-submission')
+				.addQuestion(questions.gateway3Documents)
+				.addQuestion(questions.gateway3Decision)
 				.addQuestion(questions.gateway3CompletionDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -85,6 +89,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2ValidDate)
+				.addQuestion(questions.gateway2Documents)
 				.addQuestion(questions.gateway2AssessorsName)
 				.addQuestion(questions.assessorDateOfAppointment)
 				.addQuestion(questions.workshopDate)

@@ -24,3 +24,12 @@ $font-family: arial, helvetica, sans-serif;
 .pins-white-space-pre-wrap {
 	white-space: pre-wrap;
 }
+
+.pins-custom-file-reviewer-actions {
+	.govuk-summary-list__actions-list-item {
+		display: block;
+		padding-left: 0;
+		margin-left: 0;
+		border-left: 0;
+	}
+}

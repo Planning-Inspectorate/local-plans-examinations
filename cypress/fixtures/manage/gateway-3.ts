@@ -8,6 +8,7 @@ type Gateway3DateAnswer = {
 	seedDate: string;
 	input: DateAnswer;
 	display: string;
+	section: string;
 };
 
 export const gateway3DateAnswers = {
@@ -18,7 +19,8 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-expected-date',
 		seedDate: '2026-07-21T12:00:00.000Z',
 		input: { day: '21', month: '7', year: '2026' },
-		display: '21 July 2026'
+		display: '21 July 2026',
+		section: 'gateway-3'
 	},
 	gateway3ActualDate: {
 		row: 'Gateway 3 actual date',
@@ -27,7 +29,8 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-actual-date',
 		seedDate: '2026-08-01T12:00:00.000Z',
 		input: { day: '1', month: '8', year: '2026' },
-		display: '1 August 2026'
+		display: '1 August 2026',
+		section: 'gateway-3'
 	},
 	gateway3AssessorDateAppointment: {
 		row: 'Gateway 3 assessor date of appointment',
@@ -36,7 +39,8 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-assessor-date-of-appointment',
 		seedDate: '2026-09-01T12:00:00.000Z',
 		input: { day: '1', month: '9', year: '2026' },
-		display: '1 September 2026'
+		display: '1 September 2026',
+		section: 'gateway-3'
 	},
 	gateway3CompletionDate: {
 		row: 'Gateway 3 completion date',
@@ -45,7 +49,8 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-completion-date',
 		seedDate: '2026-12-01T12:00:00.000Z',
 		input: { day: '1', month: '12', year: '2026' },
-		display: '1 December 2026'
+		display: '1 December 2026',
+		section: 'gateway-3-submission'
 	}
 } as const satisfies Record<string, Gateway3DateAnswer>;
 

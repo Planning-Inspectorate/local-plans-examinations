@@ -28,7 +28,7 @@ const allQuestionClasses = {
 	...CUSTOM_COMPONENT_CLASSES
 };
 
-const GATEWAY_2_REPORT_ALLOWED_EXTENSIONS = [
+const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
 	'docx',
@@ -48,7 +48,7 @@ const GATEWAY_2_REPORT_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'pdf',
@@ -523,6 +523,12 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
 	},
+	gateway2Documents: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER,
+		title: 'Gateway 2 documents',
+		question: 'Submitted GW2 documents',
+		fieldName: 'gateway2Documents'
+	},
 	gateway2AssessorsName: {
 		type: COMPONENT_TYPES.SELECT,
 		question: 'Who is the Gateway 2 assessor?',
@@ -590,13 +596,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload Gateway 2 report',
 		fieldName: 'gateway2Report',
 		url: 'gateway-2-report',
-		allowedFileExtensions: GATEWAY_2_REPORT_ALLOWED_EXTENSIONS,
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
-			.filter((key) => GATEWAY_2_REPORT_ALLOWED_EXTENSIONS.includes(key))
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
 			.map((key) => MIME_TYPE_MAP[key])
 			.flat(),
-		maxFileSizeBytes: GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES,
-		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_REPORT_FILE_UPLOAD_LIMIT_BYTES),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
 		maxFilesPerUpload: 1,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
@@ -604,7 +610,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		text: {
 			caption: 'Issue report',
 			introduction: 'Upload a file',
-			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_REPORT_ALLOWED_EXTENSIONS)} and smaller than 250MB.`,
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and smaller than 250MB.`,
 			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files',
@@ -661,6 +667,45 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Gateway 3 assessor date of appointment',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
+	},
+	gateway3Documents: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Gateway 3 documents',
+		question: 'Upload documents',
+		fieldName: 'gateway3Documents',
+		url: 'gateway-3-document',
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Gateway 3 documents',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
+		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')],
+		valueDisplayFormat: 'count'
+	},
+	gateway3Decision: {
+		type: COMPONENT_TYPES.RADIO,
+		options: [
+			{ value: '1', text: 'Proceed to examination' },
+			{ value: '2', text: 'Resubmission required' }
+		],
+		question: 'What is the outcome of your Gateway 3 decision',
+		fieldName: 'decision',
+		url: 'gateway-3-decision',
+		title: 'Gateway 3 decision',
+		validators: [new RequiredValidator('Select a decision')]
 	},
 	gateway3CompletionDate: {
 		type: COMPONENT_TYPES.DATE,
