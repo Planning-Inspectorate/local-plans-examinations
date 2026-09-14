@@ -1,4 +1,4 @@
-import { DOCUMENT_SET_ID } from '../../../../../packages/database/src/seed/static-data/ids/document-set.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Submitted: 'govuk-tag--green',
