@@ -10,7 +10,7 @@ describe('Portal login OTP validation', () => {
 	it('shows an error when no code is entered', { tags: ['regression'] }, () => {
 		portalLoginOtpPage.saveAndContinue();
 
-		portalLoginOtpPage.verifyErrorSummary(ERROR_MESSAGES.NO_CODE_ENTERED_SUMMARY, ERROR_MESSAGES.ENTER_CODE_SENT);
+		portalLoginOtpPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.ENTER_CODE_SENT);
 		portalLoginOtpPage.verifyFieldErrorContains(ERROR_MESSAGES.ENTER_CODE_SENT);
 	});
 
@@ -18,7 +18,7 @@ describe('Portal login OTP validation', () => {
 		portalLoginOtpPage.enterOtp('WRONGCODE');
 		portalLoginOtpPage.saveAndContinue();
 
-		portalLoginOtpPage.verifyErrorSummary(ERROR_MESSAGES.INCORRECT_CODE_SUMMARY, ERROR_MESSAGES.ENTER_CODE_SENT);
+		portalLoginOtpPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.ENTER_CODE_SENT);
 		portalLoginOtpPage.verifyFieldErrorContains(ERROR_MESSAGES.ENTER_CODE_SENT);
 	});
 });
