@@ -4,11 +4,11 @@ import { buildList, JourneyResponse } from '@planning-inspectorate/dynamic-forms
 import { JOURNEY_ID } from './journey.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 
-type Gateway3Request = Request & {
+export type Gateway3Request = Request & {
 	currentCase?: CaseModel;
 };
 
-function getRoutePlanReference(req: Request): string | undefined {
+export function getRoutePlanReference(req: Request): string | undefined {
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
 		: req.params.planReference;
@@ -24,7 +24,7 @@ function formatDisplayDate(date: Date) {
 	});
 }
 
-function renderNotFound(res: Response) {
+export function renderNotFound(res: Response) {
 	return res.status(404).render('views/layouts/error', {
 		pageTitle: 'Page not found',
 		messages: [

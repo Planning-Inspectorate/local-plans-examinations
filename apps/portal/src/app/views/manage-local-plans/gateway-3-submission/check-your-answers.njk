@@ -38,10 +38,12 @@
             <hr class="govuk-section-break govuk-section-break--visible pins-app-section-break">
         {% endif %}
 
+        <h2 class="govuk-heading-m">Required Information</h2>
+        <p class="govuk-body">You must add these documents before you can submit.</p>
+
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
                 <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
-                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
