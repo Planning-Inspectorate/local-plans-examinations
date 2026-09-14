@@ -78,14 +78,10 @@ export function resolveCaseHeaderStatus(
 	}[]
 ) {
 	const dateNow = new Date();
-	let textAndClass;
-
-	if (!gateway1Data?.slaReceivedDate) {
-		textAndClass = {
-			headerStatusText: 'Awaiting SLA',
-			headerStatusClasses: getPlanStatusClasses('Awaiting SLA')
-		};
-	}
+	let textAndClass = {
+		headerStatusText: 'Awaiting SLA',
+		headerStatusClasses: getPlanStatusClasses('Awaiting SLA')
+	};
 
 	if (gateway1Data?.slaReceivedDate) {
 		textAndClass = {
