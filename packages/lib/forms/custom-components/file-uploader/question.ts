@@ -150,28 +150,6 @@ export default class FileUploaderQuestion extends Question {
 
 		return value;
 	}
-	formatAnswerForSummary(
-		sectionSegment: string,
-		journey: any,
-		answer: unknown
-	): Array<{
-		key: string;
-		value: string;
-		action: { href: string; text: string; visuallyHiddenText: string } | undefined;
-	}> {
-		const value = this.formatAnswer(answer);
-		return [
-			{
-				key: this.title,
-				value,
-				action: this.getAction(sectionSegment, journey, answer as never) as {
-					href: string;
-					text: string;
-					visuallyHiddenText: string;
-				}
-			}
-		];
-	}
 
 	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
 		if (this.actionLink) {
