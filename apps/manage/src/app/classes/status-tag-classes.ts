@@ -78,16 +78,17 @@ export function resolveCaseHeaderStatus(
 	}[]
 ) {
 	const dateNow = new Date();
+	let textAndClass;
 
 	if (!gateway1Data?.slaReceivedDate) {
-		return {
+		textAndClass = {
 			headerStatusText: 'Awaiting SLA',
 			headerStatusClasses: getPlanStatusClasses('Awaiting SLA')
 		};
 	}
 
 	if (gateway1Data?.slaReceivedDate) {
-		return {
+		textAndClass = {
 			headerStatusText: 'GW2 pending',
 			headerStatusClasses: getPlanStatusClasses('GW2 pending')
 		};
@@ -99,7 +100,7 @@ export function resolveCaseHeaderStatus(
 		gateway2Data.workshopDate &&
 		gateway2Data.workshopDate > dateNow
 	) {
-		return {
+		textAndClass = {
 			headerStatusText: 'GW2 workshop confirmed',
 			headerStatusClasses: getPlanStatusClasses('GW2 workshop confirmed')
 		};
@@ -110,28 +111,25 @@ export function resolveCaseHeaderStatus(
 		gateway2Data.workshopDate < dateNow &&
 		!gateway2Documents.find((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT)
 	) {
-		return {
+		textAndClass = {
 			headerStatusText: 'GW2 report',
 			headerStatusClasses: getPlanStatusClasses('GW2 report')
 		};
 	}
 
 	if (gateway2Documents.length > 0) {
-		return {
+		textAndClass = {
 			headerStatusText: 'GW2 received',
 			headerStatusClasses: getPlanStatusClasses('GW2 received')
 		};
 	}
 
 	if (gateway2Documents.find((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT)) {
-		return {
+		textAndClass = {
 			headerStatusText: 'GW3 pending',
 			headerStatusClasses: getPlanStatusClasses('GW3 pending')
 		};
 	}
 
-	return {
-		headerStatusText: 'Submitted',
-		headerStatusClasses: getPlanStatusClasses('Submitted')
-	};
+	return textAndClass;
 }
