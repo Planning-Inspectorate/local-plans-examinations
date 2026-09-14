@@ -8,17 +8,7 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		const { db, logger } = service;
 		try {
-			const cases = await db.case.findMany({
-				where: { deletedDate: null },
-				select: {
-					id: true,
-					reference: true,
-					planTitle: true,
-					planType: true,
-					caseOfficer: true,
-					deletedDate: true
-				}
-			});
+			const cases = await db.case.findMany({ where: { deletedDate: null } });
 
 			const casesWithStatus = await Promise.all(
 				cases.map(async (caseRecord) => {

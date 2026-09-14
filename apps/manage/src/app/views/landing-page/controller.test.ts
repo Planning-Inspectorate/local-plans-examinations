@@ -39,7 +39,12 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 	};
 
 	const service = {
-		db: { case: { findMany } },
+		db: {
+			case: { findMany },
+			gateway1Info: { findUnique: async () => null },
+			gateway2Info: { findUnique: async () => null },
+			document: { findMany: async () => [] }
+		},
 		logger: { error: loggerError }
 	} as unknown as ManageService;
 
@@ -56,7 +61,18 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 
 describe('buildLandingPage', () => {
 	it('renders landing page with cases when fetch succeeds', async () => {
-		const cases = [{ id: 1 }, { id: 2 }];
+		const cases = [
+			{
+				id: 1,
+				headerStatusText: 'Awaiting SLA',
+				headerStatusClasses: 'govuk-tag--yellow'
+			},
+			{
+				id: 2,
+				headerStatusText: 'Awaiting SLA',
+				headerStatusClasses: 'govuk-tag--yellow'
+			}
+		];
 		const ctx = createHarness(async () => cases);
 
 		await ctx.handler(ctx.req, ctx.res);
@@ -83,7 +99,15 @@ describe('buildLandingPage', () => {
 	});
 
 	it('does not display cases that have a deletedDate attribute that is not null', async () => {
-		const cases = [{ id: 1, planTitle: 'noDisplay', deletedDate: new Date('1999-07-21') }, { id: 2 }];
+		const cases = [
+			{ id: 1, planTitle: 'noDisplay', deletedDate: new Date('1999-07-21') },
+			{
+				id: 2,
+				qaInspector1: 'Officer1',
+				headerStatusText: 'Awaiting SLA',
+				headerStatusClasses: 'govuk-tag--yellow'
+			}
+		];
 		const ctx = createHarness(async () => cases);
 		await ctx.handler(ctx.req, ctx.res);
 
@@ -91,6 +115,13 @@ describe('buildLandingPage', () => {
 
 		const renderedCases = renderData.cases;
 
-		assert.deepEqual(renderedCases, [{ id: 2 }]);
+		assert.deepEqual(renderedCases, [
+			{
+				id: 2,
+				qaInspector1: 'Officer1',
+				headerStatusText: 'Awaiting SLA',
+				headerStatusClasses: 'govuk-tag--yellow'
+			}
+		]);
 	});
 });
