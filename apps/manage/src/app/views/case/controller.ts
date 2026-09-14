@@ -15,7 +15,7 @@ import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/cust
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
