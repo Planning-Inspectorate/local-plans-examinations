@@ -62,6 +62,7 @@ export type FileUploaderQuestionConfig = {
 	text?: FileUploaderText;
 	validationMessages?: FileUploaderValidationMessages;
 	actionButtonVisibleInSummary?: boolean;
+	editable?: boolean;
 };
 
 export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {

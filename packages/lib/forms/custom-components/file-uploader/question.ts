@@ -67,8 +67,8 @@ export default class FileUploaderQuestion extends Question {
 
 		viewModel.question = {
 			...viewModel.question,
-			...this.config
-			//editable: this.editable
+			...this.config,
+			editable: this.editable
 		};
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
@@ -156,10 +156,9 @@ export default class FileUploaderQuestion extends Question {
 
 export function fileUploadBulletListFormat(context: any): string {
 	const answer = context.answer;
-	const notStartedText = context.formattedAnswer;
 	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 	if (files.length === 0) {
-		return notStartedText;
+		return 'Not started';
 	}
 
 	if (files.length === 1) {
@@ -167,7 +166,7 @@ export function fileUploadBulletListFormat(context: any): string {
 	}
 
 	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
-	return `<ul class="govuk-list">${listItems}</ul>`;
+	return `<ul class="govuk-list--bullet li">${listItems}</ul>`;
 }
 
 export function fileUploadCountFormat(context: any): string {

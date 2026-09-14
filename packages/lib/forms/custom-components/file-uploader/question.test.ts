@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import FileUploaderQuestion from './question.ts';
+import FileUploaderQuestion, { fileUploadBulletListFormat, fileUploadCountFormat } from './question.ts';
 
 describe('FileUploaderQuestion', () => {
 	it('is not answered when the uploaded files answer is missing', () => {
@@ -49,7 +49,7 @@ describe('FileUploaderQuestion', () => {
 	});
 
 	it('formats multiple uploaded files as a bullet list when valueDisplayFormat is set to items', () => {
-		const question = buildQuestion({ valueDisplayFormat: 'items' });
+		const question = buildQuestion({ formatSummaryValue: fileUploadBulletListFormat });
 
 		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
 			{ id: 'file-1', fileName: 'beach.jpg' },
@@ -63,7 +63,7 @@ describe('FileUploaderQuestion', () => {
 		);
 	});
 	it('formats multiple uploaded files as a count of the files when valueDisplayFormat is set to count', () => {
-		const question = buildQuestion({ valueDisplayFormat: 'count' });
+		const question = buildQuestion({ formatSummaryValue: fileUploadCountFormat });
 
 		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
 			{ id: 'file-1', fileName: 'beach.jpg' },
@@ -127,7 +127,7 @@ function buildQuestion(overrides = {}) {
 		maxFileSizeLabel: '1KB',
 		maxTotalUploadSizeBytes: 2000,
 		maxTotalUploadSizeLabel: '2KB',
-		valueDisplayFormat: 'items',
+		formatSummaryValue: fileUploadBulletListFormat,
 		actionButtonVisibleInSummary: true,
 		...overrides
 	});
