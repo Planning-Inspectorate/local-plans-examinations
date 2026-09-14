@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DOCUMENT_SET_ID } from '../../../../../packages/database/src/seed/static-data/ids/document-set.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { getPlanStatusClasses, resolveCaseHeaderStatus } from './status-tag-classes.ts';
 
 describe('getPlanStatusClasses', () => {
