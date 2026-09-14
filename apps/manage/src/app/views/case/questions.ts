@@ -15,6 +15,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -687,7 +688,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			dropInstructionText: 'or drop files'
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')],
-		valueDisplayFormat: 'count'
+		formatSummaryValue: fileUploadCountFormat
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,

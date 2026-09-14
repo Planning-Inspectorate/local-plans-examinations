@@ -15,10 +15,6 @@ type RequestWithFileUploaderCustomViewData = CheckForValidationErrorsParams[0] &
 	fileUploaderSessionKey?: string;
 	session?: FileUploaderCustomViewData & { fileUploader?: FileUploaderCustomViewData['fileUploader'] };
 };
-const FORMATTER_FUNCTION_MAP: Record<string, (files: UploadedFile[], notStartedText: string) => string> = {
-	items: bulletListFormat,
-	count: countFormat
-};
 
 export default class FileUploaderQuestion extends Question {
 	readonly config: FileUploaderQuestionConfig;
@@ -35,16 +31,14 @@ export default class FileUploaderQuestion extends Question {
 		text = {},
 		validationMessages = {},
 		actionButtonVisibleInSummary = true,
-		valueDisplayFormat = 'items',
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
 			...params,
 			viewFolder: 'forms/custom-components/file-uploader'
 		});
-		if (!(valueDisplayFormat in FORMATTER_FUNCTION_MAP)) {
-			// Default to showing the items
-			valueDisplayFormat = 'items';
+		if (this.formatSummaryValue == undefined) {
+			this.formatSummaryValue = fileUploadBulletListFormat;
 		}
 
 		this.config = {
@@ -59,8 +53,7 @@ export default class FileUploaderQuestion extends Question {
 			multiple,
 			text,
 			validationMessages,
-			actionButtonVisibleInSummary,
-			valueDisplayFormat
+			actionButtonVisibleInSummary
 		};
 	}
 
@@ -138,19 +131,6 @@ export default class FileUploaderQuestion extends Question {
 		return super.isAnswered(journeyResponse as never, fieldName);
 	}
 
-	formatAnswer(answer: unknown): string {
-		const formatterFunction = this.config.valueDisplayFormat
-			? FORMATTER_FUNCTION_MAP[this.config.valueDisplayFormat]
-			: null;
-		if (!formatterFunction) {
-			throw Error(`No formatter function defined for '${this.config.valueDisplayFormat}' in FileUploaderQuestion`);
-		}
-		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = formatterFunction(files, this.notStartedText);
-
-		return value;
-	}
-
 	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
 		if (this.actionLink) {
 			// show the override if its set
@@ -174,7 +154,10 @@ export default class FileUploaderQuestion extends Question {
 	}
 }
 
-function bulletListFormat(files: UploadedFile[], notStartedText: string): string {
+export function fileUploadBulletListFormat(context: any): string {
+	const answer = context.answer;
+	const notStartedText = context.formattedAnswer;
+	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 	if (files.length === 0) {
 		return notStartedText;
 	}
@@ -187,7 +170,9 @@ function bulletListFormat(files: UploadedFile[], notStartedText: string): string
 	return `<ul class="govuk-list">${listItems}</ul>`;
 }
 
-function countFormat(files: UploadedFile[]): string {
+export function fileUploadCountFormat(context: any): string {
+	const answer = context.answer;
+	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 	const pluralCharacter = files.length != 1 ? 's' : '';
 	return `<ul class="govuk-list">${files.length} document${pluralCharacter}</ul>`;
 }
