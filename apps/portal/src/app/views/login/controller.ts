@@ -1,4 +1,4 @@
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
@@ -33,9 +33,9 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
-				errors: { email: { msg: 'Enter your email address' } },
-				errorSummaryTitle: 'You have not entered your email address',
-				errorSummary: [{ text: 'Enter your email address', href: '#email' }]
+				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
+				errorSummaryTitle: 'There is a problem',
+				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
 			});
 		}
 
@@ -51,9 +51,9 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
-				errors: { email: { msg: 'Enter the valid email address your reference number was sent to' } },
-				errorSummaryTitle: 'Enter a valid email address',
-				errorSummary: [{ text: 'Enter the valid email address your reference number was sent to', href: '#email' }]
+				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
+				errorSummaryTitle: 'There is a problem',
+				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
 			});
 		}
 
@@ -67,8 +67,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 					emailQuestionText: 'What is your email address?',
 					backLinkUrl: `/`,
 					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
-					errorSummaryTitle: 'We did not recognise that email address',
-					errorSummary: [{ text: 'Enter an email address linked to a case on this service', href: '#email' }]
+					errorSummaryTitle: 'There is a problem',
+					errorSummary: [{ text: 'We did not recognise that email address', href: '#email' }]
 				});
 			}
 
@@ -79,8 +79,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			if (
 				process.env.NODE_ENV === 'production' &&
 				otpRecord &&
-				otpRecord.locked_out_until &&
-				otpRecord.locked_out_until.getTime() > Date.now()
+				otpRecord.lockedOutUntil &&
+				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt while locked out');
 				return res.render('views/login/enter-email-page.njk', {
@@ -94,10 +94,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 						{ text: 'You have been locked out for 24 hours due to too many failed attempts', href: '#email' }
 					]
 				});
-			} else if (otpRecord && otpRecord.locked_out_until && otpRecord.locked_out_until.getTime() < Date.now()) {
+			} else if (otpRecord && otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now()) {
 				await db.oneTimePassword.update({
 					where: { email: sanitisedEmail },
-					data: { attempts: 0, locked_out_until: null }
+					data: { attempts: 0, lockedOutUntil: null }
 				});
 			}
 
@@ -116,7 +116,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			if (
 				!otpRecord ||
 				otpRecord.attempts < MAX_ATTEMPTS ||
-				(otpRecord.locked_out_until && otpRecord.locked_out_until.getTime() < Date.now())
+				(otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now())
 			) {
 				await db.oneTimePassword.upsert({
 					where: { email: sanitisedEmail },
@@ -198,15 +198,17 @@ export function buildSubmitOtpPage(service: PortalService) {
 				]
 			});
 		}
+		const errorTitle = 'There is a problem';
+		const enterCorrectCodeMessage = 'Enter the code we sent to you';
 
 		const { otp } = req.body;
 		if (!otp || typeof otp !== 'string' || otp.trim().length === 0) {
 			return res.render('views/login/enter-otp.njk', {
 				pageTitle: 'Enter your one-time password',
 				pageHeading: 'Enter your one-time password',
-				errors: { otp: { msg: 'Enter the code we sent to your email address' } },
-				errorSummaryTitle: 'You have not entered a code',
-				errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
+				errors: { otp: { msg: enterCorrectCodeMessage } },
+				errorSummaryTitle: errorTitle,
+				errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
 			});
@@ -231,7 +233,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					pageTitle: 'Enter your one-time password',
 					pageHeading: 'Enter your one-time password',
 					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
-					errorSummaryTitle: 'We could not verify your code',
+					errorSummaryTitle: errorTitle,
 					errorSummary: [
 						{ text: 'We could not find a code for your email address. Go back and try again.', href: '#otp' }
 					],
@@ -243,8 +245,8 @@ export function buildSubmitOtpPage(service: PortalService) {
 			// user is locked out
 			if (
 				process.env.NODE_ENV === 'production' &&
-				otpRecord.locked_out_until &&
-				otpRecord.locked_out_until.getTime() > Date.now()
+				otpRecord.lockedOutUntil &&
+				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info({ email }, 'User is locked out - too many failed attempts');
 				return res.render('views/login/enter-otp.njk', {
@@ -261,10 +263,10 @@ export function buildSubmitOtpPage(service: PortalService) {
 			}
 
 			// reset lockout when lock out time has expired
-			if (otpRecord.locked_out_until) {
+			if (otpRecord.lockedOutUntil) {
 				await db.oneTimePassword.update({
 					where: { email },
-					data: { attempts: 0, locked_out_until: null }
+					data: { attempts: 0, lockedOutUntil: null }
 				});
 			}
 
@@ -292,7 +294,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				if (updateOtpAttempts.attempts >= MAX_ATTEMPTS) {
 					await db.oneTimePassword.update({
 						where: { email },
-						data: { locked_out_until: new Date(Date.now() + 24 * 60 * 60 * 1000) }
+						data: { lockedOutUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) }
 					});
 					return res.render('views/login/enter-otp.njk', {
 						pageTitle: 'Enter your one-time password',
@@ -307,9 +309,9 @@ export function buildSubmitOtpPage(service: PortalService) {
 				return res.render('views/login/enter-otp.njk', {
 					pageTitle: 'Enter your one-time password',
 					pageHeading: 'Enter your one-time password',
-					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
-					errorSummaryTitle: 'The code you entered is incorrect',
-					errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
+					errors: { otp: { msg: enterCorrectCodeMessage } },
+					errorSummaryTitle: errorTitle,
+					errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
 				});
@@ -320,7 +322,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				where: { email },
 				data: {
 					attempts: 0,
-					locked_out_until: null
+					lockedOutUntil: null
 				}
 			});
 

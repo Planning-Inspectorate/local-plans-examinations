@@ -400,4 +400,12 @@ export class BasePage {
 		this.chooseFilesButtonLabel(fieldName).should('contain.text', 'Choose files');
 		this.dropInstructionText(fieldName).should('contain.text', 'or drop files');
 	}
+
+	verifyTableHeaders(table: Cypress.Chainable, headers: string[]) {
+		table.within(() => {
+			headers.forEach((header) => {
+				cy.contains('th', header).should('be.visible');
+			});
+		});
+	}
 }

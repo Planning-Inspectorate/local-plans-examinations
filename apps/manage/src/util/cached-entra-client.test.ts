@@ -1,6 +1,6 @@
 import { CachedEntraClient } from './cached-entra-client.ts';
-import { MapCache } from '@pins/local-plans-lib/util/map-cache.ts';
-import { EntraClient } from './entra.ts';
+import { MapCache } from '@planning-inspectorate/core/util';
+import { EntraClient, type GroupMember } from './entra.ts';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 
@@ -57,7 +57,7 @@ describe('cached-entra-client', () => {
 				listAllGroupMembers: mock.fn((groupId) => mockListAllGroupMembers(groupId)),
 				getUserDisplayName: mock.fn((userId) => mockGetUserDisplayName(userId))
 			};
-			const groupCache = new MapCache(10);
+			const groupCache = new MapCache<GroupMember[]>(10);
 			groupCacheDefaults.forEach((value: any, key: string) => {
 				groupCache.set(key, value);
 			});
@@ -78,7 +78,7 @@ describe('cached-entra-client', () => {
 				listAllGroupMembers: mock.fn((groupId) => mockListAllGroupMembers(groupId)),
 				getUserDisplayName: mock.fn((userId) => mockGetUserDisplayName(userId))
 			};
-			const userCache = new MapCache(10);
+			const userCache = new MapCache<string>(10);
 			userCacheDefaults.forEach((value: any, key: string) => {
 				userCache.set(key, value);
 			});

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { getRoutePlanReference } from '../utils.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-complete/index.njk';

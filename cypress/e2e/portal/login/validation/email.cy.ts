@@ -30,7 +30,7 @@ describe('Portal login email validation', () => {
 
 		portalLoginEmailPage.verifyErrorSummary(
 			ERROR_MESSAGES.UNRECOGNISED_EMAIL_SUMMARY,
-			ERROR_MESSAGES.UNRECOGNISED_EMAIL
+			ERROR_MESSAGES.UNRECOGNISED_EMAIL_SUMMARY
 		);
 		portalLoginEmailPage.verifyFieldErrorContains(ERROR_MESSAGES.UNRECOGNISED_EMAIL);
 	});

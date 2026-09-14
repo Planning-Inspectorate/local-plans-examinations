@@ -1,9 +1,9 @@
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
-import * as authSession from '../../auth/session.service.ts';
+import * as authSession from '@planning-inspectorate/core/auth';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
@@ -607,12 +607,15 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'examination': {
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+				// TODO: proper view-model mapping to answers formats
+				// use dynamic-forms constants for BOOLEAN_OPTIONS
 				let isSound: string | null = null;
 				if (typeof journey4Data?.isSound === 'boolean') {
 					isSound = journey4Data?.isSound ? 'yes' : 'no';
 				}
-				res.locals.journeyResponse.answers.isSound = isSound;
+				const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+				journeyResponse.answers.isSound = isSound;
+				res.locals.journeyResponse = journeyResponse;
 				if (next) next();
 				return;
 			}

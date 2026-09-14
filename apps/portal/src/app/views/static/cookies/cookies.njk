@@ -81,6 +81,7 @@
 			</table>
 
 			<form method="post" action="/cookies" novalidate>
+				{% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
 				{{ govukRadios({
 					name: "analytics",
 					fieldset: {

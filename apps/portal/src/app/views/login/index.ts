@@ -8,7 +8,7 @@ import {
 	buildSubmitEmailPage,
 	buildSubmitOtpPage
 } from './controller.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
 
 export function createLoginRoutes(service: PortalService): IRouter {

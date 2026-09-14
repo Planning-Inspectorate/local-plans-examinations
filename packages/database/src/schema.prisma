@@ -152,12 +152,12 @@ model Authority {
 }
 
 model OneTimePassword {
-  email            String    @id
-  hashedOtp        String
-  createdAt        DateTime  @default(now())
-  expiresAt        DateTime
-  attempts         Int       @default(0)
-  locked_out_until DateTime? @db.DateTime2
+  email          String    @id
+  hashedOtp      String
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+  attempts       Int       @default(0)
+  lockedOutUntil DateTime? @map("locked_out_until") @db.DateTime2
 }
 
 model NotifyEmail {

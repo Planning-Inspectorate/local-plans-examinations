@@ -35,7 +35,7 @@ import {
 	loadGateway2DocumentsByDocumentSetId,
 	saveGateway2Documents
 } from './documents.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
@@ -49,6 +49,7 @@ import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
 import { downloadGateway2Document } from './download.ts';
+import lusca from 'lusca';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -87,7 +88,11 @@ type Gateway2Session = Request['session'] &
 	};
 
 type Gateway2Request = Request & {
-	currentCase?: CaseModel;
+	currentCase?: CaseModel & {
+		gateway2Info?: {
+			expectedDate: Date | null;
+		} | null;
+	};
 	session: Gateway2Session;
 };
 
@@ -200,7 +205,14 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		}
 
 		const currentCase = await service.db.case.findUnique({
-			where: { reference: planReference }
+			where: { reference: planReference },
+			include: {
+				gateway2Info: {
+					select: {
+						expectedDate: true
+					}
+				}
+			}
 		});
 
 		if (!currentCase) {
@@ -264,9 +276,7 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		res.locals.saveAndComeBackUrl = `/manage-local-plans/${encodedPlanReference}`;
 	}
 
-	if (currentCase?.gateway2Date) {
-		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
-	}
+	res.locals.targetDate = formatDisplayDate(currentCase?.gateway2Info?.expectedDate);
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {
@@ -309,7 +319,11 @@ function validateGateway2Submission(): RequestHandler {
 	};
 }
 
-function formatDisplayDate(date: Date) {
+function formatDisplayDate(date: Date | null | undefined) {
+	if (!date) {
+		return 'Not set';
+	}
+
 	return date.toLocaleDateString('en-GB', {
 		day: 'numeric',
 		month: 'long',
@@ -666,6 +680,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
+		// Lusca CSRF check performed after Multer handles the multipart/form-data
+		lusca.csrf(),
 		uploadGateway2DocumentForCase,
 		handleMulterFileSizeError
 	);
@@ -682,6 +698,8 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourneyResponse,
 		getJourney,
 		upload.array('files[]'),
+		// Lusca CSRF check performed after Multer handles the multipart/form-data
+		lusca.csrf(),
 		uploadGateway2Document,
 		handleMulterFileSizeError
 	);

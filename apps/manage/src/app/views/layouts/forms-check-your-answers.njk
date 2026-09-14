@@ -29,6 +29,7 @@
 
     {% if journeyComplete %}
         <form method="POST">
+            {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
             {{ govukButton({
                 text: "Submit case",
                 attributes: { "data-cy": "submit-case" }

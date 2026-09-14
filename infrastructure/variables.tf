@@ -104,8 +104,9 @@ variable "gov_notify" {
   description = "IDs for Gov Notify template"
   type = object({
     templates = object({
-      auth_id      = string
-      case_created = string
+      auth_id           = string
+      case_created      = string
+      gw2_submission_id = string
     })
   })
 }
@@ -123,13 +124,6 @@ variable "monitoring_config" {
     manage_app_insights_web_test_enabled = bool
     log_daily_cap                        = number
   })
-}
-
-variable "performance_test_auth_token" {
-  description = "Token used by the Test-only performance smoke request"
-  type        = string
-  default     = ""
-  sensitive   = true
 }
 
 variable "sql_config" {

@@ -1,7 +1,7 @@
 import type { Response, Request } from 'express';
-import type { AsyncRequestHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
-import * as authSession from '../../auth/session.service.ts';
+import * as authSession from '@planning-inspectorate/core/auth';
 
 export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {

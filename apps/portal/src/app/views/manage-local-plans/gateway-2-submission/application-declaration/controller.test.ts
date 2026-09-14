@@ -5,6 +5,10 @@ import { buildGetDeclarationPage, buildPostDeclarationPage } from './controller.
 import type { PortalService } from '#service';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
+process.env.SESSION_SECRET = 'not-a-real-secret';
+process.env.GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID = 'abc';
+process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID = '123';
+process.env.GOV_NOTIFY_API_KEY = 'xyz';
 
 function createReq(overrides: { params?: Record<string, string>; body?: Record<string, unknown> } = {}) {
 	const req = {
@@ -23,6 +27,12 @@ function createReq(overrides: { params?: Record<string, string>; body?: Record<s
 		redirect(url: string) {
 			redirectCalls.push(url);
 			return this;
+		},
+		status(code: number) {
+			return this;
+		},
+		send(body: unknown) {
+			return this;
 		}
 	} as unknown as Response;
 
@@ -31,14 +41,37 @@ function createReq(overrides: { params?: Record<string, string>; body?: Record<s
 
 function createMockService() {
 	const infoCalls: string[] = [];
+	const errorCalls: string[] = [];
+	const sendCalls: Array<{ templateId: string; to: string; options?: unknown }> = [];
+
 	return {
 		logger: {
 			info(msg: string) {
 				infoCalls.push(msg);
+			},
+			error(msg: string) {
+				errorCalls.push(msg);
 			}
 		},
-		infoCalls
-	} as unknown as PortalService & { infoCalls: string[] };
+		db: {
+			case: {
+				findUnique: async ({ where }: { where: { reference: string } }) => {
+					return {
+						contacts: [{ email: 'lpa@example.com' }]
+					};
+				}
+			}
+		},
+		notifyClient: {
+			sendEmail: async (templateId: string, to: string, options?: unknown) => {
+				sendCalls.push({ templateId, to, options });
+				return { id: 'mock-notify-id' };
+			}
+		},
+		infoCalls,
+		errorCalls,
+		sendCalls
+	} as unknown as PortalService & { infoCalls: string[]; errorCalls: string[]; sendCalls: any[] };
 }
 
 describe('buildGetDeclarationPage', () => {
@@ -71,6 +104,11 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(redirectCalls.length, 1);
 		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2-submission/application-complete');
 		assert.equal(renderCalls.length, 0);
+
+		assert.equal(service.sendCalls.length, 1);
+		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
+		assert.equal(service.sendCalls[0].to, 'lpa@example.com');
+		assert.equal(service.sendCalls[0].options.personalisation.planRef, 'PLAN-123456');
 	});
 
 	it('renders error when no checkboxes are checked', async () => {

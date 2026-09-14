@@ -14,7 +14,7 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
 import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
 import { buildSaveController } from './save.ts';
-import { asyncHandler } from '@pins/local-plans-lib/util/async-handler.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
 
 function setAsEditingFromCya(req: any, _: any, next: any) {

@@ -61,7 +61,7 @@ describe('Examination updates', () => {
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		caseHistoryPage.verifyHistoryEvent(
-			`Actual submission date updated from ${actualSubmissionDate.display} to ${actualSubmissionDate.updatedDisplay}`
+			`Submission received updated from ${actualSubmissionDate.display} to ${actualSubmissionDate.updatedDisplay}`
 		);
 	});
 

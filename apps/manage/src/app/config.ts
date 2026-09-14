@@ -1,9 +1,9 @@
 import { loadEnvFile } from 'node:process';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
-import type { BaseConfig } from '@pins/local-plans-lib/app/config-types.d.ts';
+import type { ConfigWithBlob } from '@pins/local-plans-lib/app/config-types.d.ts';
 
-export interface Config extends BaseConfig {
+export interface Config extends ConfigWithBlob {
 	appHostname: string;
 	auth: {
 		authority: string;
@@ -16,6 +16,13 @@ export interface Config extends BaseConfig {
 		};
 		redirectUri: string;
 		signoutUrl: string;
+		rateLimit: {
+			windowMs: number;
+			max: number;
+			message: string;
+			standardHeaders: boolean;
+			legacyHeaders: boolean;
+		};
 	};
 	entra: {
 		cacheTtl: number;
@@ -23,11 +30,6 @@ export interface Config extends BaseConfig {
 			caseOfficers: string;
 			inspectors: string;
 		};
-	};
-	blobStorage: {
-		containerName: string;
-		connectionString?: string;
-		accountUrl?: string;
 	};
 	govNotify: {
 		disabled: boolean;
@@ -154,7 +156,14 @@ export function loadConfig(): Config {
 				applicationAccess: AUTH_GROUP_APPLICATION_ACCESS || ''
 			},
 			redirectUri: `${protocol}${APP_HOSTNAME}/auth/redirect`,
-			signoutUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout'
+			signoutUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
+			rateLimit: {
+				windowMs: 15 * 60 * 1000,
+				max: isProduction ? 600 : 1000,
+				message: 'Too many requests, please try again later',
+				standardHeaders: true,
+				legacyHeaders: false
+			}
 		},
 		entra: {
 			cacheTtl: parseInt(ENTRA_GROUP_CACHE_TTL || '15', 10),

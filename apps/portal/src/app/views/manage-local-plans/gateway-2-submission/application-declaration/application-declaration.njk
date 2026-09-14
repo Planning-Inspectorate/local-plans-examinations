@@ -11,6 +11,7 @@
         }) }}
 
         <form method="post" novalidate>
+            {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
             <p class="govuk-body">By submitting this application, I confirm that:</p>
 
             {{ govukCheckboxes({

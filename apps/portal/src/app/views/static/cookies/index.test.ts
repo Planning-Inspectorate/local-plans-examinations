@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { TestServer } from '@pins/local-plans-lib/testing/test-server.ts';
+import { TestServer } from '@planning-inspectorate/core/testing';
 import { configureNunjucks } from '../../../nunjucks.ts';
 import { createCookiesRoutes } from './index.ts';
 import type { TestContext } from 'node:test';

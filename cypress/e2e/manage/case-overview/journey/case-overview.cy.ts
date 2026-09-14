@@ -86,7 +86,7 @@ describe('Case overview updates', () => {
 			programmeOfficer.values.email
 		);
 
-		caseOverviewPage.openActionLinkFor('Programme Officer details');
+		caseOverviewPage.openActionLinkFor('Programme officer');
 		caseOverviewProgrammeOfficerPage.verifyLoaded(
 			programmeOfficer.values.firstName,
 			programmeOfficer.values.lastName,
