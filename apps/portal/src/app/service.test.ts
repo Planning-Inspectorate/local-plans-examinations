@@ -9,18 +9,28 @@ function buildCase(overrides = {}) {
 	return {
 		reference: 'PLAN-941623',
 		planTitle: 'Real local plan',
-		gateway1Date: new Date('2026-05-07T12:00:00.000Z'),
-		gateway2Date: new Date('2026-07-21T12:00:00.000Z'),
-		gateway3Date: new Date('2026-08-01T12:00:00.000Z'),
-		submissionDate: null,
 		lpas: [
 			{ lpaName: 'Southampton City Council', lpaCode: 'SOTON' },
 			{ lpaName: 'Romsey Town Council', lpaCode: 'ROMSEY' }
 		],
+		gateway1Info: {
+			expectedGateway1Date: new Date('2026-05-07T12:00:00.000Z'),
+			completedGateway1Date: null
+		},
 		gateway2Info: {
+			expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+			actualDate: null,
 			reportIssuedDate: null
 		},
-		gateway3Info: null,
+		gateway3Info: {
+			expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+			actualDate: null,
+			completionDate: null
+		},
+		examinationInfo: {
+			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
+			submissionForExaminationDate: null
+		},
 		...overrides
 	};
 }
@@ -90,15 +100,30 @@ describe('PortalService', () => {
 					email: 'user@example.com'
 				},
 				include: {
+					gateway1Info: {
+						select: {
+							expectedGateway1Date: true,
+							completedGateway1Date: true
+						}
+					},
 					gateway2Info: {
 						select: {
+							expectedDate: true,
+							actualDate: true,
 							reportIssuedDate: true
 						}
 					},
 					gateway3Info: {
 						select: {
+							expectedDate: true,
 							actualDate: true,
 							completionDate: true
+						}
+					},
+					examinationInfo: {
+						select: {
+							expectedSubmissionForExaminationDate: true,
+							submissionForExaminationDate: true
 						}
 					},
 					lpas: {
@@ -118,13 +143,18 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].linkedLPA, 'Romsey Town Council');
 			assert.strictEqual(plans[0].stage, STAGE.Gateway2);
 			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
+			assert.strictEqual(plans[0].dates.G1, '7 May 2026');
 			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
+			assert.strictEqual(plans[0].dates.E, '1 September 2026');
 		});
 
 		it('maps Gateway 2 report issued cases to Gateway 3 plans', async () => {
 			const service = buildService([
 				buildCase({
 					gateway2Info: {
+						expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+						actualDate: null,
 						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
 					}
 				})
@@ -135,6 +165,26 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
 			assert.strictEqual(plans[0].dates.G2, '1 September 2026');
+		});
+
+		it('maps missing info table dates to Not set', async () => {
+			const service = buildService([
+				buildCase({
+					gateway1Info: null,
+					gateway2Info: null,
+					gateway3Info: null,
+					examinationInfo: null
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.deepStrictEqual(plans[0].dates, {
+				G1: 'Not set',
+				G2: 'Not set',
+				G3: 'Not set',
+				E: 'Not set'
+			});
 		});
 
 		it('queries non-deleted plans only when no signed-in email is supplied', async () => {
