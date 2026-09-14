@@ -6,7 +6,8 @@ import {
 	gateway3ExpectedAnswers,
 	gateway3ExaminationWebsite,
 	gateway3DocumentsAnswer,
-	gateway3DecisionAnswer
+	gateway3DecisionAnswer,
+	gateway3CompletionDate
 } from '../../../fixtures/manage/gateway-3.ts';
 
 const gateway3Rows = [
@@ -15,7 +16,8 @@ const gateway3Rows = [
 	gateway3ProgrammeOfficerAnswer.row,
 	gateway3ExaminationWebsite.row,
 	gateway3DocumentsAnswer.row,
-	gateway3DecisionAnswer.row
+	gateway3DecisionAnswer.row,
+	gateway3CompletionDate.row
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
