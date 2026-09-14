@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import type { Request, Response } from 'express';
 import { describe, it } from 'node:test';
 import { setGateway3ViewLocals } from './controller.ts';
+import { gateway3SubmissionRoutes } from './index.ts';
 
 describe('setGateway3ViewLocals', () => {
 	it('sets page title, heading, caption, back link, save link and status tag when case and plan reference exist', () => {
@@ -60,5 +61,14 @@ describe('setGateway3ViewLocals', () => {
 		setGateway3ViewLocals(req as unknown as Request, res);
 
 		assert.strictEqual(locals.targetDate, undefined);
+	});
+});
+
+describe('gateway3SubmissionRoutes', () => {
+	it('returns an express router with get and use methods', () => {
+		const mockService = {} as any;
+		const router = gateway3SubmissionRoutes(mockService);
+		assert.strictEqual(typeof router.get, 'function');
+		assert.strictEqual(typeof router.use, 'function');
 	});
 });
