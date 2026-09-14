@@ -23,7 +23,8 @@ import {
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError,
-	preprocessQuestionProperties
+	preprocessQuestionProperties,
+	issueGateway2WorkshopDocuments
 } from './controller.ts';
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
@@ -195,6 +196,8 @@ function registerCaseJourney(
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
+	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service, journeyId));

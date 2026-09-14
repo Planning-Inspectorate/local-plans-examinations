@@ -24,6 +24,7 @@ export const COMMON_CONSTS = {
 	GATEWAY_2_ASSESSOR_QUESTION: 'gateway-2-assessor',
 	GATEWAY_2_REPORT_QUESTION: 'gateway-2-report',
 	GATEWAY_2_REPORT_ISSUED_DATE_QUESTION: 'gateway-2-report-issued-date',
+	GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION: 'gateway-2-workshop-documents',
 	GATEWAY_3_ASSESSOR_NAME_QUESTION: 'gateway-3-assessor-name',
 	GATEWAY_3_DECISION_QUESTION: 'gateway-3-decision',
 	GATEWAY_3_DOCUMENT_QUESTION: 'gateway-3-document',
