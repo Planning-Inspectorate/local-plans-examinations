@@ -166,7 +166,6 @@ export const fileUploadQuestionsByUrl = new Map(
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
 export function updateCaseField(service: ManageService): SaveDataFn {
 	return async ({ req, res, data }: { req: Request; res: Response; data: Record<string, any> }): Promise<void> => {
-		console.log('updateCaseField called');
 		const { db, logger } = service;
 
 		const reference = getParam(req.params.reference);
@@ -620,10 +619,6 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 				res.locals.journeyResponse = journeyResponse;
 				const body = req.body as { decision?: string };
-				if (req.params.question == 'gateway-3-document') {
-					console.log('setting document readonly');
-					//res.locals.journeyResponse.answers.gateway3Documents.readonly = true;
-				}
 				// Flow for uploading a gateway 3 document
 				if (
 					req.method === 'POST' &&
