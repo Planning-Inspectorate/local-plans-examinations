@@ -69,6 +69,7 @@ interface Gateway2Input {
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
 	gateway2Report?: any;
+	workshopDocumentUploadedDate?: Date;
 }
 
 interface ExaminationInput {
@@ -582,15 +583,27 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-2-report' &&
+					(req.params.question == 'gateway-2-report' || req.params.question == 'gateway-2-workshop-documents') &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
-					const uploadedGateway2Reports =
-						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
-
-					if (uploadedGateway2Reports.length > 0) {
-						res.redirect(303, 'gateway-2-report/check');
-						return;
+					let uploadedGateway2Reports;
+					if (req.params.question == 'gateway-2-report') {
+						uploadedGateway2Reports =
+							req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ??
+							[];
+						if (uploadedGateway2Reports.length > 0) {
+							res.redirect(303, 'gateway-2-report/check');
+							return;
+						}
+					}
+					if (req.params.question == 'gateway-2-workshop-documents') {
+						uploadedGateway2Reports =
+							req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2WorkshopDocuments')]
+								?.uploadedFiles ?? [];
+						if (uploadedGateway2Reports.length > 0) {
+							res.redirect(303, 'gateway-2-workshop-documents/check');
+							return;
+						}
 					}
 				}
 
@@ -649,6 +662,7 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 				completeIndicatorFieldName: string;
 				submitButtonText: string;
 				dateUploadedQuestion: string | undefined;
+				notificationTextLPA?: string;
 			}
 		> = {
 			'signed-sla': {
@@ -663,7 +677,17 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 				dbInfo: service.db.gateway2Info,
 				completeIndicatorFieldName: 'reportIssuedDate',
 				submitButtonText: 'Issue report',
-				dateUploadedQuestion: undefined
+				dateUploadedQuestion: undefined,
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available"
+			},
+			'gateway-2-workshop-documents': {
+				title: 'Check workshop documents and issue notification',
+				dbInfo: service.db.gateway2Info,
+				completeIndicatorFieldName: 'workshopDocumentUploadedDate',
+				submitButtonText: 'Issue documents',
+				dateUploadedQuestion: undefined,
+				notificationTextLPA:
+					'We’ll send a notification to the LPA to tell them that the workshop documents are available.'
 			}
 		};
 		const questionDetails = questionDetailsMap[questionConfig.url];
@@ -709,7 +733,8 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 						year: 'numeric'
 					}).format(documentUploadDate)
 				: null,
-			documentUploadDateModificationUrl: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined
+			documentUploadDateModificationUrl: questionDetails.dateUploadedQuestion ? dateUploadedQuestion.url : undefined,
+			notificationTextLPA: questionDetails.notificationTextLPA
 		});
 		return;
 	};
@@ -1096,6 +1121,58 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 	};
 }
 
+export function issueGateway2WorkshopDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway2Info.findUnique({
+			select: {
+				workshopDocumentUploadedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.workshopDocumentUploadedDate) {
+			// Try to update the reportIssuedDate
+			const workshopDocumentUploadedDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await updateGateway2(
+				service.db,
+				{
+					workshopDocumentUploadedDate: workshopDocumentUploadedDate
+				},
+				caseReference,
+				'workshop-document-uploaded-date'
+			);
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					gateway2WorkshopDocuments: null // Will be overridden by overrideLabels
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					gateway2WorkshopDocuments: `Gateway 2 workshop documents uploaded on ${await formatCaseHistoryValue(service, req, '', workshopDocumentUploadedDate)}`
+				}
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 2 workshop documents issued';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 2 workshopDocuments already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		return;
+	};
+}
+
 export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
@@ -1153,6 +1230,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	// Any questions that need to route to new subjourneys can be defined here
 	if (req.params.question == 'gateway-2-report') {
+		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+	}
+	if (req.params.question == 'gateway-2-workshop-documents') {
 		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
 	}
 	if (req.params.question == 'signed-sla') {

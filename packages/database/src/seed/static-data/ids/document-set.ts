@@ -8,6 +8,8 @@ export const DOCUMENT_SET_ID = {
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'g2-draft-stat-sound',
 	G2_REPORT: 'g2-report',
 
+	G2_WORKSHOP_DOCUMENTS: 'g2-workshop-docs',
+
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
 	G2_SCOPING_CONSULATATION_DOCS: 'g2-scoping-cons',
@@ -26,6 +28,8 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'draft-stat-compliance',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'draft-stat-soundness',
 	G2_REPORT: 'gateway-2-report',
+
+	G2_WORKSHOP_DOCUMENTS: 'gateway-2-workshop-documents',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',

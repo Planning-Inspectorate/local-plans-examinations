@@ -70,6 +70,28 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
+const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+
+const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'mpeg',
+	'mp3',
+	'mp4',
+	'mov',
+	'png',
+	'tif',
+	'tiff'
+];
+
 const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
@@ -565,6 +587,38 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Workshop venue',
 		validators: [new RequiredValidator('Enter a venue name')],
 		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' }
+	},
+	gateway2WorkshopDocuments: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Workshop documents',
+		question: 'Upload workshop documents',
+		fieldName: 'gateway2WorkshopDocuments',
+		url: 'gateway-2-workshop-documents',
+		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: undefined,
+			introduction: 'Upload a file',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES)}.<br><br>The total size of your uploaded files must be smaller than 1GB.`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
+		},
+		validators: [
+			new FileUploadRequiredValidator(
+				'gateway2WorkshopDocuments',
+				'Upload at least one tbd workshop document before continuing'
+			)
+		]
 	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,

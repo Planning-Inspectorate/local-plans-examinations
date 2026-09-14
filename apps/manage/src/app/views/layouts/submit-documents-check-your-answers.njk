@@ -19,7 +19,7 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
 
-    <span class="govuk-caption-l">{{ caseReference }}</span>
+    <span class="govuk-caption-l">{{ caseReference.replace('-','/') }}</span>
     <h1 class="govuk-heading-l">{{ titleHeading }}</h1>
 
     
@@ -64,7 +64,7 @@
   </div>
 </details>
 
-    <p class="govuk-body">We'll send a notification to the LPA to tell them that the report is available</p>
+    <p class="govuk-body">{{ notificationTextLPA }}</p>
 
       <form method="post" action="">
         {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}

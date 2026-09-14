@@ -21,7 +21,8 @@ import {
 	issueGateway2Report,
 	issueGateway1SLA,
 	redirectToFileUploaderQuestion,
-	handleMulterFileSizeError
+	handleMulterFileSizeError,
+	issueGateway2WorkshopDocuments
 } from './controller.ts';
 import {
 	type IRouter,
@@ -215,6 +216,7 @@ function registerCaseJourney(
 		question
 	);
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 
 	// Save answer
