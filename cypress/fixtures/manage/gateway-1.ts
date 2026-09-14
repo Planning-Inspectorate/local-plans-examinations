@@ -21,7 +21,7 @@ export const gateway1DateAnswers = {
 		display: '1 May 2026'
 	},
 	expectedGateway1Date: {
-		row: 'Gateway 1 expected date',
+		row: 'Expected',
 		heading: 'What is the expected Gateway 1 date?',
 		fieldName: 'expectedGateway1Date',
 		path: 'expected-gateway-1-date',
@@ -30,7 +30,7 @@ export const gateway1DateAnswers = {
 		display: '1 June 2026'
 	},
 	completedGateway1Date: {
-		row: 'Gateway 1 actual date',
+		row: 'Submission received',
 		heading: 'When was Gateway 1 completed?',
 		fieldName: 'completedGateway1Date',
 		path: 'completed-gateway-1-date',

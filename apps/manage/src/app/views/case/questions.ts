@@ -375,7 +375,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the expected Gateway 1 date?',
 		fieldName: 'expectedGateway1Date',
 		url: 'expected-gateway-1-date',
-		title: 'Gateway 1 expected date',
+		title: 'Expected',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'expected-gateway-1-date' }
 	},
@@ -384,7 +384,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was Gateway 1 completed?',
 		fieldName: 'completedGateway1Date',
 		url: 'completed-gateway-1-date',
-		title: 'Gateway 1 actual date',
+		title: 'Submission received',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'completed-gateway-1-date' }
 	},
