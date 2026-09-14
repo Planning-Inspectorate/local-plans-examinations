@@ -1,3 +1,5 @@
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
 {% set resolvedHeaderStatus = headerStatus or {} %}
 {% set resolvedHeaderStatusText = headerStatusText or resolvedHeaderStatus.text or planStatus or (data and data.planStatus) or 'Ready to start' %}
 {% set resolvedHeaderStatusClasses = headerStatusClasses or resolvedHeaderStatus.classes or (data and data.planStatusClasses) %}

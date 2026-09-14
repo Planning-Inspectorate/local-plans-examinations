@@ -167,6 +167,100 @@ describe('resolveCaseHeaderStatus', () => {
 		});
 	});
 
+	it('returns GW2 workshop confirmed when the workshop is in the future and gateway 2 documents exist', () => {
+		const futureDate = new Date(Date.now() + 60_000);
+
+		const result = resolveCaseHeaderStatus(
+			{
+				id: '1',
+				caseId: 'case-1',
+				noticeOfIntention: null,
+				expectedGateway1Date: null,
+				completedGateway1Date: null,
+				slaSentDate: null,
+				slaReceivedDate: new Date(),
+				dsaChecked: null
+			},
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: null,
+				workshopVenue: 'Somewhere',
+				workshopDate: futureDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					createdAt: new Date(),
+					name: 'doc',
+					caseId: 'case-1',
+					guid: 'guid-1',
+					documentSetId: 'some-set',
+					isDeleted: false,
+					latestVersionId: null
+				}
+			]
+		);
+
+		assert.deepEqual(result, {
+			headerStatusText: 'GW2 workshop confirmed',
+			headerStatusClasses: 'govuk-tag--blue'
+		});
+	});
+
+	it('returns GW2 report when the workshop date has passed and gateway 2 documents exist', () => {
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const result = resolveCaseHeaderStatus(
+			{
+				id: '1',
+				caseId: 'case-1',
+				noticeOfIntention: null,
+				expectedGateway1Date: null,
+				completedGateway1Date: null,
+				slaSentDate: null,
+				slaReceivedDate: new Date(),
+				dsaChecked: null
+			},
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					createdAt: new Date(),
+					name: 'doc',
+					caseId: 'case-1',
+					guid: 'guid-1',
+					documentSetId: 'some-set',
+					isDeleted: false,
+					latestVersionId: null
+				}
+			]
+		);
+
+		assert.deepEqual(result, {
+			headerStatusText: 'GW2 report',
+			headerStatusClasses: 'govuk-tag--blue'
+		});
+	});
+
 	it('returns GW3 pending when a G2 report document exists', () => {
 		const result = resolveCaseHeaderStatus(
 			{
@@ -195,6 +289,47 @@ describe('resolveCaseHeaderStatus', () => {
 
 		assert.deepEqual(result, {
 			headerStatusText: 'GW3 pending',
+			headerStatusClasses: 'govuk-tag--yellow'
+		});
+	});
+
+	it('ignores deleted gateway 2 documents', () => {
+		const result = resolveCaseHeaderStatus(
+			{
+				id: '1',
+				caseId: 'case-1',
+				noticeOfIntention: null,
+				expectedGateway1Date: null,
+				completedGateway1Date: null,
+				slaSentDate: null,
+				slaReceivedDate: new Date(),
+				dsaChecked: null
+			},
+			null,
+			[
+				{
+					createdAt: new Date(),
+					name: 'doc',
+					caseId: 'case-1',
+					guid: 'guid-1',
+					documentSetId: 'some-set',
+					isDeleted: true,
+					latestVersionId: null
+				},
+				{
+					createdAt: new Date(),
+					name: 'g2-report',
+					caseId: 'case-1',
+					guid: 'guid-2',
+					documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+					isDeleted: true,
+					latestVersionId: null
+				}
+			]
+		);
+
+		assert.deepEqual(result, {
+			headerStatusText: 'GW2 pending',
 			headerStatusClasses: 'govuk-tag--yellow'
 		});
 	});
