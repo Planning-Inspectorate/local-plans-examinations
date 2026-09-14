@@ -11,5 +11,8 @@
 
 {{ govukTag({
   text: resolvedHeaderStatusText,
-  classes: resolvedHeaderStatusClasses
+  classes: resolvedHeaderStatusClasses,
+  attributes: {
+    "data-cy": "status-tag"
+  }
 }) }}
