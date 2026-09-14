@@ -48,6 +48,10 @@ export class CaseOverviewPage extends BasePage {
 		return cy.getByData('delete-case-button');
 	}
 
+	get headerStatusTag() {
+		return cy.getByData('status-tag');
+	}
+
 	sectionHeading(text: string) {
 		return cy.contains('h2', text);
 	}
@@ -78,6 +82,10 @@ export class CaseOverviewPage extends BasePage {
 
 	verifyExpectedServiceNavigation() {
 		this.verifyServiceNavigation(...serviceNavigationItems);
+	}
+
+	verifyHeaderStatus(status: string) {
+		this.headerStatusTag.should('be.visible').and('contain.text', status);
 	}
 
 	verifySectionHeading(text: string) {

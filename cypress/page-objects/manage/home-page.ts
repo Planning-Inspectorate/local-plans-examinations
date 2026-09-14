@@ -25,6 +25,10 @@ export class ManageHomePage extends BasePage {
 		this.casesTable.contains('tr', planTitle).find('a').first().click();
 	}
 
+	verifyCaseStatus(planTitle: string, status: string) {
+		this.casesTable.contains('tr', planTitle).find('[data-cy="status-tag"]').should('contain.text', status);
+	}
+
 	verifyCreateCaseLink(text: string) {
 		this.createCaseLink.should('be.visible').and('contain.text', text);
 	}
