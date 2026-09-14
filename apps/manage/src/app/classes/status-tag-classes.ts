@@ -1,3 +1,5 @@
+import { DOCUMENT_SET_ID } from '../../../../../packages/database/src/seed/static-data/ids/document-set.ts';
+
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Submitted: 'govuk-tag--green',
 	'In progress': 'govuk-tag--blue',
@@ -84,6 +86,13 @@ export function resolveCaseHeaderStatus(
 		};
 	}
 
+	if (gateway1Data?.slaReceivedDate) {
+		return {
+			headerStatusText: 'GW2 pending',
+			headerStatusClasses: getPlanStatusClasses('GW2 pending')
+		};
+	}
+
 	if (
 		gateway2Data?.actualDate &&
 		gateway2Data.workshopVenue &&
@@ -96,6 +105,17 @@ export function resolveCaseHeaderStatus(
 		};
 	}
 
+	if (
+		gateway2Data?.workshopDate &&
+		gateway2Data.workshopDate < dateNow &&
+		!gateway2Documents.find((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT)
+	) {
+		return {
+			headerStatusText: 'GW2 report',
+			headerStatusClasses: getPlanStatusClasses('GW2 report')
+		};
+	}
+
 	if (gateway2Documents.length > 0) {
 		return {
 			headerStatusText: 'GW2 received',
@@ -103,8 +123,15 @@ export function resolveCaseHeaderStatus(
 		};
 	}
 
+	if (gateway2Documents.find((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT)) {
+		return {
+			headerStatusText: 'GW3 pending',
+			headerStatusClasses: getPlanStatusClasses('GW3 pending')
+		};
+	}
+
 	return {
-		headerStatusText: 'GW2 pending',
-		headerStatusClasses: getPlanStatusClasses('GW2 pending')
+		headerStatusText: 'Submitted',
+		headerStatusClasses: getPlanStatusClasses('Submitted')
 	};
 }
