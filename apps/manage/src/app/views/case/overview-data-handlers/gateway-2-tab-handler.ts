@@ -78,14 +78,27 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 		res.locals.journeyResponse = journeyResponse;
 		if (
 			req.method === 'POST' &&
-			req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION &&
+			(req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION || req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) &&
 			req.originalUrl.endsWith(req.params.question)
 		) {
-			const uploadedGateway2Reports =
-				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
-			if (uploadedGateway2Reports.length > 0) {
-				res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION}/check`);
-				return;
+			let uploadedGateway2Reports;
+			if (req.params.question == 'gateway-2-report') {
+				uploadedGateway2Reports =
+					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ??
+					[];
+				if (uploadedGateway2Reports.length > 0) {
+					res.redirect(303, 'gateway-2-report/check');
+					return;
+				}
+			}
+			if (req.params.question == 'gateway-2-workshop-documents') {
+				uploadedGateway2Reports =
+					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2WorkshopDocuments')]
+						?.uploadedFiles ?? [];
+				if (uploadedGateway2Reports.length > 0) {
+					res.redirect(303, 'gateway-2-workshop-documents/check');
+					return;
+				}
 			}
 		}
 

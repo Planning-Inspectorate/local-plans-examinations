@@ -30,6 +30,8 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'g3-cons-plan-summ',
 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'g3-practical-arrng',
 
+	G2_WORKSHOP_DOCUMENTS: 'g2-workshop-docs',
+
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
 	G2_SCOPING_CONSULATATION_DOCS: 'g2-scoping-cons',
@@ -60,6 +62,8 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'consultation-content-evidence-summary',
 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'consultation-proposed-plan-summary',
 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'practical-arrangements-statement',
+
+	G2_WORKSHOP_DOCUMENTS: 'gateway-2-workshop-documents',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',
