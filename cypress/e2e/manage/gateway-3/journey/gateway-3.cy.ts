@@ -66,8 +66,9 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 		gateway3Page.verifySummaryRowContains(gateway3AssessorAnswer.row, gateway3AssessorAnswer.assessor2);
 
-		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent('Gateway 3 assessor name updated from assessor-1 to assessor-2');
+		gateway3Page.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyHistoryEvent('Assessor updated from assessor-1 to assessor-2');
 	});
 
 	it('updates the programme officer details answer and records case history', { tags: ['regression'] }, () => {
