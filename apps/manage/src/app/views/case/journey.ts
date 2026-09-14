@@ -461,7 +461,6 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
-
 	questions.gateway2WorkshopDocuments.config.text.caption = String(req.params.reference).replace('-','/');
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,

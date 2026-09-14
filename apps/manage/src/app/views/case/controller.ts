@@ -902,6 +902,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
 		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
 	}
+	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
+		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+	}
 	const journey = req.url.split(String(req.params.section))[0];
 	if (
 		req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION &&
