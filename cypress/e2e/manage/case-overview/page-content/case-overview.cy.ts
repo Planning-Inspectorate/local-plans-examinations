@@ -2,6 +2,8 @@ import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
+const seededCaseStatus = 'Awaiting SLA';
+
 describe('Case overview', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
@@ -21,6 +23,7 @@ describe('Case overview', () => {
 
 		manageHomePage.visit();
 		manageHomePage.verifyHeading('All cases (1)');
+		manageHomePage.verifyCaseStatus(seededCase.planTitle, seededCaseStatus);
 	});
 
 	it('can view detailed overview of a case', { tags: ['smoke'] }, () => {
@@ -30,6 +33,7 @@ describe('Case overview', () => {
 		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
 
 		caseOverviewPage.verifyLoaded(seededCase.planTitle);
+		caseOverviewPage.verifyHeaderStatus(seededCaseStatus);
 		caseOverviewPage.verifyBackLink('/');
 		caseOverviewPage.verifyExpectedServiceNavigation();
 		caseOverviewPage.verifyExpectedSectionHeadings();
