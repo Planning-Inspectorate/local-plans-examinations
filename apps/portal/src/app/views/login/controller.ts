@@ -33,9 +33,9 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
-				errors: { email: { msg: 'Enter your email address' } },
-				errorSummaryTitle: 'You have not entered your email address',
-				errorSummary: [{ text: 'Enter your email address', href: '#email' }]
+				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
+				errorSummaryTitle: 'There is a problem',
+				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
 			});
 		}
 
@@ -51,9 +51,9 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
 				backLinkUrl: `/`,
-				errors: { email: { msg: 'Enter the valid email address your reference number was sent to' } },
-				errorSummaryTitle: 'Enter a valid email address',
-				errorSummary: [{ text: 'Enter the valid email address your reference number was sent to', href: '#email' }]
+				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
+				errorSummaryTitle: 'There is a problem',
+				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
 			});
 		}
 
@@ -67,8 +67,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 					emailQuestionText: 'What is your email address?',
 					backLinkUrl: `/`,
 					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
-					errorSummaryTitle: 'We did not recognise that email address',
-					errorSummary: [{ text: 'Enter an email address linked to a case on this service', href: '#email' }]
+					errorSummaryTitle: 'There is a problem',
+					errorSummary: [{ text: 'We did not recognise that email address', href: '#email' }]
 				});
 			}
 
@@ -198,15 +198,17 @@ export function buildSubmitOtpPage(service: PortalService) {
 				]
 			});
 		}
+		const errorTitle = 'There is a problem';
+		const enterCorrectCodeMessage = 'Enter the code we sent to you';
 
 		const { otp } = req.body;
 		if (!otp || typeof otp !== 'string' || otp.trim().length === 0) {
 			return res.render('views/login/enter-otp.njk', {
 				pageTitle: 'Enter your one-time password',
 				pageHeading: 'Enter your one-time password',
-				errors: { otp: { msg: 'Enter the code we sent to your email address' } },
-				errorSummaryTitle: 'You have not entered a code',
-				errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
+				errors: { otp: { msg: enterCorrectCodeMessage } },
+				errorSummaryTitle: errorTitle,
+				errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
 			});
@@ -231,7 +233,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					pageTitle: 'Enter your one-time password',
 					pageHeading: 'Enter your one-time password',
 					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
-					errorSummaryTitle: 'We could not verify your code',
+					errorSummaryTitle: errorTitle,
 					errorSummary: [
 						{ text: 'We could not find a code for your email address. Go back and try again.', href: '#otp' }
 					],
@@ -307,9 +309,9 @@ export function buildSubmitOtpPage(service: PortalService) {
 				return res.render('views/login/enter-otp.njk', {
 					pageTitle: 'Enter your one-time password',
 					pageHeading: 'Enter your one-time password',
-					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
-					errorSummaryTitle: 'The code you entered is incorrect',
-					errorSummary: [{ text: 'Enter the code we sent to your email address', href: '#otp' }],
+					errors: { otp: { msg: enterCorrectCodeMessage } },
+					errorSummaryTitle: errorTitle,
+					errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
 				});

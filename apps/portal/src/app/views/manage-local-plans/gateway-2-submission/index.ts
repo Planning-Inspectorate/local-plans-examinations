@@ -269,9 +269,7 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		res.locals.saveAndComeBackUrl = `/manage-local-plans/${encodedPlanReference}`;
 	}
 
-	if (currentCase?.gateway2Date) {
-		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
-	}
+	res.locals.targetDate = formatDisplayDate(currentCase?.gateway2Info?.expectedDate);
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {
@@ -314,7 +312,11 @@ function validateGateway2Submission(): RequestHandler {
 	};
 }
 
-function formatDisplayDate(date: Date) {
+function formatDisplayDate(date: Date | null | undefined) {
+	if (!date) {
+		return 'Not set';
+	}
+
 	return date.toLocaleDateString('en-GB', {
 		day: 'numeric',
 		month: 'long',

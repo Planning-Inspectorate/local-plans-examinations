@@ -1,6 +1,6 @@
 import { portalLoginEmailPage } from '../../../../page-objects/portal/login/email-page.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
-import { portalLandingPage } from '../../../../page-objects/portal/landing-page.ts';
+import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
@@ -19,14 +19,14 @@ describe('Portal login journey', () => {
 		portalLoginOtpPage.verifyPath();
 	});
 
-	it('logs in and shows the landing page', { tags: ['smoke'] }, () => {
+	it('logs in and shows the my plans page', { tags: ['smoke'] }, () => {
 		startPortalOtpLogin();
 		portalLoginOtpPage.verifyPath();
 
 		completePortalLogin();
 
-		portalLandingPage.verifyLoaded();
-		portalLandingPage.verifyHeading('My plans');
+		myPlansPage.verifyLoaded();
+		myPlansPage.verifyHeading('My plans');
 	});
 
 	it('user cannot access OPT page by using back link and typing in url', { tags: ['regression'] }, () => {
@@ -38,7 +38,7 @@ describe('Portal login journey', () => {
 	});
 
 	it('user is redirected to /login page when trying to access Portal urls directly', { tags: ['regression'] }, () => {
-		portalLandingPage.visit();
+		myPlansPage.visit();
 		portalLoginEmailPage.verifyLoaded();
 	});
 
@@ -48,11 +48,11 @@ describe('Portal login journey', () => {
 		completePortalLogin();
 
 		loadPlanDetails().then((plan) => {
-			portalLandingPage.openPlan(plan.reference);
+			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyPathForPlan(encodeURIComponent(plan.reference));
 
-			portalLandingPage.visit();
-			portalLandingPage.verifyLoaded();
+			myPlansPage.visit();
+			myPlansPage.verifyLoaded();
 		});
 	});
 
