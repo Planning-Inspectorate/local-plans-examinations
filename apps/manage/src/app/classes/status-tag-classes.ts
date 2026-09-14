@@ -41,7 +41,7 @@ export function getPlanStatusClasses(statusText: string) {
 }
 
 export function resolveCaseHeaderStatus(
-	gateway1Data?: {
+	gateway1Data: {
 		id: string;
 		caseId: string;
 		noticeOfIntention: Date | null;
@@ -51,7 +51,7 @@ export function resolveCaseHeaderStatus(
 		slaReceivedDate: Date | null;
 		dsaChecked: string | null;
 	} | null,
-	gateway2Data?: {
+	gateway2Data: {
 		actualDate: Date | null;
 		workshopVenue: string | null;
 		workshopDate: Date | null;
@@ -64,7 +64,16 @@ export function resolveCaseHeaderStatus(
 		reportIssuedDate: Date | null;
 		reportPublishedByLPA: Date | null;
 		workshopDocumentUploadedDate: Date | null;
-	} | null
+	} | null,
+	gateway2Documents: {
+		createdAt: Date;
+		name: string;
+		caseId: string;
+		guid: string;
+		documentSetId: string;
+		isDeleted: boolean;
+		latestVersionId: number | null;
+	}[]
 ) {
 	const dateNow = new Date();
 
@@ -84,6 +93,13 @@ export function resolveCaseHeaderStatus(
 		return {
 			headerStatusText: 'GW2 workshop confirmed',
 			headerStatusClasses: getPlanStatusClasses('GW2 workshop confirmed')
+		};
+	}
+
+	if (gateway2Documents.length > 0) {
+		return {
+			headerStatusText: 'GW2 received',
+			headerStatusClasses: getPlanStatusClasses('GW2 received')
 		};
 	}
 
