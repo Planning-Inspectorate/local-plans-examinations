@@ -1,10 +1,10 @@
 export const ERROR_MESSAGES = {
 	// Login
-	NO_EMAIL_ENTERED: 'Enter your email address',
-	NO_EMAIL_ENTERED_SUMMARY: 'You have not entered your email address',
+	NO_EMAIL_ENTERED: 'Enter an email address in the correct format, like name@example.com',
+	NO_EMAIL_ENTERED_SUMMARY: 'Enter an email address in the correct format, like name@example.com',
 
-	INVALID_EMAIL_FORMAT: 'Enter the valid email address your reference number was sent to',
-	INVALID_EMAIL_FORMAT_SUMMARY: 'Enter a valid email address',
+	INVALID_EMAIL_FORMAT: 'Enter an email address in the correct format, like name@example.com',
+	INVALID_EMAIL_FORMAT_SUMMARY: 'Enter an email address in the correct format, like name@example.com',
 
 	UNRECOGNISED_EMAIL: 'Enter an email address linked to a case on this service',
 	UNRECOGNISED_EMAIL_SUMMARY: 'We did not recognise that email address',
@@ -12,7 +12,7 @@ export const ERROR_MESSAGES = {
 	// OPT
 
 	NO_CODE_ENTERED_SUMMARY: 'You have not entered a code',
-	ENTER_CODE_SENT: 'Enter the code we sent to your email address',
+	ENTER_CODE_SENT: 'Enter the code we sent to you',
 
 	INCORRECT_CODE_SUMMARY: 'The code you entered is incorrect',
 

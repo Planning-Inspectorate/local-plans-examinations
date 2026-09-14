@@ -88,7 +88,11 @@ type Gateway2Session = Request['session'] &
 	};
 
 type Gateway2Request = Request & {
-	currentCase?: CaseModel;
+	currentCase?: CaseModel & {
+		gateway2Info?: {
+			expectedDate: Date | null;
+		} | null;
+	};
 	session: Gateway2Session;
 };
 
@@ -201,7 +205,14 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		}
 
 		const currentCase = await service.db.case.findUnique({
-			where: { reference: planReference }
+			where: { reference: planReference },
+			include: {
+				gateway2Info: {
+					select: {
+						expectedDate: true
+					}
+				}
+			}
 		});
 
 		if (!currentCase) {
@@ -265,9 +276,7 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		res.locals.saveAndComeBackUrl = `/manage-local-plans/${encodedPlanReference}`;
 	}
 
-	if (currentCase?.gateway2Date) {
-		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
-	}
+	res.locals.targetDate = formatDisplayDate(currentCase?.gateway2Info?.expectedDate);
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {
@@ -310,7 +319,11 @@ function validateGateway2Submission(): RequestHandler {
 	};
 }
 
-function formatDisplayDate(date: Date) {
+function formatDisplayDate(date: Date | null | undefined) {
+	if (!date) {
+		return 'Not set';
+	}
+
 	return date.toLocaleDateString('en-GB', {
 		day: 'numeric',
 		month: 'long',
