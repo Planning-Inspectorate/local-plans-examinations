@@ -13,6 +13,7 @@ import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
+import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -527,7 +528,14 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 		const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 
-		const headerStatus = resolveCaseHeaderStatus(journey1Data, journey2Data);
+		const gateway2Documents = await db.document.findMany({
+			where: {
+				caseId: caseRecord.id,
+				documentSetId: { in: gateway2SetIds }
+			}
+		});
+
+		const headerStatus = resolveCaseHeaderStatus(journey1Data, journey2Data, gateway2Documents);
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;
 

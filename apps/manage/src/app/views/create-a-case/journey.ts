@@ -52,10 +52,10 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.caseOfficer)
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
-				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa))),
+				.addQuestion(questions.checkLpas, new ManageListSection().addQuestion(questions.lpa)),
 			new Section('Contacts', 'contact-details').addQuestion(
 				questions.checkContactDetails,
-				Object.assign(new ManageListSection().addQuestion(questions.contactDetails))
+				new ManageListSection().addQuestion(questions.contactDetails)
 			),
 			new Section('Dates', 'dates').addQuestion(questions.keyStageDates)
 		],
