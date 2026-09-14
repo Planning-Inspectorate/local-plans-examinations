@@ -98,6 +98,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
+	questions.gateway2WorkshopDocuments.config.text.caption = String(req.params.reference).replace('-','/');
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		sections: [
@@ -110,7 +111,11 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.assessorDateOfAppointment)
 				.addQuestion(questions.workshopDate)
 				.addQuestion(questions.workshopVenue),
-			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
+			new Section('Workshop', 'workshop')
+				.addQuestion(questions.gateway2WorkshopDocuments),
+			new Section('Report', 'report')
+				.addQuestion(questions.gateway2Report)
+				.addQuestion(questions.reportPublishedDate)
 		],
 		//taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -121,7 +126,6 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway2Url,
 		response
 	});
-
 	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
 }
 

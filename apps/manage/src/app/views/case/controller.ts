@@ -87,6 +87,7 @@ interface Gateway2Input {
 	reportIssuedDate?: Date;
 	reportPublishedByLPA?: Date;
 	gateway2Report?: any;
+	workshopDocumentUploadedDate?: Date;
 }
 
 interface ExaminationInput {
@@ -967,6 +968,58 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 	};
 }
 
+export function issueGateway2WorkshopDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingGatewayDetails = await service.db.gateway2Info.findUnique({
+			select: {
+				workshopDocumentUploadedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingGatewayDetails?.workshopDocumentUploadedDate) {
+			// Try to update the reportIssuedDate
+			const workshopDocumentUploadedDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await updateGateway2(
+				service.db,
+				{
+					workshopDocumentUploadedDate: workshopDocumentUploadedDate
+				},
+				caseReference,
+				'workshop-document-uploaded-date'
+			);
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					gateway2WorkshopDocuments: null // Will be overridden by overrideLabels
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					gateway2WorkshopDocuments: `Gateway 2 workshop documents uploaded on ${await formatCaseHistoryValue(service, req, '', workshopDocumentUploadedDate)}`
+				}
+			);
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 2 workshop documents issued';
+			req.session.alertMessageStatus = 'success';
+		} else {
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			req.session.alertMessage = 'Gateway 2 workshopDocuments already issued';
+			req.session.alertMessageStatus = 'important';
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		return;
+	};
+}
+
 export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
@@ -1099,6 +1152,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	}
 	if (req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION) {
 		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
+	}
+	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
+		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
