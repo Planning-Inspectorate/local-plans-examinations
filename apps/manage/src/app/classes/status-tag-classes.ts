@@ -78,54 +78,38 @@ export function resolveCaseHeaderStatus(
 	}[]
 ) {
 	const dateNow = new Date();
-	let textAndClass = {
-		headerStatusText: 'Awaiting SLA',
-		headerStatusClasses: getPlanStatusClasses('Awaiting SLA')
+	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
+	const hasGateway2Report = activeGateway2Documents.some((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT);
+	const hasGateway2SubmissionDocuments = activeGateway2Documents.some(
+		(doc) => doc.documentSetId !== DOCUMENT_SET_ID.G2_REPORT
+	);
+
+	const resolveStatus = (statusText: string) => {
+		return {
+			headerStatusText: statusText,
+			headerStatusClasses: getPlanStatusClasses(statusText)
+		};
 	};
 
+	if (hasGateway2Report) {
+		return resolveStatus('GW3 pending');
+	}
+
+	if (gateway2Data?.workshopDate && gateway2Data.workshopDate < dateNow) {
+		return resolveStatus('GW2 report');
+	}
+
+	if (gateway2Data?.workshopVenue && gateway2Data.workshopDate && gateway2Data.workshopDate > dateNow) {
+		return resolveStatus('GW2 workshop confirmed');
+	}
+
+	if (hasGateway2SubmissionDocuments) {
+		return resolveStatus('GW2 received');
+	}
+
 	if (gateway1Data?.slaReceivedDate) {
-		textAndClass = {
-			headerStatusText: 'GW2 pending',
-			headerStatusClasses: getPlanStatusClasses('GW2 pending')
-		};
+		return resolveStatus('GW2 pending');
 	}
 
-	if (
-		gateway2Data?.actualDate &&
-		gateway2Data.workshopVenue &&
-		gateway2Data.workshopDate &&
-		gateway2Data.workshopDate > dateNow
-	) {
-		textAndClass = {
-			headerStatusText: 'GW2 workshop confirmed',
-			headerStatusClasses: getPlanStatusClasses('GW2 workshop confirmed')
-		};
-	}
-
-	if (
-		gateway2Data?.workshopDate &&
-		gateway2Data.workshopDate < dateNow &&
-		!gateway2Documents.find((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT)
-	) {
-		textAndClass = {
-			headerStatusText: 'GW2 report',
-			headerStatusClasses: getPlanStatusClasses('GW2 report')
-		};
-	}
-
-	if (gateway2Documents.length > 0) {
-		textAndClass = {
-			headerStatusText: 'GW2 received',
-			headerStatusClasses: getPlanStatusClasses('GW2 received')
-		};
-	}
-
-	if (gateway2Documents.find((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT)) {
-		textAndClass = {
-			headerStatusText: 'GW3 pending',
-			headerStatusClasses: getPlanStatusClasses('GW3 pending')
-		};
-	}
-
-	return textAndClass;
+	return resolveStatus('Awaiting SLA');
 }
