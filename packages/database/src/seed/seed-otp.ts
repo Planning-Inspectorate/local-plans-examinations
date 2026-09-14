@@ -34,12 +34,26 @@ async function run() {
 		gateway3Date: new Date('2026-08-01T12:00:00.000Z'),
 		submissionDate: new Date('2026-09-01T12:00:00.000Z')
 	};
+	const gateway1Info = {
+		upsert: {
+			update: {
+				expectedGateway1Date: planDates.gateway1Date,
+				completedGateway1Date: planDates.gateway1Date
+			},
+			create: {
+				expectedGateway1Date: planDates.gateway1Date,
+				completedGateway1Date: planDates.gateway1Date
+			}
+		}
+	};
 	const gateway2Info = {
 		upsert: {
 			update: {
+				expectedDate: planDates.gateway2Date,
 				reportIssuedDate: null
 			},
 			create: {
+				expectedDate: planDates.gateway2Date,
 				reportIssuedDate: null
 			}
 		}
@@ -47,12 +61,24 @@ async function run() {
 	const gateway3Info = {
 		upsert: {
 			update: {
+				expectedDate: planDates.gateway3Date,
 				actualDate: null,
 				completionDate: null
 			},
 			create: {
+				expectedDate: planDates.gateway3Date,
 				actualDate: null,
 				completionDate: null
+			}
+		}
+	};
+	const examinationInfo = {
+		upsert: {
+			update: {
+				expectedSubmissionForExaminationDate: planDates.submissionDate
+			},
+			create: {
+				expectedSubmissionForExaminationDate: planDates.submissionDate
 			}
 		}
 	};
@@ -80,8 +106,10 @@ async function run() {
 				...planDates,
 				...(createdAt ? { createdAt } : {}),
 				lpas: lpaRelations,
+				gateway1Info,
 				gateway2Info,
-				gateway3Info
+				gateway3Info,
+				examinationInfo
 			},
 			create: {
 				reference,
@@ -91,11 +119,17 @@ async function run() {
 				planType: 'Local Plan',
 				...planDates,
 				...(createdAt ? { createdAt } : {}),
+				gateway1Info: {
+					create: gateway1Info.upsert.create
+				},
 				gateway2Info: {
 					create: gateway2Info.upsert.create
 				},
 				gateway3Info: {
 					create: gateway3Info.upsert.create
+				},
+				examinationInfo: {
+					create: examinationInfo.upsert.create
 				},
 				lpas: {
 					connect: lpaRelations.set
