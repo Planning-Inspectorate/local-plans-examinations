@@ -6,7 +6,7 @@ export class ExaminationWebsitePage extends GatewayBasePage {
 	}
 
 	get examinationWebsiteInput() {
-		return cy.get('input[id="examinationWebsite"]');
+		return cy.getByData('examination-website');
 	}
 
 	verifyExaminationWebsiteForm(value?: string) {

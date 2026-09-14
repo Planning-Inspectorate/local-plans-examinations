@@ -21,7 +21,7 @@ class Gateway2ReportCheckPage extends BasePage {
 	}
 
 	get issueReportButton() {
-		return cy.contains('button', 'Issue report');
+		return cy.getByData('issue-document-notification');
 	}
 
 	verifyLoaded(fileName?: string) {
