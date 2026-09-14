@@ -13,6 +13,15 @@ function createService(cases: unknown[] = []): any {
 		db: {
 			case: {
 				findMany: mock.fn(async () => cases)
+			},
+			gateway1Info: {
+				findUnique: mock.fn(async () => null)
+			},
+			gateway2Info: {
+				findUnique: mock.fn(async () => null)
+			},
+			document: {
+				findMany: mock.fn(async () => [])
 			}
 		},
 		logger: {
@@ -53,8 +62,18 @@ function createContext(cases: unknown[] = []) {
 describe('buildAssignedToMe', () => {
 	it('renders assigned cases when fetch succeeds', async () => {
 		const cases = [
-			{ id: 1, caseOfficer: 'officer-1' },
-			{ id: 2, caseOfficer: 'officer-1' }
+			{
+				id: 1,
+				caseOfficer: 'officer-1',
+				headerStatusText: 'Awaiting SLA',
+				headerStatusClasses: 'govuk-tag--yellow'
+			},
+			{
+				id: 2,
+				caseOfficer: 'officer-2',
+				headerStatusText: 'Awaiting SLA',
+				headerStatusClasses: 'govuk-tag--yellow'
+			}
 		];
 
 		const ctx = createContext(cases);
@@ -96,8 +115,18 @@ describe('buildAssignedToMe', () => {
 			{
 				backLinkUrl: '/',
 				cases: [
-					{ id: 1, caseOfficer: 'User officer-1' },
-					{ id: 2, caseOfficer: 'User officer-1' }
+					{
+						id: 1,
+						caseOfficer: 'User officer-1',
+						headerStatusText: 'Awaiting SLA',
+						headerStatusClasses: 'govuk-tag--yellow'
+					},
+					{
+						id: 2,
+						caseOfficer: 'User officer-2',
+						headerStatusText: 'Awaiting SLA',
+						headerStatusClasses: 'govuk-tag--yellow'
+					}
 				],
 				caseOfficerText: 'Officer1'
 			}
@@ -147,8 +176,19 @@ describe('buildAssignedToMe', () => {
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments[1], {
 			backLinkUrl: '/',
 			cases: [
-				{ id: 1, caseOfficer: 'User officer-1' },
-				{ id: 2, caseOfficer: 'User officer-2', qaInspector1: 'Officer1' }
+				{
+					id: 1,
+					caseOfficer: 'User officer-1',
+					headerStatusText: 'Awaiting SLA',
+					headerStatusClasses: 'govuk-tag--yellow'
+				},
+				{
+					id: 2,
+					caseOfficer: 'User officer-2',
+					headerStatusText: 'Awaiting SLA',
+					headerStatusClasses: 'govuk-tag--yellow',
+					qaInspector1: 'Officer1'
+				}
 			],
 			caseOfficerText: 'Officer1'
 		});
