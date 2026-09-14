@@ -5,8 +5,8 @@ import {
 	gateway3ProgrammeOfficerAnswer,
 	gateway3ExpectedAnswers,
 	gateway3ExaminationWebsite,
-	gateway3Documents,
-	gateway3Decision
+	gateway3DocumentsAnswer,
+	gateway3DecisionAnswer
 } from '../../../fixtures/manage/gateway-3.ts';
 
 const gateway3Rows = [
@@ -14,8 +14,8 @@ const gateway3Rows = [
 	gateway3AssessorAnswer.row,
 	gateway3ProgrammeOfficerAnswer.row,
 	gateway3ExaminationWebsite.row,
-	gateway3Documents.row,
-	gateway3Decision.row
+	gateway3DocumentsAnswer.row,
+	gateway3DecisionAnswer.row
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
@@ -29,7 +29,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 		new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ProgrammeOfficerAnswer.path}$`)
 	],
 	[gateway3ExaminationWebsite.row, new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ExaminationWebsite.path}$`)]
-	//[gateway3Decision.row, new RegExp(`^/case/.+/gateway-3/gateway-3-submission/${gateway3Decision.path}$`)] // This needs to be updated because the url varies depending on if gw3 has been completed
+	//[gateway3DecisionAnswer.row, new RegExp(`^/case/.+/gateway-3/gateway-3-submission/${gateway3Decision.path}$`)] // This needs to be updated because the url varies depending on if gw3 has been completed
 ];
 
 export class Gateway3Page extends GatewayBasePage {

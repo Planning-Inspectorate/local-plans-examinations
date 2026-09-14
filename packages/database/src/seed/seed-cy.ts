@@ -99,8 +99,7 @@ async function run() {
 						assessorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
 						programmeOfficerFirstName: 'Albert',
 						programmeOfficerLastName: 'Einstien',
-						programmeOfficerEmail: 'gateway3.officer@test.com',
-						completionDate: new Date('2026-12-01T12:00:00.000Z')
+						programmeOfficerEmail: 'gateway3.officer@test.com'
 					}
 				},
 				examinationInfo: {

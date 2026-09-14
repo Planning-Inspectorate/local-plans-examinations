@@ -4,7 +4,10 @@ import {
 	gateway3ProgrammeOfficerPage,
 	gateway3ActualDatePage,
 	gateway3ExpectedDatePage,
-	gateway3ExaminationWebsitePage
+	gateway3ExaminationWebsitePage,
+	gateway3DecisionPage,
+	gateway3DocumentsPage,
+	gateway3DocumentsCheckPage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { examinationPage } from '../../../../page-objects/manage/examination/index.ts';
@@ -13,9 +16,11 @@ import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway3AssessorAnswer,
 	gateway3DateAnswers,
+	gateway3DecisionAnswer,
 	gateway3ExaminationWebsite,
 	gateway3ProgrammeOfficerAnswer,
-	updatedGateway3ExpectedDateAnswer
+	updatedGateway3ExpectedDateAnswer,
+	gateway3DocumentsAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 
 const today = new Date();
@@ -161,5 +166,23 @@ describe('Gateway 3 updates', () => {
 		gateway3ProgrammeOfficerPage.goBack();
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
+	});
+
+	it('selects a gateway 3 decision and uploads files that cannot be edited', { tags: ['regression'] }, () => {
+		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
+
+		gateway3DecisionPage.verifyLoaded();
+		gateway3DecisionPage.selectDecision('1');
+
+		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName, gateway3DocumentsAnswer.fieldName);
+		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName2, gateway3DocumentsAnswer.fieldName);
+
+		gateway3DocumentsPage.saveAndReturn();
+
+		gateway3DocumentsCheckPage.verifyLoaded();
+		gateway3DocumentsCheckPage.issueDecision();
+
+		gateway3Page.verifyLoaded(seededCase.planTitle);
+		gateway3Page.verifySummaryRowContains(gateway3DocumentsAnswer.row, '2 documents');
 	});
 });

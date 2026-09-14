@@ -85,11 +85,17 @@ export const gateway3ExaminationWebsite = {
 	unsavedValue: 'www.unsaved-gateway-3-example.com'
 } as const;
 
-export const gateway3Documents = {
-	row: 'Gateway 3 documents'
+export const gateway3DocumentsAnswer = {
+	row: 'Gateway 3 documents',
+	heading: 'Upload documents',
+	fieldName: 'gateway3Documents',
+	path: 'gateway-3-document',
+	caption: 'Gateway 3 documents',
+	fileName: 'test-document.pdf',
+	fileName2: 'test-document.docx'
 } as const;
 
-export const gateway3Decision = {
+export const gateway3DecisionAnswer = {
 	row: 'Gateway 3 decision',
 	path: 'gateway-3-decision'
 } as const;
