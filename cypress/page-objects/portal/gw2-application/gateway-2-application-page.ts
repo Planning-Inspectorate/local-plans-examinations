@@ -61,7 +61,7 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 					cy.contains('tr', row).should('be.visible').and('contain.text', notAddedStatus);
 				});
 
-				cy.contains('button', submitButtonText).should('be.visible');
+				cy.get('[data-cy="submit-gateway-2"]').should('be.visible').and('contain.text', submitButtonText);
 			}
 		);
 	}

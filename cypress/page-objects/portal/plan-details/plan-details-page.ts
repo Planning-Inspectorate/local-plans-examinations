@@ -14,11 +14,11 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 	}
 
 	get planProgress() {
-		return cy.get('section[aria-labelledby="plan-progress-heading"]');
+		return cy.getByData('plan-progress');
 	}
 
 	get gateway2Link() {
-		return cy.contains('a', 'Gateway 2 - advisory check');
+		return this.planProgress.contains('a', 'Gateway 2 - advisory check');
 	}
 
 	verifyLoaded() {
@@ -54,7 +54,7 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 	}
 
 	progressRow(title: string) {
-		return cy.contains('section[aria-labelledby="plan-progress-heading"] .govuk-task-list__item', title);
+		return this.planProgress.contains('.govuk-task-list__item', title);
 	}
 
 	verifyProgressRow(title: string, hint: string, status: string) {

@@ -6,7 +6,7 @@ export class CaseOverviewExaminationWebsitePage extends BasePage {
 		super(/^\/case\/.+\/overview\/contacts\/examination-website$/);
 	}
 	get examinationWebsiteInput() {
-		return cy.get(`input[name="${examinationWebsite.field}"]`);
+		return cy.getByData('examination-website');
 	}
 
 	verifyLoaded() {
