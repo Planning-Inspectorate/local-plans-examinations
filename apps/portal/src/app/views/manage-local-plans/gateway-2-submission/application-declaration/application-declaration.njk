@@ -31,10 +31,13 @@
                 ]
             }) }}
 
-            {{ govukButton({
-                text: "Confirm and submit",
-                preventDoubleClick: true
-            }) }}
+	            {{ govukButton({
+	                text: "Confirm and submit",
+	                preventDoubleClick: true,
+	                attributes: {
+	                    "data-cy": "confirm-and-submit"
+	                }
+	            }) }}
         </form>
     </div>
 </div>

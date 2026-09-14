@@ -17,7 +17,7 @@ class Gateway1SignedSLACheckPage extends BasePage {
 	}
 
 	get issueNotificationButton() {
-		return cy.contains('button', 'issue notification');
+		return cy.getByData('issue-document-notification');
 	}
 
 	get previewDropDown() {

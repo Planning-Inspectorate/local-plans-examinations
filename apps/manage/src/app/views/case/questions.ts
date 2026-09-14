@@ -231,6 +231,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 		question: 'What is the address of the examination website?',
 		fieldName: 'examinationWebsite',
+		inputAttributes: { 'data-cy': 'examination-website' },
 		url: 'examination-website',
 		title: 'Examination website',
 		validators: [new RequiredValidator('Input an examination website')]

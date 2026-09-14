@@ -25,11 +25,7 @@ export class ExaminationPage extends GatewayBasePage {
 
 	verifySummaryRowValueLinkHref(key: string, href: string | RegExp) {
 		const assertion = typeof href === 'string' ? 'eq' : 'match';
-		this.summaryRow(key)
-			.find('.govuk-summary-list__value a')
-			.should('be.visible')
-			.should('have.attr', 'href')
-			.and(assertion, href);
+		this.summaryRowValue(key).find('a').should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 }
 

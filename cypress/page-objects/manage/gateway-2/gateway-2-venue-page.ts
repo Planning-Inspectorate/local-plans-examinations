@@ -6,7 +6,7 @@ export class WorkshopVenuePage extends GatewayBasePage {
 	}
 
 	get workshopVenueInput() {
-		return cy.get('input[id="workshopVenue"]');
+		return cy.getByData('gateway-2-workshop-venue');
 	}
 
 	verifyWorkshopVenueForm(value: string) {

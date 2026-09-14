@@ -15,7 +15,7 @@ export class PortalDeclarationPage extends PortalPlanBasePage {
 	}
 
 	get confirmAndSubmitButton() {
-		return cy.contains('button[type="submit"]', 'Confirm and submit');
+		return cy.getByData('confirm-and-submit');
 	}
 
 	get confirmInformationCheckbox() {
