@@ -6,15 +6,15 @@ export class Gateway3ProgrammeOfficerPage extends BasePage {
 	}
 
 	get programmeOfficerFirstNameInput() {
-		return cy.get('input[name="programmeOfficerFirstName"]');
+		return cy.getByData('programme-officer-first-name');
 	}
 
 	get programmeOfficerLastNameInput() {
-		return cy.get('input[name="programmeOfficerLastName"]');
+		return cy.getByData('programme-officer-last-name');
 	}
 
 	get programmeOfficerEmailInput() {
-		return cy.get('input[name="programmeOfficerEmail"]');
+		return cy.getByData('programme-officer-email');
 	}
 
 	verifyLoaded(firstName = '', lastName = '', email = '') {

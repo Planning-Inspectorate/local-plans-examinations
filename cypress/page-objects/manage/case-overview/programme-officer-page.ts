@@ -7,15 +7,15 @@ export class CaseOverviewProgrammeOfficerPage extends BasePage {
 	}
 
 	get programmeOfficerFirstNameInput() {
-		return cy.get(`input[name="${programmeOfficer.fieldFirstName}"]`);
+		return cy.getByData('programme-officer-first-name');
 	}
 
 	get programmeOfficerLastNameInput() {
-		return cy.get(`input[name="${programmeOfficer.fieldLastName}"]`);
+		return cy.getByData('programme-officer-last-name');
 	}
 
 	get programmeOfficerEmailInput() {
-		return cy.get(`input[name="${programmeOfficer.fieldEmail}"]`);
+		return cy.getByData('programme-officer-email');
 	}
 
 	verifyLoaded(firstName = '', lastName = '', email = '') {
