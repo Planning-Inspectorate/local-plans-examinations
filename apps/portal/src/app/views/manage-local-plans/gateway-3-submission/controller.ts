@@ -3,9 +3,12 @@ import { type NextFunction, type Request, type RequestHandler, type Response } f
 import { buildList, JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './journey.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
+
+type CaseWithGateway3Info = CaseModel & { gateway3Info?: Gateway3InfoModel | null };
 
 type Gateway3Request = Request & {
-	currentCase?: CaseModel;
+	currentCase?: CaseWithGateway3Info;
 };
 
 function getRoutePlanReference(req: Request): string | undefined {
@@ -42,7 +45,8 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		}
 
 		const currentCase = await service.db.case.findUnique({
-			where: { reference: planReference }
+			where: { reference: planReference },
+			include: { gateway3Info: true }
 		});
 
 		if (!currentCase) {
@@ -74,8 +78,8 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 		res.locals.saveAndComeBackUrl = `/manage-local-plans/${encodedPlanReference}`;
 	}
 
-	if (currentCase?.gateway3Date) {
-		res.locals.targetDate = formatDisplayDate(currentCase.gateway3Date);
+	if (currentCase?.gateway3Info?.expectedDate) {
+		res.locals.targetDate = formatDisplayDate(currentCase.gateway3Info.expectedDate);
 	}
 }
 
