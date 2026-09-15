@@ -18,6 +18,7 @@ type DocumentVersionRow = {
 	blobStorageContainer: string | null;
 	blobStoragePath: string | null;
 	documentURI: string | null;
+	dateCreated: Date | null;
 	isDeleted: boolean;
 };
 
@@ -169,6 +170,7 @@ function mapDocumentToUploadedFile(document: DocumentRow): UploadedFile | undefi
 		containerName: version.blobStorageContainer ?? undefined,
 		path: version.blobStoragePath ?? undefined,
 		url: version.documentURI ?? undefined,
+		...(version.dateCreated ? { dateCreated: version.dateCreated } : {}),
 		metadata: {
 			documentGuid: document.guid,
 			documentSetId: document.documentSetId,

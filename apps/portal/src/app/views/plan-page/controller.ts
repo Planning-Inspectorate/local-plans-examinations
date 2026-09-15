@@ -2,6 +2,11 @@ import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
+import { loadGateway2DocumentsByDocumentSetId } from '../manage-local-plans/gateway-2-submission/documents.ts';
+import {
+	GATEWAY_2_REPORT_DOCUMENT_SET_ID,
+	buildGateway2ReportFilesViewModel
+} from './gateway-2-report.ts';
 
 function statusTag(status: Status) {
 	const s = StatusTag[status as keyof typeof StatusTag] as { label: string; class: string } | undefined;
@@ -20,6 +25,18 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference: planRef },
+			select: {
+				id: true,
+				gateway2Info: {
+					select: {
+						reportIssuedDate: true
+					}
+				}
+			}
+		});
+
 		const planStatus = statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
 		const encodedPlanRef = encodeURIComponent(plan.refNum);
@@ -33,6 +50,18 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
 
 		const notificationBanner = plan.status === STATUS.ActionNeeded;
+		const gateway2ReportFiles =
+			caseRecord?.gateway2Info?.reportIssuedDate && caseRecord?.id
+				? buildGateway2ReportFilesViewModel(
+						planRef,
+						await loadGateway2DocumentsByDocumentSetId(
+							service,
+							caseRecord.id,
+							GATEWAY_2_REPORT_DOCUMENT_SET_ID
+						)
+					)
+				: [];
+		const showGateway2Report = gateway2ReportFiles.length > 0;
 
 		// Task list tags and links based on current stage
 		let tagG2, tagG3, tagE;
@@ -50,7 +79,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				}
 				break;
 			case STAGE.Gateway3:
-				dateTextG2 = 'Completed on:';
+				dateTextG2 = 'Completed: ';
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
@@ -61,10 +90,10 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				hrefG3 = gateway3Link();
 				hrefE = applicationLink();
 				if (plan.status === STATUS.Completed) {
-					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
+					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
-					dateTextG2 = dateTextG3 = 'Completed on: ';
+					dateTextG2 = dateTextG3 = 'Completed: ';
 					tagE = planStatus;
 					tagG2 = tagG3 = 'Completed';
 				}
@@ -97,6 +126,8 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			linkedLPA: plan.linkedLPA,
 			button,
 			notificationBanner,
+			showGateway2Report,
+			gateway2ReportFiles,
 			backLinkUrl: '/manage-local-plans/your-plans',
 			backLinkText: 'Back to my plans',
 			currentApplicationLink,

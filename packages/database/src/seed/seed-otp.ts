@@ -50,10 +50,12 @@ async function run() {
 		upsert: {
 			update: {
 				expectedDate: planDates.gateway2Date,
+				actualDate: null,
 				reportIssuedDate: null
 			},
 			create: {
 				expectedDate: planDates.gateway2Date,
+				actualDate: null,
 				reportIssuedDate: null
 			}
 		}

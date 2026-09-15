@@ -5,6 +5,8 @@ import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 
+const GATEWAY_2_REPORT_DOCUMENT_SET_ID = 'g2-report';
+
 function formatDisplayDate(date: Date | null | undefined): string {
 	if (!date) {
 		return 'Not set';
@@ -39,7 +41,25 @@ type PortalCase = {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
 	} | null;
+	documents: {
+		createdAt: Date;
+		latestDocumentVersion: {
+			dateCreated: Date | null;
+			isDeleted: boolean;
+		} | null;
+	}[];
 };
+
+function getGateway2ReportUploadedDate(caseRecord: PortalCase): Date | null {
+	const uploadedReport = caseRecord.documents.find(
+		(document) => document.latestDocumentVersion && !document.latestDocumentVersion.isDeleted
+	);
+	return uploadedReport?.latestDocumentVersion?.dateCreated ?? uploadedReport?.createdAt ?? null;
+}
+
+function hasIssuedGateway2Report(caseRecord: PortalCase): boolean {
+	return Boolean(caseRecord.gateway2Info?.reportIssuedDate && getGateway2ReportUploadedDate(caseRecord));
+}
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
 	if (caseRecord.gateway3Info?.completionDate || caseRecord.gateway3Info?.actualDate) {
@@ -49,7 +69,7 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		};
 	}
 
-	if (caseRecord.gateway2Info?.reportIssuedDate) {
+	if (hasIssuedGateway2Report(caseRecord)) {
 		return {
 			stage: STAGE.Gateway3,
 			status: STATUS.ReadyToStart
@@ -75,10 +95,9 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const lpaNames = caseRecord.lpas.map((lpa) => lpa.lpaName || lpa.lpaCode);
 	const progress = derivePlanProgress(caseRecord);
 	const gateway1Date = caseRecord.gateway1Info?.completedGateway1Date ?? caseRecord.gateway1Info?.expectedGateway1Date;
-	const gateway2Date =
-		caseRecord.gateway2Info?.reportIssuedDate ??
-		caseRecord.gateway2Info?.actualDate ??
-		caseRecord.gateway2Info?.expectedDate;
+	const gateway2Date = hasIssuedGateway2Report(caseRecord)
+		? caseRecord.gateway2Info?.reportIssuedDate
+		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
 	const gateway3Date =
 		caseRecord.gateway3Info?.completionDate ??
 		caseRecord.gateway3Info?.actualDate ??
@@ -134,6 +153,21 @@ const planCaseInclude = {
 	lpas: {
 		orderBy: {
 			lpaName: 'asc' as const
+		}
+	},
+	documents: {
+		where: {
+			documentSetId: GATEWAY_2_REPORT_DOCUMENT_SET_ID,
+			isDeleted: false
+		},
+		select: {
+			createdAt: true,
+			latestDocumentVersion: {
+				select: {
+					dateCreated: true,
+					isDeleted: true
+				}
+			}
 		}
 	}
 };

@@ -16,7 +16,14 @@ import {
 	StageLabel
 } from '../../types.ts';
 
-function initialiseTest(params: { refNum: string }, plan?: unknown) {
+function initialiseTest(
+	params: { refNum: string },
+	plan?: unknown,
+	options: {
+		gateway2ReportDocuments?: unknown[];
+		reportIssuedDate?: Date | null;
+	} = {}
+) {
 	const nunjucks = configureNunjucks();
 	const mockRes = {
 		render: mock.fn((view, data) => nunjucks.render(view, data)),
@@ -29,14 +36,38 @@ function initialiseTest(params: { refNum: string }, plan?: unknown) {
 	const logger = mockLogger();
 	const mockService = {
 		logger,
-		getPlans: mock.fn(async () => (plan ? [buildPlan(plan)] : buildTestPlans()))
+		getPlans: mock.fn(async () => (plan ? [buildPlan(plan)] : buildTestPlans())),
+		db: {
+			case: {
+				findUnique: mock.fn(async () =>
+					options.gateway2ReportDocuments
+						? {
+								id: 'case-1',
+								gateway2Info: {
+									reportIssuedDate: options.reportIssuedDate ?? new Date('2026-05-08T12:00:00.000Z')
+								}
+							}
+						: null
+				)
+			},
+			document: {
+				findMany: mock.fn(async () => options.gateway2ReportDocuments ?? [])
+			}
+		}
 	};
 	const planPage = buildPlanPage(mockService);
 	return { planPage, mockRes, mockReq, nunjucks, logger };
 }
 
-async function renderPlan(params: { refNum: string }, plan?: unknown) {
-	const ctx = initialiseTest(params, plan);
+async function renderPlan(
+	params: { refNum: string },
+	plan?: unknown,
+	options?: {
+		gateway2ReportDocuments?: unknown[];
+		reportIssuedDate?: Date | null;
+	}
+) {
+	const ctx = initialiseTest(params, plan, options);
 	await ctx.planPage(ctx.mockReq, ctx.mockRes);
 	const [view, data] = ctx.mockRes.render.mock.calls[0].arguments;
 	return {
@@ -205,6 +236,24 @@ describe('plan page', () => {
 		assert.ok(html.includes('data-cy="plan-details-action"'), 'expected action link to have a stable selector');
 	});
 
+	it('should render Gateway 3 button with correct link if Gateway 3 is ready to start', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		const expectedButton = 'Start Gateway 3 submission';
+
+		assert.strictEqual(data.button, expectedButton, `expected ${expectedButton} but got ${data.button}`);
+		assert.ok(
+			html.includes('href="/manage-local-plans/PLAN-001/gateway-3-submission"'),
+			'expected action link to point to Gateway 3 submission'
+		);
+	});
+
 	describe('should not render button if status != ready to start', () => {
 		const testCases = [
 			{ refNum: 'PLAN-002', status: STATUS.InProgress },
@@ -339,14 +388,17 @@ describe('plan page', () => {
 			null
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
-		const expectedHTML =
+		const expectedGateway2HTML =
 			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-submission"';
+		const expectedGateway3HTML =
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-3-submission"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
 		}
 
-		assert.ok(html.includes(expectedHTML), `expected html to contain ${expectedHTML}`);
+		assert.ok(html.includes(expectedGateway2HTML), `expected html to contain ${expectedGateway2HTML}`);
+		assert.ok(html.includes(expectedGateway3HTML), `expected html to contain ${expectedGateway3HTML}`);
 	});
 
 	it('should render task tag correctly for case 2 (G1, G2 complete)', async () => {
@@ -371,6 +423,85 @@ describe('plan page', () => {
 		}
 
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
+	});
+
+	it('should render Gateway 2 as completed with the shared report date when the report has been uploaded', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.strictEqual(data.tagG2, 'Completed');
+		assert.strictEqual(data.dateTextG2, 'Completed: ');
+		assert.ok(cleanHtml(html).includes('Gateway 2 - advisory check'), 'expected Gateway 2 row to render');
+		assert.ok(cleanHtml(html).includes('Completed: 2 September 2026'), 'expected Gateway 2 shared date hint');
+	});
+
+	it('should render the Gateway 2 report at the top of the plan page when the report has been uploaded', async () => {
+		const plan = {
+			refNum: 'PLAN/123456',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN/123456' }, plan, {
+			gateway2ReportDocuments: [
+				{
+					guid: 'document-guid-1',
+					name: 'Gateway 2 report PLAN/123456',
+					documentSetId: 'g2-report',
+					isDeleted: false,
+					latestDocumentVersion: {
+						version: 1,
+						originalFilename: 'gateway-2-report.txt',
+						fileName: 'gateway-2-report.txt',
+						mime: 'text/plain',
+						size: 17,
+						blobStorageContainer: 'local-planning-documents-test',
+						blobStoragePath: 'gateway-2-report/PLAN%2F123456/gateway-2-report.txt',
+						documentURI: 'http://127.0.0.1:10000/devstoreaccount1/local-planning-documents-test/report.txt',
+						dateCreated: new Date('2026-09-16T12:39:02.272Z'),
+						isDeleted: false
+					}
+				}
+			]
+		});
+
+		assert.strictEqual(data.showGateway2Report, true);
+		assert.ok(html.includes('data-cy="gateway-2-report-section"'));
+		assert.ok(cleanHtml(html).includes('Gateway 2 report'));
+		assert.ok(html.includes('gateway-2-report.txt'));
+		assert.ok(html.includes('shared on 16 September 2026'));
+		assert.ok(
+			html.includes('/manage-local-plans/PLAN%2F123456/gateway-2-submission/download-document/document-guid-1'),
+			'expected the Gateway 2 report link to use the existing download route'
+		);
+		assert.ok(
+			html.indexOf('data-cy="gateway-2-report-section"') < html.indexOf('Current stage'),
+			'expected the Gateway 2 report row to render above the plan metadata'
+		);
+	});
+
+	it('should render Gateway 3 as ready to start with a link when the Gateway 2 report has been uploaded', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.strictEqual(data.tagG3, '<strong class="govuk-tag govuk-tag--green">Ready to start</strong>');
+		assert.strictEqual(data.hrefG3, '/manage-local-plans/PLAN-001/gateway-3-submission');
+		assert.ok(cleanHtml(html).includes('Gateway 3 - readiness check'), 'expected Gateway 3 row to render');
+		assert.ok(
+			html.includes('href="/manage-local-plans/PLAN-001/gateway-3-submission"'),
+			'expected Gateway 3 row to be a hyperlink'
+		);
+		assert.ok(cleanHtml(html).includes('Ready to start'), 'expected Gateway 3 status to be Ready to start');
 	});
 
 	describe('should render task tag correctly for case 2 (G1, G2 complete) if status != 0', () => {

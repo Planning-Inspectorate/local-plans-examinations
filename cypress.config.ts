@@ -76,7 +76,13 @@ export default defineConfig({
 					return null;
 				},
 				seedStaticData: async () => {
-					await runCommand('node packages/database/src/seed/seed-prod.ts');
+					await runCommand('node --env-file=packages/database/.env packages/database/src/seed/seed-prod.ts');
+					return null;
+				},
+				seedGateway2Report: async () => {
+					await runCommand(
+						'node --env-file=packages/database/.env --experimental-strip-types packages/database/src/seed/seed-gateway2-report.ts'
+					);
 					return null;
 				},
 				seedCase: async () => {

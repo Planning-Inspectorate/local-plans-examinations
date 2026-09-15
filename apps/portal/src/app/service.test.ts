@@ -31,6 +31,7 @@ function buildCase(overrides = {}) {
 			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 			submissionForExaminationDate: null
 		},
+		documents: [],
 		...overrides
 	};
 }
@@ -41,6 +42,16 @@ function buildService(caseRecords = []) {
 			case: {
 				findMany: mock.fn(async () => caseRecords)
 			}
+		}
+	};
+}
+
+function buildGateway2ReportDocument() {
+	return {
+		createdAt: new Date('2026-09-01T12:00:00.000Z'),
+		latestDocumentVersion: {
+			dateCreated: new Date('2026-09-02T12:00:00.000Z'),
+			isDeleted: false
 		}
 	};
 }
@@ -72,13 +83,48 @@ describe('PortalService', () => {
 			);
 		});
 
-		it('returns Gateway 3 ready to start when the Gateway 2 report has been issued', () => {
+		it('returns Gateway 2 ready to start when the Gateway 2 report has been issued but not uploaded', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
 					buildCase({
 						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: null,
 							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
 						}
+					})
+				),
+				{
+					stage: STAGE.Gateway2,
+					status: STATUS.ReadyToStart
+				}
+			);
+		});
+
+		it('returns Gateway 2 ready to start when the Gateway 2 report has been uploaded but not issued', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway2,
+					status: STATUS.ReadyToStart
+				}
+			);
+		});
+
+		it('returns Gateway 3 ready to start when the Gateway 2 report has been issued and uploaded', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: null,
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						documents: [buildGateway2ReportDocument()]
 					})
 				),
 				{
@@ -148,6 +194,21 @@ describe('PortalService', () => {
 						orderBy: {
 							lpaName: 'asc'
 						}
+					},
+					documents: {
+						where: {
+							documentSetId: 'g2-report',
+							isDeleted: false
+						},
+						select: {
+							createdAt: true,
+							latestDocumentVersion: {
+								select: {
+									dateCreated: true,
+									isDeleted: true
+								}
+							}
+						}
 					}
 				},
 				orderBy: {
@@ -167,7 +228,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].dates.E, '1 September 2026');
 		});
 
-		it('maps Gateway 2 report issued cases to Gateway 3 plans', async () => {
+		it('keeps Gateway 2 report issued-only cases at Gateway 2', async () => {
 			const service = buildService([
 				buildCase({
 					gateway2Info: {
@@ -175,6 +236,39 @@ describe('PortalService', () => {
 						actualDate: null,
 						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
 					}
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].stage, STAGE.Gateway2);
+			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
+			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
+		});
+
+		it('keeps Gateway 2 report uploaded-only cases at Gateway 2', async () => {
+			const service = buildService([
+				buildCase({
+					documents: [buildGateway2ReportDocument()]
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].stage, STAGE.Gateway2);
+			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
+			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
+		});
+
+		it('maps Gateway 2 report issued and uploaded cases to Gateway 3 plans', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: {
+						expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+						actualDate: null,
+						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+					},
+					documents: [buildGateway2ReportDocument()]
 				})
 			]);
 
