@@ -24,8 +24,11 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const currentStage = StageLabel[plan.stage];
 		const encodedPlanRef = encodeURIComponent(plan.refNum);
 		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
-		const currentApplicationLink = `${applicationBase}/application-declaration`;
+		const gateway3Base = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
+		const currentApplicationLink =
+			plan.stage === STAGE.Gateway3 ? gateway3Base : `${applicationBase}/application-declaration`;
 		const applicationLink = () => applicationBase;
+		const gateway3Link = () => gateway3Base;
 
 		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
 
@@ -46,13 +49,13 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			case STAGE.Gateway3:
 				dateTextG2 = 'Completed on:';
 				hrefG2 = applicationLink();
-				hrefG3 = applicationLink();
+				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
-				hrefG3 = applicationLink();
+				hrefG3 = gateway3Link();
 				hrefE = applicationLink();
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';

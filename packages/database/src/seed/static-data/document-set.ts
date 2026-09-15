@@ -113,5 +113,87 @@ export const DOCUMENT_SET = [
 		displayName: 'Subsequent work towards draft plan',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
 		displayOrder: 17
+	},
+
+	// Gateway 3
+	{
+		id: DOCUMENT_SET_ID.G3_EXAMINATION_WEBSITE,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Examination website',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_EXAMINATION_WEBSITE,
+		displayOrder: 20
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Proposed local plan intended for submission for examination',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_PROPOSED_LOCAL_PLAN,
+		displayOrder: 21
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Map of proposed local plan policies',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_MAP_OF_POLICIES,
+		displayOrder: 22
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_STATEMENT_OF_COMPLIANCE,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Statement of Compliance',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_STATEMENT_OF_COMPLIANCE,
+		displayOrder: 23
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_STATEMENT_OF_SOUNDNESS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Statement of Soundness',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_STATEMENT_OF_SOUNDNESS,
+		displayOrder: 24
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_CONSULTATION_ENGAGEMENT_SUMMARY,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_CONSULTATION_ENGAGEMENT_SUMMARY,
+		displayOrder: 25
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_SCOPING_CONSULTATION_SUMMARY,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Summary of scoping consultation',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_SCOPING_CONSULTATION_SUMMARY,
+		displayOrder: 26
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Summary of consultation on proposed local plan content and evidence',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY,
+		displayOrder: 27
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Summary of consultation on proposed local plan',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY,
+		displayOrder: 28
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Statement setting out practical arrangements demonstrating readiness for examination',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_PRACTICAL_ARRANGEMENTS_STATEMENT,
+		displayOrder: 29
 	}
 ];
