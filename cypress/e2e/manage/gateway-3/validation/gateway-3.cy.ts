@@ -2,13 +2,16 @@ import { openSeededGateway3Page } from '../../../../flows/manage/gateway-3-flow.
 import {
 	gateway3DateAnswers,
 	gateway3AssessorAnswer,
-	gateway3ProgrammeOfficerAnswer
+	gateway3ProgrammeOfficerAnswer,
+	gateway3DecisionAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 import {
 	gateway3Page,
 	gateway3ActualDatePage,
 	gateway3AssessorPage,
-	gateway3ProgrammeOfficerPage
+	gateway3ProgrammeOfficerPage,
+	gateway3DecisionPage,
+	gateway3DocumentsPage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
 
 describe('Gateway 3 validation', () => {
@@ -59,5 +62,18 @@ describe('Gateway 3 validation', () => {
 			'Input a last name',
 			'Input an email address'
 		);
+	});
+
+	it('shows an error when the Gateway 3 report is not uploaded', { tags: ['regression'] }, () => {
+		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
+		gateway3DecisionPage.verifyLoaded();
+		gateway3DecisionPage.selectDecision('1');
+
+		gateway3DocumentsPage.verifyLoaded();
+		gateway3DocumentsPage.saveAndReturn();
+
+		gateway3DocumentsPage.verifyLoaded();
+		gateway3DocumentsPage.verifyValidationError('Please upload your Gateway 3 report');
+		gateway3DocumentsPage.verifyErrorTitle();
 	});
 });
