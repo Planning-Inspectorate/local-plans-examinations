@@ -2,7 +2,7 @@ import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
-const seededCaseStatus = 'Awaiting SLA';
+const seededCaseStatus = 'GW2 report';
 
 describe('Case overview', () => {
 	beforeEach(() => {
