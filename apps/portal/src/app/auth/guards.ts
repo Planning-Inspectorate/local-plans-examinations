@@ -8,3 +8,8 @@ export function checkIsAuthenticated(req: Request, res: Response, next: NextFunc
 
 	res.redirect('/login');
 }
+
+export function exposeAuthToViews(req: Request, res: Response, next: NextFunction): void {
+	res.locals.isAuthenticated = Boolean(req.session?.isAuthenticated);
+	next();
+}

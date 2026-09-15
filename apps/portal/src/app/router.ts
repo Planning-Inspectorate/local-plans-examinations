@@ -10,7 +10,7 @@ import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers'
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
-import { checkIsAuthenticated } from './auth/guards.ts';
+import { checkIsAuthenticated, exposeAuthToViews } from './auth/guards.ts';
 
 /**
  * Main app router
@@ -25,7 +25,12 @@ export function buildRouter(service: PortalService): IRouter {
 	// don't cache responses, note no-cache allows some caching, but with revalidation
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
+	router.use(exposeAuthToViews);
 	router.use('/login', createLoginRoutes(service));
+	router.use('/logout', (req, res) => {
+		req.session.isAuthenticated = false;
+		res.redirect('/login');
+	});
 	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', checkIsAuthenticated);
 	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));
