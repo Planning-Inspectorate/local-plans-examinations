@@ -1,0 +1,70 @@
+{% extends layoutTemplate %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block before_content %}
+	{% if backLink %}
+		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
+	{% endif %}
+	{% if errorSummary %}
+		{{ govukErrorSummary({
+			titleText: "There is a problem",
+			errorList: errorSummary
+		}) }}
+	{% endif %}
+{% endblock before_content %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        <span class="govuk-caption-l">{{ reference }}</span>
+        <h1 class="govuk-heading-l">{{ question.question }}</h1>
+        {% for group in documentGroups %}
+          <h2 class="govuk-heading-m">
+            {{ group.category | capitalize }} documents
+          </h2>
+
+          {% set rows = [] %}
+
+          {% for document in group.documents %}
+            {% if document.files.length %}
+              {% set fileLinks = [] %}
+              {% set viewActions = [] %}
+
+              {% for file in document.files %}
+                {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (file.id | urlencode) %}
+                {% set fileName = file.fileName | escape %}
+
+                {% set _ = fileLinks.push(
+                  '<a class="govuk-link" href="' + downloadUrl + '">' + fileName + '</a>'
+                ) %}
+
+                {% set _ = viewActions.push({
+                  href: downloadUrl,
+                  text: "View",
+                  visuallyHiddenText: file.fileName
+                }) %}
+              {% endfor %}
+
+              {% set _ = rows.push({
+                key: { text: document.title },
+                value: {
+                  html: fileLinks | join("<br>")
+                },
+                actions: {
+                  classes: "pins-custom-file-reviewer-actions",
+                  items: viewActions
+                }
+              }) %}
+            {% else %}
+              {% set _ = rows.push({
+                key: { text: document.title },
+                value: { text: "Not provided" }
+              }) %}
+            {% endif %}
+          {% endfor %}
+
+          {{ govukSummaryList({ rows: rows }) }}
+        {% endfor %}
+      </div>
+  </div>
+{% endblock content %}
