@@ -1,4 +1,4 @@
-import { gateway3DateAnswers } from '../../../fixtures/manage/gateway-3.ts';
+import { gateway3DateAnswers, gateway3CompletionDate } from '../../../fixtures/manage/gateway-3.ts';
 import { DateQuestionPage } from '../base/index.ts';
 
 const gateway3QuestionPath = (path: string) => new RegExp(`^/case/.+/gateway-3/gateway-3/${path}$`);
@@ -22,7 +22,7 @@ export const gateway3AssessorDateAppointmentPage = new DateQuestionPage(
 );
 
 export const gateway3CompletionDatePage = new DateQuestionPage(
-	gateway3QuestionPath(gateway3DateAnswers.gateway3CompletionDate.path),
-	gateway3DateAnswers.gateway3CompletionDate.fieldName,
-	gateway3DateAnswers.gateway3CompletionDate.heading
+	gateway3QuestionPath(gateway3CompletionDate.path),
+	gateway3CompletionDate.fieldName,
+	gateway3CompletionDate.heading
 );

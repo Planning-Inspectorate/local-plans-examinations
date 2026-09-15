@@ -61,6 +61,8 @@ export type FileUploaderQuestionConfig = {
 	multiple?: boolean;
 	text?: FileUploaderText;
 	validationMessages?: FileUploaderValidationMessages;
+	actionButtonVisibleInSummary?: boolean;
+	editable?: boolean;
 };
 
 export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
@@ -82,6 +84,8 @@ export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
 			metadata: { documentGuid: string };
 		}[];
 	}) => string | undefined;
+	actionButtonVisibleInSummary?: boolean;
+	editable?: boolean;
 };
 
 export type FileUploaderViewModel = QuestionViewModel & {
