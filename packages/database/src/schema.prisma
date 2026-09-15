@@ -91,6 +91,7 @@ model Gateway3Info {
   assessorName              String?
   assessorAppointmentDate   DateTime? @db.DateTime2
   completionDate            DateTime? @db.DateTime2
+  decision                  String?
 }
 
 model ExaminationInfo {

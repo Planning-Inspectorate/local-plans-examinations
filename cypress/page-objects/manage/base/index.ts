@@ -6,5 +6,6 @@ export * from './plan-title-page.ts';
 export * from './plan-type-page.ts';
 export * from './radio-question-page.ts';
 export * from './select-local-planning-authority-page.ts';
+export * from './single-line-input-page.ts';
 export * from './smart-lookup-page.ts';
 export * from './document-upload-page.ts';

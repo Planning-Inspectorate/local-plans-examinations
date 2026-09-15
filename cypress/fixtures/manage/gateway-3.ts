@@ -8,6 +8,7 @@ type Gateway3DateAnswer = {
 	seedDate: string;
 	input: DateAnswer;
 	display: string;
+	section: string;
 };
 
 export const gateway3DateAnswers = {
@@ -18,7 +19,8 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-expected-date',
 		seedDate: '2026-07-21T12:00:00.000Z',
 		input: { day: '21', month: '7', year: '2026' },
-		display: '21 July 2026'
+		display: '21 July 2026',
+		section: 'gateway-3'
 	},
 	gateway3ActualDate: {
 		row: 'Submission received',
@@ -27,7 +29,8 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-actual-date',
 		seedDate: '2026-08-01T12:00:00.000Z',
 		input: { day: '1', month: '8', year: '2026' },
-		display: '1 August 2026'
+		display: '1 August 2026',
+		section: 'gateway-3'
 	},
 	gateway3AssessorDateAppointment: {
 		row: 'Appointed',
@@ -36,18 +39,19 @@ export const gateway3DateAnswers = {
 		path: 'gateway-3-assessor-date-of-appointment',
 		seedDate: '2026-09-01T12:00:00.000Z',
 		input: { day: '1', month: '9', year: '2026' },
-		display: '1 September 2026'
-	},
-	gateway3CompletionDate: {
-		row: 'Gateway 3 completion date',
-		heading: 'What is the Gateway 3 completion date?',
-		fieldName: 'completionDate',
-		path: 'gateway-3-completion-date',
-		seedDate: '2026-12-01T12:00:00.000Z',
-		input: { day: '1', month: '12', year: '2026' },
-		display: '1 December 2026'
+		display: '1 September 2026',
+		section: 'gateway-3'
 	}
 } as const satisfies Record<string, Gateway3DateAnswer>;
+
+export const gateway3CompletionDate = {
+	row: 'Gateway 3 completion date',
+	heading: 'What is the Gateway 3 completion date?',
+	fieldName: 'completionDate',
+	path: 'gateway-3-completion-date',
+	display: 'Not started',
+	section: 'gateway-3-submission'
+} as const;
 
 export const gateway3AssessorAnswer = {
 	row: 'Assessor',
@@ -69,6 +73,32 @@ export const gateway3ProgrammeOfficerAnswer = {
 	email: 'gateway3.officer@test.com'
 } as const;
 
+export const gateway3ExaminationWebsite = {
+	row: 'Examination website',
+	heading: 'What is the address of the examination website?',
+	fieldName: 'examinationWebsite',
+	path: 'examination-website',
+	display: 'Not started',
+	value: 'www.gateway-3-example.com',
+	href: 'https://www.gateway-3-example.com',
+	unsavedValue: 'www.unsaved-gateway-3-example.com'
+} as const;
+
+export const gateway3DocumentsAnswer = {
+	row: 'Gateway 3 documents',
+	heading: 'Upload Gateway 3 report',
+	fieldName: 'gateway3Documents',
+	path: 'gateway-3-document',
+	caption: 'Gateway 3 documents',
+	fileName: 'test-document.pdf',
+	fileName2: 'test-document.docx'
+} as const;
+
+export const gateway3DecisionAnswer = {
+	row: 'Gateway 3 decision',
+	path: 'gateway-3-decision'
+} as const;
+
 export const updatedGateway3ExpectedDateAnswer = {
 	input: { day: '21', month: '11', year: '2026' },
 	display: '21 November 2026'
@@ -76,5 +106,6 @@ export const updatedGateway3ExpectedDateAnswer = {
 
 export const gateway3ExpectedAnswers = [
 	...Object.values(gateway3DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway3AssessorAnswer.row, display: gateway3AssessorAnswer.display }
+	{ row: gateway3AssessorAnswer.row, display: gateway3AssessorAnswer.display },
+	{ row: gateway3ExaminationWebsite.row, display: gateway3ExaminationWebsite.display }
 ];
