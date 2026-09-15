@@ -27,6 +27,10 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use(cacheNoCacheMiddleware);
 	router.use(exposeAuthToViews);
 	router.use('/login', createLoginRoutes(service));
+	router.use('/logout', (req, res) => {
+		req.session.isAuthenticated = false;
+		res.redirect('/login');
+	});
 	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', checkIsAuthenticated);
 	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));
