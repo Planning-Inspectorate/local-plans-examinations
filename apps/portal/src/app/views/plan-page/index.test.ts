@@ -335,7 +335,7 @@ describe('plan page', () => {
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
-			`/manage-local-plans/PLAN-001/gateway-2-submission`,
+			`/manage-local-plans/PLAN-001/gateway-3-submission`,
 			null
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
@@ -413,7 +413,7 @@ describe('plan page', () => {
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
-			`/manage-local-plans/PLAN-001/gateway-2-submission`,
+			`/manage-local-plans/PLAN-001/gateway-3-submission`,
 			`/manage-local-plans/PLAN-001/gateway-2-submission`
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
@@ -490,7 +490,7 @@ describe('plan page', () => {
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
-			'/manage-local-plans/PLAN-001/gateway-2-submission',
+			'/manage-local-plans/PLAN-001/gateway-3-submission',
 			'/manage-local-plans/PLAN-001/gateway-2-submission'
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
