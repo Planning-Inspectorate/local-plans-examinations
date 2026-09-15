@@ -22,7 +22,11 @@ export class ManageHomePage extends BasePage {
 	}
 
 	openCaseByPlanTitle(planTitle: string) {
-		this.casesTable.contains('tr', planTitle).find('a').first().click();
+		this.casesTable.contains('tr', planTitle).find('[data-cy="case-reference-link"]').click();
+	}
+
+	verifyCaseStatus(planTitle: string, status: string) {
+		this.casesTable.contains('tr', planTitle).find('[data-cy="status-tag"]').should('contain.text', status);
 	}
 
 	verifyCreateCaseLink(text: string) {

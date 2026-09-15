@@ -27,13 +27,16 @@
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
 
+  {% include "../layouts/components/status-tag.njk" %}
+
 {{ govukServiceNavigation({
   navigation: navigation,
   navigationLabel: "Case sections",
   attributes: {
     "id": "service-navigation",
     "data-cy": "service-navigation"
-  }
+  },
+  classes: "govuk-!-margin-top-6"
 }) }}
 
 {% if currentSection == "case-history" %}

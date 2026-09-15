@@ -70,9 +70,9 @@
         {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
         <input type="hidden" name="returnTo" value="gateway-2">
         
-        <button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">
-          {{ submitButtonText }}
-        </button>
+	        <button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="" data-cy="issue-document-notification">
+	          {{ submitButtonText }}
+	        </button>
 
       </form>
     

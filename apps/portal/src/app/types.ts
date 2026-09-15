@@ -391,6 +391,15 @@ export function buildTestPlans(): unknown[] {
 			stage: 1,
 			status: 2,
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		},
+		{
+			refNum: 'PLAN-008',
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			title: 'Riverside Local Plan',
+			stage: 1,
+			status: 6,
+			dates: { G1: '7 May 2026', G2: '1 September 2026', G3: '1 November 2026', E: '1 January 2027' }
 		}
 	];
 	return buildPlans(testData);
