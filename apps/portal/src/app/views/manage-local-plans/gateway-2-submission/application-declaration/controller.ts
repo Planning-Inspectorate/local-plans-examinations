@@ -67,24 +67,36 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		}
 
 		logger.info(`Declaration confirmed for case ${reference}`);
-		// get email address for LPA
-		let cases;
+
+		// get case details for submission update and email
+		let caseRecord;
 		try {
-			cases = await db.case.findUnique({
+			caseRecord = await db.case.findUnique({
 				where: { reference },
-				select: { contacts: true }
+				select: { id: true, contacts: true }
 			});
 		} catch (error) {
-			logger.error({ error }, `Failed to retrieve email address for case ${reference}`);
-			return res.status(500).send('Failed to retrieve email address');
+			logger.error({ error }, `Failed to retrieve case ${reference}`);
+			return res.status(500).send('Failed to retrieve case');
 		}
-		if (!cases) {
-			logger.error(`No email address found for case ${reference}`);
-			return res.status(500).send('No email address found');
+		if (!caseRecord) {
+			logger.error(`No case found for reference ${reference}`);
+			return res.status(500).send('No case found');
+		}
+
+		// Record the submission date on the case
+		try {
+			await db.gateway2Info.update({
+				where: { caseId: caseRecord.id },
+				data: { actualDate: new Date() }
+			});
+		} catch (error) {
+			logger.error({ error }, `Failed to update submission date for case ${reference}`);
+			return res.status(500).send('Failed to record submission');
 		}
 		// send email to LPA using GOV.UK Notify
 		await Promise.allSettled(
-			cases.contacts.map(async (contact) => {
+			caseRecord.contacts.map(async (contact) => {
 				try {
 					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, contact.email, {
 						personalisation: {
