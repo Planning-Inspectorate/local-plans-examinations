@@ -56,6 +56,13 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		};
 	}
 
+	if (caseRecord.gateway2Info?.actualDate) {
+		return {
+			stage: STAGE.Gateway2,
+			status: STATUS.UnderReview
+		};
+	}
+
 	return {
 		stage: STAGE.Gateway2,
 		status: STATUS.ReadyToStart

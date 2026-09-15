@@ -54,6 +54,24 @@ describe('PortalService', () => {
 			});
 		});
 
+		it('returns Gateway 2 under review when actualDate is set but report not yet issued', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: new Date('2026-08-15T12:00:00.000Z'),
+							reportIssuedDate: null
+						}
+					})
+				),
+				{
+					stage: STAGE.Gateway2,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
 		it('returns Gateway 3 ready to start when the Gateway 2 report has been issued', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
