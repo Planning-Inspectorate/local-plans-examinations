@@ -666,7 +666,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Gateway 3 documents',
-		question: 'Upload documents',
+		question: 'Upload Gateway 3 report',
 		fieldName: 'gateway3Documents',
 		url: 'gateway-3-document',
 		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
@@ -676,7 +676,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			.flat(),
 		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxFilesPerUpload: 999,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
@@ -684,6 +684,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			caption: 'Gateway 3 documents',
 			introduction: 'Upload a file',
 			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
