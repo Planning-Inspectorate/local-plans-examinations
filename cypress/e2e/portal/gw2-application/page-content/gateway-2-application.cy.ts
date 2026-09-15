@@ -15,7 +15,7 @@ describe('Gateway 2 application page content', () => {
 
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway2ApplicationPage.verifyBackLink(`/manage-local-plans/${plan.urlReference}`);
 			gateway2ApplicationPage.verifyCaption(plan.title);
 			gateway2ApplicationPage.verifyHeading('Gateway 2 submission');
