@@ -2,6 +2,7 @@
 
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
@@ -37,9 +38,59 @@
     </div>
 {% endmacro %}
 
+{% macro gateway2ReportSummary(gateway2ReportFiles) %}
+    <div data-cy="gateway-2-report-section">
+        {% set gateway2ReportHtml %}
+            {% if gateway2ReportFiles and gateway2ReportFiles.length %}
+                {% if gateway2ReportFiles.length > 1 %}
+                    <ul class="govuk-list govuk-list--bullet">
+                        {% for file in gateway2ReportFiles %}
+                            <li>
+                                {% if file.href %}
+                                    <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                                {% else %}
+                                    {{ file.fileName }}
+                                {% endif %}
+                                {% if file.sharedDate %}<span class="govuk-body"> (shared on {{ file.sharedDate }})</span>{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    {% set file = gateway2ReportFiles[0] %}
+                    {% if file.href %}
+                        <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                    {% else %}
+                        {{ file.fileName }}
+                    {% endif %}
+                    {% if file.sharedDate %}<span class="govuk-body"> (shared on {{ file.sharedDate }})</span>{% endif %}
+                {% endif %}
+            {% else %}
+                Not added
+            {% endif %}
+        {% endset %}
+
+        {{ govukSummaryList({
+            rows: [
+                {
+                    key: {
+                        text: "Gateway 2 report"
+                    },
+                    value: {
+                        html: gateway2ReportHtml
+                    }
+                }
+            ]
+        }) }}
+    </div>
+{% endmacro %}
+
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% if showGateway2Report %}
+            {{ gateway2ReportSummary(gateway2ReportFiles) }}
+        {% endif %}
+
         {{ govukInsetText({
             text: "Your target submission date is " + (targetDate or "") + ". A Gateway 2 assessment usually takes about 6 weeks."
         }) }}
