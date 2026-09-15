@@ -35,8 +35,8 @@
 		overflow-wrap: break-word;
 	}
 
-	td:last-child,
-	th:last-child {
+	td:nth-child(3),
+	th:nth-child(3) {
 		text-align: right;
 	}
 }

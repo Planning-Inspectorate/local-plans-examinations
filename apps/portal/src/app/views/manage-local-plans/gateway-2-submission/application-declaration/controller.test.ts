@@ -60,7 +60,8 @@ function createMockService() {
 						id: 'case-1',
 						contacts: [{ email: 'lpa@example.com' }]
 					};
-				}
+				},
+				update: async () => ({})
 			},
 			gateway2Info: {
 				update: async () => ({})

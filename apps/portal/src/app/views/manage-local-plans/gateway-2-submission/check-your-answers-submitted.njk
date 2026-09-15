@@ -1,0 +1,84 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block pageTitle %}Gateway 2 submission{% endblock %}
+
+{% block pageHeading %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+            {{ govukNotificationBanner({
+                type: "important",
+                html: '<h3 class="govuk-notification-banner__heading">Your Gateway 2 submission is with the Planning Inspectorate</h3><p class="govuk-body">Gateway 2 assessment usually takes 6 weeks. You will be notified by email if any action is required.</p>'
+            }) }}
+        </div>
+    </div>
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
+                {% if pageCaption %}
+                    <span class="govuk-caption-xl">{{ pageCaption }}</span>
+                {% endif %}
+                {{ pageHeading or pageTitle }}
+            </h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% if workshopVenue or workshopDateAndTime %}
+            <table class="govuk-table govuk-!-margin-bottom-6" data-cy="workshop-details-table">
+                <tbody class="govuk-table__body">
+                    {% if workshopVenue %}
+                        <tr class="govuk-table__row">
+                            <th scope="row" class="govuk-table__header">Workshop venue</th>
+                            <td class="govuk-table__cell">{{ workshopVenue }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if workshopDateAndTime %}
+                        <tr class="govuk-table__row">
+                            <th scope="row" class="govuk-table__header">Workshop date and time</th>
+                            <td class="govuk-table__cell">{{ workshopDateAndTime }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <p class="govuk-body" data-cy="submission-copy">Your application was submitted on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
+
+        {% for section in summaryListData.sections %}
+            {% if section.list.rows.length %}
+                <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
+                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+                    <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Document</th>
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="govuk-table__body">
+                            {% for row in section.list.rows %}
+                                <tr class="govuk-table__row">
+                                    <td class="govuk-table__cell">{{ row.key.text }}</td>
+                                    <td class="govuk-table__cell">
+                                        {% if row.value.html %}
+                                            {{ row.value.html | safe }}
+                                        {% else %}
+                                            {{ row.value.text }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}
