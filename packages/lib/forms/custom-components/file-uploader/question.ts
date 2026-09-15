@@ -1,4 +1,5 @@
 import { Question } from '@planning-inspectorate/dynamic-forms';
+import { type Journey } from '@planning-inspectorate/dynamic-forms';
 import escape from 'escape-html';
 import type {
 	FileUploaderCustomViewData,
@@ -29,12 +30,16 @@ export default class FileUploaderQuestion extends Question {
 		multiple = true,
 		text = {},
 		validationMessages = {},
+		actionButtonVisibleInSummary = true,
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
 			...params,
 			viewFolder: 'forms/custom-components/file-uploader'
 		});
+		if (this.formatSummaryValue == undefined) {
+			this.formatSummaryValue = fileUploadBulletListFormat;
+		}
 
 		this.config = {
 			type: 'file-uploader',
@@ -47,7 +52,8 @@ export default class FileUploaderQuestion extends Question {
 			maxTotalUploadSizeLabel,
 			multiple,
 			text,
-			validationMessages
+			validationMessages,
+			actionButtonVisibleInSummary
 		};
 	}
 
@@ -61,7 +67,8 @@ export default class FileUploaderQuestion extends Question {
 
 		viewModel.question = {
 			...viewModel.question,
-			...this.config
+			...this.config,
+			editable: this.editable
 		};
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
@@ -124,17 +131,34 @@ export default class FileUploaderQuestion extends Question {
 		return super.isAnswered(journeyResponse as never, fieldName);
 	}
 
-	formatAnswer(answer: unknown): string {
-		const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
-		const value = formatUploadedFilesForSummary(files, this.notStartedText);
+	getAction(sectionSegment: string, journey: Journey, answer: unknown) {
+		if (this.actionLink) {
+			// show the override if its set
+			return {
+				href: this.actionLink.href,
+				text: this.actionLink.text,
+				visuallyHiddenText: this.question
+			};
+		}
+		if (!this.config.actionButtonVisibleInSummary) {
+			return;
+		}
+		// The editable condition from the parent method is removed - the question will always have a view action
+		const isAnswerProvided = answer !== null && answer !== undefined && answer !== '';
 
-		return value;
+		return {
+			href: journey.getCurrentQuestionUrl(sectionSegment, this.fieldName),
+			text: isAnswerProvided ? this.changeActionText : this.answerActionText,
+			visuallyHiddenText: this.question
+		};
 	}
 }
 
-function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: string): string {
+export function fileUploadBulletListFormat(context: any): string {
+	const answer = context.answer;
+	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 	if (files.length === 0) {
-		return notStartedText;
+		return 'Not started';
 	}
 
 	if (files.length === 1) {
@@ -142,7 +166,14 @@ function formatUploadedFilesForSummary(files: UploadedFile[], notStartedText: st
 	}
 
 	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
-	return `<ul class="govuk-list">${listItems}</ul>`;
+	return `<ul class="govuk-list--bullet li">${listItems}</ul>`;
+}
+
+export function fileUploadCountFormat(context: any): string {
+	const answer = context.answer;
+	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
+	const pluralCharacter = files.length != 1 ? 's' : '';
+	return `<ul class="govuk-list">${files.length} document${pluralCharacter}</ul>`;
 }
 
 function readUploadedFiles(value: unknown): UploadedFile[] {

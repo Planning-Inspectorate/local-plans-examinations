@@ -20,8 +20,10 @@ import {
 	getParam,
 	issueGateway2Report,
 	issueGateway1SLA,
+	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	handleMulterFileSizeError
+	handleMulterFileSizeError,
+	preprocessQuestionProperties
 } from './controller.ts';
 import {
 	type IRouter,
@@ -116,6 +118,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-3',
 		journeyId: GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
+		supportsFileUpload: true,
 		updateFunction: updateGateway3
 	},
 	{
@@ -131,7 +134,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 const CASE_JOURNEY_MAP = Object.fromEntries(CASE_JOURNEYS.map((elem) => [elem.path, elem.updateFunction]));
 
 export function caseRouter(service: ManageService): IRouter {
-	console.log('Building case router');
 	const router = createRouter({ mergeParams: true });
 	const updateCase = updateCaseField(service);
 
@@ -185,6 +187,7 @@ function registerCaseJourney(
 	router.get(
 		`/${path}`,
 		getJourneyResponse,
+		preprocessQuestionProperties(service, journeyId, questions),
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
 		buildLpaOptions,
@@ -197,6 +200,7 @@ function registerCaseJourney(
 	router.get(
 		questionPath,
 		getJourneyResponse,
+		preprocessQuestionProperties(service, journeyId, questions),
 		buildCaseOfficerOptions(service, questions),
 		buildInspectorOptions(service, questions),
 		buildLpaOptions,
@@ -214,8 +218,9 @@ function registerCaseJourney(
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
-	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-3-submission/:question/check`, issueGateway3Document(service, journeyId));
 
 	// Save answer
 	router.post(
