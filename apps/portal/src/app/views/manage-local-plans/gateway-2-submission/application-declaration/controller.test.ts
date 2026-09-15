@@ -55,11 +55,15 @@ function createMockService() {
 		},
 		db: {
 			case: {
-				findUnique: async ({ where }: { where: { reference: string } }) => {
+				findUnique: async () => {
 					return {
+						id: 'case-1',
 						contacts: [{ email: 'lpa@example.com' }]
 					};
 				}
+			},
+			gateway2Info: {
+				update: async () => ({})
 			}
 		},
 		notifyClient: {
