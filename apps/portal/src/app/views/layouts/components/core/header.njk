@@ -11,7 +11,7 @@
 
 {% if (isAuthenticated) %}
 {{ govukServiceNavigation({
-	classes: 'pins-service-navigation',
+	classes: 'pins-service-navigation data-cy="service-navigation"',
 	serviceName: config.headerTitle,
 	serviceUrl: '/manage-local-plans/your-plans',
 	navigation: config.primaryNavigationLinks
