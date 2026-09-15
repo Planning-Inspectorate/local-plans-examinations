@@ -205,6 +205,24 @@ describe('plan page', () => {
 		assert.ok(html.includes('data-cy="plan-details-action"'), 'expected action link to have a stable selector');
 	});
 
+	it('should render Gateway 3 button with correct link if Gateway 3 is ready to start', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		const expectedButton = 'Start Gateway 3 submission';
+
+		assert.strictEqual(data.button, expectedButton, `expected ${expectedButton} but got ${data.button}`);
+		assert.ok(
+			html.includes('href="/manage-local-plans/PLAN-001/gateway-3-submission/application-declaration"'),
+			'expected action link to point to Gateway 3 submission'
+		);
+	});
+
 	describe('should not render button if status != ready to start', () => {
 		const testCases = [
 			{ refNum: 'PLAN-002', status: STATUS.InProgress },
@@ -315,18 +333,21 @@ describe('plan page', () => {
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
-			`/manage-local-plans/PLAN-001/gateway-2-submission`,
+			`/manage-local-plans/PLAN-001/gateway-3-submission`,
 			null
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
-		const expectedHTML =
+		const expectedGateway2HTML =
 			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-submission"';
+		const expectedGateway3HTML =
+			'class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-3-submission"';
 
 		for (let i = 0; i < expectedLinks.length; i++) {
 			assert.strictEqual(expectedLinks[i], links[i], `expected ${expectedLinks[i]} but got ${links[i]}`);
 		}
 
-		assert.ok(html.includes(expectedHTML), `expected html to contain ${expectedHTML}`);
+		assert.ok(html.includes(expectedGateway2HTML), `expected html to contain ${expectedGateway2HTML}`);
+		assert.ok(html.includes(expectedGateway3HTML), `expected html to contain ${expectedGateway3HTML}`);
 	});
 
 	it('should render task tag correctly for case 2 (G1, G2 complete)', async () => {
@@ -351,6 +372,40 @@ describe('plan page', () => {
 		}
 
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
+	});
+
+	it('should render Gateway 2 as completed with the shared report date when the report has been uploaded', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.strictEqual(data.tagG2, 'Completed');
+		assert.strictEqual(data.dateTextG2, 'Completed: ');
+		assert.ok(cleanHtml(html).includes('Gateway 2 - advisory check'), 'expected Gateway 2 row to render');
+		assert.ok(cleanHtml(html).includes('Completed: 2 September 2026'), 'expected Gateway 2 shared date hint');
+	});
+
+	it('should render Gateway 3 as ready to start with a link when the Gateway 2 report has been uploaded', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart,
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.strictEqual(data.tagG3, '<strong class="govuk-tag govuk-tag--green">Ready to start</strong>');
+		assert.strictEqual(data.hrefG3, '/manage-local-plans/PLAN-001/gateway-3-submission');
+		assert.ok(cleanHtml(html).includes('Gateway 3 - readiness check'), 'expected Gateway 3 row to render');
+		assert.ok(
+			html.includes('href="/manage-local-plans/PLAN-001/gateway-3-submission"'),
+			'expected Gateway 3 row to be a hyperlink'
+		);
+		assert.ok(cleanHtml(html).includes('Ready to start'), 'expected Gateway 3 status to be Ready to start');
 	});
 
 	describe('should render task tag correctly for case 2 (G1, G2 complete) if status != 0', () => {
@@ -393,7 +448,7 @@ describe('plan page', () => {
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
-			`/manage-local-plans/PLAN-001/gateway-2-submission`,
+			`/manage-local-plans/PLAN-001/gateway-3-submission`,
 			`/manage-local-plans/PLAN-001/gateway-2-submission`
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];
@@ -470,7 +525,7 @@ describe('plan page', () => {
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
-			'/manage-local-plans/PLAN-001/gateway-2-submission',
+			'/manage-local-plans/PLAN-001/gateway-3-submission',
 			'/manage-local-plans/PLAN-001/gateway-2-submission'
 		];
 		const links = [data.hrefG2, data.hrefG3, data.hrefE];

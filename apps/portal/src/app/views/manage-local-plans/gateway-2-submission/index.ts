@@ -26,6 +26,7 @@ import { createJourney, JOURNEY_ID } from './journey.ts';
 import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
+	decodeFileName,
 	createGateway2Questions,
 	GW2QUESTIONS
 } from './questions.ts';
@@ -80,6 +81,7 @@ const gateway2FileUploadQuestionsByUrl = new Map(
 	gateway2FileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
 );
 const GATEWAY_2_SUBMIT_ERROR = 'Add at least one document before submitting';
+const GATEWAY_2_REPORT_DOCUMENT_SET_ID = 'g2-report';
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
@@ -91,9 +93,17 @@ type Gateway2Request = Request & {
 	currentCase?: CaseModel & {
 		gateway2Info?: {
 			expectedDate: Date | null;
+			reportIssuedDate: Date | null;
 		} | null;
 	};
+	gateway2ReportFiles?: UploadedFile[];
 	session: Gateway2Session;
+};
+
+type Gateway2ReportFileViewModel = {
+	fileName: string;
+	href?: string;
+	sharedDate?: string;
 };
 
 // TODO: This shared Multer middleware uses the largest Gateway 2 question
@@ -209,7 +219,8 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			include: {
 				gateway2Info: {
 					select: {
-						expectedDate: true
+						expectedDate: true,
+						reportIssuedDate: true
 					}
 				}
 			}
@@ -248,6 +259,14 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			}
 		}
 
+		if (currentCase.gateway2Info?.reportIssuedDate) {
+			request.gateway2ReportFiles = await loadGateway2DocumentsByDocumentSetId(
+				service,
+				currentCase.id,
+				GATEWAY_2_REPORT_DOCUMENT_SET_ID
+			);
+		}
+
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...answers
 		});
@@ -277,6 +296,33 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	}
 
 	res.locals.targetDate = formatDisplayDate(currentCase?.gateway2Info?.expectedDate);
+	res.locals.showGateway2Report = Boolean(currentCase?.gateway2Info?.reportIssuedDate);
+	res.locals.gateway2ReportFiles = res.locals.showGateway2Report
+		? buildGateway2ReportFilesViewModel(planReference, request.gateway2ReportFiles ?? [])
+		: [];
+}
+
+export function buildGateway2ReportFilesViewModel(
+	planReference: string | undefined,
+	files: UploadedFile[]
+): Gateway2ReportFileViewModel[] {
+	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+
+	return files.map((file) => {
+		const documentGuid = file.metadata?.documentGuid;
+		const fileName = decodeFileName(file.fileName);
+
+		return {
+			fileName,
+			href:
+				encodedPlanReference && typeof documentGuid === 'string' && documentGuid
+					? `/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
+							documentGuid
+						)}`
+					: undefined,
+			sharedDate: file.dateCreated ? formatDisplayDate(file.dateCreated) : undefined
+		};
+	});
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {

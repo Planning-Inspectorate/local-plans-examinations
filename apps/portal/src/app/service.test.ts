@@ -31,6 +31,7 @@ function buildCase(overrides = {}) {
 			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 			submissionForExaminationDate: null
 		},
+		documents: [],
 		...overrides
 	};
 }
@@ -61,6 +62,28 @@ describe('PortalService', () => {
 						gateway2Info: {
 							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
 						}
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.ReadyToStart
+				}
+			);
+		});
+
+		it('returns Gateway 3 ready to start when the Gateway 2 report has been uploaded', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						documents: [
+							{
+								createdAt: new Date('2026-09-01T12:00:00.000Z'),
+								latestDocumentVersion: {
+									dateCreated: new Date('2026-09-02T12:00:00.000Z'),
+									isDeleted: false
+								}
+							}
+						]
 					})
 				),
 				{
@@ -130,6 +153,21 @@ describe('PortalService', () => {
 						orderBy: {
 							lpaName: 'asc'
 						}
+					},
+					documents: {
+						where: {
+							documentSetId: 'g2-report',
+							isDeleted: false
+						},
+						select: {
+							createdAt: true,
+							latestDocumentVersion: {
+								select: {
+									dateCreated: true,
+									isDeleted: true
+								}
+							}
+						}
 					}
 				},
 				orderBy: {
@@ -165,6 +203,28 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
 			assert.strictEqual(plans[0].dates.G2, '1 September 2026');
+		});
+
+		it('maps Gateway 2 report uploaded cases to Gateway 3 plans', async () => {
+			const service = buildService([
+				buildCase({
+					documents: [
+						{
+							createdAt: new Date('2026-09-01T12:00:00.000Z'),
+							latestDocumentVersion: {
+								dateCreated: new Date('2026-09-02T12:00:00.000Z'),
+								isDeleted: false
+							}
+						}
+					]
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
+			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
+			assert.strictEqual(plans[0].dates.G2, '2 September 2026');
 		});
 
 		it('maps missing info table dates to Not set', async () => {
