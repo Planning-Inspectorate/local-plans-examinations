@@ -8,6 +8,8 @@ import { localPlanTimetablePage } from '../../../../page-objects/portal/gw2-appl
 import { portalDeclarationPage } from '../../../../page-objects/portal/gw2-application/declaration-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+const today = new Date();
+const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Application complete page journeys', () => {
 	beforeEach(() => {
@@ -53,6 +55,10 @@ describe('Application complete page journeys', () => {
 				portalDeclarationPage.confirmAndSubmitButton.click();
 
 				applicationCompletePage.verifyLoaded();
+
+				applicationCompletePage.returnToYourPlanLink(plan.urlReference).click();
+				planDetailsPage.verifyLoaded();
+				planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', `Submitted: ${todayDisplay}`, 'Under review');
 			});
 		}
 	);
