@@ -203,6 +203,63 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
 }
 
+export function createTimetableJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const timetableUrl = req.baseUrl + '/timetable';
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		sections: [
+			new Section('Timetable', 'timetable').addQuestion(questions.noticeOfIntentionPublishDate),
+			new Section('Gateway 1', 'gateway-1')
+				.addQuestion(questions.gateway1ExpectedDate)
+				.addQuestion(questions.gateway1ActualDate)
+				.addQuestion(questions.slaSentDate)
+				.addQuestion(questions.slaReceivedDate),
+			new Section('Gateway 2', 'gateway-2')
+				.addQuestion(questions.gateway2ExpectedDate)
+				.addQuestion(questions.gateway2ActualDate)
+				.addQuestion(questions.workshopDate)
+				.addQuestion(questions.reportIssuedDate)
+				.addQuestion(questions.reportPublishedDate),
+			new Section('Gateway 3', 'gateway-3')
+				.addQuestion(questions.gateway3ExpectedDate)
+				.addQuestion(questions.gateway3ActualDate)
+				.addQuestion(questions.gateway3CompletionDate),
+			new Section('Examination', 'examination')
+				.addQuestion(questions.expectedSubmissionForExaminationDate)
+				.addQuestion(questions.submissionForExaminationDate)
+				// TODO Add hearing dates in here once developed
+				.addQuestion(questions.letterSentToMHCLGDate)
+				.addQuestion(questions.letterIssueDate),
+			new Section('QA', 'QA')
+				.addQuestion(questions.qaDate)
+				.addQuestion(questions.sentToPanelDate)
+				.addQuestion(questions.panelResponseSentToInspector),
+			new Section('Fact Check', 'fact-check')
+				.addQuestion(questions.factCheckDateReceivedFromInspector)
+				.addQuestion(questions.factCheckDueDate)
+				.addQuestion(questions.factCheckActualDate)
+				.addQuestion(questions.factCheckReceivedBackFromLPADate)
+				.addQuestion(questions.finalReportIssueDate)
+				.addQuestion(questions.planPauseStartDate)
+				.addQuestion(questions.planPauseEndDate)
+				.addQuestion(questions.withdrawnDate)
+				.addQuestion(questions.isSound)
+				.addQuestion(questions.soundUnsoundDate)
+				.addQuestion(questions.adoptionDate)
+				.addQuestion(questions.approvedForCILDate)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Timetable',
+		returnToListing: false,
+		makeBaseUrl: () => timetableUrl,
+		initialBackLink: timetableUrl,
+		response
+	});
+	return getBackLinksAndSetReference(journey, timetableUrl, req.params.planReference);
+}
+
 function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, caseReference: string | string[]): Journey {
 	const getBackLink = journey.getBackLink.bind(journey);
 	const caseJourney = journey as JourneyWithReference;
