@@ -14,7 +14,7 @@ describe('Declaration page content', () => {
 		loadPlanDetails().then((plan) => {
 			portalDeclarationPage.visit(plan.urlReference);
 			portalDeclarationPage.verifyLoaded();
-			portalDeclarationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			portalDeclarationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			portalDeclarationPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			portalDeclarationPage.verifyMainContains(
 				'Your application',

@@ -13,7 +13,7 @@ describe('Application Complete page content', () => {
 		loadPlanDetails().then((plan) => {
 			applicationCompletePage.visit(plan.urlReference);
 			applicationCompletePage.verifyLoaded();
-			applicationCompletePage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			applicationCompletePage.verifyServiceNavigation('Guidance', 'Sign out');
 			applicationCompletePage.verifyMainContains(
 				'Application complete',
 				'What happens next',
