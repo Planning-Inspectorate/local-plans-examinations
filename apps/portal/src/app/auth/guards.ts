@@ -10,6 +10,11 @@ export function checkIsAuthenticated(req: Request, res: Response, next: NextFunc
 	res.redirect('/login');
 }
 
+export function exposeAuthToViews(req: Request, res: Response, next: NextFunction): void {
+	res.locals.isAuthenticated = Boolean(req.session?.isAuthenticated);
+	next();
+}
+
 export function checkCaseOwnership(service: PortalService): RequestHandler {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		const rawRef = req.params.planReference;
