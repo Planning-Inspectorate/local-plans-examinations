@@ -1,10 +1,10 @@
 import type { Logger } from 'pino';
 import { GovNotifyClient } from './gov-notify-client.ts';
-import type { NotifyConfig } from './types.ts';
+import type { NotifyConfig, NotifyEmail } from './types.ts';
 import { NotifyEmailStatus } from './notify-email-status.ts';
 
 export { GovNotifyClient, NotifyEmailStatus };
-export type { NotifyConfig };
+export type { NotifyConfig, NotifyEmail };
 
 export function initGovNotify(config: NotifyConfig, logger: Logger): GovNotifyClient | null {
 	if (config.disabled) {

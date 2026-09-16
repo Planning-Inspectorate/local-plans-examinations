@@ -1,6 +1,12 @@
 import { NotifyClient } from 'notifications-node-client';
 import type { Logger } from 'pino';
-import type { GovNotifyOptions, TemplateIds, AuthCodePersonalisation } from './types.ts';
+import type { GovNotifyOptions, TemplateIds, AuthCodePersonalisation, NotifyEmail } from './types.ts';
+
+type NotifyEmailListResponse = {
+	data: {
+		notifications?: NotifyEmail[];
+	};
+};
 
 export class GovNotifyClient {
 	readonly notifyClient: NotifyClient;
@@ -40,6 +46,25 @@ export class GovNotifyClient {
 			const message = error instanceof Error ? error.message : String(error);
 			this.logger.error({ error, notificationId }, 'failed to fetch notification by ID');
 			throw new Error(`failed to fetch notification: ${message}`, {
+				cause: error
+			});
+		}
+	}
+
+	async getEmailNotificationsByReference(reference: string): Promise<NotifyEmail[]> {
+		try {
+			this.logger.info(`fetching email notifications by reference: ${reference}`);
+			const response = (await this.notifyClient.getNotifications(
+				'email',
+				undefined,
+				reference
+			)) as NotifyEmailListResponse;
+
+			return response.data.notifications ?? [];
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			this.logger.error({ error, reference }, 'failed to fetch email notifications by reference');
+			throw new Error(`failed to fetch email notifications: ${message}`, {
 				cause: error
 			});
 		}

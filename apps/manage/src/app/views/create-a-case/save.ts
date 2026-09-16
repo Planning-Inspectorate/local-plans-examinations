@@ -70,6 +70,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			if (!templateID) throw new Error('GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID environment variable is not set');
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
+			const notifyReference = `create-case:${caseReference}`;
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {
@@ -78,7 +79,8 @@ export function buildSaveController(service: ManageService): RequestHandler {
 							personalisation: {
 								portalLoginURL,
 								caseReference
-							}
+							},
+							reference: notifyReference
 						});
 						service.logger.info({ email: email }, 'create a case - email sent');
 					} catch (error) {
@@ -101,8 +103,6 @@ async function saveDataToDatabase(
 	currentUser: string
 ): Promise<void> {
 	await service.db.$transaction(async (tx) => {
-		const nameFor = (code: string) => questions.lpa.options.find((opt: any) => opt.value === code)?.text || '';
-
 		const createdCase = await tx.case.create({
 			data: {
 				reference: answers.reference,
@@ -113,7 +113,7 @@ async function saveDataToDatabase(
 				lpas: {
 					connectOrCreate: uniqueLpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
-						create: { lpaCode, lpaName: nameFor(lpaCode) }
+						create: { lpaCode, lpaName: getOptionText('lpa', lpaCode) }
 					}))
 				},
 				contacts: {
@@ -172,4 +172,8 @@ async function saveDataToDatabase(
 			})
 		]);
 	});
+}
+
+function getOptionText(question: 'lpa', value: string): string {
+	return questions[question].options.find((option: any) => option.value === value)?.text || value;
 }
