@@ -22,7 +22,7 @@ describe('Gateway 2 document upload page content', () => {
 			openGateway2DocumentUploadPage(plan, page);
 			gateway2CoverLetterPage.verifyLoaded();
 			gateway2CoverLetterPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
-			gateway2CoverLetterPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			gateway2CoverLetterPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway2CoverLetterPage.verifyMainContains('Drag and drop or choose files');
 			gateway2CoverLetterPage.verifyNoFileChosen();
 			gateway2CoverLetterPage.verifyUploadFormVisible();
@@ -40,7 +40,7 @@ describe('Gateway 2 document upload page content', () => {
 			openGateway2DocumentUploadPage(plan, page);
 			localPlanTimetablePage.verifyLoaded();
 			localPlanTimetablePage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
-			localPlanTimetablePage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			localPlanTimetablePage.verifyServiceNavigation('Guidance', 'Sign out');
 			localPlanTimetablePage.verifyMainContains('Drag and drop or choose files');
 			localPlanTimetablePage.verifyNoFileChosen();
 			localPlanTimetablePage.verifyUploadFormVisible();
@@ -58,7 +58,7 @@ describe('Gateway 2 document upload page content', () => {
 			openGateway2DocumentUploadPage(plan, page);
 			noticeOfIntentionToCommenceLocalPlanPage.verifyLoaded();
 			noticeOfIntentionToCommenceLocalPlanPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
-			noticeOfIntentionToCommenceLocalPlanPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			noticeOfIntentionToCommenceLocalPlanPage.verifyServiceNavigation('Guidance', 'Sign out');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyMainContains('Drag and drop or choose files');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyNoFileChosen();
 			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFormVisible();
@@ -76,7 +76,7 @@ describe('Gateway 2 document upload page content', () => {
 			openGateway2DocumentUploadPage(plan, page);
 			subsequentWorkTowardsDraftPlanPage.verifyLoaded();
 			subsequentWorkTowardsDraftPlanPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
-			subsequentWorkTowardsDraftPlanPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			subsequentWorkTowardsDraftPlanPage.verifyServiceNavigation('Guidance', 'Sign out');
 			subsequentWorkTowardsDraftPlanPage.verifyMainContains('Drag and drop or choose files');
 			subsequentWorkTowardsDraftPlanPage.verifyNoFileChosen();
 			subsequentWorkTowardsDraftPlanPage.verifyUploadFormVisible();

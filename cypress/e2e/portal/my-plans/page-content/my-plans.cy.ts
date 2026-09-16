@@ -14,7 +14,7 @@ describe('My plans page content', () => {
 
 	it('Shows the details on the my plans page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			myPlansPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			myPlansPage.verifyServiceNavigation('Guidance', 'Sign out');
 			myPlansPage.verifyLoaded();
 			myPlansPage.verifyCaption(plan.leadLpa);
 			myPlansPage.verifyTableHeaders(myPlansPage.myPlansTable, [
