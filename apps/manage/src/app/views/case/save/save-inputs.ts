@@ -147,3 +147,5 @@ export interface Gateway3Input extends SaveInput {
 		gateway3InfoId: string | null;
 	}[];
 }
+
+export type TimetableInput = Gateway1Input | Gateway2Input | Gateway3Input | ExaminationInput;
