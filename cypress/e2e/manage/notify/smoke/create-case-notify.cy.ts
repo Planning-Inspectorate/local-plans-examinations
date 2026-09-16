@@ -30,7 +30,7 @@ describe('Manage Notify smoke', () => {
 		}
 	});
 
-	it('sends a case-created email through Notify', { tags: ['environment-smoke'] }, () => {
+	it('sends a case-created email through Notify', () => {
 		const notifySmokeEmail = getRequiredCypressEnv('notifySmokeEmail');
 		const runId = Date.now();
 
