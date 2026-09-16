@@ -10,10 +10,18 @@ import {
 	type CreateCaseData,
 	type SelectAnswer
 } from '../../page-objects/manage/create-case/index.ts';
+import { isEnvironmentSmoke } from '../auth-flow.ts';
 import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 
 export const completeCaseDetails = (data: CreateCaseData) => {
-	caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
+	if (isEnvironmentSmoke()) {
+		caseOfficerPage.selectFirstCaseOfficer().then((caseOfficer) => {
+			data.caseOfficer = caseOfficer;
+		});
+	} else {
+		caseOfficerPage.selectCaseOfficer(data.caseOfficer.value);
+	}
+
 	planTitlePage.verifyLoaded();
 	planTitlePage.enterPlanTitle(data.planTitle);
 	planTypePage.verifyLoaded();

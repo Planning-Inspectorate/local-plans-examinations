@@ -2,6 +2,7 @@ import { defineConfig } from 'cypress';
 import { loadEnvFile } from 'node:process';
 import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
+import { waitForNotifyEmailByReference } from './cypress/tasks/notify.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -20,14 +21,15 @@ const specPatterns: Record<string, string> = {
 
 const baseUrl = baseUrls[target];
 const specPattern = specPatterns[target];
+const environmentSmoke = process.env.ENVIRONMENT_SMOKE === 'true';
 
 if (!baseUrl || !specPattern) {
 	throw new Error(`Unsupported TEST_TARGET "${target}". Expected one of: ${Object.keys(baseUrls).join(', ')}`);
 }
 
-const runCommand = (command: string): Promise<string> =>
+const runCommand = (command: string, env: NodeJS.ProcessEnv = {}): Promise<string> =>
 	new Promise((resolve, reject) => {
-		exec(command, { cwd: process.cwd() }, (err, stdout, stderr) => {
+		exec(command, { cwd: process.cwd(), env: { ...process.env, ...env } }, (err, stdout, stderr) => {
 			if (err) {
 				console.error(stderr || err);
 				reject(err);
@@ -36,6 +38,14 @@ const runCommand = (command: string): Promise<string> =>
 			resolve(stdout);
 		});
 	});
+
+const validateCaseReference = (reference: unknown) => {
+	if (typeof reference !== 'string' || !/^PLAN-\d+$/.test(reference)) {
+		throw new Error('Expected a case reference like PLAN-123456');
+	}
+
+	return reference;
+};
 
 export default defineConfig({
 	reporter: 'cypress-mochawesome-reporter',
@@ -50,8 +60,14 @@ export default defineConfig({
 	e2e: {
 		baseUrl,
 		env: {
+			authPassword: process.env.CYPRESS_AUTH_PASSWORD,
+			authUserId: process.env.CYPRESS_AUTH_USER_ID,
+			authUsername: process.env.CYPRESS_AUTH_USERNAME,
+			environmentSmoke,
 			manageBaseUrl: baseUrls.manage,
-			portalBaseUrl: baseUrls.portal
+			notifySmokeEmail: process.env.CYPRESS_NOTIFY_SMOKE_EMAIL,
+			portalBaseUrl: baseUrls.portal,
+			portalSmokeOtp: process.env.CYPRESS_PORTAL_SMOKE_OTP
 		},
 		specPattern,
 		screenshotsFolder: 'cypress/reports/screenshots',
@@ -84,6 +100,30 @@ export default defineConfig({
 					await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts --case-only');
 					return null;
 				},
+				seedAssignedToMeCase: async () => {
+					const stdout = await runCommand('node packages/database/src/seed/seed-assigned-to-me.ts');
+					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
+					if (!jsonLine) {
+						throw new Error('Assigned to me seed script did not return a result');
+					}
+					return JSON.parse(jsonLine);
+				},
+				seedPortalSmokeCase: async () => {
+					const stdout = await runCommand('node packages/database/src/seed/seed-portal-smoke.ts');
+					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
+					if (!jsonLine) {
+						throw new Error('Portal smoke seed script did not return a result');
+					}
+					return JSON.parse(jsonLine);
+				},
+				softDeleteCaseByReference: async (reference: string) => {
+					const caseReference = validateCaseReference(reference);
+					await runCommand('node packages/database/src/seed/soft-delete-case.ts', {
+						SOFT_DELETE_CASE_REFERENCE: caseReference
+					});
+					return null;
+				},
+				waitForNotifyEmailByReference,
 				seedOtp: async () => {
 					const stdout = await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts');
 					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
@@ -91,6 +131,10 @@ export default defineConfig({
 					return result.otp || null;
 				},
 				clearDb: async () => {
+					if (environmentSmoke) {
+						return null;
+					}
+
 					await runCommand('node packages/database/src/seed/clear-db.ts');
 					return null;
 				}

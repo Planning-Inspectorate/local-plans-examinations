@@ -1,4 +1,5 @@
 import { BasePage } from '../../base-page.ts';
+import type { SelectAnswer } from './types.ts';
 
 export class CaseOfficerPage extends BasePage {
 	constructor() {
@@ -23,6 +24,27 @@ export class CaseOfficerPage extends BasePage {
 	selectCaseOfficer(value: string) {
 		this.caseOfficerSelect.should('be.visible').select(value);
 		this.saveAndContinue();
+	}
+
+	selectFirstCaseOfficer(): Cypress.Chainable<SelectAnswer> {
+		return this.caseOfficerSelect
+			.should('be.visible')
+			.find('option')
+			.not('[value=""]')
+			.first()
+			.then(($option) => {
+				const value = $option.attr('value');
+				if (!value) {
+					throw new Error('No selectable case officer option was found');
+				}
+				const label = $option.text().trim();
+				return { label, value };
+			})
+			.then((caseOfficer) => {
+				this.caseOfficerSelect.select(caseOfficer.value);
+				this.saveAndContinue();
+				return cy.wrap(caseOfficer, { log: false });
+			});
 	}
 
 	verifyCaseOfficerSelected(value: string) {
