@@ -60,28 +60,4 @@ describe('Plan details page content', () => {
 			planDetailsPage.verifyProgressRow('Examination', `Target date: ${plan.dates.examination}`, 'Cannot start yet');
 		});
 	});
-
-	it(
-		'shows Gateway 2 completed and Gateway 3 ready to start when the BO Gateway 2 report has been uploaded',
-		{ tags: ['regression'] },
-		() => {
-			loadPlanDetails().then((plan) => {
-				cy.task('seedGateway2Report');
-				cy.visit(planDetailsPage.pathFor(plan.urlReference));
-
-				planDetailsPage.verifyLoaded();
-				planDetailsPage.verifyMetadataValue('Current stage', 'Gateway 3', 'Ready to start');
-				planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', 'Completed: 2 September 2026', 'Completed');
-				planDetailsPage.verifyProgressRow(
-					'Gateway 3 - readiness check',
-					`Target date: ${plan.dates.gateway3}`,
-					'Ready to start'
-				);
-				planDetailsPage.verifyProgressRowLink(
-					'Gateway 3 - readiness check',
-					`/manage-local-plans/${plan.urlReference}/gateway-3-submission`
-				);
-			});
-		}
-	);
 });

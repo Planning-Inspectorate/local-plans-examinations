@@ -36,22 +36,22 @@ function buildCase(overrides = {}) {
 	};
 }
 
+function buildGateway2ReportDocument(dateCreated = new Date('2026-09-02T12:00:00.000Z')) {
+	return {
+		createdAt: new Date('2026-09-01T12:00:00.000Z'),
+		latestDocumentVersion: {
+			dateCreated,
+			isDeleted: false
+		}
+	};
+}
+
 function buildService(caseRecords = []) {
 	return {
 		db: {
 			case: {
 				findMany: mock.fn(async () => caseRecords)
 			}
-		}
-	};
-}
-
-function buildGateway2ReportDocument() {
-	return {
-		createdAt: new Date('2026-09-01T12:00:00.000Z'),
-		latestDocumentVersion: {
-			dateCreated: new Date('2026-09-02T12:00:00.000Z'),
-			isDeleted: false
 		}
 	};
 }

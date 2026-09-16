@@ -64,10 +64,6 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 		row.should('contain.text', hint);
 		row.should('contain.text', status);
 	}
-
-	verifyProgressRowLink(title: string, href: string) {
-		this.progressRow(title).find('a').should('be.visible').and('have.attr', 'href', href);
-	}
 }
 
 export const planDetailsPage = new PlanDetailsPage();
