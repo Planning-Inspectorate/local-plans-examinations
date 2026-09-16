@@ -21,6 +21,51 @@ import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
+type TimetableInput = Gateway1Input | Gateway2Input | Gateway3Input | ExaminationInput;
+
+const timetableGateway1Questions = new Set([
+	'notice-of-intention-publish-date',
+	'expected-gateway-1-date',
+	'completed-gateway-1-date',
+	'sla-sent-date',
+	'sla-received-date'
+]);
+
+const timetableGateway2Questions = new Set([
+	'gateway-2-expected-date',
+	'gateway-2-actual-date',
+	'gateway-2-workshop-date',
+	'gateway-2-report-issued-date',
+	'gateway-2-report-published-date'
+]);
+
+const timetableGateway3Questions = new Set([
+	'gateway-3-expected-date',
+	'gateway-3-actual-date',
+	'gateway-3-completion-date'
+]);
+
+const timetableExaminationQuestions = new Set([
+	'examination-expected-submission-date',
+	'examination-actual-submission-date',
+	'letter-sent-to-mhclg-date',
+	'letter-issue-date',
+	'qa-date',
+	'report-sent-to-panel-date',
+	'panel-response-to-inspector-date',
+	'fact-check-date-received-from-inspector',
+	'fact-check-due-date',
+	'fact-check-actual-date',
+	'fact-check-received-back-from-lpa-date',
+	'final-report-issue-date',
+	'plan-pause-start-date',
+	'plan-pause-end-date',
+	'withdrawn-date',
+	'is-sound',
+	'sound-unsound-date',
+	'adoption-date',
+	'approved-for-cil-date'
+]);
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
@@ -222,6 +267,14 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				updated = await updateExamination(
 					db,
 					trimStringValues(data.answers as ExaminationInput),
+					reference,
+					req.params.question as string
+				);
+				break;
+			case 'timetable':
+				updated = await updateTimetable(
+					db,
+					trimStringValues(data.answers as TimetableInput),
 					reference,
 					req.params.question as string
 				);
@@ -462,6 +515,33 @@ export async function updateExamination(
 	return true;
 }
 
+export async function updateTimetable(
+	db: PrismaClient,
+	answers: TimetableInput,
+	caseReference: string,
+	question?: string
+): Promise<boolean> {
+	if (!question) return false;
+
+	if (timetableGateway1Questions.has(question)) {
+		return updateGateway1(db, answers as Gateway1Input, caseReference, question);
+	}
+
+	if (timetableGateway2Questions.has(question)) {
+		return updateGateway2(db, answers as Gateway2Input, caseReference, question);
+	}
+
+	if (timetableGateway3Questions.has(question)) {
+		return updateGateway3(db, answers as Gateway3Input, caseReference, question);
+	}
+
+	if (timetableExaminationQuestions.has(question)) {
+		return updateExamination(db, answers as ExaminationInput, caseReference, question);
+	}
+
+	return false;
+}
+
 /** Removes a contact, or disconnects an LPA from the case. */
 async function removeItem({
 	db,
@@ -689,6 +769,37 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
+			case 'timetable': {
+				const gateway1Data = await db.gateway1Info.findUnique({
+					where: { caseId: caseRecord.id }
+				});
+				const gateway2Data = await db.gateway2Info.findUnique({
+					where: { caseId: caseRecord.id }
+				});
+				const gateway3Data = await db.gateway3Info.findUnique({
+					where: { caseId: caseRecord.id }
+				});
+				const examinationData = await db.examinationInfo.findUnique({
+					where: { caseId: caseRecord.id }
+				});
+
+				let isSound: string | null = null;
+				if (typeof examinationData?.isSound === 'boolean') {
+					isSound = examinationData.isSound ? 'yes' : 'no';
+				}
+
+				res.locals.journeyResponse = new JourneyResponse(journeyId, '', {
+					...gateway1Data,
+					...gateway2Data,
+					...gateway3Data,
+					...examinationData,
+					isSound
+				});
+
+				if (next) next();
+				return;
+			}
+
 			default:
 				logger.error(`Unknown page ${currentPage} for case ${reference}`);
 		}
@@ -773,7 +884,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/overview` },
-		{ text: 'Timetable', href: '#' },
+		{ text: 'Timetable', href: `${baseUrl}/timetable` },
 		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
 		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
 		{ text: 'Gateway 3', href: `${baseUrl}/gateway-3` },
