@@ -3,10 +3,7 @@ import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
 import { loadGateway2DocumentsByDocumentSetId } from '../manage-local-plans/gateway-2-submission/documents.ts';
-import {
-	GATEWAY_2_REPORT_DOCUMENT_SET_ID,
-	buildGateway2ReportFilesViewModel
-} from './gateway-2-report.ts';
+import { GATEWAY_2_REPORT_DOCUMENT_SET_ID, buildGateway2ReportFilesViewModel } from './gateway-2-report.ts';
 
 function statusTag(status: Status) {
 	const s = StatusTag[status as keyof typeof StatusTag] as { label: string; class: string } | undefined;
@@ -54,11 +51,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			caseRecord?.gateway2Info?.reportIssuedDate && caseRecord?.id
 				? buildGateway2ReportFilesViewModel(
 						planRef,
-						await loadGateway2DocumentsByDocumentSetId(
-							service,
-							caseRecord.id,
-							GATEWAY_2_REPORT_DOCUMENT_SET_ID
-						)
+						await loadGateway2DocumentsByDocumentSetId(service, caseRecord.id, GATEWAY_2_REPORT_DOCUMENT_SET_ID)
 					)
 				: [];
 		const showGateway2Report = gateway2ReportFiles.length > 0;
