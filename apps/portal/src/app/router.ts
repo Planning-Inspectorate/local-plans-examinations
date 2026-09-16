@@ -6,11 +6,12 @@ import { createHomeRoutes } from './views/home/index.ts';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
 import { createPlanPageRoutes } from './views/plan-page/index.ts';
 import { gateway2SubmissionRoutes } from './views/manage-local-plans/gateway-2-submission/index.ts';
+import { gateway3SubmissionRoutes } from './views/manage-local-plans/gateway-3-submission/index.ts';
 import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
-import { checkIsAuthenticated } from './auth/guards.ts';
+import { checkIsAuthenticated, checkCaseOwnership } from './auth/guards.ts';
 
 /**
  * Main app router
@@ -30,7 +31,9 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use('/manage-local-plans', checkIsAuthenticated);
 	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', createPlanPageRoutes(service));
+	router.use('/manage-local-plans/:planReference', checkCaseOwnership(service));
 	router.use('/manage-local-plans', gateway2SubmissionRoutes(service));
+	router.use('/manage-local-plans', gateway3SubmissionRoutes(service));
 	router.use('/', createHomeRoutes(service));
 	router.use('/', createCookiesRoutes());
 	router.use('/error', createErrorRoutes(service));
