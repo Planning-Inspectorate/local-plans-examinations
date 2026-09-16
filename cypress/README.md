@@ -124,7 +124,20 @@ The target app is controlled by `TEST_TARGET` in `cypress.config.ts`. If no targ
 
 Reports are written to `cypress/reports`.
 
-Accessibility checks use `cypress-axe` on a small set of Manage and Portal pages. The checks only run the WCAG A/AA tags. Passing these tests does not prove the service is fully compliant - it just helps catch issues axe can spot. The external audit still covers the wider checks.
+## Test environment smoke
+
+The scheduled Test smoke pipeline runs selected specs tagged `environment-smoke` against the deployed Test apps:
+
+```bash
+npm run cy:manage:test-smoke
+npm run cy:portal:test-smoke
+```
+
+Use shared auth/data helpers for environment-specific setup so specs stay close to the normal user journeys. Environment smoke tests must only clean up records they create; `clearDb` is disabled in this mode to protect shared Test data.
+
+The Manage Notify smoke check requires a Notify API key and allowed recipient email from the pipeline.
+
+Accessibility checks use `cypress-axe` on a small set of Manage and Portal pages. The checks only run the WCAG A/AA tags. Axe will not catch every accessibility issue. For example, a repeated `Add` link can pass if it has text, even if a screen reader user would not know what it adds. Passing these tests does not prove the service is fully compliant - it just helps catch issues axe can spot. The external audit still covers the wider checks.
 
 If axe finds a new violation, treat it like any other failing quality gate. 
 
