@@ -1,5 +1,7 @@
 import { portalLoginEmailPage } from '../../../../page-objects/portal/login/email-page.ts';
-import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { completePortalLogin, portalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
+import { isEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
+import { preparePlanDetails } from '../../../../flows/portal/plan-flow.ts';
 import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
@@ -8,6 +10,15 @@ import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
 describe('Portal login journey', () => {
+	afterEach(() => {
+		const portalSmokeCaseReference = Cypress.env('portalSmokeCaseReference');
+
+		if (isEnvironmentSmoke() && portalSmokeCaseReference) {
+			cy.task('softDeleteCaseByReference', portalSmokeCaseReference);
+			Cypress.env('portalSmokeCaseReference', null);
+		}
+	});
+
 	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
 		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
@@ -19,7 +30,17 @@ describe('Portal login journey', () => {
 		portalLoginOtpPage.verifyPath();
 	});
 
-	it('logs in and shows the my plans page', { tags: ['smoke'] }, () => {
+	it('logs in and shows the my plans page', { tags: ['smoke', 'environment-smoke'] }, () => {
+		if (isEnvironmentSmoke()) {
+			preparePlanDetails().then((plan) => {
+				Cypress.env('portalSmokeCaseReference', plan.reference);
+			});
+			portalLogin();
+			myPlansPage.verifyLoaded();
+			myPlansPage.verifyHeading('My plans');
+			return;
+		}
+
 		startPortalOtpLogin();
 		portalLoginOtpPage.verifyPath();
 
