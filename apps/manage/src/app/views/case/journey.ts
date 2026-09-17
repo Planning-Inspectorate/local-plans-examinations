@@ -1,7 +1,8 @@
 import { Journey, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
-import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
+import { sortGateway3Submissions } from '#util/util.ts';
 
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
@@ -52,6 +53,29 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 
 export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway3Url = req.baseUrl + '/gateway-3';
+	const submissionData = Array.isArray(response.answers.submission) ? response.answers.submission : null;
+	if (!submissionData) {
+		throw Error('submissionData is null');
+	}
+	let submissionSections: Section[] = [];
+	if (submissionData.length == 1) {
+		submissionSections.push(
+			new Section('Gateway 3 submission', 'gateway-3-submission-1')
+				.addQuestion(questions['gateway3Documents-1'])
+				.addQuestion(questions['gateway3Decision-1'])
+				.addQuestion(questions['gateway3CompletionDate-1'])
+		);
+	} else {
+		submissionSections = sortGateway3Submissions(submissionData).map((submission, index) => {
+			const rowId = index + 1;
+			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
+				.addQuestion(questions[`gateway3Documents-${rowId}`])
+				.addQuestion(questions[`gateway3Decision-${rowId}`])
+				.addQuestion(questions[`gateway3CompletionDate-${rowId}`]);
+		});
+		console.log('submissionSections length');
+		console.log(submissionSections.length);
+	}
 
 	const journey = new Journey({
 		journeyId: GATEWAY_3_JOURNEY_ID,
@@ -63,10 +87,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)
 				.addQuestion(questions.programmeOfficerDetails)
 				.addQuestion(questions.examinationWebsite),
-			new Section('Gateway 3 submission', 'gateway-3-submission')
-				.addQuestion(questions.gateway3Documents)
-				.addQuestion(questions.gateway3Decision)
-				.addQuestion(questions.gateway3CompletionDate)
+			...submissionSections
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',

@@ -47,10 +47,10 @@ model DsaChecked {
 
 /// Valid outcomes for a Gateway 3 decision.
 model Gateway3Decision {
-  id            String         @id @db.NVarChar(50)
-  displayName   String         @db.NVarChar(100)
-  displayOrder  Int
-  gateway3Infos Gateway3Info[]
+  id                  String         @id @db.NVarChar(50)
+  displayName         String         @db.NVarChar(100)
+  displayOrder        Int
+  Gateway3Submissions Gateway3Submission[]
 }
 
 /// Valid statuses for imported planning authorities.
@@ -154,21 +154,27 @@ model Gateway2Info {
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
 model Gateway3Info {
-  id                        String            @id @default(uuid()) @db.UniqueIdentifier
-  case                      Case              @relation(fields: [caseId], references: [id])
-  caseId                    String            @unique @db.UniqueIdentifier
-  expectedDate              DateTime?         @db.DateTime2
-  actualDate                DateTime?         @db.DateTime2
+  id                        String               @id @default(uuid()) @db.UniqueIdentifier
+  case                      Case                 @relation(fields: [caseId], references: [id])
+  caseId                    String               @unique @db.UniqueIdentifier
+  expectedDate              DateTime?            @db.DateTime2
+  actualDate                DateTime?            @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorName              String?
-  assessorAppointmentDate   DateTime?         @db.DateTime2
-  completionDate            DateTime?         @db.DateTime2
-  decision                  String?           @db.NVarChar(50)
-  decisionLookup            Gateway3Decision? @relation(fields: [decision], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assessorAppointmentDate   DateTime?            @db.DateTime2
+  submission                Gateway3Submission[]
+}
 
-  @@index([decision])
+model Gateway3Submission {
+  id             String            @id @default(uuid()) @db.UniqueIdentifier
+  /// Gateway 3 outcome code; values are defined by GATEWAY_3_DECISION_ID.
+  decision       String?           @db.NVarChar(50)
+  completionDate DateTime?         @db.DateTime2
+  gateway3Info   Gateway3Info?     @relation(fields: [gateway3InfoId], references: [id])
+  gateway3InfoId String?           @db.UniqueIdentifier
+  decisionLookup Gateway3Decision? @relation(fields: [decision], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// Examination stage dates, inspectors, QA, fact check and final outcome fields.
