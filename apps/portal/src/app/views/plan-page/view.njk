@@ -6,6 +6,51 @@
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/tabs/macro.njk" import govukTabs %}
 
+{% macro gateway2ReportSummary(gateway2ReportFiles) %}
+    <div data-cy="gateway-2-report-section">
+        {% set gateway2ReportHtml %}
+            {% if gateway2ReportFiles and gateway2ReportFiles.length %}
+                {% if gateway2ReportFiles.length > 1 %}
+                    <ul class="govuk-list govuk-list--bullet">
+                        {% for file in gateway2ReportFiles %}
+                            <li>
+                                {% if file.href %}
+                                    <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                                {% else %}
+                                    {{ file.fileName }}
+                                {% endif %}
+                                {% if file.sharedDate %}<span class="govuk-body"> (shared on {{ file.sharedDate }})</span>{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    {% set file = gateway2ReportFiles[0] %}
+                    {% if file.href %}
+                        <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                    {% else %}
+                        {{ file.fileName }}
+                    {% endif %}
+                    {% if file.sharedDate %}<span class="govuk-body"> (shared on {{ file.sharedDate }})</span>{% endif %}
+                {% endif %}
+            {% else %}
+                Not added
+            {% endif %}
+        {% endset %}
+
+        {{ govukSummaryList({
+            rows: [
+                {
+                    key: {
+                        text: "Gateway 2 report"
+                    },
+                    value: {
+                        html: gateway2ReportHtml
+                    }
+                }
+            ]
+        }) }}
+    </div>
+{% endmacro %}
 
 {% set notificationBannerTemplate %}
   <p class="govuk-notification-banner__heading">
@@ -76,6 +121,10 @@
     {{ govukNotificationBanner({
       html: notificationBannerTemplate
     }) }}
+  {% endif %}
+
+  {% if showGateway2Report %}
+    {{ gateway2ReportSummary(gateway2ReportFiles) }}
   {% endif %}
 
   {{ govukSummaryList({
