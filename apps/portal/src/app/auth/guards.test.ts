@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { describe, it, mock } from 'node:test';
 import { checkIsAuthenticated, checkCaseOwnership } from './guards.ts';
+import { exposeAuthToViews } from './guards.ts';
 
 describe('checkIsAuthenticated', () => {
 	it('redirects unauthenticated users to login', () => {
@@ -102,5 +103,44 @@ describe('checkCaseOwnership', () => {
 
 		assert.equal(next.mock.callCount(), 1);
 		assert.equal(service.db.case.findFirst.mock.callCount(), 1);
+	});
+});
+
+describe('exposeAuthToViews', () => {
+	function createMockResponse() {
+		return { locals: {} };
+	}
+
+	it('sets isAuthenticated to true when the session is authenticated', () => {
+		const req = { session: { isAuthenticated: true } };
+		const res = createMockResponse();
+		const next = mock.fn();
+
+		exposeAuthToViews(req, res, next);
+
+		assert.equal(res.locals.isAuthenticated, true);
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('sets isAuthenticated to false when the session is not authenticated', () => {
+		const req = { session: {} };
+		const res = createMockResponse();
+		const next = mock.fn();
+
+		exposeAuthToViews(req, res, next);
+
+		assert.equal(res.locals.isAuthenticated, false);
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('sets isAuthenticated to false when there is no session at all', () => {
+		const req = {};
+		const res = createMockResponse();
+		const next = mock.fn();
+
+		exposeAuthToViews(req, res, next);
+
+		assert.equal(res.locals.isAuthenticated, false);
+		assert.equal(next.mock.callCount(), 1);
 	});
 });
