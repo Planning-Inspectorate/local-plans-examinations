@@ -3,6 +3,8 @@ import type * as authSession from '@planning-inspectorate/core/auth';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 
+type LpaOption = { value: string; text: string };
+
 export function buildCaseOfficerOptions(service: ManageService, questions: Record<string, any>) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
@@ -61,4 +63,32 @@ export function retrieveDefaultCaseOfficers() {
 		{ value: 'officer-2', text: 'Case Officer 2' },
 		{ value: 'officer-3', text: 'Case Officer 3' }
 	];
+}
+
+export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
+	const { db } = service;
+
+	if (service.authDisabled) {
+		return [
+			{
+				value: 'lpa-1',
+				text: 'Local Planning Authority 1'
+			},
+			{
+				value: 'lpa-2',
+				text: 'Local Planning Authority 2'
+			},
+			{
+				value: 'lpa-3',
+				text: 'Local Planning Authority 3'
+			}
+		];
+	}
+
+	const authorities = await db.authority.findMany({});
+
+	return authorities.map((authority) => ({
+		value: authority.pinsCode,
+		text: authority.name
+	}));
 }

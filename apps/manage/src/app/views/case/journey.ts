@@ -3,19 +3,14 @@ import { type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
-
-export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
-export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
-export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
-export const GATEWAY_3_JOURNEY_ID = 'gateway-3';
-export const EXAMINATION_JOURNEY_ID = 'examination';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions, req);
 	const overviewUrl = req.baseUrl + '/overview';
 
 	const journey = new Journey({
-		journeyId: OVERVIEW_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.OVERVIEW_JOURNEY_ID,
 		sections: [
 			new Section('Overview', 'case-details')
 				.addQuestion(questions.planTitle)
@@ -74,7 +69,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	}
 
 	const journey = new Journey({
-		journeyId: GATEWAY_3_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 3', 'gateway-3')
 				.addQuestion(questions.gateway3ExpectedDate)
@@ -100,7 +95,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
 	const journey = new Journey({
-		journeyId: GATEWAY_2_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 2', 'gateway-2')
 				.addQuestion(questions.gateway2ExpectedDate)
@@ -130,7 +125,7 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 	const gateway1Url = req.baseUrl + '/gateway-1';
 
 	const journey = new Journey({
-		journeyId: GATEWAY_1_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
 		sections: [
 			new Section('Gateway 1', 'gateway-1')
 				.addQuestion(questions.noticeOfIntentionPublishDate)
@@ -157,7 +152,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 	const examinationUrl = req.baseUrl + '/examination';
 
 	const journey = new Journey({
-		journeyId: EXAMINATION_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		sections: [
 			new Section('Examination', 'examination')
 				.addQuestion(questions.expectedSubmissionForExaminationDate)
@@ -307,9 +302,9 @@ const examinationQuestionNames = new Set<string>([
 ]);
 
 export const journeyQuestions = {
-	[OVERVIEW_JOURNEY_ID]: overviewQuestionNames,
-	[GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
-	[GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
-	[GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
-	[EXAMINATION_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.OVERVIEW_JOURNEY_ID]: overviewQuestionNames,
+	[COMMON_CONSTS.GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
+	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
+	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
+	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
 };

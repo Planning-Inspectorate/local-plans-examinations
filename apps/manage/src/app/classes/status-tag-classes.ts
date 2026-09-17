@@ -1,3 +1,8 @@
+import type {
+	DocumentModel,
+	Gateway1InfoModel,
+	Gateway2InfoModel
+} from '@pins/local-plans-database/src/client/models.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
@@ -43,39 +48,9 @@ export function getPlanStatusClasses(statusText: string) {
 }
 
 export function resolveCaseHeaderStatus(
-	gateway1Data: {
-		id: string;
-		caseId: string;
-		noticeOfIntention: Date | null;
-		expectedGateway1Date: Date | null;
-		completedGateway1Date: Date | null;
-		slaSentDate: Date | null;
-		slaReceivedDate: Date | null;
-		dsaChecked: string | null;
-	} | null,
-	gateway2Data: {
-		actualDate: Date | null;
-		workshopVenue: string | null;
-		workshopDate: Date | null;
-		id: string;
-		assessorName: string | null;
-		caseId: string;
-		expectedDate: Date | null;
-		validDate: Date | null;
-		assessorAppointmentDate: Date | null;
-		reportIssuedDate: Date | null;
-		reportPublishedByLPA: Date | null;
-		workshopDocumentUploadedDate: Date | null;
-	} | null,
-	gateway2Documents: {
-		createdAt: Date;
-		name: string;
-		caseId: string;
-		guid: string;
-		documentSetId: string;
-		isDeleted: boolean;
-		latestVersionId: number | null;
-	}[]
+	gateway2Documents: DocumentModel[],
+	gateway1Data: Gateway1InfoModel | null,
+	gateway2Data: Gateway2InfoModel | null
 ) {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
