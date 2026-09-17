@@ -2,6 +2,10 @@ import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { Service } from '../app/service.ts';
+import {
+	DOCUMENT_SOURCE_SYSTEM_ID,
+	VIRUS_CHECK_STATUS_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type RequestWithCurrentCase = Request & {
 	currentCase?: {
@@ -288,8 +292,8 @@ export class DocumentUtil {
 				blobStorageContainer: file.containerName,
 				blobStoragePath: file.path ?? file.id,
 				documentURI: file.url,
-				sourceSystem: 'front-office',
-				virusCheckStatus: 'not_scanned'
+				sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.FRONT_OFFICE,
+				virusCheckStatus: VIRUS_CHECK_STATUS_ID.NOT_SCANNED
 			}
 		});
 
