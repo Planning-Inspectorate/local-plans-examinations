@@ -52,9 +52,7 @@ describe('Gateway 2 document upload journeys', () => {
 		gateway2CoverLetterPage.removeFile('test-document.pdf');
 		gateway2CoverLetterPage.verifyFileNotUploaded('test-document.pdf');
 
-		gateway2CoverLetterPage.uploadFile('test-document.docx');
-		gateway2CoverLetterPage.clickUploadFiles();
-		gateway2CoverLetterPage.verifyFileUploaded('test-document.docx');
+		gateway2CoverLetterPage.uploadAndVerifyFile('test-document.docx');
 	});
 
 	it(
@@ -63,13 +61,9 @@ describe('Gateway 2 document upload journeys', () => {
 		() => {
 			const page = gateway2CoverLetterPage;
 			openGateway2DocumentUploadPage(planDetails, page);
-			gateway2CoverLetterPage.uploadFile('test-document.pdf');
-			gateway2CoverLetterPage.clickUploadFiles();
-			gateway2CoverLetterPage.verifyFileUploaded('test-document.pdf');
+			gateway2CoverLetterPage.uploadAndVerifyFile('test-document.pdf');
 
-			gateway2CoverLetterPage.uploadFile('test-document.docx');
-			gateway2CoverLetterPage.clickUploadFiles();
-			gateway2CoverLetterPage.verifyFileUploaded('test-document.docx');
+			gateway2CoverLetterPage.uploadAndVerifyFile('test-document.docx');
 
 			gateway2CoverLetterPage.saveAndReturn();
 			gateway2ApplicationPage.verifyLoaded();
@@ -103,9 +97,7 @@ describe('Gateway 2 document upload journeys', () => {
 			localPlanTimetablePage.removeFile('test-document.xlsx');
 			localPlanTimetablePage.verifyFileNotUploaded('test-document.xlsx');
 
-			localPlanTimetablePage.uploadFile('test-document.docx');
-			localPlanTimetablePage.clickUploadFiles();
-			localPlanTimetablePage.verifyFileUploaded('test-document.docx');
+			localPlanTimetablePage.uploadAndVerifyFile('test-document.docx');
 		}
 	);
 
@@ -148,9 +140,7 @@ describe('Gateway 2 document upload journeys', () => {
 			noticeOfIntentionToCommenceLocalPlanPage.removeFile('test-document.pdf');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyFileNotUploaded('test-document.pdf');
 
-			noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document.docx');
-			noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
-			noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.docx');
+			noticeOfIntentionToCommenceLocalPlanPage.uploadAndVerifyFile('test-document.docx');
 		}
 	);
 
@@ -205,9 +195,7 @@ describe('Gateway 2 document upload journeys', () => {
 			subsequentWorkTowardsDraftPlanPage.removeFile('test-document.pdf');
 			subsequentWorkTowardsDraftPlanPage.verifyFileNotUploaded('test-document.pdf');
 
-			subsequentWorkTowardsDraftPlanPage.uploadFile('test-document.docx');
-			subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
-			subsequentWorkTowardsDraftPlanPage.verifyFileUploaded('test-document.docx');
+			subsequentWorkTowardsDraftPlanPage.uploadAndVerifyFile('test-document.docx');
 		}
 	);
 
@@ -241,9 +229,7 @@ describe('Gateway 2 document upload journeys', () => {
 	it('Downloads covering letter file when document link is clicked', { tags: ['regression'] }, () => {
 		const page = gateway2CoverLetterPage;
 		openGateway2DocumentUploadPage(planDetails, page);
-		gateway2CoverLetterPage.uploadFile('test-document.pdf');
-		gateway2CoverLetterPage.clickUploadFiles();
-		gateway2CoverLetterPage.verifyFileUploaded('test-document.pdf');
+		gateway2CoverLetterPage.uploadAndVerifyFile('test-document.pdf');
 
 		gateway2CoverLetterPage.saveAndReturn();
 		gateway2ApplicationPage.verifyLoaded();
@@ -261,9 +247,7 @@ describe('Gateway 2 document upload journeys', () => {
 		() => {
 			const page = noticeOfIntentionToCommenceLocalPlanPage;
 			openGateway2DocumentUploadPage(planDetails, page);
-			noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document.docx');
-			noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
-			noticeOfIntentionToCommenceLocalPlanPage.verifyFileUploaded('test-document.docx');
+			noticeOfIntentionToCommenceLocalPlanPage.uploadAndVerifyFile('test-document.docx');
 
 			noticeOfIntentionToCommenceLocalPlanPage.saveAndReturn();
 			gateway2ApplicationPage.verifyLoaded();

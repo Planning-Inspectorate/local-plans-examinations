@@ -37,6 +37,12 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		super.uploadFile(this.fieldName, fileName);
 	}
 
+	uploadAndVerifyFile(fileName: string) {
+		this.uploadFile(fileName);
+		this.clickUploadFiles();
+		this.verifyFileUploaded(fileName);
+	}
+
 	verifyNoFileChosen() {
 		super.verifyNoFileChosen(this.fieldName);
 	}
