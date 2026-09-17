@@ -80,18 +80,25 @@ model Gateway2Info {
 }
 
 model Gateway3Info {
-  id                        String    @id @default(uuid()) @db.UniqueIdentifier
-  case                      Case      @relation(fields: [caseId], references: [id])
-  caseId                    String    @unique @db.UniqueIdentifier
-  expectedDate              DateTime? @db.DateTime2
-  actualDate                DateTime? @db.DateTime2
+  id                        String               @id @default(uuid()) @db.UniqueIdentifier
+  case                      Case                 @relation(fields: [caseId], references: [id])
+  caseId                    String               @unique @db.UniqueIdentifier
+  expectedDate              DateTime?            @db.DateTime2
+  actualDate                DateTime?            @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorName              String?
-  assessorAppointmentDate   DateTime? @db.DateTime2
-  completionDate            DateTime? @db.DateTime2
-  decision                  String?
+  assessorAppointmentDate   DateTime?            @db.DateTime2
+  submission                Gateway3Submission[]
+}
+
+model Gateway3Submission {
+  id             String        @id @default(uuid()) @db.UniqueIdentifier
+  decision       String?
+  completionDate DateTime?     @db.DateTime2
+  gateway3Info   Gateway3Info? @relation(fields: [gateway3InfoId], references: [id])
+  gateway3InfoId String?       @db.UniqueIdentifier
 }
 
 model ExaminationInfo {

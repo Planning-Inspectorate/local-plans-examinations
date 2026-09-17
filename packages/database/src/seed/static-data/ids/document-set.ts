@@ -1,4 +1,11 @@
-export const DOCUMENT_SET_ID = {
+const GATEWAY_3_DOCUMENT_FOLDERS: Record<string, string> = {};
+const GATEWAY_3_DOCUMENT_SET_IDS: Record<string, string> = {};
+for (let i = 1; i < 50; i++) {
+	GATEWAY_3_DOCUMENT_FOLDERS[`G3_DOCUMENT_${i}`] = `gateway-3-document-${i}`;
+	GATEWAY_3_DOCUMENT_SET_IDS[`G3_DOCUMENT_${i}`] = `g3-document-${i}`;
+}
+
+export const DOCUMENT_SET_ID: Record<string, string> = {
 	// Procedural
 	SIGNED_SLA: 'signed-sla',
 	G2_COVER_LETTER: 'g2-cover-letter',
@@ -7,7 +14,7 @@ export const DOCUMENT_SET_ID = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'g2-draft-stat-comp',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'g2-draft-stat-sound',
 	G2_REPORT: 'g2-report',
-	G3_DOCUMENT: 'g3-document',
+	...GATEWAY_3_DOCUMENT_SET_IDS,
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
@@ -27,7 +34,7 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'draft-stat-compliance',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'draft-stat-soundness',
 	G2_REPORT: 'gateway-2-report',
-	G3_DOCUMENT: 'gateway-3-document',
+	...GATEWAY_3_DOCUMENT_FOLDERS,
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',

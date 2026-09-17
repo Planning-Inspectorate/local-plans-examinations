@@ -1,5 +1,18 @@
 import { DOCUMENT_CATEGORY_ID, DOCUMENT_SET_ID, DOCUMENT_SET_FOLDER_NAME, GATEWAY_ID } from './ids/index.ts';
 
+const GATEWAY_3_DOCUMENT_FOLDERS: object[] = [];
+for (let i = 1; i < 50; i++) {
+	const key = `G3_DOCUMENT_${i}`;
+	GATEWAY_3_DOCUMENT_FOLDERS.push({
+		id: DOCUMENT_SET_ID[key],
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: `Gateway 3 Document ${i}`,
+		folderName: DOCUMENT_SET_FOLDER_NAME[key as keyof typeof DOCUMENT_SET_FOLDER_NAME],
+		displayOrder: i
+	});
+}
+
 export const DOCUMENT_SET = [
 	{
 		id: DOCUMENT_SET_ID.SIGNED_SLA,
@@ -114,12 +127,5 @@ export const DOCUMENT_SET = [
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
 		displayOrder: 17
 	},
-	{
-		id: DOCUMENT_SET_ID.G3_DOCUMENT,
-		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
-		gatewayId: GATEWAY_ID.GATEWAY_3,
-		displayName: 'Gateway 3 Document',
-		folderName: DOCUMENT_SET_FOLDER_NAME.G3_DOCUMENT,
-		displayOrder: 18
-	}
+	...GATEWAY_3_DOCUMENT_FOLDERS
 ];
