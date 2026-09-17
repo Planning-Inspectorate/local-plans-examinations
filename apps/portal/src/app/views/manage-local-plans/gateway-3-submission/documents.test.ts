@@ -13,8 +13,8 @@ import {
 	saveGateway3Documents
 } from './documents.ts';
 
-const G3_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G3_DOCUMENT;
-const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G3_DOCUMENT;
+const G3_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN;
+const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G3_PROPOSED_LOCAL_PLAN;
 
 describe('loadGateway3DocumentsByDocumentSetId', () => {
 	it('loads documents as uploaded files', async () => {
@@ -337,7 +337,7 @@ describe('saveGateway3Documents', () => {
 				saveGateway3Documents(service as unknown as PortalService, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
 					buildUploadedFile()
 				]),
-			/Missing document set reference data for "gateway-3-document"/
+			/Missing document set reference data for "proposed-local-plan"/
 		);
 		assert.equal(service.db.$transaction.mock.callCount(), 0);
 	});

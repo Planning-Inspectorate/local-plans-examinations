@@ -7,7 +7,15 @@ export const DOCUMENT_SET_ID = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'g2-draft-stat-comp',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'g2-draft-stat-sound',
 	G2_REPORT: 'g2-report',
-	G3_DOCUMENT: 'g3-document',
+	G3_PROPOSED_LOCAL_PLAN: 'g3-proposed-local-plan',
+	G3_MAP_OF_POLICIES: 'g3-map-of-policies',
+	G3_STATEMENT_OF_COMPLIANCE: 'g3-statement-of-compliance',
+	G3_STATEMENT_OF_SOUNDNESS: 'g3-statement-of-soundness',
+	G3_CONSULTATION_ENGAGEMENT_SUMMARY: 'g3-consultation-engagement-summary',
+	G3_SCOPING_CONSULTATION_SUMMARY: 'g3-scoping-consultation-summary',
+	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'g3-consultation-content-evidence-summary',
+	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'g3-consultation-proposed-plan-summary',
+	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'g3-practical-arrangements-statement',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
@@ -27,7 +35,15 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'draft-stat-compliance',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'draft-stat-soundness',
 	G2_REPORT: 'gateway-2-report',
-	G3_DOCUMENT: 'gateway-3-document',
+	G3_PROPOSED_LOCAL_PLAN: 'proposed-local-plan',
+	G3_MAP_OF_POLICIES: 'map-of-policies',
+	G3_STATEMENT_OF_COMPLIANCE: 'statement-of-compliance',
+	G3_STATEMENT_OF_SOUNDNESS: 'statement-of-soundness',
+	G3_CONSULTATION_ENGAGEMENT_SUMMARY: 'consultation-engagement-summary',
+	G3_SCOPING_CONSULTATION_SUMMARY: 'scoping-consultation-summary',
+	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'consultation-content-evidence-summary',
+	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'consultation-proposed-plan-summary',
+	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'practical-arrangements-statement',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',
