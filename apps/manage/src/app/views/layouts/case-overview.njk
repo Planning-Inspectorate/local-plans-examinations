@@ -98,6 +98,10 @@
                           rows: formattedRows
                       }) }}
                   {% endif %}
+              {% if section.heading == 'Workshop'%} 
+                <a href="/case/{{ reference }}/gateway-2/set-up-workshop/gateway-2-workshop-date-and-time" class="govuk-link">Set up workshop</a>
+                <p></p>
+              {% endif %}
               {% endfor %}
           </div>
       </div>

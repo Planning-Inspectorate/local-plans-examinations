@@ -606,7 +606,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
 		text: {
-			caption: undefined,
+			caption: undefined, //written to in journey.ts
 			introduction: 'Upload a file',
 			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES)}.<br><br>The total size of your uploaded files must be smaller than 1GB.`,
 			chooseFilesButtonText: 'Choose files',
@@ -619,6 +619,156 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				'Upload at least one tbd workshop document before continuing'
 			)
 		]
+	},
+	gateway2WorkshopDateAndTime: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.DATE,
+				fieldName: 'workshopDate',
+				label: 'Date',
+				caption: 'For example, 21 7 2024',
+				title: 'Gateway 2 workshop date',
+				attributes: { 'data-cy': 'gateway-2-workshop-date' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopTime',
+				label: 'Start time',
+				caption: 'For example, 14 30',
+				title: 'Gateway 2 workshop time',
+				attributes: { 'data-cy': 'gateway-2-workshop-time' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopEndTime',
+				label: 'End time (optional)',
+				title: 'Gateway 2 workshop end time',
+				attributes: { 'data-cy': 'gateway-2-workshop-end-time' }
+			}
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'workshopDate',
+						validators: [new DateValidator(' a valid date')]
+					},
+					{
+						fieldName: 'workshopTime',
+						validators: [new RequiredValidator(' a valid time')]
+					},
+					{
+						fieldName: 'workshopEndTime',
+						validators: [new RequiredValidator(' a valid time')]
+					}
+				]
+			})
+		],
+		question: 'Gateway 2 workshop date and time',
+		fieldName: 'gateway2WorkshopDateAndTime',
+		url: 'gateway-2-workshop-date-and-time',
+		title: 'Gateway 2 workshop date and time'
+	},
+	gateway2WorkshopExpectedDays: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you know the expected number of days to carry out the workshop?',
+		fieldName: 'gateway2WorkshopExpectedDays',
+		url: 'gateway-2-workshop-expected-days',
+		title: 'Gateway 2 expected number of days',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2WorkshopLocationType: {
+		// types are in-person, hybrid or remote
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Is the workshop in-person, hybrid or remote?',
+		fieldName: 'gateway2Location',
+		url: 'gateway-2-location',
+		title: 'Gateway 2 location',
+		options: [
+			{ value: 'in-person', text: 'In-person' },
+			{ value: 'hybrid', text: 'Hybrid' },
+			{ value: 'remote', text: 'Remote' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2WorkshopLocationKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you know the address of where the workshop will take place?',
+		fieldName: 'gateway2WorkshopLocationKnowns',
+		url: 'gateway-2-workshop-location-known',
+		title: 'Gateway 2 location known',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2WorkshopVenueAddress: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'gateway2WorkshopVenueName',
+				label: 'Venue name',
+				title: 'Gateway 2 workshop venue name',
+				attributes: { 'data-cy': 'gateway-2-workshop-venue-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'gateway2WorkshopAddressLine',
+				label: 'Address line 1',
+				title: 'Gateway 2 workshop address line 1',
+				attributes: { 'data-cy': 'gateway-2-workshop-address-line-1' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'gateway2WorkshopAddressLine2',
+				label: 'Address line 2 (optional)',
+				title: 'Gateway 2 workshop address line 2',
+				attributes: { 'data-cy': 'gateway-2-workshop-address-line-2' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'gateway2WorkshopTownOrCity',
+				label: 'Town or city',
+				title: 'Gateway 2 workshop town or city',
+				attributes: { 'data-cy': 'gateway-2-workshop-town-or-city' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'gateway2WorkshopPostcode',
+				label: 'Postcode',
+				title: 'Gateway 2 workshop postcode',
+				attributes: { 'data-cy': 'gateway-2-workshop-postcode' }
+			}
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'gateway2WorkshopDate',
+						validators: [new RequiredValidator(' a valid date')]
+					},
+					{
+						fieldName: 'gateway2WorkshopTime',
+						validators: [new RequiredValidator(' a valid date')]
+					},
+					{
+						fieldName: 'gateway2WorkshopEndTime',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
+		question: 'Workshop venue address',
+		fieldName: 'gateway2workshopDateAndTime',
+		url: 'gateway2workshopDateAndTime',
+		title: 'Gateway 2 workshop date and time'
 	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,

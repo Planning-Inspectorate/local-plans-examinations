@@ -6,6 +6,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
+export const GATEWAY_2_WORKSHOP_JOURNEY_ID = 'gateway-2-workshop';
 export const GATEWAY_3_JOURNEY_ID = 'gateway-3';
 export const EXAMINATION_JOURNEY_ID = 'examination';
 
@@ -76,9 +77,34 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	return getBacklinks(journey, gateway3Url);
 }
 
+export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop/';
+	const gateway2Url = req.baseUrl + '/gateway-2';
+
+	const journey = new Journey({
+		journeyId: GATEWAY_2_WORKSHOP_JOURNEY_ID,
+		sections: [
+			new Section('Workshop', 'workshop')
+				.addQuestion(questions.gateway2WorkshopDateAndTime)
+				.addQuestion(questions.gateway2WorkshopExpectedDays)
+				.addQuestion(questions.gateway2WorkshopLocationType)
+				.addQuestion(questions.gateway2WorkshopLocationKnown)
+				.addQuestion(questions.gateway2WorkshopVenueAddress)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Set up workshop',
+		returnToListing: false,
+		makeBaseUrl: () => gateway2WorkshopUrl,
+		initialBackLink: gateway2Url,
+		response
+	});
+	return getBacklinks(journey, gateway2WorkshopUrl);
+}
+
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
-	questions.gateway2WorkshopDocuments.config.text.caption = String(req.params.reference).replace('-','/');
+
 	const journey = new Journey({
 		journeyId: GATEWAY_2_JOURNEY_ID,
 		sections: [
@@ -87,16 +113,10 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment)
-				.addQuestion(questions.workshopDate)
-				.addQuestion(questions.workshopVenue),
-			new Section('Workshop', 'workshop')
-				.addQuestion(questions.gateway2WorkshopDocuments),
-			new Section('Report', 'report')
-				.addQuestion(questions.gateway2Report)
-				.addQuestion(questions.reportPublishedDate)
+				.addQuestion(questions.assessorDateOfAppointment),
+			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
+			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],
-		//taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Gateway 2',
