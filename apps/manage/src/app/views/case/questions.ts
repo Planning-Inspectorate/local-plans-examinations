@@ -933,9 +933,9 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	...gateway3Questions
 };
 
-export const fileUploadQuestionProperties = Object.values(caseQuestions).filter(
-	(v) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER
-) as FileUploaderQuestionProps[];
+export const fileUploadQuestionProperties = Object.fromEntries(
+	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
+) as Record<string, FileUploaderQuestionProps>;
 
 export const questions = createQuestions(
 	caseQuestions,

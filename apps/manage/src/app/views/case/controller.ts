@@ -1,6 +1,6 @@
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
-import { JourneyResponse, type SaveDataFn } from '@planning-inspectorate/dynamic-forms';
+import { JourneyResponse, type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
@@ -18,6 +18,7 @@ import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
+import { journeyQuestions } from './journey.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -160,12 +161,18 @@ export type FileUploadQuestion = FileUploaderQuestionProps & {
 };
 
 // Ordered list for loading each persisted upload when the case page opens.
-export const fileUploadQuestionConfigs = fileUploadQuestionProperties as FileUploadQuestion[];
+export const fileUploadQuestionConfigs = Object.values(fileUploadQuestionProperties) as FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
 export const fileUploadQuestionUrls = fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
 // Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
 export const fileUploadQuestionsByUrl = new Map(
 	fileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
+);
+const journeyFileUploadQuestionConfigs = Object.fromEntries(
+	Object.entries(journeyQuestions).map(([k, v]) => [
+		k,
+		Array.from(v, (elem) => fileUploadQuestionProperties[elem] as FileUploadQuestion)
+	])
 );
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -241,7 +248,6 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					answers = {
 						submission: submissionDetails
 					};
-					console.log(console.log(submissionDetails[submissionId - 1]));
 				}
 				updated = await updateGateway3(
 					db,
@@ -711,7 +717,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-1': {
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data, journeyId);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 				if (
 					req.method === 'POST' &&
@@ -728,7 +734,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-2': {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data, journeyId);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 				journeyResponse.answers.gateway2Documents = documentsByCategory;
@@ -762,7 +768,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					throw Error('No gatewa3info data found');
 				}
 				const submissionData = sortGateway3Submissions(journey3Data.submission);
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
@@ -879,15 +885,20 @@ async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
 	req: Request,
-	answers: any
+	answers: any,
+	journeyId: string
 ) {
+	const relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
+	if (!relevantFileUploadQuestionConfigs) {
+		return;
+	}
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
 	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 		service,
-		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+		relevantFileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
 	);
-	for (const questionConfig of fileUploadQuestionConfigs) {
+	for (const questionConfig of relevantFileUploadQuestionConfigs) {
 		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
 		if (!documentSetId) {
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
@@ -1411,7 +1422,11 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
  * @param questions The questions from question.ts
  * @returns An async handler for a router
  */
-export function preprocessQuestionProperties(service: ManageService, journeyId: string) {
+export function preprocessQuestionProperties(
+	service: ManageService,
+	journeyId: string,
+	questions: Record<string, Question>
+) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
 		if (journeyId == 'gateway-3') {

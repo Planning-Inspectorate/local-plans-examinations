@@ -11,7 +11,16 @@ describe('test getSubmissionCheckForQuestion', () => {
 		const testCases: Record<string, new () => SubmissionCheck> = {
 			'signed-sla': SignedSLASubmissionCheck,
 			'gateway-2-report': Gateway2ReportSubmissionCheck,
-			'gateway-3-document': Gateway3SubmissionCheck
+			'gateway-3-document-1': Gateway3SubmissionCheck,
+			'gateway-3-document-2': Gateway3SubmissionCheck,
+			'gateway-3-document-3': Gateway3SubmissionCheck,
+			'gateway-3-document-4': Gateway3SubmissionCheck,
+			'gateway-3-document-5': Gateway3SubmissionCheck,
+			'gateway-3-document-6': Gateway3SubmissionCheck,
+			'gateway-3-document-7': Gateway3SubmissionCheck,
+			'gateway-3-document-8': Gateway3SubmissionCheck,
+			'gateway-3-document-9': Gateway3SubmissionCheck,
+			'gateway-3-document-10': Gateway3SubmissionCheck
 		};
 		for (const question of Object.keys(testCases)) {
 			const expectedSubmissionCheck = testCases[question];

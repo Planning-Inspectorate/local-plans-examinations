@@ -245,8 +245,14 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with no existing data for decision 1', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				completionDate: null,
-				decision: '1'
+				submission: [
+					{
+						id: 'someId-1',
+						decision: '1',
+						completionDate: null,
+						gateway3InfoId: undefined
+					}
+				]
 			};
 		});
 		await testGenerateDataForPage(
@@ -269,7 +275,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				section: 'some-section',
 				question: 'my-question',
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
-				notificationPreviewTemplate: 'my-question',
+				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
 				additionalFields: [
 					{
@@ -284,8 +290,14 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with no existing data for decision 2', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				completionDate: null,
-				decision: '2'
+				submission: [
+					{
+						id: 'someId-1',
+						decision: '2',
+						completionDate: null,
+						gateway3InfoId: undefined
+					}
+				]
 			};
 		});
 		await testGenerateDataForPage(
@@ -308,7 +320,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				section: 'some-section',
 				question: 'my-question',
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
-				notificationPreviewTemplate: 'my-question',
+				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
 				additionalFields: [
 					{
@@ -323,8 +335,14 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with existing data', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				completionDate: new Date(2026, 0, 1),
-				decision: '1'
+				submission: [
+					{
+						id: 'someId-1',
+						decision: '1',
+						completionDate: new Date(2026, 0, 1),
+						gateway3InfoId: undefined
+					}
+				]
 			};
 		});
 		await testGenerateDataForPage(
@@ -347,7 +365,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				section: 'some-section',
 				question: 'my-question',
 				backLink: '/PLAN-12345/some-journey', // Should go back to the journey
-				notificationPreviewTemplate: 'my-question-complete',
+				notificationPreviewTemplate: 'gateway-3-document-complete',
 				submitButtonText: 'Issue decision',
 				additionalFields: [
 					{
@@ -362,8 +380,14 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with no decision', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				completionDate: null,
-				decision: null
+				submission: [
+					{
+						id: 'someId-1',
+						decision: '1',
+						completionDate: null,
+						gateway3InfoId: null
+					}
+				]
 			};
 		});
 		// Should raise an error if the decision cannot be found
@@ -388,7 +412,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 					section: 'some-section',
 					question: 'my-question',
 					backLink: '/PLAN-12345/some-journey/some-section/my-question',
-					notificationPreviewTemplate: 'my-question',
+					notificationPreviewTemplate: 'gateway-3-document',
 					submitButtonText: 'Issue decision',
 					additionalFields: [
 						{
@@ -404,8 +428,14 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with undefined decision number', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				completionDate: null,
-				decision: '999'
+				submission: [
+					{
+						id: 'someId-1',
+						decision: '999',
+						completionDate: null,
+						gateway3InfoId: undefined
+					}
+				]
 			};
 		});
 		await assert.rejects(async () =>
@@ -429,7 +459,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 					section: 'some-section',
 					question: 'my-question',
 					backLink: '/PLAN-12345/some-journey/some-section/my-question',
-					notificationPreviewTemplate: 'my-question',
+					notificationPreviewTemplate: 'gateway-3-document',
 					submitButtonText: 'Issue decision',
 					additionalFields: [
 						{
