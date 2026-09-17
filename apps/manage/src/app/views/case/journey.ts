@@ -315,6 +315,31 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	return journey;
 }
 
+export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop/';
+	const gateway2Url = req.baseUrl + '/gateway-2';
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
+		sections: [
+			new Section('Workshop', 'workshop')
+				.addQuestion(questions.gateway2WorkshopDateAndTime)
+				.addQuestion(questions.gateway2WorkshopExpectedDays)
+				.addQuestion(questions.gateway2WorkshopLocationType)
+				.addQuestion(questions.gateway2WorkshopLocationKnown)
+				.addQuestion(questions.gateway2WorkshopVenueAddress)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Set up workshop',
+		returnToListing: false,
+		makeBaseUrl: () => gateway2WorkshopUrl,
+		initialBackLink: gateway2Url,
+		response
+	});
+	return getBacklinks(journey, gateway2WorkshopUrl);
+}
+
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
 
