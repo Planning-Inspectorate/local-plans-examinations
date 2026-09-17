@@ -242,9 +242,9 @@ model Document {
   documentSetId         String            @db.NVarChar(20)
   createdAt             DateTime          @default(now())
   isDeleted             Boolean           @default(false)
-  latestDocumentVersion DocumentVersion?  @relation("latestVersion", fields: [guid, latestVersionId], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
+  latestDocumentVersion DocumentVersion?  @relation("LatestVersion", fields: [guid, latestVersionId], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
   latestVersionId       Int?
-  versions              DocumentVersion[] @relation("versionHistory")
+  versions              DocumentVersion[] @relation("VersionHistory")
 
   @@unique([name, documentSetId])
   @@unique([guid, latestVersionId])
@@ -271,8 +271,8 @@ model DocumentVersion {
   documentURI          String?                @db.NVarChar(1000)
   dateCreated          DateTime?              @default(now())
   isDeleted            Boolean                @default(false)
-  document             Document               @relation("versionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
-  latestVersion        Document?              @relation("latestVersion")
+  document             Document               @relation("VersionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
+  latestVersion        Document?              @relation("LatestVersion")
   avScan               DocumentVersionAvScan?
 
   @@id([documentGuid, version])
