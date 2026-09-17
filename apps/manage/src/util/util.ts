@@ -6,6 +6,9 @@
 export function sortGateway3Submissions(
 	submissions: { id: string; decision: string | null; completionDate: Date | null; gateway3InfoId: string | null }[]
 ) {
+	if (submissions === null || submissions == undefined) {
+		throw Error('Provided submissions list is null or undefined');
+	}
 	return submissions.toSorted((a, b) => {
 		if (!(a.completionDate || b.completionDate)) return 0;
 		if (!a.completionDate) return 1;
