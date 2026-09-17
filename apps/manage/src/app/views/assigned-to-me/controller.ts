@@ -70,7 +70,7 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 						}
 					});
 
-					const status = resolveCaseHeaderStatus(gateway1Info, gateway2Info, gateway2Documents);
+					const status = resolveCaseHeaderStatus(gateway2Documents, gateway1Info, gateway2Info);
 
 					return {
 						...c,
