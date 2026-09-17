@@ -21,13 +21,20 @@ datasource db {
 // while we don't rely on that for security, it adds an extra layer
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
+/// Case and local plan overview.
+/// Holds the shared details for a local plan examination, including the plan reference,
+/// title, type, LPAs, contacts, ownership and key milestone dates.
+/// Stage-specific details in the related gateway info and examination records.
 model Case {
   id                        String           @id @default(uuid()) @db.UniqueIdentifier
+  /// Public case reference used in URLs, correspondence and search.
   reference                 String           @unique
   email                     String
   caseOfficer               String
   planTitle                 String
+  /// Plan type is a bounded application value; keep in sync with PLAN_TYPE_ID until a lookup table exists.
   planType                  String
+  /// Optional plan band assigned during the case overview journey.
   planBand                  String?
   lpas                      LPA[]
   contacts                  Contact[]
@@ -40,6 +47,7 @@ model Case {
   gateway2Date              DateTime?
   gateway3Date              DateTime?
   submissionDate            DateTime?
+  /// Soft-delete marker used instead of physically deleting case data.
   deletedDate               DateTime?
   createdAt                 DateTime         @default(now())
   gateway1Info              Gateway1Info?
@@ -51,6 +59,7 @@ model Case {
   documents                 Document[]
 }
 
+/// Gateway 1 stage dates and readiness checks for a case.
 model Gateway1Info {
   id                    String    @id @default(uuid()) @db.UniqueIdentifier
   case                  Case      @relation(fields: [caseId], references: [id])
@@ -60,9 +69,11 @@ model Gateway1Info {
   completedGateway1Date DateTime? @db.DateTime2
   slaSentDate           DateTime? @db.DateTime2
   slaReceivedDate       DateTime? @db.DateTime2
+  /// Stores whether the LPA has a data sharing agreement; values are defined by DSA_CHECKED_ID.
   dsaChecked            String?
 }
 
+/// Gateway 2 stage dates, assessor details and report/workshop tracking for a case.
 model Gateway2Info {
   id                           String    @id @default(uuid()) @db.UniqueIdentifier
   case                         Case      @relation(fields: [caseId], references: [id])
@@ -79,6 +90,7 @@ model Gateway2Info {
   workshopDocumentUploadedDate DateTime?
 }
 
+/// Gateway 3 stage dates, programme officer details and decision tracking for a case.
 model Gateway3Info {
   id                        String    @id @default(uuid()) @db.UniqueIdentifier
   case                      Case      @relation(fields: [caseId], references: [id])
@@ -91,9 +103,11 @@ model Gateway3Info {
   assessorName              String?
   assessorAppointmentDate   DateTime? @db.DateTime2
   completionDate            DateTime? @db.DateTime2
+  /// Gateway 3 outcome code; values are defined by GATEWAY_3_DECISION_ID.
   decision                  String?
 }
 
+/// Examination stage dates, inspectors, QA, fact check and final outcome fields.
 model ExaminationInfo {
   id                                   String    @id @default(uuid()) @db.UniqueIdentifier
   case                                 Case      @relation(fields: [caseId], references: [id])
@@ -127,6 +141,7 @@ model ExaminationInfo {
   approvedForCILDate                   DateTime? @db.DateTime2
 }
 
+/// Local planning authority linked to one or more cases.
 model LPA {
   lpaCode  String    @id
   lpaName  String    @default("") @db.NVarChar(200)
@@ -134,6 +149,7 @@ model LPA {
   cases    Case[]
 }
 
+/// Contact details for people at an LPA who are associated with a case.
 model Contact {
   id          String @id @default(uuid()) @db.UniqueIdentifier
   firstName   String @db.NVarChar(100)
@@ -145,28 +161,35 @@ model Contact {
   lpa         LPA    @relation(fields: [lpaCode], references: [lpaCode])
 }
 
+/// Authority reference data imported from the published LPA source list.
 model Authority {
   id       String @id @default(uuid()) @db.UniqueIdentifier
   name     String
   pinsCode String
+  /// Imported authority status; values are defined by AUTHORITY_STATUS_ID.
   status   String
 }
 
+/// One-time password state for portal login.
 model OneTimePassword {
   email          String    @id
   hashedOtp      String
   createdAt      DateTime  @default(now())
   expiresAt      DateTime
+  /// Failed validation attempts since the last successful reset.
   attempts       Int       @default(0)
+  /// When set, the account cannot request or validate an OTP until this time.
   lockedOutUntil DateTime? @map("locked_out_until") @db.DateTime2
 }
 
+/// GOV.UK Notify delivery callback record used for email audit and troubleshooting.
 model NotifyEmail {
   id              String    @id @default(uuid()) @db.UniqueIdentifier
   notifyId        String    @db.NVarChar(100)
   reference       String?   @db.NVarChar(1000)
   createdDate     DateTime? @db.DateTime2
   completedDate   DateTime? @db.DateTime2
+  /// Delivery status received from GOV.UK Notify callbacks.
   status          String    @db.NVarChar(100)
   templateId      String?   @db.NVarChar(100)
   templateVersion Int?
@@ -175,6 +198,7 @@ model NotifyEmail {
   email           String?   @db.NVarChar(100)
 }
 
+/// Static gateway reference data used to group document sets.
 model Gateway {
   id           String @id @db.NVarChar(2)
   displayName  String @db.NVarChar(100)
@@ -186,6 +210,7 @@ model Gateway {
   cases       Case[]
 }
 
+/// Static document category reference data within a gateway.
 model DocumentCategory {
   id String @id @db.NVarChar(4)
 
@@ -202,6 +227,7 @@ model DocumentCategory {
   @@index([gatewayId])
 }
 
+/// Static document set reference data for upload journeys and storage folders.
 model DocumentSet {
   id String @id @db.NVarChar(20)
 
@@ -220,6 +246,7 @@ model DocumentSet {
   @@index([documentCategoryId])
 }
 
+/// Audit trail entry for user-visible changes made to a case.
 model CaseHistory {
   id       String   @id @default(uuid()) @db.UniqueIdentifier
   date     DateTime @default(now())
@@ -241,10 +268,12 @@ model Document {
   documentSet           DocumentSet       @relation(fields: [documentSetId], references: [id], onUpdate: NoAction, onDelete: NoAction)
   documentSetId         String            @db.NVarChar(20)
   createdAt             DateTime          @default(now())
+  /// Soft delete
   isDeleted             Boolean           @default(false)
-  latestDocumentVersion DocumentVersion?  @relation("latestVersion", fields: [guid, latestVersionId], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
+  /// Cached pointer to the current version so list and download views do not need to calculate it.
+  latestDocumentVersion DocumentVersion?  @relation("LatestVersion", fields: [guid, latestVersionId], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
   latestVersionId       Int?
-  versions              DocumentVersion[] @relation("versionHistory")
+  versions              DocumentVersion[] @relation("VersionHistory")
 
   @@unique([name, documentSetId])
   @@unique([guid, latestVersionId])
@@ -254,12 +283,14 @@ model Document {
 /// DocumentVersion model
 /// Stores information pertaining to each version of a document.
 /// Versions are stored against the `version` value (starting with 1).
-/// The physical location of these documents should be stored here.
+/// The physical location of these documents should be stored here on azurite or blob storage.
 model DocumentVersion {
   documentGuid         String                 @db.UniqueIdentifier
   version              Int
   lastModified         DateTime?
+  /// System that created the version; values are defined by DOCUMENT_SOURCE_SYSTEM_ID.
   sourceSystem         String                 @default("front-office") @db.NVarChar(1000)
+  /// Latest malware scan state for the blob; values are defined by VIRUS_CHECK_STATUS_ID.
   virusCheckStatus     String                 @default("not_scanned") @db.NVarChar(1000)
   originalFilename     String?                @db.NVarChar(1000)
   fileName             String?                @db.NVarChar(1000)
@@ -271,8 +302,8 @@ model DocumentVersion {
   documentURI          String?                @db.NVarChar(1000)
   dateCreated          DateTime?              @default(now())
   isDeleted            Boolean                @default(false)
-  document             Document               @relation("versionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
-  latestVersion        Document?              @relation("latestVersion")
+  document             Document               @relation("VersionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
+  latestVersion        Document?              @relation("LatestVersion")
   avScan               DocumentVersionAvScan?
 
   @@id([documentGuid, version])

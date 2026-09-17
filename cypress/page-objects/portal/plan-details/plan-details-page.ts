@@ -14,7 +14,7 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 	}
 
 	get planProgress() {
-		return cy.getByData('plan-progress');
+		return cy.get('[data-cy="plan-progress"], section[aria-labelledby="plan-progress-heading"]');
 	}
 
 	get gateway2Link() {
@@ -23,6 +23,7 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
+		this.verifyPlanProgressHeading();
 	}
 
 	verifyMetadataValue(key: string, ...expectedText: string[]) {

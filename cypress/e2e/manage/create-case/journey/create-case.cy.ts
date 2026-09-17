@@ -1,3 +1,4 @@
+import { authenticateManageIfRequired, isEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
 import {
 	caseOfficerPage,
 	caseCreatedPage,
@@ -21,23 +22,43 @@ const openChangeLinkFromCheckYourAnswers = (data: CreateCaseData, rowName: strin
 };
 
 describe('Create a case', () => {
-	after(() => cy.task('clearDb'));
+	let createdCaseReference: string | undefined;
 
-	it('creates a case through the full journey', { tags: ['smoke', 'regression'] }, () => {
+	beforeEach(() => {
+		createdCaseReference = undefined;
+		authenticateManageIfRequired();
+	});
+
+	afterEach(() => {
+		if (createdCaseReference && isEnvironmentSmoke()) {
+			cy.task('softDeleteCaseByReference', createdCaseReference);
+		}
+	});
+
+	after(() => {
+		cy.task('clearDb');
+	});
+
+	it('creates a case through the full journey', { tags: ['smoke', 'regression', 'environment-smoke'] }, () => {
 		loadCreateCaseData().then((data) => {
 			completeCreateCaseFlow(data);
 
-			checkYourAnswersPage.verifyLoaded();
-			checkYourAnswersPage.verifyAnswers(data);
-			checkYourAnswersPage.verifyChangeLinksNavigateToExpectedPages(data);
-			checkYourAnswersPage.openChangeLinkFor('Gateway 1 expected date');
-			keyStageDatesPage.verifyLoaded();
-			keyStageDatesPage.verifyKeyStageDatesPopulated(data.dates);
-			cy.go('back');
-			checkYourAnswersPage.verifyLoaded();
-			checkYourAnswersPage.submitCase();
-			caseCreatedPage.verifyLoaded();
-			caseCreatedPage.verifyReferenceFormat();
+			cy.then(() => {
+				checkYourAnswersPage.verifyLoaded();
+				checkYourAnswersPage.verifyAnswers(data);
+				checkYourAnswersPage.verifyChangeLinksNavigateToExpectedPages(data);
+				checkYourAnswersPage.openChangeLinkFor('Gateway 1 expected date');
+				keyStageDatesPage.verifyLoaded();
+				keyStageDatesPage.verifyKeyStageDatesPopulated(data.dates);
+				cy.go('back');
+				checkYourAnswersPage.verifyLoaded();
+				checkYourAnswersPage.submitCase();
+				caseCreatedPage.verifyLoaded();
+				caseCreatedPage.verifyReferenceFormat();
+				caseCreatedPage.getReference().then((reference) => {
+					createdCaseReference = reference;
+				});
+			});
 		});
 	});
 
