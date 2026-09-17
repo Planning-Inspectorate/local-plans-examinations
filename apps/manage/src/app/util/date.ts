@@ -4,9 +4,9 @@ export function parseDate(value: string): Date {
 	const month = Number(monthStr);
 	const year = Number(yearStr);
 
-	const date = new Date(Date.UTC(year, month - 1, day));
+	const date = new Date(year, month - 1, day);
 
-	if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) {
+	if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
 		throw new Error(`Invalid date: ${value}`);
 	}
 

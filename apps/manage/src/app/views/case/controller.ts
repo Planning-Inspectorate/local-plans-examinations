@@ -19,6 +19,7 @@ import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -183,7 +184,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		let updated;
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
-			case 'overview':
+			case COMMON_CONSTS.OVERVIEW:
 				updated = await updateOverview(
 					db,
 					trimStringValues(data.answers as CaseOverviewInput),
@@ -194,7 +195,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					getParam(req.params.question)
 				);
 				break;
-			case 'gateway-1':
+			case COMMON_CONSTS.GATEWAY_1_JOURNEY_ID:
 				updated = await updateGateway1(
 					db,
 					trimStringValues(data.answers as Gateway1Input),
@@ -202,7 +203,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
-			case 'gateway-2':
+			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID:
 				updated = await updateGateway2(
 					db,
 					trimStringValues(data.answers as Gateway2Input),
@@ -210,7 +211,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
-			case 'gateway-3':
+			case COMMON_CONSTS.GATEWAY_3_JOURNEY_ID:
 				updated = await updateGateway3(
 					db,
 					trimStringValues(data.answers as Gateway3Input),
@@ -218,7 +219,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
-			case 'examination':
+			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID:
 				updated = await updateExamination(
 					db,
 					trimStringValues(data.answers as ExaminationInput),
@@ -251,15 +252,15 @@ async function updateOverview(
 	currentItemId?: string,
 	question?: string
 ) {
-	if (question === 'assessor-gateway-2' || question === 'assessor-gateway-2') {
+	if (question === COMMON_CONSTS.ASSESSOR_GATEWAY_2_QUESTION) {
 		await updateGateway2(db, { assessorName: answers.assessorName }, reference, question);
 		return true;
 	}
-	if (question === 'assessor-gateway-3') {
+	if (question === COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION) {
 		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, reference, question);
 		return true;
 	}
-	if (question === 'programme-officer') {
+	if (question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
 		await updateGateway3(
 			db,
 			{
@@ -284,7 +285,7 @@ async function updateOverview(
 
 	// Changing the LPA associated with the *case*:
 	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
-	if (question === 'check-lpas' && answers.lpa) {
+	if (question === COMMON_CONSTS.CHECK_LPAS_QUESTION && answers.lpa) {
 		await db.case.update({
 			where: { reference: reference },
 			data: {
@@ -305,7 +306,7 @@ async function updateOverview(
 		return true;
 	}
 
-	if (question === 'check-contact-details') {
+	if (question === COMMON_CONSTS.CHECK_CONTACT_DETAILS_QUESTION) {
 		if (!currentItemId) return false;
 		const contactData = buildContactData(answers, lpaName);
 		await db.contact.upsert({
@@ -319,26 +320,26 @@ async function updateOverview(
 		return true;
 	}
 
-	if (question === 'examining-inspector-1') {
+	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION) {
 		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, reference, question);
 	}
-	if (question === 'examining-inspector-2') {
+	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_2_QUESTION) {
 		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, reference, question);
 	}
-	if (question === 'examining-inspector-3') {
+	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_3_QUESTION) {
 		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, reference, question);
 	}
-	if (question === 'examination-website') {
+	if (question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
 		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, reference, question);
 	}
 
-	if (question === 'qa-inspector-1') {
+	if (question === COMMON_CONSTS.QA_INSPECTOR_1_QUESTION) {
 		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, reference, question);
 	}
-	if (question === 'qa-inspector-2') {
+	if (question === COMMON_CONSTS.QA_INSPECTOR_2_QUESTION) {
 		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, reference, question);
 	}
-	if (question === 'qa-inspector-3') {
+	if (question === COMMON_CONSTS.QA_INSPECTOR_3_QUESTION) {
 		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, reference, question);
 	}
 
@@ -380,7 +381,7 @@ export async function updateGateway1(
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
-	if (question == 'signed-sla') {
+	if (question === COMMON_CONSTS.SIGNED_SLA_QUESTION) {
 		answers.slaReceivedDate = new Date();
 	}
 	if (answers) {
@@ -401,7 +402,10 @@ export async function updateGateway2(
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
 
-	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
+	if (
+		question === COMMON_CONSTS.GATEWAY_2_ASSESSOR_QUESTION ||
+		question === COMMON_CONSTS.ASSESSOR_GATEWAY_2_QUESTION
+	) {
 		answers.assessorAppointmentDate = new Date();
 	}
 	if (answers) {
@@ -421,13 +425,16 @@ export async function updateGateway3(
 	question?: string
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
-	if (question === 'examination-website') {
+	if (question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
 		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseReference, question);
 	}
-	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
+	if (
+		question === COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION ||
+		question === COMMON_CONSTS.GATEWAY_3_ASSESSOR_NAME_QUESTION
+	) {
 		answers.assessorAppointmentDate = new Date();
 	}
-	if (question === 'gateway-3-document') {
+	if (question === COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION) {
 		// For handling the save button
 		return true;
 	}
@@ -448,7 +455,11 @@ export async function updateExamination(
 	question?: string
 ) {
 	const caseId = await resolveCaseIdFromReference(db, caseReference);
-	const inspectorQuestions = ['examining-inspector-1', 'examining-inspector-2', 'examining-inspector-3'];
+	const inspectorQuestions = [
+		COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION,
+		COMMON_CONSTS.EXAMINING_INSPECTOR_2_QUESTION,
+		COMMON_CONSTS.EXAMINING_INSPECTOR_3_QUESTION
+	];
 	if (question && inspectorQuestions.includes(question)) {
 		answers.examiningInspectorAppointmentDate = new Date();
 	}
@@ -548,13 +559,13 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 		});
 
-		const headerStatus = resolveCaseHeaderStatus(journey1Data, journey2Data, gateway2Documents);
+		const headerStatus = resolveCaseHeaderStatus(gateway2Documents, journey1Data, journey2Data);
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
 		switch (currentPage) {
-			case 'overview': {
+			case COMMON_CONSTS.OVERVIEW: {
 				const overviewData = await getOverviewData(db, reference);
 				if (!overviewData) return res.status(404).render('views/errors/404.njk');
 				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
@@ -588,37 +599,37 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'gateway-1': {
+			case COMMON_CONSTS.GATEWAY_1_JOURNEY_ID: {
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'signed-sla' &&
+					req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
 					// TODO need to check if there are documents - only redirect if there are documents
-					res.redirect(303, 'signed-sla/check');
+					res.redirect(303, `${COMMON_CONSTS.SIGNED_SLA_QUESTION}/check`);
 					return;
 				}
 				if (next) next();
 				return;
 			}
 
-			case 'gateway-2': {
+			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID: {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-2-report' &&
+					req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
 					const uploadedGateway2Reports =
 						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
 
 					if (uploadedGateway2Reports.length > 0) {
-						res.redirect(303, 'gateway-2-report/check');
+						res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION}/check`);
 						return;
 					}
 				}
@@ -627,7 +638,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'gateway-3': {
+			case COMMON_CONSTS.GATEWAY_3_JOURNEY_ID: {
 				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
@@ -638,7 +649,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				// Flow for uploading a gateway 3 document
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-3-decision' &&
+					req.params.question === COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
 					const caseReference = getParam(req.params.reference);
@@ -648,25 +659,29 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 							decision: body.decision
 						},
 						caseReference,
-						'gateway-3-decision'
+						COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION
 					);
-					res.redirect(303, 'gateway-3-document');
+					res.redirect(303, COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION);
 					return;
 				}
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-3-document' &&
+					req.params.question === COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION &&
 					req.originalUrl.endsWith(req.params.question)
 				) {
-					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == 'gateway-3-document');
+					const questionConfig = fileUploadQuestionConfigs.find(
+						(question) => question.url === COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION
+					);
 					if (!questionConfig) {
-						throw new Error(`Could not find question config for question url 'gateway-3-document'`);
+						throw new Error(
+							`Could not find question config for question url '${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}'`
+						);
 					}
 					const uploadedFiles =
 						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
 							?.uploadedFiles ?? [];
 					if (uploadedFiles.length > 0) {
-						res.redirect(303, 'gateway-3-document/check');
+						res.redirect(303, `${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}/check`);
 						return;
 					}
 				}
@@ -674,7 +689,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'examination': {
+			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				// TODO: proper view-model mapping to answers formats
 				// use dynamic-forms constants for BOOLEAN_OPTIONS
@@ -772,12 +787,12 @@ export function addCaseNavigation(): AsyncRequestHandler {
 function createNavigationParameters(path: string, reference: string, currentSection?: string) {
 	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
 	const items = [
-		{ text: 'Overview', href: `${baseUrl}/overview` },
+		{ text: 'Overview', href: `${baseUrl}/${COMMON_CONSTS.OVERVIEW}` },
 		{ text: 'Timetable', href: '#' },
-		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
-		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
-		{ text: 'Gateway 3', href: `${baseUrl}/gateway-3` },
-		{ text: 'Examination', href: `${baseUrl}/examination` },
+		{ text: 'Gateway 1', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}` },
+		{ text: 'Gateway 2', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}` },
+		{ text: 'Gateway 3', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}` },
+		{ text: 'Examination', href: `${baseUrl}/${COMMON_CONSTS.EXAMINATION_JOURNEY_ID}` },
 		{
 			text: 'Case History',
 			href: `${baseUrl}/overview?section=case-history`,
@@ -1066,7 +1081,7 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 					reportIssuedDate: reportIssuedDate
 				},
 				caseReference,
-				'gateway-2-report-issued-date'
+				COMMON_CONSTS.GATEWAY_2_REPORT_ISSUED_DATE_QUESTION
 			);
 			await updateCaseHistory(
 				service,
@@ -1170,7 +1185,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 					completionDate: completionDate
 				},
 				caseReference,
-				'gateway-3-report-issued-date'
+				COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION
 			);
 			await updateCaseHistory(
 				service,
@@ -1203,10 +1218,10 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 export function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	// Any questions that need to route to new subjourneys can be defined here
-	if (req.params.question == 'gateway-2-report') {
+	if (req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION) {
 		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
 	}
-	if (req.params.question == 'signed-sla') {
+	if (req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION) {
 		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
