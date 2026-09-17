@@ -12,7 +12,7 @@ export const preparePlanDetails = () => {
 	return cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 };
 
-export const openGateway2ApplicationPage = (plan: PlanDetailsFixture) => {
+export const openGateway2ApplicationPage = (plan: Pick<PlanDetailsFixture, 'reference'>) => {
 	myPlansPage.verifyLoaded();
 	myPlansPage.openPlan(plan.reference);
 	planDetailsPage.verifyLoaded();

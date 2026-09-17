@@ -7,7 +7,7 @@ import { seedStaticData } from './data-static.ts';
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
 
-async function run() {
+export async function seedCy() {
 	const config = loadConfig();
 	// prettier-ignore
 	try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -42,7 +42,7 @@ async function run() {
 	try {
 		await seedStaticData(dbClient);
 
-		await dbClient.case.create({
+		const seededCase = await dbClient.case.create({
 			data: {
 				reference: `PLAN-${Date.now()}`,
 				email: 'cypress@test.com',
@@ -140,6 +140,7 @@ async function run() {
 				}
 			}
 		});
+		return { reference: seededCase.reference };
 	} catch (error) {
 		console.error(error);
 		throw error;
@@ -148,4 +149,6 @@ async function run() {
 	}
 }
 
-run();
+if (import.meta.main) {
+	seedCy();
+}
