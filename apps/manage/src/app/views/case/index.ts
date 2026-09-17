@@ -50,14 +50,9 @@ import {
 	createGateway1Journey,
 	createGateway2Journey,
 	createGateway3Journey,
-	createExaminationJourney,
-	GATEWAY_1_JOURNEY_ID,
-	GATEWAY_2_JOURNEY_ID,
-	GATEWAY_3_JOURNEY_ID,
-	OVERVIEW_JOURNEY_ID,
-	EXAMINATION_JOURNEY_ID
+	createExaminationJourney
 } from './journey.ts';
-import { buildCaseOfficerOptions, buildInspectorOptions } from '../../util/options-helper.ts';
+import { buildCaseOfficerOptions, buildInspectorOptions, loadLpaOptions } from '../../util/options-helper.ts';
 import multer from 'multer';
 import {
 	createFileUploaderDeleteController,
@@ -66,9 +61,9 @@ import {
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
-import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import lusca from 'lusca';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -91,39 +86,39 @@ interface CaseJourneyConfig {
 /** To add a new route, add a new object here **/
 const CASE_JOURNEYS: CaseJourneyConfig[] = [
 	{
-		path: 'overview',
-		journeyId: OVERVIEW_JOURNEY_ID,
+		path: COMMON_CONSTS.OVERVIEW,
+		journeyId: COMMON_CONSTS.OVERVIEW_JOURNEY_ID,
 		createJourney: createOverviewJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		updateFunction: undefined
 	},
 	{
-		path: 'gateway-1',
-		journeyId: GATEWAY_1_JOURNEY_ID,
+		path: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
 		createJourney: createGateway1Journey,
 		supportsManageList: true,
 		supportsFileUpload: true,
 		updateFunction: updateGateway1
 	},
 	{
-		path: 'gateway-2',
-		journeyId: GATEWAY_2_JOURNEY_ID,
+		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
 		supportsManageList: true,
 		supportsFileUpload: true,
 		updateFunction: updateGateway2
 	},
 	{
-		path: 'gateway-3',
-		journeyId: GATEWAY_3_JOURNEY_ID,
+		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
 		supportsFileUpload: true,
 		updateFunction: updateGateway3
 	},
 	{
-		path: 'examination',
-		journeyId: EXAMINATION_JOURNEY_ID,
+		path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
