@@ -44,6 +44,20 @@ export class ManageHomePage extends BasePage {
 	verifyNoCasesMessage(text: string) {
 		this.noCasesMessage.should('be.visible').and('contain.text', text);
 	}
+
+	get caseReference() {
+		return cy.getByData('case-reference-link');
+	}
+	getReference() {
+		return this.caseReference
+			.should('be.visible')
+			.invoke('text')
+			.then((reference) => reference.trim());
+	}
+
+	verifyReferenceFormat() {
+		this.getReference().should('match', /^PLAN-\d+$/);
+	}
 }
 
 export const manageHomePage = new ManageHomePage();
