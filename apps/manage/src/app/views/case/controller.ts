@@ -171,7 +171,7 @@ export const fileUploadQuestionsByUrl = new Map(
 const journeyFileUploadQuestionConfigs = Object.fromEntries(
 	Object.entries(journeyQuestions).map(([k, v]) => [
 		k,
-		Array.from(v, (elem) => fileUploadQuestionProperties[elem] as FileUploadQuestion)
+		Array.from(v, (elem) => fileUploadQuestionProperties[elem] as FileUploadQuestion).filter((elem) => Boolean(elem))
 	])
 );
 
@@ -888,12 +888,12 @@ async function addUploadedDocumentDetailsToAnswers(
 	answers: any,
 	journeyId: string
 ) {
+	const request = req as UploadDocumentRequest;
+	request.currentCase = currentCase;
 	const relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
 	if (!relevantFileUploadQuestionConfigs) {
 		return;
 	}
-	const request = req as UploadDocumentRequest;
-	request.currentCase = currentCase;
 	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 		service,
 		relevantFileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)

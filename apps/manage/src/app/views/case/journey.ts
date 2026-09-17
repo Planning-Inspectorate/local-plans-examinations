@@ -275,7 +275,7 @@ const gateway3QuestionNames = new Set<string>([
 		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()
-		.map((item, index) => `${item}-${index}`)
+		.map((item, index) => `${item}-${Math.trunc(index / 3) + 1}`)
 ]);
 
 const examinationQuestionNames = new Set<string>([
@@ -308,9 +308,9 @@ const examinationQuestionNames = new Set<string>([
 ]);
 
 export const journeyQuestions = {
-	OVERVIEW_JOURNEY_ID: overviewQuestionNames,
-	GATEWAY_1_JOURNEY_ID: gateway1QuestionNames,
-	GATEWAY_2_JOURNEY_ID: gateway2QuestionNames,
-	GATEWAY_3_JOURNEY_ID: gateway3QuestionNames,
-	EXAMINATION_JOURNEY_ID: examinationQuestionNames
+	[OVERVIEW_JOURNEY_ID]: overviewQuestionNames,
+	[GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
+	[GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
+	[GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
+	[EXAMINATION_JOURNEY_ID]: examinationQuestionNames
 };
