@@ -146,11 +146,13 @@ model Gateway2Info {
   validDate                    DateTime? @db.DateTime2
   assessorName                 String?
   assessorAppointmentDate      DateTime? @db.DateTime2
-  workshopDate                 DateTime? @db.DateTime2
   workshopVenue                String?
   reportIssuedDate             DateTime? @db.DateTime2
   reportPublishedByLPA         DateTime? @db.DateTime2
   workshopDocumentUploadedDate DateTime?
+  workshopDate                 DateTime? @db.DateTime2
+  workshopTime                 String?
+  workshopEndTime              String?
 }
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
