@@ -36,13 +36,14 @@ import {
 	validate,
 	validationErrorHandler,
 	type Journey,
-	type JourneyResponse
+	JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
 import { questions, getQuestions } from './questions.ts';
 import {
 	createOverviewJourney,
 	createGateway1Journey,
 	createGateway2Journey,
+	createGateway2WorkshopJourney,
 	createGateway3Journey,
 	createExaminationJourney
 } from './journey.ts';
@@ -58,6 +59,7 @@ import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
+import { loadLpaOptions } from 'src/app/util/options-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -75,6 +77,81 @@ interface CaseJourneyConfig {
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
 	updateFunction?: UpdateFunction;
+}
+
+function registerGateway2WorkshopJourney(
+	router: IRouter,
+	service: ManageService,
+	config: CaseJourneyConfig,
+	updateCase: ReturnType<typeof updateCaseField>
+): void {
+	const { createJourney } = config;
+
+	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
+		const loaded = await loadLpaOptions(service);
+
+		if (loaded.length > 0) {
+			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+		}
+
+		next();
+	});
+
+	const setWorkshopSection = (req: Request, _res: Response, next: NextFunction): void => {
+		req.params.section = 'workshop';
+		next();
+	};
+
+	const getWorkshopJourneyResponse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference },
+			select: {
+				id: true,
+				planTitle: true
+			}
+		});
+
+		if (!caseRecord) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		const gateway2Data = await service.db.gateway2Info.findUnique({
+			where: {
+				caseId: caseRecord.id
+			}
+		});
+
+		res.locals.planTitle = caseRecord.planTitle;
+		res.locals.reference = reference;
+
+		res.locals.journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
+
+		next();
+	});
+
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+
+	router.get(
+		'/gateway-2/set-up-workshop/:question',
+		buildLpaOptions,
+		setWorkshopSection,
+		getWorkshopJourneyResponse,
+		getJourney,
+		question
+	);
+
+	router.post(
+		'/gateway-2/set-up-workshop/:question',
+		buildLpaOptions,
+		setWorkshopSection,
+		getWorkshopJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		buildSave(updateCase, true)
+	);
 }
 
 /** To add a new route, add a new object here **/
@@ -104,6 +181,14 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		updateFunction: updateGateway2
 	},
 	{
+		path: 'gateway-2/set-up-workshop',
+		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
+		createJourney: createGateway2WorkshopJourney,
+		supportsManageList: false,
+		supportsFileUpload: false,
+		updateFunction: updateGateway2
+	},
+	{
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
@@ -128,7 +213,17 @@ export function caseRouter(service: ManageService): IRouter {
 
 	router.use(addCaseNavigation());
 
+	const workshopConfig = CASE_JOURNEYS.find((config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID);
+
+	if (workshopConfig) {
+		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
+	}
+
 	for (const config of CASE_JOURNEYS) {
+		if (config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID) {
+			continue;
+		}
+
 		registerCaseJourney(router, service, config, updateCase);
 	}
 
@@ -196,6 +291,7 @@ function registerCaseJourney(
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
+
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
