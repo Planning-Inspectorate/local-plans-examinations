@@ -73,8 +73,6 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions[`gateway3Decision-${rowId}`])
 				.addQuestion(questions[`gateway3CompletionDate-${rowId}`]);
 		});
-		console.log('submissionSections length');
-		console.log(submissionSections.length);
 	}
 
 	const journey = new Journey({
@@ -223,3 +221,95 @@ function getBacklinks(journey: Journey, overviewUrl: string): Journey {
 
 	return journey;
 }
+
+const overviewQuestionNames = new Set<string>([
+	'planTitle',
+	'planType',
+	'checkLpas',
+	'caseOfficer',
+	'planBand',
+	'checkContactDetails',
+	'programmeOfficerDetails',
+	'examinationWebsite',
+	'assessorGateway2',
+	'assessorGateway3',
+	'examiningInspector1',
+	'examiningInspector2',
+	'examiningInspector3',
+	'qaInspector1',
+	'qaInspector2',
+	'qaInspector3'
+]);
+
+const gateway1QuestionNames = new Set<string>([
+	'noticeOfIntentionPublishDate',
+	'gateway1ExpectedDate',
+	'gateway1ActualDate',
+	'slaSentDate',
+	'signedSla',
+	'slaReceivedDate',
+	'dsaCheck'
+]);
+
+const gateway2QuestionNames = new Set<string>([
+	'gateway2ExpectedDate',
+	'gateway2ActualDate',
+	'gateway2ValidDate',
+	'gateway2AssessorsName',
+	'assessorDateOfAppointment',
+	'workshopDate',
+	'workshopVenue'
+]);
+
+const gateway3QuestionNames = new Set<string>([
+	'gateway3ExpectedDate',
+	'gateway3ActualDate',
+	'gateway3AssessorsName',
+	'gateway3AssessorDateOfAppointment',
+	'programmeOfficerDetails',
+	'examinationWebsite',
+	...Array.from(
+		// Gateway 3 submission questions
+		{ length: 50 },
+		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
+	)
+		.flat()
+		.map((item, index) => `${item}-${index}`)
+]);
+
+const examinationQuestionNames = new Set<string>([
+	'expectedSubmissionForExaminationDate',
+	'submissionForExaminationDate',
+	'examiningInspector1',
+	'examiningInspector2',
+	'examiningInspector3',
+	'examiningInspectorAppointmentDate',
+	'letterSentToMHCLGDate',
+	'letterIssueDate',
+	'qaDate',
+	'qaInspector1',
+	'qaInspector2',
+	'qaInspector3',
+	'sentToPanelDate',
+	'panelResponseSentToInspector',
+	'factCheckDateReceivedFromInspector',
+	'factCheckDueDate',
+	'factCheckActualDate',
+	'factCheckReceivedBackFromLPADate',
+	'finalReportIssueDate',
+	'planPauseStartDate',
+	'planPauseEndDate',
+	'withdrawnDate',
+	'isSound',
+	'soundUnsoundDate',
+	'adoptionDate',
+	'approvedForCILDate'
+]);
+
+export const journeyQuestions = {
+	OVERVIEW_JOURNEY_ID: overviewQuestionNames,
+	GATEWAY_1_JOURNEY_ID: gateway1QuestionNames,
+	GATEWAY_2_JOURNEY_ID: gateway2QuestionNames,
+	GATEWAY_3_JOURNEY_ID: gateway3QuestionNames,
+	EXAMINATION_JOURNEY_ID: examinationQuestionNames
+};
