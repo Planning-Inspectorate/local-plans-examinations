@@ -34,8 +34,7 @@ export const startPortalOtpLogin = (email = getPortalLoginEmail()) => {
 	}
 
 	portalLoginEmailPage.visit();
-	portalLoginEmailPage.enterEmail(email);
-	portalLoginEmailPage.saveAndContinue();
+	portalLoginEmailPage.submitEmail(email);
 };
 
 export const completePortalLogin = () => {
@@ -124,6 +123,13 @@ const completePortalLoginByRequest = () => {
 			expect(response.status).to.eq(302);
 			expect(response.headers.location).to.contain('/manage-local-plans/your-plans');
 		});
+};
+
+export const portalLoginForExistingCase = (email: string) => {
+	portalLoginEmailPage.visit(`${Cypress.env('portalBaseUrl')}/login`);
+	cy.setCookie('cookie_consent', 'accept');
+	portalLoginEmailPage.submitEmail(email);
+	completePortalLogin();
 };
 
 export const manageToPortalLogin = (email: string) => {

@@ -1,15 +1,14 @@
 import { toPortalPlanReference } from '../../flows/cross-service/service-apps.ts';
 import { completeCreateCaseFlow } from '../../flows/manage/create-case-flow.ts';
+import { openGateway2DocumentUploadPage } from '../../flows/portal/gateway-2-upload-flow.ts';
 import {
 	caseCreatedPage,
 	checkYourAnswersPage,
 	type CreateCaseData
 } from '../../page-objects/manage/create-case/index.ts';
 import { gateway2ApplicationPage } from '../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
-import { manageToPortalLogin } from '../../flows/portal/login-flow.ts';
-import { manageHomePage } from '../../page-objects/manage/home-page.ts';
-//import { seededCase } from '../../fixtures/manage/case.ts';
-import { gateway2UploadAnswers } from 'cypress/fixtures/portal/gateway-2-uploads.ts';
+import { manageToPortalLogin, portalLoginForExistingCase } from '../../flows/portal/login-flow.ts';
+import { gateway2CoverLetterPage } from '../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 
 export const CREATE_CASE_TEST_EMAIL = 'test@planninginspectorate.gov.uk';
 export const FIXTURE_TEST_EMAIL = 'cypress@test.com';
@@ -19,7 +18,7 @@ const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.
 describe('Cross-service Manage and Portal', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
-		cy.task('seedDb');
+		cy.task<{ reference: string }>('seedDb').as('seededCase');
 	});
 
 	after(() => cy.task('clearDb'));
@@ -40,42 +39,30 @@ describe('Cross-service Manage and Portal', () => {
 		});
 	});
 
-	it.only('displays files uploaded to the FO in the BO GW2 Submission Documents', () => {
-		manageHomePage.visit();
-		manageHomePage.getReference().then((caseReference) => {
-			const portalPlanReference = toPortalPlanReference(caseReference);
-			manageToPortalLogin(FIXTURE_TEST_EMAIL);
-
-			const doc = gateway2UploadAnswers.coveringLetter;
+	it('displays files uploaded to the FO in the BO GW2 Submission Documents', () => {
+		cy.get<{ reference: string }>('@seededCase').then(({ reference }) => {
+			const portalPlanReference = toPortalPlanReference(reference);
 			const fileName = 'test-document.pdf';
 
-			cy.fixture(`files/${fileName}`, 'base64').then((base64) => {
-				cy.origin(
-					Cypress.env('portalBaseUrl'),
-					{ args: { portalPlanReference, fileName, base64, doc } },
-					({ portalPlanReference, fileName, base64, doc }) => {
-						cy.visit(`/manage-local-plans/${portalPlanReference}/gateway-2-submission`);
-						cy.get(`[data-cy="${doc.addCy}"]`).should('be.visible').click();
+			portalLoginForExistingCase(FIXTURE_TEST_EMAIL);
+			openGateway2DocumentUploadPage({ reference: portalPlanReference }, gateway2CoverLetterPage);
+			gateway2CoverLetterPage.uploadAndVerifyFile(fileName);
+			gateway2CoverLetterPage.saveAndReturn();
+			gateway2ApplicationPage.verifyLoaded();
+			gateway2ApplicationPage.verifyDocumentRowContains(
+				gateway2ApplicationPage.proceduralDocumentsTable,
+				'Gateway 2 covering letter',
+				fileName
+			);
 
-						const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-
-						cy.get(`#${doc.fieldName}-input`).selectFile(
-							{ contents: binary, fileName, mimeType: 'application/pdf' },
-							{ force: true }
-						);
-						cy.get('[data-cy="upload-files-button"]').click();
-						cy.get('.govuk-summary-list__value').should('contain', 'test-document.pdf');
-
-						cy.get('[data-cy="save-and-return-button"]').click();
-					}
-				);
+			cy.origin(Cypress.env('manageBaseUrl'), { args: { reference, fileName } }, ({ reference, fileName }) => {
+				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-2`);
+				cy.contains('.govuk-summary-list__row', 'Submission documents').contains('a', 'Review').click();
+				cy.contains('h1', 'Submitted GW2 documents').should('be.visible');
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+					.contains('.govuk-summary-list__value a', fileName)
+					.should('be.visible');
 			});
 		});
-		//file upload journeys
-		//open bo case
-		//gw2
-		//file count
-		//submission documents
-		//content check
 	});
 });
