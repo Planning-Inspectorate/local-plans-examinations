@@ -12,29 +12,30 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 		service: ManageService,
 		uploadedFiles: any
 	): Promise<SubmissionCheckData> {
+		const submissionId = Number(questionUrl.split('-').at(-1));
 		const existingGatewayDetails = await service.db.gateway3Info.findUnique({
 			select: {
-				completionDate: true,
-				decision: true
+				submission: true
 			},
 			where: {
 				caseId: caseId
 			}
 		});
-		const complete = existingGatewayDetails?.completionDate;
+		const currentSubmission = existingGatewayDetails?.submission.at(submissionId - 1);
+		const complete = currentSubmission?.completionDate;
 		const decisionMap: Record<string, string> = {
 			'1': 'Proceed to examination',
 			'2': 'Resubmission required'
 		};
-		if (!existingGatewayDetails?.decision) {
+		if (!currentSubmission?.decision) {
 			throw Error(
 				`A decision must be defined in the data for the case '${caseId}' when entering Gateway3SubmissionCheck`
 			);
 		}
-		const decisionText = decisionMap[existingGatewayDetails?.decision] ?? null;
+		const decisionText = decisionMap[currentSubmission?.decision] ?? null;
 		if (!decisionText) {
 			throw Error(
-				`Undefined decision number found for gateway3Info.decision value '${existingGatewayDetails?.decision}' in Gateway3SubmissionCheck`
+				`Undefined decision number found for gateway3Info.decision value '${currentSubmission?.decision}' in Gateway3SubmissionCheck`
 			);
 		}
 		const baseBackLink = this.generateBackUrl(originalUrl);
@@ -46,7 +47,7 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 			section: section,
 			question: questionUrl,
 			backLink: complete ? this.generateBackUrl(this.generateBackUrl(baseBackLink)) : baseBackLink,
-			notificationPreviewTemplate: questionUrl + (complete ? '-complete' : ''),
+			notificationPreviewTemplate: 'gateway-3-document' + (complete ? '-complete' : ''),
 			submitButtonText: 'Issue decision',
 			additionalFields: [
 				{

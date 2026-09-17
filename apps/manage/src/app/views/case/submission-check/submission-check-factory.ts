@@ -3,10 +3,14 @@ import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
 
+const GATEWAY3_DOCUMENT_OPTIONS: Record<string, new () => SubmissionCheck> = {};
+for (let i = 1; i < 50; i++) {
+	GATEWAY3_DOCUMENT_OPTIONS[`gateway-3-document-${i}`] = Gateway3SubmissionCheck;
+}
 const OPTIONS: Record<string, new () => SubmissionCheck> = {
 	'signed-sla': SignedSLASubmissionCheck,
 	'gateway-2-report': Gateway2ReportSubmissionCheck,
-	'gateway-3-document': Gateway3SubmissionCheck
+	...GATEWAY3_DOCUMENT_OPTIONS
 };
 
 /**
