@@ -1,5 +1,8 @@
 import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
+import { buildGetJourney } from '@planning-inspectorate/dynamic-forms';
+import { createJourney } from './journey.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
@@ -7,11 +10,12 @@ import {
 	setAsEditingFromCya,
 	setGateway3ViewData
 } from './controller.ts';
-import { asyncHandler } from '@planning-inspectorate/core/util';
 
 export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse));
+	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const {
 		getJourney,
 		getJourneyResponseFromCase,
@@ -31,7 +35,7 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 
 	// Landing page (case-scoped)
 	router.get(
-		'/:planReference/gateway-3-submission',
+		'/',
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,

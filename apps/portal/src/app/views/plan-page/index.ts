@@ -8,7 +8,7 @@ export function createPlanPageRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
 	const planPageController = buildPlanPage(service);
-	router.get('/:refNum', asyncHandler(planPageController));
+	router.get('/:planReference', asyncHandler(planPageController));
 
 	return router;
 }

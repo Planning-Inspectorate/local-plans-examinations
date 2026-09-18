@@ -72,8 +72,8 @@ function postCookiesPage(req: Request<object, unknown, CookiePreferencesBody>, r
 export function createCookiesRoutes(): IRouter {
 	const router = createRouter();
 
-	router.get('/cookies', getCookiesPage);
-	router.post('/cookies', postCookiesPage);
+	router.get('/', getCookiesPage);
+	router.post('/', postCookiesPage);
 
 	return router;
 }
