@@ -10,6 +10,8 @@ const HEADERS: Readonly<{ [x: string]: string }> = {
 	STATUS: 'status'
 };
 
+const AUTHORITY_STATUS_VALUES = Object.values(AUTHORITY_STATUS_ID) as string[];
+
 /**
  * Reads the CSV file specified by the LPA_DATA_FILE_PATH environment variable, parses it, and writes a JSON file with the same data in a format suitable for seeding the database.
  * The CSV file is expected to have three columns: pinsName, pinsCode, and status. The first row is treated as headers.
@@ -66,7 +68,7 @@ async function run(): Promise<void> {
  * Convert a record representing an LPA to a format suitable for creating an Authority in the database. The record is expected to have keys corresponding to the headers defined in the HEADERS constant.
  */
 function toCreateInput(lpa: Record<string, string>) {
-	if (!Object.values(AUTHORITY_STATUS_ID).includes(lpa[HEADERS.STATUS])) {
+	if (!AUTHORITY_STATUS_VALUES.includes(lpa[HEADERS.STATUS])) {
 		console.warn(
 			`Unknown status '${lpa[HEADERS.STATUS]}' for authority '${lpa[HEADERS.AUTHORITY_NAME]}', setting to 'UNKNOWN'`
 		);
@@ -75,9 +77,7 @@ function toCreateInput(lpa: Record<string, string>) {
 	return {
 		name: lpa[HEADERS.AUTHORITY_NAME],
 		pinsCode: lpa[HEADERS.PINS_LPA_CODE],
-		status: Object.values(AUTHORITY_STATUS_ID).includes(lpa[HEADERS.STATUS])
-			? lpa[HEADERS.STATUS]
-			: AUTHORITY_STATUS_ID.UNKNOWN
+		status: AUTHORITY_STATUS_VALUES.includes(lpa[HEADERS.STATUS]) ? lpa[HEADERS.STATUS] : AUTHORITY_STATUS_ID.UNKNOWN
 	};
 }
 
