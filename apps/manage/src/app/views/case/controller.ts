@@ -537,9 +537,12 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			where: { reference },
 			select: { id: true, planTitle: true }
 		});
+
 		if (!caseRecord) return res.status(404).render('views/errors/404.njk');
+
 		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;
+
 		if (req.session.alertMessage) {
 			res.locals.alertMessage = req.session.alertMessage;
 			delete req.session.alertMessage;
@@ -568,16 +571,20 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			case COMMON_CONSTS.OVERVIEW: {
 				const overviewData = await getOverviewData(db, reference);
 				if (!overviewData) return res.status(404).render('views/errors/404.njk');
+
 				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
 				res.locals.journeyResponse = journeyResponse;
 				res.locals.currentCase = overviewData;
 				res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
 				res.locals.currentSection = (req.query?.section as string) ?? '';
-				journeyResponse.answers.assessorName = overviewData.gateway2Info?.assessorName;
-				journeyResponse.answers.programmeOfficerFirstName = overviewData.gateway3Info?.programmeOfficerFirstName;
-				journeyResponse.answers.programmeOfficerLastName = overviewData.gateway3Info?.programmeOfficerLastName;
-				journeyResponse.answers.programmeOfficerEmail = overviewData.gateway3Info?.programmeOfficerEmail;
-				journeyResponse.answers.gateway3AssessorName = overviewData.gateway3Info?.assessorName;
+
+				journeyResponse.answers = {
+					...journeyResponse.answers,
+					...overviewData.gateway2Info,
+					...overviewData.gateway3Info,
+					...overviewData.examinationInfo
+				};
+
 				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
 					id: lpa.lpaCode,
 					lpa: lpa.lpaCode
@@ -587,13 +594,6 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					phone: contact.phoneNumber,
 					lpaContact: contact.lpaCode
 				}));
-				journeyResponse.answers.examiningInspector1 = overviewData.examinationInfo?.examiningInspector1;
-				journeyResponse.answers.examiningInspector2 = overviewData.examinationInfo?.examiningInspector2;
-				journeyResponse.answers.examiningInspector3 = overviewData.examinationInfo?.examiningInspector3;
-				journeyResponse.answers.examinationWebsite = overviewData.examinationInfo?.examinationWebsite;
-				journeyResponse.answers.qaInspector1 = overviewData.examinationInfo?.qaInspector1;
-				journeyResponse.answers.qaInspector2 = overviewData.examinationInfo?.qaInspector2;
-				journeyResponse.answers.qaInspector3 = overviewData.examinationInfo?.qaInspector3;
 
 				if (next) next();
 				return;
@@ -868,7 +868,6 @@ export async function updateCaseHistory(
 				create: await Promise.all(
 					Object.entries(previousValues).map(async ([key, oldValue]) => ({
 						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key], overrideLabels[key]),
-						// TODO: Get user once authentication is implemented
 						username: currentUser
 					}))
 				)
