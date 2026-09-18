@@ -10,11 +10,10 @@ import {
 	validate,
 	validationErrorHandler
 } from '@planning-inspectorate/dynamic-forms';
-import { createJourney, JOURNEY_ID } from './journey.ts';
+import { createJourney, JOURNEY_ID, loadJourneyOptions } from './journey.ts';
 import { questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
-import { buildCaseOfficerOptions, loadLpaOptions } from '../../util/options-helper.ts';
 
 function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
@@ -47,12 +46,8 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
-	const buildLpaOptions = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
-		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
-		}
-
+	const loadOptions = asyncHandler(async (req: any, _res: Response, next: NextFunction) => {
+		await loadJourneyOptions(service, req, questions);
 		next();
 	});
 
@@ -71,28 +66,19 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.get(
 		'/check-your-answers',
 		getJourneyResponse,
-		buildCaseOfficerOptions(service, questions),
-		buildLpaOptions,
+		loadOptions,
 		getJourney,
 		setAsEditingFromCya,
 		setBackLinkFromSession,
 		buildList()
 	);
 
-	router.post(
-		'/check-your-answers',
-		getJourneyResponse,
-		buildCaseOfficerOptions(service, questions),
-		buildLpaOptions,
-		getJourney,
-		saveToDatabase
-	);
+	router.post('/check-your-answers', getJourneyResponse, loadOptions, getJourney, saveToDatabase);
 
 	router.get(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		buildCaseOfficerOptions(service, questions),
-		buildLpaOptions,
+		loadOptions,
 		getJourney,
 		question
 	);
@@ -100,8 +86,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.post(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		buildCaseOfficerOptions(service, questions),
-		buildLpaOptions,
+		loadOptions,
 		getJourney,
 		validate,
 		validationErrorHandler,

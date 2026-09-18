@@ -25,14 +25,7 @@ import {
 	handleMulterFileSizeError,
 	preprocessQuestionProperties
 } from './controller.ts';
-import {
-	type IRouter,
-	type NextFunction,
-	type Response,
-	type Request,
-	Router as createRouter,
-	type RequestHandler
-} from 'express';
+import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import {
 	buildGetJourney,
@@ -52,7 +45,6 @@ import {
 	createGateway3Journey,
 	createExaminationJourney
 } from './journey.ts';
-import { buildCaseOfficerOptions, buildInspectorOptions, loadLpaOptions } from '../../util/options-helper.ts';
 import multer from 'multer';
 import {
 	createFileUploaderDeleteController,
@@ -61,7 +53,6 @@ import {
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
-import { asyncHandler } from '@planning-inspectorate/core/util';
 import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
@@ -157,15 +148,6 @@ function registerCaseJourney(
 ): void {
 	const { path, journeyId, createJourney, supportsManageList, supportsFileUpload } = config;
 
-	const buildLpaOptions = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
-		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
-		}
-
-		next();
-	});
-
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
 
@@ -183,9 +165,6 @@ function registerCaseJourney(
 		`/${path}`,
 		getJourneyResponse,
 		preprocessQuestionProperties(service, journeyId, questions),
-		buildCaseOfficerOptions(service, questions),
-		buildInspectorOptions(service, questions),
-		buildLpaOptions,
 		getJourney,
 		fileUploadMiddleware,
 		buildList()
@@ -196,9 +175,6 @@ function registerCaseJourney(
 		questionPath,
 		getJourneyResponse,
 		preprocessQuestionProperties(service, journeyId, questions),
-		buildCaseOfficerOptions(service, questions),
-		buildInspectorOptions(service, questions),
-		buildLpaOptions,
 		getJourney,
 		fileUploadMiddleware,
 		question
@@ -208,8 +184,6 @@ function registerCaseJourney(
 	router.get(
 		`/${path}/:section/:question/check`,
 		getJourneyResponse,
-		buildCaseOfficerOptions(service, questions),
-		buildInspectorOptions(service, questions),
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
@@ -221,9 +195,6 @@ function registerCaseJourney(
 	router.post(
 		questionPath,
 		getJourneyResponse,
-		buildCaseOfficerOptions(service, questions),
-		buildInspectorOptions(service, questions),
-		buildLpaOptions,
 		getJourney,
 		validate,
 		validationErrorHandler,
@@ -295,7 +266,6 @@ function registerCaseJourney(
 		router.post(
 			`${questionPath}/upload-documents`,
 			getJourneyResponse,
-			buildCaseOfficerOptions(service, questions),
 			getJourney,
 			upload.array('files[]'),
 			// Lusca CSRF check performed after Multer handles the multipart/form-data
@@ -306,7 +276,6 @@ function registerCaseJourney(
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,
-			buildCaseOfficerOptions(service, questions),
 			getJourney,
 			deleteDocumentRoute,
 			handleMulterFileSizeError
