@@ -2,7 +2,8 @@ import { gateway3DocumentsAnswer } from '../../../fixtures/manage/gateway-3.ts';
 import { BasePage } from '../../base-page.ts';
 import { DocumentUploadPage } from '../base/index.ts';
 
-const gateway3ReportPath = (path: string) => new RegExp(`^/case/.+/gateway-3/gateway-3-submission/${path}$`);
+const gateway3ReportPath = (path: string) =>
+	new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d)+/${path}-(\\d)+$`);
 
 export const gateway3DocumentsPage = new DocumentUploadPage(
 	gateway3ReportPath(gateway3DocumentsAnswer.path),
