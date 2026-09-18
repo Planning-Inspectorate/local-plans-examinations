@@ -7,7 +7,7 @@ const gateway3ReportPath = (path: string) =>
 
 export const gateway3DocumentsPage = new DocumentUploadPage(
 	gateway3ReportPath(gateway3DocumentsAnswer.path),
-	gateway3DocumentsAnswer.fieldName,
+	`${gateway3DocumentsAnswer.fieldName}-1`,
 	gateway3DocumentsAnswer.heading,
 	gateway3DocumentsAnswer.caption
 );
