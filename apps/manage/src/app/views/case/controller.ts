@@ -1,6 +1,6 @@
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
-import { JourneyResponse, type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
+import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
@@ -12,6 +12,7 @@ import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/cust
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
+import { getJourneyDataLoadHandlerForPage } from './journey/journey-data-load-handler-factory.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
@@ -694,177 +695,16 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		);
 
 		const currentPage = getFirstSegmentOfUrl(req.url);
-		switch (currentPage) {
-			case COMMON_CONSTS.OVERVIEW: {
-				const overviewData = await getOverviewData(db, reference);
-				if (!overviewData) return res.status(404).render('views/errors/404.njk');
-
-				const journeyResponse = new JourneyResponse(journeyId, '', overviewData);
-				res.locals.journeyResponse = journeyResponse;
-				res.locals.currentCase = overviewData;
-				res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
-				res.locals.currentSection = (req.query?.section as string) ?? '';
-
-				journeyResponse.answers = {
-					...journeyResponse.answers,
-					...overviewData.gateway2Info,
-					...overviewData.gateway3Info,
-					...overviewData.examinationInfo
-				};
-
-				journeyResponse.answers.checkLpas = overviewData.lpas.map((lpa) => ({
-					id: lpa.lpaCode,
-					lpa: lpa.lpaCode
-				}));
-				journeyResponse.answers.contactDetails = overviewData.contacts.map((contact) => ({
-					...contact,
-					phone: contact.phoneNumber,
-					lpaContact: contact.lpaCode
-				}));
-
-				if (next) next();
-				return;
-			}
-
-			case COMMON_CONSTS.GATEWAY_1_JOURNEY_ID: {
-				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data, journeyId);
-				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
-				if (
-					req.method === 'POST' &&
-					req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION &&
-					req.originalUrl.endsWith(req.params.question)
-				) {
-					// TODO need to check if there are documents - only redirect if there are documents
-					res.redirect(303, `${COMMON_CONSTS.SIGNED_SLA_QUESTION}/check`);
-					return;
-				}
-				if (next) next();
-				return;
-			}
-
-			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID: {
-				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data, journeyId);
-				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
-				const journeyResponse = res.locals.journeyResponse as JourneyResponse;
-				journeyResponse.answers.gateway2Documents = documentsByCategory;
-				res.locals.journeyResponse = journeyResponse;
-				if (
-					req.method === 'POST' &&
-					req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION &&
-					req.originalUrl.endsWith(req.params.question)
-				) {
-					const uploadedGateway2Reports =
-						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
-
-					if (uploadedGateway2Reports.length > 0) {
-						res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION}/check`);
-						return;
-					}
-				}
-
-				if (next) next();
-				return;
-			}
-
-			case COMMON_CONSTS.GATEWAY_3_JOURNEY_ID: {
-				const journey3Data = await db.gateway3Info.findUnique({
-					include: {
-						submissions: true
-					},
-					where: { caseId: caseRecord.id }
-				});
-				if (!journey3Data) {
-					throw Error('No gatewa3info data found');
-				}
-				const submissionData = sortGateway3Submissions(journey3Data.submissions);
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
-				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
-				for (let i = 0; i < submissionData.length; i++) {
-					journeyResponse.answers[`decision-${i + 1}`] = submissionData[i].decision;
-					journeyResponse.answers[`completionDate-${i + 1}`] = submissionData[i].completionDate;
-				}
-				res.locals.journeyResponse = journeyResponse;
-				const body = req.body as { decision?: string };
-				// Flow for uploading a gateway 3 document
-				if (
-					req.method === 'POST' &&
-					String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION) &&
-					req.originalUrl.endsWith(String(req.params.question))
-				) {
-					const submissionNumber = String(req.params.question).replace('gateway-3-decision-', '');
-					if (!/^\d+$/.test(submissionNumber)) {
-						throw new Error('Invalid submission number');
-					}
-					const caseReference = getParam(req.params.reference);
-					const updatedSubmissions = sortGateway3Submissions(journey3Data?.submissions);
-					if (!updatedSubmissions) {
-						throw Error('No submission found');
-					}
-					const currentSubmission = updatedSubmissions.at(-1);
-					if (!currentSubmission) {
-						throw Error('Last submission was undefined');
-					}
-					currentSubmission.decision = body[`decision-${submissionNumber}` as keyof typeof body] ?? null;
-					await updateGateway3(
-						db,
-						{
-							submissions: updatedSubmissions
-						},
-						caseReference,
-						String(req.params.question)
-					);
-					res.redirect(303, `gateway-3-document-${submissionNumber}`);
-					return;
-				}
-				if (
-					req.method === 'POST' &&
-					String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION) &&
-					req.originalUrl.endsWith(String(req.params.question))
-				) {
-					const submissionNumber = String(req.params.question).replace('gateway-3-document-', '');
-					if (!/^\d+$/.test(submissionNumber)) {
-						throw new Error('Invalid submission number');
-					}
-					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == req.params.question);
-					if (!questionConfig) {
-						throw new Error(
-							`Could not find question config for question url '${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}'`
-						);
-					}
-					const uploadedFiles =
-						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
-							?.uploadedFiles ?? [];
-					if (uploadedFiles.length > 0) {
-						res.redirect(303, `gateway-3-document-${submissionNumber}/check`);
-						return;
-					}
-				}
-				if (next) next();
-				return;
-			}
-
-			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
-				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-				// TODO: proper view-model mapping to answers formats
-				// use dynamic-forms constants for BOOLEAN_OPTIONS
-				let isSound: string | null = null;
-				if (typeof journey4Data?.isSound === 'boolean') {
-					isSound = journey4Data?.isSound ? 'yes' : 'no';
-				}
-				const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
-				journeyResponse.answers.isSound = isSound;
-				res.locals.journeyResponse = journeyResponse;
-				if (next) next();
-				return;
-			}
-
-			default:
-				logger.error(`Unknown page ${currentPage} for case ${reference}`);
+		let handlerClass;
+		try {
+			handlerClass = getJourneyDataLoadHandlerForPage(currentPage);
+		} catch {
+			logger.error(`Unknown page ${currentPage} for case ${reference}`);
+			return;
 		}
+
+		const handler = new handlerClass();
+		await handler.handle({ req, res, next, service, journeyId, reference, caseRecord });
 	};
 }
 
@@ -984,43 +824,6 @@ function createNavigationParameters(path: string, reference: string, currentSect
 function getFirstSegmentOfUrl(url: string): string {
 	const path = url.split('?')[0];
 	return path.split('/').filter(Boolean)[0] ?? '';
-}
-
-async function getOverviewData(db: PrismaClient, reference: string) {
-	return db.case.findUnique({
-		where: { reference },
-		include: {
-			lpas: true,
-			contacts: true,
-			gateway2Info: {
-				select: {
-					assessorName: true
-				}
-			},
-			gateway3Info: {
-				select: {
-					programmeOfficerFirstName: true,
-					programmeOfficerLastName: true,
-					programmeOfficerEmail: true,
-					assessorName: true
-				}
-			},
-			caseHistories: {
-				orderBy: { date: 'desc' }
-			},
-			examinationInfo: {
-				select: {
-					examiningInspector1: true,
-					examiningInspector2: true,
-					examiningInspector3: true,
-					examinationWebsite: true,
-					qaInspector1: true,
-					qaInspector2: true,
-					qaInspector3: true
-				}
-			}
-		}
-	});
 }
 
 export async function updateCaseHistory(
