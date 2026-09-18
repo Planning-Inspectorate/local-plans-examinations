@@ -62,13 +62,22 @@ async function run() {
 		upsert: {
 			update: {
 				expectedDate: planDates.gateway3Date,
-				actualDate: null,
-				completionDate: null
+				actualDate: null
 			},
 			create: {
 				expectedDate: planDates.gateway3Date,
 				actualDate: null,
-				completionDate: null
+				submission: {
+					// Will always have at least one entry
+					createMany: {
+						data: [
+							{
+								decision: undefined,
+								completionDate: undefined
+							}
+						]
+					}
+				}
 			}
 		}
 	};
