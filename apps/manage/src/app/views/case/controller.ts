@@ -702,7 +702,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-3': {
 				const journey3Data = await db.gateway3Info.findUnique({
-					select: {
+					include: {
 						submission: true
 					},
 					where: { caseId: caseRecord.id }
@@ -1378,9 +1378,8 @@ export function preprocessQuestionProperties(
 			const caseDetails = await service.db.case.findUnique({
 				include: {
 					gateway3Info: {
-						select: {
+						include: {
 							submission: true
-							//completionDate: true
 						}
 					}
 				},
