@@ -19,6 +19,7 @@ describe('getPlanStatusClasses', () => {
 describe('resolveCaseHeaderStatus', () => {
 	it('returns Awaiting SLA when no SLA has been received', () => {
 		const result = resolveCaseHeaderStatus(
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -29,8 +30,7 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: null,
 				dsaChecked: null
 			},
-			null,
-			[]
+			null
 		);
 
 		assert.deepEqual(result, {
@@ -41,6 +41,7 @@ describe('resolveCaseHeaderStatus', () => {
 
 	it('returns GW2 pending when the SLA has been received', () => {
 		const result = resolveCaseHeaderStatus(
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -51,8 +52,7 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: new Date(),
 				dsaChecked: null
 			},
-			null,
-			[]
+			null
 		);
 
 		assert.deepEqual(result, {
@@ -65,6 +65,7 @@ describe('resolveCaseHeaderStatus', () => {
 		const futureDate = new Date(Date.now() + 60_000);
 
 		const result = resolveCaseHeaderStatus(
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -88,8 +89,7 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			},
-			[]
+			}
 		);
 
 		assert.deepEqual(result, {
@@ -102,6 +102,7 @@ describe('resolveCaseHeaderStatus', () => {
 		const pastDate = new Date(Date.now() - 60_000);
 
 		const result = resolveCaseHeaderStatus(
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -125,8 +126,7 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			},
-			[]
+			}
 		);
 
 		assert.deepEqual(result, {
@@ -137,17 +137,6 @@ describe('resolveCaseHeaderStatus', () => {
 
 	it('returns GW2 received when gateway 2 documents exist', () => {
 		const result = resolveCaseHeaderStatus(
-			{
-				id: '1',
-				caseId: 'case-1',
-				noticeOfIntention: null,
-				expectedGateway1Date: null,
-				completedGateway1Date: null,
-				slaSentDate: null,
-				slaReceivedDate: new Date(),
-				dsaChecked: null
-			},
-			null,
 			[
 				{
 					createdAt: new Date(),
@@ -158,7 +147,18 @@ describe('resolveCaseHeaderStatus', () => {
 					isDeleted: false,
 					latestVersionId: null
 				}
-			]
+			],
+			{
+				id: '1',
+				caseId: 'case-1',
+				noticeOfIntention: null,
+				expectedGateway1Date: null,
+				completedGateway1Date: null,
+				slaSentDate: null,
+				slaReceivedDate: new Date(),
+				dsaChecked: null
+			},
+			null
 		);
 
 		assert.deepEqual(result, {
@@ -171,6 +171,17 @@ describe('resolveCaseHeaderStatus', () => {
 		const futureDate = new Date(Date.now() + 60_000);
 
 		const result = resolveCaseHeaderStatus(
+			[
+				{
+					createdAt: new Date(),
+					name: 'doc',
+					caseId: 'case-1',
+					guid: 'guid-1',
+					documentSetId: 'some-set',
+					isDeleted: false,
+					latestVersionId: null
+				}
+			],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -194,18 +205,7 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			},
-			[
-				{
-					createdAt: new Date(),
-					name: 'doc',
-					caseId: 'case-1',
-					guid: 'guid-1',
-					documentSetId: 'some-set',
-					isDeleted: false,
-					latestVersionId: null
-				}
-			]
+			}
 		);
 
 		assert.deepEqual(result, {
@@ -218,6 +218,17 @@ describe('resolveCaseHeaderStatus', () => {
 		const pastDate = new Date(Date.now() - 60_000);
 
 		const result = resolveCaseHeaderStatus(
+			[
+				{
+					createdAt: new Date(),
+					name: 'doc',
+					caseId: 'case-1',
+					guid: 'guid-1',
+					documentSetId: 'some-set',
+					isDeleted: false,
+					latestVersionId: null
+				}
+			],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -241,18 +252,7 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			},
-			[
-				{
-					createdAt: new Date(),
-					name: 'doc',
-					caseId: 'case-1',
-					guid: 'guid-1',
-					documentSetId: 'some-set',
-					isDeleted: false,
-					latestVersionId: null
-				}
-			]
+			}
 		);
 
 		assert.deepEqual(result, {
@@ -263,17 +263,6 @@ describe('resolveCaseHeaderStatus', () => {
 
 	it('returns GW3 pending when a G2 report document exists', () => {
 		const result = resolveCaseHeaderStatus(
-			{
-				id: '1',
-				caseId: 'case-1',
-				noticeOfIntention: null,
-				expectedGateway1Date: null,
-				completedGateway1Date: null,
-				slaSentDate: null,
-				slaReceivedDate: new Date(),
-				dsaChecked: null
-			},
-			null,
 			[
 				{
 					createdAt: new Date(),
@@ -284,17 +273,7 @@ describe('resolveCaseHeaderStatus', () => {
 					isDeleted: false,
 					latestVersionId: null
 				}
-			]
-		);
-
-		assert.deepEqual(result, {
-			headerStatusText: 'GW3 pending',
-			headerStatusClasses: 'govuk-tag--yellow'
-		});
-	});
-
-	it('ignores deleted gateway 2 documents', () => {
-		const result = resolveCaseHeaderStatus(
+			],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -305,7 +284,17 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: new Date(),
 				dsaChecked: null
 			},
-			null,
+			null
+		);
+
+		assert.deepEqual(result, {
+			headerStatusText: 'GW3 pending',
+			headerStatusClasses: 'govuk-tag--yellow'
+		});
+	});
+
+	it('ignores deleted gateway 2 documents', () => {
+		const result = resolveCaseHeaderStatus(
 			[
 				{
 					createdAt: new Date(),
@@ -325,7 +314,18 @@ describe('resolveCaseHeaderStatus', () => {
 					isDeleted: true,
 					latestVersionId: null
 				}
-			]
+			],
+			{
+				id: '1',
+				caseId: 'case-1',
+				noticeOfIntention: null,
+				expectedGateway1Date: null,
+				completedGateway1Date: null,
+				slaSentDate: null,
+				slaReceivedDate: new Date(),
+				dsaChecked: null
+			},
+			null
 		);
 
 		assert.deepEqual(result, {
