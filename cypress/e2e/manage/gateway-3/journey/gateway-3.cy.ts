@@ -174,8 +174,14 @@ describe('Gateway 3 updates', () => {
 		gateway3DecisionPage.verifyLoaded();
 		gateway3DecisionPage.selectDecision('1');
 
-		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName, gateway3DocumentsAnswer.fieldName);
-		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName2, gateway3DocumentsAnswer.fieldName);
+		gateway3DocumentsPage.uploadAndVerifyFile(
+			gateway3DocumentsAnswer.fileName,
+			`${gateway3DocumentsAnswer.fieldName}-1`
+		);
+		gateway3DocumentsPage.uploadAndVerifyFile(
+			gateway3DocumentsAnswer.fileName2,
+			`${gateway3DocumentsAnswer.fieldName}-1`
+		);
 
 		gateway3DocumentsPage.saveAndReturn();
 
