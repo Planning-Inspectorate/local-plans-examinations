@@ -13,7 +13,7 @@ export const gateway3DocumentsPage = new DocumentUploadPage(
 
 class Gateway3DocumentsCheckPage extends BasePage {
 	constructor() {
-		super(/^\/case\/.+\/gateway-3\/gateway-3-submission\/gateway-3-document\/check$/);
+		super(/^\/case\/.+\/gateway-3\/gateway-3-submission-(\d)+\/gateway-3-document-(\d)+\/check$/);
 	}
 
 	get previewDropDown() {
