@@ -17,6 +17,10 @@ import {
 	createFileUploaderUploadController,
 	fileUploaderQuestionMiddleware
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
+import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
+
+type CaseWithGateway2Info = CaseModel & { gateway2Info?: Gateway2InfoModel | null };
 import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
@@ -65,11 +69,7 @@ type Gateway2Session = Request['session'] &
 	};
 
 type Gateway2Request = Request & {
-	currentCase?: CaseModel & {
-		gateway2Info?: {
-			expectedDate: Date | null;
-		} | null;
-	};
+	currentCase?: CaseWithGateway2Info;
 	session: Gateway2Session;
 };
 
@@ -638,6 +638,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		getJourney,
 		setAsEditingFromCya,
 		setGateway2CheckAnswersViewData,
+		buildSubmittedGateway2View(),
 		buildGateway2CheckAnswersList()
 	);
 
