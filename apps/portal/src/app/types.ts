@@ -122,7 +122,7 @@ export interface ApplicationDoc {
 
 export interface Plan {
 	//BIG ? on name
-	refNum: string; //Reference Number
+	planReference: string; //Reference Number
 	leadLPA: string; //Lead Local Planning Authority
 	linkedLPA: string; //Linked Local Planning Authority
 	title: string; //Plan Title
@@ -206,19 +206,6 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 	file: null, // will be for file when implemented
 	state: 0, // which state (Not started,In progress,Completed on) document is, mapped, valid 0->2, (3/6/2026)
 	dateCompleted: null, //when completed
-	...overrides
-});
-
-export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
-	refNum: 'PLAN-001', //Reference Number
-	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
-	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
-	title: 'East Borough Local Plan', //Plan Title
-	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
-	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
-	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
-	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
-	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed
 	...overrides
 });
 
@@ -323,7 +310,7 @@ export function buildTestPlans(): unknown[] {
 
 	const testData: unknown[] = [
 		{
-			refNum: 'PLAN-001',
+			refNum: 'PLAN-001111',
 			leadLPA: 'Southampton City Council',
 			linkedLPA: 'Romsey Town Council',
 			title: 'East Borough Local Plan',

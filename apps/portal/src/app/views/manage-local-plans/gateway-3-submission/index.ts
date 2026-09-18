@@ -1,5 +1,8 @@
 import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
+import { buildGetJourney } from '@planning-inspectorate/dynamic-forms';
+import { createJourney } from './journey.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
@@ -11,6 +14,9 @@ import {
 export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
+	// const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse));
+	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const {
 		getJourney,
 		getJourneyResponseFromCase,
@@ -26,16 +32,22 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		redirectAfterCaseQuestionEdit
 	} = buildGateway3Middleware(service);
 
-	// Landing page (case-scoped)
+	// router.get(
+	// 	'/gateway-3-submission',
+	// 	getJourneyResponse,
+	// 	getJourney,
+	// 	setGateway3ViewData,
+	// 	buildGateway3CheckAnswersList()
+	// );
+
 	router.get(
-		'/:planReference/gateway-3-submission',
+		'/',
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,
 		setGateway3ViewData,
 		buildGateway3CheckAnswersList()
 	);
-
 	// Upload documents (case-scoped)
 	router.post(
 		'/:planReference/gateway-3-submission/:section/:question/upload-documents',
@@ -80,6 +92,5 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		validationErrorHandler,
 		redirectAfterCaseQuestionEdit
 	);
-
 	return router;
 }
