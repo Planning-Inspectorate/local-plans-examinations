@@ -1096,7 +1096,7 @@ describe('buildGetJourneyMiddleware', () => {
 			where: {
 				caseId: CASE_ID
 			},
-			select: { submission: true }
+			include: { submission: true }
 		});
 
 		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
@@ -1633,7 +1633,7 @@ describe('preprocessQuestionProperties', () => {
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Decision-1': {
 				actionLink: {
-					href: `gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
+					href: `/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
 					text: 'View'
 				}
 			},
