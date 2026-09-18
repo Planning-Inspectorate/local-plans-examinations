@@ -1,11 +1,11 @@
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
-import { JourneyDataLoadHandler, type JourneyDataLoadContext } from './journey-data-load-handler.ts';
-import { addUploadedDocumentDetailsToAnswers } from './journey-data.ts';
+import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
+import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
 
-export class Gateway2DataLoadHandler extends JourneyDataLoadHandler {
-	public async handle(context: JourneyDataLoadContext): Promise<void> {
+export class Gateway2TabHandler extends OverviewPageLoadHandler {
+	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
 

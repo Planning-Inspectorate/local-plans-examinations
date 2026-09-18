@@ -12,7 +12,7 @@ import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/cust
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
-import { getJourneyDataLoadHandlerForPage } from './journey/journey-data-load-handler-factory.ts';
+import { getPageLoadHandlerForPage } from './overview-data-handlers/overview-page-load-handler-factory.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
@@ -697,7 +697,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		const currentPage = getFirstSegmentOfUrl(req.url);
 		let handlerClass;
 		try {
-			handlerClass = getJourneyDataLoadHandlerForPage(currentPage);
+			handlerClass = getPageLoadHandlerForPage(currentPage);
 		} catch {
 			logger.error(`Unknown page ${currentPage} for case ${reference}`);
 			return;
