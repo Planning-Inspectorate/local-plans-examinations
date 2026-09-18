@@ -12,10 +12,9 @@ import {
 } from '@planning-inspectorate/dynamic-forms';
 import { createJourney, JOURNEY_ID } from './journey.ts';
 import { questions } from './questions.ts';
-import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
-import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
+import { buildCaseOfficerOptions, loadLpaOptions } from '../../util/options-helper.ts';
 
 function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
