@@ -2,7 +2,7 @@ import { BasePage } from '../../base-page.ts';
 
 export class Gateway3DecisionPage extends BasePage {
 	constructor() {
-		super(/^\/case\/.+\/gateway-3\/gateway-3-submission\/gateway-3-decision$/);
+		super(/^\/case\/.+\/gateway-3\/gateway-3-submission-(\d)+\/gateway-3-decision-(\d)+$/);
 	}
 
 	decisionRadio(value: string) {
