@@ -9,6 +9,7 @@ import {
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
+import { PLAN_TYPE_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -45,8 +46,8 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: 'local-plan', text: 'Local Plan' },
-			{ value: 'other', text: 'Other' }
+			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local Plan' },
+			{ value: PLAN_TYPE_ID.OTHER, text: 'Other' }
 		],
 		question: 'What is the plan type?',
 		fieldName: 'planType',
