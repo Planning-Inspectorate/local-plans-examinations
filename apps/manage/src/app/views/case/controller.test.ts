@@ -71,6 +71,9 @@ function createService(): any {
 			document: {
 				upsert: mock.fn(async () => ({})),
 				findMany: mock.fn(async () => [])
+			},
+			authority: {
+				findMany: mock.fn(async () => [])
 			}
 		},
 		logger: {

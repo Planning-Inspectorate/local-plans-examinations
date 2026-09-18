@@ -1,8 +1,8 @@
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
-import { JourneyDataLoadHandler, type JourneyDataLoadContext } from './journey-data-load-handler.ts';
+import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 
-export class ExaminationDataLoadHandler extends JourneyDataLoadHandler {
-	public async handle(context: JourneyDataLoadContext): Promise<void> {
+export class ExaminationTabHandler extends OverviewPageLoadHandler {
+	public async handle(context: PageLoadContext): Promise<void> {
 		const { res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
 

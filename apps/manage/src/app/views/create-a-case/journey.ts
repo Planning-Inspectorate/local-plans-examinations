@@ -1,8 +1,19 @@
 import { Journey, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
 import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
+import type { ManageService } from '#service';
+import { loadCaseOfficerOptions, loadLpaOptions } from '../../util/options-helper.ts';
 
 export const JOURNEY_ID = 'create-a-case';
+
+export async function loadJourneyOptions(service: ManageService, req: Request, questions: Record<string, any>) {
+	await loadCaseOfficerOptions(service, req, questions);
+
+	const lpaOptions = await loadLpaOptions(service);
+	if (lpaOptions.length > 0) {
+		questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
+	}
+}
 
 export function createLpaOptions(response: JourneyResponse, questions: Record<string, any>, req: Request) {
 	const lpaAnswers = response.answers.checkLpas || [];

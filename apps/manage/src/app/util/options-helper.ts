@@ -1,46 +1,31 @@
-import { type NextFunction, type Response, type Request } from 'express';
+import type { Request } from 'express';
 import type * as authSession from '@planning-inspectorate/core/auth';
-import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 
 type LpaOption = { value: string; text: string };
 
-export function buildCaseOfficerOptions(service: ManageService, questions: Record<string, any>) {
-	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+export async function loadCaseOfficerOptions(service: ManageService, req: Request, questions: Record<string, any>) {
+	if (service.authDisabled) return;
 
-		if (service.authDisabled) {
-			next();
-			return;
-		}
+	const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+	const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
 
-		const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
-
-		questions.caseOfficer.options = [
-			{ value: '', text: '' },
-			...caseOfficers.map((m) => ({ value: m.id, text: m.displayName }))
-		];
-		next();
-	});
+	questions.caseOfficer.options = [
+		{ value: '', text: '' },
+		...caseOfficers.map((m) => ({ value: m.id, text: m.displayName }))
+	];
 }
 
-export function buildInspectorOptions(service: ManageService, questions: Record<string, any>) {
-	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+export async function loadInspectorOptions(service: ManageService, req: Request, questions: Record<string, any>) {
+	if (service.authDisabled) return;
 
-		if (service.authDisabled) {
-			next();
-			return;
-		}
+	const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
+	const inspectors = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors) : [];
 
-		const inspectors = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors) : [];
-
-		const optionsMap = [{ value: '', text: '' }, ...inspectors.map((m) => ({ value: m.id, text: m.displayName }))];
-		questions.examiningInspector1.options = optionsMap;
-		questions.examiningInspector2.options = optionsMap;
-		questions.examiningInspector3.options = optionsMap;
-		next();
-	});
+	const optionsMap = [{ value: '', text: '' }, ...inspectors.map((m) => ({ value: m.id, text: m.displayName }))];
+	questions.examiningInspector1.options = optionsMap;
+	questions.examiningInspector2.options = optionsMap;
+	questions.examiningInspector3.options = optionsMap;
 }
 
 export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
