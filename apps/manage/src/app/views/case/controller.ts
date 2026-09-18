@@ -1408,7 +1408,7 @@ export function preprocessQuestionProperties(
 				questions[gateway3CompletionDate].editable = gateway3Complete;
 				if (gateway3Complete) {
 					questions[gateway3Decision].actionLink = {
-						href: `gateway-3/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
+						href: `/case/${reference}/gateway-3/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
 				} else {
