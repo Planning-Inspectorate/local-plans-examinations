@@ -258,6 +258,7 @@ const gateway2QuestionNames = new Set<string>([
 	'gateway2ValidDate',
 	'gateway2AssessorsName',
 	'assessorDateOfAppointment',
+	'gateway2Report',
 	'workshopDate',
 	'workshopVenue'
 ]);
