@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { ManageService } from '#service';
 
-export interface JourneyDataLoadContext {
+export interface PageLoadContext {
 	req: Request;
 	res: Response;
 	next: NextFunction | undefined;
@@ -11,6 +11,6 @@ export interface JourneyDataLoadContext {
 	caseRecord: { id: string; planTitle: string | null };
 }
 
-export abstract class JourneyDataLoadHandler {
-	public abstract handle(context: JourneyDataLoadContext): Promise<void>;
+export abstract class OverviewPageLoadHandler {
+	public abstract handle(context: PageLoadContext): Promise<void>;
 }
