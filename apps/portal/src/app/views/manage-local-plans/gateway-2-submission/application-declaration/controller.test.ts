@@ -60,11 +60,13 @@ function createMockService() {
 						id: 'case-1',
 						contacts: [{ email: 'lpa@example.com' }]
 					};
-				}
+				},
+				update: async () => ({})
 			},
 			gateway2Info: {
 				update: async () => ({})
-			}
+			},
+			$transaction: async (queries: Promise<unknown>[]) => Promise.all(queries)
 		},
 		notifyClient: {
 			sendEmail: async (templateId: string, to: string, options?: unknown) => {

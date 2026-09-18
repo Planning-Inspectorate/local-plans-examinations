@@ -128,6 +128,24 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			});
 		});
 	}
+
+	verifySubmissionData(todayDisplay: string, submitterEmail: string) {
+		cy.getByData('submission-copy')
+			.should('be.visible')
+			.invoke('text')
+			.should('match', /^Your application was submitted on .+ at \d{2}:\d{2} by .+$/)
+			.and('include', todayDisplay)
+			.and('include', submitterEmail);
+	}
+
+	verifyNoAddOrChangeLinks() {
+		cy.get('[data-cy^="add-"]').should('not.exist');
+		cy.contains('a', 'Change').should('not.exist');
+	}
+
+	verifySubmitGateway2ButtonNotShown() {
+		this.submitGateway2AssessmentButton.should('not.exist');
+	}
 }
 
 export const gateway2ApplicationPage = new Gateway2ApplicationPage();

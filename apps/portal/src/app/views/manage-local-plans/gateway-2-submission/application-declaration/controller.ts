@@ -84,16 +84,24 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			return res.status(500).send('No case found');
 		}
 
-		// Record the submission date on the case
+		// Record the submission date on the case and gateway2Info
+		const submissionDate = new Date();
 		try {
-			await db.gateway2Info.update({
-				where: { caseId: caseRecord.id },
-				data: { actualDate: new Date() }
-			});
+			await db.$transaction([
+				db.case.update({
+					where: { reference },
+					data: { submissionDate }
+				}),
+				db.gateway2Info.update({
+					where: { caseId: caseRecord.id },
+					data: { actualDate: submissionDate }
+				})
+			]);
 		} catch (error) {
 			logger.error({ error }, `Failed to update submission date for case ${reference}`);
 			return res.status(500).send('Failed to record submission');
 		}
+
 		// send email to LPA using GOV.UK Notify
 		await Promise.allSettled(
 			caseRecord.contacts.map(async (contact) => {
