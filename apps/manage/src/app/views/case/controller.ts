@@ -833,7 +833,16 @@ async function addUploadedDocumentDetailsToAnswers(
 ) {
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
-	const relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
+	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
+	if (journeyId == 'gateway-3') {
+		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
+		const lastSubmissionId = answers.submission.length;
+		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem) =>
+			Number(elem.fieldName.replace('gateway3Documents-', ''))
+				? Number(elem.fieldName.replace('gateway3Documents-', '')) <= lastSubmissionId
+				: true
+		);
+	}
 	if (!relevantFileUploadQuestionConfigs) {
 		return;
 	}
