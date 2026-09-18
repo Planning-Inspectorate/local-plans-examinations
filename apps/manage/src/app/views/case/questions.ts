@@ -105,7 +105,7 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 			chooseFilesButtonText: 'Choose files',
 			dropInstructionText: 'or drop files'
 		},
-		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Upload gateway 3 document file')],
+		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
 	},
 	gateway3Decision: {
@@ -136,6 +136,11 @@ for (let i = 1; i < 50; i++) {
 		const questionConfigCopy = { ...gateway3BaseQuestions[key] };
 		questionConfigCopy.url = `${questionConfigCopy.url}-${i}`;
 		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${i}`;
+		if (questionConfigCopy.type == CUSTOM_COMPONENTS.FILE_UPLOADER) {
+			questionConfigCopy.validators = [
+				new FileUploadRequiredValidator(questionConfigCopy.fieldName, 'Please upload your Gateway 3 report')
+			];
+		}
 		gateway3Questions[`${key}-${i}`] = questionConfigCopy;
 	}
 }

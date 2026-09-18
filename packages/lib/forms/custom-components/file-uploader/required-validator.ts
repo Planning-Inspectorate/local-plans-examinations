@@ -11,8 +11,8 @@ export default class FileUploadRequiredValidator extends RequiredValidator {
 
 	validate() {
 		return body(this.fieldName).custom((value) => {
-			const decodedJson = Buffer.from(String(value ?? ''), 'base64').toString('utf-8');
-			const parsed = JSON.parse(decodedJson);
+			const decodedJson = value ? Buffer.from(String(value ?? ''), 'base64').toString('utf-8') : '';
+			const parsed = decodedJson ? JSON.parse(decodedJson) : decodedJson;
 
 			if (!Array.isArray(parsed) || parsed.length === 0) {
 				throw new Error(this.errorMessage);
