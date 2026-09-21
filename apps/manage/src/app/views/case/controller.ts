@@ -640,60 +640,6 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;
 
-		const gateway2DocumentSets = {
-			procedural: [
-				{ folderName: 'covering-letter', title: 'Gateway 2 covering letter' },
-				{ folderName: 'local-plan-timetable', title: 'Local plan timetable' },
-				{ folderName: 'project-initiation-document', title: 'Project initiation document' },
-				{ folderName: 'draft-stat-compliance', title: 'Draft statement of compliance' },
-				{ folderName: 'draft-stat-soundness', title: 'Draft statement of soundness' }
-			],
-			consultation: [
-				{ folderName: 'notice-of-intent', title: 'Notice of intention to commence local plan preparation' },
-				{ folderName: 'scoping-cons', title: 'Scoping consultation documents' },
-				{ folderName: 'cons-summ', title: 'Consultation summary of feedback to scoping consultation' },
-				{ folderName: 'g1-self-assess', title: 'Gateway 1 - Self assessment of readiness' },
-				{ folderName: 'cons-of-proposed', title: 'Consultation on proposed local plan content and evidence documents' },
-				{
-					folderName: 'summary-of-consultation',
-					title: 'Summary of consultation on proposed local plan content and evidence documents'
-				}
-			],
-			additional: [
-				{
-					folderName: 'subsequent-work-towards-a-draft-plan',
-					title: 'Subsequent work towards a draft plan'
-				}
-			]
-		};
-
-		const allDocumentSets = Object.values(gateway2DocumentSets).flat();
-
-		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
-			service,
-			allDocumentSets.map(({ folderName }) => folderName)
-		);
-
-		const documentsByCategory = await Promise.all(
-			Object.entries(gateway2DocumentSets).map(async ([category, documentSets]) => ({
-				category,
-				documents: await Promise.all(
-					documentSets.map(async ({ folderName, title }) => {
-						const documentSetId = documentSetIds.get(folderName);
-
-						const files = documentSetId
-							? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId)
-							: [];
-
-						return {
-							title,
-							files
-						};
-					})
-				)
-			}))
-		);
-
 		const currentPage = getFirstSegmentOfUrl(req.url);
 		let handlerClass;
 		try {
