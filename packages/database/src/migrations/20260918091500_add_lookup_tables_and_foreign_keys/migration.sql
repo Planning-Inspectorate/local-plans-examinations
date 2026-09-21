@@ -2,7 +2,7 @@ BEGIN TRY
 
 BEGIN TRAN;
 
--- CreateTable
+-- Create lookup tables
 CREATE TABLE [dbo].[PlanType] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -10,7 +10,6 @@ CREATE TABLE [dbo].[PlanType] (
     CONSTRAINT [PlanType_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
--- CreateTable
 CREATE TABLE [dbo].[PlanBand] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -18,7 +17,6 @@ CREATE TABLE [dbo].[PlanBand] (
     CONSTRAINT [PlanBand_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
--- CreateTable
 CREATE TABLE [dbo].[DsaChecked] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -26,7 +24,6 @@ CREATE TABLE [dbo].[DsaChecked] (
     CONSTRAINT [DsaChecked_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
--- CreateTable
 CREATE TABLE [dbo].[Gateway3Decision] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -34,7 +31,6 @@ CREATE TABLE [dbo].[Gateway3Decision] (
     CONSTRAINT [Gateway3Decision_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
--- CreateTable
 CREATE TABLE [dbo].[AuthorityStatus] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -42,7 +38,6 @@ CREATE TABLE [dbo].[AuthorityStatus] (
     CONSTRAINT [AuthorityStatus_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
--- CreateTable
 CREATE TABLE [dbo].[DocumentSourceSystem] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -50,7 +45,6 @@ CREATE TABLE [dbo].[DocumentSourceSystem] (
     CONSTRAINT [DocumentSourceSystem_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
--- CreateTable
 CREATE TABLE [dbo].[VirusCheckStatus] (
     [id] NVARCHAR(50) NOT NULL,
     [displayName] NVARCHAR(100) NOT NULL,
@@ -198,69 +192,53 @@ BEGIN
     THROW 51000, 'DocumentVersion.virusCheckStatus contains values that are not present in VirusCheckStatus.', 1;
 END;
 
--- AlterTable
+-- Alter tables readd NOT NULL constraint
 ALTER TABLE [dbo].[Authority] ALTER COLUMN [status] NVARCHAR(50) NOT NULL;
 
--- AlterTable
 ALTER TABLE [dbo].[Case] ALTER COLUMN [planType] NVARCHAR(50) NOT NULL;
 ALTER TABLE [dbo].[Case] ALTER COLUMN [planBand] NVARCHAR(50) NULL;
 
--- AlterTable
 ALTER TABLE [dbo].[DocumentVersion] ALTER COLUMN [sourceSystem] NVARCHAR(50) NOT NULL;
 ALTER TABLE [dbo].[DocumentVersion] ALTER COLUMN [virusCheckStatus] NVARCHAR(50) NOT NULL;
 
--- AlterTable
 ALTER TABLE [dbo].[Gateway1Info] ALTER COLUMN [dsaChecked] NVARCHAR(50) NULL;
 
--- AlterTable
 ALTER TABLE [dbo].[Gateway3Info] ALTER COLUMN [decision] NVARCHAR(50) NULL;
 
--- CreateIndex
+-- Create indexes we require on lookup fields
 CREATE NONCLUSTERED INDEX [Authority_status_idx] ON [dbo].[Authority]([status]);
 
--- CreateIndex
 CREATE NONCLUSTERED INDEX [Case_planType_idx] ON [dbo].[Case]([planType]);
 
--- CreateIndex
 CREATE NONCLUSTERED INDEX [Case_planBand_idx] ON [dbo].[Case]([planBand]);
 
--- CreateIndex
 CREATE NONCLUSTERED INDEX [DocumentVersion_sourceSystem_idx] ON [dbo].[DocumentVersion]([sourceSystem]);
 
--- CreateIndex
 CREATE NONCLUSTERED INDEX [DocumentVersion_virusCheckStatus_idx] ON [dbo].[DocumentVersion]([virusCheckStatus]);
 
--- CreateIndex
 CREATE NONCLUSTERED INDEX [Gateway1Info_dsaChecked_idx] ON [dbo].[Gateway1Info]([dsaChecked]);
 
--- CreateIndex
 CREATE NONCLUSTERED INDEX [Gateway3Info_decision_idx] ON [dbo].[Gateway3Info]([decision]);
 
--- AddForeignKey
+-- AddF foreign keys on look tables
 ALTER TABLE [dbo].[Case] WITH CHECK ADD CONSTRAINT [Case_planType_fkey] FOREIGN KEY ([planType]) REFERENCES [dbo].[PlanType]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[Case] CHECK CONSTRAINT [Case_planType_fkey];
 
--- AddForeignKey
 ALTER TABLE [dbo].[Case] WITH CHECK ADD CONSTRAINT [Case_planBand_fkey] FOREIGN KEY ([planBand]) REFERENCES [dbo].[PlanBand]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[Case] CHECK CONSTRAINT [Case_planBand_fkey];
 
--- AddForeignKey
 ALTER TABLE [dbo].[Gateway1Info] WITH CHECK ADD CONSTRAINT [Gateway1Info_dsaChecked_fkey] FOREIGN KEY ([dsaChecked]) REFERENCES [dbo].[DsaChecked]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[Gateway1Info] CHECK CONSTRAINT [Gateway1Info_dsaChecked_fkey];
 
--- AddForeignKey
 ALTER TABLE [dbo].[Gateway3Info] WITH CHECK ADD CONSTRAINT [Gateway3Info_decision_fkey] FOREIGN KEY ([decision]) REFERENCES [dbo].[Gateway3Decision]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[Gateway3Info] CHECK CONSTRAINT [Gateway3Info_decision_fkey];
 
--- AddForeignKey
 ALTER TABLE [dbo].[Authority] WITH CHECK ADD CONSTRAINT [Authority_status_fkey] FOREIGN KEY ([status]) REFERENCES [dbo].[AuthorityStatus]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[Authority] CHECK CONSTRAINT [Authority_status_fkey];
 
--- AddForeignKey
 ALTER TABLE [dbo].[DocumentVersion] WITH CHECK ADD CONSTRAINT [DocumentVersion_sourceSystem_fkey] FOREIGN KEY ([sourceSystem]) REFERENCES [dbo].[DocumentSourceSystem]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[DocumentVersion] CHECK CONSTRAINT [DocumentVersion_sourceSystem_fkey];
 
--- AddForeignKey
 ALTER TABLE [dbo].[DocumentVersion] WITH CHECK ADD CONSTRAINT [DocumentVersion_virusCheckStatus_fkey] FOREIGN KEY ([virusCheckStatus]) REFERENCES [dbo].[VirusCheckStatus]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[DocumentVersion] CHECK CONSTRAINT [DocumentVersion_virusCheckStatus_fkey];
 
