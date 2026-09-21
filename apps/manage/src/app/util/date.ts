@@ -11,7 +11,12 @@ export function parseDate(value: string): Date {
 	const dateStr = `${year}-${pad(month)}-${pad(day)}`;
 	const timeStr = `${pad(hour)}:${pad(minute)}`;
 
-	return fromZonedTime(`${dateStr} ${timeStr}`, 'Europe/London');
+	const date = fromZonedTime(`${dateStr} ${timeStr}`, 'Europe/London');
+
+	if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+		throw new Error(`Invalid date: ${value}`);
+	}
+	return date;
 }
 
 function pad(num: any, length = 2) {
