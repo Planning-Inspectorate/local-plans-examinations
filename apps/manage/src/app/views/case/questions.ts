@@ -28,7 +28,9 @@ import {
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-import { retrieveDefaultCaseOfficers } from '../../util/options-helper.ts';
+import { loadCaseOfficerOptions, loadInspectorOptions, loadLpaOptions, retrieveDefaultCaseOfficers } from '../../util/options-helper.ts';
+import type { ManageService } from '#service';
+import type { Request } from 'express';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -957,3 +959,21 @@ questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: 
 		: this.notStartedText;
 	return [{ key: this.title, value, action: this.getAction(sectionSegment, journey, answer) }];
 };
+
+export async function updateQuestionsWithOptions(service: ManageService, req: Request, questions: Record<string, any>) {
+	await loadCaseOfficerOptions(service, req, questions);
+	await loadInspectorOptions(service, req, questions);
+
+	const lpaOptions = await loadLpaOptions(service);
+	if (lpaOptions.length > 0) {
+		questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
+	}
+}
+
+export async function getQuestions(
+	service: ManageService,
+	req: Request
+): Promise<Record<string, ManageQuestionConfig>> {
+	await updateQuestionsWithOptions(service, req, questions);
+	return questions;
+}

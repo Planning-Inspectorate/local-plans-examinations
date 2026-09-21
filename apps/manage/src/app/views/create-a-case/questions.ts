@@ -11,6 +11,9 @@ import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
 import { PLAN_TYPE_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import type { ManageService } from '#service';
+import { loadCaseOfficerOptions, loadLpaOptions } from '../../util/options-helper.ts';
+import type { Request } from 'express';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -216,4 +219,26 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 	}
 };
 
-export const questions = createQuestions(createACaseQuestions, allQuestionClasses, {}, {});
+async function updateQuestionsWithOptions(service: ManageService, req: Request, questions: Record<string, any>) {
+	await loadCaseOfficerOptions(service, req, questions);
+
+	const lpaOptions = await loadLpaOptions(service);
+	if (lpaOptions.length > 0) {
+		questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
+	}
+}
+
+export const questions = createQuestions(
+	createACaseQuestions,
+	allQuestionClasses,
+	{},
+	{ continueButtonText: 'Save and continue' }
+);
+
+export async function getQuestions(
+	service: ManageService,
+	req: Request
+): Promise<Record<string, ManageQuestionConfig>> {
+	await updateQuestionsWithOptions(service, req, questions);
+	return questions;
+}
