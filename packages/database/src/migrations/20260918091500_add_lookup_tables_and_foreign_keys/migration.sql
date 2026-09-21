@@ -220,7 +220,7 @@ CREATE NONCLUSTERED INDEX [Gateway1Info_dsaChecked_idx] ON [dbo].[Gateway1Info](
 
 CREATE NONCLUSTERED INDEX [Gateway3Info_decision_idx] ON [dbo].[Gateway3Info]([decision]);
 
--- AddF foreign keys on look tables
+-- Add foreign keys on look tables
 ALTER TABLE [dbo].[Case] WITH CHECK ADD CONSTRAINT [Case_planType_fkey] FOREIGN KEY ([planType]) REFERENCES [dbo].[PlanType]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE [dbo].[Case] CHECK CONSTRAINT [Case_planType_fkey];
 
