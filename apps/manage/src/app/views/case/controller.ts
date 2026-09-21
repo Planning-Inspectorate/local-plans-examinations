@@ -468,21 +468,8 @@ export async function updateGateway3(
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	const createSubmission: { submissions: { createMany: { data: object[] } } } = {
-		submissions: {
-			createMany: {
-				data: []
-			}
-		}
-	};
-	const updateSubmission: { submissions: { deleteMany: object; createMany: { data: object[] } } } = {
-		submissions: {
-			deleteMany: {},
-			createMany: {
-				data: []
-			}
-		}
-	};
+	const createData: Record<string, any> = { ...answers };
+	const updateData: Record<string, any> = { ...answers };
 	if ('submissions' in answers) {
 		const submissionDetails = answers.submissions;
 		if (!submissionDetails) {
@@ -492,9 +479,17 @@ export async function updateGateway3(
 			decision: e.decision,
 			completionDate: e.completionDate
 		}));
-		delete answers.submissions;
-		createSubmission.submissions.createMany.data = submissionDetailsCleaned;
-		updateSubmission.submissions.createMany.data = submissionDetailsCleaned;
+		createData['submissions'] = {
+			createMany: {
+				data: submissionDetailsCleaned
+			}
+		};
+		updateData['submissions'] = {
+			deleteMany: {},
+			createMany: {
+				data: submissionDetailsCleaned
+			}
+		};
 	}
 	if (question?.startsWith('gateway-3-document')) {
 		// For handling the save button
@@ -503,11 +498,10 @@ export async function updateGateway3(
 	if (answers) {
 		await db.gateway3Info.upsert({
 			where: { caseId },
-			update: { ...answers, ...updateSubmission },
+			update: { ...updateData },
 			create: {
 				caseId,
-				...answers,
-				...createSubmission
+				...createData
 			}
 		});
 	}
