@@ -476,7 +476,7 @@ export async function updateGateway3(
 		}
 	};
 	const updateSubmission: { submissions: { deleteMany: object; createMany: { data: object[] } } } = {
-			submissions: {
+		submissions: {
 			deleteMany: {},
 			createMany: {
 				data: []
@@ -494,7 +494,7 @@ export async function updateGateway3(
 		}));
 		delete answers.submissions;
 		createSubmission.submissions.createMany.data = submissionDetailsCleaned;
-		updateSubmission.submissions.createMany.data = submissionDetailsCleaned
+		updateSubmission.submissions.createMany.data = submissionDetailsCleaned;
 	}
 	if (question?.startsWith('gateway-3-document')) {
 		// For handling the save button
