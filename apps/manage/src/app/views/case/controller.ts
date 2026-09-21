@@ -117,7 +117,7 @@ interface Gateway3Input {
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
 	examinationWebsite?: string;
-	submission?: {
+	submissions?: {
 		id: string;
 		decision: string | null;
 		completionDate: Date | null;
@@ -785,6 +785,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					req.originalUrl.endsWith(String(req.params.question))
 				) {
 					const submissionNumber = String(req.params.question).replace('gateway-3-decision-', '');
+					if (!/^\d+$/.test(submissionNumber)) {
+						throw new Error('Invalid submission number');
+					}
 					const caseReference = getParam(req.params.reference);
 					const updatedSubmissions = sortGateway3Submissions(journey3Data?.submissions);
 					if (!updatedSubmissions) {
@@ -812,6 +815,9 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					req.originalUrl.endsWith(String(req.params.question))
 				) {
 					const submissionNumber = String(req.params.question).replace('gateway-3-document-', '');
+					if (!/^\d+$/.test(submissionNumber)) {
+						throw new Error('Invalid submission number');
+					}
 					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == req.params.question);
 					if (!questionConfig) {
 						throw new Error(`Could not find question config for question url 'gateway-3-document'`);
