@@ -25,13 +25,7 @@ describe('My plans page content', () => {
 				'Status'
 			]);
 			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				{
-					refNumber: plan.reference,
-					localPlanningAuthority: plan.leadLpa,
-					planTitle: plan.title,
-					currentStage: plan.currentStage,
-					status: plan.status
-				}
+				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status]
 			]);
 			myPlansPage.verifyYourPlanLink(plan.reference);
 		});
