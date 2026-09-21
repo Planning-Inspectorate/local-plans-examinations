@@ -68,7 +68,7 @@ async function run() {
 			create: {
 				expectedDate: planDates.gateway3Date,
 				actualDate: null,
-				submission: {
+				submissions: {
 					// Will always have at least one entry
 					createMany: {
 						data: [

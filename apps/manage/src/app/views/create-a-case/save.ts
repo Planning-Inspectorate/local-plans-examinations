@@ -157,7 +157,7 @@ async function saveDataToDatabase(
 			tx.gateway3Info.create({
 				data: {
 					caseId: createdCase.id,
-					submission: {
+					submissions: {
 						// Will always have at least one entry
 						create: [
 							{

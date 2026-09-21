@@ -245,7 +245,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with no existing data for decision 1', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				submission: [
+				submissions: [
 					{
 						id: 'someId-1',
 						decision: '1',
@@ -290,7 +290,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with no existing data for decision 2', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				submission: [
+				submissions: [
 					{
 						id: 'someId-1',
 						decision: '2',
@@ -335,7 +335,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with existing data', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				submission: [
+				submissions: [
 					{
 						id: 'someId-1',
 						decision: '1',
@@ -380,7 +380,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with no decision', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				submission: [
+				submissions: [
 					{
 						id: 'someId-1',
 						decision: '1',
@@ -428,7 +428,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 	it('generateDataForPage with undefined decision number', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
-				submission: [
+				submissions: [
 					{
 						id: 'someId-1',
 						decision: '999',

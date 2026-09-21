@@ -164,7 +164,7 @@ model Gateway3Info {
   programmeOfficerEmail     String?
   assessorName              String?
   assessorAppointmentDate   DateTime?            @db.DateTime2
-  submission                Gateway3Submission[]
+  submissions               Gateway3Submission[]
 }
 
 model Gateway3Submission {

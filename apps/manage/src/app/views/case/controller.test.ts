@@ -490,7 +490,7 @@ describe('updateCaseField', () => {
 		service.db.case.findUnique.mock.mockImplementationOnce(
 			async () => ({
 				gateway3Info: {
-					submission: [
+					submissions: [
 						{
 							id: 'someId',
 							decision: undefined,
@@ -1079,7 +1079,7 @@ describe('buildGetJourneyMiddleware', () => {
 		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			caseId: CASE_ID,
 			assessorName: 'Alex Assessor',
-			submission: [
+			submissions: [
 				{
 					id: 'someId',
 					decision: undefined,
@@ -1096,7 +1096,7 @@ describe('buildGetJourneyMiddleware', () => {
 			where: {
 				caseId: CASE_ID
 			},
-			include: { submission: true }
+			include: { submissions: true }
 		});
 
 		assert.equal(ctx.res.locals.planTitle, 'Southshire Local Plan');
@@ -1126,7 +1126,7 @@ describe('buildGetJourneyMiddleware', () => {
 		}));
 		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			caseId: CASE_ID,
-			submission: [
+			submissions: [
 				{
 					id: 'someId',
 					decision: undefined,
@@ -1546,7 +1546,7 @@ describe('preprocessQuestionProperties', () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
 			gateway3Info: {
-				submission: [
+				submissions: [
 					{
 						id: 'someId',
 						decision: undefined,
@@ -1600,7 +1600,7 @@ describe('preprocessQuestionProperties', () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
 			gateway3Info: {
-				submission: [
+				submissions: [
 					{
 						id: 'someId',
 						decision: undefined,
@@ -1662,7 +1662,7 @@ describe('issueGateway3Document', () => {
 		const service = createService();
 		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			completionDate: undefined,
-			submission: [
+			submissions: [
 				{
 					id: 'someId',
 					decision: undefined,
@@ -1691,7 +1691,7 @@ describe('issueGateway3Document', () => {
 	it('issue document when created date is already set', async () => {
 		const service = createService();
 		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
-			submission: [
+			submissions: [
 				{
 					id: 'someId',
 					decision: undefined,

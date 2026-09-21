@@ -228,7 +228,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					select: {
 						gateway3Info: {
 							select: {
-								submission: true
+								submissions: true
 							}
 						}
 					},
@@ -237,16 +237,16 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				if (!caseDetails) {
 					throw Error(`Could not find details for case with reference '${reference}'`);
 				}
-				if (!caseDetails.gateway3Info?.submission) {
+				if (!caseDetails.gateway3Info?.submissions) {
 					throw Error(`Could not find submission data for case with reference '${reference}'`);
 				}
-				const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submission);
+				const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submissions);
 				let answers = data.answers;
 				if (String(req.params.question).startsWith('gateway-3-completion-date')) {
 					const submissionId = Number(String(req.params.question).replace('gateway-3-completion-date-', ''));
 					submissionDetails[submissionId - 1].completionDate = data.answers[`completionDate-${submissionId}`];
 					answers = {
-						submission: submissionDetails
+						submissions: submissionDetails
 					};
 				}
 				updated = await updateGateway3(
@@ -468,10 +468,10 @@ export async function updateGateway3(
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	let createSubmission: { submission?: { createMany: { data: object[] } } } = {};
-	let updateSubmission: { submission?: { deleteMany: object; createMany: { data: object[] } } } = {};
-	if ('submission' in answers) {
-		const submissionDetails = answers.submission;
+	let createSubmission: { submissions?: { createMany: { data: object[] } } } = {};
+	let updateSubmission: { submissions?: { deleteMany: object; createMany: { data: object[] } } } = {};
+	if ('submissions' in answers) {
+		const submissionDetails = answers.submissions;
 		if (!submissionDetails) {
 			throw Error('No submission entries found');
 		}
@@ -479,16 +479,16 @@ export async function updateGateway3(
 			decision: e.decision,
 			completionDate: e.completionDate
 		}));
-		delete answers.submission;
+		delete answers.submissions;
 		createSubmission = {
-			submission: {
+			submissions: {
 				createMany: {
 					data: submissionDetailsCleaned
 				}
 			}
 		};
 		updateSubmission = {
-			submission: {
+			submissions: {
 				deleteMany: {},
 				createMany: {
 					data: submissionDetailsCleaned
@@ -760,14 +760,14 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			case 'gateway-3': {
 				const journey3Data = await db.gateway3Info.findUnique({
 					include: {
-						submission: true
+						submissions: true
 					},
 					where: { caseId: caseRecord.id }
 				});
 				if (!journey3Data) {
 					throw Error('No gatewa3info data found');
 				}
-				const submissionData = sortGateway3Submissions(journey3Data.submission);
+				const submissionData = sortGateway3Submissions(journey3Data.submissions);
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
@@ -786,7 +786,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				) {
 					const submissionNumber = String(req.params.question).replace('gateway-3-decision-', '');
 					const caseReference = getParam(req.params.reference);
-					const updatedSubmissions = sortGateway3Submissions(journey3Data?.submission);
+					const updatedSubmissions = sortGateway3Submissions(journey3Data?.submissions);
 					if (!updatedSubmissions) {
 						throw Error('No submission found');
 					}
@@ -798,7 +798,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					await updateGateway3(
 						db,
 						{
-							submission: updatedSubmissions
+							submissions: updatedSubmissions
 						},
 						caseReference,
 						String(req.params.question)
@@ -893,7 +893,7 @@ async function addUploadedDocumentDetailsToAnswers(
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
 	if (journeyId == 'gateway-3') {
 		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
-		const lastSubmissionId = answers.submission.length;
+		const lastSubmissionId = answers.submissions.length;
 		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem) =>
 			Number(elem.fieldName.replace('gateway3Documents-', ''))
 				? Number(elem.fieldName.replace('gateway3Documents-', '')) <= lastSubmissionId
@@ -1321,7 +1321,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
 		const gateway3Info = await service.db.gateway3Info.findUnique({
 			select: {
-				submission: true
+				submissions: true
 				//completionDate: true
 			},
 			where: {
@@ -1331,7 +1331,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 		if (!gateway3Info) {
 			throw Error('No gateway3info data could be found');
 		}
-		const existingSubmissions = sortGateway3Submissions(gateway3Info.submission);
+		const existingSubmissions = sortGateway3Submissions(gateway3Info.submissions);
 		const lastSubmission = existingSubmissions.at(-1);
 		if (!lastSubmission) {
 			throw Error('Could not find a submission');
@@ -1354,7 +1354,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			await updateGateway3(
 				service.db,
 				{
-					submission: existingSubmissions
+					submissions: existingSubmissions
 				},
 				caseReference,
 				'gateway-3-report-issued-date'
@@ -1445,7 +1445,7 @@ export function preprocessQuestionProperties(
 				include: {
 					gateway3Info: {
 						include: {
-							submission: true
+							submissions: true
 						}
 					}
 				},
@@ -1453,7 +1453,7 @@ export function preprocessQuestionProperties(
 					reference
 				}
 			});
-			const submissionDetails = caseDetails?.gateway3Info?.submission;
+			const submissionDetails = caseDetails?.gateway3Info?.submissions;
 			if (!submissionDetails) {
 				throw new Error(`No submission details found for case reference '${reference}'`);
 			}
