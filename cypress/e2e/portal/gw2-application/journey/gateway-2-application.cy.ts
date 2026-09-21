@@ -34,4 +34,16 @@ describe('Gateway 2 application page journeys', () => {
 			planDetailsPage.verifyPathForPlan(plan.urlReference);
 		});
 	});
+
+	it('Navigates to My Plans page when Submit development plans is clicked', { tags: ['smoke'] }, () => {
+		loadPlanDetails().then((plan) => {
+			myPlansPage.verifyLoaded();
+			myPlansPage.openPlan(plan.reference);
+			planDetailsPage.verifyLoaded();
+			planDetailsPage.gateway2Link.click();
+			gateway2ApplicationPage.verifyLoaded();
+			gateway2ApplicationPage.openServiceNavigationItem('Submit development plans');
+			myPlansPage.verifyLoaded();
+		});
+	});
 });
