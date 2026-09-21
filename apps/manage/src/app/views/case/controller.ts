@@ -19,6 +19,7 @@ import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/
 import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -479,6 +480,9 @@ export async function updateGateway3(
 			decision: e.decision,
 			completionDate: e.completionDate
 		}));
+		if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
+			throw Error('Max number of submissions has been exceeded');
+		}
 		createData['submissions'] = {
 			createMany: {
 				data: submissionDetailsCleaned
