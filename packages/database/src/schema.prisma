@@ -21,6 +21,62 @@ datasource db {
 // while we don't rely on that for security, it adds an extra layer
 // not everything needs this, but easier to make them all consistent and the increase in size (vs int) is negligible
 
+/// Valid plan types used when creating and maintaining a case.
+model PlanType {
+  id           String @id @db.NVarChar(50)
+  displayName  String @db.NVarChar(100)
+  displayOrder Int
+  cases        Case[]
+}
+
+/// Valid plan bands assigned during the case overview journey.
+model PlanBand {
+  id           String @id @db.NVarChar(50)
+  displayName  String @db.NVarChar(100)
+  displayOrder Int
+  cases        Case[]
+}
+
+/// Valid answers to the data sharing agreement check.
+model DsaChecked {
+  id            String         @id @db.NVarChar(50)
+  displayName   String         @db.NVarChar(100)
+  displayOrder  Int
+  gateway1Infos Gateway1Info[]
+}
+
+/// Valid outcomes for a Gateway 3 decision.
+model Gateway3Decision {
+  id            String         @id @db.NVarChar(50)
+  displayName   String         @db.NVarChar(100)
+  displayOrder  Int
+  gateway3Infos Gateway3Info[]
+}
+
+/// Valid statuses for imported planning authorities.
+model AuthorityStatus {
+  id           String      @id @db.NVarChar(50)
+  displayName  String      @db.NVarChar(100)
+  displayOrder Int
+  authorities  Authority[]
+}
+
+/// Systems that can create a document version.
+model DocumentSourceSystem {
+  id               String            @id @db.NVarChar(50)
+  displayName      String            @db.NVarChar(100)
+  displayOrder     Int
+  documentVersions DocumentVersion[]
+}
+
+/// Valid malware scan states for a document version.
+model VirusCheckStatus {
+  id               String            @id @db.NVarChar(50)
+  displayName      String            @db.NVarChar(100)
+  displayOrder     Int
+  documentVersions DocumentVersion[]
+}
+
 /// Case and local plan overview.
 /// Holds the shared details for a local plan examination, including the plan reference,
 /// title, type, LPAs, contacts, ownership and key milestone dates.
@@ -32,10 +88,11 @@ model Case {
   email                     String
   caseOfficer               String
   planTitle                 String
-  /// Plan type is a bounded application value; keep in sync with PLAN_TYPE_ID until a lookup table exists.
-  planType                  String
+  planType                  String           @db.NVarChar(50)
+  planTypeLookup            PlanType         @relation(fields: [planType], references: [id], onDelete: NoAction, onUpdate: NoAction)
   /// Optional plan band assigned during the case overview journey.
-  planBand                  String?
+  planBand                  String?          @db.NVarChar(50)
+  planBandLookup            PlanBand?        @relation(fields: [planBand], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lpas                      LPA[]
   contacts                  Contact[]
   programmeOfficerFirstName String?
@@ -57,20 +114,25 @@ model Case {
   gateways                  Gateway[]
   caseHistories             CaseHistory[]
   documents                 Document[]
+
+  @@index([planType])
+  @@index([planBand])
 }
 
 /// Gateway 1 stage dates and readiness checks for a case.
 model Gateway1Info {
-  id                    String    @id @default(uuid()) @db.UniqueIdentifier
-  case                  Case      @relation(fields: [caseId], references: [id])
-  caseId                String    @unique @db.UniqueIdentifier
-  noticeOfIntention     DateTime? @db.DateTime2
-  expectedGateway1Date  DateTime? @db.DateTime2
-  completedGateway1Date DateTime? @db.DateTime2
-  slaSentDate           DateTime? @db.DateTime2
-  slaReceivedDate       DateTime? @db.DateTime2
-  /// Stores whether the LPA has a data sharing agreement; values are defined by DSA_CHECKED_ID.
-  dsaChecked            String?
+  id                    String      @id @default(uuid()) @db.UniqueIdentifier
+  case                  Case        @relation(fields: [caseId], references: [id])
+  caseId                String      @unique @db.UniqueIdentifier
+  noticeOfIntention     DateTime?   @db.DateTime2
+  expectedGateway1Date  DateTime?   @db.DateTime2
+  completedGateway1Date DateTime?   @db.DateTime2
+  slaSentDate           DateTime?   @db.DateTime2
+  slaReceivedDate       DateTime?   @db.DateTime2
+  dsaChecked            String?     @db.NVarChar(50)
+  dsaCheckedLookup      DsaChecked? @relation(fields: [dsaChecked], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([dsaChecked])
 }
 
 /// Gateway 2 stage dates, assessor details and report/workshop tracking for a case.
@@ -92,19 +154,21 @@ model Gateway2Info {
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
 model Gateway3Info {
-  id                        String    @id @default(uuid()) @db.UniqueIdentifier
-  case                      Case      @relation(fields: [caseId], references: [id])
-  caseId                    String    @unique @db.UniqueIdentifier
-  expectedDate              DateTime? @db.DateTime2
-  actualDate                DateTime? @db.DateTime2
+  id                        String            @id @default(uuid()) @db.UniqueIdentifier
+  case                      Case              @relation(fields: [caseId], references: [id])
+  caseId                    String            @unique @db.UniqueIdentifier
+  expectedDate              DateTime?         @db.DateTime2
+  actualDate                DateTime?         @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorName              String?
-  assessorAppointmentDate   DateTime? @db.DateTime2
-  completionDate            DateTime? @db.DateTime2
-  /// Gateway 3 outcome code; values are defined by GATEWAY_3_DECISION_ID.
-  decision                  String?
+  assessorAppointmentDate   DateTime?         @db.DateTime2
+  completionDate            DateTime?         @db.DateTime2
+  decision                  String?           @db.NVarChar(50)
+  decisionLookup            Gateway3Decision? @relation(fields: [decision], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([decision])
 }
 
 /// Examination stage dates, inspectors, QA, fact check and final outcome fields.
@@ -163,11 +227,13 @@ model Contact {
 
 /// Authority reference data imported from the published LPA source list.
 model Authority {
-  id       String @id @default(uuid()) @db.UniqueIdentifier
-  name     String
-  pinsCode String
-  /// Imported authority status; values are defined by AUTHORITY_STATUS_ID.
-  status   String
+  id           String          @id @default(uuid()) @db.UniqueIdentifier
+  name         String
+  pinsCode     String
+  status       String          @db.NVarChar(50)
+  statusLookup AuthorityStatus @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([status])
 }
 
 /// One-time password state for portal login.
@@ -285,30 +351,32 @@ model Document {
 /// Versions are stored against the `version` value (starting with 1).
 /// The physical location of these documents should be stored here on azurite or blob storage.
 model DocumentVersion {
-  documentGuid         String                 @db.UniqueIdentifier
-  version              Int
-  lastModified         DateTime?
-  /// System that created the version; values are defined by DOCUMENT_SOURCE_SYSTEM_ID.
-  sourceSystem         String                 @default("front-office") @db.NVarChar(1000)
-  /// Latest malware scan state for the blob; values are defined by VIRUS_CHECK_STATUS_ID.
-  virusCheckStatus     String                 @default("not_scanned") @db.NVarChar(1000)
-  originalFilename     String?                @db.NVarChar(1000)
-  fileName             String?                @db.NVarChar(1000)
-  owner                String?                @db.NVarChar(1000)
-  mime                 String?                @db.NVarChar(1000)
-  size                 Int?
-  blobStorageContainer String?                @db.NVarChar(1000)
-  blobStoragePath      String?                @db.NVarChar(1000)
-  documentURI          String?                @db.NVarChar(1000)
-  dateCreated          DateTime?              @default(now())
-  isDeleted            Boolean                @default(false)
-  document             Document               @relation("VersionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
-  latestVersion        Document?              @relation("LatestVersion")
-  avScan               DocumentVersionAvScan?
+  documentGuid           String                 @db.UniqueIdentifier
+  version                Int
+  lastModified           DateTime?
+  sourceSystem           String                 @default("front-office") @db.NVarChar(50)
+  sourceSystemLookup     DocumentSourceSystem   @relation(fields: [sourceSystem], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  virusCheckStatus       String                 @default("not_scanned") @db.NVarChar(50)
+  virusCheckStatusLookup VirusCheckStatus       @relation(fields: [virusCheckStatus], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  originalFilename       String?                @db.NVarChar(1000)
+  fileName               String?                @db.NVarChar(1000)
+  owner                  String?                @db.NVarChar(1000)
+  mime                   String?                @db.NVarChar(1000)
+  size                   Int?
+  blobStorageContainer   String?                @db.NVarChar(1000)
+  blobStoragePath        String?                @db.NVarChar(1000)
+  documentURI            String?                @db.NVarChar(1000)
+  dateCreated            DateTime?              @default(now())
+  isDeleted              Boolean                @default(false)
+  document               Document               @relation("VersionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
+  latestVersion          Document?              @relation("LatestVersion")
+  avScan                 DocumentVersionAvScan?
 
   @@id([documentGuid, version])
   @@index([documentGuid], map: "documentGuid")
   @@index([documentURI])
+  @@index([sourceSystem])
+  @@index([virusCheckStatus])
 }
 
 /// DocumentVersionAvScan model

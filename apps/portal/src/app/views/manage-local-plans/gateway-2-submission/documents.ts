@@ -2,6 +2,10 @@ import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
 import type { PortalService } from '#service';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import {
+	DOCUMENT_SOURCE_SYSTEM_ID,
+	VIRUS_CHECK_STATUS_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type RequestWithCurrentCase = Request & {
 	currentCase?: {
@@ -261,8 +265,8 @@ async function createDocument(
 			blobStorageContainer: file.containerName,
 			blobStoragePath: file.path ?? file.id,
 			documentURI: file.url,
-			sourceSystem: 'front-office',
-			virusCheckStatus: 'not_scanned'
+			sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.FRONT_OFFICE,
+			virusCheckStatus: VIRUS_CHECK_STATUS_ID.NOT_SCANNED
 		}
 	});
 

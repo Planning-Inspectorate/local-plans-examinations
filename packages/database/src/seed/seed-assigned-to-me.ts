@@ -3,6 +3,7 @@ import { loadConfig } from '../configuration/config.ts';
 import { seedStaticData } from './data-static.ts';
 import { loadSeedEnv } from './load-env.ts';
 import { assertEnvironmentSmokeDatabase } from './environment-smoke-safety.ts';
+import { PLAN_TYPE_ID } from './static-data/ids/index.ts';
 
 loadSeedEnv();
 
@@ -31,13 +32,13 @@ async function run() {
 				deletedDate: null,
 				email: authEmail,
 				planTitle: assignedPlanTitle,
-				planType: 'local-plan'
+				planType: PLAN_TYPE_ID.LOCAL_PLAN
 			},
 			create: {
 				caseOfficer: authUserId,
 				email: authEmail,
 				planTitle: assignedPlanTitle,
-				planType: 'local-plan',
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				reference: assignedReference,
 				caseHistories: {
 					create: {
@@ -55,13 +56,13 @@ async function run() {
 				deletedDate: null,
 				email: 'unassigned-cypress@test.com',
 				planTitle: unassignedPlanTitle,
-				planType: 'local-plan'
+				planType: PLAN_TYPE_ID.LOCAL_PLAN
 			},
 			create: {
 				caseOfficer: 'unassigned-cypress-user',
 				email: 'unassigned-cypress@test.com',
 				planTitle: unassignedPlanTitle,
-				planType: 'local-plan',
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				reference: unassignedReference
 			}
 		});
