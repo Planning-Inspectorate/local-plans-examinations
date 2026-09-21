@@ -44,7 +44,7 @@ type PortalCase = {
 };
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
-	if (caseRecord.gateway3Info?.submissions[-1]?.completionDate || caseRecord.gateway3Info?.actualDate) {
+	if (caseRecord.gateway3Info?.submissions.at(-1)?.completionDate || caseRecord.gateway3Info?.actualDate) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
