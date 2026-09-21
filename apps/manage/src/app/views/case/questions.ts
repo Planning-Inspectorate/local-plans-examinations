@@ -79,6 +79,7 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 
 const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
+// The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
@@ -130,8 +131,9 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
 	}
 };
+// Repeat the base gw3 questions multiple times, to allow multiple gw3 submissions to be made
 const gateway3Questions: Record<string, ManageQuestionConfig> = {};
-for (let i = 1; i < 50; i++) {
+for (let i = 1; i < 200; i++) {
 	for (const key in gateway3BaseQuestions) {
 		const questionConfigCopy = { ...gateway3BaseQuestions[key] };
 		questionConfigCopy.url = `${questionConfigCopy.url}-${i}`;

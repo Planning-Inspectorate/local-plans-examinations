@@ -1,6 +1,7 @@
+// Create multiple entries to support multiple gw3 submissions
 const GATEWAY_3_DOCUMENT_FOLDERS: Record<string, string> = {};
 const GATEWAY_3_DOCUMENT_SET_IDS: Record<string, string> = {};
-for (let i = 1; i < 50; i++) {
+for (let i = 1; i < 200; i++) {
 	GATEWAY_3_DOCUMENT_FOLDERS[`G3_DOCUMENT_${i}`] = `gateway-3-document-${i}`;
 	GATEWAY_3_DOCUMENT_SET_IDS[`G3_DOCUMENT_${i}`] = `g3-document-${i}`;
 }
