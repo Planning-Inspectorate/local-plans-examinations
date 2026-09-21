@@ -16,13 +16,13 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 		const submissionId = Number(questionUrl.split('-').at(-1));
 		const existingGatewayDetails = await service.db.gateway3Info.findUnique({
 			select: {
-				submission: true
+				submissions: true
 			},
 			where: {
 				caseId: caseId
 			}
 		});
-		const currentSubmission = existingGatewayDetails?.submission.at(submissionId - 1);
+		const currentSubmission = existingGatewayDetails?.submissions.at(submissionId - 1);
 		const complete = currentSubmission?.completionDate;
 		const decisionMap: Record<string, string> = {
 			[GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION]: 'Proceed to examination',

@@ -33,7 +33,7 @@ type PortalCase = {
 	gateway3Info: {
 		expectedDate: Date | null;
 		actualDate: Date | null;
-		submission: {
+		submissions: {
 			completionDate: Date | null;
 		}[];
 	} | null;
@@ -44,7 +44,7 @@ type PortalCase = {
 };
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
-	if (caseRecord.gateway3Info?.submission[-1]?.completionDate || caseRecord.gateway3Info?.actualDate) {
+	if (caseRecord.gateway3Info?.submissions[-1]?.completionDate || caseRecord.gateway3Info?.actualDate) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
@@ -82,7 +82,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		caseRecord.gateway2Info?.actualDate ??
 		caseRecord.gateway2Info?.expectedDate;
 	const gateway3Date =
-		caseRecord.gateway3Info?.submission[-1]?.completionDate ??
+		caseRecord.gateway3Info?.submissions[-1]?.completionDate ??
 		caseRecord.gateway3Info?.actualDate ??
 		caseRecord.gateway3Info?.expectedDate;
 	const examinationDate =
@@ -124,7 +124,7 @@ const planCaseInclude = {
 		select: {
 			expectedDate: true,
 			actualDate: true,
-			submission: true
+			submissions: true
 		}
 	},
 	examinationInfo: {

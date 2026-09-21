@@ -101,7 +101,7 @@ export async function seedCy() {
 						programmeOfficerFirstName: 'Albert',
 						programmeOfficerLastName: 'Einstien',
 						programmeOfficerEmail: 'gateway3.officer@test.com',
-						submission: {
+						submissions: {
 							createMany: {
 								data: [
 									{
