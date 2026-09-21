@@ -25,7 +25,11 @@ function buildCase(overrides = {}) {
 		gateway3Info: {
 			expectedDate: new Date('2026-08-01T12:00:00.000Z'),
 			actualDate: null,
-			completionDate: null
+			submission: [
+				{
+					completionDate: null
+				}
+			]
 		},
 		examinationInfo: {
 			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
@@ -94,7 +98,11 @@ describe('PortalService', () => {
 					buildCase({
 						gateway3Info: {
 							actualDate: null,
-							completionDate: new Date('2026-12-01T12:00:00.000Z')
+							submission: [
+								{
+									completionDate: new Date('2026-12-01T12:00:00.000Z')
+								}
+							]
 						}
 					})
 				),
@@ -135,7 +143,7 @@ describe('PortalService', () => {
 						select: {
 							expectedDate: true,
 							actualDate: true,
-							completionDate: true
+							submission: true
 						}
 					},
 					examinationInfo: {
