@@ -43,7 +43,7 @@ function createGateway2JourneyForTest() {
 function createGateway3JourneyForTest() {
 	return createGateway3Journey(
 		{ baseUrl: '/case/LP-TEST-001' } as Request,
-		new JourneyResponse(GATEWAY_3_JOURNEY_ID, '', { submission: [{}] }),
+		new JourneyResponse(GATEWAY_3_JOURNEY_ID, '', { submissions: [{}] }),
 		questions
 	);
 }

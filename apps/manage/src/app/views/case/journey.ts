@@ -53,7 +53,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 
 export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway3Url = req.baseUrl + '/gateway-3';
-	const submissionData = Array.isArray(response.answers.submission) ? response.answers.submission : null;
+	const submissionData = Array.isArray(response.answers.submissions) ? response.answers.submissions : null;
 	if (!submissionData) {
 		throw Error('submissionData is null');
 	}
