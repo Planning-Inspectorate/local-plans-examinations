@@ -1,4 +1,4 @@
-import { fromZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export function parseDate(value: string): Date {
 	const [dayStr, monthStr, yearStr] = value.split('/');
@@ -12,8 +12,9 @@ export function parseDate(value: string): Date {
 	const timeStr = `${pad(hour)}:${pad(minute)}`;
 
 	const date = fromZonedTime(`${dateStr} ${timeStr}`, 'Europe/London');
+	const zoned = toZonedTime(date, 'Europe/London');
 
-	if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+	if (zoned.getFullYear() !== year || zoned.getMonth() !== month - 1 || zoned.getDate() !== day) {
 		throw new Error(`Invalid date: ${value}`);
 	}
 	return date;
