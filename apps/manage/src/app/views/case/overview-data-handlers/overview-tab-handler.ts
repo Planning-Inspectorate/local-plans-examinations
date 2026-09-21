@@ -39,12 +39,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 		const { req, res, next, service, journeyId, reference } = context;
 
 		const overviewData = await getOverviewData(service.db, reference);
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: { id: true, planTitle: true }
-		});
-
-		if (!overviewData || !caseRecord) {
+		if (!overviewData) {
 			res.status(404).render('views/errors/404.njk');
 			return;
 		}
@@ -98,7 +93,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 						const documentSetId = documentSetIds.get(folderName);
 
 						const files = documentSetId
-							? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId)
+							? await DocumentUtil.loadUploadedDocuments(service, overviewData.id, documentSetId)
 							: [];
 
 						return {
