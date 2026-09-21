@@ -43,28 +43,6 @@ export class MyPlansPage extends PortalPlanBasePage {
 	verifyPlanNotListed(refNumber: string) {
 		cy.contains('[data-cy="plan-link"]', refNumber).should('not.exist');
 	}
-
-	verifyTableRows(
-		table: Cypress.Chainable,
-		rows: {
-			refNumber: string;
-			localPlanningAuthority: string;
-			planTitle: string;
-			currentStage: string;
-			status: string;
-		}[]
-	) {
-		table.within(() => {
-			rows.forEach(({ refNumber, localPlanningAuthority, planTitle, currentStage, status }) => {
-				const row = cy.contains('tr', refNumber);
-				row.should('be.visible');
-				row.should('contain.text', localPlanningAuthority);
-				row.should('contain.text', planTitle);
-				row.should('contain.text', currentStage);
-				row.should('contain.text', status);
-			});
-		});
-	}
 }
 
 export const myPlansPage = new MyPlansPage();

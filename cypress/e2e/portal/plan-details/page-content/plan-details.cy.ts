@@ -13,6 +13,8 @@ describe('Plan details page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('shows the plan title, reference and metadata', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			planDetailsPage.verifyLoaded();
