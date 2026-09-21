@@ -1,5 +1,5 @@
 import type { ManageService } from '#service';
-import { type IRouter, type NextFunction, type Response, Router as createRouter } from 'express';
+import { type IRouter, type NextFunction, type Response, type Request, Router as createRouter } from 'express';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -10,8 +10,8 @@ import {
 	validate,
 	validationErrorHandler
 } from '@planning-inspectorate/dynamic-forms';
-import { createJourney, JOURNEY_ID, loadJourneyOptions } from './journey.ts';
-import { questions } from './questions.ts';
+import { createJourney, JOURNEY_ID } from './journey.ts';
+import { getQuestions, questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 
@@ -46,11 +46,6 @@ function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 export function createACaseRoutes(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
-	const loadOptions = asyncHandler(async (req: any, _res: Response, next: NextFunction) => {
-		await loadJourneyOptions(service, req, questions);
-		next();
-	});
-
 	router.use((req, _res, next) => {
 		if (req.session) {
 			req.session.currentJourney = JOURNEY_ID;
@@ -60,25 +55,29 @@ export function createACaseRoutes(service: ManageService): IRouter {
 
 	// read answers from the session
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
+	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		await getQuestions(service, req);
+		next();
+	});
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
 
 	router.get(
 		'/check-your-answers',
 		getJourneyResponse,
-		loadOptions,
+		resolveQuestions,
 		getJourney,
 		setAsEditingFromCya,
 		setBackLinkFromSession,
 		buildList()
 	);
 
-	router.post('/check-your-answers', getJourneyResponse, loadOptions, getJourney, saveToDatabase);
+	router.post('/check-your-answers', getJourneyResponse, resolveQuestions, getJourney, saveToDatabase);
 
 	router.get(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		loadOptions,
+		resolveQuestions,
 		getJourney,
 		question
 	);
@@ -86,7 +85,7 @@ export function createACaseRoutes(service: ManageService): IRouter {
 	router.post(
 		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponse,
-		loadOptions,
+		resolveQuestions,
 		getJourney,
 		validate,
 		validationErrorHandler,

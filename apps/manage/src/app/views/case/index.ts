@@ -37,7 +37,7 @@ import {
 	type Journey,
 	type JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
-import { questions } from './questions.ts';
+import { questions, getQuestions } from './questions.ts';
 import {
 	createOverviewJourney,
 	createGateway1Journey,
@@ -55,6 +55,8 @@ import {
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
+import type { Response, NextFunction } from 'express';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -148,6 +150,10 @@ function registerCaseJourney(
 ): void {
 	const { path, journeyId, createJourney, supportsManageList, supportsFileUpload } = config;
 
+	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		await getQuestions(service, req);
+		next();
+	});
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
 
@@ -165,6 +171,7 @@ function registerCaseJourney(
 		`/${path}`,
 		getJourneyResponse,
 		preprocessQuestionProperties(service, journeyId, questions),
+		resolveQuestions,
 		getJourney,
 		fileUploadMiddleware,
 		buildList()
@@ -175,6 +182,7 @@ function registerCaseJourney(
 		questionPath,
 		getJourneyResponse,
 		preprocessQuestionProperties(service, journeyId, questions),
+		resolveQuestions,
 		getJourney,
 		fileUploadMiddleware,
 		question
@@ -195,6 +203,7 @@ function registerCaseJourney(
 	router.post(
 		questionPath,
 		getJourneyResponse,
+		resolveQuestions,
 		getJourney,
 		validate,
 		validationErrorHandler,
