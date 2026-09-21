@@ -1,7 +1,8 @@
 import { DOCUMENT_CATEGORY_ID, DOCUMENT_SET_ID, DOCUMENT_SET_FOLDER_NAME, GATEWAY_ID } from './ids/index.ts';
 
+// Create folder entries to support multiple gw3 submissions
 const GATEWAY_3_DOCUMENT_FOLDERS: object[] = [];
-for (let i = 1; i < 50; i++) {
+for (let i = 1; i < 200; i++) {
 	const key = `G3_DOCUMENT_${i}`;
 	GATEWAY_3_DOCUMENT_FOLDERS.push({
 		id: DOCUMENT_SET_ID[key],
