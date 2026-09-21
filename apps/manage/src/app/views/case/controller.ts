@@ -468,8 +468,21 @@ export async function updateGateway3(
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	let createSubmission: { submissions?: { createMany: { data: object[] } } } = {};
-	let updateSubmission: { submissions?: { deleteMany: object; createMany: { data: object[] } } } = {};
+	const createSubmission: { submissions: { createMany: { data: object[] } } } = {
+		submissions: {
+			createMany: {
+				data: []
+			}
+		}
+	};
+	const updateSubmission: { submissions: { deleteMany: object; createMany: { data: object[] } } } = {
+			submissions: {
+			deleteMany: {},
+			createMany: {
+				data: []
+			}
+		}
+	};
 	if ('submissions' in answers) {
 		const submissionDetails = answers.submissions;
 		if (!submissionDetails) {
@@ -480,21 +493,8 @@ export async function updateGateway3(
 			completionDate: e.completionDate
 		}));
 		delete answers.submissions;
-		createSubmission = {
-			submissions: {
-				createMany: {
-					data: submissionDetailsCleaned
-				}
-			}
-		};
-		updateSubmission = {
-			submissions: {
-				deleteMany: {},
-				createMany: {
-					data: submissionDetailsCleaned
-				}
-			}
-		};
+		createSubmission.submissions.createMany.data = submissionDetailsCleaned;
+		updateSubmission.submissions.createMany.data = submissionDetailsCleaned
 	}
 	if (question?.startsWith('gateway-3-document')) {
 		// For handling the save button
