@@ -2,10 +2,11 @@ import { type SubmissionCheck } from './submission-check.ts';
 import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 // Create a map entry for the multiple gw3 submission questions
 const GATEWAY3_DOCUMENT_OPTIONS: Record<string, new () => SubmissionCheck> = {};
-for (let i = 1; i < 200; i++) {
+for (let i = 1; i < NUM_GW3_SUBMISSIONS_QUESTIONS; i++) {
 	GATEWAY3_DOCUMENT_OPTIONS[`gateway-3-document-${i}`] = Gateway3SubmissionCheck;
 }
 const OPTIONS: Record<string, new () => SubmissionCheck> = {

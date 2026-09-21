@@ -27,6 +27,7 @@ import {
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -133,7 +134,7 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 };
 // Repeat the base gw3 questions multiple times, to allow multiple gw3 submissions to be made
 const gateway3Questions: Record<string, ManageQuestionConfig> = {};
-for (let i = 1; i < 200; i++) {
+for (let i = 1; i < NUM_GW3_SUBMISSIONS_QUESTIONS; i++) {
 	for (const key in gateway3BaseQuestions) {
 		const questionConfigCopy = { ...gateway3BaseQuestions[key] };
 		questionConfigCopy.url = `${questionConfigCopy.url}-${i}`;
