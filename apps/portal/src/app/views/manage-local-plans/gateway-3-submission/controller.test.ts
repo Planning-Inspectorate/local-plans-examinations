@@ -3,6 +3,7 @@ import { describe, it, mock } from 'node:test';
 import {
 	buildGetJourneyResponseFromCase,
 	buildGateway3CheckAnswersList,
+	buildValidateGateway3Submission,
 	setGateway3ViewData,
 	setGateway3ViewLocals,
 	syncGateway3UploadAnswer
@@ -189,6 +190,76 @@ describe('buildGateway3CheckAnswersList', () => {
 	it('returns a request handler', () => {
 		const handler = buildGateway3CheckAnswersList();
 		assert.strictEqual(typeof handler, 'function');
+	});
+});
+
+describe('buildValidateGateway3Submission', () => {
+	it('calls next when all required answers are present', () => {
+		const handler = buildValidateGateway3Submission();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const res = {
+			locals: {
+				journeyResponse: {
+					answers: {
+						examinationWebsite: 'https://example.com',
+						proposedLocalPlan: [{ fileName: 'plan.pdf' }],
+						mapOfPolicies: [{ fileName: 'map.pdf' }],
+						statementOfCompliance: [{ fileName: 'compliance.pdf' }],
+						statementOfSoundness: [{ fileName: 'soundness.pdf' }],
+						consultationEngagementSummary: [{ fileName: 'engage.pdf' }],
+						scopingConsultationSummary: [{ fileName: 'scoping.pdf' }],
+						consultationContentEvidenceSummary: [{ fileName: 'content.pdf' }],
+						consultationProposedPlanSummary: [{ fileName: 'consultation.pdf' }],
+						practicalArrangementsStatement: [{ fileName: 'practical.pdf' }]
+					}
+				}
+			}
+		} as unknown as Response;
+		let called = false;
+		const next = () => {
+			called = true;
+		};
+
+		handler(req, res, next as NextFunction);
+
+		assert.strictEqual(called, true);
+	});
+
+	it('renders the check your answers page with an error when required answers are missing', async () => {
+		const handler = buildValidateGateway3Submission();
+		const req = { params: { planReference: 'PLAN-001' }, session: {} } as unknown as Request;
+		const res = {
+			status(code: number) {
+				this.statusCode = code;
+				return this;
+			},
+			render: () => {},
+			locals: {
+				journey: {
+					sections: [
+						{
+							name: 'Required Information',
+							segment: 'required-information',
+							getStatus: () => 'in-progress',
+							questions: []
+						}
+					],
+					isComplete: () => false,
+					taskListTemplate: 'views/layouts/main.njk',
+					journeyTitle: 'Gateway 3 submission'
+				},
+				journeyResponse: { answers: {} }
+			}
+		} as unknown as Response & { statusCode?: number };
+		const next = () => {};
+
+		await handler(req, res, next as NextFunction);
+
+		assert.strictEqual((res as any).statusCode, 400);
+		assert.strictEqual(res.locals.errors?.submit?.text, 'Add all required documents before submitting');
+		assert.deepStrictEqual(res.locals.errorSummary, [
+			{ text: 'Add all required documents before submitting', href: '#required-information' }
+		]);
 	});
 });
 

@@ -1,5 +1,6 @@
 {% extends "views/layouts/main.njk" %}
 
+{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
@@ -83,6 +84,17 @@
                 </div>
             {% endif %}
         {% endfor %}
+
+        <h2 class="govuk-heading-m" id="ready-to-submit" data-cy="ready-to-submit-section">Ready to submit for Gateway 3</h2>
+        <p class="govuk-body">Once submitted, Gateway 3 will be locked and you cannot make further changes. By submitting, you're confirming that the information you're sharing is correct to the best of your knowledge.</p>
+
+        <form method="post" novalidate>
+            <input type="hidden" name="_csrf" value="{{ _csrf }}">
+            {{ govukButton({
+                text: "Submit",
+                attributes: { "data-cy": "submit-gateway-3" }
+            }) }}
+        </form>
 
     </div>
 </div>

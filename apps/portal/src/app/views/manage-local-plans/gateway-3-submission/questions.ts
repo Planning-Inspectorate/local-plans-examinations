@@ -331,7 +331,8 @@ export function createGateway3Questions(planReference: string | undefined) {
 		{},
 		{
 			notStartedText: 'Not added',
-			answerActionText: 'Add'
+			answerActionText: 'Add',
+			continueButtonText: 'Save and return'
 		}
 	) as Record<string, Question>;
 }

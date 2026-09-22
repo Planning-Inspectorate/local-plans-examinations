@@ -48,6 +48,17 @@ describe('Gateway 3 check answers page', () => {
 		};
 	}
 
+	it('renders the submit section with heading, copy and a submit button', () => {
+		const html = renderCheckAnswers([]);
+
+		assert.ok(html.includes('Ready to submit for Gateway 3'), 'expected submit heading');
+		assert.ok(
+			html.includes('Once submitted, Gateway 3 will be locked and you cannot make further changes.'),
+			'expected submit copy'
+		);
+		assert.ok(html.includes('data-cy="submit-gateway-3"'), 'expected submit button data-cy');
+	});
+
 	it('renders the Optional Documents section with copy and an Add action', () => {
 		const html = renderCheckAnswers([buildSection('Optional Documents')]);
 
