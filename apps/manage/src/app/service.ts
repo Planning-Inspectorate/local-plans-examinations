@@ -44,4 +44,8 @@ export class ManageService extends Service {
 	get notifyCallbackEnabled(): boolean {
 		return this.#config.notifyCallbackEnabled;
 	}
+
+	get localPlansTeamEmail(): string {
+		return this.#config.govNotify.localPlansTeamEmail;
+	}
 }
