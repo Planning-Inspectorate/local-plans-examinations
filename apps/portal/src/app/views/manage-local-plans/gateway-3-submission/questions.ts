@@ -73,6 +73,7 @@ const fileUploadText = {
 };
 
 const REQUIRED_INFO_CAPTION = 'Required information';
+const OPTIONAL_DOCS_CAPTION = 'Optional documents';
 
 const gateway3TextInputQuestions = {
 	examinationWebsite: {
@@ -181,6 +182,87 @@ const gateway3FileUploadQuestions = {
 	}
 };
 
+const gateway3OptionalFileUploadQuestions = {
+	copiesOfRepresentations: {
+		title: 'Copies of representations',
+		question: 'Upload copies of representations',
+		fieldName: 'copiesOfRepresentations',
+		url: 'copies-of-representations',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	supplementaryPlansStatement: {
+		title: 'Supplementary plans statement',
+		question: 'Upload your supplementary plans statement',
+		fieldName: 'supplementaryPlansStatement',
+		url: 'supplementary-plans-statement',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	environmentalReport: {
+		title: 'Environmental report',
+		question: 'Upload your environmental report',
+		fieldName: 'environmentalReport',
+		url: 'environmental-report',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	statementOfReasonsDetermination: {
+		title:
+			'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+		question:
+			'Upload statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+		fieldName: 'statementOfReasonsDetermination',
+		url: 'statement-of-reasons-determination',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	representationsProgressSummary: {
+		title:
+			'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+		question:
+			'Upload summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+		fieldName: 'representationsProgressSummary',
+		url: 'representations-progress-summary',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	gateway2IssuesSummary: {
+		title: 'Summary of how Gateway 2 assessor issues have been addressed',
+		question: 'Upload summary of how Gateway 2 assessor issues have been addressed',
+		fieldName: 'gateway2IssuesSummary',
+		url: 'gateway-2-issues-summary',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	changesSinceConsultationStatement: {
+		title:
+			'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+		question:
+			'Upload statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+		fieldName: 'changesSinceConsultationStatement',
+		url: 'changes-since-consultation-statement',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	},
+	otherDocuments: {
+		title: 'Other documents',
+		question: 'Upload other documents',
+		fieldName: 'otherDocuments',
+		url: 'other-documents',
+		text: {
+			caption: OPTIONAL_DOCS_CAPTION
+		}
+	}
+};
+
 export const GW3_TEXT_INPUT_QUESTIONS = Object.fromEntries(
 	Object.entries(gateway3TextInputQuestions).map(([key, questionDef]) => [
 		key,
@@ -191,19 +273,35 @@ export const GW3_TEXT_INPUT_QUESTIONS = Object.fromEntries(
 	])
 );
 
-export const GW3_FILE_UPLOAD_QUESTIONS = Object.fromEntries(
-	Object.entries(gateway3FileUploadQuestions).map(([key, questionDef]) => [
-		key,
-		{
-			...baseFileUploadConfig,
-			...questionDef,
-			text: {
-				...fileUploadText,
-				...questionDef.text
+function buildFileUploadQuestions(
+	questions: Record<
+		string,
+		{ title: string; question: string; fieldName: string; url: string; text: { caption: string } }
+	>
+) {
+	return Object.fromEntries(
+		Object.entries(questions).map(([key, questionDef]) => [
+			key,
+			{
+				...baseFileUploadConfig,
+				...questionDef,
+				text: {
+					...fileUploadText,
+					...questionDef.text
+				}
 			}
-		}
-	])
-);
+		])
+	);
+}
+
+export const GW3_REQUIRED_FILE_UPLOAD_QUESTIONS = buildFileUploadQuestions(gateway3FileUploadQuestions);
+
+export const GW3_OPTIONAL_FILE_UPLOAD_QUESTIONS = buildFileUploadQuestions(gateway3OptionalFileUploadQuestions);
+
+export const GW3_FILE_UPLOAD_QUESTIONS = {
+	...GW3_REQUIRED_FILE_UPLOAD_QUESTIONS,
+	...GW3_OPTIONAL_FILE_UPLOAD_QUESTIONS
+};
 
 export const GW3QUESTIONS = {
 	...GW3_TEXT_INPUT_QUESTIONS,

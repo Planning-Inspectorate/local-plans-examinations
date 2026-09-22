@@ -42,6 +42,9 @@
             {% if section.list.rows.length %}
                 <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+                    {% if section.heading === 'Optional Documents' %}
+                        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
+                    {% endif %}
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">

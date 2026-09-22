@@ -193,5 +193,72 @@ export const DOCUMENT_SET = [
 		displayName: 'Statement setting out practical arrangements demonstrating readiness for examination',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G3_PRACTICAL_ARRANGEMENTS_STATEMENT,
 		displayOrder: 27
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_COPIES_OF_REPRESENTATIONS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Copies of representations',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_COPIES_OF_REPRESENTATIONS,
+		displayOrder: 28
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_SUPPLEMENTARY_PLANS_STATEMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Supplementary plans statement',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_SUPPLEMENTARY_PLANS_STATEMENT,
+		displayOrder: 29
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_ENVIRONMENTAL_REPORT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Environmental report',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_ENVIRONMENTAL_REPORT,
+		displayOrder: 30
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_STATEMENT_OF_REASONS_DETERMINATION,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName:
+			'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_STATEMENT_OF_REASONS_DETERMINATION,
+		displayOrder: 31
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_REPRESENTATIONS_PROGRESS_SUMMARY,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName:
+			'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_REPRESENTATIONS_PROGRESS_SUMMARY,
+		displayOrder: 32
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_GATEWAY2_ISSUES_SUMMARY,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Summary of how Gateway 2 assessor issues have been addressed',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_GATEWAY2_ISSUES_SUMMARY,
+		displayOrder: 33
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_CHANGES_SINCE_CONSULTATION_STATEMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName:
+			'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_CHANGES_SINCE_CONSULTATION_STATEMENT,
+		displayOrder: 34
+	},
+	{
+		id: DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Other documents',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G3_OTHER_DOCUMENTS,
+		displayOrder: 35
 	}
 ];
