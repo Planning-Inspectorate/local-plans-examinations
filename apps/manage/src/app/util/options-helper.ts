@@ -40,3 +40,25 @@ export function buildInspectorOptions(service: ManageService, questions: Record<
 		next();
 	});
 }
+
+export async function retrieveCaseOfficers(
+	service: ManageService,
+	session: authSession.SessionWithAuth
+): Promise<{ value: string; text: string }[]> {
+	if (service.authDisabled) {
+		return retrieveDefaultCaseOfficers();
+	}
+
+	const entraClient = service.getEntraClient(session);
+	const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
+	return caseOfficers.map((m) => ({ value: m.id, text: m.displayName }));
+}
+
+export function retrieveDefaultCaseOfficers() {
+	return [
+		{ value: '', text: '' },
+		{ value: 'officer-1', text: 'Case Officer 1' },
+		{ value: 'officer-2', text: 'Case Officer 2' },
+		{ value: 'officer-3', text: 'Case Officer 3' }
+	];
+}
