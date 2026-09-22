@@ -79,8 +79,11 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			const personalisationDetails: Record<string, string> = { portalLoginURL: portalLoginURL };
 			personalisationDetails['plan_ref'] = caseReference;
 			personalisationDetails['lpa_name'] = String(relevantLpaNames);
-			personalisationDetails['plan_type'] = answers.planType;
-			personalisationDetails['team_email_address'] = 'filler@someemail.com';
+			personalisationDetails['plan_type'] = answers.planType
+				.split('-')
+				.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+				.join(' ');
+			personalisationDetails['team_email_address'] = service.localPlansTeamEmail;
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {
