@@ -20,6 +20,12 @@ describe('buildSaveController', () => {
 				gateway2Info: { create: gateway2Create },
 				gateway3Info: { create: gateway3Create },
 				examinationInfo: { create: examinationCreate },
+				authority: {
+					findMany: mock.fn(async () => [
+						{ pinsCode: 'lpa-1', name: 'LPA A' },
+						{ pinsCode: 'lpa-2', name: 'LPA B' }
+					])
+				},
 				$transaction: mock.fn(async (cb: any) => {
 					const tx = {
 						case: { create: caseCreate },
@@ -38,7 +44,8 @@ describe('buildSaveController', () => {
 				info: mock.fn(),
 				warn: mock.fn(),
 				error: mock.fn()
-			}
+			},
+			localPlansTeamEmail: 'team@email.co.uk'
 		};
 
 		mockRequest = {
@@ -109,7 +116,10 @@ describe('buildSaveController', () => {
 			{
 				personalisation: {
 					portalLoginURL: 'http://localhost:3000/login',
-					caseReference: caseData.reference
+					plan_ref: caseData.reference,
+					lpa_name: 'LPA A,LPA B',
+					plan_type: 'Local Plan',
+					team_email_address: 'team@email.co.uk'
 				},
 				reference: `create-case:${caseData.reference}`
 			}
@@ -120,7 +130,10 @@ describe('buildSaveController', () => {
 			{
 				personalisation: {
 					portalLoginURL: 'http://localhost:3000/login',
-					caseReference: caseData.reference
+					plan_ref: caseData.reference,
+					lpa_name: 'LPA A,LPA B',
+					plan_type: 'Local Plan',
+					team_email_address: 'team@email.co.uk'
 				},
 				reference: `create-case:${caseData.reference}`
 			}
