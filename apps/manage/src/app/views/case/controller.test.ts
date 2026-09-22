@@ -1570,31 +1570,30 @@ describe('preprocessQuestionProperties', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		const questions: Record<string, any> = {
-			'gateway3Decision-1': {},
+			'gateway3Decision-1': {
+				formatSummaryValue: 'aValueThatShouldBeOverridden'
+			},
 			'gateway3Documents-1': {
 				config: {}
-			},
-			'gateway3CompletionDate-1': {}
+			}
 		};
 		const expectedModifiedQuestions: Record<string, any> = {
-			'gateway3Decision-1': {},
 			'gateway3Documents-1': {
 				changeActionText: 'View',
 				editable: true,
 				config: {
 					actionButtonVisibleInSummary: false
 				}
-			},
-			'gateway3CompletionDate-1': {
-				changeActionText: 'View',
-				editable: false
 			}
 		};
 		const myNextFunction = mock.fn(() => {});
 		const handler = preprocessQuestionProperties(service, journeyId, questions);
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
 		assert.equal(myNextFunction.mock.callCount(), 1);
+		const actualDecisionQuestion = questions['gateway3Decision-1'];
+		delete questions['gateway3Decision-1'];
 		assert.deepEqual(questions, expectedModifiedQuestions);
+		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
 	});
 	it('can preprocess gateway3 when the documents have submitted', async () => {
 		const service = createService();
@@ -1603,7 +1602,7 @@ describe('preprocessQuestionProperties', () => {
 				submissions: [
 					{
 						id: 'someId',
-						decision: undefined,
+						decision: '1',
 						completionDate: new Date(2026, 0, 1),
 						gateway3InfoId: undefined
 					}
@@ -1627,33 +1626,29 @@ describe('preprocessQuestionProperties', () => {
 			'gateway3Decision-1': {},
 			'gateway3Documents-1': {
 				config: {}
-			},
-			'gateway3CompletionDate-1': {}
+			}
 		};
 		const expectedModifiedQuestions: Record<string, any> = {
-			'gateway3Decision-1': {
-				actionLink: {
-					href: `/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
-					text: 'View'
-				}
-			},
 			'gateway3Documents-1': {
 				changeActionText: 'View',
 				editable: false,
 				config: {
 					actionButtonVisibleInSummary: true
 				}
-			},
-			'gateway3CompletionDate-1': {
-				changeActionText: 'View',
-				editable: true
 			}
 		};
 		const myNextFunction = mock.fn(() => {});
 		const handler = preprocessQuestionProperties(service, journeyId, questions);
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
 		assert.equal(myNextFunction.mock.callCount(), 1);
+		const actualDecisionQuestion = questions['gateway3Decision-1'];
+		delete questions['gateway3Decision-1'];
 		assert.deepEqual(questions, expectedModifiedQuestions);
+		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
+		assert.deepEqual(actualDecisionQuestion.actionLink, {
+			href: `/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
+			text: 'View'
+		});
 	});
 });
 describe('issueGateway3Document', () => {
