@@ -87,6 +87,7 @@ model Case {
   reference                 String           @unique
   email                     String
   caseOfficer               String
+  caseOfficerName           String           @default("") @db.NVarChar(100)
   planTitle                 String
   planType                  String           @db.NVarChar(50)
   planTypeLookup            PlanType         @relation(fields: [planType], references: [id], onDelete: NoAction, onUpdate: NoAction)
