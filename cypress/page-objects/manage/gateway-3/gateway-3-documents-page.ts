@@ -31,7 +31,7 @@ class Gateway3DocumentsCheckPage extends BasePage {
 		this.issueDecisionButton.should('be.visible');
 		this.previewDropDown.should('be.visible');
 		this.verifyChangeLinks();
-		this.verifySummaryRowContains('Outcome', 'Proceed to examination');
+		this.verifySummaryRowContains('Outcome', 'Resubmission required');
 
 		fileNames.forEach((fileName, index) => {
 			this.verifySummaryRowContains(`Document ${index + 1}`, fileName);
