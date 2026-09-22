@@ -47,8 +47,8 @@ model DsaChecked {
 
 /// Valid outcomes for a Gateway 3 decision.
 model Gateway3Decision {
-  id                  String         @id @db.NVarChar(50)
-  displayName         String         @db.NVarChar(100)
+  id                  String               @id @db.NVarChar(50)
+  displayName         String               @db.NVarChar(100)
   displayOrder        Int
   Gateway3Submissions Gateway3Submission[]
 }
