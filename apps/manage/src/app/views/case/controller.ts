@@ -1443,6 +1443,10 @@ export function preprocessQuestionProperties(
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
 		if (journeyId == 'gateway-3') {
+			const decisionMap = {
+				'1': 'Proceed to examination',
+				'2': 'Resubmission required'
+			};
 			// Toggle the visibility/editability of the gateway3Document question
 
 			const caseDetails = await service.db.case.findUnique({
@@ -1467,23 +1471,37 @@ export function preprocessQuestionProperties(
 				const submissionId = i + 1;
 				const submission = submissionDetailsSorted[i];
 				const gateway3Documents = `gateway3Documents-${submissionId}`;
-				const gateway3CompletionDate = `gateway3CompletionDate-${submissionId}`;
 				const gateway3Decision = `gateway3Decision-${submissionId}`;
+				const decisionValue = submissionDetailsSorted[i].decision;
+				const completionDate = submissionDetailsSorted[i].completionDate;
 				questions[gateway3Documents].changeActionText = 'View';
-				questions[gateway3CompletionDate].changeActionText = 'View';
 				const gateway3Complete = !!submission.completionDate;
 				questions[gateway3Documents].editable = !gateway3Complete;
 				(questions[gateway3Documents] as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
 					gateway3Complete;
-				questions[gateway3CompletionDate].editable = gateway3Complete;
 				if (gateway3Complete) {
+					if (!decisionValue) {
+						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
+					}
 					questions[gateway3Decision].actionLink = {
 						href: `/case/${reference}/gateway-3/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
+					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;
+					const formattedCompletionDate = completionDate
+						? new Intl.DateTimeFormat('en-GB', {
+								day: 'numeric',
+								month: 'long',
+								timeZone: 'Europe/London',
+								year: 'numeric'
+							}).format(completionDate)
+						: null;
+					questions[gateway3Decision].formatSummaryValue = () =>
+						decisionText ? `${decisionText}\nIssued on ${formattedCompletionDate}` : 'Not started';
 				} else {
 					// Reset for different journey
 					delete questions[gateway3Decision].actionLink;
+					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
 				}
 			}
 		}
