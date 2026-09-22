@@ -1,5 +1,6 @@
 import { SubmissionCheck, type SubmissionCheckData } from './submission-check.ts';
 import { type ManageService } from '#service';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 export class Gateway3SubmissionCheck extends SubmissionCheck {
 	public async generateDataForPage(
@@ -23,8 +24,8 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 		});
 		const complete = existingGatewayDetails?.completionDate;
 		const decisionMap: Record<string, string> = {
-			'1': 'Proceed to examination',
-			'2': 'Resubmission required'
+			[GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION]: 'Proceed to examination',
+			[GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED]: 'Resubmission required'
 		};
 		if (!existingGatewayDetails?.decision) {
 			throw Error(

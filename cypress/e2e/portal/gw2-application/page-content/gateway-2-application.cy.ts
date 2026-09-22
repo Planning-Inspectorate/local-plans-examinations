@@ -15,7 +15,7 @@ describe('Gateway 2 application page content', () => {
 
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway2ApplicationPage.verifyBackLink(`/manage-local-plans/${plan.urlReference}`);
 			gateway2ApplicationPage.verifyCaption(plan.title);
 			gateway2ApplicationPage.verifyHeading('Gateway 2 submission');
@@ -30,7 +30,7 @@ describe('Gateway 2 application page content', () => {
 
 	it('Shows Procedural Documents', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubHeading('Procedural Documents');
-		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.proceduralDocumentsTable, [
+		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.proceduralDocumentsTable, [
 			{ document: 'Gateway 2 covering letter', status: 'Not added', addCy: 'add-gateway-2-covering-letter' },
 			{ document: 'Local plan timetable', status: 'Not added', addCy: 'add-local-plan-timetable' },
 			{ document: 'Project initiation document', status: 'Not added', addCy: 'add-project-initiation-document' },
@@ -48,7 +48,7 @@ describe('Gateway 2 application page content', () => {
 
 	it('Shows Consultation Documents', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubHeading('Consultation Documents');
-		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.consultationDocumentsTable, [
+		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.consultationDocumentsTable, [
 			{
 				document: 'Notice of intention to commence local plan preparation',
 				status: 'Not added',
@@ -92,7 +92,7 @@ describe('Gateway 2 application page content', () => {
 
 	it('Shows Additional Documents', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubHeading('Additional documents');
-		gateway2ApplicationPage.verifyTableRows(gateway2ApplicationPage.additionalDocumentsTable, [
+		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.additionalDocumentsTable, [
 			{
 				document: 'Subsequent work towards a draft Plan',
 				status: 'Not added',

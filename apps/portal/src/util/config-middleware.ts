@@ -14,19 +14,15 @@ export function addLocalsConfiguration(clarityId?: string): Handler {
 				href: '/guidance'
 			},
 			{
-				text: 'Account settings',
-				href: '/accountSettings'
-			},
-			{
-				text: 'Manage users',
-				href: '/manageUsers'
+				text: 'Sign out',
+				href: '/logout'
 			}
 		];
 
 		res.locals.config = {
-			styleFile: 'style.css?v=813b3ed5',
+			styleFile: 'style.css?v=305ec51e',
 			cspNonce: res.locals.cspNonce,
-			headerTitle: 'Submit your plan for examination',
+			headerTitle: 'Submit development plans',
 			footerLinks: [
 				{
 					text: 'Terms and conditions',
@@ -43,10 +39,6 @@ export function addLocalsConfiguration(clarityId?: string): Handler {
 				{
 					text: 'Cookies',
 					href: '/cookies'
-				},
-				{
-					text: 'Contact',
-					href: '/contact'
 				}
 			],
 			primaryNavigationLinks: links.map((l) => {

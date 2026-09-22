@@ -22,4 +22,15 @@ describe('Plan details journey', () => {
 			myPlansPage.verifyHeading('My plans');
 		});
 	});
+
+	it('Navigates to My Plans page when Submit development plans is clicked', { tags: ['smoke'] }, () => {
+		loadPlanDetails().then((plan) => {
+			myPlansPage.verifyLoaded();
+			myPlansPage.openPlan(plan.reference);
+			planDetailsPage.verifyLoaded();
+
+			planDetailsPage.openServiceNavigationItem('Submit development plans');
+			myPlansPage.verifyLoaded();
+		});
+	});
 });

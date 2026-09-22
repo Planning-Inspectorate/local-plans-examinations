@@ -21,6 +21,12 @@ import {
 	formatByteCountIntoHumanReadableMemoryUnit,
 	formatFileExtensionsIntoHumanReadableList
 } from '@pins/local-plans-lib/util/file.ts';
+import {
+	DSA_CHECKED_ID,
+	GATEWAY_3_DECISION_ID,
+	PLAN_BAND_ID,
+	PLAN_TYPE_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -86,9 +92,9 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: '1', text: '1' },
-			{ value: '2', text: '2' },
-			{ value: '3', text: '3' }
+			{ value: PLAN_BAND_ID.BAND_1, text: '1' },
+			{ value: PLAN_BAND_ID.BAND_2, text: '2' },
+			{ value: PLAN_BAND_ID.BAND_3, text: '3' }
 		],
 		question: 'What is the plan band?',
 		fieldName: 'planBand',
@@ -99,8 +105,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: 'local-plan', text: 'Local Plan' },
-			{ value: 'other', text: 'Other' }
+			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local Plan' },
+			{ value: PLAN_TYPE_ID.OTHER, text: 'Other' }
 		],
 		question: 'What is the plan type?',
 		fieldName: 'planType',
@@ -444,8 +450,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'dsa-checked',
 		title: 'Data Sharing Agreement (DSA) check',
 		options: [
-			{ value: 'yes', text: 'Yes' },
-			{ value: 'no', text: 'No' }
+			{ value: DSA_CHECKED_ID.YES, text: 'Yes' },
+			{ value: DSA_CHECKED_ID.NO, text: 'No' }
 		],
 		validators: [new RequiredValidator('Select an option')]
 	},
@@ -524,6 +530,12 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Gateway 2 valid date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
+	},
+	gateway2Documents: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER,
+		title: 'Submission documents',
+		question: 'Submitted GW2 documents',
+		fieldName: 'gateway2Documents'
 	},
 	gateway2AssessorsName: {
 		type: COMPONENT_TYPES.SELECT,
@@ -695,8 +707,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: '1', text: 'Proceed to examination' },
-			{ value: '2', text: 'Resubmission required' }
+			{ value: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION, text: 'Proceed to examination' },
+			{ value: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED, text: 'Resubmission required' }
 		],
 		question: 'What is the outcome of your Gateway 3 decision',
 		fieldName: 'decision',

@@ -5,6 +5,7 @@ import { authenticatePortalIfRequired, getRequiredCypressEnv, isEnvironmentSmoke
 
 export const TEST_EMAIL = 'test@planninginspectorate.gov.uk';
 export const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
+export const FIXTURE_TEST_EMAIL = 'jane@lpa.gov.uk';
 
 const getCsrfToken = (html: string) => {
 	const token = new DOMParser()
@@ -33,8 +34,7 @@ export const startPortalOtpLogin = (email = getPortalLoginEmail()) => {
 	}
 
 	portalLoginEmailPage.visit();
-	portalLoginEmailPage.enterEmail(email);
-	portalLoginEmailPage.saveAndContinue();
+	portalLoginEmailPage.submitEmail(email);
 };
 
 export const completePortalLogin = () => {
@@ -125,8 +125,15 @@ const completePortalLoginByRequest = () => {
 		});
 };
 
-export const manageToPortalLogin = () => {
-	cy.origin(Cypress.env('portalBaseUrl'), { args: { email: TEST_EMAIL } }, ({ email }) => {
+export const portalLoginForExistingCase = (email: string) => {
+	portalLoginEmailPage.visit(`${Cypress.env('portalBaseUrl')}/login`);
+	cy.setCookie('cookie_consent', 'accept');
+	portalLoginEmailPage.submitEmail(email);
+	completePortalLogin();
+};
+
+export const manageToPortalLogin = (email: string) => {
+	cy.origin(Cypress.env('portalBaseUrl'), { args: { email } }, ({ email }) => {
 		cy.visit('/login');
 		cy.setCookie('cookie_consent', 'accept');
 		cy.get('[data-cy="email"]').clear().type(email);

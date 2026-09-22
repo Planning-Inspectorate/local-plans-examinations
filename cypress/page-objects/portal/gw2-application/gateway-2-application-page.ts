@@ -80,7 +80,7 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			.and('have.attr', 'type', 'submit');
 	}
 
-	verifyTableRows(table: Cypress.Chainable, rows: { document: string; status: string; addCy: string }[]) {
+	verifyDocTableRows(table: Cypress.Chainable, rows: { document: string; status: string; addCy: string }[]) {
 		table.within(() => {
 			rows.forEach(({ document, status, addCy }) => {
 				const row = cy.contains('tr', document);
@@ -127,6 +127,24 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 				cy.get('tbody tr').eq(index).should('contain.text', document);
 			});
 		});
+	}
+
+	verifySubmissionData(todayDisplay: string, submitterEmail: string) {
+		cy.getByData('submission-copy')
+			.should('be.visible')
+			.invoke('text')
+			.should('match', /^Your application was submitted on .+ at \d{2}:\d{2} by .+$/)
+			.and('include', todayDisplay)
+			.and('include', submitterEmail);
+	}
+
+	verifyNoAddOrChangeLinks() {
+		cy.get('[data-cy^="add-"]').should('not.exist');
+		cy.contains('a', 'Change').should('not.exist');
+	}
+
+	verifySubmitGateway2ButtonNotShown() {
+		this.submitGateway2AssessmentButton.should('not.exist');
 	}
 }
 

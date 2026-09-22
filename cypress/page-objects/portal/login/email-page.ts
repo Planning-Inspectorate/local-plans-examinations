@@ -16,6 +16,11 @@ export class PortalLoginEmailPage extends BasePage {
 	enterEmail(email: string) {
 		this.emailInput.clear().type(email);
 	}
+
+	submitEmail(email: string) {
+		this.enterEmail(email);
+		this.saveAndContinue();
+	}
 }
 
 export const portalLoginEmailPage = new PortalLoginEmailPage();

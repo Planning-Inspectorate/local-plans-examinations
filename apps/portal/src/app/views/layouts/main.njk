@@ -93,8 +93,8 @@
 {% endblock %}
 
 {% block footer %}
-	{{ pinsFooter(config.footerLinks) }}
-
+{#	{{ pinsFooter(config.footerLinks) }}#}
+    {% include "views/layouts/components/core/footer.njk" %}
 	<script type="module" {% if cspNonce %}nonce={{ cspNonce }}{% endif %} src="/assets/js/govuk-frontend.min.js"></script>
 	<script type="module" {% if cspNonce %}nonce={{ cspNonce }}{% endif %}>
 		import { initAll } from '/assets/js/govuk-frontend.min.js'

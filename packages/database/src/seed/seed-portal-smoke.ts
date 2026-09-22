@@ -3,6 +3,7 @@ import { loadConfig } from '../configuration/config.ts';
 import { seedStaticData } from './data-static.ts';
 import { loadSeedEnv } from './load-env.ts';
 import { assertEnvironmentSmokeDatabase } from './environment-smoke-safety.ts';
+import { PLAN_TYPE_ID } from './static-data/ids/index.ts';
 
 loadSeedEnv();
 
@@ -76,7 +77,7 @@ async function createSmokeCase(dbClient: ReturnType<typeof newDatabaseClient>) {
 					email,
 					caseOfficer: 'portal-smoke-case-officer',
 					planTitle,
-					planType: 'local-plan',
+					planType: PLAN_TYPE_ID.LOCAL_PLAN,
 					lpas: {
 						connect: lpas.map(({ lpaCode }) => ({ lpaCode }))
 					},

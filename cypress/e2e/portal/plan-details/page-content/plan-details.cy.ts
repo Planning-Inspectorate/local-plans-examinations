@@ -13,10 +13,12 @@ describe('Plan details page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('shows the plan title, reference and metadata', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			planDetailsPage.verifyServiceNavigation('Guidance', 'Sign out');
 			planDetailsPage.verifyBackLink('/manage-local-plans/your-plans');
 			planDetailsPage.verifyHeading(plan.title);
 			planDetailsPage.verifyCaption(plan.reference);

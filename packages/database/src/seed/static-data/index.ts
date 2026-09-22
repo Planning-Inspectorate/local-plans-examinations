@@ -1,3 +1,10 @@
+export { AUTHORITY_STATUSES } from './authority-status.ts';
 export { GATEWAYS } from './gateway.ts';
+export { GATEWAY_3_DECISIONS } from './gateway-3-decision.ts';
+export { DSA_CHECKED_VALUES } from './dsa-checked.ts';
+export { PLAN_BANDS } from './plan-band.ts';
+export { PLAN_TYPES } from './plan-type.ts';
 export { DOCUMENT_CATEGORY } from './document-categories.ts';
 export { DOCUMENT_SET } from './document-set.ts';
+export { DOCUMENT_SOURCE_SYSTEMS } from './document-source-system.ts';
+export { VIRUS_CHECK_STATUSES } from './virus-check-status.ts';

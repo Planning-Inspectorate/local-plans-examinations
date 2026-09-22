@@ -3,6 +3,7 @@ import { loadEnvFile } from 'node:process';
 import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference } from './cypress/tasks/notify.ts';
+import { seedCy } from './packages/database/src/seed/seed-cy.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -87,10 +88,7 @@ export default defineConfig({
 					console.table(message);
 					return null;
 				},
-				seedDb: async () => {
-					await runCommand('node packages/database/src/seed/seed-cy.ts');
-					return null;
-				},
+				seedDb: seedCy,
 				seedStaticData: async () => {
 					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;

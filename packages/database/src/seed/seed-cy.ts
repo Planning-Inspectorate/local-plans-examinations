@@ -3,11 +3,12 @@ import { loadEnvFile } from 'node:process';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
 import { seedStaticData } from './data-static.ts';
+import { DSA_CHECKED_ID, PLAN_TYPE_ID } from './static-data/ids/index.ts';
 
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
 
-async function run() {
+export async function seedCy() {
 	const config = loadConfig();
 	// prettier-ignore
 	try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -42,13 +43,13 @@ async function run() {
 	try {
 		await seedStaticData(dbClient);
 
-		await dbClient.case.create({
+		const seededCase = await dbClient.case.create({
 			data: {
 				reference: `PLAN-${Date.now()}`,
 				email: 'cypress@test.com',
 				caseOfficer: 'officer-1',
 				planTitle: 'Cypress Test Plan',
-				planType: 'local-plan',
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				intentionToCommenceDate: now,
 				gateway1Date: now,
 				gateway2Date: now,
@@ -75,7 +76,7 @@ async function run() {
 						completedGateway1Date: new Date('2026-07-01T12:00:00.000Z'),
 						slaSentDate: new Date('2026-08-01T12:00:00.000Z'),
 						slaReceivedDate: new Date('2026-09-01T12:00:00.000Z'),
-						dsaChecked: 'yes'
+						dsaChecked: DSA_CHECKED_ID.YES
 					}
 				},
 				gateway2Info: {
@@ -140,6 +141,7 @@ async function run() {
 				}
 			}
 		});
+		return { reference: seededCase.reference };
 	} catch (error) {
 		console.error(error);
 		throw error;
@@ -148,4 +150,6 @@ async function run() {
 	}
 }
 
-run();
+if (import.meta.main) {
+	seedCy();
+}

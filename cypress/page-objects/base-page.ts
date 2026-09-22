@@ -76,6 +76,28 @@ export class BasePage {
 		return cy.get('[data-cy="service-navigation"], .govuk-service-navigation');
 	}
 
+	get header() {
+		return cy.get('.govuk-header');
+	}
+
+	get footer() {
+		return cy.get('.govuk-footer, .pins-footer');
+	}
+
+	verifyHeader(title: string, href: string) {
+		const assertion = typeof href === 'string' ? 'eq' : 'match';
+		this.header.should('be.visible').and('contain.text', title);
+		this.header.find('a').should('have.attr', 'href').and(assertion, href);
+	}
+
+	verifyFooter(title: string, href?: string) {
+		const assertion = typeof href === 'string' ? 'eq' : 'match';
+		this.footer.should('be.visible').and('contain.text', title);
+		if (href) {
+			this.footer.find('a[href^="tel:"]').should('have.attr', 'href').and(assertion, href);
+		}
+	}
+
 	summaryRow(key: string) {
 		return cy.contains('.govuk-summary-list__key', key).parent('.govuk-summary-list__row');
 	}
@@ -418,6 +440,16 @@ export class BasePage {
 		table.within(() => {
 			headers.forEach((header) => {
 				cy.contains('th', header).should('be.visible');
+			});
+		});
+	}
+
+	verifyTableRows(table: Cypress.Chainable, rows: string[][]) {
+		table.within(() => {
+			rows.forEach(([key, ...values]) => {
+				const row = cy.contains('tr', key);
+				row.should('be.visible');
+				values.forEach((value) => row.should('contain.text', value));
 			});
 		});
 	}

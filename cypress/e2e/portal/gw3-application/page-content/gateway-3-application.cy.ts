@@ -15,7 +15,7 @@ describe('Gateway 3 application page content', () => {
 
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			gateway3ApplicationPage.verifyServiceNavigation('Guidance', 'Account settings', 'Manage users');
+			gateway3ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway3ApplicationPage.verifyBackLink(`/manage-local-plans/${plan.urlReference}`);
 			gateway3ApplicationPage.verifyCaption(plan.title);
 			gateway3ApplicationPage.verifyHeading('Gateway 3 submission');

@@ -3,4 +3,4 @@ export const AUTHORITY_STATUS_ID = {
 	INVALID: 'invalid',
 	TERMINATED: 'terminated',
 	UNKNOWN: 'unknown'
-};
+} as const;

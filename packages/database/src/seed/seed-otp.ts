@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
+import { PLAN_TYPE_ID } from './static-data/ids/index.ts';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -102,8 +103,9 @@ async function run() {
 				email: caseEmail,
 				caseOfficer: 'Test Officer',
 				planTitle,
-				planType: 'Local Plan',
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				...planDates,
+				submissionDate: null,
 				...(createdAt ? { createdAt } : {}),
 				lpas: lpaRelations,
 				gateway1Info,
@@ -116,8 +118,9 @@ async function run() {
 				email: caseEmail,
 				caseOfficer: 'Test Officer',
 				planTitle,
-				planType: 'Local Plan',
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				...planDates,
+				submissionDate: null,
 				...(createdAt ? { createdAt } : {}),
 				gateway1Info: {
 					create: gateway1Info.upsert.create
