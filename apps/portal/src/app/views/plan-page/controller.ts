@@ -1,12 +1,6 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
-// import { StatusTag } from '../../types.ts';
-// import type {  Status } from '../../types.ts';
-//
-// function statusTag(status: Status) {
-// 	const s = StatusTag[status as keyof typeof StatusTag] as { label: string; class: string } | undefined;
-// 	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
-// }
+import { getCaseStatusHTMLTag, getStageLabel } from '../landing-page/controller.ts';
 
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger, db } = service;
@@ -15,7 +9,12 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		let caseData;
 		try {
 			caseData = await db.case.findUnique({
-				where: { reference: planReference }
+				where: { reference: planReference },
+				include: {
+					gateway2Info: true,
+					gateway3Info: true,
+					lpas: { orderBy: { lpaName: 'asc' } }
+				}
 			});
 		} catch (error) {
 			logger.error({ error, planReference }, 'Error fetching plan from database');
@@ -29,88 +28,86 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 		// status, stage, ready to start,
+		const currentStageTag = getStageLabel(caseData);
+		const planStatus = getCaseStatusHTMLTag(caseData);
+		//TODO calculate the lead LPA from the list of LPAs, for now we are using the first one
+		const leadLPA = caseData.lpas[0].lpaName;
+		const linkedLPAs = caseData.lpas
+			.slice(1)
+			.map((lpa) => lpa.lpaName)
+			.join(', ');
 
-		// const planStatus = statusTag(caseData.status);
-		// const currentStage = StageLabel[plan.stage];
-		// const encodedPlanRef = encodeURIComponent(plan.planReference);
-		// const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
-		// const gateway3Base = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
-		// const currentApplicationLink =
-		// 	plan.stage === STAGE.Gateway3 ? gateway3Base : `${applicationBase}/application-declaration`;
-		// const applicationLink = () => applicationBase;
-		// const gateway3Link = () => gateway3Base;
-		//
-		// const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
-		//
-		// const notificationBanner = plan.status === STATUS.ActionNeeded;
-		//
-		// // Task list tags and links based on current stage
-		// let tagG2, tagG3, tagE;
-		// let dateTextG2, dateTextG3, dateTextE;
-		// let hrefG2, hrefG3, hrefE;
-		// hrefG2 = hrefG3 = hrefE = null;
-		// tagG2 = tagG3 = tagE = 'Cannot start yet';
-		// dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
-		// switch (plan.stage) {
-		// 	case STAGE.Gateway2:
-		// 		hrefG2 = applicationLink();
-		// 		tagG2 = planStatus;
-		// 		if (plan.status === STATUS.UnderReview) {
-		// 			dateTextG2 = 'Submitted: ';
-		// 		}
-		// 		break;
-		// 	case STAGE.Gateway3:
-		// 		dateTextG2 = 'Completed on:';
-		// 		hrefG2 = applicationLink();
-		// 		hrefG3 = gateway3Link();
-		// 		tagG2 = 'Completed';
-		// 		tagG3 = planStatus;
-		// 		break;
-		// 	case STAGE.Examination:
-		// 		hrefG2 = applicationLink();
-		// 		hrefG3 = gateway3Link();
-		// 		hrefE = applicationLink();
-		// 		if (plan.status === STATUS.Completed) {
-		// 			dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
-		// 			tagG2 = tagG3 = tagE = 'Completed';
-		// 		} else {
-		// 			dateTextG2 = dateTextG3 = 'Completed on: ';
-		// 			tagE = planStatus;
-		// 			tagG2 = tagG3 = 'Completed';
-		// 		}
-		// 		break;
-		// }
-		//
-		// const viewModel = {
-		// 	dateG1: plan.dates.G1,
-		// 	dateG2: plan.dates.G2,
-		// 	dateG3: plan.dates.G3,
-		// 	dateE: plan.dates.E,
-		// 	dateTextG2,
-		// 	dateTextG3,
-		// 	dateTextE,
-		// 	tagG2,
-		// 	tagG3,
-		// 	tagE,
-		// 	hrefG2,
-		// 	hrefG3,
-		// 	hrefE
-		// };
+		// Task list tags and links based on current stage
+		let tagG2, tagG3, tagE;
+		let dateTextG2, dateTextG3, dateTextE;
+		let hrefG2, hrefG3, hrefE;
+		hrefG2 = hrefG3 = hrefE = null;
+		tagG2 = tagG3 = tagE = 'Cannot start yet';
+		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
+
+		const applicationLink = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-submission`;
+		const gateway3Link = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-3-submission`;
+
+		switch (currentStageTag) {
+			case 'Gateway 2':
+				hrefG2 = applicationLink;
+				tagG2 = planStatus;
+				if (caseData.gateway2Info?.actualDate) {
+					dateTextG2 = 'Submitted: ';
+				}
+				break;
+
+			case 'Gateway 3':
+				dateTextG2 = 'Completed on: ';
+				hrefG2 = applicationLink;
+				hrefG3 = gateway3Link;
+				tagG2 = 'Completed';
+				tagG3 = planStatus;
+				break;
+
+			case 'Examination': {
+				hrefG2 = applicationLink;
+				hrefG3 = gateway3Link;
+				hrefE = applicationLink;
+				const isCompleted = Boolean(caseData.submissionDate);
+				if (isCompleted) {
+					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
+					tagG2 = tagG3 = tagE = 'Completed';
+				} else {
+					dateTextG2 = dateTextG3 = 'Completed on: ';
+					tagE = planStatus;
+					tagG2 = tagG3 = 'Completed';
+				}
+				break;
+			}
+		}
+
+		const viewModel = {
+			dateG1: caseData.gateway1Date,
+			dateG2: caseData.gateway2Date,
+			dateG3: caseData.gateway3Date,
+			dateE: caseData.submissionDate,
+			dateTextG2,
+			dateTextG3,
+			dateTextE,
+			tagG2,
+			tagG3,
+			tagE,
+			hrefG2,
+			hrefG3,
+			hrefE
+		};
 
 		return res.render('views/plan-page/view.njk', {
 			pageCaption: planReference,
 			pageTitle: caseData.planTitle,
-			// currentStage,
-			// planStatus,
-			// status: plan.status,
-			// leadLPA: caseData.leadLPA,
-			// linkedLPA: plan.linkedLPA,
-			// button,
-			// notificationBanner,
+			currentStage: currentStageTag,
+			planStatus,
+			leadLPA,
+			linkedLPA: linkedLPAs,
 			backLinkUrl: '/manage-local-plans/your-plans',
-			backLinkText: 'Back to my plans'
-			// currentApplicationLink,
-			// ...viewModel
+			backLinkText: 'Back to my plans',
+			...viewModel
 		});
 	};
 }

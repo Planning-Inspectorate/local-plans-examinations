@@ -17,7 +17,10 @@ async function run() {
 			caseOfficer: 'Sam Officer',
 			planTitle: 'Example Local Plan',
 			planType: 'Local Plan',
-			lpas: [{ lpaCode: 'E60000001', lpaName: 'Example Council' }],
+			lpas: [
+				{ lpaCode: 'E60000001', lpaName: 'Example Council' },
+				{ lpaCode: 'E60000002', lpaName: 'Jedi Council' }
+			],
 			contacts: [
 				{
 					firstName: 'Jane',
