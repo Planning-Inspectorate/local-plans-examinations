@@ -228,10 +228,11 @@ describe('buildValidateGateway3Submission', () => {
 	it('renders the check your answers page with an error when required answers are missing', async () => {
 		const handler = buildValidateGateway3Submission();
 		const req = { params: { planReference: 'PLAN-001' }, session: {} } as unknown as Request;
+		let statusCode: number | undefined;
 		const res = {
 			status(code: number) {
-				this.statusCode = code;
-				return this;
+				statusCode = code;
+				return res;
 			},
 			render: () => {},
 			locals: {
@@ -250,12 +251,12 @@ describe('buildValidateGateway3Submission', () => {
 				},
 				journeyResponse: { answers: {} }
 			}
-		} as unknown as Response & { statusCode?: number };
+		} as unknown as Response;
 		const next = () => {};
 
 		await handler(req, res, next as NextFunction);
 
-		assert.strictEqual((res as any).statusCode, 400);
+		assert.strictEqual(statusCode, 400);
 		assert.strictEqual(res.locals.errors?.submit?.text, 'Add all required documents before submitting');
 		assert.deepStrictEqual(res.locals.errorSummary, [
 			{ text: 'Add all required documents before submitting', href: '#required-information' }
