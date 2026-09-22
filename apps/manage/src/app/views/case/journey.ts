@@ -63,15 +63,13 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 			new Section('Gateway 3 submission', 'gateway-3-submission-1')
 				.addQuestion(questions['gateway3Documents-1'])
 				.addQuestion(questions['gateway3Decision-1'])
-				.addQuestion(questions['gateway3CompletionDate-1'])
 		);
 	} else {
 		submissionSections = sortGateway3Submissions(submissionData).map((submission, index) => {
 			const rowId = index + 1;
 			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
 				.addQuestion(questions[`gateway3Documents-${rowId}`])
-				.addQuestion(questions[`gateway3Decision-${rowId}`])
-				.addQuestion(questions[`gateway3CompletionDate-${rowId}`]);
+				.addQuestion(questions[`gateway3Decision-${rowId}`]);
 		});
 	}
 
