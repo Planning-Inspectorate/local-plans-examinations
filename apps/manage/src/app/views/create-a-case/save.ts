@@ -5,6 +5,7 @@ import { clearDataFromSession, type JourneyResponse } from '@planning-inspectora
 import * as authSession from '@planning-inspectorate/core/auth';
 import { parseDate } from '../../util/date.ts';
 import { questions } from './questions.ts';
+import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
 
 /**
  * The structure of data for the journey answers
@@ -59,6 +60,9 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser);
 
 		service.logger.info(answers, 'case created');
+		const lpaOptions = await loadLpaOptions(service);
+		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
+		const relevantLpaNames = uniqueLpaCodes.map((elem) => lpaOptionsMap.get(elem)).filter((elem) => elem != undefined);
 
 		// Send email to LPA using Gov Notify
 		if (!service.notifyClient) {
@@ -71,15 +75,18 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 			const notifyReference = `create-case:${caseReference}`;
+			// Need to construct the details this way to avoid eslint errors
+			const personalisationDetails: Record<string, string> = { portalLoginURL: portalLoginURL };
+			personalisationDetails['plan_ref'] = caseReference;
+			personalisationDetails['lpa_name'] = String(relevantLpaNames);
+			personalisationDetails['plan_type'] = answers.planType;
+			personalisationDetails['team_email_address'] = 'filler@someemail.com';
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {
 					try {
 						await service.notifyClient?.sendEmail(templateID, email.trim(), {
-							personalisation: {
-								portalLoginURL,
-								caseReference
-							},
+							personalisation: personalisationDetails,
 							reference: notifyReference
 						});
 						service.logger.info({ email: email }, 'create a case - email sent');
