@@ -45,7 +45,8 @@ describe('buildSaveController', () => {
 				warn: mock.fn(),
 				error: mock.fn()
 			},
-			localPlansTeamEmail: 'team@email.co.uk'
+			localPlansTeamEmail: 'team@email.co.uk',
+			getEntraClient: mock.fn()
 		};
 
 		mockRequest = {
