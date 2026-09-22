@@ -1,18 +1,25 @@
 import { BasePage } from '../../base-page.ts';
 
+export type GW3Decision = 'Proceed' | 'Resubmit';
+
 export class Gateway3DecisionPage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-3\/gateway-3-submission-(\d+)\/gateway-3-decision-(\d+)$/);
 	}
 
-	decisionRadio(value: string) {
-		return cy.getByData(`answer-${value}`);
+	private decisionMap: Record<GW3Decision, number> = {
+		Proceed: 1,
+		Resubmit: 2
+	};
+
+	decisionRadio(decision: GW3Decision) {
+		return cy.getByData(`answer-${this.decisionMap[decision]}`);
 	}
 
 	verifyDecisionForm() {
 		this.verifyHeading('What is the outcome of your Gateway 3 decision');
-		this.decisionRadio('1').parent().should('contain.text', 'Proceed to examination');
-		this.decisionRadio('2').parent().should('contain.text', 'Resubmission required');
+		this.decisionRadio('Proceed').parent().should('contain.text', 'Proceed to examination');
+		this.decisionRadio('Resubmit').parent().should('contain.text', 'Resubmission required');
 		this.verifySaveAndContinueVisible();
 	}
 
@@ -21,12 +28,12 @@ export class Gateway3DecisionPage extends BasePage {
 		this.verifyDecisionForm();
 	}
 
-	verifyDecisionSelected(value: string) {
-		this.decisionRadio(value).should('have.attr', 'checked');
+	verifyDecisionSelected(decision: GW3Decision) {
+		this.decisionRadio(decision).should('have.attr', 'checked');
 	}
 
-	selectDecision(value: string) {
-		this.decisionRadio(value).should('exist').check();
+	selectDecision(decision: GW3Decision) {
+		this.decisionRadio(decision).should('exist').check();
 		this.saveAndContinue();
 	}
 }
