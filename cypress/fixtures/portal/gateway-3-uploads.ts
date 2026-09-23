@@ -8,7 +8,7 @@ type Gateway3UploadAnswer = {
 };
 
 export const gateway3UploadAnswers = {
-	mapOfPropsedLocalPlanPolicies: {
+	mapOfProposedLocalPlanPolicies: {
 		heading: 'Upload map of proposed local plan policies',
 		caption: 'Required information',
 		fieldName: 'mapOfPolicies',

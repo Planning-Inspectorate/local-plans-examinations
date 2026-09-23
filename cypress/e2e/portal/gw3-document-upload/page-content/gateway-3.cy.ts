@@ -1,7 +1,7 @@
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import {
-	mapOfPropsedLocalPlanPoliciesPage,
+	mapOfProposedLocalPlanPoliciesPage,
 	statementOfCompliancePage
 } from '../../../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
@@ -19,19 +19,19 @@ describe('Gateway 3 document upload page content', () => {
 
 	it('Verify the page content for the map of proposed local plan policies page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			gateway3ApplicationPage.clickAddLink(mapOfPropsedLocalPlanPoliciesPage.addCy);
-			mapOfPropsedLocalPlanPoliciesPage.verifyLoaded();
-			mapOfPropsedLocalPlanPoliciesPage.verifyBackLink(gateway3ApplicationPage.pathFor(plan.urlReference));
-			mapOfPropsedLocalPlanPoliciesPage.verifyServiceNavigation('Guidance', 'Sign out');
-			mapOfPropsedLocalPlanPoliciesPage.verifyCaptionL('Required information');
-			mapOfPropsedLocalPlanPoliciesPage.verifyMainContains('Drag and drop or choose files');
-			mapOfPropsedLocalPlanPoliciesPage.verifyNoFileChosen();
-			mapOfPropsedLocalPlanPoliciesPage.verifyUploadFormVisible();
-			mapOfPropsedLocalPlanPoliciesPage.verifyFileFormatHintText(
+			gateway3ApplicationPage.clickAddLink(mapOfProposedLocalPlanPoliciesPage.addCy);
+			mapOfProposedLocalPlanPoliciesPage.verifyLoaded();
+			mapOfProposedLocalPlanPoliciesPage.verifyBackLink(gateway3ApplicationPage.pathFor(plan.urlReference));
+			mapOfProposedLocalPlanPoliciesPage.verifyServiceNavigation('Guidance', 'Sign out');
+			mapOfProposedLocalPlanPoliciesPage.verifyCaptionL('Required information');
+			mapOfProposedLocalPlanPoliciesPage.verifyMainContains('Drag and drop or choose files');
+			mapOfProposedLocalPlanPoliciesPage.verifyNoFileChosen();
+			mapOfProposedLocalPlanPoliciesPage.verifyUploadFormVisible();
+			mapOfProposedLocalPlanPoliciesPage.verifyFileFormatHintText(
 				'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.'
 			);
-			mapOfPropsedLocalPlanPoliciesPage.verifyUploadFilesButtonVisible();
-			mapOfPropsedLocalPlanPoliciesPage.verifySaveAndReturnButton();
+			mapOfProposedLocalPlanPoliciesPage.verifyUploadFilesButtonVisible();
+			mapOfProposedLocalPlanPoliciesPage.verifySaveAndReturnButton();
 		});
 	});
 

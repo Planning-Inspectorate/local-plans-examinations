@@ -1,6 +1,6 @@
 import { openGateway3DocumentUploadPage } from '../../../../flows/portal/gateway-3-upload-flow.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
-import { mapOfPropsedLocalPlanPoliciesPage } from '../../../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
+import { mapOfProposedLocalPlanPoliciesPage } from '../../../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
@@ -19,11 +19,11 @@ describe('Gateway 3 document upload validation tests', () => {
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = mapOfPropsedLocalPlanPoliciesPage;
+				const page = mapOfProposedLocalPlanPoliciesPage;
 				openGateway3DocumentUploadPage(plan, page);
-				mapOfPropsedLocalPlanPoliciesPage.uploadFile('test-document-invalid.txt');
-				mapOfPropsedLocalPlanPoliciesPage.clickUploadFiles();
-				mapOfPropsedLocalPlanPoliciesPage.verifyErrorSummary(
+				mapOfProposedLocalPlanPoliciesPage.uploadFile('test-document-invalid.txt');
+				mapOfProposedLocalPlanPoliciesPage.clickUploadFiles();
+				mapOfProposedLocalPlanPoliciesPage.verifyErrorSummary(
 					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
 					ERROR_MESSAGES.INVALID_FILE_FORMAT
 				);
@@ -36,10 +36,10 @@ describe('Gateway 3 document upload validation tests', () => {
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = mapOfPropsedLocalPlanPoliciesPage;
+				const page = mapOfProposedLocalPlanPoliciesPage;
 				openGateway3DocumentUploadPage(plan, page);
-				mapOfPropsedLocalPlanPoliciesPage.clickUploadFiles();
-				mapOfPropsedLocalPlanPoliciesPage.verifyErrorSummary(
+				mapOfProposedLocalPlanPoliciesPage.clickUploadFiles();
+				mapOfProposedLocalPlanPoliciesPage.verifyErrorSummary(
 					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
 					ERROR_MESSAGES.NO_FILE_UPLOADED
 				);
