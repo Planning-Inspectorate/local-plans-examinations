@@ -24,10 +24,10 @@ import {
 import {
 	DSA_CHECKED_ID,
 	GATEWAY_3_DECISION_ID,
+	NUM_GW3_SUBMISSIONS_QUESTIONS,
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 

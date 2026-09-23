@@ -1,4 +1,4 @@
-import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
+export const NUM_GW3_SUBMISSIONS_QUESTIONS = 200;
 
 // Create multiple entries to support multiple gw3 submissions
 const GATEWAY_3_DOCUMENT_FOLDERS: Record<string, string> = {};

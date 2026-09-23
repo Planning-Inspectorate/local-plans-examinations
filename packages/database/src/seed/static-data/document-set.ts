@@ -1,5 +1,10 @@
-import { DOCUMENT_CATEGORY_ID, DOCUMENT_SET_ID, DOCUMENT_SET_FOLDER_NAME, GATEWAY_ID } from './ids/index.ts';
-import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
+import {
+	DOCUMENT_CATEGORY_ID,
+	DOCUMENT_SET_ID,
+	DOCUMENT_SET_FOLDER_NAME,
+	GATEWAY_ID,
+	NUM_GW3_SUBMISSIONS_QUESTIONS
+} from './ids/index.ts';
 
 // Create folder entries to support multiple gw3 submissions
 const GATEWAY_3_DOCUMENT_FOLDERS: {
