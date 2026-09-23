@@ -30,11 +30,7 @@ import {
 	GW2QUESTIONS
 } from './questions.ts';
 import { buildSaveController } from './save.ts';
-import {
-	getDocumentSetIdsByFolderName,
-	loadGateway2DocumentsByDocumentSetId,
-	saveGateway2Documents
-} from './documents.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	createFileUploaderDeleteController,
@@ -215,7 +211,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
-		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
+		const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 			service,
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
 		);
@@ -228,7 +224,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				);
 			}
 
-			const uploadedFiles = await loadGateway2DocumentsByDocumentSetId(service, currentCase.id, documentSetId);
+			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),
@@ -623,7 +619,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 						};
 					},
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
@@ -665,7 +661,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 					storage: fileUploaderStorage,
 					sessionKey: fileUploaderCaseSessionKey,
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await saveGateway2Documents(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Deleted(service, req, questionConfig, uploadedFiles);
 					},
