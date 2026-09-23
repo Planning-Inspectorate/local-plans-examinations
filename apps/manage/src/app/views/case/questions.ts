@@ -82,6 +82,12 @@ const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
+	gateway3FrontOfficeDocuments: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER,
+		title: 'Documents',
+		question: 'Submitted GW3 documents',
+		fieldName: 'gateway3FrontOfficeDocuments'
+	},
 	gateway3Documents: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
 		title: 'Gateway 3 documents',

@@ -301,7 +301,7 @@ model DocumentCategory {
 
 /// Static document set reference data for upload journeys and storage folders.
 model DocumentSet {
-  id String @id @db.NVarChar(20)
+  id String @id @db.NVarChar(100)
 
   gatewayId String  @db.NVarChar(2)
   gateway   Gateway @relation(fields: [gatewayId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -338,7 +338,7 @@ model Document {
   case                  Case              @relation(fields: [caseId], references: [id], onUpdate: NoAction, onDelete: NoAction)
   caseId                String            @db.UniqueIdentifier
   documentSet           DocumentSet       @relation(fields: [documentSetId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  documentSetId         String            @db.NVarChar(20)
+  documentSetId         String            @db.NVarChar(100)
   createdAt             DateTime          @default(now())
   /// Soft delete
   isDeleted             Boolean           @default(false)

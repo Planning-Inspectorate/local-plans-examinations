@@ -61,14 +61,16 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	if (submissionData.length == 1) {
 		submissionSections.push(
 			new Section('Gateway 3 submission', 'gateway-3-submission-1')
-				.addQuestion(questions['gateway3Documents-1'])
+				.addQuestion(questions['gateway3FrontOfficeDocuments-1'])
+				.addQuestion(questions['gateway3Documents-1']) // Temp for now, need to merge with foDocs
 				.addQuestion(questions['gateway3Decision-1'])
 		);
 	} else {
 		submissionSections = sortGateway3Submissions(submissionData).map((submission, index) => {
 			const rowId = index + 1;
 			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
-				.addQuestion(questions[`gateway3Documents-${rowId}`])
+				.addQuestion(questions[`gateway3FrontOfficeDocuments-${rowId}`])
+				.addQuestion(questions[`gateway3Documents-${rowId}`]) // Temp for now, need to merge with foDocs
 				.addQuestion(questions[`gateway3Decision-${rowId}`]);
 		});
 	}
@@ -271,7 +273,7 @@ const gateway3QuestionNames = new Set<string>([
 	...Array.from(
 		// Gateway 3 submission questions
 		{ length: 50 },
-		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
+		() => ['gateway3FrontOfficeDocuments', 'gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()
 		.map((item, index) => `${item}-${Math.trunc(index / 3) + 1}`)

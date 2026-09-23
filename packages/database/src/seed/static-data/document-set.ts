@@ -10,16 +10,75 @@ const GATEWAY_3_DOCUMENT_FOLDERS: {
 	folderName: string;
 	displayOrder: number;
 }[] = [];
+
+const gw3DocumentSetIdPrefixNames = {
+	G3_DOCUMENT: { title: 'Gateway 3 Document', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_EXAM_WEBSITE: { title: 'Examination website', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_PROPOSED_PLAN: {
+		title: 'Proposed local plan intended for submission for examination',
+		category: DOCUMENT_CATEGORY_ID.PROCEDURAL
+	},
+	G3_MAP_OF_PROPOSED_PLAN: { title: 'Map of proposed local plan policies', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_STATEMENT_OF_COMPLIANCE: { title: 'Statement of Compliance', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_STATEMENT_OF_SOUNDNESS: { title: 'Statement of Soundness', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_SUMMARY_OF_ENGAGEMENT: {
+		title: 'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+		category: DOCUMENT_CATEGORY_ID.CONSULATION
+	},
+	G3_SUMMARY_OF_SCOPING_CONSULTATION: {
+		title: 'Summary of scoping consultation',
+		category: DOCUMENT_CATEGORY_ID.CONSULATION
+	},
+	G3_SUMMARY_OF_CONSULTATION_AND_EVIDENCE: {
+		title: 'Summary of consultation on proposed local plan content and evidence',
+		category: DOCUMENT_CATEGORY_ID.CONSULATION
+	},
+	G3_SUMMARY_OF_CONSULTATION: {
+		title: 'Summary of consultation on proposed local plan',
+		category: DOCUMENT_CATEGORY_ID.CONSULATION
+	},
+	G3_STATEMENT_OF_PRACTICAL_ARRANGEMENTS: {
+		title: 'Statement setting out practical arrangements demonstrating readiness for examination',
+		category: DOCUMENT_CATEGORY_ID.PROCEDURAL
+	},
+	G3_COPIES_OF_REPRESENTATIONS: { title: 'Copies of representations', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_SUPPLEMENTARY_EXAMS_STATEMENT: {
+		title: 'Supplementary plans statement',
+		category: DOCUMENT_CATEGORY_ID.PROCEDURAL
+	},
+	G3_ENVIRONMENTAL_REPORT: { title: 'Environmental report', category: DOCUMENT_CATEGORY_ID.PROCEDURAL },
+	G3_STATEMENT_OF_ENVIRONMENT_REASONS: {
+		title:
+			'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+		category: DOCUMENT_CATEGORY_ID.PROCEDURAL
+	},
+	G3_SUMMARY_OF_REPRESENTATIONS: {
+		title:
+			'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+		category: DOCUMENT_CATEGORY_ID.PROCEDURAL
+	},
+	G3_SUMMARY_OF_GW2_REMEDIATIONS: {
+		title: 'Summary of how Gateway 2 assessor issues have been addressed',
+		category: DOCUMENT_CATEGORY_ID.PROCEDURAL
+	},
+	G3_SUMMARY_OF_CHANGES: {
+		title:
+			'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+		category: DOCUMENT_CATEGORY_ID.CONSULATION
+	},
+	G3_OTHER_DOCUMENTS: { title: 'Other documents', category: DOCUMENT_CATEGORY_ID.ADDITIONAL }
+};
 for (let i = 1; i < NUM_GW3_SUBMISSIONS_QUESTIONS; i++) {
-	const key = `G3_DOCUMENT_${i}`;
-	GATEWAY_3_DOCUMENT_FOLDERS.push({
-		id: DOCUMENT_SET_ID[key],
-		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
-		gatewayId: GATEWAY_ID.GATEWAY_3,
-		displayName: `Gateway 3 Document ${i}`,
-		folderName: DOCUMENT_SET_FOLDER_NAME[key as keyof typeof DOCUMENT_SET_FOLDER_NAME],
-		displayOrder: i
-	});
+	GATEWAY_3_DOCUMENT_FOLDERS.push(
+		...Object.entries(gw3DocumentSetIdPrefixNames).map(([variablePrefix, details], index) => ({
+			id: DOCUMENT_SET_ID[`${variablePrefix}_${i}`],
+			documentCategoryId: details.category,
+			gatewayId: GATEWAY_ID.GATEWAY_3,
+			displayName: `${details.title} ${i}`,
+			folderName: DOCUMENT_SET_FOLDER_NAME[`${variablePrefix}_${i}` as keyof typeof DOCUMENT_SET_FOLDER_NAME],
+			displayOrder: i + index
+		}))
+	);
 }
 
 export const DOCUMENT_SET = [
