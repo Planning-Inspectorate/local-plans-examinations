@@ -5,6 +5,10 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
+type JourneyWithReference = Journey & {
+	caseReference: string;
+};
+
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions, req);
 	const overviewUrl = req.baseUrl + '/overview';
@@ -43,7 +47,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		response
 	});
 
-	return getBacklinks(journey, overviewUrl);
+	return getBackLinksAndSetReference(journey, overviewUrl, req.params.reference);
 }
 
 export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -89,7 +93,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		response
 	});
 
-	return getBacklinks(journey, gateway3Url);
+	return getBackLinksAndSetReference(journey, gateway3Url, req.params.reference);
 }
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -118,7 +122,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		response
 	});
 
-	return getBacklinks(journey, gateway2Url);
+	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
 }
 
 export function createGateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -145,7 +149,7 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 		response
 	});
 
-	return getBacklinks(journey, gateway1Url);
+	return getBackLinksAndSetReference(journey, gateway1Url, req.params.reference);
 }
 
 export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -196,11 +200,13 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
-	return getBacklinks(journey, examinationUrl);
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
 }
 
-function getBacklinks(journey: Journey, overviewUrl: string): Journey {
+function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, caseReference: string | string[]): Journey {
 	const getBackLink = journey.getBackLink.bind(journey);
+	const caseJourney = journey as JourneyWithReference;
+	caseJourney.caseReference = Array.isArray(caseReference) ? caseReference[0] : caseReference;
 
 	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
 		const { params, manageListQuestion } = options;

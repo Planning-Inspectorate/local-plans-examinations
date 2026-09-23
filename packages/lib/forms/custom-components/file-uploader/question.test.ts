@@ -38,17 +38,20 @@ describe('FileUploaderQuestion', () => {
 		assert.equal(row.value, 'Not started');
 	});
 
-	it('formats one uploaded file as plain escaped text', () => {
+	it('formats one uploaded file as a download link', () => {
 		const question = buildQuestion();
 
 		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
 			{ id: 'file-1', fileName: 'cover-letter.pdf' }
 		]);
 
-		assert.equal(row.value, 'cover-letter.pdf');
+		assert.equal(
+			row.value,
+			'<a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">cover-letter.pdf</a>'
+		);
 	});
 
-	it('formats multiple uploaded files as a bullet list when valueDisplayFormat is set to items', () => {
+	it('formats multiple uploaded files as a bullet list of links when valueDisplayFormat is set to items', () => {
 		const question = buildQuestion({ formatSummaryValue: fileUploadBulletListFormat });
 
 		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
@@ -59,7 +62,7 @@ describe('FileUploaderQuestion', () => {
 
 		assert.equal(
 			row.value,
-			'<ul class="govuk-list--bullet li"><li>beach.jpg</li><li>bridge.jpg</li><li>bullfrog.jpg</li></ul>'
+			'<ul class="govuk-list--bullet li"><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">beach.jpg</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-2">bridge.jpg</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-3">bullfrog.jpg</a></li></ul>'
 		);
 	});
 	it('formats multiple uploaded files as a count of the files when valueDisplayFormat is set to count', () => {
@@ -84,7 +87,7 @@ describe('FileUploaderQuestion', () => {
 
 		assert.equal(
 			row.value,
-			'<ul class="govuk-list--bullet li"><li>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</li><li>safe.pdf</li></ul>'
+			'<ul class="govuk-list--bullet li"><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;.pdf</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-2">safe.pdf</a></li></ul>'
 		);
 	});
 
@@ -112,7 +115,8 @@ describe('FileUploaderQuestion', () => {
 
 function buildJourney() {
 	return {
-		getCurrentQuestionUrl: () => '/section/documents'
+		getCurrentQuestionUrl: () => '/section/documents',
+		caseReference: 'PLAN-123456'
 	};
 }
 
