@@ -63,6 +63,7 @@ module "app_manage" {
     GOV_NOTIFY_API_KEY                 = local.key_vault_refs["localplans-gov-notify-api-key"]
     GOV_NOTIFY_WEBHOOK_TOKEN           = local.key_vault_refs["gov-notify-webhook-token"]
     GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = var.gov_notify.templates.case_created
+    LOCAL_PLANS_TEAM_EMAIL             = "enquiries@planninginspectorate.gov.uk"
 
     # document storage
     BLOB_STORE_ACCOUNT_URL = azurerm_storage_account.documents.primary_blob_endpoint
