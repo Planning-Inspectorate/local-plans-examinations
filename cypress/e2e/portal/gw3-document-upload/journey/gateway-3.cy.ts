@@ -4,7 +4,7 @@ import { preparePlanDetails } from '../../../../flows/portal/plan-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import {
-	mapOfPropsedLocalPlanPoliciesPage,
+	mapOfProposedLocalPlanPoliciesPage,
 	statementOfCompliancePage
 } from '../../../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
 import { openGateway3DocumentUploadPage } from '../../../../flows/portal/gateway-3-upload-flow.ts';
@@ -37,23 +37,23 @@ describe('Gateway 3 document upload journeys', () => {
 		'Adds a map of proposed local plan policies using drag and drop, then replaces it with new document',
 		{ tags: ['regression'] },
 		() => {
-			const page = mapOfPropsedLocalPlanPoliciesPage;
+			const page = mapOfProposedLocalPlanPoliciesPage;
 			openGateway3DocumentUploadPage(planDetails, page);
-			mapOfPropsedLocalPlanPoliciesPage.dragAndDropFile('test-document.pdf');
-			mapOfPropsedLocalPlanPoliciesPage.clickUploadFiles();
-			mapOfPropsedLocalPlanPoliciesPage.verifyFileUploaded('test-document.pdf');
+			mapOfProposedLocalPlanPoliciesPage.dragAndDropFile('test-document.pdf');
+			mapOfProposedLocalPlanPoliciesPage.clickUploadFiles();
+			mapOfProposedLocalPlanPoliciesPage.verifyFileUploaded('test-document.pdf');
 
-			mapOfPropsedLocalPlanPoliciesPage.goBack();
+			mapOfProposedLocalPlanPoliciesPage.goBack();
 			gateway3ApplicationPage.verifyLoaded();
 
 			gateway3ApplicationPage.clickAddLink(page.addCy);
-			mapOfPropsedLocalPlanPoliciesPage.verifyLoaded();
-			mapOfPropsedLocalPlanPoliciesPage.verifyFileUploaded('test-document.pdf');
+			mapOfProposedLocalPlanPoliciesPage.verifyLoaded();
+			mapOfProposedLocalPlanPoliciesPage.verifyFileUploaded('test-document.pdf');
 
-			mapOfPropsedLocalPlanPoliciesPage.removeFile('test-document.pdf');
-			mapOfPropsedLocalPlanPoliciesPage.verifyFileNotUploaded('test-document.pdf');
+			mapOfProposedLocalPlanPoliciesPage.removeFile('test-document.pdf');
+			mapOfProposedLocalPlanPoliciesPage.verifyFileNotUploaded('test-document.pdf');
 
-			mapOfPropsedLocalPlanPoliciesPage.uploadAndVerifyFile('test-document.docx');
+			mapOfProposedLocalPlanPoliciesPage.uploadAndVerifyFile('test-document.docx');
 		}
 	);
 

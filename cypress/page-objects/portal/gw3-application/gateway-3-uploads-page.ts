@@ -4,17 +4,17 @@ import { DocumentUploadPage } from '../base/document-upload-page.ts';
 const gateway3UploadPath = (section: string, path: string) =>
 	new RegExp(`^/manage-local-plans/[^/]+/gateway-3-submission/${section}/${path}$`);
 
-export const mapOfPropsedLocalPlanPoliciesPage = new DocumentUploadPage(
+export const mapOfProposedLocalPlanPoliciesPage = new DocumentUploadPage(
 	gateway3UploadPath(
-		gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.section,
-		gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.path
+		gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.section,
+		gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.path
 	),
-	gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.fieldName,
-	gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.heading,
-	gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.caption,
-	gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.addCy,
-	gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.section,
-	gateway3UploadAnswers.mapOfPropsedLocalPlanPolicies.path
+	gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.fieldName,
+	gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.heading,
+	gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.caption,
+	gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.addCy,
+	gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.section,
+	gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.path
 );
 
 export const statementOfCompliancePage = new DocumentUploadPage(
