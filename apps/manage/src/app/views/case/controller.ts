@@ -12,6 +12,7 @@ import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/cust
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import multer from 'multer';
+import { parseDate } from '../../util/date.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -70,6 +71,8 @@ interface Gateway2Input {
 	reportPublishedByLPA?: Date;
 	gateway2Report?: any;
 	workshopDocumentUploadedDate?: Date;
+	workshopExpectedDays?: string;
+	workshopExpectedDaysKnown_workshopExpectedDays?: string;
 }
 
 interface ExaminationInput {
@@ -396,6 +399,17 @@ export async function updateGateway2(
 	if (question === 'gateway-2-assessor' || question === 'assessor-gateway-2') {
 		answers.assessorAppointmentDate = new Date();
 	}
+
+	if (answers.workshopDate) {
+		answers.workshopDate = parseDate(answers.workshopDate as any);
+	}
+
+	if ('workshopExpectedDaysKnown_workshopExpectedDays' in answers) {
+		answers.workshopExpectedDays = answers.workshopExpectedDaysKnown_workshopExpectedDays;
+
+		delete answers.workshopExpectedDaysKnown_workshopExpectedDays;
+	}
+
 	if (answers) {
 		await db.gateway2Info.upsert({
 			where: { caseId },
@@ -581,6 +595,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+				res.locals.workshopDetails = journey2Data;
 				if (
 					req.method === 'POST' &&
 					(req.params.question == 'gateway-2-report' || req.params.question == 'gateway-2-workshop-documents') &&

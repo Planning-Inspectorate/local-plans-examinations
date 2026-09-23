@@ -1,4 +1,10 @@
-import { Journey, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
+import {
+	Journey,
+	ManageListSection,
+	Section,
+	whenQuestionHasAnswer,
+	questionsHaveAnswers
+} from '@planning-inspectorate/dynamic-forms';
 import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
@@ -78,7 +84,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 }
 
 export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
-	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop/';
+	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop';
 	const gateway2Url = req.baseUrl + '/gateway-2';
 
 	const journey = new Journey({
@@ -89,17 +95,42 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 				.addQuestion(questions.gateway2WorkshopExpectedDays)
 				.addQuestion(questions.gateway2WorkshopLocationType)
 				.addQuestion(questions.gateway2WorkshopLocationKnown)
+				.withCondition((response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions.gateway2WorkshopLocationType, 'in-person'],
+							[questions.gateway2WorkshopLocationType, 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
 				.addQuestion(questions.gateway2WorkshopVenueAddress)
+				.withCondition(whenQuestionHasAnswer(questions.gateway2WorkshopLocationKnown, 'yes'))
+				.addQuestion(questions.gateway2RemoteMeetingLinkKnown)
+				.withCondition((response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions.gateway2WorkshopLocationType, 'remote'],
+							[questions.gateway2WorkshopLocationType, 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions.gateway2RemoteMeetingLink)
+				.withCondition(whenQuestionHasAnswer(questions.gateway2RemoteMeetingLinkKnown, 'yes'))
 		],
+		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
-		taskListTemplate: 'views/layouts/case-overview.njk',
+		taskListTemplate: 'views/layouts/workshop-check-your-answers.njk',
 		journeyTitle: 'Set up workshop',
 		returnToListing: false,
 		makeBaseUrl: () => gateway2WorkshopUrl,
 		initialBackLink: gateway2Url,
 		response
 	});
-	return getBacklinks(journey, gateway2WorkshopUrl);
+	return journey;
 }
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {

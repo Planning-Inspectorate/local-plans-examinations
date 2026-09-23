@@ -17,7 +17,7 @@ import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import { buildCaseOfficerOptions } from '../../util/options-helper.ts';
 
-function setAsEditingFromCya(req: any, _: any, next: any) {
+export function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
 	next();
 }
@@ -28,17 +28,17 @@ export function shouldReturnToCya(req: { params?: Record<string, string | undefi
 	return editingFromCya && !hasManageListItemParams;
 }
 
-function redirectAfterCyaEdit(req: any, res: any, next: any) {
+export function redirectAfterCyaEdit(req: any, res: any, next: any) {
 	const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
-function saveLastQuestionUrl(req: any, _: any, next: any) {
+export function saveLastQuestionUrl(req: any, _: any, next: any) {
 	req.session.lastQuestionUrl = req.originalUrl;
 	next();
 }
 
-function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
+export function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 	if (req.session.lastQuestionUrl) {
 		res.locals.backLink = req.session.lastQuestionUrl;
 	}

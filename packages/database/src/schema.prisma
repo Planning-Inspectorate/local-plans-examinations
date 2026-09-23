@@ -76,9 +76,20 @@ model Gateway2Info {
   reportIssuedDate             DateTime? @db.DateTime2
   reportPublishedByLPA         DateTime? @db.DateTime2
   workshopDocumentUploadedDate DateTime?
-  workshopDate                 DateTime? @db.DateTime2
+  workshopDate                 DateTime?
   workshopTime                 String?
   workshopEndTime              String?
+  workshopExpectedDaysKnown    String?
+  workshopExpectedDays         String?
+  workshopLocationType         String?
+  remoteMeetingLinkKnown       String?
+  remoteMeetingLink            String?
+  workshopLocationKnown        String?
+  workshopVenueName            String?
+  workshopAddressLine          String?
+  workshopAddressLine2         String?
+  workshopTownOrCity           String?
+  workshopPostcode             String?
 }
 
 model Gateway3Info {

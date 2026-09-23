@@ -567,26 +567,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
 		title: 'Assessor date of appointment',
-		validators: [new DateValidator(' a valid date')],
+		validators: [new DateValidator(' Input a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
-	},
-	workshopDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When is the Gateway 2 workshop?',
-		fieldName: 'workshopDate',
-		url: 'gateway-2-workshop-date',
-		title: 'Workshop date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' }
-	},
-	workshopVenue: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'What is the venue for the Gateway 2 workshop?',
-		fieldName: 'workshopVenue',
-		url: 'gateway-2-workshop-venue',
-		title: 'Workshop venue',
-		validators: [new RequiredValidator('Enter a venue name')],
-		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' }
 	},
 	gateway2WorkshopDocuments: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
@@ -632,7 +614,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				attributes: { 'data-cy': 'gateway-2-workshop-date' }
 			},
 			{
-				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				type: 'time',
 				fieldName: 'workshopTime',
 				label: 'Start time',
 				caption: 'For example, 14 30',
@@ -640,7 +622,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				attributes: { 'data-cy': 'gateway-2-workshop-time' }
 			},
 			{
-				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				type: 'time',
 				fieldName: 'workshopEndTime',
 				label: 'End time (optional)',
 				title: 'Gateway 2 workshop end time',
@@ -652,14 +634,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				fields: [
 					{
 						fieldName: 'workshopDate',
-						validators: [new DateValidator(' a valid date')]
+						validators: [new DateValidator('Input a valid date')]
 					},
 					{
-						fieldName: 'workshopTime',
+						fieldName: 'workshopTime_hour',
 						validators: [new RequiredValidator(' a valid time')]
 					},
 					{
-						fieldName: 'workshopEndTime',
+						fieldName: 'workshopTime_minute',
 						validators: [new RequiredValidator(' a valid time')]
 					}
 				]
@@ -673,22 +655,32 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway2WorkshopExpectedDays: {
 		type: COMPONENT_TYPES.RADIO,
 		question: 'Do you know the expected number of days to carry out the workshop?',
-		fieldName: 'gateway2WorkshopExpectedDays',
+		fieldName: 'workshopExpectedDaysKnown',
 		url: 'gateway-2-workshop-expected-days',
 		title: 'Gateway 2 expected number of days',
 		options: [
-			{ value: 'yes', text: 'Yes' },
-			{ value: 'no', text: 'No' }
+			{
+				value: 'yes',
+				text: 'Yes',
+				conditional: {
+					question: 'Number of days',
+					type: 'number',
+					fieldName: 'workshopExpectedDays'
+				}
+			},
+			{
+				value: 'no',
+				text: 'No'
+			}
 		],
 		validators: [new RequiredValidator('Select an option')]
 	},
 	gateway2WorkshopLocationType: {
-		// types are in-person, hybrid or remote
 		type: COMPONENT_TYPES.RADIO,
 		question: 'Is the workshop in-person, hybrid or remote?',
-		fieldName: 'gateway2Location',
-		url: 'gateway-2-location',
-		title: 'Gateway 2 location',
+		fieldName: 'workshopLocationType',
+		url: 'gateway-2-location-type',
+		title: 'Gateway 2 location type',
 		options: [
 			{ value: 'in-person', text: 'In-person' },
 			{ value: 'hybrid', text: 'Hybrid' },
@@ -699,7 +691,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway2WorkshopLocationKnown: {
 		type: COMPONENT_TYPES.RADIO,
 		question: 'Do you know the address of where the workshop will take place?',
-		fieldName: 'gateway2WorkshopLocationKnowns',
+		fieldName: 'workshopLocationKnown',
 		url: 'gateway-2-workshop-location-known',
 		title: 'Gateway 2 location known',
 		options: [
@@ -713,35 +705,35 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputFields: [
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'gateway2WorkshopVenueName',
+				fieldName: 'workshopVenueName',
 				label: 'Venue name',
 				title: 'Gateway 2 workshop venue name',
 				attributes: { 'data-cy': 'gateway-2-workshop-venue-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'gateway2WorkshopAddressLine',
+				fieldName: 'workshopAddressLine',
 				label: 'Address line 1',
 				title: 'Gateway 2 workshop address line 1',
 				attributes: { 'data-cy': 'gateway-2-workshop-address-line-1' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'gateway2WorkshopAddressLine2',
+				fieldName: 'workshopAddressLine2',
 				label: 'Address line 2 (optional)',
 				title: 'Gateway 2 workshop address line 2',
 				attributes: { 'data-cy': 'gateway-2-workshop-address-line-2' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'gateway2WorkshopTownOrCity',
+				fieldName: 'workshopTownOrCity',
 				label: 'Town or city',
 				title: 'Gateway 2 workshop town or city',
 				attributes: { 'data-cy': 'gateway-2-workshop-town-or-city' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'gateway2WorkshopPostcode',
+				fieldName: 'workshopPostcode',
 				label: 'Postcode',
 				title: 'Gateway 2 workshop postcode',
 				attributes: { 'data-cy': 'gateway-2-workshop-postcode' }
@@ -751,24 +743,48 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			new MultiFieldInputValidator({
 				fields: [
 					{
-						fieldName: 'gateway2WorkshopDate',
-						validators: [new RequiredValidator(' a valid date')]
+						fieldName: 'workshopVenueName',
+						validators: [new RequiredValidator('Input a workshop venue name')]
 					},
 					{
-						fieldName: 'gateway2WorkshopTime',
-						validators: [new RequiredValidator(' a valid date')]
+						fieldName: 'workshopAddressLine',
+						validators: [new RequiredValidator('Input a workshop address')]
 					},
 					{
-						fieldName: 'gateway2WorkshopEndTime',
-						validators: [new RequiredValidator('Input an email address')]
+						fieldName: 'workshopTownOrCity',
+						validators: [new RequiredValidator('Input the town or city')]
+					},
+					{
+						fieldName: 'workshopPostcode',
+						validators: [new RequiredValidator('Input the postcode')]
 					}
 				]
 			})
 		],
 		question: 'Workshop venue address',
-		fieldName: 'gateway2workshopDateAndTime',
-		url: 'gateway2workshopDateAndTime',
-		title: 'Gateway 2 workshop date and time'
+		fieldName: 'gateway2WorkshopVenueAddress',
+		url: 'gateway-2-workshop-venue-address',
+		title: 'Gateway 2 workshop venue address'
+	},
+	gateway2RemoteMeetingLinkKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you have a remote meeting link?',
+		fieldName: 'remoteMeetingLinkKnown',
+		url: 'gateway-2-remote-meeting-link-known',
+		title: 'Gateway 2 remote meeting link known',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2RemoteMeetingLink: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'What is the remote meeting link?',
+		fieldName: 'remoteMeetingLink',
+		url: 'gateway-2-remote-meeting-link',
+		title: 'Gateway 2 remote meeting link',
+		validators: [new RequiredValidator('Input a remote meeting link')]
 	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -1089,4 +1105,57 @@ questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: 
 		? `<a href="${href}" class="govuk-link" rel="noreferrer noopener" target="_blank">${answer}</a>`
 		: this.notStartedText;
 	return [{ key: this.title, value, action: this.getAction(sectionSegment, journey, answer) }];
+};
+
+questions.gateway2WorkshopDateAndTime.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
+	const answersFull = journey.response.answers;
+
+	const workshopDate = {
+		key: 'workshop date',
+		value: answersFull.workshopDate,
+		action: this.getAction(sectionSegment, journey, answersFull.workshopDate)
+	};
+
+	const workshopStartTime = {
+		key: 'workshop time',
+		value: answersFull.workshopTime,
+		action: this.getAction(sectionSegment, journey, answersFull.workshopTime)
+	};
+
+	if (answersFull.workshopEndTime != null) {
+		const workshopEndTime = {
+			key: 'workshop time',
+			value: answersFull.workshopEndTime,
+			action: this.getAction(sectionSegment, journey, answersFull.workshopEndTime)
+		};
+		return [workshopDate, workshopStartTime, workshopEndTime];
+	} else {
+		return [workshopDate, workshopStartTime];
+	}
+};
+
+questions.gateway2WorkshopExpectedDays.formatAnswerForSummary = function (
+	sectionSegment: string,
+	journey: any,
+	answer: string
+) {
+	const answersFull = journey.response.answers;
+	console.log(answersFull, answersFull.expectedDays);
+	const expectedDaysKnown = {
+		key: 'Do you know the estimated number of days?',
+		value: answersFull.workshopExpectedDaysKnown,
+		action: this.getAction(sectionSegment, journey, answer)
+	};
+
+	if (answersFull.workshopExpectedDaysKnown != 'no') {
+		const expectedDays = {
+			key: 'Estimated number of days',
+			value: answersFull.workshopExpectedDays,
+			action: this.getAction(sectionSegment, journey, answer)
+		};
+
+		return [expectedDaysKnown, expectedDays];
+	} else {
+		return [expectedDaysKnown];
+	}
 };
