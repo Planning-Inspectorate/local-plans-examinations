@@ -25,9 +25,13 @@ export const ERROR_MESSAGES = {
 
 	ADD_ONE_DOCUMENT: 'Add at least one document before submitting',
 
-	// Gateway 2 document upload page
+	// Gateway 2 and 3 document upload page
 
 	FILE_TOO_LARGE: 'The selected file must be smaller than 250MB',
 	INVALID_FILE_FORMAT: 'The selected file must be PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF, TIFF',
-	NO_FILE_UPLOADED: 'Choose a file to upload'
+	NO_FILE_UPLOADED: 'Choose a file to upload',
+
+	// Gateway 3 examination website page
+
+	INVALID_EXAMINATION_WEBSITE_URL: 'Enter a valid link to your examination website'
 };

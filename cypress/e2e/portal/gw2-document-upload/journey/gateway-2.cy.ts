@@ -67,7 +67,6 @@ describe('Gateway 2 document upload journeys', () => {
 
 			gateway2CoverLetterPage.saveAndReturn();
 			gateway2ApplicationPage.verifyLoaded();
-
 			gateway2ApplicationPage.verifyDocumentRowContains(
 				gateway2ApplicationPage.proceduralDocumentsTable,
 				'Gateway 2 covering letter',
