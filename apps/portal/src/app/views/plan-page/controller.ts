@@ -30,6 +30,8 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		// status, stage, ready to start,
 		const currentStageTag = getStageLabel(caseData);
 		const planStatus = getCaseStatusHTMLTag(caseData);
+		const isReadyToStart = planStatus.includes('Ready to start');
+		const button = isReadyToStart ? `Start ${currentStageTag} submission` : null;
 		//TODO calculate the lead LPA from the list of LPAs, for now we are using the first one
 		const leadLPA = caseData.lpas[0].lpaName;
 		const linkedLPAs = caseData.lpas
@@ -45,8 +47,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 
-		const applicationLink = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-submission`;
+		const applicationLink = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-submission/application-declaration`;
 		const gateway3Link = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-3-submission`;
+		let dateG2Value: Date | null | undefined = caseData.gateway2Date;
 
 		switch (currentStageTag) {
 			case 'Gateway 2':
@@ -54,6 +57,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				tagG2 = planStatus;
 				if (caseData.gateway2Info?.actualDate) {
 					dateTextG2 = 'Submitted: ';
+					dateG2Value = caseData.gateway2Info.actualDate;
 				}
 				break;
 
@@ -81,12 +85,13 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				break;
 			}
 		}
-
+		const currentApplicationLink =
+			currentStageTag === 'Examination' ? hrefE : currentStageTag === 'Gateway 3' ? hrefG3 : hrefG2;
 		const viewModel = {
-			dateG1: caseData.gateway1Date,
-			dateG2: caseData.gateway2Date,
-			dateG3: caseData.gateway3Date,
-			dateE: caseData.submissionDate,
+			dateG1: formatDisplayDate(caseData.gateway1Date),
+			dateG2: formatDisplayDate(dateG2Value),
+			dateG3: formatDisplayDate(caseData.gateway3Date),
+			dateE: formatDisplayDate(caseData.submissionDate),
 			dateTextG2,
 			dateTextG3,
 			dateTextE,
@@ -104,10 +109,20 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			currentStage: currentStageTag,
 			planStatus,
 			leadLPA,
+			button,
+			currentApplicationLink,
 			linkedLPA: linkedLPAs,
 			backLinkUrl: '/manage-local-plans/your-plans',
 			backLinkText: 'Back to my plans',
 			...viewModel
 		});
 	};
+}
+function formatDisplayDate(date: Date | null | undefined): string {
+	if (!date) return 'Not set';
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
 }
