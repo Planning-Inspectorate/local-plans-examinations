@@ -15,6 +15,10 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('save-and-come-back');
 	}
 
+	get requiredInformationTable() {
+		return cy.getByData('required-information-section');
+	}
+
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(gateway3SubmissionHeading);

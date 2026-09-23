@@ -20,8 +20,8 @@
 }
 
 .govuk-grid-column-two-thirds.pins-app-grid-column--80 {
-	width: 80%;
-	max-width: 80%;
+	width: 100%;
+	max-width: 100%;
 }
 
 .govuk-table[data-cy$='-table'] {
@@ -31,7 +31,7 @@
 
 	td:first-child,
 	th:first-child {
-		width: 233px;
+		width: 40%;
 		font-weight: bold;
 		overflow-wrap: break-word;
 	}

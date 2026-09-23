@@ -80,55 +80,6 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			.and('have.attr', 'type', 'submit');
 	}
 
-	verifyDocTableRows(table: Cypress.Chainable, rows: { document: string; status: string; addCy: string }[]) {
-		table.within(() => {
-			rows.forEach(({ document, status, addCy }) => {
-				const row = cy.contains('tr', document);
-				row.should('be.visible');
-				row.should('contain.text', status);
-				cy.getByData(addCy).should('be.visible');
-			});
-		});
-	}
-
-	verifyDocumentRowContains(table: Cypress.Chainable, document: string, ...fileNames: string[]) {
-		table.within(() => {
-			const row = cy.contains('tr', document);
-			fileNames.forEach((fileName) => {
-				row.should('contain.text', fileName);
-			});
-			if (fileNames.length > 1) {
-				row.find('ul.govuk-list--bullet li').should('have.length', fileNames.length);
-			}
-		});
-	}
-
-	verifyDocumentDownloadLink(table: Cypress.Chainable, document: string, fileName: string) {
-		table.within(() => {
-			const row = cy.contains('tr', document);
-			row
-				.contains('a', fileName)
-				.should('be.visible')
-				.invoke('attr', 'href')
-				.then((href) => {
-					cy.request(href as string).then((response) => {
-						expect(response.status).to.equal(200);
-						expect(response.headers['content-disposition']).to.include('attachment');
-						expect(response.headers['content-disposition']).to.include(fileName);
-					});
-				});
-		});
-	}
-
-	verifyTableRowsInOrder(table: Cypress.Chainable, documents: string[]) {
-		table.within(() => {
-			cy.get('tbody tr').should('have.length', documents.length);
-			documents.forEach((document, index) => {
-				cy.get('tbody tr').eq(index).should('contain.text', document);
-			});
-		});
-	}
-
 	verifySubmissionData(todayDisplay: string, submitterEmail: string) {
 		cy.getByData('submission-copy')
 			.should('be.visible')
