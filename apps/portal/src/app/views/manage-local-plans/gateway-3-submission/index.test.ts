@@ -1,74 +1,83 @@
 import assert from 'node:assert';
-import type { Request, Response } from 'express';
 import { describe, it } from 'node:test';
-import { setGateway3ViewLocals } from './controller.ts';
 import { gateway3SubmissionRoutes } from './index.ts';
+import { configureNunjucks } from '../../../nunjucks.ts';
 
-describe('setGateway3ViewLocals', () => {
-	it('sets page title, heading, caption, back link, save link and status tag when case and plan reference exist', () => {
-		const req = {
-			currentCase: {
-				planTitle: 'Test Local Plan',
-				gateway3Info: { expectedDate: new Date('2026-06-12T00:00:00.000Z') }
-			},
-			params: { planReference: 'PLAN-003' }
+describe('gateway3SubmissionRoutes', () => {
+	it('returns an express router with get, post and use methods', () => {
+		const mockService = {
+			createFileStorage: () => ({})
 		} as any;
-
-		const locals: Record<string, unknown> = {};
-		const res = { locals } as unknown as Response;
-
-		setGateway3ViewLocals(req as unknown as Request, res);
-
-		assert.strictEqual(locals.pageTitle, 'Gateway 3 submission');
-		assert.strictEqual(locals.pageHeading, 'Gateway 3 submission');
-		assert.strictEqual(locals.pageCaption, 'Test Local Plan');
-		assert.strictEqual(locals.backLinkUrl, '/manage-local-plans/PLAN-003');
-		assert.strictEqual(locals.saveAndComeBackUrl, '/manage-local-plans/PLAN-003');
-		assert.strictEqual(locals.targetDate, '12 June 2026');
-		assert.deepStrictEqual(locals.statusTag, { label: 'Ready to start', class: 'govuk-tag govuk-tag--green' });
-	});
-
-	it('does not set back link or save link when no plan reference', () => {
-		const req = {
-			currentCase: {
-				planTitle: 'Test Local Plan'
-			},
-			params: {}
-		} as any;
-
-		const locals: Record<string, unknown> = {};
-		const res = { locals } as unknown as Response;
-
-		setGateway3ViewLocals(req as unknown as Request, res);
-
-		assert.strictEqual(locals.pageTitle, 'Gateway 3 submission');
-		assert.strictEqual(locals.backLinkUrl, undefined);
-		assert.strictEqual(locals.saveAndComeBackUrl, undefined);
-	});
-
-	it('does not set targetDate when case has no gateway3Info.expectedDate', () => {
-		const req = {
-			currentCase: {
-				planTitle: 'Test Local Plan',
-				gateway3Info: null
-			},
-			params: { planReference: 'PLAN-003' }
-		} as any;
-
-		const locals: Record<string, unknown> = {};
-		const res = { locals } as unknown as Response;
-
-		setGateway3ViewLocals(req as unknown as Request, res);
-
-		assert.strictEqual(locals.targetDate, undefined);
+		const router = gateway3SubmissionRoutes(mockService);
+		assert.strictEqual(typeof router.get, 'function');
+		assert.strictEqual(typeof router.post, 'function');
+		assert.strictEqual(typeof router.use, 'function');
 	});
 });
 
-describe('gateway3SubmissionRoutes', () => {
-	it('returns an express router with get and use methods', () => {
-		const mockService = {} as any;
-		const router = gateway3SubmissionRoutes(mockService);
-		assert.strictEqual(typeof router.get, 'function');
-		assert.strictEqual(typeof router.use, 'function');
+describe('Gateway 3 check answers page', () => {
+	function renderCheckAnswers(sections: unknown[]) {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers.njk', {
+			targetDate: '1 August 2026',
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001',
+			summaryListData: { sections },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+	}
+
+	function buildSection(heading: string) {
+		return {
+			heading,
+			list: {
+				rows: [
+					{
+						key: { text: 'Other documents' },
+						value: { text: 'Not added' },
+						actions: {
+							items: [{ href: '#', text: 'Add' }]
+						}
+					}
+				]
+			}
+		};
+	}
+
+	it('renders the submit section with heading, copy and a submit button', () => {
+		const html = renderCheckAnswers([]);
+
+		assert.ok(html.includes('Ready to submit for Gateway 3'), 'expected submit heading');
+		assert.ok(
+			html.includes('Once submitted, Gateway 3 will be locked and you cannot make further changes.'),
+			'expected submit copy'
+		);
+		assert.ok(html.includes('data-cy="submit-gateway-3"'), 'expected submit button data-cy');
+	});
+
+	it('renders the Optional Documents section with copy and an Add action', () => {
+		const html = renderCheckAnswers([buildSection('Optional Documents')]);
+
+		assert.ok(html.includes('Optional Documents'), 'expected Optional Documents heading');
+		assert.ok(
+			html.includes('Add the documents that are relevant to your plan.'),
+			'expected optional documents guidance copy'
+		);
+		assert.ok(html.includes('data-cy="optional-documents-section"'), 'expected section data-cy attribute');
+		assert.ok(html.includes('Not added'), 'expected Not added status');
+		assert.ok(html.includes('Add'), 'expected Add action link');
+	});
+
+	it('does not render the optional documents copy for other sections', () => {
+		const html = renderCheckAnswers([buildSection('Required Information')]);
+
+		assert.ok(
+			!html.includes('Add the documents that are relevant to your plan.'),
+			'expected no optional documents guidance copy'
+		);
 	});
 });
