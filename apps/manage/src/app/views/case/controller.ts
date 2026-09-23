@@ -801,36 +801,6 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					...gateway3DocumentSetNamePrefixesWithCategories['required'],
 					...gateway3DocumentSetNamePrefixesWithCategories['optional']
 				};
-				let gateway3DocumentSetNames: Record<string, string> = {};
-				for (let i = 1; i < submissionData.length + 1; i++) {
-					const gateway3DocumentSetNamesForSubmissionId = Object.fromEntries(
-						Object.entries(gateway3DocumentSetNamePrefixes).map(([k, v]) => [`${k}-${i}`, v])
-					);
-					gateway3DocumentSetNames = { ...gateway3DocumentSetNames, ...gateway3DocumentSetNamesForSubmissionId };
-				}
-				const gateway3DocumentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
-					service,
-					Object.keys(gateway3DocumentSetNames)
-				);
-				const gateway3DocumentsByCategory = await Promise.all(
-					Object.entries(gateway3DocumentSetNamePrefixesWithCategories).map(async ([category, documentSets]) => ({
-						category,
-						documents: await Promise.all(
-							Object.entries(documentSets).map(async ([k, v]) => {
-								const documentSetId = gateway3DocumentSetIds.get(k);
-
-								const files = documentSetId
-									? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId)
-									: [];
-
-								return {
-									v,
-									files
-								};
-							})
-						)
-					}))
-				);
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
@@ -839,7 +809,33 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					const submissionId = i + 1;
 					journeyResponse.answers[`decision-${submissionId}`] = submissionData[i].decision;
 					journeyResponse.answers[`completionDate-${submissionId}`] = submissionData[i].completionDate;
-					journeyResponse.answers[`gateway3FrontOfficeDocuments-${submissionId}`] = gateway3DocumentsByCategory;
+					const gateway3DocumentSetNamesForSubmissionId = Object.fromEntries(
+						Object.entries(gateway3DocumentSetNamePrefixes).map(([k, v]) => [`${k}-${i + 1}`, v])
+					);
+					const submissionDocumentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+						service,
+						Object.keys(gateway3DocumentSetNamesForSubmissionId)
+					);
+					const submissionDocumentsByCategory = await Promise.all(
+						Object.entries(gateway3DocumentSetNamePrefixesWithCategories).map(async ([category, documentSets]) => ({
+							category,
+							documents: await Promise.all(
+								Object.entries(documentSets).map(async ([k, v]) => {
+									const documentSetId = submissionDocumentSetIds.get(k);
+
+									const files = documentSetId
+										? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId)
+										: [];
+
+									return {
+										v,
+										files
+									};
+								})
+							)
+						}))
+					);
+					journeyResponse.answers[`gateway3FrontOfficeDocuments-${submissionId}`] = submissionDocumentsByCategory;
 				}
 				res.locals.journeyResponse = journeyResponse;
 				const body = req.body as { decision?: string };
