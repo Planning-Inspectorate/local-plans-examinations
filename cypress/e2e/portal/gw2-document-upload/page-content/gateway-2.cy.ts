@@ -23,6 +23,7 @@ describe('Gateway 2 document upload page content', () => {
 			gateway2CoverLetterPage.verifyLoaded();
 			gateway2CoverLetterPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			gateway2CoverLetterPage.verifyServiceNavigation('Guidance', 'Sign out');
+			gateway2ApplicationPage.verifyCaptionL('Procedural documents');
 			gateway2CoverLetterPage.verifyMainContains('Drag and drop or choose files');
 			gateway2CoverLetterPage.verifyNoFileChosen();
 			gateway2CoverLetterPage.verifyUploadFormVisible();
@@ -41,6 +42,7 @@ describe('Gateway 2 document upload page content', () => {
 			localPlanTimetablePage.verifyLoaded();
 			localPlanTimetablePage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			localPlanTimetablePage.verifyServiceNavigation('Guidance', 'Sign out');
+			localPlanTimetablePage.verifyCaptionL('Procedural documents');
 			localPlanTimetablePage.verifyMainContains('Drag and drop or choose files');
 			localPlanTimetablePage.verifyNoFileChosen();
 			localPlanTimetablePage.verifyUploadFormVisible();
@@ -59,6 +61,7 @@ describe('Gateway 2 document upload page content', () => {
 			noticeOfIntentionToCommenceLocalPlanPage.verifyLoaded();
 			noticeOfIntentionToCommenceLocalPlanPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			noticeOfIntentionToCommenceLocalPlanPage.verifyServiceNavigation('Guidance', 'Sign out');
+			noticeOfIntentionToCommenceLocalPlanPage.verifyCaptionL('Consultation documents');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyMainContains('Drag and drop or choose files');
 			noticeOfIntentionToCommenceLocalPlanPage.verifyNoFileChosen();
 			noticeOfIntentionToCommenceLocalPlanPage.verifyUploadFormVisible();
@@ -77,6 +80,7 @@ describe('Gateway 2 document upload page content', () => {
 			subsequentWorkTowardsDraftPlanPage.verifyLoaded();
 			subsequentWorkTowardsDraftPlanPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
 			subsequentWorkTowardsDraftPlanPage.verifyServiceNavigation('Guidance', 'Sign out');
+			subsequentWorkTowardsDraftPlanPage.verifyCaptionL('Additional documents');
 			subsequentWorkTowardsDraftPlanPage.verifyMainContains('Drag and drop or choose files');
 			subsequentWorkTowardsDraftPlanPage.verifyNoFileChosen();
 			subsequentWorkTowardsDraftPlanPage.verifyUploadFormVisible();
