@@ -1,7 +1,8 @@
 import { Journey, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
-import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
+import { sortGateway3Submissions } from '#util/util.ts';
 
 export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
@@ -52,6 +53,25 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 
 export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway3Url = req.baseUrl + '/gateway-3';
+	const submissionData = Array.isArray(response.answers.submissions) ? response.answers.submissions : null;
+	if (!submissionData) {
+		throw Error('submissionData is null');
+	}
+	let submissionSections: Section[] = [];
+	if (submissionData.length == 1) {
+		submissionSections.push(
+			new Section('Gateway 3 submission', 'gateway-3-submission-1')
+				.addQuestion(questions['gateway3Documents-1'])
+				.addQuestion(questions['gateway3Decision-1'])
+		);
+	} else {
+		submissionSections = sortGateway3Submissions(submissionData).map((submission, index) => {
+			const rowId = index + 1;
+			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
+				.addQuestion(questions[`gateway3Documents-${rowId}`])
+				.addQuestion(questions[`gateway3Decision-${rowId}`]);
+		});
+	}
 
 	const journey = new Journey({
 		journeyId: GATEWAY_3_JOURNEY_ID,
@@ -63,10 +83,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)
 				.addQuestion(questions.programmeOfficerDetails)
 				.addQuestion(questions.examinationWebsite),
-			new Section('Gateway 3 submission', 'gateway-3-submission')
-				.addQuestion(questions.gateway3Documents)
-				.addQuestion(questions.gateway3Decision)
-				.addQuestion(questions.gateway3CompletionDate)
+			...submissionSections
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
@@ -203,3 +220,96 @@ function getBacklinks(journey: Journey, overviewUrl: string): Journey {
 
 	return journey;
 }
+
+const overviewQuestionNames = new Set<string>([
+	'planTitle',
+	'planType',
+	'checkLpas',
+	'caseOfficer',
+	'planBand',
+	'checkContactDetails',
+	'programmeOfficerDetails',
+	'examinationWebsite',
+	'assessorGateway2',
+	'assessorGateway3',
+	'examiningInspector1',
+	'examiningInspector2',
+	'examiningInspector3',
+	'qaInspector1',
+	'qaInspector2',
+	'qaInspector3'
+]);
+
+const gateway1QuestionNames = new Set<string>([
+	'noticeOfIntentionPublishDate',
+	'gateway1ExpectedDate',
+	'gateway1ActualDate',
+	'slaSentDate',
+	'signedSla',
+	'slaReceivedDate',
+	'dsaCheck'
+]);
+
+const gateway2QuestionNames = new Set<string>([
+	'gateway2ExpectedDate',
+	'gateway2ActualDate',
+	'gateway2ValidDate',
+	'gateway2AssessorsName',
+	'assessorDateOfAppointment',
+	'gateway2Report',
+	'workshopDate',
+	'workshopVenue'
+]);
+
+const gateway3QuestionNames = new Set<string>([
+	'gateway3ExpectedDate',
+	'gateway3ActualDate',
+	'gateway3AssessorsName',
+	'gateway3AssessorDateOfAppointment',
+	'programmeOfficerDetails',
+	'examinationWebsite',
+	...Array.from(
+		// Gateway 3 submission questions
+		{ length: 50 },
+		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
+	)
+		.flat()
+		.map((item, index) => `${item}-${Math.trunc(index / 3) + 1}`)
+]);
+
+const examinationQuestionNames = new Set<string>([
+	'expectedSubmissionForExaminationDate',
+	'submissionForExaminationDate',
+	'examiningInspector1',
+	'examiningInspector2',
+	'examiningInspector3',
+	'examiningInspectorAppointmentDate',
+	'letterSentToMHCLGDate',
+	'letterIssueDate',
+	'qaDate',
+	'qaInspector1',
+	'qaInspector2',
+	'qaInspector3',
+	'sentToPanelDate',
+	'panelResponseSentToInspector',
+	'factCheckDateReceivedFromInspector',
+	'factCheckDueDate',
+	'factCheckActualDate',
+	'factCheckReceivedBackFromLPADate',
+	'finalReportIssueDate',
+	'planPauseStartDate',
+	'planPauseEndDate',
+	'withdrawnDate',
+	'isSound',
+	'soundUnsoundDate',
+	'adoptionDate',
+	'approvedForCILDate'
+]);
+
+export const journeyQuestions = {
+	[OVERVIEW_JOURNEY_ID]: overviewQuestionNames,
+	[GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
+	[GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
+	[GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
+	[EXAMINATION_JOURNEY_ID]: examinationQuestionNames
+};

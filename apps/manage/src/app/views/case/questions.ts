@@ -27,6 +27,7 @@ import {
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -78,6 +79,74 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 ];
 
 const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+
+// The base question config that are part of a gateway3 submission
+const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
+	gateway3Documents: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Gateway 3 documents',
+		question: 'Upload Gateway 3 report',
+		fieldName: 'gateway3Documents',
+		url: 'gateway-3-document',
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: 999,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Gateway 3 documents',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
+		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
+		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3Decision: {
+		type: COMPONENT_TYPES.RADIO,
+		options: [
+			{ value: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION, text: 'Proceed to examination' },
+			{ value: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED, text: 'Resubmission required' }
+		],
+		question: 'What is the outcome of your Gateway 3 decision',
+		fieldName: 'decision', //'decision',
+		url: 'gateway-3-decision',
+		title: 'Gateway 3 decision',
+		validators: [new RequiredValidator('Select a decision')]
+	},
+	gateway3CompletionDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the Gateway 3 completion date?',
+		fieldName: 'completionDate', //'completionDate',
+		url: 'gateway-3-completion-date',
+		title: 'Gateway 3 completion date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
+	}
+};
+// Repeat the base gw3 questions multiple times, to allow multiple gw3 submissions to be made
+const gateway3Questions: Record<string, ManageQuestionConfig> = {};
+for (let i = 1; i < NUM_GW3_SUBMISSIONS_QUESTIONS; i++) {
+	for (const key in gateway3BaseQuestions) {
+		const questionConfigCopy = { ...gateway3BaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${i}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${i}`;
+		if (questionConfigCopy.type == CUSTOM_COMPONENTS.FILE_UPLOADER) {
+			questionConfigCopy.validators = [
+				new FileUploadRequiredValidator(questionConfigCopy.fieldName, 'Please upload your Gateway 3 report')
+			];
+		}
+		gateway3Questions[`${key}-${i}`] = questionConfigCopy;
+	}
+}
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
@@ -676,55 +745,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor-date-of-appointment' }
 	},
-	gateway3Documents: {
-		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-		title: 'Gateway 3 documents',
-		question: 'Upload Gateway 3 report',
-		fieldName: 'gateway3Documents',
-		url: 'gateway-3-document',
-		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
-		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
-			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
-			.map((key) => MIME_TYPE_MAP[key])
-			.flat(),
-		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
-		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: 999,
-		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
-		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
-		multiple: true,
-		text: {
-			caption: 'Gateway 3 documents',
-			introduction: 'Upload a file',
-			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
-			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
-			chooseFilesButtonText: 'Choose files',
-			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
-		formatSummaryValue: fileUploadCountFormat
-	},
-	gateway3Decision: {
-		type: COMPONENT_TYPES.RADIO,
-		options: [
-			{ value: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION, text: 'Proceed to examination' },
-			{ value: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED, text: 'Resubmission required' }
-		],
-		question: 'What is the outcome of your Gateway 3 decision',
-		fieldName: 'decision',
-		url: 'gateway-3-decision',
-		title: 'Gateway 3 decision',
-		validators: [new RequiredValidator('Select a decision')]
-	},
-	gateway3CompletionDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'What is the Gateway 3 completion date?',
-		fieldName: 'completionDate',
-		url: 'gateway-3-completion-date',
-		title: 'Gateway 3 completion date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-3-completion-date' }
-	},
 	// Examination
 	expectedSubmissionForExaminationDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -917,12 +937,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Approved for CIL date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
-	}
+	},
+	...gateway3Questions
 };
 
-export const fileUploadQuestionProperties = Object.values(caseQuestions).filter(
-	(v) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER
-) as FileUploaderQuestionProps[];
+export const fileUploadQuestionProperties = Object.fromEntries(
+	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
+) as Record<string, FileUploaderQuestionProps>;
 
 export const questions = createQuestions(
 	caseQuestions,

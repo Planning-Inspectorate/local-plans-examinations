@@ -2,18 +2,19 @@ import { gateway3DocumentsAnswer } from '../../../fixtures/manage/gateway-3.ts';
 import { BasePage } from '../../base-page.ts';
 import { DocumentUploadPage } from '../base/index.ts';
 
-const gateway3ReportPath = (path: string) => new RegExp(`^/case/.+/gateway-3/gateway-3-submission/${path}$`);
+const gateway3ReportPath = (path: string) =>
+	new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${path}-(\\d+)$`);
 
 export const gateway3DocumentsPage = new DocumentUploadPage(
 	gateway3ReportPath(gateway3DocumentsAnswer.path),
-	gateway3DocumentsAnswer.fieldName,
+	`${gateway3DocumentsAnswer.fieldName}-1`,
 	gateway3DocumentsAnswer.heading,
 	gateway3DocumentsAnswer.caption
 );
 
 class Gateway3DocumentsCheckPage extends BasePage {
 	constructor() {
-		super(/^\/case\/.+\/gateway-3\/gateway-3-submission\/gateway-3-document\/check$/);
+		super(/^\/case\/.+\/gateway-3\/gateway-3-submission-(\d+)\/gateway-3-document-(\d+)\/check$/);
 	}
 
 	get previewDropDown() {
@@ -30,7 +31,7 @@ class Gateway3DocumentsCheckPage extends BasePage {
 		this.issueDecisionButton.should('be.visible');
 		this.previewDropDown.should('be.visible');
 		this.verifyChangeLinks();
-		this.verifySummaryRowContains('Outcome', 'Proceed to examination');
+		this.verifySummaryRowContains('Outcome', 'Resubmission required');
 
 		fileNames.forEach((fileName, index) => {
 			this.verifySummaryRowContains(`Document ${index + 1}`, fileName);

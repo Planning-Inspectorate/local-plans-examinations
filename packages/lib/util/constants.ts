@@ -1,0 +1,1 @@
+export const NUM_GW3_SUBMISSIONS_QUESTIONS = 200;

@@ -6,10 +6,7 @@ import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client
 import * as authSession from '@planning-inspectorate/core/auth';
 import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
-import {
-	type FileUploaderSession,
-	type FileUploaderQuestion
-} from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
@@ -19,6 +16,10 @@ import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { sortGateway3Submissions } from '#util/util.ts';
+import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
+import { journeyQuestions } from './journey.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -113,12 +114,16 @@ interface Gateway3Input {
 	actualDate?: Date;
 	assessorName?: string;
 	assessorAppointmentDate?: Date;
-	completionDate?: Date;
 	programmeOfficerFirstName?: string;
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
 	examinationWebsite?: string;
-	decision?: string;
+	submissions?: {
+		id: string;
+		decision: string | null;
+		completionDate: Date | null;
+		gateway3InfoId: string | null;
+	}[];
 }
 
 // Generate a map of <fieldName: field title>
@@ -157,12 +162,18 @@ export type FileUploadQuestion = FileUploaderQuestionProps & {
 };
 
 // Ordered list for loading each persisted upload when the case page opens.
-export const fileUploadQuestionConfigs = fileUploadQuestionProperties as FileUploadQuestion[];
+export const fileUploadQuestionConfigs = Object.values(fileUploadQuestionProperties) as FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
 export const fileUploadQuestionUrls = fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
 // Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
 export const fileUploadQuestionsByUrl = new Map(
 	fileUploadQuestionConfigs.map((questionConfig) => [questionConfig.url, questionConfig])
+);
+const journeyFileUploadQuestionConfigs = Object.fromEntries(
+	Object.entries(journeyQuestions).map(([k, v]) => [
+		k,
+		Array.from(v, (elem) => fileUploadQuestionProperties[elem] as FileUploadQuestion).filter((elem) => Boolean(elem))
+	])
 );
 
 /** * Returns a handler that applies a single case-overview edit to the database. * The action (edit / remove / update) is derived from the route params. */
@@ -183,7 +194,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		let updated;
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
-			case 'overview':
+			case 'overview': {
 				updated = await updateOverview(
 					db,
 					trimStringValues(data.answers as CaseOverviewInput),
@@ -194,7 +205,8 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					getParam(req.params.question)
 				);
 				break;
-			case 'gateway-1':
+			}
+			case 'gateway-1': {
 				updated = await updateGateway1(
 					db,
 					trimStringValues(data.answers as Gateway1Input),
@@ -202,7 +214,8 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
-			case 'gateway-2':
+			}
+			case 'gateway-2': {
 				updated = await updateGateway2(
 					db,
 					trimStringValues(data.answers as Gateway2Input),
@@ -210,15 +223,42 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
-			case 'gateway-3':
+			}
+			case 'gateway-3': {
+				const caseDetails = await db.case.findUnique({
+					select: {
+						gateway3Info: {
+							select: {
+								submissions: true
+							}
+						}
+					},
+					where: { reference }
+				});
+				if (!caseDetails) {
+					throw Error(`Could not find details for case with reference '${reference}'`);
+				}
+				if (!caseDetails.gateway3Info?.submissions) {
+					throw Error(`Could not find submission data for case with reference '${reference}'`);
+				}
+				const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submissions);
+				let answers = data.answers;
+				if (String(req.params.question).startsWith('gateway-3-completion-date')) {
+					const submissionId = Number(String(req.params.question).replace('gateway-3-completion-date-', ''));
+					submissionDetails[submissionId - 1].completionDate = data.answers[`completionDate-${submissionId}`];
+					answers = {
+						submissions: submissionDetails
+					};
+				}
 				updated = await updateGateway3(
 					db,
-					trimStringValues(data.answers as Gateway3Input),
+					trimStringValues(answers as Gateway3Input),
 					reference,
 					req.params.question as string
 				);
 				break;
-			case 'examination':
+			}
+			case 'examination': {
 				updated = await updateExamination(
 					db,
 					trimStringValues(data.answers as ExaminationInput),
@@ -226,9 +266,11 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					req.params.question as string
 				);
 				break;
-			default:
+			}
+			default: {
 				logger.info(`url - ${req.url} not found`);
 				return res.status(404).render('views/errors/404.njk');
+			}
 		}
 		if (updated) {
 			const columns = Object.keys(data.answers);
@@ -427,15 +469,44 @@ export async function updateGateway3(
 	if (question === 'assessor-gateway-3' || question === 'gateway-3-assessor-name') {
 		answers.assessorAppointmentDate = new Date();
 	}
-	if (question === 'gateway-3-document') {
+	const createData: Record<string, any> = { ...answers };
+	const updateData: Record<string, any> = { ...answers };
+	if ('submissions' in answers) {
+		const submissionDetails = answers.submissions;
+		if (!submissionDetails) {
+			throw Error('No submission entries found');
+		}
+		const submissionDetailsCleaned = Object.values(submissionDetails).map((e) => ({
+			decision: e.decision,
+			completionDate: e.completionDate
+		}));
+		if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
+			throw Error('Max number of submissions has been exceeded');
+		}
+		createData['submissions'] = {
+			createMany: {
+				data: submissionDetailsCleaned
+			}
+		};
+		updateData['submissions'] = {
+			deleteMany: {},
+			createMany: {
+				data: submissionDetailsCleaned
+			}
+		};
+	}
+	if (question?.startsWith('gateway-3-document')) {
 		// For handling the save button
 		return true;
 	}
 	if (answers) {
 		await db.gateway3Info.upsert({
 			where: { caseId },
-			update: { ...answers },
-			create: { caseId, ...answers }
+			update: { ...updateData },
+			create: {
+				caseId,
+				...createData
+			}
 		});
 	}
 	return true;
@@ -644,7 +715,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-1': {
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data, journeyId);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 				if (
 					req.method === 'POST' &&
@@ -661,7 +732,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 			case 'gateway-2': {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data, journeyId);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 				const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 				journeyResponse.answers.gateway2Documents = documentsByCategory;
@@ -685,37 +756,67 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 
 			case 'gateway-3': {
-				const journey3Data = await db.gateway3Info.findUnique({ where: { caseId: caseRecord.id } });
-				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
+				const journey3Data = await db.gateway3Info.findUnique({
+					include: {
+						submissions: true
+					},
+					where: { caseId: caseRecord.id }
+				});
+				if (!journey3Data) {
+					throw Error('No gatewa3info data found');
+				}
+				const submissionData = sortGateway3Submissions(journey3Data.submissions);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				for (let i = 0; i < submissionData.length; i++) {
+					journeyResponse.answers[`decision-${i + 1}`] = submissionData[i].decision;
+					journeyResponse.answers[`completionDate-${i + 1}`] = submissionData[i].completionDate;
+				}
 				res.locals.journeyResponse = journeyResponse;
 				const body = req.body as { decision?: string };
 				// Flow for uploading a gateway 3 document
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-3-decision' &&
-					req.originalUrl.endsWith(req.params.question)
+					String(req.params.question).startsWith('gateway-3-decision') &&
+					req.originalUrl.endsWith(String(req.params.question))
 				) {
+					const submissionNumber = String(req.params.question).replace('gateway-3-decision-', '');
+					if (!/^\d+$/.test(submissionNumber)) {
+						throw new Error('Invalid submission number');
+					}
 					const caseReference = getParam(req.params.reference);
+					const updatedSubmissions = sortGateway3Submissions(journey3Data?.submissions);
+					if (!updatedSubmissions) {
+						throw Error('No submission found');
+					}
+					const currentSubmission = updatedSubmissions.at(-1);
+					if (!currentSubmission) {
+						throw Error('Last submission was undefined');
+					}
+					currentSubmission.decision = body[`decision-${submissionNumber}` as keyof typeof body] ?? null;
 					await updateGateway3(
 						db,
 						{
-							decision: body.decision
+							submissions: updatedSubmissions
 						},
 						caseReference,
-						'gateway-3-decision'
+						String(req.params.question)
 					);
-					res.redirect(303, 'gateway-3-document');
+					res.redirect(303, `gateway-3-document-${submissionNumber}`);
 					return;
 				}
 				if (
 					req.method === 'POST' &&
-					req.params.question == 'gateway-3-document' &&
-					req.originalUrl.endsWith(req.params.question)
+					String(req.params.question).startsWith('gateway-3-document') &&
+					req.originalUrl.endsWith(String(req.params.question))
 				) {
-					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == 'gateway-3-document');
+					const submissionNumber = String(req.params.question).replace('gateway-3-document-', '');
+					if (!/^\d+$/.test(submissionNumber)) {
+						throw new Error('Invalid submission number');
+					}
+					const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == req.params.question);
 					if (!questionConfig) {
 						throw new Error(`Could not find question config for question url 'gateway-3-document'`);
 					}
@@ -723,7 +824,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
 							?.uploadedFiles ?? [];
 					if (uploadedFiles.length > 0) {
-						res.redirect(303, 'gateway-3-document/check');
+						res.redirect(303, `gateway-3-document-${submissionNumber}/check`);
 						return;
 					}
 				}
@@ -788,15 +889,29 @@ async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
 	req: Request,
-	answers: any
+	answers: any,
+	journeyId: string
 ) {
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
+	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
+	if (journeyId == 'gateway-3') {
+		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
+		const lastSubmissionId = answers.submissions.length;
+		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem) =>
+			Number(elem.fieldName.replace('gateway3Documents-', ''))
+				? Number(elem.fieldName.replace('gateway3Documents-', '')) <= lastSubmissionId
+				: true
+		);
+	}
+	if (!relevantFileUploadQuestionConfigs) {
+		return;
+	}
 	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 		service,
-		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+		relevantFileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
 	);
-	for (const questionConfig of fileUploadQuestionConfigs) {
+	for (const questionConfig of relevantFileUploadQuestionConfigs) {
 		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
 		if (!documentSetId) {
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
@@ -1208,23 +1323,42 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
-		const existingGatewayDetails = await service.db.gateway3Info.findUnique({
+		const gateway3Info = await service.db.gateway3Info.findUnique({
 			select: {
-				completionDate: true
+				submissions: true
+				//completionDate: true
 			},
 			where: {
 				caseId: caseId
 			}
 		});
-		if (!existingGatewayDetails?.completionDate) {
+		if (!gateway3Info) {
+			throw Error('No gateway3info data could be found');
+		}
+		const existingSubmissions = sortGateway3Submissions(gateway3Info.submissions);
+		const lastSubmission = existingSubmissions.at(-1);
+		if (!lastSubmission) {
+			throw Error('Could not find a submission');
+		}
+		if (!lastSubmission?.completionDate) {
 			// Try to update the reportIssuedDate
 			const completionDate = new Date();
+			lastSubmission.completionDate = new Date();
+			if (lastSubmission.decision == '2') {
+				// If a submission was rejected by the inspector, then add a new gw3 submission details block
+				existingSubmissions.push({
+					id: crypto.randomUUID(),
+					decision: null,
+					completionDate: null,
+					gateway3InfoId: lastSubmission.gateway3InfoId
+				});
+			}
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 			await updateGateway3(
 				service.db,
 				{
-					completionDate: completionDate
+					submissions: existingSubmissions
 				},
 				caseReference,
 				'gateway-3-report-issued-date'
@@ -1309,12 +1443,17 @@ export function preprocessQuestionProperties(
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
 		if (journeyId == 'gateway-3') {
+			const decisionMap = {
+				'1': 'Proceed to examination',
+				'2': 'Resubmission required'
+			};
 			// Toggle the visibility/editability of the gateway3Document question
-			const gateway3Details = await service.db.case.findUnique({
+
+			const caseDetails = await service.db.case.findUnique({
 				include: {
 					gateway3Info: {
-						select: {
-							completionDate: true
+						include: {
+							submissions: true
 						}
 					}
 				},
@@ -1322,21 +1461,48 @@ export function preprocessQuestionProperties(
 					reference
 				}
 			});
-			questions.gateway3Documents.changeActionText = 'View';
-			questions.gateway3CompletionDate.changeActionText = 'View';
-			const gateway3Complete = !!gateway3Details?.gateway3Info?.completionDate;
-			questions.gateway3Documents.editable = !gateway3Complete;
-			(questions.gateway3Documents as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
-				gateway3Complete;
-			questions.gateway3CompletionDate.editable = gateway3Complete;
-			if (gateway3Complete) {
-				questions.gateway3Decision.actionLink = {
-					href: `/case/${reference}/gateway-3/gateway-3-submission/gateway-3-document/check`,
-					text: 'View'
-				};
-			} else {
-				// Reset for different journey
-				delete questions.gateway3Decision.actionLink;
+			const submissionDetails = caseDetails?.gateway3Info?.submissions;
+			if (!submissionDetails) {
+				throw new Error(`No submission details found for case reference '${reference}'`);
+			}
+			const submissionDetailsSorted = sortGateway3Submissions(submissionDetails);
+			// todo update this to account for multiple gw3 submission questions
+			for (let i = 0; i < submissionDetailsSorted.length; i++) {
+				const submissionId = i + 1;
+				const submission = submissionDetailsSorted[i];
+				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3Decision = `gateway3Decision-${submissionId}`;
+				const decisionValue = submissionDetailsSorted[i].decision;
+				const completionDate = submissionDetailsSorted[i].completionDate;
+				questions[gateway3Documents].changeActionText = 'View';
+				const gateway3Complete = !!submission.completionDate;
+				questions[gateway3Documents].editable = !gateway3Complete;
+				(questions[gateway3Documents] as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
+					gateway3Complete;
+				if (gateway3Complete) {
+					if (!decisionValue) {
+						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
+					}
+					questions[gateway3Decision].actionLink = {
+						href: `/case/${reference}/gateway-3/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
+						text: 'View'
+					};
+					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;
+					const formattedCompletionDate = completionDate
+						? new Intl.DateTimeFormat('en-GB', {
+								day: 'numeric',
+								month: 'long',
+								timeZone: 'Europe/London',
+								year: 'numeric'
+							}).format(completionDate)
+						: null;
+					questions[gateway3Decision].formatSummaryValue = () =>
+						decisionText ? `${decisionText}\nIssued on ${formattedCompletionDate}` : 'Not started';
+				} else {
+					// Reset for different journey
+					delete questions[gateway3Decision].actionLink;
+					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
+				}
 			}
 		}
 		next();

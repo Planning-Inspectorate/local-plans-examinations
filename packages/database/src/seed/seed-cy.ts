@@ -100,7 +100,17 @@ export async function seedCy() {
 						assessorAppointmentDate: new Date('2026-09-01T12:00:00.000Z'),
 						programmeOfficerFirstName: 'Albert',
 						programmeOfficerLastName: 'Einstien',
-						programmeOfficerEmail: 'gateway3.officer@test.com'
+						programmeOfficerEmail: 'gateway3.officer@test.com',
+						submissions: {
+							createMany: {
+								data: [
+									{
+										decision: undefined,
+										completionDate: undefined
+									}
+								]
+							}
+						}
 					}
 				},
 				examinationInfo: {
