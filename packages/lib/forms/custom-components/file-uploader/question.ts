@@ -162,10 +162,17 @@ export function fileUploadBulletListFormat(context: any): string {
 	}
 
 	if (files.length === 1) {
-		return escape(files[0].fileName);
+		const downloadUrl = `/case/${encodeURIComponent(context.journey.caseReference)}/download-case-document/${encodeURIComponent(files[0].id)}`;
+		return `<a class="govuk-link" href="${downloadUrl}">${escape(files[0].fileName)}</a>`;
 	}
 
-	const listItems = files.map((file) => `<li>${escape(file.fileName)}</li>`).join('');
+	const listItems = files
+		.map((file) => {
+			const downloadUrl = `/case/${encodeURIComponent(context.journey.caseReference)}/download-case-document/${encodeURIComponent(file.id)}`;
+			return `<li><a class="govuk-link" href="${downloadUrl}">${escape(file.fileName)}</a></li>`;
+		})
+		.join('');
+
 	return `<ul class="govuk-list--bullet li">${listItems}</ul>`;
 }
 
