@@ -5,6 +5,8 @@ import { clearDataFromSession, type JourneyResponse } from '@planning-inspectora
 import * as authSession from '@planning-inspectorate/core/auth';
 import { parseDate } from '../../util/date.ts';
 import { questions } from './questions.ts';
+import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
+import { retrieveCaseOfficers } from '../../util/options-helper.ts';
 
 /**
  * The structure of data for the journey answers
@@ -56,9 +58,14 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		const allEmails = answers.contactDetails.map((contact) => contact.email);
 
 		const uniqueLpaCodes = [...new Set(answers.checkLpas.map((lpa) => lpa.lpa))];
-		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser);
+		const caseOfficerNames = await retrieveCaseOfficers(service, req.session as authSession.SessionWithAuth);
+
+		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser, caseOfficerNames);
 
 		service.logger.info(answers, 'case created');
+		const lpaOptions = await loadLpaOptions(service);
+		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
+		const relevantLpaNames = uniqueLpaCodes.map((elem) => lpaOptionsMap.get(elem)).filter((elem) => elem != undefined);
 
 		// Send email to LPA using Gov Notify
 		if (!service.notifyClient) {
@@ -71,15 +78,21 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 			const notifyReference = `create-case:${caseReference}`;
+			// Need to construct the details this way to avoid eslint errors
+			const personalisationDetails: Record<string, string> = { portalLoginURL: portalLoginURL };
+			personalisationDetails['plan_ref'] = caseReference;
+			personalisationDetails['lpa_name'] = String(relevantLpaNames);
+			personalisationDetails['plan_type'] = answers.planType
+				.split('-')
+				.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+				.join(' ');
+			personalisationDetails['team_email_address'] = service.localPlansTeamEmail;
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {
 					try {
 						await service.notifyClient?.sendEmail(templateID, email.trim(), {
-							personalisation: {
-								portalLoginURL,
-								caseReference
-							},
+							personalisation: personalisationDetails,
 							reference: notifyReference
 						});
 						service.logger.info({ email: email }, 'create a case - email sent');
@@ -100,7 +113,8 @@ async function saveDataToDatabase(
 	service: ManageService,
 	answers: CreateCaseAnswers,
 	uniqueLpaCodes: string[],
-	currentUser: string
+	currentUser: string,
+	caseOfficerNames: { value: string; text: string }[]
 ): Promise<void> {
 	await service.db.$transaction(async (tx) => {
 		const createdCase = await tx.case.create({
@@ -108,6 +122,7 @@ async function saveDataToDatabase(
 				reference: answers.reference,
 				email: answers.email,
 				caseOfficer: answers.caseOfficer,
+				caseOfficerName: caseOfficerNames.find((officer) => officer.value === answers.caseOfficer)?.text || '',
 				planTitle: answers.planTitle,
 				planType: answers.planType,
 				lpas: {

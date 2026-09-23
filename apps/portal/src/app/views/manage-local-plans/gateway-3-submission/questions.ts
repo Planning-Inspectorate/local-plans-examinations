@@ -83,6 +83,7 @@ const gateway3TextInputQuestions = {
 		url: 'examination-website',
 		type: 'single-line-input' as const,
 		hint: 'Enter the web address (URL) where your examination library is published',
+		capitaliseAnswer: false,
 		validators: [
 			new StringValidator({
 				regex: {
@@ -262,7 +263,6 @@ const gateway3OptionalFileUploadQuestions = {
 		}
 	}
 };
-
 export const GW3_TEXT_INPUT_QUESTIONS = Object.fromEntries(
 	Object.entries(gateway3TextInputQuestions).map(([key, questionDef]) => [
 		key,
@@ -331,7 +331,8 @@ export function createGateway3Questions(planReference: string | undefined) {
 		{},
 		{
 			notStartedText: 'Not added',
-			answerActionText: 'Add'
+			answerActionText: 'Add',
+			continueButtonText: 'Save and return'
 		}
 	) as Record<string, Question>;
 }

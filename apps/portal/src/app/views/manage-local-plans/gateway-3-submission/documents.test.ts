@@ -2,10 +2,6 @@ import assert from 'node:assert/strict';
 import type { Request } from 'express';
 import { describe, it, mock } from 'node:test';
 import type { PortalService } from '#service';
-import {
-	DOCUMENT_SET_FOLDER_NAME,
-	DOCUMENT_SET_ID
-} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
 	getDocumentSetIdsByFolderName,
@@ -13,8 +9,8 @@ import {
 	saveGateway3Documents
 } from './documents.ts';
 
-const G3_DOCUMENT_SET_ID = DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN;
-const TEST_DOCUMENT_SET_FOLDER_NAME = DOCUMENT_SET_FOLDER_NAME.G3_PROPOSED_LOCAL_PLAN;
+const G3_DOCUMENT_SET_ID = 'g3-document-1';
+const TEST_DOCUMENT_SET_FOLDER_NAME = 'gateway-3-document-1';
 
 describe('loadGateway3DocumentsByDocumentSetId', () => {
 	it('delegates to DocumentUtil.loadUploadedDocuments', async () => {

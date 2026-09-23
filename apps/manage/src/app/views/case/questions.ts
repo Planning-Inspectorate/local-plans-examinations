@@ -24,10 +24,11 @@ import {
 import {
 	DSA_CHECKED_ID,
 	GATEWAY_3_DECISION_ID,
+	NUM_GW3_SUBMISSIONS_QUESTIONS,
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
+import { retrieveDefaultCaseOfficers } from '../../util/options-helper.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -217,12 +218,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	caseOfficer: {
 		type: COMPONENT_TYPES.SELECT,
-		options: [
-			{ value: '', text: '' },
-			{ value: 'officer-1', text: 'Case Officer 1' },
-			{ value: 'officer-2', text: 'Case Officer 2' },
-			{ value: 'officer-3', text: 'Case Officer 3' }
-		],
+		options: retrieveDefaultCaseOfficers(),
 		question: 'Who is the case officer?',
 		fieldName: 'caseOfficer',
 		url: 'case-officer',

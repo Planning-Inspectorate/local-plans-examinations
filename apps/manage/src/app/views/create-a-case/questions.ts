@@ -6,6 +6,7 @@ import {
 	questionClasses,
 	type BaseQuestionProps
 } from '@planning-inspectorate/dynamic-forms';
+import { retrieveDefaultCaseOfficers } from '../../util/options-helper.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
@@ -21,12 +22,7 @@ const allQuestionClasses = {
 const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 	caseOfficer: {
 		type: COMPONENT_TYPES.SELECT,
-		options: [
-			{ value: '', text: '' },
-			{ value: 'officer-1', text: 'Case Officer 1' },
-			{ value: 'officer-2', text: 'Case Officer 2' },
-			{ value: 'officer-3', text: 'Case Officer 3' }
-		],
+		options: retrieveDefaultCaseOfficers(),
 		question: 'Who is the case officer?',
 		fieldName: 'caseOfficer',
 		url: 'case-officer',

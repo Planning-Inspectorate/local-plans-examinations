@@ -38,6 +38,7 @@ export interface Config extends ConfigWithBlob {
 		templateIds: {
 			authCode?: string;
 		};
+		localPlansTeamEmail: string;
 	};
 	notifyCallbackEnabled: boolean;
 }
@@ -93,7 +94,8 @@ export function loadConfig(): Config {
 		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
-		BLOB_STORE_ACCOUNT_URL
+		BLOB_STORE_ACCOUNT_URL,
+		LOCAL_PLANS_TEAM_EMAIL
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -203,7 +205,8 @@ export function loadConfig(): Config {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',
 			webHookToken: GOV_NOTIFY_WEBHOOK_TOKEN || '',
-			templateIds: {}
+			templateIds: {},
+			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
 		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
 	};

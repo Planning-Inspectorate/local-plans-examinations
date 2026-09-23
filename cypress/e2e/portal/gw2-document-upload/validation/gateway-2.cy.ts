@@ -7,7 +7,7 @@ import {
 	subsequentWorkTowardsDraftPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { ERROR_MESSAGES } from 'cypress/constants/portal/error-messages.ts';
+import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
