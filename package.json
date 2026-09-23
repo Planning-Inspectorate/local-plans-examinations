@@ -49,9 +49,9 @@
     "cy:open:cross-service": "cross-env TEST_TARGET=cross-service npx cypress open"
   },
   "dependencies": {
-    "@azure/functions": "^4.16.2",
-    "@azure/identity": "^4.13.2",
-    "@azure/msal-node": "^6.0.0",
+    "@azure/functions": "^4.16.4",
+    "@azure/identity": "^4.13.3",
+    "@azure/msal-node": "^6.0.1",
     "@planning-inspectorate/core": "^1.11.0",
     "@planning-inspectorate/dynamic-forms": "^3.19.1",
     "@prisma/adapter-mssql": "^7.10.0",
