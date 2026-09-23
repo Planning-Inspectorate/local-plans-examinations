@@ -70,6 +70,15 @@
                                         {% if row.actions and row.actions.items %}
                                             {% for action in row.actions.items %}
                                                 {% set actionDataCy = "add-" + (row.key.text | lower | replace(' ', '-')) %}
+                                                {% if row.key.text == "Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects" %}
+                                                    {% set actionDataCy = "add-statement-of-reasons-determination" %}
+                                                {% endif %}
+                                                {% if row.key.text == "Summary of representations relating to progress towards meeting prescribed requirements and the LPA response" %}
+                                                    {% set actionDataCy = "add-representations-progress-summary" %}
+                                                {% endif %}
+                                                {% if row.key.text == "Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation" %}
+                                                    {% set actionDataCy = "add-changes-since-consultation-statement" %}
+                                                {% endif %}
                                                 <a href="{{ action.href }}" class="govuk-link" data-cy="{{ actionDataCy }}">
                                                     {{ action.text }}
                                                     {% if action.visuallyHiddenText %}
