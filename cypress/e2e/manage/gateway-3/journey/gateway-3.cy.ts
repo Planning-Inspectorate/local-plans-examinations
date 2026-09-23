@@ -168,14 +168,20 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 	});
 
-	it('selects a gateway 3 decision and uploads files that cannot be edited', { tags: ['regression'] }, () => {
+	it('selects a gateway 3 resubmission decision and verifies new submission row', { tags: ['regression'] }, () => {
 		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
 
 		gateway3DecisionPage.verifyLoaded();
-		gateway3DecisionPage.selectDecision('1');
+		gateway3DecisionPage.selectDecision('Resubmit');
 
-		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName, gateway3DocumentsAnswer.fieldName);
-		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName2, gateway3DocumentsAnswer.fieldName);
+		gateway3DocumentsPage.uploadAndVerifyFile(
+			gateway3DocumentsAnswer.fileName,
+			`${gateway3DocumentsAnswer.fieldName}-1`
+		);
+		gateway3DocumentsPage.uploadAndVerifyFile(
+			gateway3DocumentsAnswer.fileName2,
+			`${gateway3DocumentsAnswer.fieldName}-1`
+		);
 
 		gateway3DocumentsPage.saveAndReturn();
 
@@ -184,5 +190,6 @@ describe('Gateway 3 updates', () => {
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 		gateway3Page.verifyGateway3SubmissionIssued();
+		gateway3Page.verifySubHeading('Gateway 3 submission 2');
 	});
 });

@@ -67,7 +67,7 @@ describe('Gateway 3 validation', () => {
 	it('shows an error when the Gateway 3 report is not uploaded', { tags: ['regression'] }, () => {
 		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
 		gateway3DecisionPage.verifyLoaded();
-		gateway3DecisionPage.selectDecision('1');
+		gateway3DecisionPage.selectDecision('Proceed');
 
 		gateway3DocumentsPage.verifyLoaded();
 		gateway3DocumentsPage.saveAndReturn();
