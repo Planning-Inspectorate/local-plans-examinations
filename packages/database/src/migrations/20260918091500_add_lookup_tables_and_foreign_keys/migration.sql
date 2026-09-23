@@ -89,6 +89,7 @@ INSERT INTO [dbo].[VirusCheckStatus] ([id], [displayName], [displayOrder]) VALUE
 UPDATE [dbo].[Case]
 SET [planType] = CASE LOWER(LTRIM(RTRIM([planType])))
     WHEN N'local plan' THEN N'local-plan'
+    WHEN N'local plan - cypress' THEN N'local-plan'
     WHEN N'local-plan' THEN N'local-plan'
     WHEN N'other' THEN N'other'
     ELSE [planType]
