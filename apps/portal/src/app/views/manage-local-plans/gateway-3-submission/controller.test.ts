@@ -3,12 +3,18 @@ import { describe, it, mock } from 'node:test';
 import {
 	buildGetJourneyResponseFromCase,
 	buildGateway3CheckAnswersList,
+	buildGateway3Middleware,
+	handleMulterFileSizeError,
+	redirectAfterCaseQuestionEdit,
+	redirectAfterCyaEdit,
+	setAsEditingFromCya,
 	setGateway3ViewData,
 	setGateway3ViewLocals,
 	syncGateway3UploadAnswer
 } from './controller.ts';
 import type { PortalService } from '#service';
 import type { NextFunction, Request, Response } from 'express';
+import multer from 'multer';
 
 function buildMockDocumentSets() {
 	const folderNames = [
@@ -223,5 +229,148 @@ describe('syncGateway3UploadAnswer', () => {
 	it('does nothing when session is missing', () => {
 		const req = { params: {} } as unknown as Request;
 		assert.doesNotThrow(() => syncGateway3UploadAnswer(req, 'proposedLocalPlan', []));
+	});
+});
+
+describe('handleMulterFileSizeError', () => {
+	it('redirects with error when multer file size limit is exceeded', () => {
+		const err = new multer.MulterError('LIMIT_FILE_SIZE');
+		const req = {
+			params: { planReference: 'PLAN-001', section: 'required-information', question: 'proposed-local-plan' },
+			baseUrl: '/manage-local-plans',
+			session: {}
+		} as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+		const next = mock.fn();
+
+		handleMulterFileSizeError(err, req, res, next);
+
+		assert.ok(redirectUrl.includes('gateway-3-submission'));
+		assert.strictEqual(next.mock.callCount(), 0);
+		const session = req.session as any;
+		assert.ok(session.errorSummary);
+		assert.ok(session.errorSummary[0].text.includes('smaller than'));
+	});
+
+	it('calls next for non-multer errors', () => {
+		const err = new Error('something else');
+		const req = { params: {}, session: {} } as unknown as Request;
+		const res = {} as unknown as Response;
+		const next = mock.fn();
+
+		handleMulterFileSizeError(err, req, res, next);
+
+		assert.strictEqual(next.mock.callCount(), 1);
+		assert.strictEqual(next.mock.calls[0].arguments[0], err);
+	});
+});
+
+describe('setAsEditingFromCya', () => {
+	it('sets editingFromCheckAnswers flag on session and calls next', () => {
+		const session: Record<string, unknown> = {};
+		const req = { session } as unknown as Request;
+		const res = {} as unknown as Response;
+		const next = mock.fn();
+
+		setAsEditingFromCya(req, res, next);
+
+		assert.strictEqual(session.editingFromCheckAnswers, true);
+		assert.strictEqual(next.mock.callCount(), 1);
+	});
+});
+
+describe('redirectAfterCyaEdit', () => {
+	it('is an express middleware function', () => {
+		assert.strictEqual(typeof redirectAfterCyaEdit, 'function');
+		assert.strictEqual(redirectAfterCyaEdit.length, 3);
+	});
+});
+
+describe('redirectAfterCaseQuestionEdit', () => {
+	it('returns a middleware function when given a save function', () => {
+		const saveDataFn = async () => {};
+		const middleware = redirectAfterCaseQuestionEdit(saveDataFn);
+		assert.strictEqual(typeof middleware, 'function');
+	});
+});
+
+describe('buildGateway3Middleware', () => {
+	it('returns all expected middleware handlers', () => {
+		const mockService = {
+			db: {
+				case: { findUnique: async () => null },
+				documentSet: { findMany: async () => [] },
+				document: { findMany: async () => [] }
+			},
+			logger: {
+				info: () => {},
+				warn: () => {},
+				error: () => {}
+			},
+			createFileStorage: () => ({
+				upload: async () => ({ id: 'file-1' }),
+				delete: async () => {},
+				list: async () => []
+			})
+		} as unknown as PortalService;
+
+		const middleware = buildGateway3Middleware(mockService);
+
+		assert.strictEqual(typeof middleware.getJourneyResponse, 'function');
+		assert.strictEqual(typeof middleware.getJourney, 'function');
+		assert.strictEqual(typeof middleware.getJourneyResponseFromCase, 'function');
+		assert.strictEqual(typeof middleware.saveDataToCase, 'function');
+		assert.ok(middleware.upload);
+		assert.strictEqual(typeof middleware.uploadGateway3DocumentForCase, 'function');
+		assert.strictEqual(typeof middleware.deleteGateway3DocumentForCase, 'function');
+		assert.strictEqual(typeof middleware.fileUploaderMiddlewareForCase, 'function');
+		assert.strictEqual(typeof middleware.downloadGateway3Document, 'function');
+		assert.strictEqual(typeof middleware.validate, 'function');
+		assert.strictEqual(typeof middleware.validationErrorHandler, 'function');
+		assert.strictEqual(typeof middleware.question, 'function');
+		assert.strictEqual(typeof middleware.redirectAfterCaseQuestionEdit, 'function');
+	});
+
+	it('uploadGateway3DocumentForCase returns 404 for unknown question URL', () => {
+		const mockService = {
+			db: {
+				case: { findUnique: async () => null },
+				documentSet: { findMany: async () => [] },
+				document: { findMany: async () => [] }
+			},
+			logger: { info: () => {}, warn: () => {}, error: () => {} },
+			createFileStorage: () => ({})
+		} as unknown as PortalService;
+
+		const middleware = buildGateway3Middleware(mockService);
+		const req = { params: { question: 'unknown-question' } } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		middleware.uploadGateway3DocumentForCase(req, res, () => {});
+
+		assert.strictEqual(calls[0]?.method, 'status');
+		assert.strictEqual(calls[0]?.args[0], 404);
+	});
+
+	it('deleteGateway3DocumentForCase returns 404 for unknown question URL', () => {
+		const mockService = {
+			db: {
+				case: { findUnique: async () => null },
+				documentSet: { findMany: async () => [] },
+				document: { findMany: async () => [] }
+			},
+			logger: { info: () => {}, warn: () => {}, error: () => {} },
+			createFileStorage: () => ({})
+		} as unknown as PortalService;
+
+		const middleware = buildGateway3Middleware(mockService);
+		const req = { params: { question: 'nonexistent' } } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		middleware.deleteGateway3DocumentForCase(req, res, () => {});
+
+		assert.strictEqual(calls[0]?.method, 'status');
+		assert.strictEqual(calls[0]?.args[0], 404);
 	});
 });
