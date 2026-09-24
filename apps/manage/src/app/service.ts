@@ -33,6 +33,10 @@ export class ManageService extends Service {
 		return this.#config.auth.rateLimit;
 	}
 
+	override get otherSessionOptions() {
+		return { name: 'manage' };
+	}
+
 	get entraGroupIds(): Config['entra']['groupIds'] {
 		return this.#config.entra.groupIds;
 	}
