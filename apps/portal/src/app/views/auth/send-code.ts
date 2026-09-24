@@ -15,7 +15,8 @@ export async function sendAuthCodeNotification(
 		return;
 	}
 	try {
-		await service.notifyClient.sendAuthCode(recipientEmail, personalisation);
+		const reference = personalisation.caseReference ? `portal-login:${personalisation.caseReference}` : undefined;
+		await service.notifyClient.sendAuthCode(recipientEmail, personalisation, reference);
 		service.logger.info({ email: recipientEmail }, 'Auth code notification sent successfully');
 	} catch (error) {
 		service.logger.error({ error, email: recipientEmail }, 'Failed to send auth code notification');

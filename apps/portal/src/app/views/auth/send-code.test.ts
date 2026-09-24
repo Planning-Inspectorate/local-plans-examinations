@@ -34,13 +34,21 @@ describe('sendAuthCodeNotification', () => {
 
 		await sendAuthCodeNotification(service, 'user@example.com', {
 			authCode: 'XYZABCDE',
-			expiryMinutes: '15'
+			expiryMinutes: '15',
+			caseReference: 'PLAN-123456',
+			signInUrl: 'https://portal.example.com/login/enter-code'
 		});
 
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 1);
-		const [email, personalisation] = service.notifyClient.sendAuthCode.mock.calls[0].arguments;
+		const [email, personalisation, reference] = service.notifyClient.sendAuthCode.mock.calls[0].arguments;
 		assert.strictEqual(email, 'user@example.com');
-		assert.deepStrictEqual(personalisation, { authCode: 'XYZABCDE', expiryMinutes: '15' });
+		assert.deepStrictEqual(personalisation, {
+			authCode: 'XYZABCDE',
+			expiryMinutes: '15',
+			caseReference: 'PLAN-123456',
+			signInUrl: 'https://portal.example.com/login/enter-code'
+		});
+		assert.strictEqual(reference, 'portal-login:PLAN-123456');
 		assert.strictEqual(service.logger.info.mock.callCount(), 1);
 		const logArgs = service.logger.info.mock.calls[0].arguments;
 		assert.strictEqual(logArgs[0].email, 'user@example.com');

@@ -15,13 +15,24 @@ type AssignedToMeSeedResult = {
 };
 
 describe('Assigned to me', () => {
+	let seededReferences: string[] = [];
+
 	before(function () {
 		skipUnlessEnvironmentSmoke(this);
+	});
+
+	beforeEach(() => {
+		seededReferences = [];
+	});
+
+	afterEach(() => {
+		seededReferences.forEach((reference) => cy.task('softDeleteCaseByReference', reference));
 	});
 
 	it('shows a case assigned to the authorised user', { tags: ['environment-smoke'] }, () => {
 		cy.task('seedAssignedToMeCase').then((result) => {
 			const { assignedCase, unassignedCase } = result as AssignedToMeSeedResult;
+			seededReferences = [assignedCase.reference, unassignedCase.reference];
 
 			authenticateManageIfRequired();
 			manageHomePage.visit();

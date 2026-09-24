@@ -10,7 +10,10 @@ export type Gateway2DocumentUpload = {
 	fileNames: string[];
 };
 
-export const submitGateway2Application = (plan: PlanDetailsFixture, uploads: Gateway2DocumentUpload[]) => {
+export const submitGateway2Application = (
+	plan: Pick<PlanDetailsFixture, 'reference'>,
+	uploads: Gateway2DocumentUpload[]
+) => {
 	uploads.forEach(({ page, fileNames }, index) => {
 		if (index === 0) {
 			openGateway2DocumentUploadPage(plan, page);

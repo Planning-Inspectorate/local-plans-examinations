@@ -19,8 +19,11 @@ export class GovNotifyClient {
 		this.#templateIds = templateIds;
 	}
 
-	async sendAuthCode(email: string, personalisation: AuthCodePersonalisation): Promise<void> {
-		await this.sendEmail(this.#templateIds.authCode!, email, { personalisation });
+	async sendAuthCode(email: string, personalisation: AuthCodePersonalisation, reference?: string): Promise<void> {
+		await this.sendEmail(this.#templateIds.authCode!, email, {
+			personalisation,
+			...(reference && { reference })
+		});
 	}
 
 	async sendEmail(templateId: string, emailAddress: string, options: GovNotifyOptions): Promise<void> {

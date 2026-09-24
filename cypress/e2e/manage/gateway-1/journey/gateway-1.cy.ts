@@ -14,16 +14,18 @@ import {
 	signedSLA,
 	updatedNoticeOfIntention
 } from '../../../../fixtures/manage/gateway-1.ts';
+import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 
 describe('Gateway 1 updates', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
 		openSeededGateway1Page();
 	});
+	afterEach(cleanupSeededManageCase);
 
 	after(() => cy.task('clearDb'));
 
-	it('updates a Gateway 1 date answer', () => {
+	it('updates a Gateway 1 date answer', { tags: ['regression', 'environment-smoke'] }, () => {
 		gateway1Page.openActionLinkFor(gateway1DateAnswers.noticeOfIntention.row);
 		noticeOfIntentionPublishDatePage.verifyLoaded(gateway1DateAnswers.noticeOfIntention.input);
 		noticeOfIntentionPublishDatePage.enterDate(updatedNoticeOfIntention.input);

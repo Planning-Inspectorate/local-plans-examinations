@@ -8,6 +8,7 @@ import {
 	gateway2ReportPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
 import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
+import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway2AssessorAnswer,
@@ -22,6 +23,7 @@ describe('Gateway 2 updates', () => {
 		cy.task('clearDb');
 		openSeededGateway2Page();
 	});
+	afterEach(cleanupSeededManageCase);
 	after(() => cy.task('clearDb'));
 
 	it('updates a Gateway 2 date answer', { tags: ['regression'] }, () => {
@@ -59,7 +61,7 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
 	});
 
-	it('uploads the Gateway 2 report', { tags: ['regression'] }, () => {
+	it('uploads the Gateway 2 report', { tags: ['regression', 'environment-smoke'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2Report.row);
 		gateway2ReportPage.verifyLoaded();
 

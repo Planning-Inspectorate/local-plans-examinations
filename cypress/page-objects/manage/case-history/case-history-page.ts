@@ -32,11 +32,14 @@ export class CaseHistoryPage extends BasePage {
 	}
 
 	verifyHistoryEvent(event: string, user = 'Unknown') {
-		this.table.within(() => {
-			cy.getByData('case-history-date').first().should('contain.text', expectedDate);
-			cy.getByData('case-history-event').should('contain.text', event);
-			cy.getByData('case-history-user').should('contain.text', user);
-		});
+		this.table
+			.contains('[data-cy="case-history-event"]', event)
+			.closest('tr')
+			.within(() => {
+				cy.getByData('case-history-date').should('contain.text', expectedDate);
+				cy.getByData('case-history-event').should('contain.text', event);
+				cy.getByData('case-history-user').should('contain.text', user);
+			});
 	}
 }
 

@@ -4,12 +4,17 @@ import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
 import { seedStaticData } from './data-static.ts';
 import { DSA_CHECKED_ID, PLAN_TYPE_ID } from './static-data/ids/index.ts';
+import { assertEnvironmentSmokeDatabase } from './environment-smoke-safety.ts';
 
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
 
 export async function seedCy() {
 	const config = loadConfig();
+	const environmentSmoke = process.env.ENVIRONMENT_SMOKE === 'true';
+	if (environmentSmoke) {
+		assertEnvironmentSmokeDatabase(config.db, { actionName: 'Manage smoke seed' });
+	}
 	// prettier-ignore
 	try { loadEnvFile(); } catch {/* ignore errors*/}
 	const now = new Date(Date.now());
@@ -151,7 +156,7 @@ export async function seedCy() {
 				}
 			}
 		});
-		return { reference: seededCase.reference };
+		return { planTitle: seededCase.planTitle, reference: seededCase.reference };
 	} catch (error) {
 		console.error(error);
 		throw error;

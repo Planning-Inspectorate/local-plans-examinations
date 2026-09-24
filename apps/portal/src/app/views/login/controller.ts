@@ -58,7 +58,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 		}
 
 		try {
-			const emailIsAssociatedToACase = await db.case.findFirst({ where: { email: sanitisedEmail } });
+			const emailIsAssociatedToACase = await db.case.findFirst({
+				where: { email: sanitisedEmail, deletedDate: null },
+				orderBy: { createdAt: 'desc' }
+			});
 			if (!emailIsAssociatedToACase) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt with unrecognised email');
 				return res.render('views/login/enter-email-page.njk', {
