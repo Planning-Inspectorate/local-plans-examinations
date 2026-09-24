@@ -2,7 +2,7 @@ import { defineConfig } from 'cypress';
 import { loadEnvFile } from 'node:process';
 import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
-import { waitForNotifyEmailByReference } from './cypress/tasks/notify.ts';
+import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
 
 // prettier-ignore
@@ -122,6 +122,7 @@ export default defineConfig({
 					return null;
 				},
 				waitForNotifyEmailByReference,
+				waitForNotifyEmailsByReference,
 				seedOtp: async () => {
 					const stdout = await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts');
 					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));

@@ -18,7 +18,18 @@ export function authenticatePortalIfRequired() {
 	authenticateWithMicrosoftIfRequired('portal', '/.auth/login/aad?post_login_redirect_uri=/');
 }
 
-function authenticateWithMicrosoftIfRequired(name: 'manage' | 'portal', signInPath: string) {
+export function authenticatePortalUserIfRequired(completeLogin: () => void, validateLogin: () => void) {
+	authenticateWithMicrosoftIfRequired('portal-user', '/.auth/login/aad?post_login_redirect_uri=/', {
+		afterMicrosoftLogin: completeLogin,
+		validate: validateLogin
+	});
+}
+
+function authenticateWithMicrosoftIfRequired(
+	name: 'manage' | 'portal' | 'portal-user',
+	signInPath: string,
+	options: { afterMicrosoftLogin?: () => void; validate?: () => void } = {}
+) {
 	if (!isEnvironmentSmoke()) {
 		return;
 	}
@@ -43,9 +54,12 @@ function authenticateWithMicrosoftIfRequired(name: 'manage' | 'portal', signInPa
 			});
 
 			cy.location('origin', { timeout: 60000 }).should('eq', applicationOrigin);
+			cy.location('pathname', { timeout: 60000 }).should('eq', '/');
+			options.afterMicrosoftLogin?.();
 		},
 		{
-			cacheAcrossSpecs: true
+			cacheAcrossSpecs: true,
+			...(options.validate ? { validate: options.validate } : {})
 		}
 	);
 }

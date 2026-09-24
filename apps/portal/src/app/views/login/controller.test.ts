@@ -131,7 +131,7 @@ describe('buildSubmitEmailPage', () => {
 		const originalEnv = process.env.NODE_ENV;
 		process.env.NODE_ENV = 'production';
 		const service = createMockService();
-		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
 			email: 'test@example.com',
 			lockedOutUntil: new Date(Date.now() + 60 * 60 * 1000),
@@ -155,7 +155,7 @@ describe('buildSubmitEmailPage', () => {
 
 	it('should reset lockout when lock time has expired', async () => {
 		const service = createMockService();
-		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
 			email: 'test@example.com',
 			lockedOutUntil: new Date(Date.now() - 1000),
@@ -178,7 +178,7 @@ describe('buildSubmitEmailPage', () => {
 
 	it('should create OTP, set session email, send notification, and redirect on success', async () => {
 		const service = createMockService();
-		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
 		service.db.oneTimePassword.upsert.mock.mockImplementation(async () => ({}));
 
@@ -191,8 +191,13 @@ describe('buildSubmitEmailPage', () => {
 		// email should be sanitised (trimmed + lowercased)
 		assert.strictEqual(req.session.email, 'test@example.com');
 		assert.strictEqual(service.db.case.findFirst.mock.callCount(), 1);
+		assert.deepStrictEqual(service.db.case.findFirst.mock.calls[0].arguments[0], {
+			where: { email: 'test@example.com', deletedDate: null },
+			orderBy: { createdAt: 'desc' }
+		});
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 1);
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 1);
+		assert.strictEqual(service.notifyClient.sendAuthCode.mock.calls[0].arguments[2], 'portal-login:PLAN-123456');
 		assertRedirect(res, '/login/enter-code');
 	});
 
@@ -218,7 +223,7 @@ describe('buildSubmitEmailPage', () => {
 
 	it('should still redirect when notify fails (fire-and-forget)', async () => {
 		const service = createMockService();
-		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1 }));
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
 		service.db.oneTimePassword.upsert.mock.mockImplementation(async () => ({}));
 		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {

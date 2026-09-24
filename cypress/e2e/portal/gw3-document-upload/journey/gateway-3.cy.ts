@@ -79,18 +79,22 @@ describe('Gateway 3 document upload journeys', () => {
 		}
 	);
 
-	it('Downloads statement of compliance file when document link is clicked', { tags: ['regression'] }, () => {
-		const page = statementOfCompliancePage;
-		openGateway3DocumentUploadPage(planDetails, page);
-		statementOfCompliancePage.uploadAndVerifyFile('test-document.pdf');
+	it(
+		'Downloads statement of compliance file when document link is clicked',
+		{ tags: ['regression', 'environment-smoke'] },
+		() => {
+			const page = statementOfCompliancePage;
+			openGateway3DocumentUploadPage(planDetails, page);
+			statementOfCompliancePage.uploadAndVerifyFile('test-document.pdf');
 
-		statementOfCompliancePage.saveAndReturn();
-		gateway3ApplicationPage.verifyLoaded();
+			statementOfCompliancePage.saveAndReturn();
+			gateway3ApplicationPage.verifyLoaded();
 
-		gateway3ApplicationPage.verifyDocumentDownloadLink(
-			gateway3ApplicationPage.requiredInformationTable,
-			'Statement of Compliance',
-			'test-document.pdf'
-		);
-	});
+			gateway3ApplicationPage.verifyDocumentDownloadLink(
+				gateway3ApplicationPage.requiredInformationTable,
+				'Statement of Compliance',
+				'test-document.pdf'
+			);
+		}
+	);
 });

@@ -114,7 +114,8 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 							workshopWeekMonday: 'workshop week monday',
 							teamEmailAddress: 'team email address',
 							teamPhone: 'team phone'
-						}
+						},
+						reference: `gateway-2-submission:${reference}`
 					});
 					logger.info({ encodedReference }, 'gateway 2 submission - email sent');
 				} catch (error) {

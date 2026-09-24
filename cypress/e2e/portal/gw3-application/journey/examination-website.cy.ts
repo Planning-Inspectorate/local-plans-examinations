@@ -1,6 +1,5 @@
-import { isEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
-import { preparePlanDetails } from '../../../../flows/portal/plan-flow.ts';
+import { cleanupPreparedPlanDetails, preparePlanDetails } from '../../../../flows/portal/plan-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { examinationWebsitePage } from '../../../../page-objects/portal/gw3-application/examination-website-page.ts';
@@ -8,25 +7,17 @@ import { examinationWebsite } from '../../../../fixtures/portal/examination.ts';
 
 describe('Gateway 3 examination website journeys', () => {
 	let planDetails: PlanDetailsFixture;
-	let portalSmokeCaseReference: string | undefined;
 
 	beforeEach(() => {
-		portalSmokeCaseReference = undefined;
 		cy.task('clearDb');
 		preparePlanDetails().then((plan) => {
 			planDetails = plan;
-			if (isEnvironmentSmoke()) {
-				portalSmokeCaseReference = plan.reference;
-			}
 		});
 		portalLogin();
 	});
 
 	afterEach(() => {
-		if (portalSmokeCaseReference) {
-			cy.task('softDeleteCaseByReference', portalSmokeCaseReference);
-		}
-
+		cleanupPreparedPlanDetails();
 		cy.task('clearDb');
 	});
 

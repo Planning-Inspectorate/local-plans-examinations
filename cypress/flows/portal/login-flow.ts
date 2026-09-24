@@ -1,7 +1,12 @@
 import { portalLoginEmailPage } from '../../page-objects/portal/login/email-page.ts';
 import { portalLoginOtpPage } from '../../page-objects/portal/login/otp-page.ts';
 import { myPlansPage } from '../../page-objects/portal/my-plans-page.ts';
-import { authenticatePortalIfRequired, getRequiredCypressEnv, isEnvironmentSmoke } from '../auth-flow.ts';
+import {
+	authenticatePortalIfRequired,
+	authenticatePortalUserIfRequired,
+	getRequiredCypressEnv,
+	isEnvironmentSmoke
+} from '../auth-flow.ts';
 
 export const TEST_EMAIL = 'test@planninginspectorate.gov.uk';
 export const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
@@ -52,8 +57,7 @@ export const completePortalLogin = () => {
 
 export const portalLogin = () => {
 	if (isEnvironmentSmoke()) {
-		authenticatePortalIfRequired();
-		completePortalLoginByRequest();
+		authenticatePortalUserIfRequired(completePortalLoginByRequest, validatePortalLogin);
 		myPlansPage.visit();
 		return;
 	}
@@ -72,6 +76,16 @@ const getPortalLoginEmail = () => {
 };
 
 const getPortalSmokeOtp = () => getRequiredCypressEnv('portalSmokeOtp');
+
+const validatePortalLogin = () => {
+	cy.request({
+		failOnStatusCode: false,
+		followRedirect: false,
+		url: '/manage-local-plans/your-plans'
+	}).then((response) => {
+		expect(response.status).to.eq(200);
+	});
+};
 
 const completePortalLoginByRequest = () => {
 	const email = getRequiredCypressEnv('authUsername');

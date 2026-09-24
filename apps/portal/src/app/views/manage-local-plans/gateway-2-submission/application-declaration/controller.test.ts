@@ -115,6 +115,7 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
 		assert.equal(service.sendCalls[0].to, 'lpa@example.com');
 		assert.equal(service.sendCalls[0].options.personalisation.planRef, 'PLAN-123456');
+		assert.equal(service.sendCalls[0].options.reference, 'gateway-2-submission:PLAN-123456');
 	});
 
 	it('renders error when no checkboxes are checked', async () => {

@@ -22,6 +22,7 @@ import {
 	updatedGateway3ExpectedDateAnswer,
 	gateway3DocumentsAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
+import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 
 const today = new Date();
 const todayDisplay = today.toLocaleDateString('en-GB', {
@@ -41,6 +42,7 @@ describe('Gateway 3 updates', () => {
 		cy.task('clearDb');
 		openSeededGateway3Page();
 	});
+	afterEach(cleanupSeededManageCase);
 
 	after(() => cy.task('clearDb'));
 
@@ -108,7 +110,7 @@ describe('Gateway 3 updates', () => {
 
 	it(
 		'updates the Examination website from Gateway 3 and shows the same link on Examination',
-		{ tags: ['regression'] },
+		{ tags: ['regression', 'environment-smoke'] },
 		() => {
 			gateway3Page.openActionLinkFor(gateway3ExaminationWebsite.row);
 

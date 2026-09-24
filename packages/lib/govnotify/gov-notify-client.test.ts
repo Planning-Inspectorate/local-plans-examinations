@@ -89,17 +89,24 @@ describe('GovNotifyClient', () => {
 	});
 
 	describe('sendAuthCode', () => {
-		it('should call sendEmail with authCode template', async () => {
+		it('should call sendEmail with authCode template and reference', async () => {
 			const { client, mockNotify } = createTestClient({ authCode: 'auth-template-id' });
 			mockNotify.sendEmail.mock.mockImplementation(async () => ({}));
 
-			await client.sendAuthCode('user@example.com', { authCode: 'XYZABC', expiryMinutes: '20' });
+			await client.sendAuthCode(
+				'user@example.com',
+				{ authCode: 'XYZABC', expiryMinutes: '20' },
+				'portal-login:PLAN-123456'
+			);
 
 			assert.strictEqual(mockNotify.sendEmail.mock.callCount(), 1);
 			const [templateId, email, options] = mockNotify.sendEmail.mock.calls[0].arguments;
 			assert.strictEqual(templateId, 'auth-template-id');
 			assert.strictEqual(email, 'user@example.com');
-			assert.deepStrictEqual(options.personalisation, { authCode: 'XYZABC', expiryMinutes: '20' });
+			assert.deepStrictEqual(options, {
+				personalisation: { authCode: 'XYZABC', expiryMinutes: '20' },
+				reference: 'portal-login:PLAN-123456'
+			});
 		});
 	});
 

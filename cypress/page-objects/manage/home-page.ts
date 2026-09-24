@@ -33,6 +33,10 @@ export class ManageHomePage extends BasePage {
 		this.casesTable.contains('tr', planTitle).find('[data-cy="case-reference-link"]').click();
 	}
 
+	openCaseByReference(reference: string) {
+		this.casesTable.contains('[data-cy="case-reference-link"]', reference).should('be.visible').click();
+	}
+
 	verifyCaseStatus(planTitle: string, status: string) {
 		this.casesTable.contains('tr', planTitle).find('[data-cy="status-tag"]').should('contain.text', status);
 	}
