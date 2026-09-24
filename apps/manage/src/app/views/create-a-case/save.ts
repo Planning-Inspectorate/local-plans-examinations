@@ -5,8 +5,7 @@ import { clearDataFromSession, type JourneyResponse } from '@planning-inspectora
 import * as authSession from '@planning-inspectorate/core/auth';
 import { parseDate } from '../../util/date.ts';
 import { questions } from './questions.ts';
-import { loadLpaOptions } from '../../lib/load-lpa-options.ts';
-import { retrieveCaseOfficers } from '../../util/options-helper.ts';
+import { retrieveCaseOfficers, loadLpaOptions } from '../../util/options-helper.ts';
 
 /**
  * The structure of data for the journey answers
