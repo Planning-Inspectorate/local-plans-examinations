@@ -8,6 +8,7 @@ export const OVERVIEW_JOURNEY_ID = 'edit-case-overview';
 export const GATEWAY_1_JOURNEY_ID = 'gateway-1';
 export const GATEWAY_2_JOURNEY_ID = 'gateway-2';
 export const GATEWAY_3_JOURNEY_ID = 'gateway-3';
+export const GATEWAY_3_REPORT_JOURNEY_ID = 'gateway-3-report';
 export const EXAMINATION_JOURNEY_ID = 'examination';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -62,7 +63,6 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		submissionSections.push(
 			new Section('Gateway 3 submission', 'gateway-3-submission-1')
 				.addQuestion(questions['gateway3FrontOfficeDocuments-1'])
-				.addQuestion(questions['gateway3Documents-1']) // Temp for now, need to merge with foDocs
 				.addQuestion(questions['gateway3Decision-1'])
 		);
 	} else {
@@ -70,7 +70,6 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 			const rowId = index + 1;
 			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
 				.addQuestion(questions[`gateway3FrontOfficeDocuments-${rowId}`])
-				.addQuestion(questions[`gateway3Documents-${rowId}`]) // Temp for now, need to merge with foDocs
 				.addQuestion(questions[`gateway3Decision-${rowId}`]);
 		});
 	}
@@ -97,6 +96,31 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	});
 
 	return getBacklinks(journey, gateway3Url);
+}
+
+export function createGateway3ReportJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway3ReportUrl = req.baseUrl + '/gateway-3-report';
+	const submissionData = Array.isArray(response.answers.submissions) ? response.answers.submissions : null;
+	if (!submissionData) {
+		throw Error('submissionData is null');
+	}
+	const submissionId = Number(String(req.params.question).split('-').at(-1));
+	return new Journey({
+		journeyId: GATEWAY_3_REPORT_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 3 report', `gateway-3-submission-${submissionId}`)
+				.addQuestion(questions[`gateway3Decision-${submissionId}`])
+				.addQuestion(questions[`gateway3Documents-${submissionId}`])
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		taskListUrl: 'gateway-3',
+		journeyTitle: 'Gateway 2',
+		returnToListing: false,
+		makeBaseUrl: () => gateway3ReportUrl,
+		initialBackLink: gateway3ReportUrl,
+		response
+	});
 }
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {

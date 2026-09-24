@@ -18,7 +18,14 @@ import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
-import { journeyQuestions } from './journey.ts';
+import {
+	journeyQuestions,
+	GATEWAY_1_JOURNEY_ID,
+	GATEWAY_2_JOURNEY_ID,
+	GATEWAY_3_JOURNEY_ID,
+	GATEWAY_3_REPORT_JOURNEY_ID,
+	EXAMINATION_JOURNEY_ID
+} from './journey.ts';
 import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-lib/util/constants.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -206,7 +213,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				);
 				break;
 			}
-			case 'gateway-1': {
+			case GATEWAY_1_JOURNEY_ID: {
 				updated = await updateGateway1(
 					db,
 					trimStringValues(data.answers as Gateway1Input),
@@ -215,7 +222,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				);
 				break;
 			}
-			case 'gateway-2': {
+			case GATEWAY_2_JOURNEY_ID: {
 				updated = await updateGateway2(
 					db,
 					trimStringValues(data.answers as Gateway2Input),
@@ -224,7 +231,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				);
 				break;
 			}
-			case 'gateway-3': {
+			case GATEWAY_3_JOURNEY_ID: {
 				const caseDetails = await db.case.findUnique({
 					select: {
 						gateway3Info: {
@@ -258,7 +265,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				);
 				break;
 			}
-			case 'examination': {
+			case EXAMINATION_JOURNEY_ID: {
 				updated = await updateExamination(
 					db,
 					trimStringValues(data.answers as ExaminationInput),
@@ -713,7 +720,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'gateway-1': {
+			case GATEWAY_1_JOURNEY_ID: {
 				const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data, journeyId);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
@@ -730,7 +737,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'gateway-2': {
+			case GATEWAY_2_JOURNEY_ID: {
 				const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey2Data, journeyId);
 				res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
@@ -755,7 +762,20 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'gateway-3': {
+			case GATEWAY_3_JOURNEY_ID: {
+				if (
+					req.method === 'GET' &&
+					String(req.params.question).startsWith('gateway-3-decision') &&
+					req.originalUrl.endsWith(String(req.params.question))
+				) {
+					const submissionId = Number(String(req.params.question).split('-').at(-1));
+					const caseReference = getParam(req.params.reference);
+					// Navigate to gw3 report subjourney
+					res.redirect(
+						`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(GATEWAY_3_REPORT_JOURNEY_ID)}/gateway-3-submission-${submissionId}/gateway-3-decision-${submissionId}`
+					);
+					return;
+				}
 				const journey3Data = await db.gateway3Info.findUnique({
 					include: {
 						submissions: true
@@ -838,6 +858,35 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					journeyResponse.answers[`gateway3FrontOfficeDocuments-${submissionId}`] = submissionDocumentsByCategory;
 				}
 				res.locals.journeyResponse = journeyResponse;
+				if (next) next();
+				return;
+			}
+			case GATEWAY_3_REPORT_JOURNEY_ID: {
+				const caseReference = getParam(req.params.reference);
+				if (req.params.question == undefined) {
+					res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(GATEWAY_3_JOURNEY_ID)}`);
+					return;
+				}
+				const journey3Data = await db.gateway3Info.findUnique({
+					include: {
+						submissions: true
+					},
+					where: { caseId: caseRecord.id }
+				});
+				if (!journey3Data) {
+					throw Error('No gatewa3info data found');
+				}
+				const submissionData = sortGateway3Submissions(journey3Data.submissions);
+				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
+				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
+				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+				for (let i = 0; i < submissionData.length; i++) {
+					const submissionId = i + 1;
+					journeyResponse.answers[`decision-${submissionId}`] = submissionData[i].decision;
+					journeyResponse.answers[`completionDate-${submissionId}`] = submissionData[i].completionDate;
+				}
+				res.locals.journeyResponse = journeyResponse;
 				const body = req.body as { decision?: string };
 				// Flow for uploading a gateway 3 document
 				if (
@@ -849,7 +898,6 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					if (!/^\d+$/.test(submissionNumber)) {
 						throw new Error('Invalid submission number');
 					}
-					const caseReference = getParam(req.params.reference);
 					const updatedSubmissions = sortGateway3Submissions(journey3Data?.submissions);
 					if (!updatedSubmissions) {
 						throw Error('No submission found');
@@ -895,7 +943,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				return;
 			}
 
-			case 'examination': {
+			case EXAMINATION_JOURNEY_ID: {
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				// TODO: proper view-model mapping to answers formats
 				// use dynamic-forms constants for BOOLEAN_OPTIONS
@@ -958,7 +1006,7 @@ async function addUploadedDocumentDetailsToAnswers(
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
-	if (journeyId == 'gateway-3') {
+	if (journeyId == GATEWAY_3_JOURNEY_ID) {
 		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
 		const lastSubmissionId = answers.submissions.length;
 		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem) =>
@@ -1009,10 +1057,10 @@ function createNavigationParameters(path: string, reference: string, currentSect
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/overview` },
 		{ text: 'Timetable', href: '#' },
-		{ text: 'Gateway 1', href: `${baseUrl}/gateway-1` },
-		{ text: 'Gateway 2', href: `${baseUrl}/gateway-2` },
-		{ text: 'Gateway 3', href: `${baseUrl}/gateway-3` },
-		{ text: 'Examination', href: `${baseUrl}/examination` },
+		{ text: 'Gateway 1', href: `${baseUrl}/${GATEWAY_1_JOURNEY_ID}` },
+		{ text: 'Gateway 2', href: `${baseUrl}/${GATEWAY_2_JOURNEY_ID}` },
+		{ text: 'Gateway 3', href: `${baseUrl}/${GATEWAY_3_JOURNEY_ID}` },
+		{ text: 'Examination', href: `${baseUrl}/${EXAMINATION_JOURNEY_ID}` },
 		{
 			text: 'Case History',
 			href: `${baseUrl}/overview?section=case-history`,
@@ -1382,7 +1430,7 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 	};
 }
 
-export function issueGateway3Document(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function issueGateway3Document(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
@@ -1399,21 +1447,22 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			throw Error('No gateway3info data could be found');
 		}
 		const existingSubmissions = sortGateway3Submissions(gateway3Info.submissions);
-		const lastSubmission = existingSubmissions.at(-1);
-		if (!lastSubmission) {
+		const submissionId = Number(String(req.params.question).replace('gateway-3-document-', ''));
+		const submission = existingSubmissions.at(submissionId - 1);
+		if (!submission) {
 			throw Error('Could not find a submission');
 		}
-		if (!lastSubmission?.completionDate) {
+		if (!submission?.completionDate) {
 			// Try to update the reportIssuedDate
 			const completionDate = new Date();
-			lastSubmission.completionDate = new Date();
-			if (lastSubmission.decision == '2') {
+			submission.completionDate = new Date();
+			if (submission.decision == '2') {
 				// If a submission was rejected by the inspector, then add a new gw3 submission details block
 				existingSubmissions.push({
 					id: crypto.randomUUID(),
 					decision: null,
 					completionDate: null,
-					gateway3InfoId: lastSubmission.gateway3InfoId
+					gateway3InfoId: submission.gateway3InfoId
 				});
 			}
 			const account = authSession.getAccount(req.session);
@@ -1448,7 +1497,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			req.session.alertMessage = 'Gateway 3 decision already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(GATEWAY_3_JOURNEY_ID)}`);
 		return;
 	};
 }
@@ -1458,10 +1507,10 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	// Any questions that need to route to new subjourneys can be defined here
 	if (req.params.question == 'gateway-2-report') {
-		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+		return `${req.baseUrl}${planPath}/${GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	if (req.params.question == 'signed-sla') {
-		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
+		return `${req.baseUrl}${planPath}/${GATEWAY_1_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
@@ -1505,7 +1554,7 @@ export function preprocessQuestionProperties(
 ) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
-		if (journeyId == 'gateway-3') {
+		if (journeyId == GATEWAY_3_JOURNEY_ID) {
 			const decisionMap = {
 				'1': 'Proceed to examination',
 				'2': 'Resubmission required'
@@ -1547,7 +1596,7 @@ export function preprocessQuestionProperties(
 						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
 					}
 					questions[gateway3Decision].actionLink = {
-						href: `/case/${reference}/gateway-3/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
+						href: `/case/${reference}/${GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
 					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;

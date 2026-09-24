@@ -1666,7 +1666,7 @@ describe('issueGateway3Document', () => {
 				}
 			]
 		}));
-		const handler = issueGateway3Document(service, 'some-journey');
+		const handler = issueGateway3Document(service);
 		const res = {
 			redirect: mock.fn(() => {})
 		};
@@ -1695,7 +1695,7 @@ describe('issueGateway3Document', () => {
 				}
 			]
 		}));
-		const handler = issueGateway3Document(service, 'some-journey');
+		const handler = issueGateway3Document(service);
 		const res = {
 			redirect: mock.fn(() => {})
 		};

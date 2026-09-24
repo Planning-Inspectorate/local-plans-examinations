@@ -50,10 +50,12 @@ import {
 	createGateway1Journey,
 	createGateway2Journey,
 	createGateway3Journey,
+	createGateway3ReportJourney,
 	createExaminationJourney,
 	GATEWAY_1_JOURNEY_ID,
 	GATEWAY_2_JOURNEY_ID,
 	GATEWAY_3_JOURNEY_ID,
+	GATEWAY_3_REPORT_JOURNEY_ID,
 	OVERVIEW_JOURNEY_ID,
 	EXAMINATION_JOURNEY_ID
 } from './journey.ts';
@@ -118,6 +120,13 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-3',
 		journeyId: GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
+		supportsFileUpload: true,
+		updateFunction: updateGateway3
+	},
+	{
+		path: 'gateway-3-report',
+		journeyId: GATEWAY_3_REPORT_JOURNEY_ID,
+		createJourney: createGateway3ReportJourney,
 		supportsFileUpload: true,
 		updateFunction: updateGateway3
 	},
@@ -220,7 +229,7 @@ function registerCaseJourney(
 	);
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
-	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service, journeyId));
+	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
 	// Save answer
 	router.post(
