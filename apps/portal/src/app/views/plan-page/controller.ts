@@ -47,7 +47,8 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
 
-		const applicationLink = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-submission/application-declaration`;
+		const applicationLink = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-submission`;
+		const gateway2DeclarationLink = `${applicationLink}/application-declaration`;
 		const gateway3Link = `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-3-submission`;
 		let dateG2Value: Date | null | undefined = caseData.gateway2Date;
 
@@ -86,7 +87,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			}
 		}
 		const currentApplicationLink =
-			currentStageTag === 'Examination' ? hrefE : currentStageTag === 'Gateway 3' ? hrefG3 : hrefG2;
+			currentStageTag === 'Examination' ? hrefE : currentStageTag === 'Gateway 3' ? hrefG3 : gateway2DeclarationLink;
 		const viewModel = {
 			dateG1: formatDisplayDate(caseData.gateway1Date),
 			dateG2: formatDisplayDate(dateG2Value),
