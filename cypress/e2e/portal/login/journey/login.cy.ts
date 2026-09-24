@@ -78,7 +78,7 @@ describe('Portal login journey', () => {
 		});
 	});
 
-	it('user is taken to the login page if they click sign out', { tags: ['regression', 'environment-smoke'] }, () => {
+	it('user is taken to the login page if they click sign out', { tags: ['regression'] }, () => {
 		preparePlanDetails().then((plan) => {
 			portalLogin();
 			myPlansPage.verifyLoaded();
