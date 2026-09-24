@@ -11,7 +11,9 @@ export function isEnvironmentSmoke() {
 }
 
 export function authenticateManageIfRequired() {
-	authenticateWithMicrosoftIfRequired('manage', '/auth/signin?redirect_to=/');
+	authenticateWithMicrosoftIfRequired('manage', '/auth/signin?redirect_to=/', {
+		afterMicrosoftLogin: verifyManageLogin
+	});
 }
 
 export function authenticatePortalIfRequired() {
@@ -54,7 +56,6 @@ function authenticateWithMicrosoftIfRequired(
 			});
 
 			cy.location('origin', { timeout: 60000 }).should('eq', applicationOrigin);
-			cy.location('pathname', { timeout: 60000 }).should('eq', '/');
 			options.afterMicrosoftLogin?.();
 		},
 		{
@@ -62,6 +63,11 @@ function authenticateWithMicrosoftIfRequired(
 			...(options.validate ? { validate: options.validate } : {})
 		}
 	);
+}
+
+function verifyManageLogin() {
+	cy.visit('/');
+	cy.get('h1').should('contain.text', 'All cases');
 }
 
 function completeMicrosoftLogin(username: string, password: string, loginUrl: string) {
