@@ -3,7 +3,7 @@ import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import {
-	fileUploadQuestionConfigs,
+	journeyFileUploadQuestionConfigs,
 	fileUploaderCaseSessionKeyForField,
 	type UploadDocumentRequest
 } from '../controller.ts';
@@ -45,19 +45,40 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 	});
 }
 
-export async function addUploadedDocumentDetailsToAnswers(
+export /**
+ * Load the documents for the given case and prepopulate the answer fields with their names
+ * @param service The manage service
+ * @param currentCase The case from the database
+ * @param req The request object
+ * @param answers The answers that the details should be added to
+ */
+async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
 	req: Request,
-	answers: any
+	answers: any,
+	journeyId: string
 ) {
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
+	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
+	if (journeyId == 'gateway-3') {
+		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
+		const lastSubmissionId = answers.submissions.length;
+		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem: any) =>
+			Number(elem.fieldName.replace('gateway3Documents-', ''))
+				? Number(elem.fieldName.replace('gateway3Documents-', '')) <= lastSubmissionId
+				: true
+		);
+	}
+	if (!relevantFileUploadQuestionConfigs) {
+		return;
+	}
 	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 		service,
-		fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+		relevantFileUploadQuestionConfigs.map((questionConfig: any) => questionConfig.url)
 	);
-	for (const questionConfig of fileUploadQuestionConfigs) {
+	for (const questionConfig of relevantFileUploadQuestionConfigs) {
 		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
 		if (!documentSetId) {
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);

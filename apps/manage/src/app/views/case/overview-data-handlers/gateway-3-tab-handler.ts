@@ -1,5 +1,6 @@
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import {
 	fileUploadQuestionConfigs,
@@ -24,7 +25,13 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 			throw Error('No gatewa3info data found');
 		}
 		const submissionData = sortGateway3Submissions(journey3Data.submissions);
-		await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data);
+		await addUploadedDocumentDetailsToAnswers(
+			service,
+			caseRecord,
+			req,
+			journey3Data,
+			COMMON_CONSTS.GATEWAY_3_JOURNEY_ID
+		);
 		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
