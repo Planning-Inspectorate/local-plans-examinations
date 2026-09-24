@@ -86,7 +86,9 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		type: CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER,
 		title: 'Documents',
 		question: 'Submitted GW3 documents',
-		fieldName: 'gateway3FrontOfficeDocuments'
+		url: 'gateway-3-fo-preview',
+		fieldName: 'gateway3FrontOfficeDocuments',
+		showViewWhenEmpty: true
 	},
 	gateway3Documents: {
 		type: CUSTOM_COMPONENTS.FILE_UPLOADER,

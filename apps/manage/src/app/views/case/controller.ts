@@ -17,7 +17,6 @@ import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
-import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	journeyQuestions,
 	GATEWAY_1_JOURNEY_ID,
@@ -786,77 +785,12 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 					throw Error('No gatewa3info data found');
 				}
 				const submissionData = sortGateway3Submissions(journey3Data.submissions);
-				const gateway3DocumentSetNamePrefixesWithCategories: Record<string, Record<string, string>> = {
-					required: {
-						'gateway-3-document-exam-website': 'Examination website',
-						'gateway-3-document-proposed-plan': 'Proposed local plan intended for submission for examination',
-						'gateway-3-document-map-of-proposed-plan': 'Map of proposed local plan policies',
-						'gateway-3-document-statement-of-compliance': 'Statement of Compliance',
-						'gateway-3-document-statement-of-soundness': 'Statement of Soundness',
-						'gateway-3-document-summary-of-engagement':
-							'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
-						'gateway-3-document-summary-of-scoping-consultation': 'Summary of scoping consultation',
-						'gateway-3-document-summary-of-consultation-and-evidence':
-							'Summary of consultation on proposed local plan content and evidence',
-						'gateway-3-document-summary-of-consultation': 'Summary of consultation on proposed local plan',
-						'gateway-3-document-statement-of-practical-arrangements':
-							'Statement setting out practical arrangements demonstrating readiness for examination'
-					},
-					optional: {
-						'gateway-3-document-copies-of-representations': 'Copies of representations',
-						'gateway-3-document-supplementary-exams-statement': 'Supplementary plans statement',
-						'gateway-3-document-environmental-report': 'Environmental report',
-						'gateway-3-document-statement-of-environment-reasons':
-							'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
-						'gateway-3-document-summary-of-representations':
-							'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
-						'gateway-3-document-summary-of-gw2-remediations':
-							'Summary of how Gateway 2 assessor issues have been addressed',
-						'gateway-3-document-summary-of-changes':
-							'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
-						'gateway-3-document-other-documents': 'Other documents'
-					}
-				};
-				const gateway3DocumentSetNamePrefixes = {
-					...gateway3DocumentSetNamePrefixesWithCategories['required'],
-					...gateway3DocumentSetNamePrefixesWithCategories['optional']
-				};
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
-				for (let i = 0; i < submissionData.length; i++) {
-					const submissionId = i + 1;
-					journeyResponse.answers[`decision-${submissionId}`] = submissionData[i].decision;
-					journeyResponse.answers[`completionDate-${submissionId}`] = submissionData[i].completionDate;
-					const gateway3DocumentSetNamesForSubmissionId = Object.fromEntries(
-						Object.entries(gateway3DocumentSetNamePrefixes).map(([k, v]) => [`${k}-${i + 1}`, v])
-					);
-					const submissionDocumentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
-						service,
-						Object.keys(gateway3DocumentSetNamesForSubmissionId)
-					);
-					const submissionDocumentsByCategory = await Promise.all(
-						Object.entries(gateway3DocumentSetNamePrefixesWithCategories).map(async ([category, documentSets]) => ({
-							category,
-							documents: await Promise.all(
-								Object.entries(documentSets).map(async ([k, v]) => {
-									const documentSetId = submissionDocumentSetIds.get(k);
+				addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
 
-									const files = documentSetId
-										? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId)
-										: [];
-
-									return {
-										v,
-										files
-									};
-								})
-							)
-						}))
-					);
-					journeyResponse.answers[`gateway3FrontOfficeDocuments-${submissionId}`] = submissionDocumentsByCategory;
-				}
 				res.locals.journeyResponse = journeyResponse;
 				if (next) next();
 				return;
@@ -880,6 +814,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+				addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 				for (let i = 0; i < submissionData.length; i++) {
 					const submissionId = i + 1;
@@ -988,6 +923,88 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
 	};
+}
+
+/**
+ * Enrich the journeyResponse with gateway3 documents pulled from the front office
+ * @param service The manage service
+ * @param caseId The unique id of the case
+ * @param journeyResponse The journey response to write the answers to
+ * @param submissionData List of submission data objects from the database for the given case
+ */
+async function addGateway3FrontOfficeDocumentsToAnswers(
+	service: ManageService,
+	caseId: string,
+	journeyResponse: JourneyResponse,
+	submissionData: {
+		id: string;
+		decision: string | null;
+		completionDate: Date | null;
+		gateway3InfoId: string | null;
+	}[]
+) {
+	const gateway3DocumentSetNamePrefixesWithCategories: Record<string, Record<string, string>> = {
+		required: {
+			'gateway-3-document-exam-website': 'Examination website',
+			'gateway-3-document-proposed-plan': 'Proposed local plan intended for submission for examination',
+			'gateway-3-document-map-of-proposed-plan': 'Map of proposed local plan policies',
+			'gateway-3-document-statement-of-compliance': 'Statement of Compliance',
+			'gateway-3-document-statement-of-soundness': 'Statement of Soundness',
+			'gateway-3-document-summary-of-engagement':
+				'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+			'gateway-3-document-summary-of-scoping-consultation': 'Summary of scoping consultation',
+			'gateway-3-document-summary-of-consultation-and-evidence':
+				'Summary of consultation on proposed local plan content and evidence',
+			'gateway-3-document-summary-of-consultation': 'Summary of consultation on proposed local plan',
+			'gateway-3-document-statement-of-practical-arrangements':
+				'Statement setting out practical arrangements demonstrating readiness for examination'
+		},
+		optional: {
+			'gateway-3-document-copies-of-representations': 'Copies of representations',
+			'gateway-3-document-supplementary-exams-statement': 'Supplementary plans statement',
+			'gateway-3-document-environmental-report': 'Environmental report',
+			'gateway-3-document-statement-of-environment-reasons':
+				'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+			'gateway-3-document-summary-of-representations':
+				'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+			'gateway-3-document-summary-of-gw2-remediations': 'Summary of how Gateway 2 assessor issues have been addressed',
+			'gateway-3-document-summary-of-changes':
+				'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+			'gateway-3-document-other-documents': 'Other documents'
+		}
+	};
+	const gateway3DocumentSetNamePrefixes = {
+		...gateway3DocumentSetNamePrefixesWithCategories['required'],
+		...gateway3DocumentSetNamePrefixesWithCategories['optional']
+	};
+	for (let i = 0; i < submissionData.length; i++) {
+		const submissionId = i + 1;
+		const gateway3DocumentSetNamesForSubmissionId = Object.fromEntries(
+			Object.entries(gateway3DocumentSetNamePrefixes).map(([k, v]) => [`${k}-${i + 1}`, v])
+		);
+		const submissionDocumentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+			service,
+			Object.keys(gateway3DocumentSetNamesForSubmissionId)
+		);
+		const submissionDocumentsByCategory = await Promise.all(
+			Object.entries(gateway3DocumentSetNamePrefixesWithCategories).map(async ([category, documentSets]) => ({
+				category,
+				documents: await Promise.all(
+					Object.entries(documentSets).map(async ([k, v]) => {
+						const documentSetId = submissionDocumentSetIds.get(k);
+
+						const files = documentSetId ? await DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId) : [];
+
+						return {
+							title: v,
+							files
+						};
+					})
+				)
+			}))
+		);
+		journeyResponse.answers[`gateway3FrontOfficeDocuments-${submissionId}`] = submissionDocumentsByCategory;
+	}
 }
 /**
  * Load the documents for the given case and prepopulate the answer fields with their names
@@ -1588,9 +1605,6 @@ export function preprocessQuestionProperties(
 				const completionDate = submissionDetailsSorted[i].completionDate;
 				questions[gateway3Documents].changeActionText = 'View';
 				const gateway3Complete = !!submission.completionDate;
-				questions[gateway3Documents].editable = !gateway3Complete;
-				(questions[gateway3Documents] as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
-					gateway3Complete;
 				if (gateway3Complete) {
 					if (!decisionValue) {
 						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
