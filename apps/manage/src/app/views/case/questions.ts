@@ -28,7 +28,12 @@ import {
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-import { loadCaseOfficerOptions, loadInspectorOptions, loadLpaOptions, retrieveDefaultCaseOfficers } from '../../util/options-helper.ts';
+import {
+	loadCaseOfficerOptions,
+	loadInspectorOptions,
+	loadLpaOptions,
+	retrieveDefaultCaseOfficers
+} from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 
