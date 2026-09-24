@@ -789,7 +789,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
-				addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
+				await addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
 
 				res.locals.journeyResponse = journeyResponse;
 				if (next) next();
@@ -814,7 +814,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 				const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 				const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-				addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
+				await addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
 				journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 				for (let i = 0; i < submissionData.length; i++) {
 					const submissionId = i + 1;
