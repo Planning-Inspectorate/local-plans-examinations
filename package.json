@@ -52,7 +52,7 @@
     "@azure/functions": "^4.16.4",
     "@azure/identity": "^4.13.3",
     "@azure/msal-node": "^6.0.1",
-    "@planning-inspectorate/core": "^1.11.0",
+    "@planning-inspectorate/core": "^1.14.1",
     "@planning-inspectorate/dynamic-forms": "^3.19.1",
     "@prisma/adapter-mssql": "^7.10.0",
     "@prisma/client": "^7.10.0",
