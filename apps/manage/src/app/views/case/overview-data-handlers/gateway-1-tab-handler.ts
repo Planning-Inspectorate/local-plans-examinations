@@ -9,7 +9,13 @@ export class Gateway1TabHandler extends OverviewPageLoadHandler {
 		const { db } = service;
 
 		const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
-		await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey1Data);
+		await addUploadedDocumentDetailsToAnswers(
+			service,
+			caseRecord,
+			req,
+			journey1Data,
+			COMMON_CONSTS.GATEWAY_1_JOURNEY_ID
+		);
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 		if (
 			req.method === 'POST' &&
