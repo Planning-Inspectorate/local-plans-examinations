@@ -262,8 +262,8 @@ describe('Test Gateway3SubmissionCheck', () => {
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
-				questionUrl: 'my-question',
-				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				questionUrl: 'my-question-1',
+				originalUrl: '/case/PLAN-12345/some-journey/some-section/my-question/check',
 				service: MockService,
 				uploadedFiles: ['fileA.txt', 'fileB.txt']
 			},
@@ -273,15 +273,15 @@ describe('Test Gateway3SubmissionCheck', () => {
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
-				question: 'my-question',
-				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				question: 'my-question-1',
+				backLink: '/case/PLAN-12345/gateway-3',
 				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
 				additionalFields: [
 					{
 						name: 'Outcome',
 						value: 'Proceed to examination',
-						url: 'gateway-3-decision'
+						url: 'gateway-3-decision-1'
 					}
 				]
 			}
@@ -307,8 +307,8 @@ describe('Test Gateway3SubmissionCheck', () => {
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
-				questionUrl: 'my-question',
-				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				questionUrl: 'my-question-1',
+				originalUrl: '/case/PLAN-12345/some-journey/some-section/my-question/check',
 				service: MockService,
 				uploadedFiles: ['fileA.txt', 'fileB.txt']
 			},
@@ -318,15 +318,15 @@ describe('Test Gateway3SubmissionCheck', () => {
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
-				question: 'my-question',
-				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				question: 'my-question-1',
+				backLink: '/case/PLAN-12345/gateway-3',
 				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
 				additionalFields: [
 					{
 						name: 'Outcome',
 						value: 'Resubmission required',
-						url: 'gateway-3-decision'
+						url: 'gateway-3-decision-1'
 					}
 				]
 			}
@@ -352,8 +352,8 @@ describe('Test Gateway3SubmissionCheck', () => {
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
-				questionUrl: 'my-question',
-				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				questionUrl: 'my-question-1',
+				originalUrl: '/case/PLAN-12345/some-journey/some-section/my-question/check',
 				service: MockService,
 				uploadedFiles: ['fileA.txt', 'fileB.txt']
 			},
@@ -363,15 +363,15 @@ describe('Test Gateway3SubmissionCheck', () => {
 				caseReference: 'PLAN-12345',
 				journeyId: 'some-journey',
 				section: 'some-section',
-				question: 'my-question',
-				backLink: '/PLAN-12345/some-journey', // Should go back to the journey
+				question: 'my-question-1',
+				backLink: '/case/PLAN-12345/gateway-3', // Should go back to the journey
 				notificationPreviewTemplate: 'gateway-3-document-complete',
 				submitButtonText: 'Issue decision',
 				additionalFields: [
 					{
 						name: 'Outcome',
 						value: 'Proceed to examination',
-						url: 'gateway-3-decision'
+						url: 'gateway-3-decision-1'
 					}
 				]
 			}
@@ -399,7 +399,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 					caseReference: 'PLAN-12345',
 					journeyId: 'some-journey',
 					section: 'some-section',
-					questionUrl: 'my-question',
+					questionUrl: 'my-question-1',
 					originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
 					service: MockService,
 					uploadedFiles: ['fileA.txt', 'fileB.txt']
@@ -410,15 +410,15 @@ describe('Test Gateway3SubmissionCheck', () => {
 					caseReference: 'PLAN-12345',
 					journeyId: 'some-journey',
 					section: 'some-section',
-					question: 'my-question',
-					backLink: '/PLAN-12345/some-journey/some-section/my-question',
+					question: 'my-question-1',
+					backLink: '/PLAN-12345/some-journey',
 					notificationPreviewTemplate: 'gateway-3-document',
 					submitButtonText: 'Issue decision',
 					additionalFields: [
 						{
 							name: 'Outcome',
 							value: null,
-							url: 'gateway-3-decision'
+							url: 'gateway-3-decision-1'
 						}
 					]
 				}
@@ -446,7 +446,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 					caseReference: 'PLAN-12345',
 					journeyId: 'some-journey',
 					section: 'some-section',
-					questionUrl: 'my-question',
+					questionUrl: 'my-question-1',
 					originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
 					service: MockService,
 					uploadedFiles: ['fileA.txt', 'fileB.txt']
@@ -458,7 +458,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 					journeyId: 'some-journey',
 					section: 'some-section',
 					question: 'my-question',
-					backLink: '/PLAN-12345/some-journey/some-section/my-question',
+					backLink: '/PLAN-12345/some-journey',
 					notificationPreviewTemplate: 'gateway-3-document',
 					submitButtonText: 'Issue decision',
 					additionalFields: [

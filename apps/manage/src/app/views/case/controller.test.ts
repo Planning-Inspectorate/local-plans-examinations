@@ -1580,10 +1580,7 @@ describe('preprocessQuestionProperties', () => {
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
-				editable: true,
-				config: {
-					actionButtonVisibleInSummary: false
-				}
+				config: {}
 			}
 		};
 		const myNextFunction = mock.fn(() => {});
@@ -1631,10 +1628,7 @@ describe('preprocessQuestionProperties', () => {
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
-				editable: false,
-				config: {
-					actionButtonVisibleInSummary: true
-				}
+				config: {}
 			}
 		};
 		const myNextFunction = mock.fn(() => {});
@@ -1646,7 +1640,7 @@ describe('preprocessQuestionProperties', () => {
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
 		assert.deepEqual(actualDecisionQuestion.actionLink, {
-			href: `/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
+			href: `/case/some-case-reference/gateway-3-report/gateway-3-submission-1/gateway-3-document-1/check`, //
 			text: 'View'
 		});
 	});
