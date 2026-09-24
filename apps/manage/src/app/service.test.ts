@@ -44,6 +44,10 @@ describe('ManageService', () => {
 		const service = createManageService();
 		assert.strictEqual(service.authRateLimitConfig, 42);
 	});
+	it('uses a manage-specific session cookie name', () => {
+		const service = createManageService();
+		assert.deepStrictEqual(service.otherSessionOptions, { name: 'manage' });
+	});
 	it('entraGroupIds returns the correct value', () => {
 		const service = createManageService();
 		assert.deepStrictEqual(service.entraGroupIds, [1, 2, 3]);

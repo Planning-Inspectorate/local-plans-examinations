@@ -50,6 +50,10 @@ function buildService(caseRecords = []) {
 }
 
 describe('PortalService', () => {
+	it('uses a portal-specific session cookie name', () => {
+		assert.deepStrictEqual(PortalService.prototype.otherSessionOptions, { name: 'portal' });
+	});
+
 	describe('derivePlanProgress', () => {
 		it('returns Gateway 2 ready to start', () => {
 			assert.deepStrictEqual(derivePlanProgress(buildCase()), {

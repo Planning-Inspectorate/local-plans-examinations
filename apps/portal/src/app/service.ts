@@ -154,6 +154,10 @@ export class PortalService extends Service {
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
 
+	override get otherSessionOptions() {
+		return { name: 'portal' };
+	}
+
 	async getPlans(email?: string): Promise<Plan[]> {
 		const caseRecords = (await this.db.case.findMany({
 			where: {
