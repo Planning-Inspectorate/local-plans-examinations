@@ -3,13 +3,12 @@ import { cacheNoCacheMiddleware } from '@planning-inspectorate/core/middleware';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createCookiesRoutes } from './views/static/cookies/index.ts';
 import { createHomeRoutes } from './views/home/index.ts';
-import { createLandingPageRoutes } from './views/landing-page/index.ts';
 import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
 import { manageLocalPlansRoutes } from './views/manage-local-plans/index.ts';
-import { checkIsAuthenticated } from './auth/guards.ts';
+import { checkIsAuthenticated, exposeAuthToViews } from './auth/guards.ts';
 
 /**
  * Main app router
@@ -33,7 +32,6 @@ export function buildRouter(service: PortalService): IRouter {
 			res.redirect('/login');
 		});
 	});
-	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', checkIsAuthenticated, manageLocalPlansRoutes(service));
 	router.use('/error', createErrorRoutes(service));
 

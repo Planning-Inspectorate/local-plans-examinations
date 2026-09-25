@@ -20,6 +20,7 @@ import {
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { getRoutePlanReference } from './utils.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
+import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -41,6 +42,7 @@ type Gateway2FileUploadQuestion = FileUploaderQuestionProps & {
 	url: string;
 };
 
+type CaseWithGateway2Info = CaseModel & { gateway2Info?: Gateway2InfoModel | null };
 // Ordered list for loading each persisted upload when the case page opens.
 export const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
@@ -60,7 +62,7 @@ type Gateway2Session = Request['session'] &
 	};
 
 export type Gateway2Request = Request & {
-	currentCase?: CaseModel;
+	currentCase?: CaseWithGateway2Info;
 	session: Gateway2Session;
 };
 
@@ -171,7 +173,10 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		}
 
 		const currentCase = await service.db.case.findUnique({
-			where: { reference: planReference }
+			where: { reference: planReference },
+			include: {
+				gateway2Info: true
+			}
 		});
 
 		if (!currentCase) {
