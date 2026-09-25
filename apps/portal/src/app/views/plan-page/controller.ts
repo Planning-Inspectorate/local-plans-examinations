@@ -50,7 +50,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				}
 				break;
 			case STAGE.Gateway3:
-				dateTextG2 = 'Completed on:';
+				dateTextG2 = 'Completed: ';
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
@@ -61,10 +61,10 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				hrefG3 = gateway3Link();
 				hrefE = applicationLink();
 				if (plan.status === STATUS.Completed) {
-					dateTextG2 = dateTextG3 = dateTextE = 'Completed on: ';
+					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
-					dateTextG2 = dateTextG3 = 'Completed on: ';
+					dateTextG2 = dateTextG3 = 'Completed: ';
 					tagE = planStatus;
 					tagG2 = tagG3 = 'Completed';
 				}

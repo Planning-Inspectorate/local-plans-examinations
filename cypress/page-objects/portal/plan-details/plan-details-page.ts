@@ -21,6 +21,10 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 		return this.planProgress.contains('a', 'Gateway 2 - advisory check');
 	}
 
+	get gateway3Link() {
+		return this.planProgress.contains('a', 'Gateway 3 - readiness check');
+	}
+
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 		this.verifyPlanProgressHeading();

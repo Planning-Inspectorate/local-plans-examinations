@@ -1,0 +1,20 @@
+{
+	"reference": "PLAN-C01",
+	"urlReference": "PLAN-C01",
+	"title": "GW2ReportIssued",
+	"currentStage": "Gateway 3",
+	"status": "Ready to start",
+	"leadLpa": "Romsey Town Council",
+	"linkedLpa": "Southampton City Council",
+	"dates": {
+		"gateway1": "7 May 2026",
+		"gateway2": "15 September 2026",
+		"gateway3": "1 August 2026",
+		"examination": "1 September 2026"
+	},
+	"submittedDate": "12 September 2026",
+	"report": {
+		"fileName": "GW2Report.docx",
+		"sharedDate": "15 September 2026"
+	}
+}
