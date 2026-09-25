@@ -33,7 +33,7 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		getDeclarationPage
 	} = buildGateway3Middleware(service);
 
-	// Landing page (case-scoped)
+
 	router.get(
 		'/',
 		getJourneyResponseFromCase,
@@ -102,6 +102,5 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		validationErrorHandler,
 		redirectAfterCaseQuestionEdit
 	);
-
 	return router;
 }
