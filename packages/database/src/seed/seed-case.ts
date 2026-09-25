@@ -16,7 +16,7 @@ async function run() {
 			email: 'jane.doe@example.gov.uk',
 			caseOfficer: 'Sam Officer',
 			planTitle: 'Example Local Plan',
-			planType: 'Local Plan',
+			planType: 'local-plan',
 			lpas: [
 				{ lpaCode: 'E60000001', lpaName: 'Example Council' },
 				{ lpaCode: 'E60000002', lpaName: 'Jedi Council' }

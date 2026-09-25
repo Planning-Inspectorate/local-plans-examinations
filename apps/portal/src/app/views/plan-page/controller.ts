@@ -13,6 +13,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				include: {
 					gateway2Info: true,
 					gateway3Info: true,
+					examinationInfo: true,
 					lpas: { orderBy: { lpaName: 'asc' } }
 				}
 			});
@@ -92,7 +93,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			dateG1: formatDisplayDate(caseData.gateway1Date),
 			dateG2: formatDisplayDate(dateG2Value),
 			dateG3: formatDisplayDate(caseData.gateway3Date),
-			dateE: formatDisplayDate(caseData.submissionDate),
+			dateE: formatDisplayDate(caseData.examinationInfo?.expectedSubmissionForExaminationDate),
 			dateTextG2,
 			dateTextG3,
 			dateTextE,

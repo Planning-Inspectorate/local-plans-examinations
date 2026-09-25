@@ -45,7 +45,7 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	);
 	// Upload documents (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question/upload-documents',
+		'/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
@@ -56,22 +56,18 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 
 	// Delete documents (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question/delete-document/:fileId',
+		'/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
 		deleteGateway3DocumentForCase
 	);
 
 	// Download document (case-scoped)
-	router.get(
-		'/:planReference/gateway-3-submission/download-document/:documentId',
-		getJourneyResponseFromCase,
-		downloadGateway3Document
-	);
+	router.get('/download-document/:documentId', getJourneyResponseFromCase, downloadGateway3Document);
 
 	// Question page GET (case-scoped)
 	router.get(
-		'/:planReference/gateway-3-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderMiddlewareForCase,
@@ -80,7 +76,7 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 
 	// Question page POST (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		validate,

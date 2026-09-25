@@ -110,9 +110,7 @@ function getRouteFileUploadQuestion(req: Request): Gateway3FileUploadQuestion {
 }
 
 function redirectToFileUploaderQuestion(req: Request) {
-	const planReference = getRoutePlanReference(req);
-	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
-	return `${req.baseUrl}${planPath}/gateway-3-submission/${req.params.section}/${req.params.question}`;
+	return `${req.baseUrl}/${req.params.section}/${req.params.question}`;
 }
 
 function formatDisplayDate(date: Date | null | undefined) {
