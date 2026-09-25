@@ -38,7 +38,8 @@ import {
 	upload,
 	handleMulterFileSizeError,
 	gateway2FileUploadQuestionUrls,
-	redirectAfterCaseQuestionEdit
+	redirectAfterCaseQuestionEdit,
+	buildSubmittedGateway2View
 } from './controller.ts';
 
 // This file wires the Gateway 2 submission journey into Express.

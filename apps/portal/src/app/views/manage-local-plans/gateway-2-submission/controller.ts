@@ -12,7 +12,6 @@ import {
 } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './journey.ts';
 import { CHECK_ANSWERS_REDIRECT_QUERY, CHECK_ANSWERS_REDIRECTS, GW2QUESTIONS } from './questions.ts';
-import { getDocumentSetIdsByFolderName, loadGateway2DocumentsByDocumentSetId } from './documents.ts';
 import {
 	type FileUploaderQuestionProps,
 	type FileUploaderSession,
@@ -20,6 +19,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { getRoutePlanReference } from './utils.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -181,7 +181,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		const request = req as Gateway2Request;
 		request.currentCase = currentCase;
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference ?? planReference);
-		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
+		const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 			service,
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
 		);
@@ -194,7 +194,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 				);
 			}
 
-			const uploadedFiles = await loadGateway2DocumentsByDocumentSetId(service, currentCase.id, documentSetId);
+			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),
@@ -476,4 +476,48 @@ export function logGateway2DeleteFailed(
 		},
 		'Gateway 2 document delete failed'
 	);
+}
+
+function formatDisplayTime(date: Date) {
+	return date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
+}
+
+const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk';
+
+export function buildSubmittedGateway2View(): RequestHandler {
+	return (req, res, next) => {
+		const request = req as Gateway2Request;
+		const currentCase = request.currentCase;
+
+		if (!currentCase?.submissionDate) {
+			return next();
+		}
+
+		const journey = res.locals.journey;
+		if (journey) {
+			journey.taskListTemplate = SUBMITTED_TEMPLATE;
+		}
+
+		res.locals.submissionDate = formatDisplayDate(currentCase.submissionDate);
+		res.locals.submissionTime = formatDisplayTime(currentCase.submissionDate);
+		res.locals.submitter = currentCase.email;
+		delete res.locals.saveAndComeBackUrl;
+
+		const gw2Info = currentCase.gateway2Info;
+		if (gw2Info) {
+			if (gw2Info.workshopVenue) {
+				res.locals.workshopVenue = gw2Info.workshopVenue;
+			}
+			if (gw2Info.workshopDate) {
+				res.locals.workshopDateAndTime =
+					formatDisplayDate(gw2Info.workshopDate) + ' at ' + formatDisplayTime(gw2Info.workshopDate);
+			}
+		}
+
+		return next();
+	};
 }

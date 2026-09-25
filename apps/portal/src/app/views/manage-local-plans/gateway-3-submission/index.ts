@@ -1,8 +1,5 @@
 import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
-import { buildGetJourney } from '@planning-inspectorate/dynamic-forms';
-import { createJourney } from './journey.ts';
-import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
@@ -15,8 +12,6 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
 	// const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
-	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse));
-	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const {
 		getJourney,
 		getJourneyResponseFromCase,
