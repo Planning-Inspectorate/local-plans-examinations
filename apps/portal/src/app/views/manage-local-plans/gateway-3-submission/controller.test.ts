@@ -237,7 +237,7 @@ describe('handleMulterFileSizeError', () => {
 		const err = new multer.MulterError('LIMIT_FILE_SIZE');
 		const req = {
 			params: { planReference: 'PLAN-001', section: 'required-information', question: 'proposed-local-plan' },
-			baseUrl: '/manage-local-plans',
+			baseUrl: '/manage-local-plans/PLAN-001/gateway-3-submission',
 			session: {}
 		} as unknown as Request;
 		let redirectUrl = '';

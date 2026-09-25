@@ -13,7 +13,7 @@ describe('createJourney (Gateway 3)', () => {
 	it('builds scoped Gateway 3 submission URLs from a plan reference', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
 		const req = {
-			baseUrl: '/manage-local-plans',
+			baseUrl: '/manage-local-plans/PLAN-123456/gateway-3-submission',
 			params: {
 				planReference: 'PLAN-123456'
 			}
@@ -32,7 +32,7 @@ describe('createJourney (Gateway 3)', () => {
 	it('builds session Gateway 3 submission URLs without a plan reference', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'session', {});
 		const req = {
-			baseUrl: '/manage-local-plans',
+			baseUrl: '/manage-local-plans/gateway-3-submission',
 			params: {}
 		} as unknown as Request;
 
@@ -60,7 +60,7 @@ describe('createJourney (Gateway 3)', () => {
 	it('overrides back link to the overview URL for non-manage-list pages', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
 		const req = {
-			baseUrl: '/manage-local-plans',
+			baseUrl: '/manage-local-plans/PLAN-001/gateway-3-submission',
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
 

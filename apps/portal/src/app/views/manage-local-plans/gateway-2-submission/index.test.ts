@@ -2,11 +2,10 @@ import assert from 'node:assert';
 import type { Request } from 'express';
 import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { syncGateway2UploadAnswer } from './controller.ts';
 import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
 import { GW2QUESTIONS } from './questions.ts';
-
+import { syncGateway2UploadAnswer, buildSubmittedGateway2View } from './controller.ts';
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
 	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
 
