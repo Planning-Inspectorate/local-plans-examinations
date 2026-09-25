@@ -337,5 +337,6 @@ export const journeyQuestions = {
 	[GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
 	[GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
+	[GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[EXAMINATION_JOURNEY_ID]: examinationQuestionNames
 };
