@@ -31,7 +31,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	[gateway3ExaminationWebsite.row, new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ExaminationWebsite.path}$`)],
 	[
 		gateway3DecisionAnswer.row,
-		new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${gateway3DecisionAnswer.path}-(\\d+)$`)
+		new RegExp(`^/case/.+/gateway-3-report/gateway-3-submission-(\\d+)/${gateway3DecisionAnswer.path}-(\\d+)$`)
 	]
 ];
 
