@@ -1,4 +1,5 @@
 {% extends "views/layouts/main.njk" %}
+{% from "views/components/gateway-2-report-summary.njk" import gateway2ReportSummary %}
 
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
@@ -18,6 +19,10 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% if gateway2ReportFiles and gateway2ReportFiles.length %}
+            {{ gateway2ReportSummary(gateway2ReportFiles) }}
+        {% endif %}
+
         {% if workshopVenue or workshopDateAndTime %}
             <table class="govuk-table govuk-!-margin-bottom-6" data-cy="workshop-details-table">
                 <tbody class="govuk-table__body">

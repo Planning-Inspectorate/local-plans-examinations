@@ -2,6 +2,7 @@
 
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "views/components/gateway-2-report-summary.njk" import gateway2ReportSummary %}
 
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
@@ -40,6 +41,10 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% if gateway2ReportFiles and gateway2ReportFiles.length %}
+            {{ gateway2ReportSummary(gateway2ReportFiles) }}
+        {% endif %}
+
         {{ govukInsetText({
             text: "Your target submission date is " + (targetDate or "") + ". A Gateway 2 assessment usually takes about 6 weeks."
         }) }}

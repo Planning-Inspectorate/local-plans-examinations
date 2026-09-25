@@ -120,6 +120,12 @@ export interface ApplicationDoc {
 	dateCompleted: string | null; //when completed
 }
 
+export interface Gateway2ReportFile {
+	fileName: string;
+	documentGuid: string;
+	dateCreated?: Date;
+}
+
 export interface Plan {
 	//BIG ? on name
 	refNum: string; //Reference Number
@@ -137,6 +143,7 @@ export interface Plan {
 	};
 	sections: State[]; // track which state each gateway is array of state e.g. [0,0,0]
 	documents: ApplicationDoc[]; // holds interfaces of each doc needed
+	gateway2ReportFiles: Gateway2ReportFile[];
 }
 
 function validApplicationDoc(rawApplicationDoc: unknown): rawApplicationDoc is ApplicationDoc {
@@ -156,6 +163,17 @@ function validApplicationDoc(rawApplicationDoc: unknown): rawApplicationDoc is A
 		applicationDoc.file === null &&
 		validState(applicationDoc.state) &&
 		(applicationDoc.dateCompleted === null || typeof applicationDoc.dateCompleted === 'string')
+	);
+}
+
+function validGateway2ReportFile(rawFile: unknown): rawFile is Gateway2ReportFile {
+	if (typeof rawFile !== 'object' || rawFile === null) return false;
+
+	const file = rawFile as Record<string, unknown>;
+	return (
+		typeof file.fileName === 'string' &&
+		typeof file.documentGuid === 'string' &&
+		(file.dateCreated === undefined || file.dateCreated instanceof Date)
 	);
 }
 
@@ -194,7 +212,9 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		validSections(plan.sections) &&
 		Array.isArray(plan.documents) &&
 		plan.documents.length > 0 &&
-		plan.documents.every(validApplicationDoc)
+		plan.documents.every(validApplicationDoc) &&
+		Array.isArray(plan.gateway2ReportFiles) &&
+		plan.gateway2ReportFiles.every(validGateway2ReportFile)
 	);
 }
 
@@ -219,6 +239,7 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed
+	gateway2ReportFiles: [],
 	...overrides
 });
 

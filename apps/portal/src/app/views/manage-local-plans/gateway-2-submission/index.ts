@@ -42,8 +42,25 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
 
-type CaseWithGateway2Info = CaseModel & { gateway2Info?: Gateway2InfoModel | null };
+type Gateway2ReportDocument = {
+	guid: string;
+	name: string;
+	createdAt: Date;
+	latestDocumentVersion: {
+		originalFilename: string | null;
+		fileName: string | null;
+		dateCreated: Date | null;
+		isDeleted: boolean;
+	} | null;
+};
+
+type CaseWithGateway2Info = CaseModel & {
+	gateway2Info?: Gateway2InfoModel | null;
+	documents?: Gateway2ReportDocument[];
+};
 import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
 import { createApplicationDeclarationRoutes } from './application-declaration/index.ts';
@@ -201,7 +218,29 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 
 		const currentCase = await service.db.case.findUnique({
 			where: { reference: planReference },
-			include: { gateway2Info: true }
+			include: {
+				gateway2Info: true,
+				documents: {
+					where: {
+						documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+						isDeleted: false
+					},
+					orderBy: { createdAt: 'asc' },
+					select: {
+						guid: true,
+						name: true,
+						createdAt: true,
+						latestDocumentVersion: {
+							select: {
+								originalFilename: true,
+								fileName: true,
+								dateCreated: true,
+								isDeleted: true
+							}
+						}
+					}
+				}
+			}
 		});
 
 		if (!currentCase) {
@@ -266,6 +305,25 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	}
 
 	res.locals.targetDate = formatDisplayDate(currentCase?.gateway2Info?.expectedDate);
+	res.locals.gateway2ReportFiles = buildGateway2ReportFilesViewModel(
+		planReference,
+		currentCase?.gateway2Info?.reportIssuedDate
+			? (currentCase.documents ?? []).flatMap((document) => {
+					const version = document.latestDocumentVersion;
+					if (!version || version.isDeleted) {
+						return [];
+					}
+
+					return [
+						{
+							fileName: version.originalFilename ?? version.fileName ?? document.name,
+							documentGuid: document.guid,
+							dateCreated: version.dateCreated ?? document.createdAt
+						}
+					];
+				})
+			: []
+	);
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {

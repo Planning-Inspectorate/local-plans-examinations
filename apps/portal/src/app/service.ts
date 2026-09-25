@@ -4,18 +4,8 @@ import type { Config } from './config.ts';
 import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
-
-function formatDisplayDate(date: Date | null | undefined): string {
-	if (!date) {
-		return 'Not set';
-	}
-
-	return date.toLocaleDateString('en-GB', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric'
-	});
-}
+import { formatDisplayDate } from '#util/date.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type PortalCase = {
 	reference: string;
@@ -41,7 +31,50 @@ type PortalCase = {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
 	} | null;
+	documents: {
+		guid: string;
+		name: string;
+		createdAt: Date;
+		latestDocumentVersion: {
+			originalFilename: string | null;
+			fileName: string | null;
+			dateCreated: Date | null;
+			isDeleted: boolean;
+		} | null;
+	}[];
 };
+
+function getGateway2ReportUploadedDate(caseRecord: PortalCase): Date | null {
+	const uploadedReport = caseRecord.documents.find(
+		(document) => document.latestDocumentVersion && !document.latestDocumentVersion.isDeleted
+	);
+	return uploadedReport?.latestDocumentVersion?.dateCreated ?? uploadedReport?.createdAt ?? null;
+}
+
+function hasIssuedGateway2Report(caseRecord: PortalCase): boolean {
+	return Boolean(caseRecord.gateway2Info?.reportIssuedDate && getGateway2ReportUploadedDate(caseRecord));
+}
+
+function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFiles'] {
+	if (!caseRecord.gateway2Info?.reportIssuedDate) {
+		return [];
+	}
+
+	return caseRecord.documents.flatMap((document) => {
+		const version = document.latestDocumentVersion;
+		if (!version || version.isDeleted) {
+			return [];
+		}
+
+		return [
+			{
+				fileName: version.originalFilename ?? version.fileName ?? document.name,
+				documentGuid: document.guid,
+				...(version.dateCreated ? { dateCreated: version.dateCreated } : {})
+			}
+		];
+	});
+}
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
 	if (caseRecord.gateway3Info?.submissions.at(-1)?.completionDate || caseRecord.gateway3Info?.actualDate) {
@@ -51,7 +84,7 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		};
 	}
 
-	if (caseRecord.gateway2Info?.reportIssuedDate) {
+	if (hasIssuedGateway2Report(caseRecord)) {
 		return {
 			stage: STAGE.Gateway3,
 			status: STATUS.ReadyToStart
@@ -77,10 +110,9 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const lpaNames = caseRecord.lpas.map((lpa) => lpa.lpaName || lpa.lpaCode);
 	const progress = derivePlanProgress(caseRecord);
 	const gateway1Date = caseRecord.gateway1Info?.completedGateway1Date ?? caseRecord.gateway1Info?.expectedGateway1Date;
-	const gateway2Date =
-		caseRecord.gateway2Info?.reportIssuedDate ??
-		caseRecord.gateway2Info?.actualDate ??
-		caseRecord.gateway2Info?.expectedDate;
+	const gateway2Date = hasIssuedGateway2Report(caseRecord)
+		? caseRecord.gateway2Info?.reportIssuedDate
+		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
 	const gateway3Date =
 		caseRecord.gateway3Info?.submissions[-1]?.completionDate ??
 		caseRecord.gateway3Info?.actualDate ??
@@ -95,11 +127,12 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		title: caseRecord.planTitle,
 		stage: progress.stage,
 		status: progress.status,
+		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
-			G1: formatDisplayDate(gateway1Date),
-			G2: formatDisplayDate(gateway2Date),
-			G3: formatDisplayDate(gateway3Date),
-			E: formatDisplayDate(examinationDate)
+			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
+			G2: formatDisplayDate(gateway2Date) ?? 'Not set',
+			G3: formatDisplayDate(gateway3Date) ?? 'Not set',
+			E: formatDisplayDate(examinationDate) ?? 'Not set'
 		}
 	});
 
@@ -136,6 +169,28 @@ const planCaseInclude = {
 	lpas: {
 		orderBy: {
 			lpaName: 'asc' as const
+		}
+	},
+	documents: {
+		where: {
+			documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+			isDeleted: false
+		},
+		orderBy: {
+			createdAt: 'asc' as const
+		},
+		select: {
+			guid: true,
+			name: true,
+			createdAt: true,
+			latestDocumentVersion: {
+				select: {
+					originalFilename: true,
+					fileName: true,
+					dateCreated: true,
+					isDeleted: true
+				}
+			}
 		}
 	}
 };

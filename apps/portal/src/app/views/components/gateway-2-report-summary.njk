@@ -1,0 +1,43 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro gateway2ReportSummary(gateway2ReportFiles) %}
+    <div data-cy="gateway-2-report-section">
+        {% set gateway2ReportHtml %}
+            {% if gateway2ReportFiles.length > 1 %}
+                <ul class="govuk-list govuk-list--bullet">
+                    {% for file in gateway2ReportFiles %}
+                        <li>
+                            {% if file.href %}
+                                <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                            {% else %}
+                                {{ file.fileName }}
+                            {% endif %}
+                            {% if file.sharedDate %}<span class="govuk-body"> (shared on {{ file.sharedDate }})</span>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                {% set file = gateway2ReportFiles[0] %}
+                {% if file.href %}
+                    <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                {% else %}
+                    {{ file.fileName }}
+                {% endif %}
+                {% if file.sharedDate %}<span class="govuk-body"> (shared on {{ file.sharedDate }})</span>{% endif %}
+            {% endif %}
+        {% endset %}
+
+        {{ govukSummaryList({
+            rows: [
+                {
+                    key: {
+                        text: "Gateway 2 report"
+                    },
+                    value: {
+                        html: gateway2ReportHtml
+                    }
+                }
+            ]
+        }) }}
+    </div>
+{% endmacro %}

@@ -3,13 +3,29 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
-import { PLAN_TYPE_ID } from './static-data/ids/index.ts';
+import {
+	PLAN_TYPE_ID,
+	DOCUMENT_SET_ID,
+	DOCUMENT_SOURCE_SYSTEM_ID,
+	VIRUS_CHECK_STATUS_ID
+} from './static-data/ids/index.ts';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const TEST_OTP = '12345';
 const SALT_ROUNDS = 10;
 const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
+const THIRD_TEST_EMAIL = 'test3@planninginspectorate.gov.uk';
+const FOURTH_TEST_EMAIL = 'test4@planninginspectorate.gov.uk';
+const CASE_REFERENCE = 'PLAN-C01';
+const PLAN_TITLE = 'GW2ReportIssued';
+const REPORT_ISSUED_DATE = new Date('2026-09-15T12:00:00.000Z');
+const REPORT_SHARED_DATE = new Date('2026-09-15T12:00:00.000Z');
+const DOCUMENT_GUID = '0c7ccb00-cc92-4913-9e70-cc77972a10ad';
+const DOCUMENT_NAME = 'GW2Report.docx';
+const SUBMISSION_DATE = new Date('2026-09-12T12:00:00.000Z');
+const SUBMITTED_CASE_REFERENCE = 'PLAN-C02';
+const SUBMITTED_PLAN_TITLE = 'GW2SubmittedNotIssued';
 
 async function run() {
 	const config = loadConfig();
@@ -51,10 +67,40 @@ async function run() {
 		upsert: {
 			update: {
 				expectedDate: planDates.gateway2Date,
+				actualDate: null,
 				reportIssuedDate: null
 			},
 			create: {
 				expectedDate: planDates.gateway2Date,
+				actualDate: null,
+				reportIssuedDate: null
+			}
+		}
+	};
+	const gateway2InfoReportIssued = {
+		upsert: {
+			update: {
+				expectedDate: planDates.gateway2Date,
+				actualDate: SUBMISSION_DATE,
+				reportIssuedDate: REPORT_ISSUED_DATE
+			},
+			create: {
+				expectedDate: planDates.gateway2Date,
+				actualDate: SUBMISSION_DATE,
+				reportIssuedDate: REPORT_ISSUED_DATE
+			}
+		}
+	};
+	const gateway2InfoSubmitted = {
+		upsert: {
+			update: {
+				expectedDate: planDates.gateway2Date,
+				actualDate: SUBMISSION_DATE,
+				reportIssuedDate: null
+			},
+			create: {
+				expectedDate: planDates.gateway2Date,
+				actualDate: SUBMISSION_DATE,
 				reportIssuedDate: null
 			}
 		}
@@ -99,12 +145,16 @@ async function run() {
 		reference,
 		caseEmail,
 		planTitle,
-		createdAt
+		createdAt,
+		submissionDate = null,
+		gateway2InfoUpsert = gateway2Info
 	}: {
 		reference: string;
 		caseEmail: string;
 		planTitle: string;
 		createdAt?: Date;
+		submissionDate?: Date | null;
+		gateway2InfoUpsert?: typeof gateway2Info | typeof gateway2InfoReportIssued | typeof gateway2InfoSubmitted;
 	}) {
 		return dbClient.case.upsert({
 			where: { reference },
@@ -114,11 +164,11 @@ async function run() {
 				planTitle,
 				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				...planDates,
-				submissionDate: null,
+				submissionDate,
 				...(createdAt ? { createdAt } : {}),
 				lpas: lpaRelations,
 				gateway1Info,
-				gateway2Info,
+				gateway2Info: gateway2InfoUpsert,
 				gateway3Info,
 				examinationInfo
 			},
@@ -129,13 +179,13 @@ async function run() {
 				planTitle,
 				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				...planDates,
-				submissionDate: null,
+				submissionDate,
 				...(createdAt ? { createdAt } : {}),
 				gateway1Info: {
 					create: gateway1Info.upsert.create
 				},
 				gateway2Info: {
-					create: gateway2Info.upsert.create
+					create: gateway2InfoUpsert.upsert.create
 				},
 				gateway3Info: {
 					create: gateway3Info.upsert.create
@@ -188,6 +238,49 @@ async function run() {
 			reference: 'PLAN-B01',
 			caseEmail: SECOND_TEST_EMAIL,
 			planTitle: 'User B Local Plan'
+		});
+
+		// Case for fourth user, GW2 submitted in the FO but no report issued yet in the BO
+		await upsertCase({
+			reference: SUBMITTED_CASE_REFERENCE,
+			caseEmail: FOURTH_TEST_EMAIL,
+			planTitle: SUBMITTED_PLAN_TITLE,
+			submissionDate: SUBMISSION_DATE,
+			gateway2InfoUpsert: gateway2InfoSubmitted
+		});
+
+		// Case for third user, submitted GW2 in the FO and GW2 report issued in BO
+		const reportIssuedCase = await upsertCase({
+			reference: CASE_REFERENCE,
+			caseEmail: THIRD_TEST_EMAIL,
+			planTitle: PLAN_TITLE,
+			submissionDate: SUBMISSION_DATE,
+			gateway2InfoUpsert: gateway2InfoReportIssued
+		});
+
+		await dbClient.document.upsert({
+			where: { guid: DOCUMENT_GUID },
+			update: {},
+			create: {
+				guid: DOCUMENT_GUID,
+				name: DOCUMENT_NAME,
+				caseId: reportIssuedCase.id,
+				documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+				versions: {
+					create: {
+						version: 1,
+						originalFilename: DOCUMENT_NAME,
+						fileName: DOCUMENT_NAME,
+						sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.BACK_OFFICE,
+						virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED,
+						dateCreated: REPORT_SHARED_DATE
+					}
+				}
+			}
+		});
+		await dbClient.document.update({
+			where: { guid: DOCUMENT_GUID },
+			data: { latestVersionId: 1 }
 		});
 
 		if (!caseOnly) {

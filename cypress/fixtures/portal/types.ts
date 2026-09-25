@@ -15,3 +15,11 @@ export interface PlanDetailsFixture {
 	linkedLpa: string;
 	dates: PlanDetailsDates;
 }
+
+export interface Gateway2ReportIssuedFixture extends PlanDetailsFixture {
+	submittedDate: string;
+	report: {
+		fileName: string;
+		sharedDate: string;
+	};
+}
