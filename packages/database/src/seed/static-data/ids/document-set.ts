@@ -30,6 +30,16 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'g3-cons-plan-summ',
 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'g3-practical-arrng',
 
+	// Gateway 3 portal optional documents
+	G3_COPIES_OF_REPRESENTATIONS: 'g3-copies-of-reps',
+	G3_SUPPLEMENTARY_PLANS_STATEMENT: 'g3-supp-plans-stmt',
+	G3_ENVIRONMENTAL_REPORT: 'g3-env-report',
+	G3_STATEMENT_OF_REASONS_DETERMINATION: 'g3-stmt-reasons',
+	G3_REPRESENTATIONS_PROGRESS_SUMMARY: 'g3-reps-progress',
+	G3_GATEWAY_2_ISSUES_SUMMARY: 'g3-g2-issues-summ',
+	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'g3-changes-stmt',
+	G3_OTHER_DOCUMENTS: 'g3-other-documents',
+
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
 	G2_SCOPING_CONSULATATION_DOCS: 'g2-scoping-cons',
@@ -60,6 +70,16 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'consultation-content-evidence-summary',
 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'consultation-proposed-plan-summary',
 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'practical-arrangements-statement',
+
+	// Gateway 3 portal optional documents
+	G3_COPIES_OF_REPRESENTATIONS: 'copies-of-representations',
+	G3_SUPPLEMENTARY_PLANS_STATEMENT: 'supplementary-plans-statement',
+	G3_ENVIRONMENTAL_REPORT: 'environmental-report',
+	G3_STATEMENT_OF_REASONS_DETERMINATION: 'statement-of-reasons-determination',
+	G3_REPRESENTATIONS_PROGRESS_SUMMARY: 'representations-progress-summary',
+	G3_GATEWAY_2_ISSUES_SUMMARY: 'gateway-2-issues-summary',
+	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'changes-since-consultation-statement',
+	G3_OTHER_DOCUMENTS: 'other-documents',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',

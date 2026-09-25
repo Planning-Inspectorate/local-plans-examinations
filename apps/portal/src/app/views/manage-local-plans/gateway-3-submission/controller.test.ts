@@ -26,7 +26,15 @@ function buildMockDocumentSets() {
 		'scoping-consultation-summary',
 		'consultation-content-evidence-summary',
 		'consultation-proposed-plan-summary',
-		'practical-arrangements-statement'
+		'practical-arrangements-statement',
+		'copies-of-representations',
+		'supplementary-plans-statement',
+		'environmental-report',
+		'statement-of-reasons-determination',
+		'representations-progress-summary',
+		'gateway-2-issues-summary',
+		'changes-since-consultation-statement',
+		'other-documents'
 	];
 	return folderNames.map((folderName) => ({ id: `ds-${folderName}`, folderName }));
 }

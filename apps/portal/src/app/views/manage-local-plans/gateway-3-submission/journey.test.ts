@@ -52,9 +52,23 @@ describe('createJourney (Gateway 3)', () => {
 
 		const journey = createJourney(req, response, buildQuestions());
 
-		assert.strictEqual(journey.sections.length, 1);
 		assert.strictEqual(journey.sections[0].name, 'Required Information');
 		assert.strictEqual(journey.sections[0].questions.length, 10);
+	});
+
+	it('creates an Optional Documents section with all 8 questions', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+
+		const journey = createJourney(req, response, buildQuestions());
+
+		assert.strictEqual(journey.sections.length, 2);
+		assert.strictEqual(journey.sections[1].name, 'Optional Documents');
+		assert.strictEqual(journey.sections[1].segment, 'optional-documents');
+		assert.strictEqual(journey.sections[1].questions.length, 8);
 	});
 
 	it('overrides back link to the overview URL for non-manage-list pages', () => {

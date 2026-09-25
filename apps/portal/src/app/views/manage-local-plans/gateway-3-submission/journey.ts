@@ -26,7 +26,16 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.scopingConsultationSummary)
 				.addQuestion(questions.consultationContentEvidenceSummary)
 				.addQuestion(questions.consultationProposedPlanSummary)
-				.addQuestion(questions.practicalArrangementsStatement)
+				.addQuestion(questions.practicalArrangementsStatement),
+			new Section('Optional Documents', 'optional-documents')
+				.addQuestion(questions.copiesOfRepresentations)
+				.addQuestion(questions.supplementaryPlansStatement)
+				.addQuestion(questions.environmentalReport)
+				.addQuestion(questions.statementOfReasonsDetermination)
+				.addQuestion(questions.representationsProgressSummary)
+				.addQuestion(questions.gateway2IssuesSummary)
+				.addQuestion(questions.changesSinceConsultationStatement)
+				.addQuestion(questions.otherDocuments)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',
