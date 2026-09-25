@@ -4,6 +4,9 @@ import type { Config } from './config.ts';
 import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+
+const gateway2SubmissionSetIds = gateway2SetIds.filter((documentSetId) => documentSetId !== DOCUMENT_SET_ID.G2_REPORT);
 
 function formatDisplayDate(date: Date | null | undefined): string {
 	if (!date) {
@@ -21,6 +24,7 @@ type PortalCase = {
 	reference: string;
 	planTitle: string;
 	lpas: { lpaName: string; lpaCode: string }[];
+	documents: { guid: string }[];
 	gateway1Info: {
 		expectedGateway1Date: Date | null;
 		completedGateway1Date: Date | null;
@@ -62,6 +66,13 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		return {
 			stage: STAGE.Gateway2,
 			status: STATUS.UnderReview
+		};
+	}
+
+	if (caseRecord.documents.length > 0) {
+		return {
+			stage: STAGE.Gateway2,
+			status: STATUS.InProgress
 		};
 	}
 
@@ -137,6 +148,16 @@ const planCaseInclude = {
 		orderBy: {
 			lpaName: 'asc' as const
 		}
+	},
+	documents: {
+		where: {
+			// A soft-deleted document still means the submission was started.
+			documentSetId: { in: gateway2SubmissionSetIds }
+		},
+		select: {
+			guid: true
+		},
+		take: 1
 	}
 };
 

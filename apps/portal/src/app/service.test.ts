@@ -9,6 +9,7 @@ function buildCase(overrides = {}) {
 	return {
 		reference: 'PLAN-941623',
 		planTitle: 'Real local plan',
+		documents: [],
 		lpas: [
 			{ lpaName: 'Southampton City Council', lpaCode: 'SOTON' },
 			{ lpaName: 'Romsey Town Council', lpaCode: 'ROMSEY' }
@@ -76,6 +77,20 @@ describe('PortalService', () => {
 				{
 					stage: STAGE.Gateway2,
 					status: STATUS.UnderReview
+				}
+			);
+		});
+
+		it('returns Gateway 2 in progress when a submission document has been created', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						documents: [{ guid: 'document-guid' }]
+					})
+				),
+				{
+					stage: STAGE.Gateway2,
+					status: STATUS.InProgress
 				}
 			);
 		});
@@ -160,6 +175,30 @@ describe('PortalService', () => {
 						orderBy: {
 							lpaName: 'asc'
 						}
+					},
+					documents: {
+						where: {
+							documentSetId: {
+								in: [
+									'g2-cover-letter',
+									'g2-timetable',
+									'g2-init-doc',
+									'g2-draft-stat-comp',
+									'g2-draft-stat-sound',
+									'g2-notice-intent',
+									'g2-scoping-cons',
+									'g2-cons-summ',
+									'g2-g1-self-assess',
+									'g2-cons-of-proposed',
+									'g2-sum-of-cons',
+									'g2-subsequent-work'
+								]
+							}
+						},
+						select: {
+							guid: true
+						},
+						take: 1
 					}
 				},
 				orderBy: {
