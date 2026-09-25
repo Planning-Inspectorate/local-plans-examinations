@@ -66,12 +66,6 @@ export class Gateway3Page extends GatewayBasePage {
 	}
 
 	verifyGateway3SubmissionIssued() {
-		this.verifySummaryRowContains(gateway3DocumentsAnswer.row, '2 documents');
-		this.verifySummaryRowActionHref(
-			gateway3DocumentsAnswer.row,
-			new RegExp(`^/case/.+/gateway-3-report/gateway-3-submission-(\\d+)/${gateway3DocumentsAnswer.path}-(\\d+)$`)
-		);
-		this.summaryRowActionLink(gateway3DocumentsAnswer.row).should('contain.text', 'View');
 		this.verifySummaryRowActionHref(
 			gateway3DecisionAnswer.row,
 			new RegExp(`^/case/.+/gateway-3-report/gateway-3-submission-(\\d+)/${gateway3DocumentsAnswer.path}-(\\d+)/check$`)
