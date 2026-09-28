@@ -30,6 +30,7 @@ import {
 	CONTACT_LPA_FIELDS,
 	RELATION_APPOINTMENT_DATE_TRIGGERS
 } from '../../classes/case-field-mappings.ts';
+import { parseDate } from '../../util/date.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -88,6 +89,8 @@ interface Gateway2Input {
 	reportPublishedByLPA?: Date;
 	gateway2Report?: any;
 	workshopDocumentUploadedDate?: Date;
+	workshopExpectedDays?: string;
+	workshopExpectedDaysKnown_workshopExpectedDays?: string;
 }
 
 interface ExaminationInput {
@@ -444,6 +447,17 @@ export async function updateGateway2(
 	) {
 		answers.assessorAppointmentDate = new Date();
 	}
+
+	if (answers.workshopDate) {
+		answers.workshopDate = parseDate(answers.workshopDate as any);
+	}
+
+	if ('workshopExpectedDaysKnown_workshopExpectedDays' in answers) {
+		answers.workshopExpectedDays = answers.workshopExpectedDaysKnown_workshopExpectedDays;
+
+		delete answers.workshopExpectedDaysKnown_workshopExpectedDays;
+	}
+
 	if (answers) {
 		await db.gateway2Info.upsert({
 			where: { caseId },
