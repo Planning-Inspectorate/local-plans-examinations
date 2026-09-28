@@ -4,7 +4,7 @@ import { OverviewTabHandler } from './overview-tab-handler.ts';
 import { Gateway1TabHandler } from './gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './gateway-2-tab-handler.ts';
 import { Gateway3TabHandler } from './gateway-3-tab-handler.ts';
-import { Gateway3SubmissionHandler } from './gateway-3-submission-handler.ts'
+import { Gateway3SubmissionHandler } from './gateway-3-submission-handler.ts';
 import { ExaminationTabHandler } from './examination-tab-handler.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { describe, it } from 'node:test';

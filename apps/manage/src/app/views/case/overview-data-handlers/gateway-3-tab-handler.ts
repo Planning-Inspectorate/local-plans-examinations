@@ -3,9 +3,7 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import type { ManageService } from '#service';
-import {
-	getParam,
-} from '../controller.ts';
+import { getParam } from '../controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 
@@ -94,7 +92,8 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 					'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
 				'gateway-3-document-summary-of-representations':
 					'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
-				'gateway-3-document-summary-of-gw2-remediations': 'Summary of how Gateway 2 assessor issues have been addressed',
+				'gateway-3-document-summary-of-gw2-remediations':
+					'Summary of how Gateway 2 assessor issues have been addressed',
 				'gateway-3-document-summary-of-changes':
 					'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
 				'gateway-3-document-other-documents': 'Other documents'
@@ -120,7 +119,9 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 						Object.entries(documentSets).map(async ([k, v]) => {
 							const documentSetId = submissionDocumentSetIds.get(k);
 
-							const files = documentSetId ? await DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId) : [];
+							const files = documentSetId
+								? await DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId)
+								: [];
 
 							return {
 								title: v,

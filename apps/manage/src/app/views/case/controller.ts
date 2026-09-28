@@ -1103,7 +1103,9 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			req.session.alertMessage = 'Gateway 3 decision already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`);
+		res.redirect(
+			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`
+		);
 		return;
 	};
 }

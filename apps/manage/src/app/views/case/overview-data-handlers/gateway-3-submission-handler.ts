@@ -17,7 +17,9 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 		const { db } = service;
 		const caseReference = getParam(req.params.reference);
 		if (req.params.question == undefined) {
-			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`);
+			res.redirect(
+				`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`
+			);
 			return;
 		}
 		const journey3Data = await db.gateway3Info.findUnique({
@@ -86,8 +88,8 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 				throw new Error(`Could not find question config for question url 'gateway-3-document'`);
 			}
 			const uploadedFiles =
-				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
-					?.uploadedFiles ?? [];
+				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[];
 			if (uploadedFiles.length > 0) {
 				res.redirect(303, `gateway-3-document-${submissionNumber}/check`);
 				return;
