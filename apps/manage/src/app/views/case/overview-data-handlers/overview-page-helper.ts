@@ -7,7 +7,7 @@ import {
 	fileUploaderCaseSessionKeyForField,
 	type UploadDocumentRequest
 } from '../controller.ts';
-import { COMMON_CONSTS } from 'src/app/classes/common-consts.ts';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
