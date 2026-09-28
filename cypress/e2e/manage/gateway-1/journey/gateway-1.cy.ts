@@ -23,7 +23,10 @@ describe('Gateway 1 updates', () => {
 	});
 	afterEach(cleanupSeededManageCase);
 
-	after(() => cy.task('clearDb'));
+	after(() => {
+		cy.task('clearDb');
+		cy.task('clearDownloads');
+	});
 
 	it('updates a Gateway 1 date answer', { tags: ['regression', 'environment-smoke'] }, () => {
 		gateway1Page.openActionLinkFor(gateway1DateAnswers.noticeOfIntention.row);
