@@ -43,7 +43,8 @@ import {
 	createGateway1Journey,
 	createGateway2Journey,
 	createGateway3Journey,
-	createExaminationJourney
+	createExaminationJourney,
+	createGateway3ReportJourney,
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -106,6 +107,13 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
+		supportsFileUpload: true,
+		updateFunction: updateGateway3
+	},
+	{
+		path: 'gateway-3-report',
+		journeyId: COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID,
+		createJourney: createGateway3ReportJourney,
 		supportsFileUpload: true,
 		updateFunction: updateGateway3
 	},
@@ -197,7 +205,7 @@ function registerCaseJourney(
 	);
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
-	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service, journeyId));
+	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
 	// Save answer
 	router.post(

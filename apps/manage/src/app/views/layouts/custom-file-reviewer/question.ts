@@ -1,6 +1,7 @@
 import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
 
 export default class CustomFileReviewerQuestion extends Question {
+	showViewWhenEmpty: boolean;
 	constructor({ ...params }) {
 		super({
 			...params,
@@ -9,6 +10,7 @@ export default class CustomFileReviewerQuestion extends Question {
 			question: params.question,
 			fieldName: params.fieldName
 		});
+		this.showViewWhenEmpty = params.showViewWhenEmpty;
 	}
 
 	toViewModel(options: any) {
@@ -31,7 +33,8 @@ export default class CustomFileReviewerQuestion extends Question {
 				),
 			0
 		);
-		const baseAction = documentCount > 0 ? this.getAction(sectionSegment, journey, answer) : undefined;
+		const baseAction =
+			this.showViewWhenEmpty || documentCount > 0 ? this.getAction(sectionSegment, journey, answer) : undefined;
 
 		return [
 			{

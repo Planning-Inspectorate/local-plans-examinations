@@ -7,6 +7,7 @@ import {
 	fileUploaderCaseSessionKeyForField,
 	type UploadDocumentRequest
 } from '../controller.ts';
+import { COMMON_CONSTS } from 'src/app/classes/common-consts.ts';
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
@@ -61,8 +62,12 @@ async function addUploadedDocumentDetailsToAnswers(
 ) {
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
-	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
-	if (journeyId == 'gateway-3') {
+	let overrideJourneyId = journeyId;
+	if (journeyId == COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID) {
+		overrideJourneyId = COMMON_CONSTS.GATEWAY_3_JOURNEY_ID;
+	}
+	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[overrideJourneyId];
+	if (overrideJourneyId == 'gateway-3') {
 		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
 		const lastSubmissionId = answers.submissions.length;
 		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem: any) =>

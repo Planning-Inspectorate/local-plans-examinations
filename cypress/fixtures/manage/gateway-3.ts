@@ -94,6 +94,12 @@ export const gateway3DocumentsAnswer = {
 	fileName2: 'test-document.docx'
 } as const;
 
+export const gateway3FrontOfficeDocumentsAnswer = {
+	row: 'Documents',
+	fieldName: 'gateway3FrontOfficeDocuments',
+	path: 'gateway-3-fo-preview'
+} as const;
+
 export const gateway3DecisionAnswer = {
 	row: 'Gateway 3 decision',
 	path: 'gateway-3-decision'
