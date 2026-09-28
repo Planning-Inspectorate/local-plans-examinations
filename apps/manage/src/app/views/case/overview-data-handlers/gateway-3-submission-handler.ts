@@ -29,7 +29,7 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 			where: { caseId: caseRecord.id }
 		});
 		if (!journey3Data) {
-			throw Error('No gatewa3info data found');
+			throw Error('No gateway3info data found');
 		}
 		const submissionData = sortGateway3Submissions(journey3Data.submissions);
 		await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
@@ -47,10 +47,10 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 		// Flow for uploading a gateway 3 document
 		if (
 			req.method === 'POST' &&
-			String(req.params.question).startsWith('gateway-3-decision') &&
+			String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION) &&
 			req.originalUrl.endsWith(String(req.params.question))
 		) {
-			const submissionNumber = String(req.params.question).replace('gateway-3-decision-', '');
+			const submissionNumber = String(req.params.question).replace(`${COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION}-`, '');
 			if (!/^\d+$/.test(submissionNumber)) {
 				throw new Error('Invalid submission number');
 			}
@@ -71,27 +71,29 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 				caseReference,
 				String(req.params.question)
 			);
-			res.redirect(303, `gateway-3-document-${submissionNumber}`);
+			res.redirect(303, `${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}-${submissionNumber}`);
 			return;
 		}
 		if (
 			req.method === 'POST' &&
-			String(req.params.question).startsWith('gateway-3-document') &&
+			String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION) &&
 			req.originalUrl.endsWith(String(req.params.question))
 		) {
-			const submissionNumber = String(req.params.question).replace('gateway-3-document-', '');
+			const submissionNumber = String(req.params.question).replace(`${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}-`, '');
 			if (!/^\d+$/.test(submissionNumber)) {
 				throw new Error('Invalid submission number');
 			}
 			const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == req.params.question);
 			if (!questionConfig) {
-				throw new Error(`Could not find question config for question url 'gateway-3-document'`);
+				throw new Error(
+					`Could not find question config for question url '${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}'`
+				);
 			}
 			const uploadedFiles =
 				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
 				[];
 			if (uploadedFiles.length > 0) {
-				res.redirect(303, `gateway-3-document-${submissionNumber}/check`);
+				res.redirect(303, `${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}-${submissionNumber}/check`);
 				return;
 			}
 		}

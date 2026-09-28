@@ -12,7 +12,7 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		if (
 			req.method === 'GET' &&
-			String(req.params.question).startsWith('gateway-3-decision') &&
+			String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION) &&
 			req.originalUrl.endsWith(String(req.params.question))
 		) {
 			const submissionId = Number(String(req.params.question).split('-').at(-1));
@@ -32,7 +32,7 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 			where: { caseId: caseRecord.id }
 		});
 		if (!journey3Data) {
-			throw Error('No gatewa3info data found');
+			throw Error('No gateway3info data found');
 		}
 		const submissionData = sortGateway3Submissions(journey3Data.submissions);
 		await addUploadedDocumentDetailsToAnswers(
