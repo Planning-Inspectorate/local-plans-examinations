@@ -44,7 +44,7 @@ import {
 	createGateway2Journey,
 	createGateway3Journey,
 	createExaminationJourney,
-	createGateway3ReportJourney,
+	createGateway3ReportJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
