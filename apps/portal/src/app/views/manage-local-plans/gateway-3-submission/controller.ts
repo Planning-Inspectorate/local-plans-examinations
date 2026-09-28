@@ -20,7 +20,8 @@ import {
 	CHECK_ANSWERS_REDIRECT_QUERY,
 	CHECK_ANSWERS_REDIRECTS,
 	createGateway3Questions,
-	GW3_FILE_UPLOAD_QUESTIONS
+	GW3_FILE_UPLOAD_QUESTIONS,
+	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS
 } from './questions.ts';
 import {
 	getDocumentSetIdsByFolderName,
@@ -68,6 +69,10 @@ type Gateway3FileUploadQuestion = FileUploaderQuestionProps & {
 // ---------------------------------------------------------------------------
 
 const gateway3FileUploadQuestionConfigs = Object.values(GW3_FILE_UPLOAD_QUESTIONS) as Gateway3FileUploadQuestion[];
+
+const gateway3RequiredFileUploadQuestionConfigs = Object.values(
+	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS
+) as Gateway3FileUploadQuestion[];
 
 const gateway3FileUploadQuestionUrls = gateway3FileUploadQuestionConfigs.map((q) => q.url);
 
@@ -125,6 +130,8 @@ function formatDisplayDate(date: Date | null | undefined) {
 		year: 'numeric'
 	});
 }
+
+const DECLARATION_VIEW_PATH = 'views/manage-local-plans/gateway-3-submission/declaration/declaration.njk';
 
 function renderNotFound(res: Response) {
 	return res.status(404).render('views/layouts/error', {
@@ -467,6 +474,73 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 }
 
 // ---------------------------------------------------------------------------
+// Submission validation and declaration page
+// ---------------------------------------------------------------------------
+
+const GATEWAY_3_SUBMIT_ERROR = 'Add all required documents before submitting';
+
+function hasRequiredQuestionAnswer(answers: Record<string, unknown>, fieldName: string) {
+	const answer = answers[fieldName];
+	if (Array.isArray(answer)) {
+		return answer.length > 0;
+	}
+	if (typeof answer === 'string') {
+		return answer.length > 0;
+	}
+	return false;
+}
+
+function hasAllRequiredAnswers(answers: Record<string, unknown>) {
+	const requiredFieldNames = [
+		'examinationWebsite',
+		...gateway3RequiredFileUploadQuestionConfigs.map((q) => q.fieldName)
+	];
+	return requiredFieldNames.every((fieldName) => hasRequiredQuestionAnswer(answers, fieldName));
+}
+
+export function buildValidateGateway3Submission(): RequestHandler {
+	return async (req, res, next) => {
+		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		const answers = journeyResponse?.answers ?? {};
+
+		if (hasAllRequiredAnswers(answers)) {
+			return next();
+		}
+
+		res.status(400);
+		res.locals.errors = {
+			submit: {
+				text: GATEWAY_3_SUBMIT_ERROR
+			}
+		};
+		res.locals.errorSummary = [
+			{
+				text: GATEWAY_3_SUBMIT_ERROR,
+				href: '#required-information'
+			}
+		];
+
+		setGateway3ViewLocals(req, res);
+		await buildGateway3CheckAnswersList()(req, res, next);
+	};
+}
+
+export function buildGetDeclarationPage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const backLinkUrl = planReference
+			? `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-3-submission`
+			: undefined;
+
+		return res.render(DECLARATION_VIEW_PATH, {
+			pageTitle: 'Review declaration',
+			pageHeading: 'Review declaration',
+			backLinkUrl
+		});
+	};
+}
+
+// ---------------------------------------------------------------------------
 // Build all route middleware — called once by index.ts
 // ---------------------------------------------------------------------------
 
@@ -557,6 +631,8 @@ export function buildGateway3Middleware(service: PortalService) {
 		validationErrorHandler,
 		question,
 		lusca,
-		redirectAfterCaseQuestionEdit: redirectAfterCaseQuestionEdit(saveDataToCase)
+		redirectAfterCaseQuestionEdit: redirectAfterCaseQuestionEdit(saveDataToCase),
+		validateGateway3Submission: buildValidateGateway3Submission(),
+		getDeclarationPage: buildGetDeclarationPage()
 	};
 }
