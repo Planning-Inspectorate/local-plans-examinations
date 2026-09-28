@@ -60,7 +60,7 @@ import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
-import { loadLpaOptions } from 'src/app/util/options-helper.ts';
+import { loadLpaOptions } from '../../util/options-helper.ts';
 import {
 	saveLastQuestionUrl,
 	setBackLinkFromSession,
@@ -273,7 +273,9 @@ export function caseRouter(service: ManageService): IRouter {
 
 	router.use(addCaseNavigation());
 
-	const workshopConfig = CASE_JOURNEYS.find((config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID);
+	const workshopConfig = CASE_JOURNEYS.find(
+		(config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID
+	);
 
 	if (workshopConfig) {
 		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
