@@ -67,7 +67,7 @@ async function addUploadedDocumentDetailsToAnswers(
 		overrideJourneyId = COMMON_CONSTS.GATEWAY_3_JOURNEY_ID;
 	}
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[overrideJourneyId];
-	if (overrideJourneyId == 'gateway-3') {
+	if (overrideJourneyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
 		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
 		const lastSubmissionId = answers.submissions.length;
 		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem: any) =>
