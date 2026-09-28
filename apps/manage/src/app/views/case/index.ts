@@ -414,11 +414,6 @@ function registerGateway2WorkshopJourney(
 		next();
 	});
 
-	const setWorkshopSection = (req: Request, _res: Response, next: NextFunction): void => {
-		req.params.section = 'workshop';
-		next();
-	};
-
 	const getWorkshopJourneyResponse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
 
@@ -443,32 +438,90 @@ function registerGateway2WorkshopJourney(
 		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;
 
-		res.locals.journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
+		const journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
+
+		if (gateway2Data?.workshopExpectedDays && gateway2Data.workshopExpectedDays != 'no') {
+			journeyResponse.answers.workshopExpectedDaysKnown = 'yes';
+			//journeyResponse.answers.workshopExpectedDaysKnown_workshopExpectedDays = gateway2Data.workshopExpectedDays;
+		}
+
+		res.locals.journeyResponse = journeyResponse;
 
 		next();
+	});
+
+	const completeWorkshop = asyncHandler(async (req: Request, res: Response) => {
+		const reference = getParam(req.params.reference);
+
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+
+		await service.db.case.update({
+			where: { reference },
+			data: {
+				caseHistories: {
+					create: {
+						event: 'Workshop set up',
+						username: currentUser
+					}
+				}
+			}
+		});
+
+		req.session.alertMessage = 'Workshop set up';
+		req.session.alertMessageStatus = 'success';
+
+		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	});
 
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 
 	router.get(
-		'/gateway-2/set-up-workshop/:question',
+		'/gateway-2/set-up-workshop/check-your-answers',
 		buildLpaOptions,
-		setWorkshopSection,
 		getWorkshopJourneyResponse,
 		getJourney,
+		setBackLinkFromSession,
+		setAsEditingFromCya,
+		buildList({ notificationPreviewTemplate: 'gateway-2-report' })
+	);
+
+	router.post(
+		'/gateway-2/set-up-workshop/check-your-answers',
+		buildLpaOptions,
+		getWorkshopJourneyResponse,
+		getJourney,
+		saveLastQuestionUrl,
+		completeWorkshop
+	);
+
+	router.get(
+		'/gateway-2/set-up-workshop/:section/:question',
+		buildLpaOptions,
+		getWorkshopJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
 		question
 	);
 
 	router.post(
-		'/gateway-2/set-up-workshop/:question',
+		'/gateway-2/set-up-workshop/:section/:question',
 		buildLpaOptions,
-		setWorkshopSection,
 		getWorkshopJourneyResponse,
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true)
+		saveLastQuestionUrl,
+		redirectAfterCyaEdit(updateCase)
 	);
+}
+
+function redirectAfterCyaEdit(updateCase: any) {
+	return (req: any, res: Response, next: NextFunction) => {
+		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+
+		buildSave(updateCase, returnToCya)(req, res, next);
+	};
 }
 
 /** To add a new route, add a new object here **/
