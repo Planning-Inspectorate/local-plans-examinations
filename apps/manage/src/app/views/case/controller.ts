@@ -24,6 +24,7 @@ import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { parseDate } from '../../util/date.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -82,6 +83,8 @@ interface Gateway2Input {
 	reportPublishedByLPA?: Date;
 	gateway2Report?: any;
 	workshopDocumentUploadedDate?: Date;
+	workshopExpectedDays?: string;
+	workshopExpectedDaysKnown_workshopExpectedDays?: string;
 }
 
 interface ExaminationInput {
@@ -454,6 +457,17 @@ export async function updateGateway2(
 	) {
 		answers.assessorAppointmentDate = new Date();
 	}
+
+	if (answers.workshopDate) {
+		answers.workshopDate = parseDate(answers.workshopDate as any);
+	}
+
+	if ('workshopExpectedDaysKnown_workshopExpectedDays' in answers) {
+		answers.workshopExpectedDays = answers.workshopExpectedDaysKnown_workshopExpectedDays;
+
+		delete answers.workshopExpectedDaysKnown_workshopExpectedDays;
+	}
+
 	if (answers) {
 		await db.gateway2Info.upsert({
 			where: { caseId },
