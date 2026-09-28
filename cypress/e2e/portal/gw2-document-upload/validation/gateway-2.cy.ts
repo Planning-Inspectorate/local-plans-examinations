@@ -7,7 +7,6 @@ import {
 	subsequentWorkTowardsDraftPlanPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -23,9 +22,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		loadPlanDetails().then((plan) => {
 			const page = gateway2CoverLetterPage;
 			openGateway2DocumentUploadPage(plan, page);
-			gateway2CoverLetterPage.uploadFile('test-document-invalid.txt');
-			gateway2CoverLetterPage.clickUploadFiles();
-			gateway2CoverLetterPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.INVALID_FILE_FORMAT);
+			page.verifyInvalidFileTypeError();
 		});
 	});
 
@@ -33,8 +30,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		loadPlanDetails().then((plan) => {
 			const page = gateway2CoverLetterPage;
 			openGateway2DocumentUploadPage(plan, page);
-			gateway2CoverLetterPage.clickUploadFiles();
-			gateway2CoverLetterPage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.NO_FILE_UPLOADED);
+			page.verifyNoFileUploadedError();
 		});
 	});
 
@@ -42,9 +38,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		loadPlanDetails().then((plan) => {
 			const page = localPlanTimetablePage;
 			openGateway2DocumentUploadPage(plan, page);
-			localPlanTimetablePage.uploadFile('test-document-invalid.txt');
-			localPlanTimetablePage.clickUploadFiles();
-			localPlanTimetablePage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.INVALID_FILE_FORMAT);
+			page.verifyInvalidFileTypeError();
 		});
 	});
 
@@ -52,8 +46,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		loadPlanDetails().then((plan) => {
 			const page = localPlanTimetablePage;
 			openGateway2DocumentUploadPage(plan, page);
-			localPlanTimetablePage.clickUploadFiles();
-			localPlanTimetablePage.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.NO_FILE_UPLOADED);
+			page.verifyNoFileUploadedError();
 		});
 	});
 
@@ -64,12 +57,7 @@ describe('Gateway 2 document upload validation tests', () => {
 			loadPlanDetails().then((plan) => {
 				const page = noticeOfIntentionToCommenceLocalPlanPage;
 				openGateway2DocumentUploadPage(plan, page);
-				noticeOfIntentionToCommenceLocalPlanPage.uploadFile('test-document-invalid.txt');
-				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
-				noticeOfIntentionToCommenceLocalPlanPage.verifyErrorSummary(
-					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
-					ERROR_MESSAGES.INVALID_FILE_FORMAT
-				);
+				page.verifyInvalidFileTypeError();
 			});
 		}
 	);
@@ -81,11 +69,7 @@ describe('Gateway 2 document upload validation tests', () => {
 			loadPlanDetails().then((plan) => {
 				const page = noticeOfIntentionToCommenceLocalPlanPage;
 				openGateway2DocumentUploadPage(plan, page);
-				noticeOfIntentionToCommenceLocalPlanPage.clickUploadFiles();
-				noticeOfIntentionToCommenceLocalPlanPage.verifyErrorSummary(
-					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
-					ERROR_MESSAGES.NO_FILE_UPLOADED
-				);
+				page.verifyNoFileUploadedError();
 			});
 		}
 	);
@@ -97,12 +81,7 @@ describe('Gateway 2 document upload validation tests', () => {
 			loadPlanDetails().then((plan) => {
 				const page = subsequentWorkTowardsDraftPlanPage;
 				openGateway2DocumentUploadPage(plan, page);
-				subsequentWorkTowardsDraftPlanPage.uploadFile('test-document-invalid.txt');
-				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
-				subsequentWorkTowardsDraftPlanPage.verifyErrorSummary(
-					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
-					ERROR_MESSAGES.INVALID_FILE_FORMAT
-				);
+				page.verifyInvalidFileTypeError();
 			});
 		}
 	);
@@ -114,11 +93,7 @@ describe('Gateway 2 document upload validation tests', () => {
 			loadPlanDetails().then((plan) => {
 				const page = subsequentWorkTowardsDraftPlanPage;
 				openGateway2DocumentUploadPage(plan, page);
-				subsequentWorkTowardsDraftPlanPage.clickUploadFiles();
-				subsequentWorkTowardsDraftPlanPage.verifyErrorSummary(
-					ERROR_MESSAGES.THERE_IS_A_PROBLEM,
-					ERROR_MESSAGES.NO_FILE_UPLOADED
-				);
+				page.verifyNoFileUploadedError();
 			});
 		}
 	);

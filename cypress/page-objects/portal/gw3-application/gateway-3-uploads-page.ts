@@ -29,3 +29,13 @@ export const statementOfCompliancePage = new DocumentUploadPage(
 	gateway3UploadAnswers.statementOfCompliance.section,
 	gateway3UploadAnswers.statementOfCompliance.path
 );
+
+export const environmentalReportPage = new DocumentUploadPage(
+	gateway3UploadPath(gateway3UploadAnswers.environmentalReport.section, gateway3UploadAnswers.environmentalReport.path),
+	gateway3UploadAnswers.environmentalReport.fieldName,
+	gateway3UploadAnswers.environmentalReport.heading,
+	gateway3UploadAnswers.environmentalReport.caption,
+	gateway3UploadAnswers.environmentalReport.addCy,
+	gateway3UploadAnswers.environmentalReport.section,
+	gateway3UploadAnswers.environmentalReport.path
+);

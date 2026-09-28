@@ -19,6 +19,10 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('required-information-section');
 	}
 
+	get optionalDocumentsTable() {
+		return cy.getByData('optional-documents-section');
+	}
+
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(gateway3SubmissionHeading);
