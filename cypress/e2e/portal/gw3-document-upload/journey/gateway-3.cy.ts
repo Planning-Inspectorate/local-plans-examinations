@@ -5,7 +5,8 @@ import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import {
 	mapOfProposedLocalPlanPoliciesPage,
-	statementOfCompliancePage
+	statementOfCompliancePage,
+	environmentalReportPage
 } from '../../../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
 import { openGateway3DocumentUploadPage } from '../../../../flows/portal/gateway-3-upload-flow.ts';
 
@@ -39,21 +40,8 @@ describe('Gateway 3 document upload journeys', () => {
 		() => {
 			const page = mapOfProposedLocalPlanPoliciesPage;
 			openGateway3DocumentUploadPage(planDetails, page);
-			mapOfProposedLocalPlanPoliciesPage.dragAndDropFile('test-document.pdf');
-			mapOfProposedLocalPlanPoliciesPage.clickUploadFiles();
-			mapOfProposedLocalPlanPoliciesPage.verifyFileUploaded('test-document.pdf');
-
-			mapOfProposedLocalPlanPoliciesPage.goBack();
-			gateway3ApplicationPage.verifyLoaded();
-
-			gateway3ApplicationPage.clickAddLink(page.addCy);
-			mapOfProposedLocalPlanPoliciesPage.verifyLoaded();
-			mapOfProposedLocalPlanPoliciesPage.verifyFileUploaded('test-document.pdf');
-
-			mapOfProposedLocalPlanPoliciesPage.removeFile('test-document.pdf');
-			mapOfProposedLocalPlanPoliciesPage.verifyFileNotUploaded('test-document.pdf');
-
-			mapOfProposedLocalPlanPoliciesPage.uploadAndVerifyFile('test-document.docx');
+			page.dragAndDropAndVerifyFile('test-document.pdf');
+			page.verifyReplaceFile(gateway3ApplicationPage, 'test-document.pdf', 'test-document.docx', 'goBack');
 		}
 	);
 
@@ -63,15 +51,10 @@ describe('Gateway 3 document upload journeys', () => {
 		() => {
 			const page = statementOfCompliancePage;
 			openGateway3DocumentUploadPage(planDetails, page);
-			statementOfCompliancePage.uploadAndVerifyFile('test-document.pdf');
-
-			statementOfCompliancePage.uploadAndVerifyFile('test-document.docx');
-
-			statementOfCompliancePage.saveAndReturn();
-			gateway3ApplicationPage.verifyLoaded();
-
-			gateway3ApplicationPage.verifyDocumentRowContains(
-				gateway3ApplicationPage.requiredInformationTable,
+			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx']);
+			page.saveAndVerifyDocumentRow(
+				gateway3ApplicationPage,
+				() => gateway3ApplicationPage.requiredInformationTable,
 				'Statement of Compliance',
 				'test-document.pdf',
 				'test-document.docx'
@@ -85,16 +68,53 @@ describe('Gateway 3 document upload journeys', () => {
 		() => {
 			const page = statementOfCompliancePage;
 			openGateway3DocumentUploadPage(planDetails, page);
-			statementOfCompliancePage.uploadAndVerifyFile('test-document.pdf');
-
-			statementOfCompliancePage.saveAndReturn();
-			gateway3ApplicationPage.verifyLoaded();
-
-			gateway3ApplicationPage.verifyDocumentDownloadLink(
-				gateway3ApplicationPage.requiredInformationTable,
+			page.uploadAndVerifyFile('test-document.docx');
+			page.saveAndVerifyDownloadLink(
+				gateway3ApplicationPage,
+				() => gateway3ApplicationPage.requiredInformationTable,
 				'Statement of Compliance',
-				'test-document.pdf'
+				'test-document.docx'
 			);
 		}
 	);
+
+	it(
+		'Adds an environmental report using drag and drop, then replaces it with new document',
+		{ tags: ['regression'] },
+		() => {
+			const page = environmentalReportPage;
+			openGateway3DocumentUploadPage(planDetails, page);
+			page.dragAndDropAndVerifyFile('test-document.pdf');
+			page.verifyReplaceFile(gateway3ApplicationPage, 'test-document.pdf', 'test-document.docx', 'goBack');
+		}
+	);
+
+	it(
+		'Shows both uploaded environmental report files on the Gateway 3 submission page',
+		{ tags: ['regression', 'environment-smoke'] },
+		() => {
+			const page = environmentalReportPage;
+			openGateway3DocumentUploadPage(planDetails, page);
+			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx']);
+			page.saveAndVerifyDocumentRow(
+				gateway3ApplicationPage,
+				() => gateway3ApplicationPage.optionalDocumentsTable,
+				'Environmental report',
+				'test-document.pdf',
+				'test-document.docx'
+			);
+		}
+	);
+
+	it('Downloads environmental report file when document link is clicked', { tags: ['regression'] }, () => {
+		const page = environmentalReportPage;
+		openGateway3DocumentUploadPage(planDetails, page);
+		page.uploadAndVerifyFile('test-document.pdf');
+		page.saveAndVerifyDownloadLink(
+			gateway3ApplicationPage,
+			() => gateway3ApplicationPage.optionalDocumentsTable,
+			'Environmental report',
+			'test-document.pdf'
+		);
+	});
 });
