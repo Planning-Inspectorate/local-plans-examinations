@@ -23,5 +23,13 @@ export const gateway3UploadAnswers = {
 		path: 'statement-of-compliance',
 		section: 'required-information',
 		addCy: 'add-statement-of-compliance'
+	},
+	environmentalReport: {
+		heading: 'Upload your environmental report',
+		caption: 'Optional documents',
+		fieldName: 'environmentalReport',
+		path: 'environmental-report',
+		section: 'optional-documents',
+		addCy: 'add-environmental-report'
 	}
 } as const satisfies Record<string, Gateway3UploadAnswer>;
