@@ -18,10 +18,6 @@ ALTER TABLE [dbo].[Gateway2Info] ADD [remoteMeetingLink] NVARCHAR(1000),
 [workshopTownOrCity] NVARCHAR(1000),
 [workshopVenueName] NVARCHAR(1000);
 
--- AlterTable
-ALTER TABLE [dbo].[LPA] DROP CONSTRAINT [LPA_lpaName_default];
-ALTER TABLE [dbo].[LPA] ADD CONSTRAINT [LPA_lpaName_df] DEFAULT '' FOR [lpaName];
-
 COMMIT TRAN;
 
 END TRY
