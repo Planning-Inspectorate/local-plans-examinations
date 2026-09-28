@@ -4,6 +4,7 @@ import { OverviewTabHandler } from './overview-tab-handler.ts';
 import { Gateway1TabHandler } from './gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './gateway-2-tab-handler.ts';
 import { Gateway3TabHandler } from './gateway-3-tab-handler.ts';
+import { Gateway3SubmissionHandler } from './gateway-3-submission-handler.ts';
 import { ExaminationTabHandler } from './examination-tab-handler.ts';
 
 const OPTIONS: Record<string, new () => OverviewPageLoadHandler> = {
@@ -11,6 +12,7 @@ const OPTIONS: Record<string, new () => OverviewPageLoadHandler> = {
 	[COMMON_CONSTS.GATEWAY_1_JOURNEY_ID]: Gateway1TabHandler,
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: Gateway2TabHandler,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: Gateway3TabHandler,
+	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: Gateway3SubmissionHandler,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: ExaminationTabHandler
 };
 
