@@ -13,6 +13,7 @@ describe('Gateway 2 application page journeys', () => {
 	let planDetails: PlanDetailsFixture;
 
 	beforeEach(() => {
+		cy.task('clearDb');
 		preparePlanDetails().then((plan) => {
 			planDetails = plan;
 		});
