@@ -41,6 +41,21 @@ export async function retrieveCaseOfficers(
 	return caseOfficers.map((m) => ({ value: m.id, text: m.displayName }));
 }
 
+export async function retrieveLpaOptions(service: ManageService): Promise<{ value: string; text: string }[]> {
+	const { db } = service;
+
+	if (service.authDisabled) {
+		return retrieveDefaultLpaOptions();
+	}
+
+	const authorities = await db.authority.findMany({});
+
+	return authorities.map((authority) => ({
+		value: authority.pinsCode,
+		text: authority.name
+	}));
+}
+
 export function retrieveDefaultCaseOfficers() {
 	return [
 		{ value: '', text: '' },
@@ -50,24 +65,21 @@ export function retrieveDefaultCaseOfficers() {
 	];
 }
 
+function retrieveDefaultLpaOptions(): LpaOption[] {
+	return [
+		{ value: '', text: '' },
+		{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+		{ value: 'lpa-2', text: 'Local Planning Authority 2' },
+		{ value: 'lpa-3', text: 'Local Planning Authority 3' },
+		{ value: 'lpa-4', text: 'Local Planning Authority 4' }
+	];
+}
+
 export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
 	const { db } = service;
 
 	if (service.authDisabled) {
-		return [
-			{
-				value: 'lpa-1',
-				text: 'Local Planning Authority 1'
-			},
-			{
-				value: 'lpa-2',
-				text: 'Local Planning Authority 2'
-			},
-			{
-				value: 'lpa-3',
-				text: 'Local Planning Authority 3'
-			}
-		];
+		return retrieveDefaultLpaOptions();
 	}
 
 	const authorities = await db.authority.findMany({});

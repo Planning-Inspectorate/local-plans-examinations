@@ -1,10 +1,11 @@
-import type { RequestHandler } from 'express';
+import type { RequestHandler, Request } from 'express';
 import type { ManageService } from '#service';
 import { JOURNEY_ID } from './journey.ts';
 import { clearDataFromSession, type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import * as authSession from '@planning-inspectorate/core/auth';
 import { parseDate } from '../../util/date.ts';
-import { questions } from './questions.ts';
+import { getQuestions } from './questions.ts';
+import type { ManageQuestionConfig } from './questions.ts';
 import { retrieveCaseOfficers, loadLpaOptions } from '../../util/options-helper.ts';
 
 /**
@@ -59,7 +60,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		const uniqueLpaCodes = [...new Set(answers.checkLpas.map((lpa) => lpa.lpa))];
 		const caseOfficerNames = await retrieveCaseOfficers(service, req.session as authSession.SessionWithAuth);
 
-		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser, caseOfficerNames);
+		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser, caseOfficerNames, req);
 
 		service.logger.info(answers, 'case created');
 		const lpaOptions = await loadLpaOptions(service);
@@ -113,8 +114,11 @@ async function saveDataToDatabase(
 	answers: CreateCaseAnswers,
 	uniqueLpaCodes: string[],
 	currentUser: string,
-	caseOfficerNames: { value: string; text: string }[]
+	caseOfficerNames: { value: string; text: string }[],
+	req: Request
 ): Promise<void> {
+	const questions = await getQuestions(service, req.session);
+
 	await service.db.$transaction(async (tx) => {
 		const createdCase = await tx.case.create({
 			data: {
@@ -127,7 +131,7 @@ async function saveDataToDatabase(
 				lpas: {
 					connectOrCreate: uniqueLpaCodes.map((lpaCode) => ({
 						where: { lpaCode },
-						create: { lpaCode, lpaName: getOptionText('lpa', lpaCode) }
+						create: { lpaCode, lpaName: getOptionText('lpa', lpaCode, questions) }
 					}))
 				},
 				contacts: {
@@ -197,6 +201,6 @@ async function saveDataToDatabase(
 	});
 }
 
-function getOptionText(question: 'lpa', value: string): string {
+function getOptionText(question: 'lpa', value: string, questions: Record<string, ManageQuestionConfig>): string {
 	return questions[question].options.find((option: any) => option.value === value)?.text || value;
 }
