@@ -20,10 +20,14 @@ describe('Gateway 1 updates', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
 		openSeededGateway1Page();
+		cy.task('clearDownloads');
 	});
 	afterEach(cleanupSeededManageCase);
 
-	after(() => cy.task('clearDb'));
+	after(() => {
+		cy.task('clearDb');
+		cy.task('clearDownloads');
+	});
 
 	it('updates a Gateway 1 date answer', { tags: ['regression', 'environment-smoke'] }, () => {
 		gateway1Page.openActionLinkFor(gateway1DateAnswers.noticeOfIntention.row);
@@ -59,7 +63,7 @@ describe('Gateway 1 updates', () => {
 		gateway1SignedSLACheckPage.issueNotification();
 
 		gateway1Page.verifyLoaded(seededCase.planTitle);
-		gateway1Page.verifySummaryRowContains(signedSLA.row, signedSLA.updatedFileName);
+		gateway1Page.verifySummaryRowContainsFileLink(signedSLA.row, signedSLA.updatedFileName);
 	});
 
 	it('returns to Gateway 1 from Gateway 1 answer page back links', () => {

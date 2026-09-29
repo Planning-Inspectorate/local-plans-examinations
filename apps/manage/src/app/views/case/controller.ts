@@ -24,13 +24,19 @@ import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import type { CaseRelation } from '../../classes/case-field-mappings.ts';
+import {
+	FIELD_RELATIONS,
+	CONTACT_LPA_FIELDS,
+	RELATION_APPOINTMENT_DATE_TRIGGERS
+} from '../../classes/case-field-mappings.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
 
-interface CaseOverviewInput {
+export interface CaseOverviewInput {
 	planTitle?: string;
 	planType?: string;
 	planBand?: string;
@@ -205,8 +211,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					reference,
 					action,
 					section,
-					currentItemId,
-					getParam(req.params.question)
+					currentItemId
 				);
 				break;
 			}
@@ -288,114 +293,99 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 	};
 }
 
+/** Splits flat overview answers into the Case row's own fields and any related-table buckets. */
+function splitOverviewAnswers(answers: CaseOverviewInput) {
+	const caseFields: Record<string, unknown> = {};
+	const nestedData: Partial<Record<CaseRelation, Record<string, unknown>>> = {};
+
+	for (const [key, value] of Object.entries(answers)) {
+		if (value === undefined || CONTACT_LPA_FIELDS.has(key as keyof CaseOverviewInput)) continue;
+
+		const mapping = FIELD_RELATIONS[key as keyof CaseOverviewInput];
+		if (!mapping) {
+			caseFields[key] = value;
+			continue;
+		}
+		const bucket = (nestedData[mapping.relation] ??= {});
+		bucket[mapping.differingFieldName ?? key] = value;
+	}
+
+	return { caseFields, nestedData };
+}
+
+/** Builds the `{ relation: { upsert: { create, update } } }` payload for each related table touched. */
+function buildNestedRelationUpdates(nestedData: Partial<Record<CaseRelation, Record<string, unknown>>>) {
+	const relationUpdates: Record<string, unknown> = {};
+
+	for (const [relation, fields] of Object.entries(nestedData) as [CaseRelation, Record<string, unknown>][]) {
+		const trigger = RELATION_APPOINTMENT_DATE_TRIGGERS[relation];
+		if (trigger.triggerFields.some((field) => field in fields)) {
+			fields[trigger.dateField] = new Date();
+		}
+		relationUpdates[relation] = { upsert: { create: fields, update: fields } };
+	}
+
+	return relationUpdates;
+}
+
 async function updateOverview(
 	db: PrismaClient,
 	answers: CaseOverviewInput,
 	reference: string,
 	action?: string,
 	section?: string,
-	currentItemId?: string,
-	question?: string
+	currentItemId?: string
 ) {
-	if (question === COMMON_CONSTS.ASSESSOR_GATEWAY_2_QUESTION) {
-		await updateGateway2(db, { assessorName: answers.assessorName }, reference, question);
-		return true;
-	}
-	if (question === COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION) {
-		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, reference, question);
-		return true;
-	}
-	if (question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
-		await updateGateway3(
-			db,
-			{
-				programmeOfficerFirstName: answers.programmeOfficerFirstName,
-				programmeOfficerLastName: answers.programmeOfficerLastName,
-				programmeOfficerEmail: answers.programmeOfficerEmail
-			},
-			reference
-		);
-		return true;
-	}
-
 	const lpaName = (questions.lpa.options || []).find((opt: any) => opt.value === answers.lpa)?.text || '';
-	// Editing a contact's details (incl. changing that contact's LPA)
-	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
-		await db.contact.update({
-			where: { id: currentItemId },
-			data: buildContactData(answers, lpaName)
-		});
-		return true;
-	}
+	const { caseFields, nestedData } = splitOverviewAnswers(answers);
 
-	// Changing the LPA associated with the *case*:
-	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
-	if (question === COMMON_CONSTS.CHECK_LPAS_QUESTION && answers.lpa) {
-		await db.case.update({
-			where: { reference: reference },
-			data: {
-				lpas: {
-					connectOrCreate: {
-						where: {
-							lpaCode: answers.lpa
-						},
-						create: {
-							lpaCode: answers.lpa,
-							lpaName: lpaName
-						}
-					},
-					disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
-				}
+	const hasContactFields =
+		section === CONTACTS_SECTION ||
+		['firstName', 'lastName', 'phone', 'lpaContact', 'lpaCode'].some((key) => key in answers) ||
+		(Boolean(currentItemId) && 'email' in answers);
+	let updated = false;
+
+	await db.$transaction(async (tx) => {
+		let contactRecordChange;
+
+		if (hasContactFields && currentItemId) {
+			const contactData = buildContactData(answers, lpaName);
+			if (section === CONTACTS_SECTION && action === 'edit') {
+				contactRecordChange = await tx.contact.update({ where: { id: currentItemId }, data: contactData });
+			} else {
+				contactRecordChange = await tx.contact.upsert({
+					where: { id: currentItemId },
+					create: { ...contactData, cases: { connect: { reference } } },
+					update: contactData
+				});
 			}
-		});
-		return true;
-	}
+			updated = true;
+		}
 
-	if (question === COMMON_CONSTS.CHECK_CONTACT_DETAILS_QUESTION) {
-		if (!currentItemId) return false;
-		const contactData = buildContactData(answers, lpaName);
-		await db.contact.upsert({
-			where: { id: currentItemId },
-			create: {
-				...contactData,
-				cases: { connect: { reference: reference } }
-			},
-			update: contactData
-		});
-		return true;
-	}
+		const caseUpdate: Record<string, unknown> = { ...caseFields, ...buildNestedRelationUpdates(nestedData) };
+		if (answers.lpa) {
+			caseUpdate.lpas = {
+				connectOrCreate: {
+					where: { lpaCode: answers.lpa },
+					create: { lpaCode: answers.lpa, lpaName }
+				},
+				disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
+			};
+		}
 
-	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION) {
-		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_2_QUESTION) {
-		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_3_QUESTION) {
-		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
-		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, reference, question);
-	}
+		let caseRecordChange;
+		if (Object.keys(caseUpdate).length > 0) {
+			caseRecordChange = await tx.case.update({ where: { reference }, data: caseUpdate });
+			updated = true;
+		}
 
-	if (question === COMMON_CONSTS.QA_INSPECTOR_1_QUESTION) {
-		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.QA_INSPECTOR_2_QUESTION) {
-		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.QA_INSPECTOR_3_QUESTION) {
-		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, reference, question);
-	}
-
-	// Updating case (scalar) details + any newly added contact / LPA
-	const { ...scalars } = answers;
-
-	await db.case.update({
-		where: { reference: reference },
-		data: scalars
+		return {
+			contactRecordChange,
+			caseRecordChange
+		};
 	});
-	return true;
+
+	return updated;
 }
 
 async function resolveCaseIdFromReference(db: PrismaClient, reference: string): Promise<string> {
