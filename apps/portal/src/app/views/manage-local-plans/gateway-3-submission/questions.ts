@@ -263,6 +263,7 @@ const gateway3OptionalFileUploadQuestions = {
 		}
 	}
 };
+
 export const GW3_TEXT_INPUT_QUESTIONS = Object.fromEntries(
 	Object.entries(gateway3TextInputQuestions).map(([key, questionDef]) => [
 		key,

@@ -23,6 +23,14 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('optional-documents-section');
 	}
 
+	get submitGateway3Button() {
+		return cy.getByData('submit-gateway-3');
+	}
+
+	get readyToSubmitHeading() {
+		return cy.getByData('ready-to-submit-section');
+	}
+
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(gateway3SubmissionHeading);
@@ -33,6 +41,10 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 			.should('be.visible')
 			.and('contain.text', 'Save and come back later')
 			.and('have.attr', 'href', href);
+	}
+
+	verifySubmitGateway3Button() {
+		this.submitGateway3Button.should('be.visible').and('contain.text', 'Submit').and('have.attr', 'type', 'submit');
 	}
 }
 
