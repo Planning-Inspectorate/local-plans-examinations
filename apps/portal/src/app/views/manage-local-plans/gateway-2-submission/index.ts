@@ -2,22 +2,14 @@ import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
 import { buildGetJourney, question, validate, validationErrorHandler } from '@planning-inspectorate/dynamic-forms';
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import {
-	CHECK_ANSWERS_REDIRECT_QUERY,
-	CHECK_ANSWERS_REDIRECTS,
-	createGateway2Questions,
-	GW2QUESTIONS
-} from './questions.ts';
+import { createGateway2Questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
-	fileUploaderQuestionMiddleware,
-	type FileUploaderQuestionProps,
-	type FileUploaderSession,
-	type UploadedFile
+	fileUploaderQuestionMiddleware
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 import { getRoutePlanReference } from './utils.ts';
@@ -185,26 +177,23 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		)
 	);
 
-	router.get(
-		'/gateway-2-submission',
-		getJourneyResponse,
-		getJourney,
-		setAsEditingFromCya,
-		setGateway2CheckAnswersViewData,
-		buildGateway2CheckAnswersList()
-	);
+	// router.get(
+	// 	'/gateway-2-submission',
+	// 	getJourneyResponse,
+	// 	getJourney,
+	// 	setAsEditingFromCya,
+	// 	setGateway2CheckAnswersViewData,
+	// 	buildGateway2CheckAnswersList()
+	// );
 
-	router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission(), saveToDatabase);
+	// router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission(), saveToDatabase);
 
-	router.use(
-		'/:planReference/gateway-2-submission/application-declaration',
-		createApplicationDeclarationRoutes(service)
-	);
+	router.use('/application-declaration', createApplicationDeclarationRoutes(service));
 
-	router.use('/:planReference/gateway-2-submission/application-complete', createApplicationCompleteRoutes());
+	router.use('/application-complete', createApplicationCompleteRoutes());
 
 	router.get(
-		'/:planReference/gateway-2-submission',
+		'',
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,
@@ -213,16 +202,10 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		buildGateway2CheckAnswersList()
 	);
 
-	router.post(
-		'/:planReference/gateway-2-submission',
-		getJourneyResponseFromCase,
-		getJourney,
-		validateGateway2Submission(),
-		saveToDatabase
-	);
+	router.post('', getJourneyResponseFromCase, getJourney, validateGateway2Submission(), saveToDatabase);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question/upload-documents',
+		'/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
@@ -233,7 +216,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
+		'/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
 		deleteGateway2DocumentForCase
@@ -258,13 +241,13 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	// );
 
 	router.get(
-		'/:planReference/gateway-2-submission/download-document/:documentId',
+		'/download-document/:documentId',
 		getJourneyResponseFromCase,
 		asyncHandler(downloadGateway2Document(service))
 	);
 
 	router.get(
-		'/:planReference/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderQuestionMiddleware({
@@ -275,7 +258,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		validate,

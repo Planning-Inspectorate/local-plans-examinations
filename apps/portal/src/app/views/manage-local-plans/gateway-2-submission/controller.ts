@@ -21,6 +21,8 @@ import type { CaseModel } from '@pins/local-plans-database/src/client/models/Cas
 import { getRoutePlanReference } from './utils.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -42,7 +44,22 @@ type Gateway2FileUploadQuestion = FileUploaderQuestionProps & {
 	url: string;
 };
 
-type CaseWithGateway2Info = CaseModel & { gateway2Info?: Gateway2InfoModel | null };
+type Gateway2ReportDocument = {
+	guid: string;
+	name: string;
+	createdAt: Date;
+	latestDocumentVersion: {
+		originalFilename: string | null;
+		fileName: string | null;
+		dateCreated: Date | null;
+		isDeleted: boolean;
+	} | null;
+};
+
+type CaseWithGateway2Info = CaseModel & {
+	gateway2Info?: Gateway2InfoModel | null;
+	documents?: Gateway2ReportDocument[];
+};
 // Ordered list for loading each persisted upload when the case page opens.
 export const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
@@ -175,7 +192,27 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		const currentCase = await service.db.case.findUnique({
 			where: { reference: planReference },
 			include: {
-				gateway2Info: true
+				gateway2Info: true,
+				documents: {
+					where: {
+						documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+						isDeleted: false
+					},
+					orderBy: { createdAt: 'asc' },
+					select: {
+						guid: true,
+						name: true,
+						createdAt: true,
+						latestDocumentVersion: {
+							select: {
+								originalFilename: true,
+								fileName: true,
+								dateCreated: true,
+								isDeleted: true
+							}
+						}
+					}
+				}
 			}
 		});
 
@@ -243,6 +280,26 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	if (currentCase?.gateway2Date) {
 		res.locals.targetDate = formatDisplayDate(currentCase.gateway2Date);
 	}
+
+	res.locals.gateway2ReportFiles = buildGateway2ReportFilesViewModel(
+		planReference,
+		currentCase?.gateway2Info?.reportIssuedDate
+			? (currentCase.documents ?? []).flatMap((document) => {
+					const version = document.latestDocumentVersion;
+					if (!version || version.isDeleted) {
+						return [];
+					}
+
+					return [
+						{
+							fileName: version.originalFilename ?? version.fileName ?? document.name,
+							documentGuid: document.guid,
+							dateCreated: version.dateCreated ?? document.createdAt
+						}
+					];
+				})
+			: []
+	);
 }
 
 export function buildGateway2CheckAnswersList(): RequestHandler {

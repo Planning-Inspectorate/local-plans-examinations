@@ -1,5 +1,9 @@
 import { formatDisplayDate } from '#util/date.ts';
-import type { Gateway2ReportFile } from '../../types.ts';
+export interface Gateway2ReportFile {
+	fileName: string;
+	documentGuid: string;
+	dateCreated?: Date;
+}
 
 export type Gateway2ReportFileViewModel = {
 	fileName: string;

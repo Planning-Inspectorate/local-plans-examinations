@@ -6,6 +6,7 @@ import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
 import { GW2QUESTIONS } from './questions.ts';
 import { syncGateway2UploadAnswer, buildSubmittedGateway2View } from './controller.ts';
+import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
 	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
 
