@@ -101,42 +101,43 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop';
 	const gateway2Url = req.baseUrl + '/gateway-2';
+	const workshopId = Number(String(req.url).split('-').at(-1));
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
 		sections: [
 			new Section('Workshop', 'workshop')
-				.addQuestion(questions.gateway2WorkshopDateAndTime)
-				.addQuestion(questions.gateway2WorkshopExpectedDays)
-				.addQuestion(questions.gateway2WorkshopLocationType)
-				.addQuestion(questions.gateway2WorkshopLocationKnown)
+				.addQuestion(questions[`gateway2WorkshopDateAndTime-${workshopId}`])
+				.addQuestion(questions[`gateway2WorkshopExpectedDays-${workshopId}`])
+				.addQuestion(questions[`gateway2WorkshopLocationType-${workshopId}`])
+				.addQuestion(questions[`gateway2WorkshopLocationKnown-${workshopId}`])
 				.withCondition((response) =>
 					questionsHaveAnswers(
 						response,
 						[
-							[questions.gateway2WorkshopLocationType, 'in-person'],
-							[questions.gateway2WorkshopLocationType, 'hybrid']
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'in-person'],
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'hybrid']
 						],
 						{ logicalCombinator: 'or' }
 					)
 				)
-				.addQuestion(questions.gateway2WorkshopVenueAddress)
-				.withCondition(whenQuestionHasAnswer(questions.gateway2WorkshopLocationKnown, 'yes'))
-				.addQuestion(questions.gateway2RemoteMeetingLinkKnown)
+				.addQuestion(questions[`gateway2WorkshopVenueAddress-${workshopId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`gateway2WorkshopLocationKnown-${workshopId}`], 'yes'))
+				.addQuestion(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`])
 				.withCondition((response) =>
 					questionsHaveAnswers(
 						response,
 						[
-							[questions.gateway2WorkshopLocationType, 'remote'],
-							[questions.gateway2WorkshopLocationType, 'hybrid']
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'remote'],
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'hybrid']
 						],
 						{ logicalCombinator: 'or' }
 					)
 				)
-				.addQuestion(questions.gateway2RemoteMeetingLink)
-				.withCondition(whenQuestionHasAnswer(questions.gateway2RemoteMeetingLinkKnown, 'yes'))
+				.addQuestion(questions[`gateway2RemoteMeetingLink-${workshopId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`], 'yes'))
 		],
-		taskListUrl: 'check-your-answers',
+		taskListUrl: `check-your-answers-${workshopId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/workshop-check-your-answers.njk',
 		journeyTitle: 'Set up workshop',
@@ -145,6 +146,19 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		initialBackLink: gateway2Url,
 		response
 	});
+	console.log('gw2 workshop answers');
+	console.log(response.answers);
+	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+	const workshopAnswers: Record<string, any>[] = response.answers.workshops as object[];
+	const currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	if (currentWorkshopAnswers) {
+		Object.entries(currentWorkshopAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${workshopId}`] = value;
+			//response.answers[key] = value
+		});
+		response.answers[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`] =
+			workshopAnswers[workshopId - 1].workshopExpectedDays;
+	}
 	return journey;
 }
 
@@ -172,6 +186,8 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway2Url,
 		response
 	});
+	console.log('gw2 answers');
+	console.log(response.answers);
 	return getBacklinks(journey, gateway2Url);
 }
 

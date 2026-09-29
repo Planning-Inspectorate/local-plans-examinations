@@ -13,3 +13,17 @@ export function sortGateway3Submissions(
 		return a.completionDate.getTime() - b.completionDate.getTime();
 	});
 }
+
+/**
+ * Immutably sort the given list submission details, with null completionDate values at the end
+ * @param dates The submissions to sort
+ * @returns The sorted dates, with undefined/null completionDate values at the end
+ */
+export function sortGateway2Workshops(submissions: { workshopDate: Date | null; [key: string]: any }[]) {
+	return submissions.toSorted((a, b) => {
+		if (!(a.workshopDate || b.workshopDate)) return 0;
+		if (!a.workshopDate) return 1;
+		if (!b.workshopDate) return -1;
+		return a.workshopDate.getTime() - b.workshopDate.getTime();
+	});
+}
