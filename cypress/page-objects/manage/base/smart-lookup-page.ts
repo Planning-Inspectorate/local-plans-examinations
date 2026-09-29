@@ -24,12 +24,13 @@ export class SmartLookupPage extends BasePage {
 	}
 
 	enterLookupAnswer(answer: string) {
-		this.enterSmartLookUp(this.fieldId, this.listBoxId, answer);
+		this.smartLookupInput.clearAndWrite(answer);
+		cy.get(`#${this.listBoxId}`).contains('[role="option"]', answer).should('be.visible').click();
 		this.saveAndContinue();
 	}
 
 	verifyLookupAnswer(answer: string) {
-		this.smartLookUpPopulated(this.fieldId, answer);
+		this.smartLookupInput.should('have.value', answer);
 	}
 
 	clearLookupAnswer() {

@@ -51,12 +51,12 @@ describe('Gateway 1 updates', () => {
 		gateway1Page.openActionLinkFor(signedSLA.row);
 		gateway1SignedSLAPage.verifyLoaded();
 
-		gateway1SignedSLAPage.uploadAndVerifyFile(signedSLA.fileName, signedSLA.fieldName);
+		gateway1SignedSLAPage.uploadAndVerifyFile(signedSLA.fileName);
 
 		gateway1SignedSLAPage.removeFile(signedSLA.fileName);
 		gateway1SignedSLAPage.verifyFileNotUploaded(signedSLA.fileName);
 
-		gateway1SignedSLAPage.uploadAndVerifyFile(signedSLA.updatedFileName, signedSLA.fieldName);
+		gateway1SignedSLAPage.uploadAndVerifyFile(signedSLA.updatedFileName);
 
 		gateway1SignedSLAPage.saveAndReturn();
 		gateway1SignedSLACheckPage.verifyLoaded();

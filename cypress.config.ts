@@ -124,12 +124,6 @@ export default defineConfig({
 				},
 				waitForNotifyEmailByReference,
 				waitForNotifyEmailsByReference,
-				seedOtp: async () => {
-					const stdout = await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts');
-					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
-					const result = JSON.parse(jsonLine || '{}');
-					return result.otp || null;
-				},
 				clearDb: async () => {
 					if (environmentSmoke) {
 						return null;

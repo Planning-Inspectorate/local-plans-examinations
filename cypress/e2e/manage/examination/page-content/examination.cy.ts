@@ -1,4 +1,5 @@
-import { openSeededExaminationPage } from '../../../../flows/manage/examination-flow.ts';
+import { openExaminationPage } from '../../../../flows/manage/examination-flow.ts';
+import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import {
 	actualSubmissionDate,
 	examinationWebsite,
@@ -22,15 +23,22 @@ import {
 } from '../../../../page-objects/manage/examination/index.ts';
 
 describe('Examination page content', () => {
-	beforeEach(() => {
+	let seededManageCase: SeededManageCase;
+
+	before(() => {
 		cy.task('clearDb');
+		cy.task<SeededManageCase>('seedDb').then((result) => {
+			seededManageCase = result;
+		});
+	});
+
+	beforeEach(() => {
+		openExaminationPage(seededManageCase);
 	});
 
 	after(() => cy.task('clearDb'));
 
 	it('displays the Examination content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Examination');
 		examinationPage.verifyExpectedRows(examinationSubmissionDates);
@@ -39,16 +47,12 @@ describe('Examination page content', () => {
 	});
 
 	it('loads an Examination date page with the saved answer', { tags: ['regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.openActionLinkFor(actualSubmissionDate.row);
 
 		actualSubmissionDatePage.verifyLoaded(actualSubmissionDate.input);
 	});
 
 	it('displays the Inspectors content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Inspectors');
 		examinationPage.verifyExpectedRows(examiningInspectors);
@@ -57,7 +61,6 @@ describe('Examination page content', () => {
 	});
 
 	it('loads an Examining Inspector page with the saved answer', { tags: ['regression'] }, () => {
-		openSeededExaminationPage();
 		examinationPage.openActionLinkFor(examiningInspector1.row);
 
 		examiningInspector1Page.verifyLoaded();
@@ -65,8 +68,6 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the Examination website content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Examination website');
 		examinationPage.verifyExpectedRows([examinationWebsite]);
@@ -75,16 +76,12 @@ describe('Examination page content', () => {
 	});
 
 	it('loads the Examination website page with no answer', { tags: ['regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.openActionLinkFor(examinationWebsite.row);
 
 		examinationWebsitePage.verifyLoaded('');
 	});
 
 	it('displays the Examination Letters content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Letters');
 		examinationPage.verifyExpectedRows(examinationLetterDates);
@@ -93,16 +90,12 @@ describe('Examination page content', () => {
 	});
 
 	it('loads a Letter date page with the saved answer', { tags: ['regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.openActionLinkFor(letterSentToMHCLGDate.row);
 
 		letterSentToMHCLGDatePage.verifyLoaded(letterSentToMHCLGDate.input);
 	});
 
 	it('displays the Examination Fact Check content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Fact Check');
 		examinationPage.verifyExpectedRows(examinationFactCheckDates);
@@ -111,16 +104,12 @@ describe('Examination page content', () => {
 	});
 
 	it('loads a Fact Check date page with the saved answer', { tags: ['regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.openActionLinkFor(factCheckDateReceivedFromInspector.row);
 
 		factCheckDateReceivedFromInspectorPage.verifyLoaded(factCheckDateReceivedFromInspector.input);
 	});
 
 	it('displays the QA content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('QA');
 		examinationPage.verifyExpectedRows(QAExpectedAnswers);
@@ -129,8 +118,6 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the Examination Important Dates content for a case', { tags: ['smoke', 'regression'] }, () => {
-		openSeededExaminationPage();
-
 		examinationPage.verifyBackLink('/');
 		examinationPage.verifySectionHeading('Important dates for this plan');
 		examinationPage.verifyExpectedRows(examinationImportantDates);
