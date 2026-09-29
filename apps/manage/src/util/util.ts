@@ -19,11 +19,11 @@ export function sortGateway3Submissions(
  * @param dates The submissions to sort
  * @returns The sorted dates, with undefined/null completionDate values at the end
  */
-export function sortGateway2Workshops(submissions: { workshopDate: Date | null; [key: string]: any }[]) {
-	return submissions.toSorted((a, b) => {
-		if (!(a.workshopDate || b.workshopDate)) return 0;
-		if (!a.workshopDate) return 1;
-		if (!b.workshopDate) return -1;
-		return a.workshopDate.getTime() - b.workshopDate.getTime();
+export function sortGateway2Workshops(workshops: { createdDate: Date; [key: string]: any }[]) {
+	return workshops.toSorted((a, b) => {
+		if (!(a.createdDate || b.createdDate)) return 0;
+		if (!a.createdDate) return 1;
+		if (!b.createdDate) return -1;
+		return a.createdDate.getTime() - b.createdDate.getTime();
 	});
 }

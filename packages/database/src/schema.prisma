@@ -157,6 +157,7 @@ model Gateway2Workshop {
   id                        String        @id @default(uuid()) @db.UniqueIdentifier
   gateway2Info              Gateway2Info? @relation(fields: [gateway2InfoId], references: [id])
   gateway2InfoId            String?       @db.UniqueIdentifier
+  createdDate               DateTime
   workshopDate              DateTime?
   workshopTime              String?
   workshopEndTime           String?

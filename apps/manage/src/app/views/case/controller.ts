@@ -94,6 +94,7 @@ interface Gateway2Input {
 	workshopExpectedDaysKnown_workshopExpectedDays?: string;
 	workshops?: {
 		id: string;
+		createdDate: Date;
 		workshopDate: Date | null;
 		workshopTime: string | null;
 		workshopEndTime: string | null;
@@ -276,7 +277,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					console.log(workshopId);
 					console.log(workshopDetails.length);
 					if (workshopId > workshopDetails.length) {
-						workshopDetails.push({ workshopDate: null });
+						workshopDetails.push({ workshopDate: null, createdDate: new Date() });
 					}
 					const workshopFieldsToAnswerMap = {
 						workshopDate: `workshopDate-${workshopId}`,
@@ -541,11 +542,12 @@ export async function updateGateway2(
 	const createData: Record<string, any> = { ...answers };
 	const updateData: Record<string, any> = { ...answers };
 	if ('workshops' in answers) {
-		const workshops = answers.workshops;
+		const workshops = sortGateway2Workshops(answers.workshops as { createdDate: Date; [key: string]: any }[]);
 		if (!workshops) {
 			throw Error('No workshop entries found');
 		}
 		const workshopsCleaned = Object.values(workshops).map((e) => ({
+			createdDate: e.createdDate,
 			workshopDate: e.workshopDate,
 			workshopTime: e.workshopTime,
 			workshopEndTime: e.workshopEndTime,
