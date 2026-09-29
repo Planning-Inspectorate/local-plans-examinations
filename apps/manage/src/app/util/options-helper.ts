@@ -42,6 +42,40 @@ export async function retrieveCaseOfficers(
 	return caseOfficers.map((m) => ({ value: m.id, text: m.displayName }));
 }
 
+/**
+ * Loads Local Planning Authority (LPA) options either from a database or a predefined list.
+ *
+ * @param {ManageService} service - The service instance containing the database and other configurations.
+ * @return {Promise<LpaOption[]>} A promise that resolves to an array of LPA options. Each option includes a value and text property.
+ */
+export async function loadLpaOptions(service: ManageService, addEmptyValue: boolean): Promise<LpaOption[]> {
+	const { db } = service;
+
+	if (service.authDisabled) {
+		return retrieveDefaultLpaOptions();
+	}
+
+	const authorities = await db.authority.findMany({});
+
+	if (authorities.length > 0) {
+		if (addEmptyValue) {
+			return [
+				{ value: '', text: '' },
+				...authorities.map((authority) => ({
+					value: authority.pinsCode,
+					text: authority.name
+				}))
+			];
+		}
+		return authorities.map((authority) => ({
+			value: authority.pinsCode,
+			text: authority.name
+		}));
+	}
+
+	return retrieveDefaultLpaOptions();
+}
+
 export function retrieveDefaultCaseOfficers() {
 	return [
 		{ value: '', text: '' },
@@ -51,38 +85,12 @@ export function retrieveDefaultCaseOfficers() {
 	];
 }
 
-/**
- * Loads Local Planning Authority (LPA) options either from a database or a predefined list.
- *
- * @param {ManageService} service - The service instance containing the database and other configurations.
- * @return {Promise<LpaOption[]>} A promise that resolves to an array of LPA options. Each option includes a value and text property.
- */
-export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
-	const { db } = service;
-
-	if (service.authDisabled) {
-		return [
-			{
-				value: 'lpa-1',
-				text: 'Local Planning Authority 1'
-			},
-			{
-				value: 'lpa-2',
-				text: 'Local Planning Authority 2'
-			},
-			{
-				value: 'lpa-3',
-				text: 'Local Planning Authority 3'
-			}
-		];
-	}
-
-	const authorities = await db.authority.findMany({
-		orderBy: { name: 'asc' }
-	});
-
-	return authorities.map((authority) => ({
-		value: authority.pinsCode,
-		text: authority.name
-	}));
+function retrieveDefaultLpaOptions(): LpaOption[] {
+	return [
+		{ value: '', text: '' },
+		{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+		{ value: 'lpa-2', text: 'Local Planning Authority 2' },
+		{ value: 'lpa-3', text: 'Local Planning Authority 3' },
+		{ value: 'lpa-4', text: 'Local Planning Authority 4' }
+	];
 }
