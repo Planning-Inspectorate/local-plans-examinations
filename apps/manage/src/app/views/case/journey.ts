@@ -10,6 +10,7 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { sortGateway2Workshops } from '#util/util.ts';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions, req);
@@ -149,7 +150,9 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	console.log('gw2 workshop answers');
 	console.log(response.answers);
 	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-	const workshopAnswers: Record<string, any>[] = response.answers.workshops as object[];
+	const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
+		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+	) as object[];
 	const currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	if (currentWorkshopAnswers) {
 		Object.entries(currentWorkshopAnswers).forEach(([key, value]) => {
@@ -186,6 +189,9 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway2Url,
 		response
 	});
+	response.answers.workshops = sortGateway2Workshops(
+		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+	);
 	console.log('gw2 answers');
 	console.log(response.answers);
 	return getBacklinks(journey, gateway2Url);
