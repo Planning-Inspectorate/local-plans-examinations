@@ -4,7 +4,7 @@ import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
-import * as fs from 'fs';
+import { existsSync, rmSync, mkdirSync } from 'fs';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -139,10 +139,11 @@ export default defineConfig({
 					return null;
 				},
 				clearDownloads: () => {
-					const downloadsFolderPath = './cypress/downloads';
-					if (fs.existsSync(downloadsFolderPath)) {
-						fs.rmSync(downloadsFolderPath, { recursive: true, force: true });
+					const downloadsFolderPath = config.downloadsFolder;
+					if (existsSync(downloadsFolderPath)) {
+						rmSync(downloadsFolderPath, { recursive: true, force: true });
 					}
+					mkdirSync(downloadsFolderPath, { recursive: true });
 					return null;
 				}
 			});
