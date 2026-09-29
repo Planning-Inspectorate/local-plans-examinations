@@ -12,7 +12,7 @@ import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/cust
 import { fileUploadQuestionProperties } from './questions.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
-import { getPageLoadHandlerForPage } from './overview-data-handlers/overview-page-load-handler-factory.ts';
+import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
@@ -602,9 +602,13 @@ export function trimStringValues<T extends object>(input: T): T {
 	return trimmed;
 }
 
-export function buildGetJourneyMiddleware(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function buildGetJourneyMiddleware(
+	service: ManageService,
+	journeyId: string,
+	pageLoadHandler: new () => OverviewPageLoadHandler
+): AsyncRequestHandler {
 	return async (req, res, next) => {
-		const { db, logger } = service;
+		const { db } = service;
 		const reference = getParam(req.params.reference);
 
 		const caseRecord = await db.case.findUnique({
@@ -640,16 +644,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;
 
-		const currentPage = getFirstSegmentOfUrl(req.url);
-		let handlerClass;
-		try {
-			handlerClass = getPageLoadHandlerForPage(currentPage);
-		} catch {
-			logger.error(`Unknown page ${currentPage} for case ${reference}`);
-			return;
-		}
-
-		const handler = new handlerClass();
+		const handler = new pageLoadHandler();
 		await handler.handle({ req, res, next, service, journeyId, reference, caseRecord });
 	};
 }
