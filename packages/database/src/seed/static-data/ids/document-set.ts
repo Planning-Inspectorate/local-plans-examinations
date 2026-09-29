@@ -17,7 +17,6 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'g2-draft-stat-comp',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'g2-draft-stat-sound',
 	G2_REPORT: 'g2-report',
-	G2_WORKSHOP: 'g2-workshop',
 	...GATEWAY_3_DOCUMENT_SET_IDS,
 
 	// Gateway 3 portal required documents
@@ -30,6 +29,8 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'g3-cons-content-sum',
 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'g3-cons-plan-summ',
 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'g3-practical-arrng',
+
+	G2_WORKSHOP_DOCUMENTS: 'g2-workshop-docs',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
@@ -49,7 +50,6 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_DRAFT_STATEMENT_COMPLIANCE: 'draft-stat-compliance',
 	G2_DRAFT_STATEMENT_SOUNDNESS: 'draft-stat-soundness',
 	G2_REPORT: 'gateway-2-report',
-	G2_WORKSHOP: 'gateway-2-workshop',
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 
 	// Gateway 3 portal required documents
@@ -62,6 +62,8 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'consultation-content-evidence-summary',
 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'consultation-proposed-plan-summary',
 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'practical-arrangements-statement',
+
+	G2_WORKSHOP_DOCUMENTS: 'gateway-2-workshop-documents',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',
@@ -79,7 +81,7 @@ export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_DRAFT_STATEMENT_COMPLIANCE,
 	DOCUMENT_SET_ID.G2_DRAFT_STATEMENT_SOUNDNESS,
 	DOCUMENT_SET_ID.G2_REPORT,
-	DOCUMENT_SET_ID.G2_WORKSHOP,
+	DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS,
 	DOCUMENT_SET_ID.G2_NOTICE_OF_INTENTION,
 	DOCUMENT_SET_ID.G2_SCOPING_CONSULATATION_DOCS,
 	DOCUMENT_SET_ID.G2_CONSULTATION_SUMMARY,

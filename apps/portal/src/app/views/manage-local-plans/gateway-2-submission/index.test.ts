@@ -155,7 +155,7 @@ describe('Gateway 2 summary view data', () => {
 					{
 						guid: 'workshop-guid',
 						name: 'Workshop agenda',
-						documentSetId: DOCUMENT_SET_ID.G2_WORKSHOP,
+						documentSetId: DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS,
 						createdAt: new Date('2026-05-08T10:00:00.000Z'),
 						latestDocumentVersion: {
 							originalFilename: 'workshop-agenda.pdf',

@@ -224,7 +224,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				documents: {
 					where: {
 						documentSetId: {
-							in: [DOCUMENT_SET_ID.G2_REPORT, DOCUMENT_SET_ID.G2_WORKSHOP]
+							in: [DOCUMENT_SET_ID.G2_REPORT, DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS]
 						},
 						isDeleted: false
 					},
@@ -337,7 +337,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	res.locals.workshopDocuments = buildGateway2ReportFilesViewModel(
 		planReference,
 		documents.flatMap((document) => {
-			if (document.documentSetId !== DOCUMENT_SET_ID.G2_WORKSHOP) {
+			if (document.documentSetId !== DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS) {
 				return [];
 			}
 

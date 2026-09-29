@@ -134,11 +134,11 @@ export const DOCUMENT_SET = [
 		displayOrder: 16
 	},
 	{
-		id: DOCUMENT_SET_ID.G2_WORKSHOP,
+		id: DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Gateway 2 workshop documents',
-		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP,
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP_DOCUMENTS,
 		displayOrder: 17
 	},
 	{
