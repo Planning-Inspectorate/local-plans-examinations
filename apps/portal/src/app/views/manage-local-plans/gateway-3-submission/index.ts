@@ -26,7 +26,10 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		lusca,
 		redirectAfterCaseQuestionEdit,
 		validateGateway3Submission,
-		getDeclarationPage
+		guardDeclarationPage,
+		getDeclarationPage,
+		postDeclarationPage,
+		getSubmissionCompletePage
 	} = buildGateway3Middleware(service);
 
 	// Landing page (case-scoped)
@@ -51,8 +54,22 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		}
 	);
 
-	// Declaration page (case-scoped)
-	router.get('/:planReference/gateway-3-submission/declaration', asyncHandler(getDeclarationPage));
+	// Declaration page (case-scoped) — guarded: requires all required answers
+	router.get(
+		'/:planReference/gateway-3-submission/declaration',
+		getJourneyResponseFromCase,
+		guardDeclarationPage,
+		asyncHandler(getDeclarationPage)
+	);
+	router.post(
+		'/:planReference/gateway-3-submission/declaration',
+		getJourneyResponseFromCase,
+		guardDeclarationPage,
+		postDeclarationPage
+	);
+
+	// Submission complete page (case-scoped)
+	router.get('/:planReference/gateway-3-submission/submission-complete', getSubmissionCompletePage);
 
 	// Upload documents (case-scoped)
 	router.post(

@@ -4,6 +4,10 @@ import {
 	buildGetJourneyResponseFromCase,
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
+	buildGuardDeclarationPage,
+	buildGetDeclarationPage,
+	buildPostDeclarationPage,
+	buildGetSubmissionCompletePage,
 	buildValidateGateway3Submission,
 	handleMulterFileSizeError,
 	redirectAfterCaseQuestionEdit,
@@ -375,6 +379,147 @@ describe('redirectAfterCaseQuestionEdit', () => {
 	});
 });
 
+describe('buildGuardDeclarationPage', () => {
+	const allRequiredAnswers = {
+		examinationWebsite: 'https://example.com',
+		proposedLocalPlan: [{ fileName: 'plan.pdf' }],
+		mapOfPolicies: [{ fileName: 'map.pdf' }],
+		statementOfCompliance: [{ fileName: 'compliance.pdf' }],
+		statementOfSoundness: [{ fileName: 'soundness.pdf' }],
+		consultationEngagementSummary: [{ fileName: 'engage.pdf' }],
+		scopingConsultationSummary: [{ fileName: 'scoping.pdf' }],
+		consultationContentEvidenceSummary: [{ fileName: 'content.pdf' }],
+		consultationProposedPlanSummary: [{ fileName: 'consultation.pdf' }],
+		practicalArrangementsStatement: [{ fileName: 'practical.pdf' }]
+	};
+
+	it('calls next when all required answers are present', () => {
+		const handler = buildGuardDeclarationPage();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const res = {
+			locals: { journeyResponse: { answers: allRequiredAnswers } },
+			redirect: mock.fn()
+		} as unknown as Response;
+		let called = false;
+		const next = () => {
+			called = true;
+		};
+
+		handler(req, res, next as NextFunction);
+
+		assert.strictEqual(called, true);
+		assert.strictEqual((res.redirect as ReturnType<typeof mock.fn>).mock.callCount(), 0);
+	});
+
+	it('redirects to the submission page when required answers are missing', () => {
+		const handler = buildGuardDeclarationPage();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		let redirectUrl = '';
+		const res = {
+			locals: { journeyResponse: { answers: {} } },
+			redirect: (url: string) => {
+				redirectUrl = url;
+			}
+		} as unknown as Response;
+		let called = false;
+		const next = () => {
+			called = true;
+		};
+
+		handler(req, res, next as NextFunction);
+
+		assert.strictEqual(called, false);
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission');
+	});
+
+	it('redirects to the submission page when journeyResponse is missing', () => {
+		const handler = buildGuardDeclarationPage();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		let redirectUrl = '';
+		const res = {
+			locals: {},
+			redirect: (url: string) => {
+				redirectUrl = url;
+			}
+		} as unknown as Response;
+
+		handler(req, res, (() => {}) as NextFunction);
+
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission');
+	});
+});
+
+describe('buildGetDeclarationPage', () => {
+	it('renders the declaration page with correct title and back link', () => {
+		const handler = buildGetDeclarationPage();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('declaration/declaration.njk'));
+		assert.strictEqual(data.pageTitle, "Are you sure you're ready to submit?");
+		assert.strictEqual(data.pageHeading, "Are you sure you're ready to submit?");
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001/gateway-3-submission');
+		assert.strictEqual(data.goBackUrl, '/manage-local-plans/PLAN-001/gateway-3-submission');
+	});
+
+	it('sets backLinkUrl and goBackUrl to undefined when no plan reference', () => {
+		const handler = buildGetDeclarationPage();
+		const req = { params: {} } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const [, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.strictEqual(data.backLinkUrl, undefined);
+		assert.strictEqual(data.goBackUrl, undefined);
+	});
+});
+
+describe('buildPostDeclarationPage', () => {
+	it('redirects to the submission-complete page', () => {
+		const handler = buildPostDeclarationPage();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+});
+
+describe('buildGetSubmissionCompletePage', () => {
+	it('renders the submission complete page with plan overview link', () => {
+		const handler = buildGetSubmissionCompletePage();
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('submission-complete.njk'));
+		assert.strictEqual(data.pageTitle, 'Submission complete');
+		assert.strictEqual(data.pageHeading, 'Submission complete');
+		assert.strictEqual(data.planOverviewUrl, '/manage-local-plans/PLAN-001');
+	});
+
+	it('falls back to /manage-local-plans when no plan reference', () => {
+		const handler = buildGetSubmissionCompletePage();
+		const req = { params: {} } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const [, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.strictEqual(data.planOverviewUrl, '/manage-local-plans');
+	});
+});
+
 describe('buildGateway3Middleware', () => {
 	it('returns all expected middleware handlers', () => {
 		const mockService = {
@@ -410,6 +555,9 @@ describe('buildGateway3Middleware', () => {
 		assert.strictEqual(typeof middleware.validationErrorHandler, 'function');
 		assert.strictEqual(typeof middleware.question, 'function');
 		assert.strictEqual(typeof middleware.redirectAfterCaseQuestionEdit, 'function');
+		assert.strictEqual(typeof middleware.guardDeclarationPage, 'function');
+		assert.strictEqual(typeof middleware.postDeclarationPage, 'function');
+		assert.strictEqual(typeof middleware.getSubmissionCompletePage, 'function');
 	});
 
 	it('uploadGateway3DocumentForCase returns 404 for unknown question URL', () => {
