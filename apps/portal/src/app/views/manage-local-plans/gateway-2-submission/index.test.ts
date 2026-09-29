@@ -2,8 +2,9 @@ import assert from 'node:assert';
 import type { Request } from 'express';
 import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
-import { syncGateway2UploadAnswer, buildSubmittedGateway2View } from './index.ts';
+import { syncGateway2UploadAnswer, buildSubmittedGateway2View, setGateway2CheckAnswersViewLocals } from './index.ts';
 import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
 import { GW2QUESTIONS } from './questions.ts';
@@ -70,6 +71,116 @@ describe('Gateway 2 submission check answers page', () => {
 		assert.ok(html.includes('Gateway 2 report'));
 		assert.ok(html.includes('gateway-2-report.pdf'));
 		assert.ok(html.includes('(shared on 24 September 2026)'));
+	});
+
+	it('renders the Gateway 2 report beneath the available workshop details', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			targetDate: '21 July 2026',
+			gateway2ReportFiles: [{ fileName: 'gateway-2-report.pdf' }],
+			workshopVenue: 'Virtual',
+			workshopDateAndTime: '19 May 2026 at 10:00',
+			workshopDocuments: [
+				{
+					fileName: 'workshop-agenda.pdf',
+					href: '/manage-local-plans/PLAN-001/gateway-2-submission/download-document/workshop-guid',
+					sharedDate: '8 May 2026'
+				}
+			],
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		const reportPosition = html.indexOf('data-cy="gateway-2-report-section"');
+		const workshopPosition = html.indexOf('data-cy="gateway-2-workshop-section"');
+		assert.ok(workshopPosition >= 0 && reportPosition > workshopPosition);
+		assert.ok(html.includes('Workshop venue'));
+		assert.ok(html.includes('Virtual'));
+		assert.ok(html.includes('Workshop date and time'));
+		assert.ok(html.includes('19 May 2026 at 10:00'));
+		assert.ok(html.includes('Workshop documents'));
+		assert.ok(html.includes('workshop-agenda.pdf'));
+		assert.ok(html.includes('(shared on 8 May 2026)'));
+	});
+
+	it('renders only the workshop rows that have data', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			workshopVenue: 'Virtual',
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('Workshop venue'));
+		assert.ok(!html.includes('Workshop date and time'));
+		assert.ok(!html.includes('Workshop documents'));
+	});
+});
+
+describe('Gateway 2 summary view data', () => {
+	it('separates report and workshop documents and formats workshop details', () => {
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				planTitle: 'East Borough Local Plan',
+				gateway2Info: {
+					expectedDate: null,
+					reportIssuedDate: new Date('2026-05-08T09:00:00.000Z'),
+					workshopVenue: 'Virtual',
+					workshopDate: new Date('2026-05-19T10:00:00')
+				},
+				documents: [
+					{
+						guid: 'report-guid',
+						name: 'Gateway 2 report',
+						documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+						createdAt: new Date('2026-05-08T09:00:00.000Z'),
+						latestDocumentVersion: {
+							originalFilename: 'gateway-2-report.pdf',
+							fileName: 'stored-report.pdf',
+							dateCreated: new Date('2026-05-08T09:00:00.000Z'),
+							isDeleted: false
+						}
+					},
+					{
+						guid: 'workshop-guid',
+						name: 'Workshop agenda',
+						documentSetId: DOCUMENT_SET_ID.G2_WORKSHOP,
+						createdAt: new Date('2026-05-08T10:00:00.000Z'),
+						latestDocumentVersion: {
+							originalFilename: 'workshop-agenda.pdf',
+							fileName: 'stored-workshop.pdf',
+							dateCreated: new Date('2026-05-08T10:00:00.000Z'),
+							isDeleted: false
+						}
+					}
+				]
+			}
+		} as any;
+		const res = { locals: {} } as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		assert.deepStrictEqual(
+			res.locals.gateway2ReportFiles.map((file: { fileName: string }) => file.fileName),
+			['gateway-2-report.pdf']
+		);
+		assert.deepStrictEqual(
+			res.locals.workshopDocuments.map((file: { fileName: string }) => file.fileName),
+			['workshop-agenda.pdf']
+		);
+		assert.strictEqual(res.locals.workshopVenue, 'Virtual');
+		assert.strictEqual(res.locals.workshopDateAndTime, '19 May 2026 at 10:00');
 	});
 });
 

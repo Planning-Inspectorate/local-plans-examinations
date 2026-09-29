@@ -1,0 +1,39 @@
+{% macro gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) %}
+    {% if workshopVenue or workshopDateAndTime or (workshopDocuments and workshopDocuments.length) %}
+        <dl class="govuk-summary-list" data-cy="gateway-2-workshop-section">
+            {% if workshopVenue %}
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Workshop venue</dt>
+                    <dd class="govuk-summary-list__value">{{ workshopVenue }}</dd>
+                </div>
+            {% endif %}
+
+            {% if workshopDateAndTime %}
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Workshop date and time</dt>
+                    <dd class="govuk-summary-list__value">{{ workshopDateAndTime }}</dd>
+                </div>
+            {% endif %}
+
+            {% if workshopDocuments and workshopDocuments.length %}
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Workshop documents</dt>
+                    <dd class="govuk-summary-list__value">
+                        {% if workshopDocuments.length > 1 %}<ul class="govuk-list">{% endif %}
+                        {% for document in workshopDocuments %}
+                            {% if workshopDocuments.length > 1 %}<li>{% endif %}
+                            {% if document.href %}
+                                <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                            {% else %}
+                                {{ document.fileName }}
+                            {% endif %}
+                            {% if document.sharedDate %}<span class="govuk-body"> (shared on {{ document.sharedDate }})</span>{% endif %}
+                            {% if workshopDocuments.length > 1 %}</li>{% endif %}
+                        {% endfor %}
+                        {% if workshopDocuments.length > 1 %}</ul>{% endif %}
+                    </dd>
+                </div>
+            {% endif %}
+        </dl>
+    {% endif %}
+{% endmacro %}

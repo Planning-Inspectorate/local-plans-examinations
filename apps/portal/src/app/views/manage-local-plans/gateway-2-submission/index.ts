@@ -45,9 +45,10 @@ import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/mo
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
 
-type Gateway2ReportDocument = {
+type Gateway2SummaryDocument = {
 	guid: string;
 	name: string;
+	documentSetId: string;
 	createdAt: Date;
 	latestDocumentVersion: {
 		originalFilename: string | null;
@@ -59,7 +60,7 @@ type Gateway2ReportDocument = {
 
 type CaseWithGateway2Info = CaseModel & {
 	gateway2Info?: Gateway2InfoModel | null;
-	documents?: Gateway2ReportDocument[];
+	documents?: Gateway2SummaryDocument[];
 };
 import { getRoutePlanReference } from './utils.ts';
 import { createApplicationCompleteRoutes } from './application-complete/index.ts';
@@ -222,13 +223,16 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				gateway2Info: true,
 				documents: {
 					where: {
-						documentSetId: DOCUMENT_SET_ID.G2_REPORT,
+						documentSetId: {
+							in: [DOCUMENT_SET_ID.G2_REPORT, DOCUMENT_SET_ID.G2_WORKSHOP]
+						},
 						isDeleted: false
 					},
 					orderBy: { createdAt: 'asc' },
 					select: {
 						guid: true,
 						name: true,
+						documentSetId: true,
 						createdAt: true,
 						latestDocumentVersion: {
 							select: {
@@ -289,7 +293,7 @@ function setGateway2CheckAnswersViewData(req: Request, res: Response, next: Next
 	next();
 }
 
-function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
+export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	const request = req as Gateway2Request;
 	const planReference = getRoutePlanReference(req);
 	const currentCase = request.currentCase;
@@ -305,10 +309,16 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	}
 
 	res.locals.targetDate = formatDisplayDate(currentCase?.gateway2Info?.expectedDate);
+	const gateway2Info = currentCase?.gateway2Info;
+	const documents = currentCase?.documents ?? [];
 	res.locals.gateway2ReportFiles = buildGateway2ReportFilesViewModel(
 		planReference,
-		currentCase?.gateway2Info?.reportIssuedDate
-			? (currentCase.documents ?? []).flatMap((document) => {
+		gateway2Info?.reportIssuedDate
+			? documents.flatMap((document) => {
+					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT) {
+						return [];
+					}
+
 					const version = document.latestDocumentVersion;
 					if (!version || version.isDeleted) {
 						return [];
@@ -324,6 +334,31 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 				})
 			: []
 	);
+	res.locals.workshopDocuments = buildGateway2ReportFilesViewModel(
+		planReference,
+		documents.flatMap((document) => {
+			if (document.documentSetId !== DOCUMENT_SET_ID.G2_WORKSHOP) {
+				return [];
+			}
+
+			const version = document.latestDocumentVersion;
+			if (!version || version.isDeleted) {
+				return [];
+			}
+
+			return [
+				{
+					fileName: version.originalFilename ?? version.fileName ?? document.name,
+					documentGuid: document.guid,
+					dateCreated: version.dateCreated ?? document.createdAt
+				}
+			];
+		})
+	);
+	res.locals.workshopVenue = gateway2Info?.workshopVenue || undefined;
+	res.locals.workshopDateAndTime = gateway2Info?.workshopDate
+		? `${formatDisplayDate(gateway2Info.workshopDate)} at ${formatDisplayTime(gateway2Info.workshopDate)}`
+		: undefined;
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {
@@ -406,17 +441,6 @@ export function buildSubmittedGateway2View(): RequestHandler {
 		res.locals.submissionTime = formatDisplayTime(currentCase.submissionDate);
 		res.locals.submitter = currentCase.email;
 		delete res.locals.saveAndComeBackUrl;
-
-		const gw2Info = currentCase.gateway2Info;
-		if (gw2Info) {
-			if (gw2Info.workshopVenue) {
-				res.locals.workshopVenue = gw2Info.workshopVenue;
-			}
-			if (gw2Info.workshopDate) {
-				res.locals.workshopDateAndTime =
-					formatDisplayDate(gw2Info.workshopDate) + ' at ' + formatDisplayTime(gw2Info.workshopDate);
-			}
-		}
 
 		return next();
 	};

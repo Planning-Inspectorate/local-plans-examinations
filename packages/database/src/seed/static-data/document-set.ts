@@ -134,12 +134,20 @@ export const DOCUMENT_SET = [
 		displayOrder: 16
 	},
 	{
+		id: DOCUMENT_SET_ID.G2_WORKSHOP,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Gateway 2 workshop documents',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP,
+		displayOrder: 17
+	},
+	{
 		id: DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Subsequent work towards draft plan',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
-		displayOrder: 17
+		displayOrder: 18
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 
