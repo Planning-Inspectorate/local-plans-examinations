@@ -366,7 +366,9 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	console.log('gw2 workshop answers');
 	console.log(response.answers);
 	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-	const workshopAnswers: Record<string, any>[] = response.answers.workshops as object[];
+	const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
+		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+	) as object[];
 	const currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	if (currentWorkshopAnswers) {
 		Object.entries(currentWorkshopAnswers).forEach(([key, value]) => {
