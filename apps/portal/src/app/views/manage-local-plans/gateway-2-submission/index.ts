@@ -71,35 +71,6 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	const saveToDatabase = asyncHandler(buildSaveController(service));
 	const saveDataToCase = buildSaveDataToCase();
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
-	// const uploadGateway2Document = buildFileUploadRouteHandler(
-	// 	new Map(
-	// 		gateway2FileUploadQuestionConfigs.map((questionConfig) => [
-	// 			questionConfig.url,
-	// 			createFileUploaderUploadController({
-	// 				fieldName: questionConfig.fieldName,
-	// 				question: questionConfig,
-	// 				storage: fileUploaderStorage,
-	// 				destination: (req) => ({
-	// 					folderPath: `${req.sessionID ?? 'session'}/${questionConfig.url}`,
-	// 					metadata: {
-	// 						journeyId: JOURNEY_ID,
-	// 						fieldName: questionConfig.fieldName,
-	// 						documentSetFolderName: questionConfig.url
-	// 					}
-	// 				}),
-	// 				onFilesChange: ({ req, uploadedFiles }) => {
-	// 					syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
-	// 					logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
-	// 				},
-	// 				onUploadError: ({ req, errors, error }) =>
-	// 					logGateway2UploadFailed(service, req, questionConfig, { errors, error }),
-	// 				onUploadCleanupError: ({ req, file, error }) =>
-	// 					logGateway2UploadCleanupFailed(service, req, questionConfig, file, error),
-	// 				redirect: redirectToFileUploaderQuestion
-	// 			})
-	// 		])
-	// 	)
-	// );
 	const uploadGateway2DocumentForCase = buildFileUploadRouteHandler(
 		new Map(
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
@@ -136,25 +107,6 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 			])
 		)
 	);
-	// const deleteGateway2Document = buildFileUploadRouteHandler(
-	// 	new Map(
-	// 		gateway2FileUploadQuestionConfigs.map((questionConfig) => [
-	// 			questionConfig.url,
-	// 			createFileUploaderDeleteController({
-	// 				fieldName: questionConfig.fieldName,
-	// 				question: questionConfig,
-	// 				storage: fileUploaderStorage,
-	// 				onFilesChange: ({ req, uploadedFiles }) => {
-	// 					syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
-	// 					logGateway2Deleted(service, req, questionConfig, uploadedFiles);
-	// 				},
-	// 				onDeleteError: ({ req, fileId, error }) =>
-	// 					logGateway2DeleteFailed(service, req, questionConfig, fileId, error),
-	// 				redirect: redirectToFileUploaderQuestion
-	// 			})
-	// 		])
-	// 	)
-	// );
 	const deleteGateway2DocumentForCase = buildFileUploadRouteHandler(
 		new Map(
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
@@ -176,17 +128,6 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 			])
 		)
 	);
-
-	// router.get(
-	// 	'/gateway-2-submission',
-	// 	getJourneyResponse,
-	// 	getJourney,
-	// 	setAsEditingFromCya,
-	// 	setGateway2CheckAnswersViewData,
-	// 	buildGateway2CheckAnswersList()
-	// );
-
-	// router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission(), saveToDatabase);
 
 	router.use('/application-declaration', createApplicationDeclarationRoutes(service));
 
@@ -222,24 +163,6 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		deleteGateway2DocumentForCase
 	);
 
-	// router.post(
-	// 	'/gateway-2-submission/:section/:question/upload-documents',
-	// 	getJourneyResponse,
-	// 	getJourney,
-	// 	upload.array('files[]'),
-	// 	// Lusca CSRF check performed after Multer handles the multipart/form-data
-	// 	lusca.csrf(),
-	// 	uploadGateway2Document,
-	// 	handleMulterFileSizeError
-	// );
-	//
-	// router.post(
-	// 	'/gateway-2-submission/:section/:question/delete-document/:fileId',
-	// 	getJourneyResponse,
-	// 	getJourney,
-	// 	deleteGateway2Document
-	// );
-
 	router.get(
 		'/download-document/:documentId',
 		getJourneyResponseFromCase,
@@ -265,25 +188,6 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 		validationErrorHandler,
 		redirectAfterCaseQuestionEdit(saveDataToCase)
 	);
-
-	// router.get(
-	// 	'/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
-	// 	getJourneyResponse,
-	// 	getJourney,
-	// 	fileUploaderQuestionMiddleware({
-	// 		questionUrls: gateway2FileUploadQuestionUrls
-	// 	}),
-	// 	question
-	// );
-	//
-	// router.post(
-	// 	'/gateway-2-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
-	// 	getJourneyResponse,
-	// 	getJourney,
-	// 	validate,
-	// 	validationErrorHandler,
-	// 	redirectAfterCyaEdit
-	// );
 
 	return router;
 }
