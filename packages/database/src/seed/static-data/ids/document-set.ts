@@ -1,3 +1,4 @@
+export const NUM_GW2_WORKSHOP_QUESTIONS = 200;
 export const NUM_GW3_SUBMISSIONS_QUESTIONS = 200;
 
 // Create multiple entries to support multiple gw3 submissions

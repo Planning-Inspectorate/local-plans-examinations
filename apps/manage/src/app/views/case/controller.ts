@@ -4,7 +4,7 @@ import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-f
 import type { Request, Response, NextFunction } from 'express';
 import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
-import { questions } from './questions.ts';
+import { questions, gatway2WorkshopBaseUrls } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
@@ -18,9 +18,10 @@ import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import {
 	gateway2SetIds,
+	NUM_GW2_WORKSHOP_QUESTIONS,
 	NUM_GW3_SUBMISSIONS_QUESTIONS
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { sortGateway3Submissions } from '#util/util.ts';
+import { sortGateway2Workshops, sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
@@ -91,6 +92,23 @@ interface Gateway2Input {
 	workshopDocumentUploadedDate?: Date;
 	workshopExpectedDays?: string;
 	workshopExpectedDaysKnown_workshopExpectedDays?: string;
+	workshops?: {
+		id: string;
+		workshopDate: Date | null;
+		workshopTime: string | null;
+		workshopEndTime: string | null;
+		workshopExpectedDaysKnown: string | null;
+		workshopExpectedDays: string | null;
+		workshopLocationType: string | null;
+		remoteMeetingLinkKnown: string | null;
+		remoteMeetingLink: string | null;
+		workshopLocationKnown: string | null;
+		workshopVenueName: string | null;
+		workshopAddressLine: string | null;
+		workshopAddressLine2: string | null;
+		workshopTownOrCity: string | null;
+		workshopPostcode: string | null;
+	}[];
 }
 
 interface ExaminationInput {
@@ -229,9 +247,72 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID: {
+				const caseDetails = await db.case.findUnique({
+					select: {
+						gateway2Info: {
+							select: {
+								workshops: true
+							}
+						}
+					},
+					where: { reference }
+				});
+				if (!caseDetails) {
+					throw Error(`Could not find details for case with reference '${reference}'`);
+				}
+				if (!caseDetails.gateway2Info?.workshops) {
+					throw Error(`Could not find workshop data for case with reference '${reference}'`);
+				}
+				const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
+				let answers = data.answers;
+				const matchedQuestion = gatway2WorkshopBaseUrls.find((prefix) =>
+					String(req.params.question).startsWith(prefix)
+				);
+				if (matchedQuestion) {
+					console.log('updateCaseField answers');
+					console.log(data.answers);
+					const workshopId = Number(String(req.params.question).replace(`${matchedQuestion}-`, ''));
+					console.log('workshopIdworkshopId');
+					console.log(workshopId);
+					console.log(workshopDetails.length);
+					if (workshopId > workshopDetails.length) {
+						workshopDetails.push({ workshopDate: null });
+					}
+					const workshopFieldsToAnswerMap = {
+						workshopDate: `workshopDate-${workshopId}`,
+						workshopTime: `workshopTime-${workshopId}`,
+						workshopEndTime: `workshopEndTime-${workshopId}`,
+						workshopExpectedDaysKnown: `workshopExpectedDaysKnown-${workshopId}`,
+						workshopExpectedDays: `workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`, // Radio button with nested field
+						workshopLocationType: `workshopLocationType-${workshopId}`,
+						remoteMeetingLinkKnown: `remoteMeetingLinkKnown-${workshopId}`,
+						remoteMeetingLink: `remoteMeetingLink-${workshopId}`,
+						workshopLocationKnown: `workshopLocationKnown-${workshopId}`,
+						workshopVenueName: `workshopVenueName-${workshopId}`,
+						workshopAddressLine: `workshopAddressLine-${workshopId}`,
+						workshopAddressLine2: `workshopAddressLine2-${workshopId}`,
+						workshopTownOrCity: `workshopTownOrCity-${workshopId}`,
+						workshopPostcode: `workshopPostcode-${workshopId}`
+					};
+					Object.entries(workshopFieldsToAnswerMap).forEach(([workshopField, answerField]) => {
+						const questionAnswer = data.answers[answerField];
+						if (questionAnswer) {
+							if (workshopField == 'workshopDate') {
+								workshopDetails[workshopId - 1][workshopField] = parseDate(questionAnswer);
+							} else {
+								workshopDetails[workshopId - 1][workshopField] = questionAnswer;
+							}
+						}
+					});
+					answers = {
+						workshops: workshopDetails
+					};
+				}
+				console.log('formatted answers');
+				console.log(answers);
 				updated = await updateGateway2(
 					db,
-					trimStringValues(data.answers as Gateway2Input),
+					trimStringValues(answers as Gateway2Input),
 					reference,
 					req.params.question as string
 				);
@@ -457,12 +538,50 @@ export async function updateGateway2(
 
 		delete answers.workshopExpectedDaysKnown_workshopExpectedDays;
 	}
+	const createData: Record<string, any> = { ...answers };
+	const updateData: Record<string, any> = { ...answers };
+	if ('workshops' in answers) {
+		const workshops = answers.workshops;
+		if (!workshops) {
+			throw Error('No workshop entries found');
+		}
+		const workshopsCleaned = Object.values(workshops).map((e) => ({
+			workshopDate: e.workshopDate,
+			workshopTime: e.workshopTime,
+			workshopEndTime: e.workshopEndTime,
+			workshopExpectedDaysKnown: e.workshopExpectedDaysKnown,
+			workshopExpectedDays: e.workshopExpectedDays,
+			workshopLocationType: e.workshopLocationType,
+			remoteMeetingLinkKnown: e.remoteMeetingLinkKnown,
+			remoteMeetingLink: e.remoteMeetingLink,
+			workshopLocationKnown: e.workshopLocationKnown,
+			workshopVenueName: e.workshopVenueName,
+			workshopAddressLine: e.workshopAddressLine,
+			workshopAddressLine2: e.workshopAddressLine2,
+			workshopTownOrCity: e.workshopTownOrCity,
+			workshopPostcode: e.workshopPostcode
+		}));
+		if (workshopsCleaned.length > NUM_GW2_WORKSHOP_QUESTIONS) {
+			throw Error('Max number of workshop has been exceeded');
+		}
+		createData['workshops'] = {
+			createMany: {
+				data: workshopsCleaned
+			}
+		};
+		updateData['workshops'] = {
+			deleteMany: {},
+			createMany: {
+				data: workshopsCleaned
+			}
+		};
+	}
 
 	if (answers) {
 		await db.gateway2Info.upsert({
 			where: { caseId },
-			update: { ...answers },
-			create: { caseId, ...answers }
+			update: { ...updateData },
+			create: { caseId, ...createData }
 		});
 	}
 	return true;
@@ -632,7 +751,14 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 		}
 
 		const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
-		const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
+		const journey2Data = await db.gateway2Info.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				workshops: true
+			}
+		});
 
 		const gateway2Documents = await db.document.findMany({
 			where: {

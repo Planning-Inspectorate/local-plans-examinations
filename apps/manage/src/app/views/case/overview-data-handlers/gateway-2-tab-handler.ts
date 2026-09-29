@@ -64,7 +64,16 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 			}))
 		);
 
-		const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
+		const journey2Data = await db.gateway2Info.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				workshops: true
+			}
+		});
+		console.log('journey2Data');
+		console.log(journey2Data);
 		await addUploadedDocumentDetailsToAnswers(
 			service,
 			caseRecord,
@@ -75,17 +84,19 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 		journeyResponse.answers.gateway2Documents = documentsByCategory;
+		console.log('journeyResponse.answers');
+		console.log(journeyResponse.answers);
 		res.locals.journeyResponse = journeyResponse;
 		if (
 			req.method === 'POST' &&
-			(req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION || req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) &&
+			(req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION ||
+				req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) &&
 			req.originalUrl.endsWith(req.params.question)
 		) {
 			let uploadedGateway2Reports;
 			if (req.params.question == 'gateway-2-report') {
 				uploadedGateway2Reports =
-					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ??
-					[];
+					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
 				if (uploadedGateway2Reports.length > 0) {
 					res.redirect(303, 'gateway-2-report/check');
 					return;
