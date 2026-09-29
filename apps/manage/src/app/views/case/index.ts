@@ -122,6 +122,9 @@ function registerGateway2WorkshopJourney(
 		const gateway2Data = await service.db.gateway2Info.findUnique({
 			where: {
 				caseId: caseRecord.id
+			},
+			include: {
+				workshops: true
 			}
 		});
 
@@ -129,6 +132,8 @@ function registerGateway2WorkshopJourney(
 		res.locals.reference = reference;
 
 		const journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
+		console.log('journeyResponse answers');
+		console.log(journeyResponse.answers);
 
 		if (gateway2Data?.workshopExpectedDays && gateway2Data.workshopExpectedDays != 'no') {
 			journeyResponse.answers.workshopExpectedDaysKnown = 'yes';
@@ -167,7 +172,7 @@ function registerGateway2WorkshopJourney(
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
 
 	router.get(
-		'/gateway-2/set-up-workshop/check-your-answers',
+		'/gateway-2/set-up-workshop/check-your-answers-*workshopId',
 		buildLpaOptions,
 		getWorkshopJourneyResponse,
 		getJourney,
@@ -177,7 +182,7 @@ function registerGateway2WorkshopJourney(
 	);
 
 	router.post(
-		'/gateway-2/set-up-workshop/check-your-answers',
+		'/gateway-2/set-up-workshop/check-your-answers-*workshopId',
 		buildLpaOptions,
 		getWorkshopJourneyResponse,
 		getJourney,

@@ -138,32 +138,39 @@ model Gateway1Info {
 
 /// Gateway 2 stage dates, assessor details and report/workshop tracking for a case.
 model Gateway2Info {
-  id                           String    @id @default(uuid()) @db.UniqueIdentifier
-  case                         Case      @relation(fields: [caseId], references: [id])
-  caseId                       String    @unique @db.UniqueIdentifier
-  expectedDate                 DateTime? @db.DateTime2
-  actualDate                   DateTime? @db.DateTime2
-  validDate                    DateTime? @db.DateTime2
+  id                           String             @id @default(uuid()) @db.UniqueIdentifier
+  case                         Case               @relation(fields: [caseId], references: [id])
+  caseId                       String             @unique @db.UniqueIdentifier
+  expectedDate                 DateTime?          @db.DateTime2
+  actualDate                   DateTime?          @db.DateTime2
+  validDate                    DateTime?          @db.DateTime2
   assessorName                 String?
-  assessorAppointmentDate      DateTime? @db.DateTime2
+  assessorAppointmentDate      DateTime?          @db.DateTime2
   workshopVenue                String?
-  reportIssuedDate             DateTime? @db.DateTime2
-  reportPublishedByLPA         DateTime? @db.DateTime2
+  reportIssuedDate             DateTime?          @db.DateTime2
+  reportPublishedByLPA         DateTime?          @db.DateTime2
   workshopDocumentUploadedDate DateTime?
-  workshopDate                 DateTime?
-  workshopTime                 String?
-  workshopEndTime              String?
-  workshopExpectedDaysKnown    String?
-  workshopExpectedDays         String?
-  workshopLocationType         String?
-  remoteMeetingLinkKnown       String?
-  remoteMeetingLink            String?
-  workshopLocationKnown        String?
-  workshopVenueName            String?
-  workshopAddressLine          String?
-  workshopAddressLine2         String?
-  workshopTownOrCity           String?
-  workshopPostcode             String?
+  workshops                    Gateway2Workshop[]
+}
+
+model Gateway2Workshop {
+  id                        String        @id @default(uuid()) @db.UniqueIdentifier
+  gateway2Info              Gateway2Info? @relation(fields: [gateway2InfoId], references: [id])
+  gateway2InfoId            String?       @db.UniqueIdentifier
+  workshopDate              DateTime?
+  workshopTime              String?
+  workshopEndTime           String?
+  workshopExpectedDaysKnown String?
+  workshopExpectedDays      String?
+  workshopLocationType      String?
+  remoteMeetingLinkKnown    String?
+  remoteMeetingLink         String?
+  workshopLocationKnown     String?
+  workshopVenueName         String?
+  workshopAddressLine       String?
+  workshopAddressLine2      String?
+  workshopTownOrCity        String?
+  workshopPostcode          String?
 }
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
