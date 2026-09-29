@@ -33,5 +33,9 @@ export const ERROR_MESSAGES = {
 
 	// Gateway 3 examination website page
 
-	INVALID_EXAMINATION_WEBSITE_URL: 'Enter a valid link to your examination website'
+	INVALID_EXAMINATION_WEBSITE_URL: 'Enter a valid link to your examination website',
+
+	// Gateway 2 application page
+
+	ADD_ALL_REQUIRED_DOCUMENTS: 'Add all required documents before submitting'
 };
