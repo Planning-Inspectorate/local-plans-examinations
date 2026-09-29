@@ -1,6 +1,10 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { getCaseStatusHTMLTag, getStageLabel } from '../landing-page/controller.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+
+// Gateway 2 document sets that represent an in-progress submission (excludes the back-office issued report)
+const gateway2SubmissionSetIds = gateway2SetIds.filter((id) => id !== DOCUMENT_SET_ID.G2_REPORT);
 
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger, db } = service;
@@ -14,7 +18,14 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 					gateway2Info: true,
 					gateway3Info: true,
 					examinationInfo: true,
-					lpas: { orderBy: { lpaName: 'asc' } }
+					lpas: { orderBy: { lpaName: 'asc' } },
+					documents: {
+						where: {
+							isDeleted: false,
+							documentSetId: { in: gateway2SubmissionSetIds }
+						},
+						select: { guid: true }
+					}
 				}
 			});
 		} catch (error) {
@@ -29,8 +40,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 		// status, stage, ready to start,
+		const hasGateway2SubmissionDocuments = (caseData.documents?.length ?? 0) > 0;
 		const currentStageTag = getStageLabel(caseData);
-		const planStatus = getCaseStatusHTMLTag(caseData);
+		const planStatus = getCaseStatusHTMLTag(caseData, hasGateway2SubmissionDocuments);
 		const isReadyToStart = planStatus.includes('Ready to start');
 		const button = isReadyToStart ? `Start ${currentStageTag} submission` : null;
 		//TODO calculate the lead LPA from the list of LPAs, for now we are using the first one
@@ -64,7 +76,10 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				break;
 
 			case 'Gateway 3':
-				dateTextG2 = 'Completed on: ';
+				dateTextG2 = 'Completed: ';
+				if (caseData.gateway2Info?.reportIssuedDate) {
+					dateG2Value = caseData.gateway2Info.reportIssuedDate;
+				}
 				hrefG2 = applicationLink;
 				hrefG3 = gateway3Link;
 				tagG2 = 'Completed';

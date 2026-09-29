@@ -56,10 +56,13 @@ export function getStageLabel(caseData: {
 	return 'Gateway 2';
 }
 
-export function getCaseStatusHTMLTag(caseData: {
-	gateway2Info?: { actualDate?: Date | null; reportIssuedDate?: Date | null } | null;
-	gateway3Info?: { actualDate?: Date | null; completionDate?: Date | null } | null;
-}): string {
+export function getCaseStatusHTMLTag(
+	caseData: {
+		gateway2Info?: { actualDate?: Date | null; reportIssuedDate?: Date | null } | null;
+		gateway3Info?: { actualDate?: Date | null; completionDate?: Date | null } | null;
+	},
+	hasGateway2SubmissionDocuments = false
+): string {
 	// Only "Gateway 2 with actualDate and no later progress" is Under review; everything else Ready to start
 	const laterProgress =
 		caseData.gateway3Info?.completionDate ||
@@ -68,6 +71,10 @@ export function getCaseStatusHTMLTag(caseData: {
 
 	if (!laterProgress && caseData.gateway2Info?.actualDate) {
 		return `<strong class="${statusTag[6].class}">${statusTag[6].label}</strong>`;
+	}
+	// Gateway 2 submission started (documents uploaded) but not yet submitted = In progress
+	if (!laterProgress && !caseData.gateway2Info?.actualDate && hasGateway2SubmissionDocuments) {
+		return `<strong class="${statusTag[1].class}">${statusTag[1].label}</strong>`;
 	}
 	return `<strong class="${statusTag[0].class}">${statusTag[0].label}</strong>`;
 }
