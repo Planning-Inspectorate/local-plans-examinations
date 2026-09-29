@@ -176,14 +176,8 @@ describe('Gateway 3 updates', () => {
 		gateway3DecisionPage.verifyLoaded();
 		gateway3DecisionPage.selectDecision('Resubmit');
 
-		gateway3DocumentsPage.uploadAndVerifyFile(
-			gateway3DocumentsAnswer.fileName,
-			`${gateway3DocumentsAnswer.fieldName}-1`
-		);
-		gateway3DocumentsPage.uploadAndVerifyFile(
-			gateway3DocumentsAnswer.fileName2,
-			`${gateway3DocumentsAnswer.fieldName}-1`
-		);
+		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName);
+		gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName2);
 
 		gateway3DocumentsPage.saveAndReturn();
 

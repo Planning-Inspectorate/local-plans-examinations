@@ -1,9 +1,11 @@
 import { BasePage } from '../../base-page.ts';
+import { DateInput } from '../../components/date-input.ts';
 import type { DateAnswer } from '../../../types/date.ts';
 
 export class DateQuestionPage extends BasePage {
 	private readonly fieldName: string;
 	private readonly heading: string;
+	private readonly dateInput = new DateInput();
 
 	constructor(path: string | RegExp, fieldName: string, heading: string) {
 		super(path);
@@ -14,20 +16,20 @@ export class DateQuestionPage extends BasePage {
 	verifyLoaded(date?: DateAnswer) {
 		super.verifyLoaded();
 		this.verifyHeading(this.heading);
-		this.verifyDateInputsVisible(this.fieldName);
+		this.dateInput.verifyVisible(this.fieldName);
 		this.verifySaveAndContinueVisible();
 
 		if (date) {
-			this.verifyDateInputValues(this.fieldName, date);
+			this.dateInput.verifyValues(this.fieldName, date);
 		}
 	}
 
 	enterDate(date: DateAnswer) {
-		this.enterDateAnswer(this.fieldName, date);
+		this.dateInput.enter(this.fieldName, date);
 		this.saveAndContinue();
 	}
 
 	clearDate() {
-		this.clearDateInputs(this.fieldName);
+		this.dateInput.clear(this.fieldName);
 	}
 }

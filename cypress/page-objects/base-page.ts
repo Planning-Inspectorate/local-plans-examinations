@@ -1,5 +1,3 @@
-import type { DateAnswer } from '../types/date.ts';
-
 export class BasePage {
 	private readonly path?: string | RegExp;
 
@@ -112,34 +110,6 @@ export class BasePage {
 
 	summaryRowActionLink(key: string) {
 		return this.summaryRowActions(key).find('a');
-	}
-
-	dateInput(fieldName: string, part: keyof DateAnswer) {
-		return cy.get(`[name="${fieldName}-${part}"], [name="${fieldName}_${part}"]`);
-	}
-
-	verifyDateInputsVisible(fieldName: string) {
-		this.dateInput(fieldName, 'day').should('be.visible');
-		this.dateInput(fieldName, 'month').should('be.visible');
-		this.dateInput(fieldName, 'year').should('be.visible');
-	}
-
-	verifyDateInputValues(fieldName: string, date: DateAnswer) {
-		this.dateInput(fieldName, 'day').should('have.value', date.day);
-		this.dateInput(fieldName, 'month').should('have.value', date.month);
-		this.dateInput(fieldName, 'year').should('have.value', date.year);
-	}
-
-	enterDateAnswer(fieldName: string, date: DateAnswer) {
-		this.dateInput(fieldName, 'day').clearAndWrite(date.day);
-		this.dateInput(fieldName, 'month').clearAndWrite(date.month);
-		this.dateInput(fieldName, 'year').clearAndWrite(date.year);
-	}
-
-	clearDateInputs(fieldName: string) {
-		this.dateInput(fieldName, 'day').clear();
-		this.dateInput(fieldName, 'month').clear();
-		this.dateInput(fieldName, 'year').clear();
 	}
 
 	verifySummaryRowContains(key: string, ...values: string[]) {
@@ -322,118 +292,8 @@ export class BasePage {
 		}
 	}
 
-	enterSmartLookUp(inputFieldID: string, listBoxID: string, input: string) {
-		cy.get(`input[id="${inputFieldID}"]`).clearAndWrite(input);
-		cy.get(`[id="${listBoxID}"]`).contains('[role="option"]', input).should('be.visible').click();
-	}
-
-	smartLookUpPopulated(fieldID: string, item: string) {
-		return cy.get(`input[id="${fieldID}"]`).should('have.value', item);
-	}
-
-	dragAndDropFile(fileName: string, chooseFilesButtonField: string) {
-		cy.get(`#${chooseFilesButtonField}`).selectFile(`cypress/fixtures/files/${fileName}`, {
-			action: 'drag-drop'
-		});
-	}
-
-	removeFile(fileName: string) {
-		cy.contains('.govuk-summary-list', fileName).find("[data-cy='remove-file-button']").should('be.visible').click();
-	}
-
-	verifyFileUploaded(...fileNames: string[]) {
-		fileNames.forEach((fileName) => {
-			cy.get('.govuk-summary-list__value').should('contain', fileName);
-		});
-	}
-
-	verifyFileNotUploaded(fileName: string) {
-		this.mainContent.should('not.contain.text', fileName);
-	}
-
-	verifyDateInputValidationError(fieldName: string, dateInput: DateAnswer, errorMessage: string) {
-		this.enterDateAnswer(fieldName, dateInput);
-		this.saveAndContinue();
-		this.verifyErrorSummaryContains(errorMessage);
-	}
-
-	fileInput(fieldName: string) {
-		return cy.get(`#${fieldName}-input`);
-	}
-
-	chooseFilesButton(fieldName: string) {
-		return cy.get(`#${fieldName}`);
-	}
-
-	uploadStatusText(fieldName: string) {
-		return this.chooseFilesButton(fieldName).find('.govuk-file-upload-button__status');
-	}
-
-	chooseFilesButtonLabel(fieldName: string) {
-		return this.chooseFilesButton(fieldName).find('.govuk-file-upload-button__pseudo-button');
-	}
-
-	dropInstructionText(fieldName: string) {
-		return this.chooseFilesButton(fieldName).find('.govuk-file-upload-button__instruction');
-	}
-
-	get uploadFilesButton() {
-		return cy.getByData('upload-files-button');
-	}
-
-	get saveAndReturnButton() {
-		return cy.getByData('save-and-return-button');
-	}
-
-	get hintText() {
-		return cy.getByData('file-requirements-hint');
-	}
-
-	get uploadForm() {
-		return cy.getByData('upload-form');
-	}
-
-	clickUploadFiles() {
-		this.uploadFilesButton.should('be.visible').click();
-	}
-
-	verifyUploadFormVisible() {
-		this.uploadForm.should('be.visible');
-	}
-
-	verifyUploadFilesButtonVisible() {
-		this.uploadFilesButton.should('be.visible');
-	}
-
-	uploadFile(fieldName: string, fileNames: string | string[]) {
-		const files = Array.isArray(fileNames) ? fileNames : [fileNames];
-		this.fileInput(fieldName).selectFile(
-			files.map((fileName) => `cypress/fixtures/files/${fileName}`),
-			{ force: true }
-		);
-	}
-
-	verifyFileFormatHintText(text: string) {
-		this.hintText.should('have.text', text);
-	}
-
-	verifySaveAndReturnButton() {
-		this.saveAndReturnButton.should('be.visible').and('have.attr', 'type', 'submit');
-	}
-
-	saveAndReturn() {
-		this.saveAndReturnButton.should('be.visible').click();
-	}
-
 	verifyCaptionL(text: string) {
 		cy.get('.govuk-caption-l').should('be.visible').and('contain.text', text);
-	}
-
-	verifyNoFileChosen(fieldName: string) {
-		this.chooseFilesButton(fieldName).should('be.visible');
-		this.uploadStatusText(fieldName).should('have.text', 'No file chosen');
-		this.chooseFilesButtonLabel(fieldName).should('contain.text', 'Choose files');
-		this.dropInstructionText(fieldName).should('contain.text', 'or drop files');
 	}
 
 	verifyTableHeaders(table: Cypress.Chainable, headers: string[]) {
