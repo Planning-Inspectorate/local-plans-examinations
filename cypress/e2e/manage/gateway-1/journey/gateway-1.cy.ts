@@ -20,6 +20,7 @@ describe('Gateway 1 updates', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
 		openSeededGateway1Page();
+		cy.task('clearDownloads');
 	});
 	afterEach(cleanupSeededManageCase);
 
