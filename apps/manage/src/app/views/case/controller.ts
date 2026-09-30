@@ -2,9 +2,9 @@ import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
-import type { Prisma, PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
-import { questions, gatway2WorkshopBaseUrls } from './questions.ts';
+import { questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
@@ -16,142 +16,21 @@ import { getPageLoadHandlerForPage } from './overview-data-handlers/overview-pag
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
-import {
-	gateway2SetIds,
-	NUM_GW2_WORKSHOP_QUESTIONS,
-	NUM_GW3_SUBMISSIONS_QUESTIONS
-} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { sortGateway2Workshops, sortGateway3Submissions } from '#util/util.ts';
+import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { parseDate } from '../../util/date.ts';
+import { OverviewSaveController } from './save/overview-save-controller.ts';
+import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
+import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
+import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
+import { ExaminationSaveController } from './save/examination-save-controller.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
-
-interface CaseOverviewInput {
-	planTitle?: string;
-	planType?: string;
-	planBand?: string;
-	caseOfficer?: string;
-	lpa?: string;
-	lpaCode?: string;
-	lpaContact?: string;
-	firstName?: string;
-	lastName?: string;
-	email?: string;
-	phone?: string;
-	examinationWebsite?: string;
-	// assessor for Gateway 2
-	assessorName?: string;
-	gateway3AssessorName?: string;
-	assessorGateway3?: string;
-	examiningInspector1?: string;
-	examiningInspector2?: string;
-	examiningInspector3?: string;
-	qaInspector1?: string;
-	qaInspector2?: string;
-	qaInspector3?: string;
-	//programme Officer for gateway 3
-	programmeOfficerFirstName?: string;
-	programmeOfficerLastName?: string;
-	programmeOfficerEmail?: string;
-}
-
-interface Gateway1Input {
-	noticeOfIntention?: Date;
-	expectedGateway1Date?: Date;
-	completedGateway1Date?: Date;
-	slaSentDate?: Date;
-	signedSla?: any;
-	slaReceivedDate?: Date;
-	dsaChecked?: string;
-}
-
-interface Gateway2Input {
-	expectedDate?: Date;
-	actualDate?: Date;
-	validDate?: Date;
-	assessorName?: string;
-	assessorDate?: Date;
-	assessorAppointmentDate?: Date;
-	workshopDate?: Date;
-	workshopVenue?: string;
-	reportIssuedDate?: Date;
-	reportPublishedByLPA?: Date;
-	gateway2Report?: any;
-	workshopDocumentUploadedDate?: Date;
-	workshopExpectedDays?: string;
-	workshopExpectedDaysKnown_workshopExpectedDays?: string;
-	workshops?: {
-		id: string;
-		createdDate: Date;
-		workshopDate: Date | null;
-		workshopTime: string | null;
-		workshopEndTime: string | null;
-		workshopExpectedDaysKnown: string | null;
-		workshopExpectedDays: string | null;
-		workshopLocationType: string | null;
-		remoteMeetingLinkKnown: string | null;
-		remoteMeetingLink: string | null;
-		workshopLocationKnown: string | null;
-		workshopVenueName: string | null;
-		workshopAddressLine: string | null;
-		workshopAddressLine2: string | null;
-		workshopTownOrCity: string | null;
-		workshopPostcode: string | null;
-	}[];
-}
-
-interface ExaminationInput {
-	expectedSubmissionForExaminationDate?: Date;
-	submissionForExaminationDate?: Date;
-	examiningInspector1?: string;
-	examiningInspector2?: string;
-	examiningInspector3?: string;
-	examiningInspectorAppointmentDate?: Date;
-	examinationWebsite?: string;
-	QADate?: Date;
-	reportSentToPanelDate?: Date;
-	panelResponseToInspectorDate?: Date;
-	letterSentToMHCLGDate?: Date;
-	letterIssueDate?: Date;
-	factCheckDateReceivedFromInspector?: Date;
-	factCheckDueDate?: Date;
-	factCheckActualDate?: Date;
-	factCheckReceivedBackFromLPADate?: Date;
-	finalReportIssueDate?: Date;
-	qaInspector1?: string;
-	qaInspector2?: string;
-	qaInspector3?: string;
-	planPauseStartDate?: Date;
-	planPauseEndDate?: Date;
-	withdrawnDate?: Date;
-	isSound?: boolean;
-	soundUnsoundDate?: Date;
-	adoptionDate?: Date;
-	approvedForCILDate?: Date;
-}
-
-interface Gateway3Input {
-	expectedDate?: Date;
-	actualDate?: Date;
-	assessorName?: string;
-	assessorAppointmentDate?: Date;
-	programmeOfficerFirstName?: string;
-	programmeOfficerLastName?: string;
-	programmeOfficerEmail?: string;
-	examinationWebsite?: string;
-	submissions?: {
-		id: string;
-		decision: string | null;
-		completionDate: Date | null;
-		gateway3InfoId: string | null;
-	}[];
-}
 
 // Generate a map of <fieldName: field title>
 const caseHistoryLabels = {
@@ -218,134 +97,45 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			return;
 		}
 
-		let updated;
+		let updated: boolean;
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
 			case COMMON_CONSTS.OVERVIEW: {
-				updated = await updateOverview(
-					db,
-					trimStringValues(data.answers as CaseOverviewInput),
-					reference,
-					action,
-					section,
-					currentItemId,
+				updated = await new OverviewSaveController(service, reference, action, section, currentItemId).prepareAndSave(
+					req,
+					data.answers,
 					getParam(req.params.question)
 				);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_1_JOURNEY_ID: {
-				updated = await updateGateway1(
-					db,
-					trimStringValues(data.answers as Gateway1Input),
-					reference,
+				updated = await new Gateway1SaveController(service, reference).prepareAndSave(
+					req,
+					data.answers,
 					req.params.question as string
 				);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID: {
-				const caseDetails = await db.case.findUnique({
-					select: {
-						gateway2Info: {
-							select: {
-								workshops: true
-							}
-						}
-					},
-					where: { reference }
-				});
-				if (!caseDetails) {
-					throw Error(`Could not find details for case with reference '${reference}'`);
-				}
-				if (!caseDetails.gateway2Info?.workshops) {
-					throw Error(`Could not find workshop data for case with reference '${reference}'`);
-				}
-				const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
-				let answers = data.answers;
-				const matchedQuestion = gatway2WorkshopBaseUrls.find((prefix) =>
-					String(req.params.question).startsWith(prefix)
-				);
-				if (matchedQuestion) {
-					const workshopId = Number(String(req.params.question).replace(`${matchedQuestion}-`, ''));
-					if (workshopId > workshopDetails.length) {
-						workshopDetails.push({ workshopDate: null, createdDate: new Date() });
-					}
-					const workshopFieldsToAnswerMap = {
-						workshopDate: `workshopDate-${workshopId}`,
-						workshopTime: `workshopTime-${workshopId}`,
-						workshopEndTime: `workshopEndTime-${workshopId}`,
-						workshopExpectedDaysKnown: `workshopExpectedDaysKnown-${workshopId}`,
-						workshopExpectedDays: `workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`, // Radio button with nested field
-						workshopLocationType: `workshopLocationType-${workshopId}`,
-						remoteMeetingLinkKnown: `remoteMeetingLinkKnown-${workshopId}`,
-						remoteMeetingLink: `remoteMeetingLink-${workshopId}`,
-						workshopLocationKnown: `workshopLocationKnown-${workshopId}`,
-						workshopVenueName: `workshopVenueName-${workshopId}`,
-						workshopAddressLine: `workshopAddressLine-${workshopId}`,
-						workshopAddressLine2: `workshopAddressLine2-${workshopId}`,
-						workshopTownOrCity: `workshopTownOrCity-${workshopId}`,
-						workshopPostcode: `workshopPostcode-${workshopId}`
-					};
-					Object.entries(workshopFieldsToAnswerMap).forEach(([workshopField, answerField]) => {
-						const questionAnswer = data.answers[answerField];
-						if (questionAnswer) {
-							if (workshopField == 'workshopDate') {
-								workshopDetails[workshopId - 1][workshopField] = parseDate(questionAnswer);
-							} else {
-								workshopDetails[workshopId - 1][workshopField] = questionAnswer;
-							}
-						}
-					});
-					answers = {
-						workshops: workshopDetails
-					};
-				}
-				updated = await updateGateway2(
-					db,
-					trimStringValues(answers as Gateway2Input),
-					reference,
+				updated = await new Gateway2SaveController(service, reference).prepareAndSave(
+					req,
+					data.answers,
 					req.params.question as string
 				);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_3_JOURNEY_ID: {
-				const caseDetails = await db.case.findUnique({
-					select: {
-						gateway3Info: {
-							select: {
-								submissions: true
-							}
-						}
-					},
-					where: { reference }
-				});
-				if (!caseDetails) {
-					throw Error(`Could not find details for case with reference '${reference}'`);
-				}
-				if (!caseDetails.gateway3Info?.submissions) {
-					throw Error(`Could not find submission data for case with reference '${reference}'`);
-				}
-				const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submissions);
-				let answers = data.answers;
-				if (String(req.params.question).startsWith('gateway-3-completion-date')) {
-					const submissionId = Number(String(req.params.question).replace('gateway-3-completion-date-', ''));
-					submissionDetails[submissionId - 1].completionDate = data.answers[`completionDate-${submissionId}`];
-					answers = {
-						submissions: submissionDetails
-					};
-				}
-				updated = await updateGateway3(
-					db,
-					trimStringValues(answers as Gateway3Input),
-					reference,
+				updated = await new Gateway3SaveController(service, reference).prepareAndSave(
+					req,
+					data.answers,
 					req.params.question as string
 				);
 				break;
 			}
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
-				updated = await updateExamination(
-					db,
-					trimStringValues(data.answers as ExaminationInput),
-					reference,
+				updated = await new ExaminationSaveController(service, reference).prepareAndSave(
+					req,
+					data.answers,
 					req.params.question as string
 				);
 				break;
@@ -367,116 +157,6 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 	};
 }
 
-async function updateOverview(
-	db: PrismaClient,
-	answers: CaseOverviewInput,
-	reference: string,
-	action?: string,
-	section?: string,
-	currentItemId?: string,
-	question?: string
-) {
-	if (question === COMMON_CONSTS.ASSESSOR_GATEWAY_2_QUESTION) {
-		await updateGateway2(db, { assessorName: answers.assessorName }, reference, question);
-		return true;
-	}
-	if (question === COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION) {
-		await updateGateway3(db, { assessorName: answers.gateway3AssessorName }, reference, question);
-		return true;
-	}
-	if (question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
-		await updateGateway3(
-			db,
-			{
-				programmeOfficerFirstName: answers.programmeOfficerFirstName,
-				programmeOfficerLastName: answers.programmeOfficerLastName,
-				programmeOfficerEmail: answers.programmeOfficerEmail
-			},
-			reference
-		);
-		return true;
-	}
-
-	const lpaName = (questions.lpa.options || []).find((opt: any) => opt.value === answers.lpa)?.text || '';
-	// Editing a contact's details (incl. changing that contact's LPA)
-	if (section === CONTACTS_SECTION && action === 'edit' && currentItemId) {
-		await db.contact.update({
-			where: { id: currentItemId },
-			data: buildContactData(answers, lpaName)
-		});
-		return true;
-	}
-
-	// Changing the LPA associated with the *case*:
-	// replace the old LPA (currentItemId) with the newly selected one (answers.lpa)
-	if (question === COMMON_CONSTS.CHECK_LPAS_QUESTION && answers.lpa) {
-		await db.case.update({
-			where: { reference: reference },
-			data: {
-				lpas: {
-					connectOrCreate: {
-						where: {
-							lpaCode: answers.lpa
-						},
-						create: {
-							lpaCode: answers.lpa,
-							lpaName: lpaName
-						}
-					},
-					disconnect: currentItemId ? [{ lpaCode: currentItemId }] : undefined
-				}
-			}
-		});
-		return true;
-	}
-
-	if (question === COMMON_CONSTS.CHECK_CONTACT_DETAILS_QUESTION) {
-		if (!currentItemId) return false;
-		const contactData = buildContactData(answers, lpaName);
-		await db.contact.upsert({
-			where: { id: currentItemId },
-			create: {
-				...contactData,
-				cases: { connect: { reference: reference } }
-			},
-			update: contactData
-		});
-		return true;
-	}
-
-	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION) {
-		return await updateExamination(db, { examiningInspector1: answers.examiningInspector1 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_2_QUESTION) {
-		return await updateExamination(db, { examiningInspector2: answers.examiningInspector2 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.EXAMINING_INSPECTOR_3_QUESTION) {
-		return await updateExamination(db, { examiningInspector3: answers.examiningInspector3 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
-		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, reference, question);
-	}
-
-	if (question === COMMON_CONSTS.QA_INSPECTOR_1_QUESTION) {
-		return await updateExamination(db, { qaInspector1: answers.qaInspector1 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.QA_INSPECTOR_2_QUESTION) {
-		return await updateExamination(db, { qaInspector2: answers.qaInspector2 }, reference, question);
-	}
-	if (question === COMMON_CONSTS.QA_INSPECTOR_3_QUESTION) {
-		return await updateExamination(db, { qaInspector3: answers.qaInspector3 }, reference, question);
-	}
-
-	// Updating case (scalar) details + any newly added contact / LPA
-	const { ...scalars } = answers;
-
-	await db.case.update({
-		where: { reference: reference },
-		data: scalars
-	});
-	return true;
-}
-
 async function resolveCaseIdFromReference(db: PrismaClient, reference: string): Promise<string> {
 	const caseRecord = await db.case.findUnique({
 		where: { reference },
@@ -488,192 +168,6 @@ async function resolveCaseIdFromReference(db: PrismaClient, reference: string): 
 	}
 
 	return caseRecord.id;
-}
-
-export type UpdateFunction = (
-	db: PrismaClient,
-	answers: any,
-	caseReference: string,
-	question?: string
-) => Promise<boolean>;
-
-export async function updateGateway1(
-	db: PrismaClient,
-	answers: Gateway1Input,
-	caseReference: string,
-	question?: string
-) {
-	const caseId = await resolveCaseIdFromReference(db, caseReference);
-
-	if (question === COMMON_CONSTS.SIGNED_SLA_QUESTION) {
-		answers.slaReceivedDate = new Date();
-	}
-	if (answers) {
-		await db.gateway1Info.upsert({
-			where: { caseId },
-			update: { ...answers },
-			create: { caseId, ...answers }
-		});
-	}
-	return true;
-}
-
-export async function updateGateway2(
-	db: PrismaClient,
-	answers: Gateway2Input,
-	caseReference: string,
-	question?: string
-) {
-	const caseId = await resolveCaseIdFromReference(db, caseReference);
-
-	if (
-		question === COMMON_CONSTS.GATEWAY_2_ASSESSOR_QUESTION ||
-		question === COMMON_CONSTS.ASSESSOR_GATEWAY_2_QUESTION
-	) {
-		answers.assessorAppointmentDate = new Date();
-	}
-
-	if (answers.workshopDate) {
-		answers.workshopDate = parseDate(answers.workshopDate as any);
-	}
-
-	if ('workshopExpectedDaysKnown_workshopExpectedDays' in answers) {
-		answers.workshopExpectedDays = answers.workshopExpectedDaysKnown_workshopExpectedDays;
-
-		delete answers.workshopExpectedDaysKnown_workshopExpectedDays;
-	}
-	const createData: Record<string, any> = { ...answers };
-	const updateData: Record<string, any> = { ...answers };
-	if ('workshops' in answers) {
-		const workshops = sortGateway2Workshops(answers.workshops as { createdDate: Date; [key: string]: any }[]);
-		if (!workshops) {
-			throw Error('No workshop entries found');
-		}
-		const workshopsCleaned = Object.values(workshops).map((e) => ({
-			createdDate: e.createdDate,
-			workshopDate: e.workshopDate,
-			workshopTime: e.workshopTime,
-			workshopEndTime: e.workshopEndTime,
-			workshopExpectedDaysKnown: e.workshopExpectedDaysKnown,
-			workshopExpectedDays: e.workshopExpectedDays,
-			workshopLocationType: e.workshopLocationType,
-			remoteMeetingLinkKnown: e.remoteMeetingLinkKnown,
-			remoteMeetingLink: e.remoteMeetingLink,
-			workshopLocationKnown: e.workshopLocationKnown,
-			workshopVenueName: e.workshopVenueName,
-			workshopAddressLine: e.workshopAddressLine,
-			workshopAddressLine2: e.workshopAddressLine2,
-			workshopTownOrCity: e.workshopTownOrCity,
-			workshopPostcode: e.workshopPostcode
-		}));
-		if (workshopsCleaned.length > NUM_GW2_WORKSHOP_QUESTIONS) {
-			throw Error('Max number of workshop has been exceeded');
-		}
-		createData['workshops'] = {
-			createMany: {
-				data: workshopsCleaned
-			}
-		};
-		updateData['workshops'] = {
-			deleteMany: {},
-			createMany: {
-				data: workshopsCleaned
-			}
-		};
-	}
-
-	if (answers) {
-		await db.gateway2Info.upsert({
-			where: { caseId },
-			update: { ...updateData },
-			create: { caseId, ...createData }
-		});
-	}
-	return true;
-}
-
-export async function updateGateway3(
-	db: PrismaClient,
-	answers: Gateway3Input,
-	caseReference: string,
-	question?: string
-) {
-	const caseId = await resolveCaseIdFromReference(db, caseReference);
-	if (question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
-		return await updateExamination(db, { examinationWebsite: answers.examinationWebsite }, caseReference, question);
-	}
-	if (
-		question === COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION ||
-		question === COMMON_CONSTS.GATEWAY_3_ASSESSOR_NAME_QUESTION
-	) {
-		answers.assessorAppointmentDate = new Date();
-	}
-	const createData: Record<string, any> = { ...answers };
-	const updateData: Record<string, any> = { ...answers };
-	if ('submissions' in answers) {
-		const submissionDetails = answers.submissions;
-		if (!submissionDetails) {
-			throw Error('No submission entries found');
-		}
-		const submissionDetailsCleaned = Object.values(submissionDetails).map((e) => ({
-			decision: e.decision,
-			completionDate: e.completionDate
-		}));
-		if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
-			throw Error('Max number of submissions has been exceeded');
-		}
-		createData['submissions'] = {
-			createMany: {
-				data: submissionDetailsCleaned
-			}
-		};
-		updateData['submissions'] = {
-			deleteMany: {},
-			createMany: {
-				data: submissionDetailsCleaned
-			}
-		};
-	}
-	if (question?.startsWith(COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION)) {
-		// For handling the save button
-		return true;
-	}
-	if (answers) {
-		await db.gateway3Info.upsert({
-			where: { caseId },
-			update: { ...updateData },
-			create: {
-				caseId,
-				...createData
-			}
-		});
-	}
-	return true;
-}
-
-export async function updateExamination(
-	db: PrismaClient,
-	answers: ExaminationInput,
-	caseReference: string,
-	question?: string
-) {
-	const caseId = await resolveCaseIdFromReference(db, caseReference);
-	const inspectorQuestions = [
-		COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION,
-		COMMON_CONSTS.EXAMINING_INSPECTOR_2_QUESTION,
-		COMMON_CONSTS.EXAMINING_INSPECTOR_3_QUESTION
-	];
-	if (question && inspectorQuestions.includes(question)) {
-		answers.examiningInspectorAppointmentDate = new Date();
-	}
-	if (answers) {
-		await db.examinationInfo.upsert({
-			where: { caseId },
-			update: { ...answers },
-			create: { caseId, ...answers }
-		});
-	}
-	return true;
 }
 
 /** Removes a contact, or disconnects an LPA from the case. */
@@ -696,23 +190,6 @@ async function removeItem({
 		where: { reference },
 		data: { lpas: { disconnect: { lpaCode: currentItemId } } }
 	});
-}
-
-/** Builds the shared contact `data` payload used by both create and update. */
-function buildContactData(formData: CaseOverviewInput, lpaName: string): Prisma.ContactCreateWithoutCasesInput {
-	const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
-	return {
-		firstName,
-		lastName,
-		email,
-		phoneNumber: phone,
-		lpa: { connectOrCreate: lpaConnectOrCreate(lpaCode || lpaContact || '', lpaName) }
-	};
-}
-
-/** A reusable `connectOrCreate` clause for an LPA by its code. */
-function lpaConnectOrCreate(lpaCode: string, lpaName: string): Prisma.LPACreateOrConnectWithoutContactsInput {
-	return { where: { lpaCode }, create: { lpaCode, lpaName } };
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
@@ -1078,12 +555,11 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			const reportIssuedDate = new Date();
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await updateGateway2(
-				service.db,
+			await new Gateway2SaveController(service, caseReference).prepareAndSave(
+				req,
 				{
 					reportIssuedDate: reportIssuedDate
 				},
-				caseReference,
 				COMMON_CONSTS.GATEWAY_2_REPORT_ISSUED_DATE_QUESTION
 			);
 			await updateCaseHistory(
@@ -1130,12 +606,11 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 			const workshopDocumentUploadedDate = new Date();
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await updateGateway2(
-				service.db,
+			await new Gateway2SaveController(service, caseReference).prepareAndSave(
+				req,
 				{
 					workshopDocumentUploadedDate: workshopDocumentUploadedDate
 				},
-				caseReference,
 				'workshop-document-uploaded-date'
 			);
 			await updateCaseHistory(
@@ -1182,12 +657,11 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 			const slaSentDate = new Date();
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await updateGateway1(
-				service.db,
+			await new Gateway1SaveController(service, caseReference).prepareAndSave(
+				req,
 				{
 					slaSentDate: slaSentDate
 				},
-				caseReference,
 				'sla-sent-date'
 			);
 			await updateCaseHistory(
@@ -1253,12 +727,11 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			}
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await updateGateway3(
-				service.db,
+			await new Gateway3SaveController(service, caseReference).prepareAndSave(
+				req,
 				{
 					submissions: existingSubmissions
 				},
-				caseReference,
 				COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION
 			);
 			await updateCaseHistory(
