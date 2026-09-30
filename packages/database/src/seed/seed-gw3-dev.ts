@@ -23,18 +23,15 @@ async function run() {
 	const dbClient = newDatabaseClient(config.db);
 
 	try {
-		// Find the case
 		const caseRecord = await dbClient.case.findUnique({
 			where: { reference: CASE_REFERENCE },
 			select: { id: true }
 		});
 
 		if (!caseRecord) {
-			console.error(`Case ${CASE_REFERENCE} not found. Run the OTP seed first.`);
-			process.exit(1);
+			throw new Error(`Case ${CASE_REFERENCE} not found. Run the OTP seed first.`);
 		}
 
-		// Update gateway2Info to set reportIssuedDate and actualDate
 		await dbClient.gateway2Info.update({
 			where: { caseId: caseRecord.id },
 			data: {
@@ -42,9 +39,7 @@ async function run() {
 				reportIssuedDate: REPORT_ISSUED_DATE
 			}
 		});
-		console.log(`Updated gateway2Info for ${CASE_REFERENCE}: reportIssuedDate=${REPORT_ISSUED_DATE.toISOString()}`);
 
-		// Create a gateway 2 report document (needed for hasIssuedGateway2Report)
 		await dbClient.document.upsert({
 			where: { guid: DOCUMENT_GUID },
 			update: {},
@@ -69,14 +64,6 @@ async function run() {
 			where: { guid: DOCUMENT_GUID },
 			data: { latestVersionId: 1 }
 		});
-		console.log(`Created gateway 2 report document for ${CASE_REFERENCE}`);
-
-		console.log(`\n${CASE_REFERENCE} is now at Gateway 3 stage.`);
-		console.log(`Navigate to: http://localhost:8080/manage-local-plans/your-plans`);
-		console.log(`Click PLAN-001 -> Gateway 3 submission -> fill in documents -> Submit -> Declaration page`);
-	} catch (error) {
-		console.error('Error:', error);
-		throw error;
 	} finally {
 		await dbClient.$disconnect();
 	}
