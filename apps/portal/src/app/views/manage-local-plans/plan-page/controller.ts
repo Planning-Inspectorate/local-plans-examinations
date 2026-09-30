@@ -21,7 +21,6 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 					lpas: { orderBy: { lpaName: 'asc' } },
 					documents: {
 						where: {
-							isDeleted: false,
 							documentSetId: { in: gateway2SubmissionSetIds }
 						},
 						select: { guid: true }
@@ -120,7 +119,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			hrefE
 		};
 
-		return res.render('views/plan-page/view.njk', {
+		return res.render('views/manage-local-plans/plan-page/view.njk', {
 			pageCaption: planReference,
 			pageTitle: caseData.planTitle,
 			currentStage: currentStageTag,

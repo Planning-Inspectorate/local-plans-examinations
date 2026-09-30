@@ -1,7 +1,10 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import type { PrismaClient } from '@prisma/client/extension';
+
+// Gateway 2 document sets that represent an in-progress submission (excludes the back-office issued report)
+const gateway2SubmissionSetIds = gateway2SetIds.filter((id) => id !== DOCUMENT_SET_ID.G2_REPORT);
 
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger, db } = service;
@@ -11,7 +14,17 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			caseData = await db.case.findMany({
 				where: { email: req.session.authenticatedEmail },
 				orderBy: { createdAt: 'desc' },
-				include: { lpas: true, gateway2Info: true, gateway3Info: true }
+				include: {
+					lpas: true,
+					gateway2Info: true,
+					gateway3Info: true,
+					documents: {
+						where: {
+							documentSetId: { in: gateway2SubmissionSetIds }
+						},
+						select: { guid: true }
+					}
+				}
 			});
 		} catch (error) {
 			logger.error({ error }, 'Error fetching case data');
@@ -37,7 +50,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 				{ text: c.lpas[0]?.lpaName || '-' },
 				{ text: c.planTitle },
 				{ text: await getStageLabel(c, db) },
-				{ html: getCaseStatusHTMLTag(c) }
+				{ html: getCaseStatusHTMLTag(c, (c.documents?.length ?? 0) > 0) }
 			])
 		);
 
@@ -72,8 +85,7 @@ export function getCaseStatusHTMLTag(
 	hasGateway2SubmissionDocuments = false
 ): string {
 	// Only "Gateway 2 with actualDate and no later progress" is Under review; everything else Ready to start
-	const laterProgress =
-		caseData.gateway3Info?.actualDate || caseData.gateway3Info?.actualDate || caseData.gateway2Info?.reportIssuedDate;
+	const laterProgress = caseData.gateway3Info?.actualDate || caseData.gateway2Info?.reportIssuedDate;
 
 	if (!laterProgress && caseData.gateway2Info?.actualDate) {
 		return `<strong class="${statusTag[6].class}">${statusTag[6].label}</strong>`;

@@ -16,4 +16,8 @@ export class PortalService extends Service {
 		this.clarityId = config.clarityId;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
+
+	override get otherSessionOptions() {
+		return { name: 'portal' };
+	}
 }

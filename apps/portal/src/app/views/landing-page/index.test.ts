@@ -164,4 +164,20 @@ describe('landing page', () => {
 			);
 		}
 	});
+	it('should render "In progress" status when gateway 2 submission documents exist but plan not yet submitted', async () => {
+		// Matches the individual plan page logic: uploaded (but not submitted) documents => In progress
+		const cases = [
+			mockCase({
+				reference: 'PLAN-005',
+				lpas: [{ lpaName: 'Fareham' }],
+				gateway2Info: null,
+				documents: [{ guid: 'doc-1' }]
+			})
+		];
+		const { landingPage, mockRes, mockReq } = initialiseTest(cases);
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+		const [, data] = mockRes.render.mock.calls[0].arguments;
+		const statusHtml = data.plans[0][4].html;
+		assert.ok(statusHtml.includes('In progress'), `Expected "In progress" status tag but got ${statusHtml}`);
+	});
 });
