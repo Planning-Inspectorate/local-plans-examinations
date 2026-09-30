@@ -1,7 +1,5 @@
 import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
-import { buildGetJourney } from '@planning-inspectorate/dynamic-forms';
-import { createJourney } from './journey.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	buildGateway3CheckAnswersList,
@@ -14,8 +12,6 @@ import {
 export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
 
-	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse));
-	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const {
 		getJourney,
 		getJourneyResponseFromCase,
@@ -33,7 +29,6 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		getDeclarationPage
 	} = buildGateway3Middleware(service);
 
-
 	router.get(
 		'/',
 		getJourneyResponseFromCase,
@@ -44,19 +39,13 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	// Submit Gateway 3 (case-scoped)
-	router.post(
-		'/:planReference/gateway-3-submission',
-		getJourneyResponseFromCase,
-		getJourney,
-		validateGateway3Submission,
-		(req, res) => {
-			const planReference = encodeURIComponent(req.params.planReference as string);
-			res.redirect(`/manage-local-plans/${planReference}/gateway-3-submission/declaration`);
-		}
-	);
+	router.post('/', getJourneyResponseFromCase, getJourney, validateGateway3Submission, (req, res) => {
+		const planReference = encodeURIComponent(req.params.planReference as string);
+		res.redirect(`/manage-local-plans/${planReference}/gateway-3-submission/declaration`);
+	});
 
 	// Declaration page (case-scoped)
-	router.get('/:planReference/gateway-3-submission/declaration', asyncHandler(getDeclarationPage));
+	router.get('/declaration', asyncHandler(getDeclarationPage));
 
 	// Upload documents (case-scoped)
 	router.post(
