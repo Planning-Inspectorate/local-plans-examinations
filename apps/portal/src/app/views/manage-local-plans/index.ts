@@ -3,7 +3,7 @@ import { type IRouter, Router as createRouter } from 'express';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import { gateway2SubmissionRoutes } from './gateway-2-submission/index.ts';
 import { createLandingPageRoutes } from '../landing-page/index.ts';
-import { buildPlanPage } from '../plan-page/controller.ts';
+import { buildPlanPage } from './plan-page/controller.ts';
 import { gateway3SubmissionRoutes } from './gateway-3-submission/index.ts';
 import { checkCaseOwnership } from '../../auth/guards.ts';
 

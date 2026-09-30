@@ -7,8 +7,7 @@ import {
 	buildSaveDataToSession,
 	JourneyResponse,
 	type SaveDataFn,
-	type SaveParams,
-	saveDataToSession
+	type SaveParams
 } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './journey.ts';
 import { CHECK_ANSWERS_REDIRECT_QUERY, CHECK_ANSWERS_REDIRECTS, GW2QUESTIONS } from './questions.ts';
@@ -22,7 +21,7 @@ import { getRoutePlanReference } from './utils.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
+import { buildGateway2ReportFilesViewModel } from '../plan-page/gateway-2-report.ts';
 
 // This file wires the Gateway 2 submission journey into Express.
 //
@@ -114,13 +113,6 @@ export function setAsEditingFromCya(req: Request, _: Response, next: NextFunctio
 	const request = req as Gateway2Request;
 	request.session.editingFromCheckAnswers = true;
 	next();
-}
-
-// Saves the answer and sends the user back to check answers when needed.
-export function redirectAfterCyaEdit(req: Request, res: Response, next: NextFunction) {
-	const request = req as Gateway2Request;
-	const returnToCya = getCheckAnswersRedirect(req) ?? request.session.editingFromCheckAnswers === true;
-	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
 // Saves the case answer and returns to check answers by default.

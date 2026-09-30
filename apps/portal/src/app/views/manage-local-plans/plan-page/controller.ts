@@ -1,6 +1,6 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
-import { getCaseStatusHTMLTag, getStageLabel } from '../landing-page/controller.ts';
+import { getCaseStatusHTMLTag, getStageLabel } from '../../landing-page/controller.ts';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 // Gateway 2 document sets that represent an in-progress submission (excludes the back-office issued report)

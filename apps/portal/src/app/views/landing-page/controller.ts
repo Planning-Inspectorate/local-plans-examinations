@@ -15,7 +15,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			});
 		} catch (error) {
 			logger.error({ error }, 'Error fetching case data');
-			return res.status(505).render('views/layouts/error', {
+			return res.status(500).render('views/layouts/error', {
 				pageTitle: 'Internal Server Error'
 			});
 		}
