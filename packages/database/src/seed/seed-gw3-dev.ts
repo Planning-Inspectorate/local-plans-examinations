@@ -9,8 +9,11 @@ import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
 import { DOCUMENT_SET_ID, DOCUMENT_SOURCE_SYSTEM_ID, VIRUS_CHECK_STATUS_ID } from './static-data/ids/index.ts';
 import { loadSeedEnv } from './load-env.ts';
+import { initLogger } from '@planning-inspectorate/core/util';
 
 loadSeedEnv();
+
+const logger = initLogger({ logLevel: 'info', NODE_ENV: 'development' });
 
 const CASE_REFERENCE = 'PLAN-001';
 const REPORT_ISSUED_DATE = new Date('2026-09-15T12:00:00.000Z');
@@ -29,7 +32,8 @@ async function run() {
 		});
 
 		if (!caseRecord) {
-			throw new Error(`Case ${CASE_REFERENCE} not found. Run the OTP seed first.`);
+			logger.error(`Case ${CASE_REFERENCE} not found. Run the OTP seed first.`);
+			process.exit(1);
 		}
 
 		await dbClient.gateway2Info.update({
@@ -64,6 +68,8 @@ async function run() {
 			where: { guid: DOCUMENT_GUID },
 			data: { latestVersionId: 1 }
 		});
+
+		logger.info(`${CASE_REFERENCE} is now at Gateway 3 stage`);
 	} finally {
 		await dbClient.$disconnect();
 	}
