@@ -11,7 +11,7 @@ export class Gateway3DeclarationPage extends PortalPlanBasePage {
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('Review declaration');
+		this.verifyHeading("Are you sure you're ready to submit?");
 	}
 }
 
