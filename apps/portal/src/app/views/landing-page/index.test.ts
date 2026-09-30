@@ -38,7 +38,7 @@ function buildTestCases() {
 		mockCase({
 			reference: 'PLAN-004',
 			lpas: [{ lpaName: 'Eastleigh' }],
-			gateway3Info: { completionDate: new Date('2026-07-01') }
+			gateway3Info: { actualDate: new Date('2026-07-01') }
 		})
 	];
 }
@@ -53,7 +53,10 @@ function initialiseTest(cases?: unknown[]) {
 	const mockReq = { session: { authenticatedEmail: 'user@example.com' }, params: {} };
 	const logger = mockLogger();
 	const db = {
-		case: { findMany: mock.fn(async () => cases ?? buildTestCases()) }
+		case: {
+			findMany: mock.fn(async () => cases ?? buildTestCases()),
+			findFirst: mock.fn(async () => null)
+		}
 	};
 	const mockService = { logger, db };
 	const landingPage = buildLandingPage(mockService);

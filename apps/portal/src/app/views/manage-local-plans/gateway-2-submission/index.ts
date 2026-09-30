@@ -134,7 +134,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	router.use('/application-complete', createApplicationCompleteRoutes());
 
 	router.get(
-		'',
+		'/',
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,

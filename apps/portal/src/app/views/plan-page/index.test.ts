@@ -43,7 +43,13 @@ function initialiseTest(planReference, caseData) {
 	const mockReq = { session: {}, params: { planReference } };
 	const logger = mockLogger();
 	const resolved = caseData === undefined ? mockCase({ reference: planReference }) : caseData;
-	const db = { case: { findUnique: mock.fn(async () => resolved) } };
+	const db = {
+		case: {
+			findUnique: mock.fn(async () => resolved),
+			// hasIssuedGateway2Report matches a case with an issued G2 report; mirror that here
+			findFirst: mock.fn(async () => (resolved?.gateway2Info?.reportIssuedDate ? resolved : null))
+		}
+	};
 	const mockService = { logger, db };
 	const planPage = buildPlanPage(mockService);
 	return { planPage, mockRes, mockReq, db, nunjucks, logger };
@@ -176,7 +182,7 @@ describe('plan page', () => {
 		assert.strictEqual(data.tagE, 'Cannot start yet');
 	});
 	it('should render task table links correctly for case 3 (Examination)', async () => {
-		const plan = mockCase({ gateway3Info: { completionDate: new Date('2026-08-05') } });
+		const plan = mockCase({ gateway3Info: { actualDate: new Date('2026-08-05') } });
 		const { data } = await renderPlan('PLAN-001', plan);
 		assert.strictEqual(data.currentStage, 'Examination');
 		assert.strictEqual(data.hrefG2, '/manage-local-plans/PLAN-001/gateway-2-submission');
@@ -184,7 +190,7 @@ describe('plan page', () => {
 		assert.strictEqual(data.hrefE, '/manage-local-plans/PLAN-001/gateway-2-submission');
 	});
 	it('should render task tags correctly for case 3 (Examination, ready to start)', async () => {
-		const plan = mockCase({ gateway3Info: { completionDate: new Date('2026-08-05') } });
+		const plan = mockCase({ gateway3Info: { actualDate: new Date('2026-08-05') } });
 		const { data } = await renderPlan('PLAN-001', plan);
 		assert.strictEqual(data.tagG2, 'Completed');
 		assert.strictEqual(data.tagG3, 'Completed');
@@ -192,7 +198,7 @@ describe('plan page', () => {
 	});
 	it('should render task tags correctly for case 3 (Examination, completed)', async () => {
 		const plan = mockCase({
-			gateway3Info: { completionDate: new Date('2026-08-05') },
+			gateway3Info: { actualDate: new Date('2026-08-05') },
 			submissionDate: new Date('2026-09-01')
 		});
 		const { data } = await renderPlan('PLAN-001', plan);

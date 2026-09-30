@@ -190,7 +190,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		}
 
 		const currentCase = await service.db.case.findUnique({
-			where: { reference: planReference },
+			where: { reference: planReference, email: req.session.authenticatedEmail },
 			include: {
 				gateway2Info: true,
 				documents: {

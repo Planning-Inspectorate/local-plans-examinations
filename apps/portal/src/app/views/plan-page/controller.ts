@@ -13,7 +13,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		let caseData;
 		try {
 			caseData = await db.case.findUnique({
-				where: { reference: planReference },
+				where: { reference: planReference, email: req.session.authenticatedEmail },
 				include: {
 					gateway2Info: true,
 					gateway3Info: true,
@@ -41,12 +41,12 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		}
 		// status, stage, ready to start,
 		const hasGateway2SubmissionDocuments = (caseData.documents?.length ?? 0) > 0;
-		const currentStageTag = getStageLabel(caseData);
+		const currentStageTag = await getStageLabel(caseData, db);
 		const planStatus = getCaseStatusHTMLTag(caseData, hasGateway2SubmissionDocuments);
 		const isReadyToStart = planStatus.includes('Ready to start');
 		const button = isReadyToStart ? `Start ${currentStageTag} submission` : null;
 		//TODO calculate the lead LPA from the list of LPAs, for now we are using the first one
-		const leadLPA = caseData.lpas[0].lpaName;
+		const leadLPA = caseData.lpas[0]?.lpaName ?? '';
 		const linkedLPAs = caseData.lpas
 			.slice(1)
 			.map((lpa) => lpa.lpaName)
