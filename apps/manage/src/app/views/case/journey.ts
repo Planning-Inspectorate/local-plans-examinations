@@ -363,8 +363,6 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		initialBackLink: gateway2Url,
 		response
 	});
-	console.log('gw2 workshop answers');
-	console.log(response.answers);
 	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
 	const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
 		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
@@ -377,6 +375,9 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		});
 		response.answers[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`] =
 			workshopAnswers[workshopId - 1].workshopExpectedDays;
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID;
 	}
 	return journey;
 }
