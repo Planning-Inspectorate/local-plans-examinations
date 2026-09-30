@@ -4,7 +4,11 @@ import { describe, it } from 'node:test';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
-import { syncGateway2UploadAnswer, buildSubmittedGateway2View, setGateway2CheckAnswersViewLocals } from './index.ts';
+import {
+	syncGateway2UploadAnswer,
+	buildSubmittedGateway2View,
+	setGateway2CheckAnswersViewLocals
+} from './controller.ts';
 import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
 import { GW2QUESTIONS } from './questions.ts';
@@ -124,6 +128,24 @@ describe('Gateway 2 submission check answers page', () => {
 		assert.ok(html.includes('Workshop venue'));
 		assert.ok(!html.includes('Workshop date and time'));
 		assert.ok(!html.includes('Workshop documents'));
+	});
+
+	it('renders multiple workshop documents as a list', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			workshopDocuments: [{ fileName: 'workshop-agenda.pdf' }, { fileName: 'workshop-questions.pdf' }],
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('<ul class="govuk-list">'));
+		assert.match(html, /<li>\s*workshop-agenda\.pdf\s*<\/li>/);
+		assert.match(html, /<li>\s*workshop-questions\.pdf\s*<\/li>/);
 	});
 });
 

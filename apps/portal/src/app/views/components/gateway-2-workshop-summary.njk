@@ -19,18 +19,28 @@
                 <div class="govuk-summary-list__row">
                     <dt class="govuk-summary-list__key">Workshop documents</dt>
                     <dd class="govuk-summary-list__value">
-                        {% if workshopDocuments.length > 1 %}<ul class="govuk-list">{% endif %}
-                        {% for document in workshopDocuments %}
-                            {% if workshopDocuments.length > 1 %}<li>{% endif %}
+                        {% if workshopDocuments.length > 1 %}
+                            <ul class="govuk-list">
+                                {% for document in workshopDocuments %}
+                                    <li>
+                                        {% if document.href %}
+                                            <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                                        {% else %}
+                                            {{ document.fileName }}
+                                        {% endif %}
+                                        {% if document.sharedDate %}<span class="govuk-body"> (shared on {{ document.sharedDate }})</span>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            {% set document = workshopDocuments[0] %}
                             {% if document.href %}
                                 <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
                             {% else %}
                                 {{ document.fileName }}
                             {% endif %}
                             {% if document.sharedDate %}<span class="govuk-body"> (shared on {{ document.sharedDate }})</span>{% endif %}
-                            {% if workshopDocuments.length > 1 %}</li>{% endif %}
-                        {% endfor %}
-                        {% if workshopDocuments.length > 1 %}</ul>{% endif %}
+                        {% endif %}
                     </dd>
                 </div>
             {% endif %}
