@@ -39,47 +39,50 @@ const MOCK_DOCUMENT_SETS = [
 ];
 
 function createService(): any {
-	return {
-		db: {
-			case: {
-				update: mock.fn(async () => ({})),
-				findUnique: mock.fn(async () => ({
-					id: CASE_ID
-				}))
-			},
-			contact: {
-				update: mock.fn(async () => ({})),
-				delete: mock.fn(async () => ({})),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway1Info: {
-				upsert: mock.fn(async () => ({})),
-				findUnique: mock.fn(async () => null)
-			},
-			gateway2Info: {
-				upsert: mock.fn(async () => ({})),
-				findUnique: mock.fn(async () => null)
-			},
-			gateway3Info: {
-				upsert: mock.fn(async () => ({})),
-				findUnique: mock.fn(async () => null)
-			},
-			examinationInfo: {
-				upsert: mock.fn(async () => ({})),
-				findUnique: mock.fn(async () => null)
-			},
-			documentSet: {
-				upsert: mock.fn(async () => ({})),
-				findMany: mock.fn(async () => [])
-			},
-			document: {
-				upsert: mock.fn(async () => ({})),
-				findMany: mock.fn(async () => [])
-			},
-			authority: {
-				findMany: mock.fn(async () => [])
-			}
+	const db: any = {
+		case: {
+			update: mock.fn(async () => ({})),
+			findUnique: mock.fn(async () => ({
+				id: CASE_ID
+			}))
 		},
+		contact: {
+			update: mock.fn(async () => ({})),
+			delete: mock.fn(async () => ({})),
+			upsert: mock.fn(async () => ({}))
+		},
+		gateway1Info: {
+			upsert: mock.fn(async () => ({})),
+			findUnique: mock.fn(async () => null)
+		},
+		gateway2Info: {
+			upsert: mock.fn(async () => ({})),
+			findUnique: mock.fn(async () => null)
+		},
+		gateway3Info: {
+			upsert: mock.fn(async () => ({})),
+			findUnique: mock.fn(async () => null)
+		},
+		examinationInfo: {
+			upsert: mock.fn(async () => ({})),
+			findUnique: mock.fn(async () => null)
+		},
+		documentSet: {
+			upsert: mock.fn(async () => ({})),
+			findMany: mock.fn(async () => [])
+		},
+		document: {
+			upsert: mock.fn(async () => ({})),
+			findMany: mock.fn(async () => [])
+		},
+		authority: {
+			findMany: mock.fn(async () => [])
+		}
+	};
+	db.$transaction = mock.fn(async (fn: (tx: any) => Promise<unknown>) => fn(db));
+
+	return {
+		db,
 		logger: {
 			info: mock.fn(),
 			error: mock.fn()
@@ -271,21 +274,23 @@ describe('updateCaseField', () => {
 	});
 
 	describe('case update (default action)', () => {
-		it('updates scalar case fields', async () => {
+		it('updates overview fields by answer key across Case and related models', async () => {
 			const service = createService();
 			const handler = updateCaseField(service);
 			const context = createSaveContext({
 				url: '/overview',
+				params: { question: 'an-unrelated-question-name' },
 				body: {
 					planTitle: '  Southshire Local Plan  ',
 					planType: 'Local Plan',
 					caseOfficer: '  John Doe  ',
+					assessorGateway3: '  Legacy assessor field  ',
+					assessorName: '  Alex Assessor  ',
+					gateway3AssessorName: '  Alex Inspector  ',
 					programmeOfficerFirstName: 'Pat',
-					programmeOfficerLastName: 'Officer',
-					programmeOfficerEmail: 'pat.officer@example.com',
 					examinationWebsite: 'https://example.com',
 					examiningInspector1: 'Insp One',
-					qaInspector1: 'Insp One'
+					qaInspector1: 'QA One'
 				}
 			});
 
@@ -297,14 +302,15 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.planTitle, 'Southshire Local Plan');
 			assert.equal(args.data.planType, 'Local Plan');
 			assert.equal(args.data.caseOfficer, 'John Doe');
-			assert.equal(args.data.programmeOfficerFirstName, 'Pat');
-			assert.equal(args.data.programmeOfficerLastName, 'Officer');
-			assert.equal(args.data.programmeOfficerEmail, 'pat.officer@example.com');
-			assert.equal(args.data.examiningInspector1, 'Insp One');
-			assert.equal(args.data.qaInspector1, 'Insp One');
-			// no contact or lpa fields -> undefined
-			assert.equal(args.data.contacts, undefined);
-			assert.equal(args.data.lpas, undefined);
+			assert.equal(args.data.assessorGateway3, 'Legacy assessor field');
+			assert.deepEqual(args.data.gateway2Info.upsert.create.assessorName, 'Alex Assessor');
+			assert.ok(args.data.gateway2Info.upsert.create.assessorAppointmentDate instanceof Date);
+			assert.equal(args.data.gateway3Info.upsert.create.assessorName, 'Alex Inspector');
+			assert.equal(args.data.gateway3Info.upsert.create.programmeOfficerFirstName, 'Pat');
+			assert.equal(args.data.examinationInfo.upsert.create.examinationWebsite, 'https://example.com');
+			assert.equal(args.data.examinationInfo.upsert.create.examiningInspector1, 'Insp One');
+			assert.equal(args.data.examinationInfo.upsert.create.qaInspector1, 'QA One');
+			assert.ok(args.data.examinationInfo.upsert.create.examiningInspectorAppointmentDate instanceof Date);
 		});
 	});
 
@@ -375,14 +381,12 @@ describe('updateCaseField', () => {
 		});
 	});
 
-	it('upserts programme officer details from the overview programme-officer question', async () => {
+	it('upserts programme officer details based on their answer keys', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
 		const context = createSaveContext({
 			url: '/overview',
-			params: {
-				question: 'programme-officer'
-			},
+			params: { question: 'not-the-programme-officer-question' },
 			body: {
 				programmeOfficerFirstName: 'Pat',
 				programmeOfficerLastName: 'Officer',
@@ -392,21 +396,19 @@ describe('updateCaseField', () => {
 
 		await save(handler, context);
 
-		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
-		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
-			where: {
-				caseId: CASE_ID
-			},
-			update: {
-				programmeOfficerFirstName: 'Pat',
-				programmeOfficerLastName: 'Officer',
-				programmeOfficerEmail: 'pat.officer@example.com'
-			},
-			create: {
-				caseId: CASE_ID,
-				programmeOfficerFirstName: 'Pat',
-				programmeOfficerLastName: 'Officer',
-				programmeOfficerEmail: 'pat.officer@example.com'
+		assert.equal(service.db.case.update.mock.callCount(), 2);
+		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0].data.gateway3Info, {
+			upsert: {
+				create: {
+					programmeOfficerFirstName: 'Pat',
+					programmeOfficerLastName: 'Officer',
+					programmeOfficerEmail: 'pat.officer@example.com'
+				},
+				update: {
+					programmeOfficerFirstName: 'Pat',
+					programmeOfficerLastName: 'Officer',
+					programmeOfficerEmail: 'pat.officer@example.com'
+				}
 			}
 		});
 	});

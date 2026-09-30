@@ -153,7 +153,6 @@ Some Cypress specs also seed data through Cypress tasks, for example:
 
 - `seedDb`: creates case data for tests such as case overview
 - `seedCase`: creates a portal case without an OTP
-- `seedOtp`: creates portal login data and returns an OTP for the test
 - `clearDb`: clears the database between tests that need a clean state
 
 Journey tests should prefer creating data through the UI where that is the behaviour under test.

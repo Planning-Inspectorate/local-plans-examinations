@@ -3,26 +3,29 @@ import { caseOverviewPage } from '../../page-objects/manage/case-overview/index.
 import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 import { authenticateManageIfRequired, isEnvironmentSmoke } from '../auth-flow.ts';
 
-type SeededManageCase = {
+export type SeededManageCase = {
 	planTitle: string;
 	reference: string;
 };
 
 const smokeCaseReferenceKey = 'manageSmokeCaseReference';
 
-export const openSeededManageCase = () => {
+export const openManageCase = (seededManageCase: SeededManageCase) => {
 	authenticateManageIfRequired();
+	manageHomePage.visit();
+	manageHomePage.openCaseByReference(seededManageCase.reference);
+	caseOverviewPage.verifyLoaded(seededManageCase.planTitle || seededCase.planTitle);
 
+	return cy.wrap(seededManageCase, { log: false });
+};
+
+export const openSeededManageCase = () => {
 	return cy.task<SeededManageCase>('seedDb').then((result) => {
 		if (isEnvironmentSmoke()) {
 			Cypress.env(smokeCaseReferenceKey, result.reference);
 		}
 
-		manageHomePage.visit();
-		manageHomePage.openCaseByReference(result.reference);
-		caseOverviewPage.verifyLoaded(result.planTitle || seededCase.planTitle);
-
-		return cy.wrap(result, { log: false });
+		return openManageCase(result);
 	});
 };
 

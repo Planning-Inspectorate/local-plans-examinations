@@ -1,17 +1,21 @@
 import { BasePage } from '../../base-page.ts';
+import { DateInput } from '../../components/date-input.ts';
+import type { DateAnswer } from '../../../types/date.ts';
 import type { CreateCaseData } from './types.ts';
 
 export class KeyStageDatesPage extends BasePage {
+	private readonly dateInput = new DateInput();
+
 	constructor() {
 		super('/create-a-case/dates/key-stage-dates');
 	}
 
 	verifyKeyStageDatesPopulated(dates: CreateCaseData['dates']) {
-		this.verifyDateInputValues('intentionToCommenceDate', dates.intentionToCommenceDate);
-		this.verifyDateInputValues('gateway1Date', dates.gateway1Date);
-		this.verifyDateInputValues('gateway2Date', dates.gateway2Date);
-		this.verifyDateInputValues('gateway3Date', dates.gateway3Date);
-		this.verifyDateInputValues('expectedSubmissionForExaminationDate', dates.expectedSubmissionForExaminationDate);
+		this.dateInput.verifyValues('intentionToCommenceDate', dates.intentionToCommenceDate);
+		this.dateInput.verifyValues('gateway1Date', dates.gateway1Date);
+		this.dateInput.verifyValues('gateway2Date', dates.gateway2Date);
+		this.dateInput.verifyValues('gateway3Date', dates.gateway3Date);
+		this.dateInput.verifyValues('expectedSubmissionForExaminationDate', dates.expectedSubmissionForExaminationDate);
 	}
 
 	verifyLoaded() {
@@ -24,21 +28,27 @@ export class KeyStageDatesPage extends BasePage {
 			'Gateway 3 expected date',
 			'Expected submission for examination date'
 		);
-		this.verifyDateInputsVisible('intentionToCommenceDate');
-		this.verifyDateInputsVisible('gateway1Date');
-		this.verifyDateInputsVisible('gateway2Date');
-		this.verifyDateInputsVisible('gateway3Date');
-		this.verifyDateInputsVisible('expectedSubmissionForExaminationDate');
+		this.dateInput.verifyVisible('intentionToCommenceDate');
+		this.dateInput.verifyVisible('gateway1Date');
+		this.dateInput.verifyVisible('gateway2Date');
+		this.dateInput.verifyVisible('gateway3Date');
+		this.dateInput.verifyVisible('expectedSubmissionForExaminationDate');
 		this.verifySaveAndContinueVisible();
 	}
 
 	enterKeyStageDates(dates: CreateCaseData['dates']) {
-		this.enterDateAnswer('intentionToCommenceDate', dates.intentionToCommenceDate);
-		this.enterDateAnswer('gateway1Date', dates.gateway1Date);
-		this.enterDateAnswer('gateway2Date', dates.gateway2Date);
-		this.enterDateAnswer('gateway3Date', dates.gateway3Date);
-		this.enterDateAnswer('expectedSubmissionForExaminationDate', dates.expectedSubmissionForExaminationDate);
+		this.dateInput.enter('intentionToCommenceDate', dates.intentionToCommenceDate);
+		this.dateInput.enter('gateway1Date', dates.gateway1Date);
+		this.dateInput.enter('gateway2Date', dates.gateway2Date);
+		this.dateInput.enter('gateway3Date', dates.gateway3Date);
+		this.dateInput.enter('expectedSubmissionForExaminationDate', dates.expectedSubmissionForExaminationDate);
 		this.saveAndContinue();
+	}
+
+	verifyDateInputValidationError(fieldName: string, date: DateAnswer, errorMessage: string) {
+		this.dateInput.enter(fieldName, date);
+		this.saveAndContinue();
+		this.verifyErrorSummaryContains(errorMessage);
 	}
 }
 

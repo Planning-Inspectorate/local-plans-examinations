@@ -14,15 +14,15 @@ import { questions } from './questions.ts';
 
 function createOverviewJourneyForTest() {
 	return createOverviewJourney(
-		{ baseUrl: '/case/LP-TEST-001' } as Request,
-		new JourneyResponse(COMMON_CONSTS.OVERVIEW_JOURNEY_ID, '', {}),
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
+		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', {}),
 		questions
 	);
 }
 
 function createGateway1JourneyForTest() {
 	return createGateway1Journey(
-		{ baseUrl: '/case/LP-TEST-001' } as Request,
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_1_JOURNEY_ID, '', {}),
 		questions
 	);
@@ -30,7 +30,7 @@ function createGateway1JourneyForTest() {
 
 function createGateway2JourneyForTest() {
 	return createGateway2Journey(
-		{ baseUrl: '/case/LP-TEST-001' } as Request,
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', {}),
 		questions
 	);
@@ -38,7 +38,7 @@ function createGateway2JourneyForTest() {
 
 function createGateway3JourneyForTest() {
 	return createGateway3Journey(
-		{ baseUrl: '/case/LP-TEST-001' } as Request,
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions: [{}] }),
 		questions
 	);
@@ -46,7 +46,7 @@ function createGateway3JourneyForTest() {
 
 function createExaminationJourneyForTest() {
 	return createExaminationJourney(
-		{ baseUrl: '/case/LP-TEST-001' } as Request,
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
 		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', {}),
 		questions
 	);

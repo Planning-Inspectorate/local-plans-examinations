@@ -140,4 +140,12 @@ describe('Gateway 3 application page content', () => {
 			'Other documents'
 		]);
 	});
+
+	it('Shows ready to submit for Gateway 3 section', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifySubHeading('Ready to submit for Gateway 3');
+		gateway3ApplicationPage.verifyMainContains(
+			`Once submitted, Gateway 3 will be locked and you cannot make further changes. By submitting, you're confirming that the information you're sharing is correct to the best of your knowledge.`
+		);
+		gateway3ApplicationPage.verifySubmitGateway3Button();
+	});
 });
