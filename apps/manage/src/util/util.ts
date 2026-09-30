@@ -82,3 +82,17 @@ export function sortByCreatedDate(workshops: { createdDate: Date; [key: string]:
 		return aCreatedDate.getTime() - bCreatedDate.getTime();
 	});
 }
+
+export function filterGateway2Workshops(
+	workshops: { createdDate: Date; workshopComplete: boolean; [key: string]: any }[],
+	workshopId?: number
+) {
+	const workshopsToKeep: typeof workshops = [];
+	for (let i = 0; i < workshops.length; i++) {
+		const workshop = workshops[i];
+		if (workshop.workshopComplete || i == workshopId) {
+			workshopsToKeep.push(workshop);
+		}
+	}
+	return workshopsToKeep;
+}
