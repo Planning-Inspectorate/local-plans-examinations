@@ -49,6 +49,9 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		initialBackLink: overviewUrl,
 		response
 	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.OVERVIEW_JOURNEY_ID;
+	}
 
 	return getBacklinks(journey, overviewUrl);
 }
@@ -95,6 +98,9 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway3Url,
 		response
 	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_3_JOURNEY_ID;
+	}
 
 	return getBacklinks(journey, gateway3Url);
 }
@@ -147,8 +153,6 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		initialBackLink: gateway2Url,
 		response
 	});
-	console.log('gw2 workshop answers');
-	console.log(response.answers);
 	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
 	const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
 		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
@@ -161,6 +165,9 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		});
 		response.answers[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`] =
 			workshopAnswers[workshopId - 1].workshopExpectedDays;
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID;
 	}
 	return journey;
 }
@@ -192,8 +199,9 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	response.answers.workshops = sortGateway2Workshops(
 		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
 	);
-	console.log('gw2 answers');
-	console.log(response.answers);
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_JOURNEY_ID;
+	}
 	return getBacklinks(journey, gateway2Url);
 }
 
@@ -220,7 +228,9 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway1Url,
 		response
 	});
-
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_1_JOURNEY_ID;
+	}
 	return getBacklinks(journey, gateway1Url);
 }
 
@@ -272,6 +282,9 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
+	}
 	return getBacklinks(journey, examinationUrl);
 }
 

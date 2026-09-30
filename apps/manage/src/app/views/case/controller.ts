@@ -265,12 +265,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					String(req.params.question).startsWith(prefix)
 				);
 				if (matchedQuestion) {
-					console.log('updateCaseField answers');
-					console.log(data.answers);
 					const workshopId = Number(String(req.params.question).replace(`${matchedQuestion}-`, ''));
-					console.log('workshopIdworkshopId');
-					console.log(workshopId);
-					console.log(workshopDetails.length);
 					if (workshopId > workshopDetails.length) {
 						workshopDetails.push({ workshopDate: null, createdDate: new Date() });
 					}
@@ -304,8 +299,6 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						workshops: workshopDetails
 					};
 				}
-				console.log('formatted answers');
-				console.log(answers);
 				updated = await updateGateway2(
 					db,
 					trimStringValues(answers as Gateway2Input),
