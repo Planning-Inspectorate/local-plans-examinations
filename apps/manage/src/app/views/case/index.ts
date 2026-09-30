@@ -2,11 +2,6 @@ import {
 	addCaseNavigation,
 	buildGetJourneyMiddleware,
 	updateCaseField,
-	type UpdateFunction,
-	updateGateway1,
-	updateGateway2,
-	updateGateway3,
-	updateExamination,
 	getDeleteCase,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
@@ -26,6 +21,11 @@ import {
 	preprocessQuestionProperties,
 	issueGateway2WorkshopDocuments
 } from './controller.ts';
+import { type SaveController } from './save/save-controller.ts';
+import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
+import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
+import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
+import { ExaminationSaveController } from './save/examination-save-controller.ts';
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import * as authSession from '@planning-inspectorate/core/auth';
@@ -83,7 +83,7 @@ interface CaseJourneyConfig {
 	createJourney: JourneyFactory;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
-	updateFunction?: UpdateFunction;
+	saveController?: new (...args: any[]) => SaveController;
 }
 
 function registerGateway2WorkshopJourney(
@@ -148,6 +148,9 @@ function registerGateway2WorkshopJourney(
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
+		const workshopId = String(req.url).split('-')[-1];
+		await new Gateway2SaveController(service, reference).prepareAndSave(req, {}, `check-your-answers-${workshopId}`);
+		await updateCaseField(service);
 
 		await service.db.case.update({
 			where: { reference },
@@ -225,7 +228,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createOverviewJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
-		updateFunction: undefined
+		saveController: undefined
 	},
 	{
 		path: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
@@ -233,7 +236,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway1Journey,
 		supportsManageList: true,
 		supportsFileUpload: true,
-		updateFunction: updateGateway1
+		saveController: Gateway1SaveController
 	},
 	{
 		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
@@ -241,7 +244,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway2Journey,
 		supportsManageList: true,
 		supportsFileUpload: true,
-		updateFunction: updateGateway2
+		saveController: Gateway2SaveController
 	},
 	{
 		path: 'gateway-2/set-up-workshop',
@@ -249,14 +252,14 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway2WorkshopJourney,
 		supportsManageList: false,
 		supportsFileUpload: false,
-		updateFunction: updateGateway2
+		saveController: Gateway2SaveController
 	},
 	{
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
 		supportsFileUpload: true,
-		updateFunction: updateGateway3
+		saveController: Gateway3SaveController
 	},
 	{
 		path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
@@ -264,11 +267,11 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
-		updateFunction: updateExamination
+		saveController: ExaminationSaveController
 	}
 ];
 
-const CASE_JOURNEY_MAP = Object.fromEntries(CASE_JOURNEYS.map((elem) => [elem.path, elem.updateFunction]));
+const CASE_JOURNEY_MAP = Object.fromEntries(CASE_JOURNEYS.map((elem) => [elem.path, elem.saveController]));
 
 export function caseRouter(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -402,9 +405,13 @@ function registerCaseJourney(
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
-							const saveFunction = CASE_JOURNEY_MAP[journeyId];
-							if (saveFunction) {
-								saveFunction(service.db, {}, getParam(req.params.reference), questionConfig.url);
+							const saveController = CASE_JOURNEY_MAP[journeyId];
+							if (saveController) {
+								await new saveController(service, getParam(req.params.reference)).prepareAndSave(
+									req,
+									{},
+									questionConfig.url
+								);
 							}
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),

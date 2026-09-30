@@ -37,7 +37,7 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortGateway2Workshops, filterGateway2Workshops } from '#util/util.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -1244,7 +1244,9 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = filterGateway2Workshops(sortGateway2Workshops(answersFull.workshops), workshopId - 1)[
+				workshopId - 1
+			];
 
 			const workshopDate = {
 				key: 'workshop date',
@@ -1278,7 +1280,9 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = filterGateway2Workshops(sortGateway2Workshops(answersFull.workshops), workshopId - 1)[
+				workshopId - 1
+			];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: workshopDetails.workshopExpectedDaysKnown,
@@ -1306,7 +1310,9 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = filterGateway2Workshops(sortGateway2Workshops(answersFull.workshops), workshopId - 1)[
+				workshopId - 1
+			];
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,
