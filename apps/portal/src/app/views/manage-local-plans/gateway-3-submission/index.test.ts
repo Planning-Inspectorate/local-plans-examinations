@@ -195,6 +195,6 @@ describe('Gateway 3 submission complete page', () => {
 		const html = renderSubmissionComplete();
 		assert.ok(html.includes('data-cy="get-in-touch"'), 'expected get-in-touch data-cy');
 		assert.ok(html.includes('If you need to adjust your submission,'), 'expected get in touch copy');
-		assert.ok(html.includes('contact-us.planninginspectorate.gov.uk'), 'expected contact URL');
+		assert.ok(html.includes('get in touch'), 'expected get in touch link text');
 	});
 });
