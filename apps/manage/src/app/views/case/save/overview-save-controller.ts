@@ -43,7 +43,6 @@ export class OverviewSaveController extends SaveController {
 				}
 				updated = true;
 			}
-
 			const caseUpdate: Record<string, unknown> = { ...caseFields, ...this.buildNestedRelationUpdates(nestedData) };
 			if (answers.lpa) {
 				caseUpdate.lpas = {
@@ -67,7 +66,6 @@ export class OverviewSaveController extends SaveController {
 				caseRecordChange = await tx.case.update({ where: { reference: this.caseReference }, data: caseUpdate });
 				updated = true;
 			}
-
 			return {
 				contactRecordChange,
 				caseRecordChange
@@ -108,14 +106,12 @@ export class OverviewSaveController extends SaveController {
 			const bucket = (nestedData[mapping.relation] ??= {});
 			bucket[mapping.differingFieldName ?? key] = value;
 		}
-
 		return { caseFields, nestedData };
 	}
 
 	/** Builds the `{ relation: { upsert: { create, update } } }` payload for each related table touched. */
 	private buildNestedRelationUpdates(nestedData: Partial<Record<CaseRelation, Record<string, unknown>>>) {
 		const relationUpdates: Record<string, unknown> = {};
-
 		for (const [relation, fields] of Object.entries(nestedData) as [CaseRelation, Record<string, unknown>][]) {
 			const trigger = RELATION_APPOINTMENT_DATE_TRIGGERS[relation];
 			if (trigger.triggerFields.some((field) => field in fields)) {
@@ -123,7 +119,6 @@ export class OverviewSaveController extends SaveController {
 			}
 			relationUpdates[relation] = { upsert: { create: fields, update: fields } };
 		}
-
 		return relationUpdates;
 	}
 }

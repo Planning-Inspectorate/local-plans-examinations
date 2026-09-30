@@ -713,6 +713,9 @@ function registerGateway2WorkshopJourney(
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
+		const workshopId = String(req.url).split('-')[-1];
+		await new Gateway2SaveController(service, reference).prepareAndSave(req, {}, `check-your-answers-${workshopId}`);
+		await updateCaseField(service);
 
 		await service.db.case.update({
 			where: { reference },
@@ -821,22 +824,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		saveController: Gateway2SaveController
 	},
 	{
-		path: 'gateway-2/set-up-workshop',
-		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
-		createJourney: createGateway2WorkshopJourney,
-		supportsManageList: false,
-		supportsFileUpload: false,
-		saveController: Gateway2SaveController
-	},
-	{
-		path: 'gateway-2/set-up-workshop',
-		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
-		createJourney: createGateway2WorkshopJourney,
-		supportsManageList: false,
-		supportsFileUpload: false,
-		updateFunction: updateGateway2
-	},
-	{
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
@@ -866,14 +853,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
 		createJourney: createExaminationHearingJourney,
 		pageLoadHandler: ExaminationTabHandler,
-		supportsManageList: true,
-		supportsFileUpload: false,
-		saveController: ExaminationSaveController
-	},
-	{
-		path: 'examination/set-up-hearing',
-		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
-		createJourney: createExaminationHearingJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
