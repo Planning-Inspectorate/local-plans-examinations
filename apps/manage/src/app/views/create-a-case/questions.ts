@@ -6,7 +6,7 @@ import {
 	questionClasses,
 	type BaseQuestionProps
 } from '@planning-inspectorate/dynamic-forms';
-import { retrieveCaseOfficers, retrieveLpaOptions } from '../../util/options-helper.ts';
+import { retrieveCaseOfficers, loadLpaOptions } from '../../util/options-helper.ts';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
@@ -59,7 +59,7 @@ export async function getQuestions(
 		},
 		lpa: {
 			type: COMPONENT_TYPES.SELECT,
-			options: await retrieveLpaOptions(service),
+			options: await loadLpaOptions(service, true),
 			question: 'Select the Local Planning Authority for this plan',
 			fieldName: 'lpa',
 			url: 'select-lpa',
