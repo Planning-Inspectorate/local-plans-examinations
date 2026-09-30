@@ -4,6 +4,12 @@ import type { ManageService } from '#service';
 
 type LpaOption = { value: string; text: string };
 
+/**
+ * Loads the case officer options into the provided questions object.
+ * @param service The manage service instance.
+ * @param req The express request object.
+ * @param questions The questions object to populate with case officer options.
+ */
 export async function loadCaseOfficerOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	if (service.authDisabled) return;
 
@@ -16,6 +22,12 @@ export async function loadCaseOfficerOptions(service: ManageService, req: Reques
 	];
 }
 
+/**
+ * Loads the inspector options into the provided questions object.
+ * @param service The manage service instance.
+ * @param req The express request object.
+ * @param questions The questions object to populate with inspector options.
+ */
 export async function loadInspectorOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	if (service.authDisabled) return;
 
@@ -28,6 +40,12 @@ export async function loadInspectorOptions(service: ManageService, req: Request,
 	questions.examiningInspector3.options = optionsMap;
 }
 
+/**
+ * Retrieves the list of case officer options to be put directly into a questions options array.
+ * @param service The manage service instance.
+ * @param session The authentication session.
+ * @returns A promise that resolves to an array of case officer options.
+ */
 export async function retrieveCaseOfficers(
 	service: ManageService,
 	session: authSession.SessionWithAuth
@@ -38,14 +56,33 @@ export async function retrieveCaseOfficers(
 
 	const entraClient = service.getEntraClient(session);
 	const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
-	return caseOfficers.map((m) => ({ value: m.id, text: m.displayName }));
+	return [{ value: '', text: '' }, ...caseOfficers.map((m) => ({ value: m.id, text: m.displayName }))];
+}
+
+export function retrieveDefaultCaseOfficers() {
+	return [
+		{ value: '', text: '' },
+		{ value: 'officer-1', text: 'Case Officer 1' },
+		{ value: 'officer-2', text: 'Case Officer 2' },
+		{ value: 'officer-3', text: 'Case Officer 3' }
+	];
+}
+
+function retrieveDefaultLpaOptions(): LpaOption[] {
+	return [
+		{ value: '', text: '' },
+		{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+		{ value: 'lpa-2', text: 'Local Planning Authority 2' },
+		{ value: 'lpa-3', text: 'Local Planning Authority 3' },
+		{ value: 'lpa-4', text: 'Local Planning Authority 4' }
+	];
 }
 
 /**
- * Loads Local Planning Authority (LPA) options either from a database or a predefined list.
- *
- * @param {ManageService} service - The service instance containing the database and other configurations.
- * @return {Promise<LpaOption[]>} A promise that resolves to an array of LPA options. Each option includes a value and text property.
+ * Loads the LPA options into the provided questions object.
+ * @param service The manage service instance.
+ * @param addEmptyValue Whether to include an empty value option.
+ * @returns A promise that resolves to an array of LPA options.
  */
 export async function loadLpaOptions(service: ManageService, addEmptyValue: boolean): Promise<LpaOption[]> {
 	const { db } = service;
@@ -73,23 +110,4 @@ export async function loadLpaOptions(service: ManageService, addEmptyValue: bool
 	}
 
 	return retrieveDefaultLpaOptions();
-}
-
-export function retrieveDefaultCaseOfficers() {
-	return [
-		{ value: '', text: '' },
-		{ value: 'officer-1', text: 'Case Officer 1' },
-		{ value: 'officer-2', text: 'Case Officer 2' },
-		{ value: 'officer-3', text: 'Case Officer 3' }
-	];
-}
-
-function retrieveDefaultLpaOptions(): LpaOption[] {
-	return [
-		{ value: '', text: '' },
-		{ value: 'lpa-1', text: 'Local Planning Authority 1' },
-		{ value: 'lpa-2', text: 'Local Planning Authority 2' },
-		{ value: 'lpa-3', text: 'Local Planning Authority 3' },
-		{ value: 'lpa-4', text: 'Local Planning Authority 4' }
-	];
 }
