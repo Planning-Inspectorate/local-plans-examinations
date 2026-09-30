@@ -63,7 +63,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser, caseOfficerNames, req);
 
 		service.logger.info(answers, 'case created');
-		const lpaOptions = await loadLpaOptions(service);
+		const lpaOptions = await loadLpaOptions(service, false);
 		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
 		const relevantLpaNames = uniqueLpaCodes.map((code) => lpaOptionsMap.get(code) ?? getOptionText('lpa', code));
 
