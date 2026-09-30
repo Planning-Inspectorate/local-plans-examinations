@@ -133,6 +133,8 @@ npm run cy:manage:test-smoke
 npm run cy:portal:test-smoke
 ```
 
+The same Manage and Portal smoke jobs run automatically after a successful deployment to Test.
+
 Use shared auth/data helpers for environment-specific setup so specs stay close to the normal user journeys. Environment smoke tests must only clean up records they create; `clearDb` is disabled in this mode to protect shared Test data.
 
 Accessibility checks use `cypress-axe` on a small set of Manage and Portal pages. The checks only run the WCAG A/AA tags. Axe will not catch every accessibility issue. For example, a repeated `Add` link can pass if it has text, even if a screen reader user would not know what it adds. Passing these tests does not prove the service is fully compliant - it just helps catch issues axe can spot. The external audit still covers the wider checks.
