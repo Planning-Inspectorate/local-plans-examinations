@@ -57,6 +57,12 @@ import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
+import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
+import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
+import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
+import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
+import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
+import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -71,6 +77,7 @@ interface CaseJourneyConfig {
 	path: string;
 	journeyId: string;
 	createJourney: JourneyFactory;
+	pageLoadHandler: new () => OverviewPageLoadHandler;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
 	updateFunction?: UpdateFunction;
@@ -82,6 +89,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.OVERVIEW,
 		journeyId: COMMON_CONSTS.OVERVIEW_JOURNEY_ID,
 		createJourney: createOverviewJourney,
+		pageLoadHandler: OverviewTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		updateFunction: undefined
@@ -90,6 +98,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
 		createJourney: createGateway1Journey,
+		pageLoadHandler: Gateway1TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
 		updateFunction: updateGateway1
@@ -98,6 +107,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
+		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
 		updateFunction: updateGateway2
@@ -106,6 +116,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
+		pageLoadHandler: Gateway3TabHandler,
 		supportsFileUpload: true,
 		updateFunction: updateGateway3
 	},
@@ -113,6 +124,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
+		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		updateFunction: updateExamination
@@ -148,14 +160,14 @@ function registerCaseJourney(
 	config: CaseJourneyConfig,
 	updateCase: ReturnType<typeof updateCaseField>
 ): void {
-	const { path, journeyId, createJourney, supportsManageList, supportsFileUpload } = config;
+	const { path, journeyId, createJourney, pageLoadHandler, supportsManageList, supportsFileUpload } = config;
 
 	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		await getQuestions(service, req);
 		next();
 	});
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
-	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
+	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId, pageLoadHandler);
 
 	const fileUploadMiddleware = fileUploaderQuestionMiddleware({
 		questionUrls: fileUploadQuestionUrls,
