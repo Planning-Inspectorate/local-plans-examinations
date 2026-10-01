@@ -203,6 +203,9 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway2Url,
 		response
 	});
+	if (!response.answers.workshops) {
+		throw Error('workshops property missing from answers for gateway2 journey');
+	}
 	response.answers.workshops = filterGateway2Workshops(
 		sortGateway2Workshops(
 			response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
