@@ -101,7 +101,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
 			case COMMON_CONSTS.OVERVIEW: {
-				updated = await new OverviewSaveController(service, reference, action, section, currentItemId).prepareAndSave(
+				updated = await new OverviewSaveController(service, reference, section, action, currentItemId).prepareAndSave(
 					req,
 					data.answers,
 					getParam(req.params.question)

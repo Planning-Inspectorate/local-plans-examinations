@@ -43,7 +43,20 @@ function createService(): any {
 		case: {
 			update: mock.fn(async () => ({})),
 			findUnique: mock.fn(async () => ({
-				id: CASE_ID
+				id: CASE_ID,
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				}
 			}))
 		},
 		contact: {
@@ -1061,6 +1074,9 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.gateway2Info.findUnique.mock.calls[0].arguments[0], {
+			include: {
+				workshops: true
+			},
 			where: {
 				caseId: CASE_ID
 			}
