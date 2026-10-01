@@ -1,4 +1,4 @@
-import { CaseOverviewInput } from '../views/case/save/save-inputs.ts';
+import type { CaseOverviewInput } from '../views/case/save/save-inputs.ts';
 import { COMMON_CONSTS } from './common-consts.ts';
 
 export type CaseRelation =
