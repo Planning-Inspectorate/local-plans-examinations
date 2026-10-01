@@ -968,11 +968,7 @@ questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: 
 export async function updateQuestionsWithOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	await loadCaseOfficerOptions(service, req, questions);
 	await loadInspectorOptions(service, req, questions);
-
-	const lpaOptions = await loadLpaOptions(service);
-	if (lpaOptions.length > 0) {
-		questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
-	}
+	await loadLpaOptions(service, true);
 }
 
 export async function getQuestions(
