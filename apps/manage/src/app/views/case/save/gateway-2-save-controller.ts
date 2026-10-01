@@ -27,14 +27,16 @@ export class Gateway2SaveController extends SaveController {
 		if (!this.caseId) {
 			this.caseId = caseDetails.id;
 		}
-		if (!caseDetails.gateway2Info?.workshops) {
+		if (caseDetails.gateway2Info?.workshops == undefined) {
 			throw Error(`Could not find workshop data for case with reference '${this.caseReference}'`);
 		}
 		const question = req.params.question ? String(req.params.question) : '';
 		const matchedQuestion = gatway2WorkshopBaseUrls.find((prefix) => question.startsWith(prefix));
 		const submittingCheckYourAnswers = String(req.url).includes('check-your-answers');
 		if (matchedQuestion || submittingCheckYourAnswers) {
-			const workshopId = Number(question.replace(`${matchedQuestion}-`, '') || req.url.split('-').at(-1));
+			const workshopIdFromQuestion = parseInt(question.replace(`${matchedQuestion}-`, ''));
+			const workshopIdFromUrl = parseInt(String(req.url.split('-').at(-1)));
+			const workshopId = isNaN(workshopIdFromQuestion) ? workshopIdFromUrl : workshopIdFromQuestion;
 			if (!workshopId) {
 				throw Error('Could not extract the workshop id');
 			}
@@ -72,9 +74,7 @@ export class Gateway2SaveController extends SaveController {
 				}
 			});
 			if (submittingCheckYourAnswers) {
-				console.log('updating workshopComplete');
 				workshopDetails[workshopId - 1].workshopComplete = true;
-				console.log(workshopDetails[workshopId - 1]);
 			}
 			return {
 				workshops: workshopDetails
@@ -96,12 +96,6 @@ export class Gateway2SaveController extends SaveController {
 
 		if (answers.workshopDate) {
 			answers.workshopDate = parseDate(answers.workshopDate as any);
-		}
-
-		if ('workshopExpectedDaysKnown_workshopExpectedDays' in answers) {
-			answers.workshopExpectedDays = answers.workshopExpectedDaysKnown_workshopExpectedDays;
-
-			delete answers.workshopExpectedDaysKnown_workshopExpectedDays;
 		}
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
