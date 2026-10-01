@@ -21,7 +21,7 @@ export class Gateway3SaveController extends SaveController {
 		if (!caseDetails) {
 			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
 		}
-		if (!caseDetails.gateway3Info?.submissions) {
+		if (caseDetails.gateway3Info?.submissions == undefined || caseDetails.gateway3Info?.submissions.length == 0) {
 			throw Error(`Could not find submission data for case with reference '${this.caseReference}'`);
 		}
 		const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submissions);
