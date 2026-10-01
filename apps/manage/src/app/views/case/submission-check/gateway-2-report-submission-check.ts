@@ -33,7 +33,8 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 			backLink: this.generateBackUrl(originalUrl),
 			notificationPreviewTemplate: questionUrl + (receivedDate ? '-complete' : ''),
 			submitButtonText: 'Issue report',
-			additionalFields: this.generateAdditionalDateField(fileUploadedDate, undefined)
+			additionalFields: this.generateAdditionalDateField(fileUploadedDate, undefined),
+			notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available"
 		};
 	}
 }

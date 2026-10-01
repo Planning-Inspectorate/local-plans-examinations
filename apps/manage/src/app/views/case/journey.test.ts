@@ -31,7 +31,7 @@ function createGateway1JourneyForTest() {
 function createGateway2JourneyForTest() {
 	return createGateway2Journey(
 		{ baseUrl: '/case/LP-TEST-001' } as Request,
-		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', {}),
+		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', { workshops: [] }),
 		questions
 	);
 }
