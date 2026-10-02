@@ -12,6 +12,15 @@ export class Gateway3DeclarationPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading("Are you sure you're ready to submit?");
+		this.verifyMainContains("This can't be undone.");
+	}
+
+	get confirmSubmissionButton() {
+		return cy.getByData('confirm-submission');
+	}
+
+	verifyConfirmSubmissionButton() {
+		this.confirmSubmissionButton.should('be.visible');
 	}
 }
 
