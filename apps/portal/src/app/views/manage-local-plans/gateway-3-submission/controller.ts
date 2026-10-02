@@ -3,7 +3,6 @@ import { type NextFunction, type Request, type RequestHandler, type Response } f
 import multer from 'multer';
 import {
 	buildGetJourney,
-	buildGetJourneyResponseFromSession,
 	buildList,
 	buildSave,
 	buildSaveDataToSession,
@@ -11,7 +10,6 @@ import {
 	question,
 	type SaveDataFn,
 	type SaveParams,
-	saveDataToSession,
 	validate,
 	validationErrorHandler
 } from '@planning-inspectorate/dynamic-forms';
@@ -115,9 +113,7 @@ function getRouteFileUploadQuestion(req: Request): Gateway3FileUploadQuestion {
 }
 
 function redirectToFileUploaderQuestion(req: Request) {
-	const planReference = getRoutePlanReference(req);
-	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
-	return `${req.baseUrl}${planPath}/gateway-3-submission/${req.params.section}/${req.params.question}`;
+	return `${req.baseUrl}/${req.params.section}/${req.params.question}`;
 }
 
 function formatDisplayDate(date: Date | null | undefined) {
@@ -403,12 +399,6 @@ export function setAsEditingFromCya(req: Request, _: Response, next: NextFunctio
 	next();
 }
 
-export function redirectAfterCyaEdit(req: Request, res: Response, next: NextFunction) {
-	const request = req as Gateway3Request;
-	const returnToCya = getCheckAnswersRedirect(req) ?? request.session.editingFromCheckAnswers === true;
-	buildSave(saveDataToSession, returnToCya)(req, res, next);
-}
-
 export function redirectAfterCaseQuestionEdit(saveDataToCase: SaveDataFn) {
 	return (req: Request, res: Response, next: NextFunction) => {
 		const returnToCya = getCheckAnswersRedirect(req) ?? true;
@@ -545,7 +535,6 @@ export function buildGetDeclarationPage(): RequestHandler {
 // ---------------------------------------------------------------------------
 
 export function buildGateway3Middleware(service: PortalService) {
-	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
 	const getJourney = buildGetJourney((req, journeyResponse) =>
 		createJourney(req, journeyResponse, createGateway3Questions(getRoutePlanReference(req)))
 	);
@@ -618,7 +607,6 @@ export function buildGateway3Middleware(service: PortalService) {
 	});
 
 	return {
-		getJourneyResponse,
 		getJourney,
 		getJourneyResponseFromCase,
 		saveDataToCase,

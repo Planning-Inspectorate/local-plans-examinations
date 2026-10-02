@@ -7,7 +7,6 @@ import {
 	buildValidateGateway3Submission,
 	handleMulterFileSizeError,
 	redirectAfterCaseQuestionEdit,
-	redirectAfterCyaEdit,
 	setAsEditingFromCya,
 	setGateway3ViewData,
 	setGateway3ViewLocals,
@@ -317,7 +316,7 @@ describe('handleMulterFileSizeError', () => {
 		const err = new multer.MulterError('LIMIT_FILE_SIZE');
 		const req = {
 			params: { planReference: 'PLAN-001', section: 'required-information', question: 'proposed-local-plan' },
-			baseUrl: '/manage-local-plans',
+			baseUrl: '/manage-local-plans/PLAN-001/gateway-3-submission',
 			session: {}
 		} as unknown as Request;
 		let redirectUrl = '';
@@ -360,13 +359,6 @@ describe('setAsEditingFromCya', () => {
 	});
 });
 
-describe('redirectAfterCyaEdit', () => {
-	it('is an express middleware function', () => {
-		assert.strictEqual(typeof redirectAfterCyaEdit, 'function');
-		assert.strictEqual(redirectAfterCyaEdit.length, 3);
-	});
-});
-
 describe('redirectAfterCaseQuestionEdit', () => {
 	it('returns a middleware function when given a save function', () => {
 		const saveDataFn = async () => {};
@@ -397,7 +389,6 @@ describe('buildGateway3Middleware', () => {
 
 		const middleware = buildGateway3Middleware(mockService);
 
-		assert.strictEqual(typeof middleware.getJourneyResponse, 'function');
 		assert.strictEqual(typeof middleware.getJourney, 'function');
 		assert.strictEqual(typeof middleware.getJourneyResponseFromCase, 'function');
 		assert.strictEqual(typeof middleware.saveDataToCase, 'function');

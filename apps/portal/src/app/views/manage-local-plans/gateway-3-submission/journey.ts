@@ -8,10 +8,8 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 	const planReference = Array.isArray(req.params.planReference)
 		? req.params.planReference[0]
 		: req.params.planReference;
-	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-	const baseUrl = planReference
-		? `${req.baseUrl}/${encodedPlanReference}/gateway-3-submission`
-		: `${req.baseUrl}/gateway-3-submission`;
+	// const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+	const baseUrl = req.baseUrl;
 
 	const journey = new Journey({
 		journeyId: JOURNEY_ID,

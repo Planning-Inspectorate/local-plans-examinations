@@ -20,7 +20,7 @@ function createApp() {
 	nunjucksEnv.express(app);
 	app.set('view engine', 'njk');
 
-	app.use('/', createCookiesRoutes());
+	app.use('/cookies', createCookiesRoutes());
 	return app;
 }
 

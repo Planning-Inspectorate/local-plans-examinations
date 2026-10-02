@@ -1,5 +1,6 @@
 import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
@@ -7,7 +8,6 @@ import {
 	setAsEditingFromCya,
 	setGateway3ViewData
 } from './controller.ts';
-import { asyncHandler } from '@planning-inspectorate/core/util';
 
 export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -29,9 +29,8 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		getDeclarationPage
 	} = buildGateway3Middleware(service);
 
-	// Landing page (case-scoped)
 	router.get(
-		'/:planReference/gateway-3-submission',
+		'/',
 		getJourneyResponseFromCase,
 		getJourney,
 		setAsEditingFromCya,
@@ -40,23 +39,17 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	// Submit Gateway 3 (case-scoped)
-	router.post(
-		'/:planReference/gateway-3-submission',
-		getJourneyResponseFromCase,
-		getJourney,
-		validateGateway3Submission,
-		(req, res) => {
-			const planReference = encodeURIComponent(req.params.planReference as string);
-			res.redirect(`/manage-local-plans/${planReference}/gateway-3-submission/declaration`);
-		}
-	);
+	router.post('/', getJourneyResponseFromCase, getJourney, validateGateway3Submission, (req, res) => {
+		const planReference = encodeURIComponent(req.params.planReference as string);
+		res.redirect(`/manage-local-plans/${planReference}/gateway-3-submission/declaration`);
+	});
 
 	// Declaration page (case-scoped)
-	router.get('/:planReference/gateway-3-submission/declaration', asyncHandler(getDeclarationPage));
+	router.get('/declaration', asyncHandler(getDeclarationPage));
 
 	// Upload documents (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question/upload-documents',
+		'/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
 		getJourney,
 		upload.array('files[]'),
@@ -67,22 +60,18 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 
 	// Delete documents (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question/delete-document/:fileId',
+		'/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		getJourney,
 		deleteGateway3DocumentForCase
 	);
 
 	// Download document (case-scoped)
-	router.get(
-		'/:planReference/gateway-3-submission/download-document/:documentId',
-		getJourneyResponseFromCase,
-		downloadGateway3Document
-	);
+	router.get('/download-document/:documentId', getJourneyResponseFromCase, downloadGateway3Document);
 
 	// Question page GET (case-scoped)
 	router.get(
-		'/:planReference/gateway-3-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		fileUploaderMiddlewareForCase,
@@ -91,13 +80,12 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 
 	// Question page POST (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		getJourney,
 		validate,
 		validationErrorHandler,
 		redirectAfterCaseQuestionEdit
 	);
-
 	return router;
 }

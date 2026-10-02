@@ -3,15 +3,12 @@ import { cacheNoCacheMiddleware } from '@planning-inspectorate/core/middleware';
 import { createErrorRoutes } from './views/static/error/index.ts';
 import { createCookiesRoutes } from './views/static/cookies/index.ts';
 import { createHomeRoutes } from './views/home/index.ts';
-import { createLandingPageRoutes } from './views/landing-page/index.ts';
-import { createPlanPageRoutes } from './views/plan-page/index.ts';
-import { gateway2SubmissionRoutes } from './views/manage-local-plans/gateway-2-submission/index.ts';
-import { gateway3SubmissionRoutes } from './views/manage-local-plans/gateway-3-submission/index.ts';
 import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
-import { checkCaseOwnership, checkIsAuthenticated, exposeAuthToViews } from './auth/guards.ts';
+import { manageLocalPlansRoutes } from './views/manage-local-plans/index.ts';
+import { checkIsAuthenticated, exposeAuthToViews } from './auth/guards.ts';
 
 /**
  * Main app router
@@ -27,21 +24,15 @@ export function buildRouter(service: PortalService): IRouter {
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
 	router.use(exposeAuthToViews);
+	router.use('/', createHomeRoutes(service));
+	router.use('/cookies', createCookiesRoutes());
 	router.use('/login', createLoginRoutes(service));
 	router.use('/logout', (req, res) => {
 		req.session.destroy(() => {
 			res.redirect('/login');
 		});
 	});
-	router.use('/landingPage', createLandingPageRoutes(service));
-	router.use('/manage-local-plans', checkIsAuthenticated);
-	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));
-	router.use('/manage-local-plans', createPlanPageRoutes(service));
-	router.use('/manage-local-plans/:planReference', checkCaseOwnership(service));
-	router.use('/manage-local-plans', gateway2SubmissionRoutes(service));
-	router.use('/manage-local-plans', gateway3SubmissionRoutes(service));
-	router.use('/', createHomeRoutes(service));
-	router.use('/', createCookiesRoutes());
+	router.use('/manage-local-plans', checkIsAuthenticated, manageLocalPlansRoutes(service));
 	router.use('/error', createErrorRoutes(service));
 
 	return router;
