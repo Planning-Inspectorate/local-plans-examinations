@@ -50,6 +50,7 @@ describe('Gateway 3 Submission page journeys', () => {
 			gateway3DeclarationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway3DeclarationPage.verifyBackLink(gateway3ApplicationPage.pathFor(plan.urlReference));
 			gateway3DeclarationPage.verifyConfirmSubmissionButton();
+			gateway3DeclarationPage.verifyGoBackButton();
 		});
 	});
 });
