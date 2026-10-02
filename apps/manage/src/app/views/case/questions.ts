@@ -869,7 +869,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the Gateway 2 assessor appointed?',
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
-		title: 'Assessor date of appointment',
+		title: 'Appointed',
 		validators: [new DateValidator(' Input a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
 	},
