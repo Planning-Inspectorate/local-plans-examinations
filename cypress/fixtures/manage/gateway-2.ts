@@ -85,15 +85,6 @@ export const gateway2AssessorAnswer = {
 	boxListField: 'assessorName__listbox'
 } as const;
 
-export const workshopVenueAnswer = {
-	row: 'Workshop venue',
-	path: 'gateway-2-workshop-venue',
-	heading: 'What is the venue for the Gateway 2 workshop?',
-	value: 'Workshop venue name',
-	updatedValue: 'Updated Workshop Venue',
-	display: 'Workshop venue'
-} as const;
-
 export const gateway2Report = {
 	row: 'Issue Gateway 2 report',
 	heading: 'Upload Gateway 2 report',
@@ -111,6 +102,5 @@ export const updatedGateway2ExpectedDateAnswer = {
 
 export const gateway2ExpectedAnswers = [
 	...Object.values(gateway2DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display },
-	{ row: workshopVenueAnswer.row, display: workshopVenueAnswer.display }
+	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display }
 ];
