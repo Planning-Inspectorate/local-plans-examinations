@@ -713,8 +713,9 @@ function registerGateway2WorkshopJourney(
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
-		const workshopId = String(req.url).split('-')[-1];
-		await new Gateway2SaveController(service, reference).prepareAndSave(req, {}, `check-your-answers-${workshopId}`);
+		//const workshopId = String(req.url).split('-')[-1];
+		//reqCopy.params.question = `check-your-answers-${workshopId}`;
+		await new Gateway2SaveController(service, req, reference).prepareAndSave({});
 		await updateCaseField(service);
 
 		await service.db.case.update({
