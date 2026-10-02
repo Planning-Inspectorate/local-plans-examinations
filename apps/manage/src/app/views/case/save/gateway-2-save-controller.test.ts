@@ -158,7 +158,7 @@ describe('test Gateway2SaveController', () => {
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await assert.rejects(gateway2Controller.prepareAndSave(answers));
 	});
-	it('can save a non-workshop field with an assessor question', async () => {
+	it('can save a non-workshop field with an assessor question to the database', async () => {
 		const mockService = createMockService();
 		const question = 'gateway-2-assessor';
 		const req = {
@@ -178,7 +178,153 @@ describe('test Gateway2SaveController', () => {
 		await gateway2Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
-	it('can save the workshop field', async () => {
+	it('can save the workshop field to the session with no existing session data', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: [
+					{
+						id: 'someWorkshop'
+					}
+				]
+			},
+			gateway3Info: {
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						gateway3InfoId: undefined
+					}
+				]
+			}
+		}));
+		const question = `gateway-2-location-type-${workshopId}`;
+		const req = {
+			params: {
+				question: question
+			},
+			session: {},
+			url: question
+		} as Request<any, any, any, any, Record<string, any>>;
+		req.params.question = question;
+		const answers = {
+			[`workshopLocationType-${workshopId}`]: 'a'
+		};
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway2Controller.prepareAndSave(answers);
+		assert.equal(mockService.db.gateway2Info.upsert.mock.calls.length, 0);
+		const expectedSession = {
+			answers: {
+				workshops: [
+					{
+						id: 'someWorkshop',
+						workshopLocationType: 'a'
+					}
+				]
+			}
+		};
+		assert.deepEqual(req.session, expectedSession);
+	});
+	it('can save the workshop field to the session with existing session data', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: [
+					{
+						id: 'someWorkshop'
+					}
+				]
+			},
+			gateway3Info: {
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						gateway3InfoId: undefined
+					}
+				]
+			}
+		}));
+		const question = `gateway-2-location-type-${workshopId}`;
+		const req = {
+			params: {
+				question: question
+			},
+			session: {
+				answers: {
+					workshops: [
+						{
+							workshopDate: '01/01/2026',
+							workshopTime: '00:00',
+							workshopEndTime: '00:00',
+							workshopExpectedDaysKnown: true,
+							workshopExpectedDays: 2, // Radio button with nested field
+							remoteMeetingLinkKnown: true,
+							remoteMeetingLink: 'b',
+							workshopLocationKnown: true,
+							workshopVenueName: 'c',
+							workshopAddressLine: 'd',
+							workshopAddressLine2: 'e',
+							workshopTownOrCity: 'f',
+							workshopPostcode: 'g'
+						}
+					]
+				}
+			},
+			url: question
+		} as unknown as Request<any, any, any, any, Record<string, any>>;
+		req.params.question = question;
+		const answers = {
+			[`workshopDate-${workshopId}`]: '01/01/2026',
+			[`workshopTime-${workshopId}`]: '00:00',
+			[`workshopEndTime-${workshopId}`]: '00:00',
+			[`workshopExpectedDaysKnown-${workshopId}`]: true,
+			[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`]: 2, // Radio button with nested field
+			[`workshopLocationType-${workshopId}`]: 'a',
+			[`remoteMeetingLinkKnown-${workshopId}`]: true,
+			[`remoteMeetingLink-${workshopId}`]: 'b',
+			[`workshopLocationKnown-${workshopId}`]: true,
+			[`workshopVenueName-${workshopId}`]: 'c',
+			[`workshopAddressLine-${workshopId}`]: 'd',
+			[`workshopAddressLine2-${workshopId}`]: 'e',
+			[`workshopTownOrCity-${workshopId}`]: 'f',
+			[`workshopPostcode-${workshopId}`]: 'g'
+		};
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway2Controller.prepareAndSave(answers);
+		assert.equal(mockService.db.gateway2Info.upsert.mock.calls.length, 0);
+		const expectedSession = {
+			answers: {
+				workshops: [
+					{
+						id: 'someWorkshop',
+						workshopDate: mockDate,
+						workshopTime: '00:00',
+						workshopEndTime: '00:00',
+						workshopExpectedDaysKnown: true,
+						workshopExpectedDays: 2, // Radio button with nested field
+						workshopLocationType: 'a',
+						remoteMeetingLinkKnown: true,
+						remoteMeetingLink: 'b',
+						workshopLocationKnown: true,
+						workshopVenueName: 'c',
+						workshopAddressLine: 'd',
+						workshopAddressLine2: 'e',
+						workshopTownOrCity: 'f',
+						workshopPostcode: 'g'
+					}
+				]
+			}
+		};
+		assert.deepEqual(req.session, expectedSession);
+	});
+	it('can save the workshop field to the database', async () => {
 		const workshopId = 1;
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => ({
@@ -225,7 +371,6 @@ describe('test Gateway2SaveController', () => {
 			[`workshopTownOrCity-${workshopId}`]: 'f',
 			[`workshopPostcode-${workshopId}`]: 'g'
 		};
-		const expectedAnswers = {};
 		const expectedQuery = {
 			create: {
 				caseId: 'someCaseId',
