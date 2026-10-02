@@ -164,6 +164,24 @@ describe('PortalService', () => {
 			);
 		});
 
+		it('returns Gateway 3 under review when actualDate is set but the decision is not complete', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: new Date('2026-10-01T12:00:00.000Z'),
+							submissions: [{ completionDate: null }]
+						}
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
 		it('returns Examination ready to start when Gateway 3 has been completed', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
@@ -328,6 +346,25 @@ describe('PortalService', () => {
 					dateCreated: new Date('2026-09-02T12:00:00.000Z')
 				}
 			]);
+		});
+
+		it('maps a submitted Gateway 3 plan to Under review using its actual date', async () => {
+			const actualDate = new Date('2026-10-01T12:00:00.000Z');
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate,
+						submissions: [{ completionDate: null }]
+					}
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
+			assert.strictEqual(plans[0].status, STATUS.UnderReview);
+			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
 		});
 
 		it('maps missing info table dates to Not set', async () => {

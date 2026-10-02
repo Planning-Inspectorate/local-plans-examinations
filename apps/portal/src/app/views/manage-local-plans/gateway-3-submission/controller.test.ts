@@ -113,6 +113,29 @@ describe('setGateway3ViewLocals', () => {
 		assert.strictEqual(locals.saveAndComeBackUrl, undefined);
 	});
 
+	it('sets the Under review status tag when Gateway 3 has an actual date', () => {
+		const req = {
+			currentCase: {
+				planTitle: 'Test Local Plan',
+				gateway3Info: {
+					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
+					actualDate: new Date('2026-10-01T12:00:00.000Z')
+				}
+			},
+			params: { planReference: 'PLAN-003' }
+		} as any;
+
+		const locals: Record<string, unknown> = {};
+		const res = { locals } as unknown as Response;
+
+		setGateway3ViewLocals(req as unknown as Request, res);
+
+		assert.deepStrictEqual(locals.statusTag, {
+			label: 'Under review',
+			class: 'govuk-tag govuk-tag--yellow'
+		});
+	});
+
 	it('does not set targetDate when case has no gateway3Info.expectedDate', () => {
 		const req = {
 			currentCase: {
