@@ -525,17 +525,59 @@ export function buildValidateGateway3Submission(): RequestHandler {
 	};
 }
 
+export function buildGuardDeclarationPage(): RequestHandler {
+	return (req, res, next) => {
+		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		const answers = journeyResponse?.answers ?? {};
+
+		if (hasAllRequiredAnswers(answers)) {
+			return next();
+		}
+
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission`);
+	};
+}
+
 export function buildGetDeclarationPage(): RequestHandler {
 	return (req, res) => {
 		const planReference = getRoutePlanReference(req);
-		const backLinkUrl = planReference
-			? `/manage-local-plans/${encodeURIComponent(planReference)}/gateway-3-submission`
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+		const gateway3SubmissionUrl = encodedPlanReference
+			? `/manage-local-plans/${encodedPlanReference}/gateway-3-submission`
 			: undefined;
 
 		return res.render(DECLARATION_VIEW_PATH, {
-			pageTitle: 'Review declaration',
-			pageHeading: 'Review declaration',
-			backLinkUrl
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			backLinkUrl: gateway3SubmissionUrl,
+			goBackUrl: gateway3SubmissionUrl
+		});
+	};
+}
+
+const SUBMISSION_COMPLETE_VIEW_PATH =
+	'views/manage-local-plans/gateway-3-submission/declaration/submission-complete.njk';
+
+export function buildPostDeclarationPage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);
+	};
+}
+
+export function buildGetSubmissionCompletePage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+
+		return res.render(SUBMISSION_COMPLETE_VIEW_PATH, {
+			pageTitle: 'Gateway 3 submission complete',
+			pageHeading: 'Gateway 3 submission complete',
+			planOverviewUrl: encodedPlanReference ? `/manage-local-plans/${encodedPlanReference}` : '/manage-local-plans'
 		});
 	};
 }
@@ -633,6 +675,9 @@ export function buildGateway3Middleware(service: PortalService) {
 		lusca,
 		redirectAfterCaseQuestionEdit: redirectAfterCaseQuestionEdit(saveDataToCase),
 		validateGateway3Submission: buildValidateGateway3Submission(),
-		getDeclarationPage: buildGetDeclarationPage()
+		guardDeclarationPage: buildGuardDeclarationPage(),
+		getDeclarationPage: buildGetDeclarationPage(),
+		postDeclarationPage: buildPostDeclarationPage(),
+		getSubmissionCompletePage: buildGetSubmissionCompletePage()
 	};
 }
