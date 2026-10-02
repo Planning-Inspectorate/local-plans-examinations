@@ -52,7 +52,7 @@ export class Gateway2SaveController extends SaveController {
 				workshopDetails.push({ workshopDate: null, createdDate: new Date(), workshopComplete: false });
 			}
 			// Enrich the current workshop with the answers
-			if (this.req.session.answers && this.req.session.answers.workshops) {
+			if (this.req.session && this.req.session.answers && this.req.session.answers.workshops) {
 				const filteredSessionAnswerWorkshops = sortGateway2Workshops(this.req.session.answers.workshops);
 				workshopDetails[workshopId - 1] = {
 					...workshopDetails[workshopId - 1],
@@ -177,7 +177,9 @@ export class Gateway2SaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
-			delete this.req.session.answers;
+			if (this.req.session) {
+				delete this.req.session.answers;
+			}
 			return true;
 		}
 		return false;
