@@ -101,8 +101,11 @@ export class Gateway2SaveController extends SaveController {
 			throw Error('Could not extract the workshop id from the question');
 		}
 		const workshopId = parseInt(workshopIdString);
-		const sessionAnswers = this.req.session.answers as Gateway2Input;
-		if (sessionAnswers) {
+		if (!this.req.session) {
+			throw Error('request has no session data');
+		}
+		if (this.req.session.answers) {
+			const sessionAnswers = this.req.session.answers as Gateway2Input;
 			const workshopAnswers = sessionAnswers.workshops;
 			if (workshopAnswers && answers.workshops) {
 				const sessionAnswers = workshopAnswers[workshopId - 1];
