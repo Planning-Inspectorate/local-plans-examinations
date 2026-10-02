@@ -19,8 +19,16 @@ export class Gateway3DeclarationPage extends PortalPlanBasePage {
 		return cy.getByData('confirm-submission');
 	}
 
+	get GoBackButton() {
+		return cy.getByData('no-go-back');
+	}
+
 	verifyConfirmSubmissionButton() {
 		this.confirmSubmissionButton.should('be.visible');
+	}
+
+	verifyGoBackButton() {
+		this.GoBackButton.should('be.visible');
 	}
 }
 
