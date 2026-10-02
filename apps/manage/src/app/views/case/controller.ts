@@ -705,7 +705,7 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			}
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			//reqCopy.params.question = COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION;
+			req.params.question = COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION;
 			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
 				submissions: existingSubmissions
 			});
