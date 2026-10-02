@@ -38,7 +38,7 @@
     {% if workshop.workshopExpectedDays %}
       {% set _ = workshopRows.push({
         key: { text: "Estimated number of days" },
-        value: { text: answers.workshopExpectedDays }
+        value: { text: workshop.workshopExpectedDays }
       }) %}
     {% endif %}
 

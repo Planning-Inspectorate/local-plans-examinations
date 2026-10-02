@@ -1,4 +1,3 @@
-import type { Request } from 'express';
 import { SaveController } from './save-controller.ts';
 import type { CaseOverviewInput } from './save-inputs.ts';
 import { questions } from '../questions.ts';
@@ -11,11 +10,14 @@ import {
 } from '../../../classes/case-field-mappings.ts';
 
 export class OverviewSaveController extends SaveController {
-	protected async prepareData(req: Request, answers: Record<string, any>) {
+	protected async prepareData(answers: Record<string, any>) {
 		return this.trimStringValues(answers as CaseOverviewInput);
 	}
+	protected async shouldSaveToSession() {
+		return false;
+	}
 
-	protected async save(answers: CaseOverviewInput) {
+	protected async saveToDatabase(answers: CaseOverviewInput) {
 		const lpaName = (questions.lpa.options || []).find((opt: any) => opt.value === answers.lpa)?.text || '';
 		const { caseFields, nestedData } = this.splitOverviewAnswers(answers);
 

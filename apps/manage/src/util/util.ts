@@ -28,20 +28,8 @@ export function sortGateway2Workshops(
 		if (!(a.createdDate || b.createdDate)) return 0;
 		if (!a.createdDate) return 1;
 		if (!b.createdDate) return -1;
-		return a.createdDate.getTime() - b.createdDate.getTime();
+		const aCreatedDate = typeof a.createdDate === 'string' ? new Date(a.createdDate) : a.createdDate;
+		const bCreatedDate = typeof b.createdDate === 'string' ? new Date(b.createdDate) : b.createdDate;
+		return aCreatedDate.getTime() - bCreatedDate.getTime();
 	});
-}
-
-export function filterGateway2Workshops(
-	workshops: { createdDate: Date; workshopComplete: boolean; [key: string]: any }[],
-	workshopId?: number
-) {
-	const workshopsToKeep: typeof workshops = [];
-	for (let i = 0; i < workshops.length; i++) {
-		const workshop = workshops[i];
-		if (workshop.workshopComplete || i == workshopId) {
-			workshopsToKeep.push(workshop);
-		}
-	}
-	return workshopsToKeep;
 }

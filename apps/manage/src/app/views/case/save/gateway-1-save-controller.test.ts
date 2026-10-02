@@ -91,9 +91,11 @@ mock.timers.enable({
 describe('test Gateway1SaveController', () => {
 	it('can save when the question is signed-sla', async () => {
 		const mockService = createMockService();
+		const question = 'signed-sla';
 		const req = {
 			params: {}
 		} as Request;
+		req.params.question = question;
 		const answers = {};
 		const expectedQuery = {
 			where: { caseId: 'someCaseId' },
@@ -109,16 +111,17 @@ describe('test Gateway1SaveController', () => {
 				}
 			}
 		};
-		const question = 'signed-sla';
-		const gateway1Controller = new Gateway1SaveController(mockService as unknown as ManageService, 'caseRef');
-		await gateway1Controller.prepareAndSave(req, answers, question);
+		const gateway1Controller = new Gateway1SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway1Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway1Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
 	it('can save when Gateway1Info', async () => {
 		const mockService = createMockService();
+		const question = 'a-different-question';
 		const req = {
 			params: {}
 		} as Request;
+		req.params.question = question;
 		const answers = {};
 		const expectedQuery = {
 			where: { caseId: 'someCaseId' },
@@ -128,9 +131,8 @@ describe('test Gateway1SaveController', () => {
 				...answers
 			}
 		};
-		const question = 'a-different-question';
-		const gateway1Controller = new Gateway1SaveController(mockService as unknown as ManageService, 'caseRef');
-		await gateway1Controller.prepareAndSave(req, answers, question);
+		const gateway1Controller = new Gateway1SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway1Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway1Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
 });

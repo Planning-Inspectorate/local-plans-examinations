@@ -91,9 +91,11 @@ mock.timers.enable({
 describe('test Gateway1SaveController', () => {
 	it('can save an examination', async () => {
 		const mockService = createMockService();
+		const question = 'examining-inspector-1';
 		const req = {
 			params: {}
 		} as Request;
+		req.params.question = question;
 		const answers = {};
 		const expectedAnswers = {
 			examiningInspectorAppointmentDate: mockDate
@@ -106,9 +108,12 @@ describe('test Gateway1SaveController', () => {
 				...expectedAnswers
 			}
 		};
-		const question = 'examining-inspector-1';
-		const examinationController = new ExaminationSaveController(mockService as unknown as ManageService, 'caseRef');
-		await examinationController.prepareAndSave(req, answers, question);
+		const examinationController = new ExaminationSaveController(
+			mockService as unknown as ManageService,
+			req,
+			'caseRef'
+		);
+		await examinationController.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
 });
