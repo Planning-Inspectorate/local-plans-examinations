@@ -22,7 +22,6 @@ describe('Portal Notify smoke', () => {
 
 			submitGateway2Application({ reference }, [{ page: gateway2CoverLetterPage, fileNames: ['test-document.pdf'] }]);
 
-			/* Notify API verification is temporarily disabled while the Test service has an unreliable daily send quota.
 			const expectedReferences = [`portal-login:${reference}`, `gateway-2-submission:${reference}`];
 			cy.task<Array<{ id?: string; reference?: string }>>(
 				'waitForNotifyEmailsByReference',
@@ -36,7 +35,6 @@ describe('Portal Notify smoke', () => {
 				);
 				notifications.forEach(({ id }) => expect(id).to.match(/\S+/));
 			});
-			*/
 		});
 	});
 });
