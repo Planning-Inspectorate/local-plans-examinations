@@ -45,4 +45,8 @@ export abstract class SubmissionCheck {
 	protected generateBackUrl(url: string): string {
 		return `${url.substring(0, url.lastIndexOf('/'))}`;
 	}
+
+	protected generateBaseUrl(url: string): string {
+		return url.split('/').slice(0, 3).join('/');
+	}
 }

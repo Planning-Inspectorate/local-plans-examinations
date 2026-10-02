@@ -1,0 +1,102 @@
+import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { type PageLoadContext } from './overview-page-load-handler.ts';
+import { Gateway3TabHandler } from './gateway-3-tab-handler.ts';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
+import {
+	fileUploadQuestionConfigs,
+	fileUploaderCaseSessionKeyForField,
+	getParam,
+	updateGateway3
+} from '../controller.ts';
+import { sortGateway3Submissions } from '#util/util.ts';
+
+export class Gateway3SubmissionHandler extends Gateway3TabHandler {
+	public async handle(context: PageLoadContext): Promise<void> {
+		const { req, res, next, service, journeyId, caseRecord } = context;
+		const { db } = service;
+		const caseReference = getParam(req.params.reference);
+		if (req.params.question == undefined) {
+			res.redirect(
+				`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`
+			);
+			return;
+		}
+		const journey3Data = await db.gateway3Info.findUnique({
+			include: {
+				submissions: true
+			},
+			where: { caseId: caseRecord.id }
+		});
+		if (!journey3Data) {
+			throw Error('No gateway3info data found');
+		}
+		const submissionData = sortGateway3Submissions(journey3Data.submissions);
+		await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
+		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
+		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
+		await this.addGateway3FrontOfficeDocumentsToAnswers(service, caseRecord.id, journeyResponse, submissionData);
+		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+		for (let i = 0; i < submissionData.length; i++) {
+			const submissionId = i + 1;
+			journeyResponse.answers[`decision-${submissionId}`] = submissionData[i].decision;
+			journeyResponse.answers[`completionDate-${submissionId}`] = submissionData[i].completionDate;
+		}
+		res.locals.journeyResponse = journeyResponse;
+		const body = req.body as { decision?: string };
+		// Flow for uploading a gateway 3 document
+		if (
+			req.method === 'POST' &&
+			String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION) &&
+			req.originalUrl.endsWith(String(req.params.question))
+		) {
+			const submissionNumber = String(req.params.question).replace(`${COMMON_CONSTS.GATEWAY_3_DECISION_QUESTION}-`, '');
+			if (!/^\d+$/.test(submissionNumber)) {
+				throw new Error('Invalid submission number');
+			}
+			const updatedSubmissions = sortGateway3Submissions(journey3Data?.submissions);
+			if (!updatedSubmissions) {
+				throw Error('No submission found');
+			}
+			const currentSubmission = updatedSubmissions.at(-1);
+			if (!currentSubmission) {
+				throw Error('Last submission was undefined');
+			}
+			currentSubmission.decision = body[`decision-${submissionNumber}` as keyof typeof body] ?? null;
+			await updateGateway3(
+				db,
+				{
+					submissions: updatedSubmissions
+				},
+				caseReference,
+				String(req.params.question)
+			);
+			res.redirect(303, `${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}-${submissionNumber}`);
+			return;
+		}
+		if (
+			req.method === 'POST' &&
+			String(req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION) &&
+			req.originalUrl.endsWith(String(req.params.question))
+		) {
+			const submissionNumber = String(req.params.question).replace(`${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}-`, '');
+			if (!/^\d+$/.test(submissionNumber)) {
+				throw new Error('Invalid submission number');
+			}
+			const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == req.params.question);
+			if (!questionConfig) {
+				throw new Error(
+					`Could not find question config for question url '${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}'`
+				);
+			}
+			const uploadedFiles =
+				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[];
+			if (uploadedFiles.length > 0) {
+				res.redirect(303, `${COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION}-${submissionNumber}/check`);
+				return;
+			}
+		}
+		if (next) next();
+	}
+}
