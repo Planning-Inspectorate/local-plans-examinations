@@ -92,13 +92,14 @@ describe('test Gateway2SaveController', () => {
 	it('rejects when a case could not be found', async () => {
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => undefined);
-		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, 'caseRef');
 		const req = {
 			params: {}
 		} as Request;
 		const answers = {};
 		const question = '';
-		await assert.rejects(gateway3Controller.prepareAndSave(req, answers, question));
+		req.params.question = question;
+		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway3Controller.prepareAndSave(answers));
 	});
 	it('rejects when there are no submissions', async () => {
 		const mockService = createMockService();
@@ -111,17 +112,17 @@ describe('test Gateway2SaveController', () => {
 				submissions: [] // Workshops is empty
 			}
 		}));
-		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, 'caseRef');
 		const req = {
 			params: {}
 		} as Request;
 		const answers = {};
 		const question = '';
-		await assert.rejects(gateway3Controller.prepareAndSave(req, answers, question));
+		req.params.question = question;
+		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway3Controller.prepareAndSave(answers));
 	});
 	it('saved for the completion date question', async () => {
 		const mockService = createMockService();
-		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, 'caseRef');
 		const question = 'gateway-3-completion-date-1';
 		const req = {
 			params: {
@@ -162,7 +163,9 @@ describe('test Gateway2SaveController', () => {
 				caseId: 'someCaseId'
 			}
 		};
-		await gateway3Controller.prepareAndSave(req, answers, question);
+		req.params.question = question;
+		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway3Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway3Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
 });

@@ -91,14 +91,15 @@ mock.timers.enable({
 describe('test Gateway2SaveController', () => {
 	it('rejects when a case could not be found', async () => {
 		const mockService = createMockService();
+		const question = '';
 		mockService.db.case.findUnique = mock.fn(async () => undefined);
-		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, 'caseRef');
 		const req = {
 			params: {}
 		} as Request;
+		req.params.question = question;
 		const answers = {};
-		const question = '';
-		await assert.rejects(gateway2Controller.prepareAndSave(req, answers, question));
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway2Controller.prepareAndSave(answers));
 	});
 	it('rejects when there are no workshops', async () => {
 		const mockService = createMockService();
@@ -116,13 +117,14 @@ describe('test Gateway2SaveController', () => {
 				]
 			}
 		}));
-		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, 'caseRef');
 		const req = {
 			params: {}
 		} as Request;
 		const answers = {};
 		const question = '';
-		await assert.rejects(gateway2Controller.prepareAndSave(req, answers, question));
+		req.params.question = question;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway2Controller.prepareAndSave(answers));
 	});
 	it('rejects when the current workshop id could not be found', async () => {
 		const mockService = createMockService();
@@ -146,18 +148,18 @@ describe('test Gateway2SaveController', () => {
 				]
 			}
 		}));
-		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, 'caseRef');
 		const req = {
 			params: {},
 			url: '/check-your-answers'
 		} as Request;
 		const answers = {};
 		const question = 'gateway-2-workshop-date-and-time';
-		await assert.rejects(gateway2Controller.prepareAndSave(req, answers, question));
+		req.params.question = question;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway2Controller.prepareAndSave(answers));
 	});
 	it('can save a non-workshop field with an assessor question', async () => {
 		const mockService = createMockService();
-		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, 'caseRef');
 		const question = 'gateway-2-assessor';
 		const req = {
 			params: {
@@ -171,7 +173,9 @@ describe('test Gateway2SaveController', () => {
 			update: { ...expectedAnswers },
 			create: { caseId: 'someCaseId', ...expectedAnswers }
 		};
-		await gateway2Controller.prepareAndSave(req, answers, question);
+		req.params.question = question;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway2Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
 	it('can save the workshop field', async () => {
@@ -197,7 +201,6 @@ describe('test Gateway2SaveController', () => {
 				]
 			}
 		}));
-		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, 'caseRef');
 		const question = undefined;
 		const req = {
 			params: {
@@ -205,6 +208,7 @@ describe('test Gateway2SaveController', () => {
 			},
 			url: `/check-your-answers-${workshopId}`
 		} as Request<any, any, any, any, Record<string, any>>;
+		req.params.question = question;
 		const answers = {
 			[`workshopDate-${workshopId}`]: '01/01/2026',
 			[`workshopTime-${workshopId}`]: '00:00',
@@ -281,7 +285,8 @@ describe('test Gateway2SaveController', () => {
 				caseId: 'someCaseId'
 			}
 		};
-		await gateway2Controller.prepareAndSave(req, answers, question);
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway2Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
 });

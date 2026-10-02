@@ -10,7 +10,7 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { sortGateway2Workshops, filterGateway2Workshops } from '#util/util.ts';
+import { sortGateway2Workshops } from '#util/util.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -157,21 +157,25 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		initialBackLink: gateway2Url,
 		response
 	});
-	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-	const workshopAnswers: Record<string, any>[] = filterGateway2Workshops(
-		sortGateway2Workshops(
+	let currentWorkshopAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const workshopAnswers: object[] = sortGateway2Workshops(req.session.answers.workshops);
+		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
 			response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
-		),
-		workshopId - 1
-	) as object[];
-	const currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+		) as object[];
+		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	}
 	if (currentWorkshopAnswers) {
 		Object.entries(currentWorkshopAnswers).forEach(([key, value]) => {
 			response.answers[`${key}-${workshopId}`] = value;
 			//response.answers[key] = value
 		});
 		response.answers[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`] =
-			workshopAnswers[workshopId - 1].workshopExpectedDays;
+			currentWorkshopAnswers.workshopExpectedDays;
 	}
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID;
@@ -206,11 +210,11 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	if (!response.answers.workshops) {
 		throw Error('workshops property missing from answers for gateway2 journey');
 	}
-	response.answers.workshops = filterGateway2Workshops(
-		sortGateway2Workshops(
-			response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
-		)
+	const sortedWorkshops = sortGateway2Workshops(
+		response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
 	);
+
+	response.answers.workshops = sortedWorkshops;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_JOURNEY_ID;
 	}

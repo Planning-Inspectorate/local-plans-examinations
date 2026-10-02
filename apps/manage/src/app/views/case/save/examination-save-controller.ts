@@ -1,14 +1,17 @@
-import type { Request } from 'express';
 import { SaveController } from './save-controller.ts';
 import type { ExaminationInput } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 
 export class ExaminationSaveController extends SaveController {
-	protected async prepareData(req: Request, answers: Record<string, any>) {
+	protected async shouldSaveToSession() {
+		return false;
+	}
+	protected async prepareData(answers: Record<string, any>) {
 		return this.trimStringValues(answers as ExaminationInput);
 	}
 
-	protected async save(answers: ExaminationInput, question?: string) {
+	protected async saveToDatabase(answers: ExaminationInput) {
+		const question = String(this.req.params.question);
 		const caseId = await this.resolveCaseId();
 		const inspectorQuestions = [
 			COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION,

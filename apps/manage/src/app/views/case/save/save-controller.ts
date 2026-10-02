@@ -4,30 +4,47 @@ import type { SaveInput } from './save-inputs.ts';
 
 export abstract class SaveController {
 	protected caseReference;
+	protected req;
 	protected service;
 	protected section;
 	protected action;
 	protected currentItemId;
 	constructor(
 		service: ManageService,
+		req: Request,
 		caseReference: string,
 		section?: string,
 		action?: string,
 		currentItemId?: string
 	) {
 		this.caseReference = caseReference;
+		this.req = req;
 		this.service = service;
 		this.section = section;
 		this.action = action;
 		this.currentItemId = currentItemId;
 	}
-	protected abstract prepareData(req: Request, answers: Record<string, any>): Promise<Record<string, any>>;
+	protected abstract prepareData(answers: Record<string, any>): Promise<Record<string, any>>;
 
-	protected abstract save(answers: SaveInput, question?: string): Promise<boolean>;
+	protected abstract saveToDatabase(answers: SaveInput, question?: string): Promise<boolean>;
 
-	public async prepareAndSave(req: Request, answers: Record<string, any>, question?: string) {
-		const preparedData = await this.prepareData(req, answers);
-		return await this.save(preparedData, question);
+	protected saveToSession(answers: SaveInput) {
+		this.req.session.answers = answers;
+		return true;
+	}
+
+	protected abstract shouldSaveToSession(): Promise<boolean>;
+
+	protected async save(answers: SaveInput) {
+		if (await this.shouldSaveToSession()) {
+			return this.saveToSession(answers);
+		}
+		return await this.saveToDatabase(answers);
+	}
+
+	public async prepareAndSave(answers: Record<string, any>) {
+		const preparedData = await this.prepareData(answers);
+		return await this.save(preparedData);
 	}
 	protected async resolveCaseId(): Promise<string> {
 		const caseRecord = await this.service.db.case.findUnique({
