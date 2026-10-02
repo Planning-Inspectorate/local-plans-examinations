@@ -265,7 +265,9 @@ export class Gateway2SaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
-			delete this.req.session.answers;
+			if (this.req.session) {
+				delete this.req.session.answers;
+			}
 			return true;
 		}
 		return false;
