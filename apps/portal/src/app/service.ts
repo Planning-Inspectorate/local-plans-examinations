@@ -87,10 +87,17 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 }
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
-	if (caseRecord.gateway3Info?.submissions.at(-1)?.completionDate || caseRecord.gateway3Info?.actualDate) {
+	if (caseRecord.gateway3Info?.submissions.at(-1)?.completionDate) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
+		};
+	}
+
+	if (caseRecord.gateway3Info?.actualDate) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.UnderReview
 		};
 	}
 
@@ -131,7 +138,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		? caseRecord.gateway2Info?.reportIssuedDate
 		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
 	const gateway3Date =
-		caseRecord.gateway3Info?.submissions[-1]?.completionDate ??
+		caseRecord.gateway3Info?.submissions.at(-1)?.completionDate ??
 		caseRecord.gateway3Info?.actualDate ??
 		caseRecord.gateway3Info?.expectedDate;
 	const examinationDate =

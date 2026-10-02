@@ -41,6 +41,7 @@ import {
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
 import lusca from 'lusca';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -232,7 +233,9 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 3 submission';
 	res.locals.pageHeading = 'Gateway 3 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
-	res.locals.statusTag = { label: 'Ready to start', class: 'govuk-tag govuk-tag--green' };
+	res.locals.statusTag = currentCase?.gateway3Info?.actualDate
+		? StatusTag[STATUS.UnderReview]
+		: StatusTag[STATUS.ReadyToStart];
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);

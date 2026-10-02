@@ -16,11 +16,15 @@ describe('gateway3SubmissionRoutes', () => {
 });
 
 describe('Gateway 3 check answers page', () => {
-	function renderCheckAnswers(sections: unknown[]) {
+	function renderCheckAnswers(
+		sections: unknown[],
+		statusTag: { label: string; class: string } | undefined = undefined
+	) {
 		const nunjucks = configureNunjucks();
 		return nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers.njk', {
 			targetDate: '1 August 2026',
 			saveAndComeBackUrl: '/manage-local-plans/PLAN-001',
+			statusTag,
 			summaryListData: { sections },
 			config: {
 				styleFile: 'style.css',
@@ -57,6 +61,16 @@ describe('Gateway 3 check answers page', () => {
 			'expected submit copy'
 		);
 		assert.ok(html.includes('data-cy="submit-gateway-3"'), 'expected submit button data-cy');
+	});
+
+	it('renders the Under review status tag', () => {
+		const html = renderCheckAnswers([], {
+			label: 'Under review',
+			class: 'govuk-tag govuk-tag--yellow'
+		});
+
+		assert.ok(html.includes('Under review'));
+		assert.ok(html.includes('govuk-tag--yellow'));
 	});
 
 	it('renders the Optional Documents section with copy and an Add action', () => {
