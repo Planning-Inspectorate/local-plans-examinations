@@ -12,7 +12,7 @@ import {
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
 
-describe.skip('Manage Notify smoke', () => {
+describe('Manage Notify smoke', () => {
 	let createdCaseReference: string | undefined;
 
 	before(function () {
