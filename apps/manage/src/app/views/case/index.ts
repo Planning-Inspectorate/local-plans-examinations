@@ -23,7 +23,8 @@ import {
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError,
-	preprocessQuestionProperties
+	preprocessQuestionProperties,
+	updateTimetable
 } from './controller.ts';
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
@@ -43,7 +44,8 @@ import {
 	createGateway1Journey,
 	createGateway2Journey,
 	createGateway3Journey,
-	createExaminationJourney
+	createExaminationJourney,
+	createTimetableJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -116,6 +118,12 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		supportsManageList: true,
 		supportsFileUpload: false,
 		updateFunction: updateExamination
+	},
+	{
+		path: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		createJourney: createTimetableJourney,
+		updateFunction: updateTimetable
 	}
 ];
 
