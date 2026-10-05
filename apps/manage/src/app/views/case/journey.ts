@@ -445,7 +445,7 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
 		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
-			response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
+			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
 		) as object[];
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	}

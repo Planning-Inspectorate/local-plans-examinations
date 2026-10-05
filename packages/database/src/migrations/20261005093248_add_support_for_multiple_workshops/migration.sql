@@ -14,6 +14,7 @@
   - You are about to drop the column `workshopPostcode` on the `Gateway2Info` table. All the data in the column will be lost.
   - You are about to drop the column `workshopTime` on the `Gateway2Info` table. All the data in the column will be lost.
   - You are about to drop the column `workshopTownOrCity` on the `Gateway2Info` table. All the data in the column will be lost.
+  - You are about to drop the column `workshopVenue` on the `Gateway2Info` table. All the data in the column will be lost.
   - You are about to drop the column `workshopVenueName` on the `Gateway2Info` table. All the data in the column will be lost.
 
 */
@@ -35,12 +36,14 @@ ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN [remoteMeetingLink],
 [workshopPostcode],
 [workshopTime],
 [workshopTownOrCity],
+[workshopVenue],
 [workshopVenueName];
 
 -- CreateTable
 CREATE TABLE [dbo].[Gateway2Workshop] (
     [id] UNIQUEIDENTIFIER NOT NULL,
     [gateway2InfoId] UNIQUEIDENTIFIER,
+    [createdDate] DATETIME2 NOT NULL,
     [workshopDate] DATETIME2,
     [workshopTime] NVARCHAR(1000),
     [workshopEndTime] NVARCHAR(1000),
