@@ -57,7 +57,6 @@ export interface Gateway2Input extends SaveInput {
 	workshops?: {
 		id: string;
 		createdDate: Date;
-		workshopComplete: boolean;
 		workshopDate: Date | null;
 		workshopTime: string | null;
 		workshopEndTime: string | null;

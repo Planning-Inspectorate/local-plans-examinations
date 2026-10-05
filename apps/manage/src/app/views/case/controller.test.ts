@@ -1065,7 +1065,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 		ctx.service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
 			caseId: CASE_ID,
-			assessorName: 'Alex Assessor'
+			assessorName: 'Alex Assessor',
+			workshops: []
 		}));
 
 		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);

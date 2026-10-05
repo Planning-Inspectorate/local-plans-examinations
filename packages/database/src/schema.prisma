@@ -157,7 +157,6 @@ model Gateway2Workshop {
   gateway2Info              Gateway2Info? @relation(fields: [gateway2InfoId], references: [id])
   gateway2InfoId            String?       @db.UniqueIdentifier
   createdDate               DateTime
-  workshopComplete          Boolean       @default(false) // Workshops are saved during journey progress, but should only be permanent if submitted - this is used to identify workshops that should be cleaned up if exiting the journey
   workshopDate              DateTime?
   workshopTime              String?
   workshopEndTime           String?

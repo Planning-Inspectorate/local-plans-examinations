@@ -72,6 +72,7 @@ export function resolveCaseHeaderStatus(
 	if (hasGateway2Report) {
 		return resolveStatus('GW3 pending');
 	}
+
 	if (gateway2Data?.workshops.every((workshop) => workshop.workshopDate && workshop.workshopDate < dateNow)) {
 		return resolveStatus('GW2 report');
 	}

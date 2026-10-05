@@ -49,7 +49,7 @@ export class Gateway2SaveController extends SaveController {
 			}
 			const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
 			if (workshopId > workshopDetails.length) {
-				workshopDetails.push({ workshopDate: null, createdDate: new Date(), workshopComplete: false });
+				workshopDetails.push({ workshopDate: null, createdDate: new Date() });
 			}
 			// Enrich the current workshop with the answers
 			if (this.req.session && this.req.session.answers && this.req.session.answers.workshops) {
@@ -86,9 +86,6 @@ export class Gateway2SaveController extends SaveController {
 					}
 				}
 			});
-			if (submittingCheckYourAnswers) {
-				currentWorkshop.workshopComplete = true;
-			}
 			return {
 				workshops: workshopDetails
 			};
@@ -135,14 +132,11 @@ export class Gateway2SaveController extends SaveController {
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
 		if ('workshops' in answers) {
-			const workshops = sortGateway2Workshops(
-				answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
-			);
+			const workshops = sortGateway2Workshops(answers.workshops as { createdDate: Date; [key: string]: any }[]);
 			if (!workshops) {
 				throw Error('No workshop entries found');
 			}
 			const workshopsCleaned = Object.values(workshops).map((e) => ({
-				workshopComplete: e.workshopComplete,
 				createdDate: e.createdDate,
 				workshopDate: e.workshopDate,
 				workshopTime: e.workshopTime,
