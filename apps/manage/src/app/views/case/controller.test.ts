@@ -14,6 +14,12 @@ import {
 	issueGateway3Document
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
+import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
+import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
+import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
+import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
+import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
+import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -788,10 +794,12 @@ describe('trimStringValues', () => {
 describe('buildGetJourneyMiddleware', () => {
 	function createMiddlewareContext({
 		url = '/overview',
-		reference = REFERENCE
+		reference = REFERENCE,
+		pageLoadHandler = OverviewTabHandler
 	}: {
 		url?: string;
 		reference?: unknown;
+		pageLoadHandler?: new () => OverviewPageLoadHandler;
 	} = {}) {
 		const service = createService();
 		service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
@@ -812,7 +820,7 @@ describe('buildGetJourneyMiddleware', () => {
 			req,
 			res,
 			next,
-			handler: buildGetJourneyMiddleware(service, JOURNEY_ID)
+			handler: buildGetJourneyMiddleware(service, JOURNEY_ID, pageLoadHandler)
 		};
 	}
 
@@ -1009,7 +1017,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 	it('loads gateway 1 journey data', async () => {
 		const ctx = createMiddlewareContext({
-			url: '/gateway-1'
+			url: '/gateway-1',
+			pageLoadHandler: Gateway1TabHandler
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -1041,7 +1050,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 	it('loads gateway 2 journey data', async () => {
 		const ctx = createMiddlewareContext({
-			url: '/gateway-2'
+			url: '/gateway-2',
+			pageLoadHandler: Gateway2TabHandler
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -1074,7 +1084,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 	it('loads gateway 3 journey data', async () => {
 		const ctx = createMiddlewareContext({
-			url: '/gateway-3'
+			url: '/gateway-3',
+			pageLoadHandler: Gateway3TabHandler
 		});
 
 		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -1113,7 +1124,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 	it('continues the Gateway 3 document page when no files have been uploaded', async () => {
 		const ctx = createMiddlewareContext({
-			url: '/gateway-3/gateway-3-submission/gateway-3-document'
+			url: '/gateway-3/gateway-3-submission/gateway-3-document',
+			pageLoadHandler: Gateway3TabHandler
 		});
 
 		Object.assign(ctx.req, {
@@ -1150,7 +1162,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 	it('loads examination journey data', async () => {
 		const ctx = createMiddlewareContext({
-			url: '/examination'
+			url: '/examination',
+			pageLoadHandler: ExaminationTabHandler
 		});
 		const letterSentToMHCLGDate = new Date('2026-10-01T12:00:00.000Z');
 		const factCheckDueDate = new Date('2026-01-07T12:00:00.000Z');
@@ -1179,26 +1192,6 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.journeyResponse.answers.letterSentToMHCLGDate, letterSentToMHCLGDate);
 		assert.equal(ctx.res.locals.journeyResponse.answers.factCheckDueDate, factCheckDueDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
-	});
-
-	it('logs unknown pages after loading the case title', async () => {
-		const ctx = createMiddlewareContext({
-			url: '/unknown-page'
-		});
-
-		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
-			id: CASE_ID,
-			planTitle: 'Southshire Local Plan'
-		}));
-
-		await ctx.handler(ctx.req, ctx.res, ctx.next);
-
-		assert.equal(ctx.service.logger.error.mock.callCount(), 1);
-		assert.match(ctx.service.logger.error.mock.calls[0].arguments[0], /Unknown page unknown-page/);
-
-		assert.equal(ctx.next.mock.callCount(), 0);
-		assert.equal(ctx.res.status.mock.callCount(), 0);
-		assert.equal(ctx.res.render.mock.callCount(), 0);
 	});
 });
 
