@@ -77,6 +77,9 @@ function createService(): any {
 		},
 		authority: {
 			findMany: mock.fn(async () => [])
+		},
+		gateway3Submission: {
+			findMany: mock.fn(async () => [])
 		}
 	};
 	db.$transaction = mock.fn(async (fn: (tx: any) => Promise<unknown>) => fn(db));

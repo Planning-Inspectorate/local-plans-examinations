@@ -43,6 +43,7 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 			case: { findMany },
 			gateway1Info: { findUnique: async () => null },
 			gateway2Info: { findUnique: async () => null },
+			gateway3Info: { findUnique: async () => null },
 			document: { findMany: async () => [] }
 		},
 		logger: { error: loggerError }

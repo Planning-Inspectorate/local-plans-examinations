@@ -20,6 +20,7 @@ describe('resolveCaseHeaderStatus', () => {
 	it('returns Awaiting SLA when no SLA has been received', () => {
 		const result = resolveCaseHeaderStatus(
 			[],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -30,7 +31,8 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: null,
 				dsaChecked: null
 			},
-			null
+			null,
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -42,6 +44,7 @@ describe('resolveCaseHeaderStatus', () => {
 	it('returns GW2 pending when the SLA has been received', () => {
 		const result = resolveCaseHeaderStatus(
 			[],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -52,7 +55,8 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: new Date(),
 				dsaChecked: null
 			},
-			null
+			null,
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -65,6 +69,7 @@ describe('resolveCaseHeaderStatus', () => {
 		const futureDate = new Date(Date.now() + 60_000);
 
 		const result = resolveCaseHeaderStatus(
+			[],
 			[],
 			{
 				id: '1',
@@ -89,7 +94,8 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			}
+			},
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -102,6 +108,7 @@ describe('resolveCaseHeaderStatus', () => {
 		const pastDate = new Date(Date.now() - 60_000);
 
 		const result = resolveCaseHeaderStatus(
+			[],
 			[],
 			{
 				id: '1',
@@ -126,7 +133,8 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			}
+			},
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -148,6 +156,7 @@ describe('resolveCaseHeaderStatus', () => {
 					latestVersionId: null
 				}
 			],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -158,7 +167,8 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: new Date(),
 				dsaChecked: null
 			},
-			null
+			null,
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -182,6 +192,7 @@ describe('resolveCaseHeaderStatus', () => {
 					latestVersionId: null
 				}
 			],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -205,7 +216,8 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			}
+			},
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -229,6 +241,7 @@ describe('resolveCaseHeaderStatus', () => {
 					latestVersionId: null
 				}
 			],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -252,7 +265,8 @@ describe('resolveCaseHeaderStatus', () => {
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
 				workshopDocumentUploadedDate: null
-			}
+			},
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -274,6 +288,7 @@ describe('resolveCaseHeaderStatus', () => {
 					latestVersionId: null
 				}
 			],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -284,7 +299,8 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: new Date(),
 				dsaChecked: null
 			},
-			null
+			null,
+			[]
 		);
 
 		assert.deepEqual(result, {
@@ -315,6 +331,7 @@ describe('resolveCaseHeaderStatus', () => {
 					latestVersionId: null
 				}
 			],
+			[],
 			{
 				id: '1',
 				caseId: 'case-1',
@@ -325,7 +342,8 @@ describe('resolveCaseHeaderStatus', () => {
 				slaReceivedDate: new Date(),
 				dsaChecked: null
 			},
-			null
+			null,
+			[]
 		);
 
 		assert.deepEqual(result, {

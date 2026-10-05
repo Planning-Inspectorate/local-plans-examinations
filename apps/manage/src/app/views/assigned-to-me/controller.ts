@@ -3,7 +3,7 @@ import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 import * as authSession from '@planning-inspectorate/core/auth';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
-import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
@@ -54,12 +54,16 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 				unmappedCases.map(async (c) => {
 					const caseOfficerName = await entraClient.getUserDisplayName(c.caseOfficer);
 
-					const [gateway1Info, gateway2Info] = await Promise.all([
+					const [gateway1Info, gateway2Info, gateway3Info] = await Promise.all([
 						db.gateway1Info.findUnique({
 							where: { caseId: c.id }
 						}),
 						db.gateway2Info.findUnique({
 							where: { caseId: c.id }
+						}),
+						db.gateway3Info.findUnique({
+							where: { caseId: c.id },
+							include: { submissions: true }
 						})
 					]);
 
@@ -69,8 +73,19 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 							documentSetId: { in: gateway2SetIds }
 						}
 					});
-
-					const status = resolveCaseHeaderStatus(gateway2Documents, gateway1Info, gateway2Info);
+					const gateway3Documents = await db.document.findMany({
+						where: {
+							caseId: c.id,
+							documentSetId: { in: gateway3SetIds }
+						}
+					});
+					const status = resolveCaseHeaderStatus(
+						gateway2Documents,
+						gateway3Documents,
+						gateway1Info,
+						gateway2Info,
+						gateway3Info?.submissions ?? []
+					);
 
 					return {
 						...c,
