@@ -37,11 +37,16 @@ export abstract class SaveController {
 
 	protected async save(answers: SaveInput) {
 		if (await this.shouldSaveToSession()) {
-			return this.saveToSession(answers);
+			return { dataWritten: this.saveToSession(answers), writtenToDB: false };
 		}
-		return await this.saveToDatabase(answers);
+		return { dataWritten: await this.saveToDatabase(answers), writtenToDB: true };
 	}
 
+	/**
+	 * Attempt to save the given answers. Depending on the question being saved, this will either save to the session or the database
+	 * @param answers The answers to save
+	 * @returns An object with structure {"dataWritten": boolean, "writtenToDB": boolean} which details how the data was saved
+	 */
 	public async prepareAndSave(answers: Record<string, any>) {
 		const preparedData = await this.prepareData(answers);
 		return await this.save(preparedData);

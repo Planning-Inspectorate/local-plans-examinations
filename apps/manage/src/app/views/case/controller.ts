@@ -97,11 +97,11 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			return;
 		}
 
-		let updated: boolean;
+		let writeResponse: { dataWritten: boolean; writtenToDB: boolean };
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
 			case COMMON_CONSTS.OVERVIEW: {
-				updated = await new OverviewSaveController(
+				writeResponse = await new OverviewSaveController(
 					service,
 					req,
 					reference,
@@ -112,19 +112,19 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_1_JOURNEY_ID: {
-				updated = await new Gateway1SaveController(service, req, reference).prepareAndSave(data.answers);
+				writeResponse = await new Gateway1SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID: {
-				updated = await new Gateway2SaveController(service, req, reference).prepareAndSave(data.answers);
+				writeResponse = await new Gateway2SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_3_JOURNEY_ID: {
-				updated = await new Gateway3SaveController(service, req, reference).prepareAndSave(data.answers);
+				writeResponse = await new Gateway3SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
-				updated = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			default: {
@@ -132,7 +132,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				return res.status(404).render('views/errors/404.njk');
 			}
 		}
-		if (updated) {
+		if (writeResponse.dataWritten && writeResponse.writtenToDB) {
 			const columns = Object.keys(data.answers);
 			const oldValues = Object.fromEntries(columns.map((key) => [key, res.locals.journeyResponse?.answers[key]]));
 

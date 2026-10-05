@@ -36,7 +36,7 @@ export class Gateway3SaveController extends SaveController {
 		}
 		return this.trimStringValues(answers as Gateway3Input);
 	}
-	public async prepareAndSave(answers: Record<string, any>): Promise<boolean> {
+	public async prepareAndSave(answers: Record<string, any>) {
 		if (this.req.params.question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
 			return await new ExaminationSaveController(this.service, this.req, this.caseReference).prepareAndSave({
 				examinationWebsite: answers.examinationWebsite

@@ -35,7 +35,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '13', folderName: 'gateway-2-report' },
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
-	{ id: '16', folderName: 'gateway-3-document-1' }
+	{ id: '16', folderName: 'gateway-3-document-1' },
+	{ id: '17', folderName: 'gateway-2-workshop-documents' }
 ];
 
 function createService(): any {
