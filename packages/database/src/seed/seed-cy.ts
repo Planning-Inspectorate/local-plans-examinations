@@ -93,7 +93,6 @@ export async function seedCy() {
 						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z'),
 						reportPublishedByLPA: new Date('2026-09-01T12:00:00.000Z'),
 						assessorName: 'assessor-1',
-						workshopVenue: 'Workshop venue name',
 						workshops: {
 							create: []
 						}

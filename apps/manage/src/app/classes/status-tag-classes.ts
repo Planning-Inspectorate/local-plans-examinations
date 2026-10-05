@@ -1,7 +1,8 @@
 import type {
 	DocumentModel,
 	Gateway1InfoModel,
-	Gateway2InfoModel
+	Gateway2InfoModel,
+	Gateway2WorkshopModel
 } from '@pins/local-plans-database/src/client/models.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
@@ -47,10 +48,12 @@ export function getPlanStatusClasses(statusText: string) {
 	return PLAN_STATUS_CLASS_MAP[statusText] ?? 'govuk-tag--turquoise';
 }
 
+type Gateway2ModelWithWorkshops = Gateway2InfoModel & { workshops: Gateway2WorkshopModel[] };
+
 export function resolveCaseHeaderStatus(
 	gateway2Documents: DocumentModel[],
 	gateway1Data: Gateway1InfoModel | null,
-	gateway2Data: Gateway2InfoModel | null
+	gateway2Data: Gateway2ModelWithWorkshops | null
 ) {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
@@ -69,12 +72,14 @@ export function resolveCaseHeaderStatus(
 	if (hasGateway2Report) {
 		return resolveStatus('GW3 pending');
 	}
-
-	if (gateway2Data?.workshopDate && gateway2Data.workshopDate < dateNow) {
+	if (gateway2Data?.workshops.every((workshop) => workshop.workshopDate && workshop.workshopDate < dateNow)) {
 		return resolveStatus('GW2 report');
 	}
-
-	if (gateway2Data?.workshopVenue && gateway2Data.workshopDate && gateway2Data.workshopDate > dateNow) {
+	if (
+		gateway2Data?.workshops.every(
+			(workshop) => workshop.workshopVenueName && workshop.workshopDate && workshop.workshopDate > dateNow
+		)
+	) {
 		return resolveStatus('GW2 workshop confirmed');
 	}
 

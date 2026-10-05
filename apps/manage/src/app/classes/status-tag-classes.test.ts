@@ -80,15 +80,35 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: new Date(),
-				workshopVenue: 'Somewhere',
-				workshopDate: futureDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopComplete: true,
+						workshopDate: futureDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			}
 		);
 
@@ -117,15 +137,35 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: new Date(),
-				workshopVenue: 'Somewhere',
-				workshopDate: pastDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopComplete: true,
+						workshopDate: pastDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			}
 		);
 
@@ -196,15 +236,35 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: null,
-				workshopVenue: 'Somewhere',
-				workshopDate: futureDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopComplete: true,
+						workshopDate: futureDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			}
 		);
 
@@ -243,15 +303,35 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: new Date(),
-				workshopVenue: 'Somewhere',
-				workshopDate: pastDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopComplete: true,
+						workshopDate: pastDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			}
 		);
 

@@ -146,7 +146,6 @@ model Gateway2Info {
   validDate                    DateTime?          @db.DateTime2
   assessorName                 String?
   assessorAppointmentDate      DateTime?          @db.DateTime2
-  workshopVenue                String?
   reportIssuedDate             DateTime?          @db.DateTime2
   reportPublishedByLPA         DateTime?          @db.DateTime2
   workshopDocumentUploadedDate DateTime?

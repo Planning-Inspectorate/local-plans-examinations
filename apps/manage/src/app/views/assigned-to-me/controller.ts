@@ -59,7 +59,10 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 							where: { caseId: c.id }
 						}),
 						db.gateway2Info.findUnique({
-							where: { caseId: c.id }
+							where: { caseId: c.id },
+							include: {
+								workshops: true
+							}
 						})
 					]);
 
