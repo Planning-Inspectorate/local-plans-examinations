@@ -133,11 +133,6 @@ function registerGateway2WorkshopJourney(
 
 		const journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
 
-		if (gateway2Data?.workshopExpectedDays && gateway2Data.workshopExpectedDays != 'no') {
-			journeyResponse.answers.workshopExpectedDaysKnown = 'yes';
-			//journeyResponse.answers.workshopExpectedDaysKnown_workshopExpectedDays = gateway2Data.workshopExpectedDays;
-		}
-
 		res.locals.journeyResponse = journeyResponse;
 
 		next();
