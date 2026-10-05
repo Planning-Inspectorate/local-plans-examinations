@@ -6,6 +6,7 @@ import type {
 } from '@pins/local-plans-database/src/client/models.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
+import { sortGateway3Submissions } from '../../util/util.ts';
 
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Submitted: 'govuk-tag--green',
@@ -64,16 +65,28 @@ export function resolveCaseHeaderStatus(
 	const hasGateway2SubmissionDocuments = activeGateway2Documents.some(
 		(doc) => doc.documentSetId !== DOCUMENT_SET_ID.G2_REPORT
 	);
-
-	const rejected = gateway3Submissions
-		.filter((s) => s.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED && s.completionDate)
-		.sort((a, b) => b.completionDate!.getTime() - a.completionDate!.getTime())[0];
+	const gateway3Received = activeGateway3Documents.length > 0 && gateway3Submissions.some((s) => s.completionDate);
+	const sortedSubmissions = sortGateway3Submissions(gateway3Submissions);
+	const latestSubmission = sortedSubmissions.at(-1);
+	const rejected = sortedSubmissions
+		.filter(
+			(submission) => submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED && submission.completionDate
+		)
+		.at(-1);
 	const resubmissionRequired = !!rejected;
+
 	const resubmissionReceived =
-		resubmissionRequired && activeGateway3Documents.some((doc) => doc.createdAt > rejected.completionDate!);
-	const passDecisionGiven = gateway3Submissions.some(
-		(s) => s.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION && s.completionDate
-	);
+		rejected &&
+		latestSubmission &&
+		latestSubmission.id !== rejected.id &&
+		latestSubmission.decision == null &&
+		latestSubmission.completionDate == null &&
+		activeGateway3Documents.length > 0;
+
+	const passDecisionGiven =
+		latestSubmission?.completionDate && latestSubmission.decision == GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
+			? true
+			: false;
 
 	const resolveStatus = (statusText: string) => {
 		return {
@@ -94,7 +107,7 @@ export function resolveCaseHeaderStatus(
 		return resolveStatus('GW3 pending');
 	}
 
-	if (activeGateway3Documents.length > 0) {
+	if (gateway3Received) {
 		return resolveStatus('GW3 received');
 	}
 
