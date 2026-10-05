@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 import { getPlanStatusClasses, resolveCaseHeaderStatus } from './status-tag-classes.ts';
 
 describe('getPlanStatusClasses', () => {
@@ -17,6 +18,51 @@ describe('getPlanStatusClasses', () => {
 });
 
 describe('resolveCaseHeaderStatus', () => {
+	it('does not treat the initial Gateway 3 submission as a resubmission', () => {
+		const result = resolveCaseHeaderStatus([], [], null, null, [
+			{
+				id: 'submission-1',
+				decision: null,
+				completionDate: null,
+				gateway3InfoId: 'gateway-3-info-1'
+			}
+		]);
+
+		assert.equal(result.headerStatusText, 'Awaiting SLA');
+	});
+
+	it('requires new Gateway 3 documents and a new submission after rejection', () => {
+		const rejectedAt = new Date('2026-01-01T00:00:00.000Z');
+		const resubmittedAt = new Date('2026-02-01T00:00:00.000Z');
+		const rejectedSubmission = {
+			id: 'submission-1',
+			decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+			completionDate: rejectedAt,
+			gateway3InfoId: 'gateway-3-info-1'
+		};
+		const newSubmission = {
+			id: 'submission-2',
+			decision: null,
+			completionDate: null,
+			gateway3InfoId: 'gateway-3-info-1'
+		};
+		const newDocument = {
+			createdAt: resubmittedAt,
+			name: 'resubmitted document',
+			caseId: 'case-1',
+			guid: 'guid-1',
+			documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+			isDeleted: false,
+			latestVersionId: null
+		};
+		const resolve = (documents: (typeof newDocument)[], submissions: (typeof rejectedSubmission)[]) =>
+			resolveCaseHeaderStatus([], documents, null, null, submissions);
+
+		assert.equal(resolve([newDocument], [rejectedSubmission]).headerStatusText, 'GW3 pending');
+		assert.equal(resolve([], [rejectedSubmission, newSubmission]).headerStatusText, 'GW3 pending');
+		assert.equal(resolve([newDocument], [rejectedSubmission, newSubmission]).headerStatusText, 'GW3 received');
+	});
+
 	it('returns Awaiting SLA when no SLA has been received', () => {
 		const result = resolveCaseHeaderStatus(
 			[],
