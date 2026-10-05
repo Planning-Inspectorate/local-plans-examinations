@@ -20,6 +20,9 @@ function createService(cases: unknown[] = []): any {
 			gateway2Info: {
 				findUnique: mock.fn(async () => null)
 			},
+			gateway3Info: {
+				findUnique: mock.fn(async () => null)
+			},
 			document: {
 				findMany: mock.fn(async () => [])
 			}

@@ -1,9 +1,11 @@
 import type {
 	DocumentModel,
 	Gateway1InfoModel,
-	Gateway2InfoModel
+	Gateway2InfoModel,
+	Gateway3SubmissionModel
 } from '@pins/local-plans-database/src/client/models.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Submitted: 'govuk-tag--green',
@@ -49,14 +51,28 @@ export function getPlanStatusClasses(statusText: string) {
 
 export function resolveCaseHeaderStatus(
 	gateway2Documents: DocumentModel[],
+	gateway3Documents: DocumentModel[],
 	gateway1Data: Gateway1InfoModel | null,
-	gateway2Data: Gateway2InfoModel | null
+	gateway2Data: Gateway2InfoModel | null,
+	gateway3Submissions: Gateway3SubmissionModel[]
 ) {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
+	const activeGateway3Documents = gateway3Documents.filter((doc) => !doc.isDeleted);
+
 	const hasGateway2Report = activeGateway2Documents.some((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT);
 	const hasGateway2SubmissionDocuments = activeGateway2Documents.some(
 		(doc) => doc.documentSetId !== DOCUMENT_SET_ID.G2_REPORT
+	);
+
+	const rejected = gateway3Submissions
+		.filter((s) => s.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED && s.completionDate)
+		.sort((a, b) => b.completionDate!.getTime() - a.completionDate!.getTime())[0];
+	const resubmissionRequired = !!rejected;
+	const resubmissionReceived =
+		resubmissionRequired && activeGateway3Documents.some((doc) => doc.createdAt > rejected.completionDate!);
+	const passDecisionGiven = gateway3Submissions.some(
+		(s) => s.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION && s.completionDate
 	);
 
 	const resolveStatus = (statusText: string) => {
@@ -65,6 +81,22 @@ export function resolveCaseHeaderStatus(
 			headerStatusClasses: getPlanStatusClasses(statusText)
 		};
 	};
+
+	if (passDecisionGiven) {
+		return resolveStatus('Submission pending');
+	}
+
+	if (resubmissionReceived) {
+		return resolveStatus('GW3 received');
+	}
+
+	if (resubmissionRequired) {
+		return resolveStatus('GW3 pending');
+	}
+
+	if (activeGateway3Documents.length > 0) {
+		return resolveStatus('GW3 received');
+	}
 
 	if (hasGateway2Report) {
 		return resolveStatus('GW3 pending');
