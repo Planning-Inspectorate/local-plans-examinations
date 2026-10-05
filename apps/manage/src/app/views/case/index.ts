@@ -46,7 +46,8 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createGateway3Journey,
-	createExaminationJourney
+	createExaminationJourney,
+	createExaminationHearingJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -212,6 +213,127 @@ function registerGateway2WorkshopJourney(
 	);
 }
 
+function registerExaminationHearingJourney(
+	router: IRouter,
+	service: ManageService,
+	config: CaseJourneyConfig,
+	updateCase: ReturnType<typeof updateCaseField>
+): void {
+	const { createJourney } = config;
+
+	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
+		const loaded = await loadLpaOptions(service);
+
+		if (loaded.length > 0) {
+			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+		}
+
+		next();
+	});
+
+	const getHearingJourneyResponse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference },
+			select: {
+				id: true,
+				planTitle: true
+			}
+		});
+
+		if (!caseRecord) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		const examinationData = await service.db.examinationInfo.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				hearings: true
+			}
+		});
+
+		res.locals.planTitle = caseRecord.planTitle;
+		res.locals.reference = reference;
+
+		const journeyResponse = new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', examinationData);
+
+		res.locals.journeyResponse = journeyResponse;
+
+		next();
+	});
+
+	const completeWorkshop = asyncHandler(async (req: Request, res: Response) => {
+		const reference = getParam(req.params.reference);
+
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		const hearingId = String(req.url).split('-')[-1];
+		await new ExaminationSaveController(service, reference).prepareAndSave(req, {}, `check-your-answers-${hearingId}`);
+		await updateCaseField(service);
+
+		await service.db.case.update({
+			where: { reference },
+			data: {
+				caseHistories: {
+					create: {
+						event: 'Hearing set up',
+						username: currentUser
+					}
+				}
+			}
+		});
+
+		req.session.alertMessage = 'Hearing set up';
+		req.session.alertMessageStatus = 'success';
+
+		res.redirect(`/case/${encodeURIComponent(reference)}/examination`);
+	});
+
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+
+	router.get(
+		'/examination/set-up-hearing/check-your-answers-*hearingId',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		setAsEditingFromCya,
+		buildList({ notificationPreviewTemplate: 'gateway-2-report' })
+	);
+
+	router.post(
+		'/examination/set-up-hearing/check-your-answers-*hearingId',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		saveLastQuestionUrl,
+		completeWorkshop
+	);
+
+	router.get(
+		'/examination/set-up-hearing/:section/:question',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		question
+	);
+
+	router.post(
+		'/examination/set-up-hearing/:section/:question',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		saveLastQuestionUrl,
+		redirectAfterCyaEdit(updateCase)
+	);
+}
+
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
 		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
@@ -268,6 +390,14 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
+	},
+	{
+		path: 'examination/set-up-hearing',
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		createJourney: createExaminationHearingJourney,
+		supportsManageList: true,
+		supportsFileUpload: false,
+		saveController: ExaminationSaveController
 	}
 ];
 
@@ -282,13 +412,22 @@ export function caseRouter(service: ManageService): IRouter {
 	const workshopConfig = CASE_JOURNEYS.find(
 		(config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID
 	);
-
 	if (workshopConfig) {
 		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
 	}
 
+	const hearingConfig = CASE_JOURNEYS.find(
+		(config) => config.journeyId === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID
+	);
+	if (hearingConfig) {
+		registerExaminationHearingJourney(router, service, hearingConfig, updateCase);
+	}
+
 	for (const config of CASE_JOURNEYS) {
-		if (config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID) {
+		if (
+			config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID ||
+			config.journeyId === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID
+		) {
 			continue;
 		}
 

@@ -45,3 +45,35 @@ export function filterGateway2Workshops(
 	}
 	return workshopsToKeep;
 }
+
+/**
+ * Immutably filter the workshops list into workshops to keep and workshops to delete (based on workshopComplete), with the workshop to keep sorted by createdDate
+ * Note: Workshops are saved during the workshop journey, but should only be permanent if "submitted" - this function helps to cleanup the workshops if the journey is half-complete
+ * @param hearings The workshops to filter and sort
+ * @param hearingId If provided, then enforce the element in the sorted workshops at index workshopId to be kept, regardless of whether or not the workshops has been completed
+ * @returns Two lists, with the first list being the workshops to keep, and the second list being the workshops to delete
+ */
+export function sortExaminationHearings(
+	hearings: { createdDate: Date; hearingComplete: boolean; [key: string]: any }[]
+) {
+	return hearings.toSorted((a, b) => {
+		if (!(a.createdDate || b.createdDate)) return 0;
+		if (!a.createdDate) return 1;
+		if (!b.createdDate) return -1;
+		return a.createdDate.getTime() - b.createdDate.getTime();
+	});
+}
+
+export function filterExaminationHearings(
+	hearings: { createdDate: Date; hearingComplete: boolean; [key: string]: any }[],
+	hearingId?: number
+) {
+	const hearingsToKeep: typeof hearings = [];
+	for (let i = 0; i < hearings.length; i++) {
+		const hearing = hearings[i];
+		if (hearing.hearingComplete || i == hearingId) {
+			hearingsToKeep.push(hearing);
+		}
+	}
+	return hearingsToKeep;
+}

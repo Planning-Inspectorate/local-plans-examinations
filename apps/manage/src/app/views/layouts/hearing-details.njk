@@ -1,0 +1,88 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro hearingDetails(answers, reference) %}
+
+  {% for hearing in answers.hearings %}
+
+  
+    {% set hearingRows = [] %}
+
+    {% if hearing.hearingDate %}
+      {% set _ = hearingRows.push({
+        key: { text: "Start date" },
+        value: { text: hearing.hearingDate },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/gateway-2/set-up-hearing/check-your-answers-" + (loop.index),
+              text: "Change"
+            }
+          ]
+        }
+      }) %}
+    {% endif %}
+
+    {% if hearing.hearingTime %}
+      {% set _ = hearingRows.push({
+        key: { text: "Start time" },
+        value: { text: hearing.hearingTime }
+      }) %}
+    {% endif %}
+
+    {% if hearing.hearingExpectedDays %}
+      {% set _ = hearingRows.push({
+        key: { text: "Estimated number of days" },
+        value: { text: answers.hearingExpectedDays }
+      }) %}
+    {% endif %}
+
+    {% if hearing.hearingLocationType %}
+      {% set _ = hearingRows.push({
+        key: { text: "Format" },
+        value: { text: hearing.hearingLocationType }
+      }) %}
+    {% endif %}
+
+    {% if hearing.remoteMeetingLinkKnown %}
+      {% set _ = hearingRows.push({
+        key: { text: "Do you have a virtual meeting link?" },
+        value: { text: hearing.remoteMeetingLinkKnown }
+      }) %}
+    {% endif %}
+
+    {% if hearing.remoteMeetingLink %}
+      {% set _ = hearingRows.push({
+        key: { text: "Virtual meeting link" },
+        value: { text: hearing.remoteMeetingLink }
+      }) %}
+    {% endif %}
+
+    {% if hearing.hearingVenueName %}
+      {% set address = hearing.hearingVenueName %}
+      {% set address = address + "<br>" + hearing.hearingAddressLine %}
+
+      {% if hearing.hearingAddressLine2 %}
+          {% set address = address + "<br>" + hearing.hearingAddressLine2 %}
+      {% endif %}
+
+      {% set address = address + "<br>" + hearing.hearingTownOrCity %}
+      {% set address = address + "<br>" + hearing.hearingPostcode %}
+
+      {% set _ = hearingRows.push({
+          key: { text: "Location" },
+          value: { html: address }
+      }) %}
+    {% endif %}
+
+    {% if hearingRows.length %}
+      <h2 class="govuk-heading-m">Hearing {{ loop.index }} details</h2>
+      <a href="/" class="govuk-link">Cancel hearing {{ loop.index }}</a>
+      <p></p>
+      {{ govukSummaryList({
+        rows: hearingRows
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+
+{% endmacro %}

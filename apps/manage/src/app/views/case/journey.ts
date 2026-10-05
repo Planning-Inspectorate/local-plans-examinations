@@ -10,7 +10,12 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { sortGateway2Workshops, filterGateway2Workshops } from '#util/util.ts';
+import {
+	sortGateway2Workshops,
+	filterGateway2Workshops,
+	sortExaminationHearings,
+	filterExaminationHearings
+} from '#util/util.ts';
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions, req);
@@ -54,6 +59,80 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 	}
 
 	return getBacklinks(journey, overviewUrl);
+}
+
+export function createExaminationHearingJourney(
+	req: Request,
+	response: JourneyResponse,
+	questions: Record<string, any>
+) {
+	const examinationHearingUrl = req.baseUrl + '/examination/set-up-hearing';
+	const examinationUrl = req.baseUrl + '/examination';
+	const hearingId = Number(String(req.url).split('-').at(-1));
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		sections: [
+			new Section('Hearing', 'hearing')
+				.addQuestion(questions[`examinationHearingDateAndTime-${hearingId}`])
+				.addQuestion(questions[`examinationHearingExpectedDays-${hearingId}`])
+				.addQuestion(questions[`examinationHearingLocationType-${hearingId}`])
+				.addQuestion(questions[`examinationHearingLocationKnown-${hearingId}`])
+				.withCondition((response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions[`examinationHearingLocationType-${hearingId}`], 'in-person'],
+							[questions[`examinationHearingLocationType-${hearingId}`], 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions[`examinationHearingVenueAddress-${hearingId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingLocationKnown-${hearingId}`], 'yes'))
+				.addQuestion(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`])
+				.withCondition((response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions[`examinationHearingLocationType-${hearingId}`], 'remote'],
+							[questions[`examinationHearingLocationType-${hearingId}`], 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
+		],
+		taskListUrl: `check-your-answers-${hearingId}`,
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/workshop-check-your-answers.njk',
+		journeyTitle: 'Set up workshop',
+		returnToListing: false,
+		makeBaseUrl: () => examinationHearingUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+	const hearingAnswers: Record<string, any>[] = filterExaminationHearings(
+		sortExaminationHearings(
+			response.answers.hearings as { createdDate: Date; hearingComplete: boolean; [key: string]: any }[]
+		),
+		hearingId - 1
+	) as object[];
+	const currentHearingAnswers = hearingAnswers[hearingId - 1];
+	if (currentHearingAnswers) {
+		Object.entries(currentHearingAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${hearingId}`] = value;
+			//response.answers[key] = value
+		});
+		response.answers[`hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`] =
+			hearingAnswers[hearingId - 1].hearingExpectedDays;
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
+	}
+	return journey;
 }
 
 export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -257,6 +336,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
 			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
+			new Section('Hearings', 'hearings'),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
@@ -290,6 +370,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
 	}

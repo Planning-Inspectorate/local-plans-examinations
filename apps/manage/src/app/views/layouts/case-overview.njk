@@ -6,6 +6,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "views/layouts/workshop-details.njk" import workshopDetails %}
+{% from "views/layouts/hearing-details.njk" import hearingDetails %}
 
 {% block backLink %}
   <nav aria-label="Back">
@@ -107,6 +108,11 @@
                 {{ workshopDetails(journeyResponse.answers, reference) }}
                 <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link">Set up workshop</a>
                 <p></p>
+              {% endif %}
+              
+              {% if section.heading == 'Hearings'%} 
+                {{ hearingDetails(journeyResponse.answers, reference) }}
+                <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link">Set up hearing</a>
               {% endif %}
               {% endfor %}
           </div>

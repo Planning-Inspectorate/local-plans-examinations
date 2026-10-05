@@ -202,36 +202,58 @@ model Gateway3Submission {
 
 /// Examination stage dates, inspectors, QA, fact check and final outcome fields.
 model ExaminationInfo {
-  id                                   String    @id @default(uuid()) @db.UniqueIdentifier
-  case                                 Case      @relation(fields: [caseId], references: [id])
-  caseId                               String    @unique @db.UniqueIdentifier
-  expectedSubmissionForExaminationDate DateTime? @db.DateTime2
-  submissionForExaminationDate         DateTime? @db.DateTime2
+  id                                   String               @id @default(uuid()) @db.UniqueIdentifier
+  case                                 Case                 @relation(fields: [caseId], references: [id])
+  caseId                               String               @unique @db.UniqueIdentifier
+  expectedSubmissionForExaminationDate DateTime?            @db.DateTime2
+  submissionForExaminationDate         DateTime?            @db.DateTime2
   examiningInspector1                  String?
   examiningInspector2                  String?
   examiningInspector3                  String?
-  examiningInspectorAppointmentDate    DateTime? @db.DateTime2
+  examiningInspectorAppointmentDate    DateTime?            @db.DateTime2
   examinationWebsite                   String?
-  letterSentToMHCLGDate                DateTime? @db.DateTime2
-  letterIssueDate                      DateTime? @db.DateTime2
-  QADate                               DateTime? @db.DateTime2
+  letterSentToMHCLGDate                DateTime?            @db.DateTime2
+  letterIssueDate                      DateTime?            @db.DateTime2
+  QADate                               DateTime?            @db.DateTime2
   qaInspector1                         String?
   qaInspector2                         String?
   qaInspector3                         String?
-  reportSentToPanelDate                DateTime? @db.DateTime2
-  panelResponseToInspectorDate         DateTime? @db.DateTime2
-  factCheckDateReceivedFromInspector   DateTime? @db.DateTime2
-  factCheckDueDate                     DateTime? @db.DateTime2
-  factCheckActualDate                  DateTime? @db.DateTime2
-  factCheckReceivedBackFromLPADate     DateTime? @db.DateTime2
-  finalReportIssueDate                 DateTime? @db.DateTime2
-  planPauseStartDate                   DateTime? @db.DateTime2
-  planPauseEndDate                     DateTime? @db.DateTime2
-  withdrawnDate                        DateTime? @db.DateTime2
-  isSound                              Boolean?  @db.Bit
-  soundUnsoundDate                     DateTime? @db.DateTime2
-  adoptionDate                         DateTime? @db.DateTime2
-  approvedForCILDate                   DateTime? @db.DateTime2
+  reportSentToPanelDate                DateTime?            @db.DateTime2
+  panelResponseToInspectorDate         DateTime?            @db.DateTime2
+  factCheckDateReceivedFromInspector   DateTime?            @db.DateTime2
+  factCheckDueDate                     DateTime?            @db.DateTime2
+  factCheckActualDate                  DateTime?            @db.DateTime2
+  factCheckReceivedBackFromLPADate     DateTime?            @db.DateTime2
+  finalReportIssueDate                 DateTime?            @db.DateTime2
+  planPauseStartDate                   DateTime?            @db.DateTime2
+  planPauseEndDate                     DateTime?            @db.DateTime2
+  withdrawnDate                        DateTime?            @db.DateTime2
+  isSound                              Boolean?             @db.Bit
+  soundUnsoundDate                     DateTime?            @db.DateTime2
+  adoptionDate                         DateTime?            @db.DateTime2
+  approvedForCILDate                   DateTime?            @db.DateTime2
+  hearings                             ExaminationHearing[]
+}
+
+model ExaminationHearing {
+  id                            String           @id @default(uuid()) @db.UniqueIdentifier
+  ExaminationInfo               ExaminationInfo? @relation(fields: [ExaminationInfoID], references: [id])
+  ExaminationInfoID             String?          @db.UniqueIdentifier
+  createdDate                   DateTime
+  hearingComplete               Boolean          @default(false) // Hearings are saved during journey progress, but should only be permanent if submitted - this is used to identify hearings that should be cleaned up if exiting the journey
+  hearingDate                   DateTime?
+  hearingTime                   String?
+  hearingExpectedDaysKnown      String?
+  hearingExpectedDays           String?
+  hearingLocationType           String?
+  hearingRemoteMeetingLinkKnown String?
+  hearingRemoteMeetingLink      String?
+  hearingLocationKnown          String?
+  hearingVenueName              String?
+  hearingAddressLine            String?
+  hearingAddressLine2           String?
+  hearingTownOrCity             String?
+  hearingPostcode               String?
 }
 
 /// Local planning authority linked to one or more cases.
