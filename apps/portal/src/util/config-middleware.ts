@@ -20,7 +20,7 @@ export function addLocalsConfiguration(clarityId?: string): Handler {
 		];
 
 		res.locals.config = {
-			styleFile: 'style.css?v=24f6ce65',
+			styleFile: 'style.css?v=305ec51e',
 			cspNonce: res.locals.cspNonce,
 			headerTitle: 'Submit development plans',
 			footerLinks: [
