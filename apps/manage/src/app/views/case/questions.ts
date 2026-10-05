@@ -180,7 +180,7 @@ for (let i = 1; i < NUM_GW3_SUBMISSIONS_QUESTIONS; i++) {
 	}
 }
 
-const gatway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
+const gateway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway2WorkshopDateAndTime: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
 		inputFields: [
@@ -326,15 +326,15 @@ const gatway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new RequiredValidator('Input a remote meeting link')]
 	}
 };
-export const gatway2WorkshopBaseUrls = Object.values(gatway2WorkshopBaseQuestions)
+export const gatway2WorkshopBaseUrls = Object.values(gateway2WorkshopBaseQuestions)
 	.map((value) => value.url)
 	.filter((value) => value != undefined);
 
-// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshop documents to be made
+// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshops to be made
 const gateway2WorkshopQuestions: Record<string, ManageQuestionConfig> = {};
 for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) {
-	for (const key in gatway2WorkshopBaseQuestions) {
-		const questionConfigCopy = { ...gatway2WorkshopBaseQuestions[key] };
+	for (const key in gateway2WorkshopBaseQuestions) {
+		const questionConfigCopy = { ...gateway2WorkshopBaseQuestions[key] };
 		questionConfigCopy.url = `${questionConfigCopy.url}-${workshopId}`;
 		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${workshopId}`;
 		gateway2WorkshopQuestions[`${key}-${workshopId}`] = questionConfigCopy;
