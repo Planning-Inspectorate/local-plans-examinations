@@ -795,14 +795,15 @@ export function preprocessQuestionProperties(
 			// Format the Start date answer into a human-readable date
 			const workshopAnswers = _res.locals.journeyResponse.answers.workshops ?? [];
 			for (let i = 0; i < workshopAnswers.length; i++) {
-				workshopAnswers[i].workshopDate = workshopAnswers[i].workshopDate
-					? new Intl.DateTimeFormat('en-GB', {
-							day: 'numeric',
-							month: 'long',
-							timeZone: 'Europe/London',
-							year: 'numeric'
-						}).format(workshopAnswers[i].workshopDate)
-					: null;
+				workshopAnswers[i].workshopDate =
+					workshopAnswers[i].workshopDate && typeof workshopAnswers[i].workshopDate != 'string'
+						? new Intl.DateTimeFormat('en-GB', {
+								day: 'numeric',
+								month: 'long',
+								timeZone: 'Europe/London',
+								year: 'numeric'
+							}).format(workshopAnswers[i].workshopDate)
+						: null;
 			}
 		}
 		if (journeyId == 'gateway-3') {

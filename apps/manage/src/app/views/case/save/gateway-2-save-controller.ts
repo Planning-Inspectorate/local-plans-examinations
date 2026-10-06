@@ -150,7 +150,7 @@ export class Gateway2SaveController extends SaveController {
 			}
 			const workshopsCleaned = Object.values(workshops).map((e) => ({
 				createdDate: e.createdDate,
-				workshopDate: e.workshopDate ? parseDate(e.workshopDate) : null,
+				workshopDate: e.workshopDate && typeof e.workshopDate == 'string' ? parseDate(e.workshopDate) : e.workshopDate,
 				workshopTime: e.workshopTime,
 				workshopEndTime: e.workshopEndTime,
 				workshopExpectedDaysKnown: e.workshopExpectedDaysKnown,
