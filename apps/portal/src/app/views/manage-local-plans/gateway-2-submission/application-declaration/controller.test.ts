@@ -9,6 +9,7 @@ process.env.SESSION_SECRET = 'not-a-real-secret';
 process.env.GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID = 'abc';
 process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID = '123';
 process.env.GOV_NOTIFY_API_KEY = 'xyz';
+process.env.LOCAL_PLANS_TEAM_EMAIL = 'team@email.co.uk';
 
 function createReq(overrides: { params?: Record<string, string>; body?: Record<string, unknown> } = {}) {
 	const req = {
@@ -122,6 +123,7 @@ describe('buildPostDeclarationPage', () => {
 		assert.deepEqual(service.sendCalls[0].options.personalisation, {
 			planRef: 'PLAN-123456',
 			authority_name: 'Test Planning Authority',
+			contact_info: 'team@email.co.uk',
 			planType: 'plan type',
 			workshopWeekMonday: 'workshop week monday',
 			teamEmailAddress: 'team email address',
