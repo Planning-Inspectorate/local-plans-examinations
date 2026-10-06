@@ -304,7 +304,7 @@ describe('test Gateway2SaveController', () => {
 				workshops: [
 					{
 						id: 'someWorkshop',
-						workshopDate: mockDate,
+						workshopDate: '01/01/2026',
 						workshopTime: '00:00',
 						workshopEndTime: '00:00',
 						workshopExpectedDaysKnown: true,
