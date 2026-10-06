@@ -74,6 +74,7 @@ export function resolveCaseHeaderStatus(
 		)
 		.at(-1);
 	const resubmissionRequired = !!rejected;
+	const rejectedAt = rejected?.completionDate;
 
 	const resubmissionReceived =
 		rejected &&
@@ -81,7 +82,8 @@ export function resolveCaseHeaderStatus(
 		latestSubmission.id !== rejected.id &&
 		latestSubmission.decision == null &&
 		latestSubmission.completionDate == null &&
-		activeGateway3Documents.length > 0;
+		rejectedAt &&
+		activeGateway3Documents.some((document) => document.createdAt > rejectedAt);
 
 	const passDecisionGiven =
 		latestSubmission?.completionDate && latestSubmission.decision == GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
