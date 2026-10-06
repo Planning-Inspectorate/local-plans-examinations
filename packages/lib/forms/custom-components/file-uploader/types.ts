@@ -21,7 +21,7 @@ export type FileUploaderSession = {
 	fileUploader?: Record<string, UploadedFileGroup>;
 	errors?: Record<string, { msg: string }>;
 	errorSummary?: Array<{ text: string; href: string }>;
-	forms: any
+	forms: Record<string, unknown>;
 };
 
 export type FileUploaderText = {
