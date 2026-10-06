@@ -138,8 +138,8 @@ describe('Gateway 3 submission complete page', () => {
 	function renderSubmissionComplete(data: Record<string, unknown> = {}) {
 		const nunjucks = configureNunjucks();
 		return nunjucks.render('views/manage-local-plans/gateway-3-submission/declaration/submission-complete.njk', {
-			pageTitle: 'Submission complete',
-			pageHeading: 'Submission complete',
+			pageTitle: 'Gateway 3 submission complete',
+			pageHeading: 'Gateway 3 submission complete',
 			planOverviewUrl: '/manage-local-plans/PLAN-001',
 			config: {
 				styleFile: 'style.css',
@@ -151,14 +151,50 @@ describe('Gateway 3 submission complete page', () => {
 		});
 	}
 
-	it('renders the submission complete panel', () => {
+	it('renders the submission complete panel with correct title', () => {
 		const html = renderSubmissionComplete();
-		assert.ok(html.includes('Submission complete'), 'expected submission complete panel');
+		assert.ok(html.includes('Gateway 3 submission complete'), 'expected Gateway 3 submission complete panel');
 	});
 
-	it('renders the return to plan link', () => {
+	it('renders the confirmation email copy', () => {
 		const html = renderSubmissionComplete();
-		assert.ok(html.includes('data-cy="return-to-plan"'), 'expected return-to-plan data-cy');
+		assert.ok(html.includes('data-cy="confirmation-email-copy"'), 'expected confirmation email copy data-cy');
+		assert.ok(
+			html.includes('We have sent you a confirmation email.') ||
+				html.includes('We have sent you a confirmation email.'),
+			'expected confirmation email text'
+		);
+	});
+
+	it('renders the what happens next heading and list', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('What happens next'), 'expected What happens next heading');
+		assert.ok(html.includes('data-cy="what-happens-next-heading"'), 'expected what-happens-next-heading data-cy');
+		assert.ok(html.includes('data-cy="what-happens-next-list"'), 'expected what-happens-next-list data-cy');
+		assert.ok(
+			html.includes('The Planning Inspectorate will check that your submission is complete'),
+			'expected first bullet point'
+		);
+		assert.ok(
+			html.includes('They will contact you if any further information is required'),
+			'expected second bullet point'
+		);
+		assert.ok(
+			html.includes('check your submission status'),
+			'expected third bullet point with check submission status link'
+		);
+	});
+
+	it('renders the check your submission status link pointing to plan overview', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('data-cy="check-submission-status"'), 'expected check-submission-status data-cy');
 		assert.ok(html.includes('/manage-local-plans/PLAN-001'), 'expected plan overview URL');
+	});
+
+	it('renders the get in touch link', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('data-cy="get-in-touch"'), 'expected get-in-touch data-cy');
+		assert.ok(html.includes('If you need to adjust your submission,'), 'expected get in touch copy');
+		assert.ok(html.includes('get in touch'), 'expected get in touch link text');
 	});
 });
