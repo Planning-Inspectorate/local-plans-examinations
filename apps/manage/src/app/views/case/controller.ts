@@ -1101,15 +1101,16 @@ export function redirectToFileUploaderQuestion(req: Request) {
 		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
-	console.log('Files uploaded session redirect', req.session.fileUploader);
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
 
 }
 
-export const redirectToFilePreviousPage = (req: Request) => {
+export const redirectToChecks = (req: Request) => {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
-	const journey = req.url.split(String(req.params.section))[0];
-	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
+	console.log(planPath)
+	console.log(req.params)
+	console.log(`----> /${req.params.section}/${req.params.question}/check`);
+	return `/${req.params.section}/${req.params.question}/check`;
 }
 
 export function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {

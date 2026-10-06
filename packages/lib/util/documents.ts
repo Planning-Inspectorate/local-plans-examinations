@@ -111,8 +111,6 @@ export class DocumentUtil {
 				createdAt: 'asc'
 			}
 		})) as DocumentRow[];
-		console.log('documents', documents);
-
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 

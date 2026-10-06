@@ -87,9 +87,6 @@ async function addUploadedDocumentDetailsToAnswers(
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
 		}
 
-
-		console.log('addUploadedDocumentDetailsToAnswers', isUploadPage);
-
 		const uploadedFiles = isUploadPage ?
 			await DocumentUtil.loadTempUploadedDocuments(	service,
 				currentCase.id,

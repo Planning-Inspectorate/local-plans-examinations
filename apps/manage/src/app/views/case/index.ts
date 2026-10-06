@@ -22,9 +22,9 @@ import {
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	handleMulterFileSizeError,
+	redirectToChecks,
 	preprocessQuestionProperties,
-	redirectToFilePreviousPage
+	handleMulterFileSizeError
 } from './controller.ts';
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
@@ -61,6 +61,7 @@ import type { Response, NextFunction } from 'express';
 import {
 	createFileSubmitUploadController
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -293,6 +294,7 @@ function registerCaseJourney(
 								console.log('uploadedFiles submit', uploadedFiles);
 							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
 						},
+						redirect: redirectToChecks
 					})
 				])
 			)
