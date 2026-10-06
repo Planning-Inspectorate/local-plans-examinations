@@ -32,7 +32,7 @@ describe('Portal Notify smoke', () => {
 				{
 					notifications: expectedReferences.map((notifyReference) => ({ reference: notifyReference }))
 				},
-				{ timeout: 750000 }
+				{ timeout: 70000 }
 			).then((notifications) => {
 				expect(notifications.map(({ reference: notifyReference }) => notifyReference)).to.deep.equal(
 					expectedReferences

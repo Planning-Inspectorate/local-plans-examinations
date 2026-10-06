@@ -58,7 +58,7 @@ export const waitForNotifyEmailsByReference = async ({ notifications }: NotifyEm
 		templateId
 	}));
 	const notifyClient = getNotifyClient();
-	const timeoutMs = Number(process.env.CYPRESS_NOTIFY_SMOKE_TIMEOUT_MS || 720000);
+	const timeoutMs = 60000;
 	const intervalMs = Number(process.env.CYPRESS_NOTIFY_SMOKE_INTERVAL_MS || 10000);
 	const startedAt = Date.now();
 	const foundCounts = new Map<string, number>();
