@@ -160,8 +160,8 @@ describe('Gateway 3 submission complete page', () => {
 		const html = renderSubmissionComplete();
 		assert.ok(html.includes('data-cy="confirmation-email-copy"'), 'expected confirmation email copy data-cy');
 		assert.ok(
-			html.includes('We&#39;ve sent you a confirmation email.') ||
-				html.includes("We've sent you a confirmation email."),
+			html.includes('We have sent you a confirmation email.') ||
+				html.includes('We have sent you a confirmation email.'),
 			'expected confirmation email text'
 		);
 	});
