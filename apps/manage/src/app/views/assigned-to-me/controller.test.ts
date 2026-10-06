@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildAssignedToMe } from './controller.ts';
 import type { ManageService } from '#service';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 const entraClient = { getUserDisplayName: async (id: string) => `User ${id}` };
 
@@ -195,5 +196,41 @@ describe('buildAssignedToMe', () => {
 			],
 			caseOfficerText: 'Officer1'
 		});
+	});
+
+	it('renders the Gateway 3 status for an assigned case', async () => {
+		const ctx = createContext([{ id: 'case-1', caseOfficer: 'officer-1' }]);
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'submission-1',
+					decision: null,
+					completionDate: new Date('2026-10-01T12:00:00.000Z'),
+					gateway3InfoId: 'gateway-3-info-1'
+				}
+			]
+		}));
+		ctx.service.db.document.findMany.mock.mockImplementation(
+			async ({ where }: { where: { documentSetId: { in: string[] } } }) =>
+				where.documentSetId.in.includes(DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN)
+					? [
+							{
+								createdAt: new Date('2026-09-30T12:00:00.000Z'),
+								name: 'gateway-3-document.pdf',
+								caseId: 'case-1',
+								guid: 'document-1',
+								documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+								isDeleted: false,
+								latestVersionId: null
+							}
+						]
+					: []
+		);
+
+		await ctx.handler(ctx.req, ctx.res);
+
+		const renderedCase = ctx.res.render.mock.calls[0].arguments[1].cases[0];
+		assert.equal(renderedCase.headerStatusText, 'GW3 received');
+		assert.equal(renderedCase.headerStatusClasses, 'govuk-tag--turquoise');
 	});
 });

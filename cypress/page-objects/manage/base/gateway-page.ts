@@ -19,4 +19,8 @@ export class GatewayBasePage extends BasePage {
 	verifySectionHeading(text: string) {
 		this.sectionHeading(text).should('be.visible');
 	}
+
+	verifyHeaderStatus(status: string) {
+		cy.getByData('status-tag').should('be.visible').and('contain.text', status);
+	}
 }
