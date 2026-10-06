@@ -57,8 +57,12 @@ async function addUploadedDocumentDetailsToAnswers(
 	currentCase: any,
 	req: Request,
 	answers: any,
-	journeyId: string
+	journeyId: string,
+	loadTempFiles: boolean
 ) {
+
+	const isUploadPage = req.url === '/gateway-1/gateway-1/signed-sla';
+	const shouldLoadTempFiles = isUploadPage || loadTempFiles;
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
@@ -84,7 +88,13 @@ async function addUploadedDocumentDetailsToAnswers(
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
 		}
 
-		const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+		const uploadedFiles = await DocumentUtil.loadUploadedDocuments(
+			service,
+			currentCase.id,
+			documentSetId,
+			shouldLoadTempFiles
+		);
+
 		req.session.fileUploader = {
 			...request.session.fileUploader,
 			[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]: {

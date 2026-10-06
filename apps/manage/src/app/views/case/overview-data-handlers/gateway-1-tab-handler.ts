@@ -14,7 +14,8 @@ export class Gateway1TabHandler extends OverviewPageLoadHandler {
 			caseRecord,
 			req,
 			journey1Data,
-			COMMON_CONSTS.GATEWAY_1_JOURNEY_ID
+			COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
+			false
 		);
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
 		if (

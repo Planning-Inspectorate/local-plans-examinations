@@ -50,7 +50,7 @@ pids
 **/*.swp
 
 # Env settings / local env files
-.env
+packages/database/.env
 .env.local
 .env.*.local
 

@@ -52,7 +52,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 						const documentSetId = documentSetIds.get(folderName);
 
 						const files = documentSetId
-							? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId)
+							? await DocumentUtil.loadUploadedDocuments(service, caseRecord.id, documentSetId, false)
 							: [];
 
 						return {
@@ -70,7 +70,8 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 			caseRecord,
 			req,
 			journey2Data,
-			COMMON_CONSTS.GATEWAY_2_JOURNEY_ID
+			COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
+			false
 		);
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;

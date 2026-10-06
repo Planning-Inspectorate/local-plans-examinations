@@ -8,7 +8,7 @@ export async function loadGateway3DocumentsByDocumentSetId(
 	caseId: string,
 	documentSetId: string
 ): Promise<UploadedFile[]> {
-	return DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId);
+	return DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId, false);
 }
 
 export async function saveGateway3Documents(

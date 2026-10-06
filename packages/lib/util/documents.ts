@@ -32,6 +32,7 @@ type DocumentRow = {
 	documentSetId: string;
 	isDeleted: boolean;
 	latestDocumentVersion: DocumentVersionRow | null;
+	isTemp: boolean;
 };
 
 type SyncDocumentsParams = {
@@ -73,13 +74,15 @@ export class DocumentUtil {
 	public static async loadUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string
+		documentSetId: string,
+		loadTempFiles: boolean
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSetId,
-				isDeleted: false
+				isDeleted: false,
+				isTemp: loadTempFiles
 			},
 			include: {
 				latestDocumentVersion: true
@@ -88,6 +91,8 @@ export class DocumentUtil {
 				createdAt: 'asc'
 			}
 		})) as DocumentRow[];
+
+		console.log('documents', documents);
 
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
@@ -201,7 +206,8 @@ export class DocumentUtil {
 				documentGuid: document.guid,
 				documentSetId: document.documentSetId,
 				version: version.version
-			}
+			},
+			isTemp: document.isTemp
 		};
 	}
 
@@ -355,6 +361,35 @@ export class DocumentUtil {
 				isDeleted: false
 			}
 		});
+	}
+	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
+	 try  {
+		 await Promise.all(uploadedFiles.map(async  (file) => {
+			 console.log('Updating temporary document to permanent', file);
+			 const fileId = await service.db.document.findFirst({
+					where: {
+						name: file.id
+					}
+				});
+			 if(!fileId) {
+				 throw new Error('File not found');
+			 }
+
+			 await service.db.document.update({
+					where: {
+						guid: fileId.guid
+					},
+					data: {
+						isTemp: false
+					}
+				});
+		 }));
+
+
+		}
+		catch (err) {
+			console.error(err);
+		}
 	}
 
 	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {

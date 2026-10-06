@@ -14,6 +14,7 @@ export type UploadedFile = {
 	url?: string;
 	dateCreated?: Date;
 	metadata?: Record<string, unknown>;
+	isTemp: boolean;
 };
 
 export type UploadedRequestFile = {

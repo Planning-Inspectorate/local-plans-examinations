@@ -23,7 +23,8 @@ import {
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError,
-	preprocessQuestionProperties
+	preprocessQuestionProperties,
+	redirectToFilePreviousPage
 } from './controller.ts';
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
@@ -57,6 +58,9 @@ import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
+import {
+	createFileSubmitUploadController
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -242,6 +246,8 @@ function registerCaseJourney(
 							if (saveFunction) {
 								saveFunction(service.db, {}, getParam(req.params.reference), questionConfig.url);
 							}
+							console.log('Files uploaded session', req.session.fileUploader);
+
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
 						onUploadCleanupError: ({ req, file, error }) =>
@@ -251,6 +257,7 @@ function registerCaseJourney(
 				])
 			)
 		);
+		;
 		const deleteDocumentRoute = buildFileUploadRouteHandler(
 			new Map(
 				fileUploadQuestionConfigs.map((questionConfig) => [
@@ -272,6 +279,27 @@ function registerCaseJourney(
 				])
 			)
 		);
+
+		const onSubmitDocumentRoute = buildFileUploadRouteHandler(
+			new Map(
+				fileUploadQuestionConfigs.map((questionConfig) => [
+					questionConfig.url,
+					createFileSubmitUploadController({
+						fieldName: questionConfig.fieldName,
+						question: questionConfig,
+						storage: fileUploaderStorage,
+						sessionKey: fileUploaderCaseSessionKey,
+						onSubmit: async ({ uploadedFiles }) => {
+							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
+						},
+						redirect: "/"
+					})
+				])
+			)
+		);
+
+
+
 		router.post(
 			`${questionPath}/upload-documents`,
 			getJourneyResponse,
@@ -282,6 +310,18 @@ function registerCaseJourney(
 			uploadDocumentRoute,
 			handleMulterFileSizeError
 		);
+
+		router.post(
+			`${questionPath}/upload-documents/submit`,
+			getJourneyResponse,
+			getJourney,
+			upload.array('files[]'),
+			// Lusca CSRF check performed after Multer handles the multipart/form-data
+			lusca.csrf(),
+			onSubmitDocumentRoute,
+			handleMulterFileSizeError
+		);
+
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,
