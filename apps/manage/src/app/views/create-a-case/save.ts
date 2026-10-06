@@ -77,15 +77,16 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 			const notifyReference = `create-case:${caseReference}`;
-			// Need to construct the details this way to avoid eslint errors
-			const personalisationDetails: Record<string, string> = { portalLoginURL: portalLoginURL };
-			personalisationDetails['plan_ref'] = caseReference;
-			personalisationDetails['authority_name'] = relevantLpaNames.join(', ');
-			personalisationDetails['plan_type'] = answers.planType
-				.split('-')
-				.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' ');
-			personalisationDetails['team_email_address'] = service.localPlansTeamEmail;
+			const personalisationDetails = {
+				portalLoginURL,
+				['plan_ref']: caseReference,
+				['authority_name']: relevantLpaNames.join(', '),
+				['plan_type']: answers.planType
+					.split('-')
+					.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+					.join(' '),
+				['team_email_address']: service.localPlansTeamEmail
+			};
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {
