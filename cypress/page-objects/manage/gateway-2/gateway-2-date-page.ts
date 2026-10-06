@@ -15,12 +15,6 @@ export const gateway2ActualDatePage = new DateQuestionPage(
 	gateway2DateAnswers.gateway2ActualDate.heading
 );
 
-export const gateway2ValidDatePage = new DateQuestionPage(
-	gateway2QuestionPath(gateway2DateAnswers.gateway2ValidDate.path),
-	gateway2DateAnswers.gateway2ValidDate.fieldName,
-	gateway2DateAnswers.gateway2ValidDate.heading
-);
-
 export const assessorDateOfAppointmentPage = new DateQuestionPage(
 	gateway2QuestionPath(gateway2DateAnswers.assessorDateOfAppointment.path),
 	gateway2DateAnswers.assessorDateOfAppointment.fieldName,

@@ -109,7 +109,6 @@ describe('gateway2Journey', () => {
 		const gateway2Questions = [
 			'gateway-2-expected-date',
 			'gateway-2-actual-date',
-			'gateway-2-valid-date',
 			'gateway-2-assessor',
 			'gateway-2-assessor-appointed',
 			'gateway-2-workshop-date',
