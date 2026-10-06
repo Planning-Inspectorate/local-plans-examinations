@@ -473,6 +473,22 @@ export function postDeleteWorkshop(service: ManageService): AsyncRequestHandler 
 		}
 		const returnUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
 		new Gateway2SaveController(service, req, reference).deleteWorkshop(workshopToDelete);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				workshops: null // Will be overridden by overrideLabels
+			},
+			{},
+			reference,
+			currentUser,
+			{
+				workshops: 'Workshop cancelled'
+			}
+		);
 		return res.redirect(returnUrl);
 	};
 }
