@@ -73,7 +73,7 @@ export class DocumentUtil {
 	public static async loadTempUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string,
+		documentSetId: string
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
@@ -95,7 +95,7 @@ export class DocumentUtil {
 	public static async loadUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string,
+		documentSetId: string
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
@@ -383,7 +383,6 @@ export class DocumentUtil {
 		try {
 			await Promise.all(
 				uploadedFiles.map(async (file) => {
-					console.log('Updating temporary document to permanent', file);
 					const fileId = await service.db.document.findFirst({
 						where: {
 							name: file.id

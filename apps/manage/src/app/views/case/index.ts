@@ -58,10 +58,7 @@ import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
-import {
-	createFileSubmitUploadController
-} from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
-
+import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -248,7 +245,6 @@ function registerCaseJourney(
 								saveFunction(service.db, {}, getParam(req.params.reference), questionConfig.url);
 							}
 							console.log('Files uploaded session', req.session.fileUploader);
-
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
 						onUploadCleanupError: ({ req, file, error }) =>
@@ -258,7 +254,6 @@ function registerCaseJourney(
 				])
 			)
 		);
-		;
 		const deleteDocumentRoute = buildFileUploadRouteHandler(
 			new Map(
 				fileUploadQuestionConfigs.map((questionConfig) => [
@@ -291,16 +286,13 @@ function registerCaseJourney(
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
 						onSubmit: async ({ uploadedFiles }) => {
-								console.log('uploadedFiles submit', uploadedFiles);
 							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
 						},
-						redirect: redirectToChecks
+						redirect: (req) => redirectToChecks(req, path)
 					})
 				])
 			)
 		);
-
-
 
 		router.post(
 			`${questionPath}/upload-documents`,

@@ -53,11 +53,7 @@ export type FileUploaderControllerOptions = {
 		fileId: string;
 		error: unknown;
 	}) => void | Promise<void>;
-	onSubmit?: (params: {
-		req: Request;
-		fieldName: string;
-		uploadedFiles: UploadedFile[];
-	}) => void | Promise<void>;
+	onSubmit?: (params: { req: Request; fieldName: string; uploadedFiles: UploadedFile[] }) => void | Promise<void>;
 };
 
 type RequestWithFiles = Request & {
@@ -106,7 +102,6 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 				uploadedFiles.push(await storage.upload(file, destination));
 			}
 		} catch (error) {
-			console.log('errorupload fail why?', error)
 			await options.onUploadError?.({
 				req: request,
 				sessionKey,
@@ -116,7 +111,7 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 			throw error;
 		}
 
-		const nextUploadedFiles = [...existingFiles, ...uploadedFiles]
+		const nextUploadedFiles = [...existingFiles, ...uploadedFiles];
 
 		try {
 			await options.onFilesChange?.({
@@ -125,7 +120,6 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 				fieldName: options.fieldName,
 				uploadedFiles: nextUploadedFiles
 			});
-
 		} catch (error) {
 			await cleanupUploadedFiles(request, options, sessionKey, storage, uploadedFiles);
 			try {
@@ -327,18 +321,16 @@ function resolveRedirect(req: Request, options: FileUploaderControllerOptions): 
 	return '/';
 }
 
-
 export function createFileSubmitUploadController(options: FileUploaderControllerOptions): RequestHandler {
 	return async (request: Request, res: Response) => {
-		 try {
+		try {
 			const session = ensureFileUploaderSession(request as RequestWithFiles);
-			const urlPathRoot = request.url.split('/')[1]
-			const uploadedFiles = session.forms?.[urlPathRoot][options.fieldName]  ?? []
-			await options.onSubmit?.({ req: request,uploadedFiles,  fieldName: options.fieldName, });
-			}
-			catch (error) {
-			 	console.log(error)
-			}
-		 return redirectSafely(res, resolveRedirect(request, options));
+			const urlPathRoot = request.url.split('/')[1];
+			const uploadedFiles = session.forms?.[urlPathRoot][options.fieldName] ?? [];
+			await options.onSubmit?.({ req: request, uploadedFiles, fieldName: options.fieldName });
+		} catch (error) {
+			console.log(error);
+		}
+		return redirectSafely(res, resolveRedirect(request, options));
 	};
 }

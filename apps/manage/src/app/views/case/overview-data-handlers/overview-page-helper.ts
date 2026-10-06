@@ -45,23 +45,26 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 	});
 }
 
-export /**
+/**
  * Load the documents for the given case and prepopulate the answer fields with their names
  * @param service The manage service
  * @param currentCase The case from the database
  * @param req The request object
  * @param answers The answers that the details should be added to
+ * @param journeyId
  */
-async function addUploadedDocumentDetailsToAnswers(
+export async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
 	req: Request,
 	answers: any,
-	journeyId: string,
+	journeyId: string
 ) {
+	const isUploadPages =
+		req.params.section === 'signed-sla' ||
+		req.params.section === 'report' ||
+		req.params.section === 'gateway-3-submission-1';
 
-	console.log('addUploadedDocumentDetailsToAnswers', req.url);
-	const isUploadPage = req.url === '/gateway-1/gateway-1/signed-sla';
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
@@ -87,15 +90,9 @@ async function addUploadedDocumentDetailsToAnswers(
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
 		}
 
-		const uploadedFiles = isUploadPage ?
-			await DocumentUtil.loadTempUploadedDocuments(	service,
-				currentCase.id,
-				documentSetId) :
-			await DocumentUtil.loadUploadedDocuments(
-			service,
-			currentCase.id,
-			documentSetId,
-		);
+		const uploadedFiles = isUploadPages
+			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
+			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
 
 		req.session.fileUploader = {
 			...request.session.fileUploader,

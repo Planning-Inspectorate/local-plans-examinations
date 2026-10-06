@@ -1102,16 +1102,12 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	}
 	const journey = req.url.split(String(req.params.section))[0];
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
-
 }
 
-export const redirectToChecks = (req: Request) => {
-	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
-	console.log(planPath)
-	console.log(req.params)
-	console.log(`----> /${req.params.section}/${req.params.question}/check`);
-	return `/${req.params.section}/${req.params.question}/check`;
-}
+export const redirectToChecks = (req: Request, path: string) => {
+	const plan = req.params.reference;
+	return `/case/${plan}/${path}/${req.params.section}/${req.params.question}/check`;
+};
 
 export function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {
 	if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
