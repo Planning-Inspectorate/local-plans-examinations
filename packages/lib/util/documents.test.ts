@@ -35,7 +35,8 @@ describe('loadUploadedDocuments', () => {
 						blobStoragePath: 'gateway-2/cover-letter.pdf',
 						documentURI: 'http://storage/cover-letter.pdf',
 						isDeleted: false,
-						dateCreated: DOCUMENT_CREATED_DATE
+						dateCreated: DOCUMENT_CREATED_DATE,
+						virusCheckStatus: 'scanned'
 					}
 				}
 			]
@@ -58,6 +59,7 @@ describe('loadUploadedDocuments', () => {
 				path: 'gateway-2/cover-letter.pdf',
 				url: 'http://storage/cover-letter.pdf',
 				dateCreated: DOCUMENT_CREATED_DATE,
+				virusCheckStatus: 'scanned',
 				metadata: {
 					documentGuid: 'document-1',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
