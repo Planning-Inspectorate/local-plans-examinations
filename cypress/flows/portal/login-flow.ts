@@ -27,15 +27,17 @@ const getCsrfToken = (html: string) => {
 	return token as string;
 };
 
-export const startPortalOtpLogin = (email = getPortalLoginEmail()) => {
+export const startPortalOtpLogin = (email = getPortalLoginEmail(), { seedCase = true } = {}) => {
 	if (isEnvironmentSmoke()) {
-		cy.task('seedPortalSmokeCase').then((plan) => {
-			const reference = (plan as { reference?: string }).reference;
+		if (seedCase) {
+			cy.task('seedPortalSmokeCase').then((plan) => {
+				const reference = (plan as { reference?: string }).reference;
 
-			if (reference) {
-				Cypress.env('portalSmokeCaseReference', reference);
-			}
-		});
+				if (reference) {
+					Cypress.env('portalSmokeCaseReference', reference);
+				}
+			});
+		}
 		authenticatePortalIfRequired();
 	} else {
 		cy.task('seedCase');

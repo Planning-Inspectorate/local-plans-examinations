@@ -1,4 +1,4 @@
-import { skipUnlessEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
+import { getRequiredCypressEnv, skipUnlessEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
 import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import { cleanupPreparedPlanDetails } from '../../../../flows/portal/plan-flow.ts';
@@ -13,7 +13,11 @@ describe('Portal Notify smoke', () => {
 	afterEach(cleanupPreparedPlanDetails);
 
 	it('logs in and submits a Gateway 2 application', { tags: ['environment-smoke'] }, () => {
-		startPortalOtpLogin();
+		const email = createUniqueSmokeEmail();
+		cy.task<{ reference: string }>('seedPortalSmokeCase', { email }).then(({ reference }) => {
+			Cypress.env('portalSmokeCaseReference', reference);
+		});
+		startPortalOtpLogin(email, { seedCase: false });
 		completePortalLogin();
 		myPlansPage.verifyLoaded();
 
@@ -38,3 +42,8 @@ describe('Portal Notify smoke', () => {
 		});
 	});
 });
+
+const createUniqueSmokeEmail = () => {
+	const [localPart, domain] = getRequiredCypressEnv('authUsername').split('@');
+	return `${localPart}+portal-notify-${Date.now()}@${domain}`;
+};

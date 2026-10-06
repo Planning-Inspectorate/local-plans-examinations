@@ -73,7 +73,15 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		try {
 			caseRecord = await db.case.findUnique({
 				where: { reference },
-				select: { id: true, contacts: true }
+				select: {
+					id: true,
+					contacts: {
+						select: {
+							email: true,
+							lpa: { select: { lpaCode: true, lpaName: true } }
+						}
+					}
+				}
 			});
 		} catch (error) {
 			logger.error({ error }, `Failed to retrieve case ${reference}`);
@@ -106,15 +114,17 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		await Promise.allSettled(
 			caseRecord.contacts.map(async (contact) => {
 				try {
+					const personalisation: Record<string, string> = {
+						planRef: reference,
+						planType: 'plan type',
+						workshopWeekMonday: 'workshop week monday',
+						teamEmailAddress: 'team email address',
+						teamPhone: 'team phone'
+					};
+					personalisation['authority_name'] = contact.lpa.lpaName || contact.lpa.lpaCode;
+
 					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, contact.email, {
-						personalisation: {
-							planRef: reference,
-							lpaName: 'lpa name',
-							planType: 'plan type',
-							workshopWeekMonday: 'workshop week monday',
-							teamEmailAddress: 'team email address',
-							teamPhone: 'team phone'
-						},
+						personalisation,
 						reference: `gateway-2-submission:${reference}`
 					});
 					logger.info({ encodedReference }, 'gateway 2 submission - email sent');
