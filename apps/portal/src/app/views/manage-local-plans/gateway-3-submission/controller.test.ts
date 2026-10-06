@@ -503,8 +503,8 @@ describe('buildGetSubmissionCompletePage', () => {
 		assert.strictEqual(calls[0].method, 'render');
 		const [view, data] = calls[0].args as [string, Record<string, unknown>];
 		assert.ok(view.includes('submission-complete.njk'));
-		assert.strictEqual(data.pageTitle, 'Submission complete');
-		assert.strictEqual(data.pageHeading, 'Submission complete');
+		assert.strictEqual(data.pageTitle, 'Gateway 3 submission complete');
+		assert.strictEqual(data.pageHeading, 'Gateway 3 submission complete');
 		assert.strictEqual(data.planOverviewUrl, '/manage-local-plans/PLAN-001');
 	});
 
