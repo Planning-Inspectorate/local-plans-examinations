@@ -480,14 +480,70 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('redirects to the submission-complete page', () => {
-		const handler = buildPostDeclarationPage();
+	function buildMockService(submissions: { id: string; completionDate: Date | null; decision: string | null }[] = []) {
+		const updatedIds: string[] = [];
+		return {
+			service: {
+				db: {
+					case: {
+						findFirst: mock.fn(async () => ({
+							gateway3Info: {
+								submissions
+							}
+						}))
+					},
+					gateway3Submission: {
+						update: mock.fn(async (args: { where: { id: string }; data: Record<string, unknown> }) => {
+							updatedIds.push(args.where.id);
+						})
+					}
+				}
+			} as unknown as PortalService,
+			updatedIds
+		};
+	}
+
+	it('redirects to the submission-complete page', async () => {
+		const { service } = buildMockService();
+		const handler = buildPostDeclarationPage(service);
 		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
 		let redirectUrl = '';
 		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
 
-		handler(req, res, () => {});
+		await handler(req, res, () => {});
 
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+
+	it('sets completionDate on a pending submission', async () => {
+		const { service, updatedIds } = buildMockService([
+			{ id: 'sub-1', completionDate: new Date('2026-10-01'), decision: 'RESUBMISSION_REQUIRED' },
+			{ id: 'sub-2', completionDate: null, decision: null }
+		]);
+		const handler = buildPostDeclarationPage(service);
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(updatedIds.length, 1);
+		assert.strictEqual(updatedIds[0], 'sub-2');
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+
+	it('does not update when there is no pending submission', async () => {
+		const { service, updatedIds } = buildMockService([
+			{ id: 'sub-1', completionDate: new Date('2026-10-01'), decision: 'RESUBMISSION_REQUIRED' }
+		]);
+		const handler = buildPostDeclarationPage(service);
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(updatedIds.length, 0);
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 	});
 });

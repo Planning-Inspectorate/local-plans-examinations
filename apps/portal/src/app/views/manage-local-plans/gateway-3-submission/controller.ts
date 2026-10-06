@@ -560,10 +560,43 @@ export function buildGetDeclarationPage(): RequestHandler {
 const SUBMISSION_COMPLETE_VIEW_PATH =
 	'views/manage-local-plans/gateway-3-submission/declaration/submission-complete.njk';
 
-export function buildPostDeclarationPage(): RequestHandler {
-	return (req, res) => {
+export function buildPostDeclarationPage(service: PortalService): RequestHandler {
+	return async (req, res) => {
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+
+		// Complete any pending Gateway 3 submission (placeholder created by the BO
+		// when the assessor requires a resubmission, or by the system for the
+		// initial submission).
+		if (planReference) {
+			try {
+				const caseRecord = await service.db.case.findFirst({
+					where: { reference: planReference },
+					include: {
+						gateway3Info: {
+							include: {
+								submissions: {
+									orderBy: { completionDate: 'asc' }
+								}
+							}
+						}
+					}
+				});
+
+				const submissions = caseRecord?.gateway3Info?.submissions ?? [];
+				const pendingSubmission = submissions.find((s) => !s.completionDate && !s.decision);
+
+				if (pendingSubmission) {
+					await service.db.gateway3Submission.update({
+						where: { id: pendingSubmission.id },
+						data: { completionDate: new Date() }
+					});
+				}
+			} catch {
+				// Log but don't block the redirect — the submission confirmation
+				// page should still be shown even if the DB update fails.
+			}
+		}
 
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);
 	};
@@ -677,7 +710,7 @@ export function buildGateway3Middleware(service: PortalService) {
 		validateGateway3Submission: buildValidateGateway3Submission(),
 		guardDeclarationPage: buildGuardDeclarationPage(),
 		getDeclarationPage: buildGetDeclarationPage(),
-		postDeclarationPage: buildPostDeclarationPage(),
+		postDeclarationPage: asyncHandler(buildPostDeclarationPage(service)),
 		getSubmissionCompletePage: buildGetSubmissionCompletePage()
 	};
 }

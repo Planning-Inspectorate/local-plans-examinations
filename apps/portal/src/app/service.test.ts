@@ -3,6 +3,7 @@
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -29,7 +30,8 @@ function buildCase(overrides = {}) {
 			actualDate: null,
 			submissions: [
 				{
-					completionDate: null
+					completionDate: null,
+					decision: null
 				}
 			]
 		},
@@ -172,7 +174,8 @@ describe('PortalService', () => {
 							actualDate: null,
 							submissions: [
 								{
-									completionDate: new Date('2026-12-01T12:00:00.000Z')
+									completionDate: new Date('2026-12-01T12:00:00.000Z'),
+									decision: null
 								}
 							]
 						}
@@ -181,6 +184,34 @@ describe('PortalService', () => {
 				{
 					stage: STAGE.Examination,
 					status: STATUS.ReadyToStart
+				}
+			);
+		});
+
+		it('returns Gateway 3 resubmission required when latest submission has resubmission decision', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: new Date('2026-07-21T12:00:00.000Z'),
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							actualDate: null,
+							submissions: [
+								{
+									completionDate: new Date('2026-10-01T12:00:00.000Z'),
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+								}
+							]
+						},
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.ResubmissionRequired
 				}
 			);
 		});

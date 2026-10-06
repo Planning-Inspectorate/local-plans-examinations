@@ -25,10 +25,15 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const encodedPlanRef = encodeURIComponent(plan.refNum);
 		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
 		const gateway3Base = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
-		const currentApplicationLink =
-			plan.stage === STAGE.Gateway3 ? gateway3Base : `${applicationBase}/application-declaration`;
+		const gateway3ResubBase = `/manage-local-plans/${encodedPlanRef}/gateway-3-resubmission`;
+		const isResubmissionRequired = plan.status === STATUS.ResubmissionRequired;
+		const currentApplicationLink = isResubmissionRequired
+			? gateway3ResubBase
+			: plan.stage === STAGE.Gateway3
+				? gateway3Base
+				: `${applicationBase}/application-declaration`;
 		const applicationLink = () => applicationBase;
-		const gateway3Link = () => gateway3Base;
+		const gateway3Link = () => (isResubmissionRequired ? gateway3ResubBase : gateway3Base);
 
 		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
 
@@ -55,6 +60,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
+				if (isResubmissionRequired || plan.status === STATUS.UnderReview) {
+					dateTextG3 = 'Submitted: ';
+				}
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();

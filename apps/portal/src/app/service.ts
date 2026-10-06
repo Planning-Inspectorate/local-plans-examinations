@@ -6,6 +6,7 @@ import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
 	reference: string;
@@ -25,6 +26,7 @@ type PortalCase = {
 		actualDate: Date | null;
 		submissions: {
 			completionDate: Date | null;
+			decision: string | null;
 		}[];
 	} | null;
 	examinationInfo: {
@@ -87,7 +89,19 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 }
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
-	if (caseRecord.gateway3Info?.submissions.at(-1)?.completionDate || caseRecord.gateway3Info?.actualDate) {
+	const submissions = caseRecord.gateway3Info?.submissions ?? [];
+	// The last completed submission is the one with a decision or completion date set.
+	// The BO pre-creates an empty submission after a decision, so the latest may be a placeholder.
+	const lastCompletedSubmission = [...submissions].reverse().find((s) => s.decision || s.completionDate);
+
+	if (lastCompletedSubmission?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.ResubmissionRequired
+		};
+	}
+
+	if (lastCompletedSubmission?.completionDate || caseRecord.gateway3Info?.actualDate) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
