@@ -58,7 +58,12 @@ function createMockService() {
 				findUnique: async () => {
 					return {
 						id: 'case-1',
-						contacts: [{ email: 'lpa@example.com' }]
+						contacts: [
+							{
+								email: 'lpa@example.com',
+								lpa: { lpaCode: 'TEST', lpaName: 'Test Planning Authority' }
+							}
+						]
 					};
 				},
 				update: async () => ({})
@@ -114,7 +119,14 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(service.sendCalls.length, 1);
 		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
 		assert.equal(service.sendCalls[0].to, 'lpa@example.com');
-		assert.equal(service.sendCalls[0].options.personalisation.planRef, 'PLAN-123456');
+		assert.deepEqual(service.sendCalls[0].options.personalisation, {
+			planRef: 'PLAN-123456',
+			authority_name: 'Test Planning Authority',
+			planType: 'plan type',
+			workshopWeekMonday: 'workshop week monday',
+			teamEmailAddress: 'team email address',
+			teamPhone: 'team phone'
+		});
 		assert.equal(service.sendCalls[0].options.reference, 'gateway-2-submission:PLAN-123456');
 	});
 

@@ -109,8 +109,11 @@ export default defineConfig({
 					}
 					return JSON.parse(jsonLine);
 				},
-				seedPortalSmokeCase: async () => {
-					const stdout = await runCommand('node packages/database/src/seed/seed-portal-smoke.ts');
+				seedPortalSmokeCase: async (options?: { email?: string }) => {
+					const stdout = await runCommand(
+						'node packages/database/src/seed/seed-portal-smoke.ts',
+						options?.email ? { CYPRESS_PORTAL_SMOKE_EMAIL: options.email } : {}
+					);
 					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
 					if (!jsonLine) {
 						throw new Error('Portal smoke seed script did not return a result');

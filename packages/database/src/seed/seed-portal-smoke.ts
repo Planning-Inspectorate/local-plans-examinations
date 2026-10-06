@@ -132,7 +132,7 @@ async function createSmokeCase(dbClient: ReturnType<typeof newDatabaseClient>) {
 }
 
 function getRequiredSmokeEmail() {
-	const smokeEmail = process.env.CYPRESS_AUTH_USERNAME;
+	const smokeEmail = process.env.CYPRESS_PORTAL_SMOKE_EMAIL || process.env.CYPRESS_AUTH_USERNAME;
 
 	if (!smokeEmail) {
 		throw new Error('CYPRESS_AUTH_USERNAME is required to seed Portal smoke data');
