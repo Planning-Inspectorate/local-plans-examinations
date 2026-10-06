@@ -447,6 +447,36 @@ export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 	};
 }
 
+export function getDeleteWorkshop(): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const workshopToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(workshopToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
+		res.render('views/layouts/delete-workshop.njk', { reference: reference, workshopIndex: workshopToDelete });
+	};
+}
+
+/**
+ * For deleting a workshop
+ * @param service
+ * @returns Redirects back to the GW2 tab
+ */
+export function postDeleteWorkshop(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const workshopToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(workshopToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		const returnUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
+		new Gateway2SaveController(service, req, reference).deleteWorkshop(workshopToDelete);
+		return res.redirect(returnUrl);
+	};
+}
+
 export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
 		const reference = getParam(req.params.reference);
