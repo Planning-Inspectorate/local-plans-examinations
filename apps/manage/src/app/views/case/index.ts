@@ -3,6 +3,8 @@ import {
 	buildGetJourneyMiddleware,
 	updateCaseField,
 	getDeleteCase,
+	getDeleteWorkshop,
+	postDeleteWorkshop,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
 	fileUploadQuestionConfigs,
@@ -195,6 +197,8 @@ function registerGateway2WorkshopJourney(
 		saveLastQuestionUrl,
 		completeWorkshop
 	);
+	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
+	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
 
 	router.get(
 		'/gateway-2/set-up-workshop/:section/:question',

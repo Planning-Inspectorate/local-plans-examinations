@@ -17,6 +17,51 @@ export class Gateway2SaveController extends SaveController {
 	protected async shouldSaveToSession() {
 		return this.isGateway2WorkshopQuestion();
 	}
+	/**
+	 * Delete the workshop at the given index
+	 * @param workshopId The workshop id to delete (from the URL, not the index in the workshop list)
+	 * @returns The result of the save operation
+	 */
+	public async deleteWorkshop(workshopId: number) {
+		const workshopIndex = workshopId - 1;
+		const caseDetails = await this.service.db.case.findUnique({
+			select: {
+				id: true,
+				gateway2Info: {
+					select: {
+						workshops: true
+					}
+				}
+			},
+			where: { reference: this.caseReference }
+		});
+		if (!caseDetails) {
+			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
+		}
+		if (!this.caseId) {
+			this.caseId = caseDetails.id;
+		}
+		if (caseDetails.gateway2Info?.workshops == undefined) {
+			throw Error(`Could not find workshop data for case with reference '${this.caseReference}'`);
+		}
+		const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
+		if (workshopDetails.length == 0) {
+			throw Error(`There are no workshops to delete for the case with reference '${this.caseReference}'`);
+		}
+		if (workshopIndex < 0) {
+			throw Error(`Given workshop id '${workshopIndex}' must be greater than '0'`);
+		}
+		if (workshopIndex >= workshopDetails.length) {
+			throw Error(
+				`Given workshop id '${workshopIndex}' is greater than the number of workshops '${workshopDetails.length}'`
+			);
+		}
+		workshopDetails.splice(workshopIndex, 1);
+		return this.save({
+			workshops: workshopDetails
+		});
+	}
+
 	protected async prepareData(answers: Record<string, any>) {
 		const caseDetails = await this.service.db.case.findUnique({
 			select: {
@@ -175,6 +220,7 @@ export class Gateway2SaveController extends SaveController {
 				throw Error('No workshop entries found');
 			}
 			const workshopsCleaned = Object.values(workshops).map((e) => ({
+				id: e.id,
 				createdDate: e.createdDate,
 				workshopDate: e.workshopDate && typeof e.workshopDate == 'string' ? parseDate(e.workshopDate) : e.workshopDate,
 				workshopTime: e.workshopTime,
