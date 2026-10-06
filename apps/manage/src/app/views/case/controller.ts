@@ -805,6 +805,21 @@ export function preprocessQuestionProperties(
 							}).format(workshopAnswers[i].workshopDate)
 						: null;
 			}
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					gateway2Info: true
+				},
+				where: {
+					reference
+				}
+			});
+			const gateway2Complete = !!caseDetails?.gateway2Info?.workshopDocumentUploadedDate;
+			if (gateway2Complete) {
+				questions['gateway2WorkshopDocuments'].actionLink = {
+					href: `/case/${reference}/gateway-2/workshop/gateway-2-workshop-documents/check`,
+					text: 'View'
+				};
+			}
 		}
 		if (journeyId == 'gateway-3') {
 			const decisionMap = {
