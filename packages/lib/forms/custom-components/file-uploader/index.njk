@@ -10,12 +10,6 @@
 	{% if backLink %}
 		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
 	{% endif %}
-	{% if errorSummary %}
-		{{ govukErrorSummary({
-			titleText: "There is a problem",
-			errorList: errorSummary
-		}) }}
-	{% endif %}
 {% endblock before_content %}
 
 {% block content %}
@@ -41,7 +35,12 @@
 			{% if question.text.fileRequirementsText %}
 				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText }}</p>
 			{% endif %}
-
+			{% if errorSummary and errorSummary.length %}
+				{{ govukErrorSummary({
+					titleText: "There is a problem",
+					errorList: errorSummary
+				}) }}
+			{% endif %}
 			{% if virusScanInProgress %}
 				{{ govukNotificationBanner({
 					titleText: "Important",
