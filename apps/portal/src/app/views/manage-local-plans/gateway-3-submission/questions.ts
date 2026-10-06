@@ -6,6 +6,8 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import { VIRUS_CHECK_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { virusScanStatusTag } from '../gateway-2-submission/questions.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -347,6 +349,7 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 		formattedAnswer: string;
 		answer: {
 			fileName?: string;
+			virusCheckStatus?: string;
 			metadata?: {
 				documentGuid?: string;
 			};
@@ -364,10 +367,16 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 			}
 
 			const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
+			const statusTag = virusScanStatusTag(file.virusCheckStatus);
 
-			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-3-submission/download-document/${encodeURIComponent(
+			// When a virus has been detected, users are unable to download it - no download link.
+			if (file.virusCheckStatus === VIRUS_CHECK_STATUS_ID.AFFECTED) {
+				return `${fileName} ${statusTag}`;
+			}
+
+			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
 				documentGuid
-			)}">${fileName}</a>`;
+			)}">${fileName}</a> ${statusTag}`;
 		});
 
 		if (linkedFiles.some((file) => file === undefined)) {

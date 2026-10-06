@@ -1,5 +1,6 @@
 import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
+import { VIRUS_CHECK_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import {
 	SINGLE_FILE_UPLOAD_LIMIT,
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
@@ -228,6 +229,7 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 		formattedAnswer: string;
 		answer: {
 			fileName?: string;
+			virusCheckStatus?: string;
 			metadata?: {
 				documentGuid?: string;
 			};
@@ -245,10 +247,16 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 			}
 
 			const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
+			const statusTag = virusScanStatusTag(file.virusCheckStatus);
+
+			// When a virus has been detected, users are unable to download it - no download link
+			if (file.virusCheckStatus === VIRUS_CHECK_STATUS_ID.AFFECTED) {
+				return `${fileName} ${statusTag}`;
+			}
 
 			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
 				documentGuid
-			)}">${fileName}</a>`;
+			)}">${fileName}</a>${statusTag}`;
 		});
 
 		if (linkedFiles.some((file) => file === undefined)) {
@@ -268,5 +276,20 @@ export function decodeFileName(fileName: string) {
 		return decodeURIComponent(fileName);
 	} catch {
 		return fileName;
+	}
+}
+
+/**
+ * Builds the GOV.UK status tag markup for a file's virus scan state.
+ * Returns an empty string for scanned/clean files (no tag required).
+ */
+export function virusScanStatusTag(virusCheckStatus: string | undefined): string {
+	switch (virusCheckStatus) {
+		case VIRUS_CHECK_STATUS_ID.NOT_SCANNED:
+			return '<strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong>';
+		case VIRUS_CHECK_STATUS_ID.AFFECTED:
+			return '<strong class="govuk-tag govuk-tag--red">Virus detected</strong>';
+		default:
+			return '';
 	}
 }

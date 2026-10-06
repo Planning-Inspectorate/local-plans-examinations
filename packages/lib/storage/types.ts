@@ -13,6 +13,8 @@ export type UploadedFile = {
 	path?: string;
 	url?: string;
 	dateCreated?: Date;
+	/** The latest virus/malware scan status for the file, e.g. 'not_scanned', 'scanned' or 'affected'. */
+	virusCheckStatus?: string;
 	metadata?: Record<string, unknown>;
 };
 

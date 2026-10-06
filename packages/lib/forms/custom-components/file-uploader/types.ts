@@ -94,6 +94,8 @@ export type FileUploaderViewModel = QuestionViewModel & {
 	uploadedFilesEncoded: string;
 	errors?: Record<string, { msg: string }>;
 	errorSummary?: Array<{ text: string; href: string }>;
+	/** True when at least one uploaded file is still awaiting a virus scan result. */
+	virusScanInProgress?: boolean;
 	currentUrl?: string;
 };
 
