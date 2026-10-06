@@ -244,7 +244,6 @@ function registerCaseJourney(
 							if (saveFunction) {
 								saveFunction(service.db, {}, getParam(req.params.reference), questionConfig.url);
 							}
-							console.log('Files uploaded session', req.session.fileUploader);
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
 						onUploadCleanupError: ({ req, file, error }) =>

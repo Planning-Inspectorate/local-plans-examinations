@@ -70,7 +70,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 			caseRecord,
 			req,
 			journey2Data,
-			COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
+			COMMON_CONSTS.GATEWAY_2_JOURNEY_ID
 		);
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
