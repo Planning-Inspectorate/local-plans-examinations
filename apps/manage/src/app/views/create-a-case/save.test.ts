@@ -120,7 +120,7 @@ describe('buildSaveController', () => {
 					plan_ref: caseData.reference,
 					authority_name: 'LPA A, LPA B',
 					plan_type: 'Local Plan',
-					team_email_address: 'team@email.co.uk'
+					contact_info: 'team@email.co.uk'
 				},
 				reference: `create-case:${caseData.reference}`
 			}
@@ -134,7 +134,7 @@ describe('buildSaveController', () => {
 					plan_ref: caseData.reference,
 					authority_name: 'LPA A, LPA B',
 					plan_type: 'Local Plan',
-					team_email_address: 'team@email.co.uk'
+					contact_info: 'team@email.co.uk'
 				},
 				reference: `create-case:${caseData.reference}`
 			}
