@@ -105,6 +105,21 @@ export class Gateway2SaveController extends SaveController {
 				const sessionAnswers = workshopAnswers[workshopId - 1];
 				const newAnswers = answers.workshops[workshopId - 1];
 				answers.workshops[workshopId - 1] = { ...sessionAnswers, ...newAnswers };
+				// Clean related fields
+				const currentWorkshop = answers.workshops[workshopId - 1];
+				if (currentWorkshop.workshopExpectedDaysKnown == 'no') {
+					delete (currentWorkshop as any).workshopExpectedDays;
+				}
+				if (currentWorkshop.workshopLocationType == 'remote') {
+					delete (currentWorkshop as any).workshopVenueName;
+					delete (currentWorkshop as any).workshopAddressLine;
+					delete (currentWorkshop as any).workshopAddressLine2;
+					delete (currentWorkshop as any).workshopTownOrCity;
+					delete (currentWorkshop as any).workshopPostcode;
+				}
+				if (currentWorkshop.remoteMeetingLinkKnown == 'no') {
+					delete (currentWorkshop as any).remoteMeetingLink;
+				}
 			}
 		}
 		this.req.session.answers = answers;
