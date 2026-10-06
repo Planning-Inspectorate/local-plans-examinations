@@ -1,6 +1,6 @@
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { gateway3ApplicationCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-complete-page.ts';
+import { gateway3SubmissionCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
 import { gateway3DeclarationPage } from '../../../../page-objects/portal/gw3-application/declaration-page.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { openSeededGateway3DeclarationPage } from '../../../../flows/portal/gateway-3-submission-flow.ts';
@@ -34,7 +34,7 @@ describe('Gateway 3 Submission page journeys', () => {
 			gateway3DeclarationPage.verifyLoaded();
 
 			gateway3DeclarationPage.confirmSubmissionButton.click();
-			gateway3ApplicationCompletePage.verifyPathForPlan(plan.urlReference);
+			gateway3SubmissionCompletePage.verifyPathForPlan(plan.urlReference);
 		});
 	});
 });
