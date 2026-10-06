@@ -118,6 +118,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 						personalisation: {
 							planRef: reference,
 							['authority_name']: contact.lpa.lpaName || contact.lpa.lpaCode,
+							['contact_info']: govNotify.localPlansTeamEmail,
 							planType: 'plan type',
 							workshopWeekMonday: 'workshop week monday',
 							teamEmailAddress: 'team email address',

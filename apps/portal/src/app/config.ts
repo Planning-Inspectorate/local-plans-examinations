@@ -11,6 +11,7 @@ export type Config = ConfigWithBlob & {
 	govNotify: {
 		disabled: boolean;
 		apiKey: string;
+		localPlansTeamEmail: string;
 		templateIds: {
 			authCode: string;
 			gw2Submission: string;
@@ -48,6 +49,7 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_API_KEY,
 		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
 		GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID,
+		LOCAL_PLANS_TEAM_EMAIL,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
@@ -124,6 +126,7 @@ export function loadConfig(): Config {
 		govNotify: {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',
+			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || '',
 			templateIds: {
 				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || '',
 				gw2Submission: GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID || ''
