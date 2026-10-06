@@ -31,7 +31,6 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 			req,
 			journey3Data,
 			COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
-			false,
 		);
 		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);

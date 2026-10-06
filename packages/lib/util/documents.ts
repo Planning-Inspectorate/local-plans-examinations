@@ -70,19 +70,16 @@ export class DocumentUtil {
 		});
 	}
 
-	// Reads active documents from the database.
-	public static async loadUploadedDocuments(
+	public static async loadTempUploadedDocuments(
 		service: Service,
 		caseId: string,
 		documentSetId: string,
-		loadTempFiles: boolean
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSetId,
-				isDeleted: false,
-				isTemp: loadTempFiles
+				OR: [{ isDeleted: false }, { isTemp: true }]
 			},
 			include: {
 				latestDocumentVersion: true
@@ -91,7 +88,29 @@ export class DocumentUtil {
 				createdAt: 'asc'
 			}
 		})) as DocumentRow[];
+		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
+	}
 
+	// Reads active documents from the database.
+	public static async loadUploadedDocuments(
+		service: Service,
+		caseId: string,
+		documentSetId: string,
+	): Promise<UploadedFile[]> {
+		const documents = (await service.db.document.findMany({
+			where: {
+				caseId,
+				documentSetId,
+				isDeleted: false,
+				isTemp: false
+			},
+			include: {
+				latestDocumentVersion: true
+			},
+			orderBy: {
+				createdAt: 'asc'
+			}
+		})) as DocumentRow[];
 		console.log('documents', documents);
 
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
@@ -363,31 +382,30 @@ export class DocumentUtil {
 		});
 	}
 	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
-	 try  {
-		 await Promise.all(uploadedFiles.map(async  (file) => {
-			 console.log('Updating temporary document to permanent', file);
-			 const fileId = await service.db.document.findFirst({
-					where: {
-						name: file.id
+		try {
+			await Promise.all(
+				uploadedFiles.map(async (file) => {
+					console.log('Updating temporary document to permanent', file);
+					const fileId = await service.db.document.findFirst({
+						where: {
+							name: file.id
+						}
+					});
+					if (!fileId) {
+						throw new Error('File not found');
 					}
-				});
-			 if(!fileId) {
-				 throw new Error('File not found');
-			 }
 
-			 await service.db.document.update({
-					where: {
-						guid: fileId.guid
-					},
-					data: {
-						isTemp: false
-					}
-				});
-		 }));
-
-
-		}
-		catch (err) {
+					await service.db.document.update({
+						where: {
+							guid: fileId.guid
+						},
+						data: {
+							isTemp: false
+						}
+					});
+				})
+			);
+		} catch (err) {
 			console.error(err);
 		}
 	}

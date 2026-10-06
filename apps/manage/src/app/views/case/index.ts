@@ -290,9 +290,9 @@ function registerCaseJourney(
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
 						onSubmit: async ({ uploadedFiles }) => {
+								console.log('uploadedFiles submit', uploadedFiles);
 							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
 						},
-						redirect: "/"
 					})
 				])
 			)
