@@ -114,17 +114,15 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		await Promise.allSettled(
 			caseRecord.contacts.map(async (contact) => {
 				try {
-					const personalisation: Record<string, string> = {
-						planRef: reference,
-						planType: 'plan type',
-						workshopWeekMonday: 'workshop week monday',
-						teamEmailAddress: 'team email address',
-						teamPhone: 'team phone'
-					};
-					personalisation['authority_name'] = contact.lpa.lpaName || contact.lpa.lpaCode;
-
 					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, contact.email, {
-						personalisation,
+						personalisation: {
+							planRef: reference,
+							['authority_name']: contact.lpa.lpaName || contact.lpa.lpaCode,
+							planType: 'plan type',
+							workshopWeekMonday: 'workshop week monday',
+							teamEmailAddress: 'team email address',
+							teamPhone: 'team phone'
+						},
 						reference: `gateway-2-submission:${reference}`
 					});
 					logger.info({ encodedReference }, 'gateway 2 submission - email sent');

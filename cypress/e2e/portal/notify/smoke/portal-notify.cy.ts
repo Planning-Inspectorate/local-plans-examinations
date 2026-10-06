@@ -12,7 +12,7 @@ describe('Portal Notify smoke', () => {
 
 	afterEach(cleanupPreparedPlanDetails);
 
-	it('logs in and submits a Gateway 2 application', { tags: ['environment-smoke'] }, () => {
+	it('sends login and Gateway 2 submission emails through Notify', { tags: ['environment-smoke'] }, () => {
 		const email = createUniqueSmokeEmail();
 		cy.task<{ reference: string }>('seedPortalSmokeCase', { email }).then(({ reference }) => {
 			Cypress.env('portalSmokeCaseReference', reference);
