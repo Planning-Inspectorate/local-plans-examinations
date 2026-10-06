@@ -8,6 +8,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Gatway 3 submission complete page content', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin();
 		loadPlanDetails().then((plan) => {
 			openSeededGateway3DeclarationPage(plan);
