@@ -59,6 +59,7 @@ export class Gateway2SaveController extends SaveController {
 					...filteredSessionAnswerWorkshops[workshopId - 1]
 				};
 			}
+			// Copy answer fields to the workshop
 			const currentWorkshop = workshopDetails[workshopId - 1];
 			const workshopFieldsToAnswerMap = {
 				workshopDate: `workshopDate-${workshopId}`,
@@ -79,11 +80,7 @@ export class Gateway2SaveController extends SaveController {
 			Object.entries(workshopFieldsToAnswerMap).forEach(([workshopField, answerField]) => {
 				const questionAnswer = answers[answerField];
 				if (questionAnswer) {
-					if (workshopField == 'workshopDate') {
-						currentWorkshop[workshopField] = parseDate(questionAnswer);
-					} else {
-						currentWorkshop[workshopField] = questionAnswer;
-					}
+					currentWorkshop[workshopField] = questionAnswer;
 				}
 			});
 			return {
@@ -138,7 +135,7 @@ export class Gateway2SaveController extends SaveController {
 			}
 			const workshopsCleaned = Object.values(workshops).map((e) => ({
 				createdDate: e.createdDate,
-				workshopDate: e.workshopDate,
+				workshopDate: e.workshopDate ? parseDate(e.workshopDate) : null,
 				workshopTime: e.workshopTime,
 				workshopEndTime: e.workshopEndTime,
 				workshopExpectedDaysKnown: e.workshopExpectedDaysKnown,
