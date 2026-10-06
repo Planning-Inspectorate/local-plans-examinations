@@ -1,0 +1,18 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        {{ govukPanel({
+            titleText: "Submission complete"
+        }) }}
+
+        <p class="govuk-body">
+            <a href="{{ planOverviewUrl }}" class="govuk-link" data-cy="return-to-plan">Return to your plan</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

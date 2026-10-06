@@ -2,7 +2,7 @@
 
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -10,6 +10,7 @@ function buildCase(overrides = {}) {
 	return {
 		reference: 'PLAN-941623',
 		planTitle: 'Real local plan',
+		documents: [],
 		lpas: [
 			{ lpaName: 'Southampton City Council', lpaCode: 'SOTON' },
 			{ lpaName: 'Romsey Town Council', lpaCode: 'ROMSEY' }
@@ -45,7 +46,9 @@ function buildGateway2ReportDocument(dateCreated = new Date('2026-09-02T12:00:00
 	return {
 		guid: 'document-guid-1',
 		name: 'Gateway 2 report',
+		documentSetId: DOCUMENT_SET_ID.G2_REPORT,
 		createdAt: new Date('2026-09-01T12:00:00.000Z'),
+		isDeleted: false,
 		latestDocumentVersion: {
 			originalFilename: 'gateway-2-report.pdf',
 			fileName: 'stored-gateway-2-report.pdf',
@@ -92,6 +95,20 @@ describe('PortalService', () => {
 				{
 					stage: STAGE.Gateway2,
 					status: STATUS.UnderReview
+				}
+			);
+		});
+
+		it('returns Gateway 2 in progress when a submission document has been created', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						documents: [{ documentSetId: DOCUMENT_SET_ID.G2_COVER_LETTER }]
+					})
+				),
+				{
+					stage: STAGE.Gateway2,
+					status: STATUS.InProgress
 				}
 			);
 		});
@@ -214,8 +231,9 @@ describe('PortalService', () => {
 					},
 					documents: {
 						where: {
-							documentSetId: DOCUMENT_SET_ID.G2_REPORT,
-							isDeleted: false
+							documentSetId: {
+								in: gateway2SetIds
+							}
 						},
 						orderBy: {
 							createdAt: 'asc'
@@ -223,7 +241,9 @@ describe('PortalService', () => {
 						select: {
 							guid: true,
 							name: true,
+							documentSetId: true,
 							createdAt: true,
+							isDeleted: true,
 							latestDocumentVersion: {
 								select: {
 									originalFilename: true,

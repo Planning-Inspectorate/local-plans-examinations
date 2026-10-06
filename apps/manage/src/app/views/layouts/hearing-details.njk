@@ -32,7 +32,7 @@
     {% if hearing.hearingExpectedDays %}
       {% set _ = hearingRows.push({
         key: { text: "Estimated number of days" },
-        value: { text: answers.hearingExpectedDays }
+        value: { text: hearing.hearingExpectedDays }
       }) %}
     {% endif %}
 

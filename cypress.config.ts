@@ -4,6 +4,7 @@ import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
+import { existsSync, rmSync, mkdirSync } from 'fs';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -123,18 +124,20 @@ export default defineConfig({
 				},
 				waitForNotifyEmailByReference,
 				waitForNotifyEmailsByReference,
-				seedOtp: async () => {
-					const stdout = await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts');
-					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
-					const result = JSON.parse(jsonLine || '{}');
-					return result.otp || null;
-				},
 				clearDb: async () => {
 					if (environmentSmoke) {
 						return null;
 					}
 
 					await runCommand('node packages/database/src/seed/clear-db.ts');
+					return null;
+				},
+				clearDownloads: () => {
+					const downloadsFolderPath = config.downloadsFolder;
+					if (existsSync(downloadsFolderPath)) {
+						rmSync(downloadsFolderPath, { recursive: true, force: true });
+					}
+					mkdirSync(downloadsFolderPath, { recursive: true });
 					return null;
 				}
 			});

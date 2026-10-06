@@ -37,7 +37,7 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortGateway2Workshops, filterGateway2Workshops } from '#util/util.ts';
+import { sortGateway2Workshops } from '#util/util.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -330,7 +330,7 @@ export const gatway2WorkshopBaseUrls = Object.values(gateway2WorkshopBaseQuestio
 	.map((value) => value.url)
 	.filter((value) => value != undefined);
 
-// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshop documents to be made
+// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshops to be made
 const gateway2WorkshopQuestions: Record<string, ManageQuestionConfig> = {};
 for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) {
 	for (const key in gateway2WorkshopBaseQuestions) {
@@ -1078,7 +1078,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the Gateway 2 assessor appointed?',
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
-		title: 'Assessor date of appointment',
+		title: 'Appointed',
 		validators: [new DateValidator(' Input a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
 	},
@@ -1454,9 +1454,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = filterGateway2Workshops(sortGateway2Workshops(answersFull.workshops), workshopId - 1)[
-				workshopId - 1
-			];
+			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
 
 			const workshopDate = {
 				key: 'workshop date',
@@ -1490,9 +1488,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = filterGateway2Workshops(sortGateway2Workshops(answersFull.workshops), workshopId - 1)[
-				workshopId - 1
-			];
+			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: workshopDetails.workshopExpectedDaysKnown,
@@ -1520,9 +1516,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = filterGateway2Workshops(sortGateway2Workshops(answersFull.workshops), workshopId - 1)[
-				workshopId - 1
-			];
+			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,

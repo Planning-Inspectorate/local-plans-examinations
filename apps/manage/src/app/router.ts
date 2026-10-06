@@ -16,8 +16,6 @@ import { JOURNEY_ID } from './views/create-a-case/journey.ts';
 import { COMMON_CONSTS } from './classes/common-consts.ts';
 
 function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFunction) {
-	console.log('clearSessionDataWhenLeaving called');
-	console.log(req.session?.currentJourney);
 	// clearCreateCaseWhenLeaving
 	if (req.session?.currentJourney === JOURNEY_ID && !req.path.startsWith('/create-a-case')) {
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });

@@ -1,6 +1,8 @@
 import { GatewayBasePage } from '../base/gateway-page.ts';
 import { gateway1DateAnswers, gateway1DsaAnswer, gateway1ExpectedAnswers } from '../../../fixtures/manage/gateway-1.ts';
 
+const filePath = 'cypress/downloads/';
+
 const gateway1Rows = [...Object.values(gateway1DateAnswers).map(({ row }) => row), gateway1DsaAnswer.row];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
@@ -32,6 +34,13 @@ export class Gateway1Page extends GatewayBasePage {
 		actionLinkHrefs.forEach(([key, href]) => {
 			this.verifySummaryRowActionHref(key, href);
 		});
+	}
+
+	verifySummaryRowContainsFileLink(row: string, fileName: string) {
+		super.verifySummaryRowContains(row, fileName);
+		super.verifySummaryRowValueLinkHref(row, /case\/.+\/download-case-document\/.+$/);
+		this.summaryRowValue(row).find('a').click();
+		cy.readFile(`${filePath}${fileName}`).should('exist');
 	}
 }
 

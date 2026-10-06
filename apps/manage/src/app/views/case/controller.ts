@@ -97,47 +97,34 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			return;
 		}
 
-		let updated: boolean;
+		let writeResponse: { dataWritten: boolean; writtenToDB: boolean };
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
 		switch (firstSegmentUrl) {
 			case COMMON_CONSTS.OVERVIEW: {
-				updated = await new OverviewSaveController(service, reference, section, action, currentItemId).prepareAndSave(
+				writeResponse = await new OverviewSaveController(
+					service,
 					req,
-					data.answers,
-					getParam(req.params.question)
-				);
+					reference,
+					section,
+					action,
+					currentItemId
+				).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_1_JOURNEY_ID: {
-				updated = await new Gateway1SaveController(service, reference).prepareAndSave(
-					req,
-					data.answers,
-					req.params.question as string
-				);
+				writeResponse = await new Gateway1SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_2_JOURNEY_ID: {
-				updated = await new Gateway2SaveController(service, reference).prepareAndSave(
-					req,
-					data.answers,
-					req.params.question as string
-				);
+				writeResponse = await new Gateway2SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.GATEWAY_3_JOURNEY_ID: {
-				updated = await new Gateway3SaveController(service, reference).prepareAndSave(
-					req,
-					data.answers,
-					req.params.question as string
-				);
+				writeResponse = await new Gateway3SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
-				updated = await new ExaminationSaveController(service, reference).prepareAndSave(
-					req,
-					data.answers,
-					req.params.question as string
-				);
+				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			default: {
@@ -145,7 +132,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				return res.status(404).render('views/errors/404.njk');
 			}
 		}
-		if (updated) {
+		if (writeResponse.dataWritten && writeResponse.writtenToDB) {
 			const columns = Object.keys(data.answers);
 			const oldValues = Object.fromEntries(columns.map((key) => [key, res.locals.journeyResponse?.answers[key]]));
 
@@ -555,13 +542,10 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			const reportIssuedDate = new Date();
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await new Gateway2SaveController(service, caseReference).prepareAndSave(
-				req,
-				{
-					reportIssuedDate: reportIssuedDate
-				},
-				COMMON_CONSTS.GATEWAY_2_REPORT_ISSUED_DATE_QUESTION
-			);
+			//reqCopy.params.question = COMMON_CONSTS.GATEWAY_2_REPORT_ISSUED_DATE_QUESTION;
+			await new Gateway2SaveController(service, req, caseReference).prepareAndSave({
+				reportIssuedDate: reportIssuedDate
+			});
 			await updateCaseHistory(
 				service,
 				req,
@@ -606,13 +590,10 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 			const workshopDocumentUploadedDate = new Date();
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await new Gateway2SaveController(service, caseReference).prepareAndSave(
-				req,
-				{
-					workshopDocumentUploadedDate: workshopDocumentUploadedDate
-				},
-				'workshop-document-uploaded-date'
-			);
+			//reqCopy.params.question = 'workshop-document-uploaded-date'
+			await new Gateway2SaveController(service, req, caseReference).prepareAndSave({
+				workshopDocumentUploadedDate: workshopDocumentUploadedDate
+			});
 			await updateCaseHistory(
 				service,
 				req,
@@ -657,13 +638,10 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 			const slaSentDate = new Date();
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await new Gateway1SaveController(service, caseReference).prepareAndSave(
-				req,
-				{
-					slaSentDate: slaSentDate
-				},
-				'sla-sent-date'
-			);
+			//reqCopy.params.question = 'sla-sent-date';
+			await new Gateway1SaveController(service, req, caseReference).prepareAndSave({
+				slaSentDate: slaSentDate
+			});
 			await updateCaseHistory(
 				service,
 				req,
@@ -727,13 +705,10 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			}
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			await new Gateway3SaveController(service, caseReference).prepareAndSave(
-				req,
-				{
-					submissions: existingSubmissions
-				},
-				COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION
-			);
+			req.params.question = COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION;
+			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
+				submissions: existingSubmissions
+			});
 			await updateCaseHistory(
 				service,
 				req,

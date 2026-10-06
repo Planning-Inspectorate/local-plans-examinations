@@ -10,12 +10,11 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import {
-	sortGateway2Workshops,
-	filterGateway2Workshops,
-	sortExaminationHearings,
-	filterExaminationHearings
-} from '#util/util.ts';
+import { sortGateway2Workshops, sortExaminationHearings } from '#util/util.ts';
+
+type JourneyWithReference = Journey & {
+	caseReference: string;
+};
 
 export function createOverviewJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	createLpaOptions(response, questions, req);
@@ -58,7 +57,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		req.session.currentJourney = COMMON_CONSTS.OVERVIEW_JOURNEY_ID;
 	}
 
-	return getBacklinks(journey, overviewUrl);
+	return getBackLinksAndSetReference(journey, overviewUrl, req.params.reference);
 }
 
 export function createExaminationHearingJourney(
@@ -69,7 +68,12 @@ export function createExaminationHearingJourney(
 	const examinationHearingUrl = req.baseUrl + '/examination/set-up-hearing';
 	const examinationUrl = req.baseUrl + '/examination';
 	const hearingId = Number(String(req.url).split('-').at(-1));
-
+	console.log({
+		url: req.url,
+		question: req.params.question,
+		hearingId,
+		sessionHearings: req.session.answers?.hearings
+	});
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
 		sections: [
@@ -113,21 +117,25 @@ export function createExaminationHearingJourney(
 		initialBackLink: examinationUrl,
 		response
 	});
-	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-	const hearingAnswers: Record<string, any>[] = filterExaminationHearings(
-		sortExaminationHearings(
-			response.answers.hearings as { createdDate: Date; hearingComplete: boolean; [key: string]: any }[]
-		),
-		hearingId - 1
-	) as object[];
-	const currentHearingAnswers = hearingAnswers[hearingId - 1];
+	let currentHearingAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const hearingAnswers: object[] = sortExaminationHearings(req.session.answers.hearings);
+		currentHearingAnswers = hearingAnswers[hearingId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+		const hearingAnswers: Record<string, any>[] = sortExaminationHearings(
+			response.answers.hearings as { createdDate: Date; [key: string]: any }[]
+		) as object[];
+		currentHearingAnswers = hearingAnswers[hearingId - 1];
+	}
 	if (currentHearingAnswers) {
 		Object.entries(currentHearingAnswers).forEach(([key, value]) => {
 			response.answers[`${key}-${hearingId}`] = value;
 			//response.answers[key] = value
 		});
 		response.answers[`hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`] =
-			hearingAnswers[hearingId - 1].hearingExpectedDays;
+			currentHearingAnswers.hearingExpectedDays;
 	}
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
@@ -181,7 +189,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_3_JOURNEY_ID;
 	}
 
-	return getBacklinks(journey, gateway3Url);
+	return getBackLinksAndSetReference(journey, gateway3Url, req.params.reference);
 }
 
 export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -232,21 +240,25 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 		initialBackLink: gateway2Url,
 		response
 	});
-	// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-	const workshopAnswers: Record<string, any>[] = filterGateway2Workshops(
-		sortGateway2Workshops(
-			response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
-		),
-		workshopId - 1
-	) as object[];
-	const currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	let currentWorkshopAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const workshopAnswers: object[] = sortGateway2Workshops(req.session.answers.workshops);
+		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
+			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+		) as object[];
+		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	}
 	if (currentWorkshopAnswers) {
 		Object.entries(currentWorkshopAnswers).forEach(([key, value]) => {
 			response.answers[`${key}-${workshopId}`] = value;
 			//response.answers[key] = value
 		});
 		response.answers[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`] =
-			workshopAnswers[workshopId - 1].workshopExpectedDays;
+			currentWorkshopAnswers.workshopExpectedDays;
 	}
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID;
@@ -281,15 +293,15 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	if (!response.answers.workshops) {
 		throw Error('workshops property missing from answers for gateway2 journey');
 	}
-	response.answers.workshops = filterGateway2Workshops(
-		sortGateway2Workshops(
-			response.answers.workshops as { createdDate: Date; workshopComplete: boolean; [key: string]: any }[]
-		)
+	const sortedWorkshops = sortGateway2Workshops(
+		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
 	);
+
+	response.answers.workshops = sortedWorkshops;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_JOURNEY_ID;
 	}
-	return getBacklinks(journey, gateway2Url);
+	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
 }
 
 export function createGateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -318,7 +330,7 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_1_JOURNEY_ID;
 	}
-	return getBacklinks(journey, gateway1Url);
+	return getBackLinksAndSetReference(journey, gateway1Url, req.params.reference);
 }
 
 export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -370,15 +382,16 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
-
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
 	}
-	return getBacklinks(journey, examinationUrl);
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
 }
 
-function getBacklinks(journey: Journey, overviewUrl: string): Journey {
+function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, caseReference: string | string[]): Journey {
 	const getBackLink = journey.getBackLink.bind(journey);
+	const caseJourney = journey as JourneyWithReference;
+	caseJourney.caseReference = Array.isArray(caseReference) ? caseReference[0] : caseReference;
 
 	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
 		const { params, manageListQuestion } = options;
@@ -430,8 +443,8 @@ const gateway2QuestionNames = new Set<string>([
 	'gateway2AssessorsName',
 	'assessorDateOfAppointment',
 	'gateway2Report',
-	'workshopDate',
-	'workshopVenue'
+	'gateway2WorkshopDocuments',
+	'workshops'
 ]);
 
 const gateway3QuestionNames = new Set<string>([

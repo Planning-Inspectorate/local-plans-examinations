@@ -16,7 +16,8 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 				{ folderName: 'local-plan-timetable', title: 'Local plan timetable' },
 				{ folderName: 'project-initiation-document', title: 'Project initiation document' },
 				{ folderName: 'draft-stat-compliance', title: 'Draft statement of compliance' },
-				{ folderName: 'draft-stat-soundness', title: 'Draft statement of soundness' }
+				{ folderName: 'draft-stat-soundness', title: 'Draft statement of soundness' },
+				{ folderName: 'gateway-2-workshop-documents', title: 'Workshop document' }
 			],
 			consultation: [
 				{ folderName: 'notice-of-intent', title: 'Notice of intention to commence local plan preparation' },
@@ -72,8 +73,6 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 				workshops: true
 			}
 		});
-		console.log('journey2Data');
-		console.log(journey2Data);
 		await addUploadedDocumentDetailsToAnswers(
 			service,
 			caseRecord,

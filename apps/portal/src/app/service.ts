@@ -5,7 +5,7 @@ import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type PortalCase = {
 	reference: string;
@@ -34,7 +34,9 @@ type PortalCase = {
 	documents: {
 		guid: string;
 		name: string;
+		documentSetId: string;
 		createdAt: Date;
+		isDeleted: boolean;
 		latestDocumentVersion: {
 			originalFilename: string | null;
 			fileName: string | null;
@@ -44,9 +46,17 @@ type PortalCase = {
 	}[];
 };
 
+function isGateway2ReportDocument(document: PortalCase['documents'][number]): boolean {
+	return document.documentSetId === DOCUMENT_SET_ID.G2_REPORT;
+}
+
 function getGateway2ReportUploadedDate(caseRecord: PortalCase): Date | null {
 	const uploadedReport = caseRecord.documents.find(
-		(document) => document.latestDocumentVersion && !document.latestDocumentVersion.isDeleted
+		(document) =>
+			isGateway2ReportDocument(document) &&
+			!document.isDeleted &&
+			document.latestDocumentVersion &&
+			!document.latestDocumentVersion.isDeleted
 	);
 	return uploadedReport?.latestDocumentVersion?.dateCreated ?? uploadedReport?.createdAt ?? null;
 }
@@ -62,7 +72,7 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 
 	return caseRecord.documents.flatMap((document) => {
 		const version = document.latestDocumentVersion;
-		if (!version || version.isDeleted) {
+		if (!isGateway2ReportDocument(document) || document.isDeleted || !version || version.isDeleted) {
 			return [];
 		}
 
@@ -95,6 +105,13 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		return {
 			stage: STAGE.Gateway2,
 			status: STATUS.UnderReview
+		};
+	}
+
+	if (caseRecord.documents.some((document) => !isGateway2ReportDocument(document))) {
+		return {
+			stage: STAGE.Gateway2,
+			status: STATUS.InProgress
 		};
 	}
 
@@ -173,8 +190,8 @@ const planCaseInclude = {
 	},
 	documents: {
 		where: {
-			documentSetId: DOCUMENT_SET_ID.G2_REPORT,
-			isDeleted: false
+			// A soft-deleted document still means the submission was started.
+			documentSetId: { in: gateway2SetIds }
 		},
 		orderBy: {
 			createdAt: 'asc' as const
@@ -182,7 +199,9 @@ const planCaseInclude = {
 		select: {
 			guid: true,
 			name: true,
+			documentSetId: true,
 			createdAt: true,
+			isDeleted: true,
 			latestDocumentVersion: {
 				select: {
 					originalFilename: true,

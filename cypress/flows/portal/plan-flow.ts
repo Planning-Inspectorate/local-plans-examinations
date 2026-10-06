@@ -2,6 +2,7 @@ import type { PlanDetailsFixture } from '../../fixtures/portal/types.ts';
 import { myPlansPage } from '../../page-objects/portal/my-plans-page.ts';
 import { planDetailsPage } from '../../page-objects/portal/plan-details/plan-details-page.ts';
 import { gateway2ApplicationPage } from '../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
+import { gateway3ApplicationPage } from '../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { isEnvironmentSmoke } from '../auth-flow.ts';
 
 const smokeCaseReferenceKey = 'portalSmokeCaseReference';
@@ -35,4 +36,12 @@ export const openGateway2ApplicationPage = (plan: Pick<PlanDetailsFixture, 'refe
 	planDetailsPage.verifyLoaded();
 	planDetailsPage.gateway2Link.click();
 	gateway2ApplicationPage.verifyLoaded();
+};
+
+export const openGateway3ApplicationPage = (plan: Pick<PlanDetailsFixture, 'reference'>) => {
+	myPlansPage.verifyLoaded();
+	myPlansPage.openPlan(plan.reference);
+	planDetailsPage.verifyLoaded();
+	planDetailsPage.gateway3Link.click();
+	gateway3ApplicationPage.verifyLoaded();
 };

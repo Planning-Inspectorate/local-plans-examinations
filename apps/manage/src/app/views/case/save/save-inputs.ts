@@ -57,7 +57,6 @@ export interface Gateway2Input extends SaveInput {
 	workshops?: {
 		id: string;
 		createdDate: Date;
-		workshopComplete: boolean;
 		workshopDate: Date | null;
 		workshopTime: string | null;
 		workshopEndTime: string | null;
@@ -103,7 +102,6 @@ export interface ExaminationInput extends SaveInput {
 	soundUnsoundDate?: Date;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
-	hearingDate?: Date;
 	hearingExpectedDays?: string;
 	hearingExpectedDaysKnown_hearingExpectedDays?: string;
 	hearings?: {

@@ -1,6 +1,5 @@
 import {
 	gateway2Page,
-	workshopVenuePage,
 	gateway2AssessorPage,
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
@@ -14,7 +13,6 @@ import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
 	gateway2Report,
-	workshopVenueAnswer,
 	updatedGateway2ExpectedDateAnswer
 } from '../../../../fixtures/manage/gateway-2.ts';
 
@@ -50,22 +48,11 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
 	});
 
-	it('updates the workshop venue answer', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
-
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
-		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
-		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
-	});
-
 	it('uploads the Gateway 2 report', { tags: ['regression', 'environment-smoke'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2Report.row);
 		gateway2ReportPage.verifyLoaded();
 
-		gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName, gateway2Report.fieldName);
+		gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName);
 		gateway2ReportPage.saveAndReturn();
 
 		gateway2ReportCheckPage.verifyLoaded(gateway2Report.fileName);
@@ -79,12 +66,6 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2ActualDate.row);
 		gateway2ActualDatePage.verifyLoaded(gateway2DateAnswers.gateway2ActualDate.input);
 		gateway2ActualDatePage.goBack();
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-
-		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
-		workshopVenuePage.goBack();
 
 		gateway2Page.verifyLoaded(seededCase.planTitle);
 	});

@@ -113,6 +113,7 @@
               {% if section.heading == 'Hearings'%} 
                 {{ hearingDetails(journeyResponse.answers, reference) }}
                 <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link">Set up hearing</a>
+                <p></p>
               {% endif %}
               {% endfor %}
           </div>

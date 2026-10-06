@@ -57,13 +57,9 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 				throw Error('Last submission was undefined');
 			}
 			currentSubmission.decision = body[`decision-${submissionNumber}` as keyof typeof body] ?? null;
-			await new Gateway3SaveController(service, caseReference).prepareAndSave(
-				req,
-				{
-					submissions: updatedSubmissions
-				},
-				String(req.params.question)
-			);
+			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
+				submissions: updatedSubmissions
+			});
 			res.redirect(303, `gateway-3-document-${submissionNumber}`);
 			return;
 		}

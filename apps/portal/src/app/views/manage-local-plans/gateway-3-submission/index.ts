@@ -7,6 +7,7 @@ import {
 	setAsEditingFromCya,
 	setGateway3ViewData
 } from './controller.ts';
+import { asyncHandler } from '@planning-inspectorate/core/util';
 
 export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -23,7 +24,12 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		validationErrorHandler,
 		question,
 		lusca,
-		redirectAfterCaseQuestionEdit
+		redirectAfterCaseQuestionEdit,
+		validateGateway3Submission,
+		guardDeclarationPage,
+		getDeclarationPage,
+		postDeclarationPage,
+		getSubmissionCompletePage
 	} = buildGateway3Middleware(service);
 
 	// Landing page (case-scoped)
@@ -35,6 +41,35 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		setGateway3ViewData,
 		buildGateway3CheckAnswersList()
 	);
+
+	// Submit Gateway 3 (case-scoped)
+	router.post(
+		'/:planReference/gateway-3-submission',
+		getJourneyResponseFromCase,
+		getJourney,
+		validateGateway3Submission,
+		(req, res) => {
+			const planReference = encodeURIComponent(req.params.planReference as string);
+			res.redirect(`/manage-local-plans/${planReference}/gateway-3-submission/declaration`);
+		}
+	);
+
+	// Declaration page (case-scoped) — guarded: requires all required answers
+	router.get(
+		'/:planReference/gateway-3-submission/declaration',
+		getJourneyResponseFromCase,
+		guardDeclarationPage,
+		asyncHandler(getDeclarationPage)
+	);
+	router.post(
+		'/:planReference/gateway-3-submission/declaration',
+		getJourneyResponseFromCase,
+		guardDeclarationPage,
+		postDeclarationPage
+	);
+
+	// Submission complete page (case-scoped)
+	router.get('/:planReference/gateway-3-submission/submission-complete', getSubmissionCompletePage);
 
 	// Upload documents (case-scoped)
 	router.post(

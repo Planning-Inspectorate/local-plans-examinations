@@ -13,6 +13,7 @@ export const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
 export const THIRD_TEST_EMAIL = 'test3@planninginspectorate.gov.uk';
 export const FOURTH_TEST_EMAIL = 'test4@planninginspectorate.gov.uk';
 export const FIXTURE_TEST_EMAIL = 'jane@lpa.gov.uk';
+const LOCAL_TEST_OTP = '12345';
 
 const getCsrfToken = (html: string) => {
 	const token = new DOMParser()
@@ -51,10 +52,8 @@ export const completePortalLogin = () => {
 		return;
 	}
 
-	cy.task('seedOtp').then((otp) => {
-		portalLoginOtpPage.enterOtp(String(otp));
-		portalLoginOtpPage.saveAndContinue();
-	});
+	portalLoginOtpPage.enterOtp(LOCAL_TEST_OTP);
+	portalLoginOtpPage.saveAndContinue();
 };
 
 export const portalLogin = (email?: string) => {
@@ -156,10 +155,8 @@ export const manageToPortalLogin = (email: string) => {
 		cy.get('[data-cy="button-save-and-continue"]').click();
 	});
 
-	cy.task('seedOtp').then((otp) => {
-		cy.origin(Cypress.env('portalBaseUrl'), { args: { otp: String(otp) } }, ({ otp }) => {
-			cy.get('[data-cy="otp"]').clear().type(otp);
-			cy.get('[data-cy="button-save-and-continue"]').click();
-		});
+	cy.origin(Cypress.env('portalBaseUrl'), { args: { otp: LOCAL_TEST_OTP } }, ({ otp }) => {
+		cy.get('[data-cy="otp"]').clear().type(otp);
+		cy.get('[data-cy="button-save-and-continue"]').click();
 	});
 };

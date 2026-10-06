@@ -134,11 +134,6 @@ function registerGateway2WorkshopJourney(
 
 		const journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
 
-		if (gateway2Data?.workshopExpectedDays && gateway2Data.workshopExpectedDays != 'no') {
-			journeyResponse.answers.workshopExpectedDaysKnown = 'yes';
-			//journeyResponse.answers.workshopExpectedDaysKnown_workshopExpectedDays = gateway2Data.workshopExpectedDays;
-		}
-
 		res.locals.journeyResponse = journeyResponse;
 
 		next();
@@ -149,8 +144,9 @@ function registerGateway2WorkshopJourney(
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
-		const workshopId = String(req.url).split('-')[-1];
-		await new Gateway2SaveController(service, reference).prepareAndSave(req, {}, `check-your-answers-${workshopId}`);
+		//const workshopId = String(req.url).split('-')[-1];
+		//reqCopy.params.question = `check-your-answers-${workshopId}`;
+		await new Gateway2SaveController(service, req, reference).prepareAndSave({});
 		await updateCaseField(service);
 
 		await service.db.case.update({
@@ -265,13 +261,12 @@ function registerExaminationHearingJourney(
 		next();
 	});
 
-	const completeWorkshop = asyncHandler(async (req: Request, res: Response) => {
+	const completeHearing = asyncHandler(async (req: Request, res: Response) => {
 		const reference = getParam(req.params.reference);
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
-		const hearingId = String(req.url).split('-')[-1];
-		await new ExaminationSaveController(service, reference).prepareAndSave(req, {}, `check-your-answers-${hearingId}`);
+		await new ExaminationSaveController(service, req, reference).prepareAndSave({});
 		await updateCaseField(service);
 
 		await service.db.case.update({
@@ -310,7 +305,7 @@ function registerExaminationHearingJourney(
 		getHearingJourneyResponse,
 		getJourney,
 		saveLastQuestionUrl,
-		completeWorkshop
+		completeHearing
 	);
 
 	router.get(
@@ -546,11 +541,8 @@ function registerCaseJourney(
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
 							const saveController = CASE_JOURNEY_MAP[journeyId];
 							if (saveController) {
-								await new saveController(service, getParam(req.params.reference)).prepareAndSave(
-									req,
-									{},
-									questionConfig.url
-								);
+								//reqCopy.params.question = questionConfig.url;
+								await new saveController(service, req, getParam(req.params.reference)).prepareAndSave({});
 							}
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),

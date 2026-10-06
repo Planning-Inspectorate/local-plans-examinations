@@ -84,4 +84,68 @@ describe('Gateway 3 application page content', () => {
 			'Statement setting out practical arrangements demonstrating readiness for examination'
 		]);
 	});
+
+	it('Shows Optional Documents', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifySubHeading('Optional Documents');
+		gateway3ApplicationPage.verifyMainContains('Add the documents that are relevant to your plan.');
+		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.optionalDocumentsTable, [
+			{ document: 'Copies of representations', status: 'Not added', addCy: 'add-copies-of-representations' },
+			{
+				document: 'Supplementary plans statement',
+				status: 'Not added',
+				addCy: 'add-supplementary-plans-statement'
+			},
+			{
+				document: 'Environmental report',
+				status: 'Not added',
+				addCy: 'add-environmental-report'
+			},
+			{
+				document:
+					'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+				status: 'Not added',
+				addCy: 'add-statement-of-reasons-determination'
+			},
+			{
+				document:
+					'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+				status: 'Not added',
+				addCy: 'add-representations-progress-summary'
+			},
+			{
+				document: 'Summary of how Gateway 2 assessor issues have been addressed',
+				status: 'Not added',
+				addCy: 'add-summary-of-how-gateway-2-assessor-issues-have-been-addressed'
+			},
+			{
+				document:
+					'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+				status: 'Not added',
+				addCy: 'add-changes-since-consultation-statement'
+			},
+			{
+				document: 'Other documents',
+				status: 'Not added',
+				addCy: 'add-other-documents'
+			}
+		]);
+		gateway3ApplicationPage.verifyTableRowsInOrder(gateway3ApplicationPage.optionalDocumentsTable, [
+			'Copies of representations',
+			'Supplementary plans statement',
+			'Environmental report',
+			'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+			'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+			'Summary of how Gateway 2 assessor issues have been addressed',
+			'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+			'Other documents'
+		]);
+	});
+
+	it('Shows ready to submit for Gateway 3 section', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifySubHeading('Ready to submit for Gateway 3');
+		gateway3ApplicationPage.verifyMainContains(
+			`Once submitted, Gateway 3 will be locked and you cannot make further changes. By submitting, you're confirming that the information you're sharing is correct to the best of your knowledge.`
+		);
+		gateway3ApplicationPage.verifySubmitGateway3Button();
+	});
 });
