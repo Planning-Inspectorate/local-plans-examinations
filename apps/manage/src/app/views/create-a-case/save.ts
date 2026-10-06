@@ -85,7 +85,8 @@ export function buildSaveController(service: ManageService): RequestHandler {
 					.split('-')
 					.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 					.join(' '),
-				['contact_info']: service.localPlansTeamEmail
+				['contact_info']: service.localPlansTeamEmail,
+				['team_email_address']: service.localPlansTeamEmail
 			};
 
 			await Promise.allSettled(
