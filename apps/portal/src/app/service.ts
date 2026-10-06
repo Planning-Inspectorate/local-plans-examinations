@@ -101,6 +101,16 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		};
 	}
 
+	// A resubmission was submitted (completionDate set, no decision yet) after a
+	// previous RESUBMISSION_REQUIRED decision — the assessor has not yet reviewed it.
+	const hadResubmissionRequired = submissions.some((s) => s.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED);
+	if (hadResubmissionRequired && lastCompletedSubmission?.completionDate && !lastCompletedSubmission?.decision) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.UnderReview
+		};
+	}
+
 	if (lastCompletedSubmission?.completionDate || caseRecord.gateway3Info?.actualDate) {
 		return {
 			stage: STAGE.Examination,

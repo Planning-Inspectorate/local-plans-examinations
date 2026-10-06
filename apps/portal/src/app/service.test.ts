@@ -188,6 +188,38 @@ describe('PortalService', () => {
 			);
 		});
 
+		it('returns Gateway 3 under review when resubmission has been submitted but not yet assessed', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: new Date('2026-07-21T12:00:00.000Z'),
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							actualDate: null,
+							submissions: [
+								{
+									completionDate: new Date('2026-10-01T12:00:00.000Z'),
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+								},
+								{
+									completionDate: new Date('2026-10-05T12:00:00.000Z'),
+									decision: null
+								}
+							]
+						},
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
 		it('returns Gateway 3 resubmission required when latest submission has resubmission decision', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(

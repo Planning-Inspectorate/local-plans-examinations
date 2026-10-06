@@ -591,10 +591,12 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 						where: { id: pendingSubmission.id },
 						data: { completionDate: new Date() }
 					});
+					service.logger.info({ submissionId: pendingSubmission.id }, 'Gateway 3 submission completionDate set');
 				}
-			} catch {
+			} catch (error) {
 				// Log but don't block the redirect — the submission confirmation
 				// page should still be shown even if the DB update fails.
+				service.logger.error({ error }, 'Failed to update Gateway3Submission completionDate');
 			}
 		}
 
