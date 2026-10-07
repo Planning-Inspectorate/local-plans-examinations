@@ -16,7 +16,7 @@ import { getPageLoadHandlerForPage } from './overview-data-handlers/overview-pag
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
-import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
@@ -228,6 +228,10 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 				workshops: true
 			}
 		});
+		const journey3Data = await db.gateway3Info.findUnique({
+			where: { caseId: caseRecord.id },
+			include: { submissions: true }
+		});
 
 		const gateway2Documents = await db.document.findMany({
 			where: {
@@ -236,7 +240,20 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 		});
 
-		const headerStatus = resolveCaseHeaderStatus(gateway2Documents, journey1Data, journey2Data);
+		const gateway3Documents = await db.document.findMany({
+			where: {
+				caseId: caseRecord.id,
+				documentSetId: { in: gateway3SetIds }
+			}
+		});
+
+		const headerStatus = resolveCaseHeaderStatus(
+			gateway2Documents,
+			gateway3Documents,
+			journey1Data,
+			journey2Data,
+			journey3Data?.submissions ?? []
+		);
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;
 

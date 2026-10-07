@@ -40,6 +40,7 @@ describe('Assigned to me', () => {
 
 			assignedToMePage.verifyLoaded();
 			assignedToMePage.verifyCaseVisible(assignedCase.reference);
+			assignedToMePage.verifyCaseStatus(assignedCase.reference, 'Awaiting SLA');
 			assignedToMePage.verifyCaseNotVisible(unassignedCase.reference);
 			assignedToMePage.openCase(assignedCase.reference);
 

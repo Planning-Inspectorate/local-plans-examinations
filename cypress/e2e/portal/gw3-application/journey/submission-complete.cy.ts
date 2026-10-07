@@ -1,0 +1,26 @@
+import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
+import { portalLogin } from '../../../../flows/portal/login-flow.ts';
+import { gateway3SubmissionCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
+import { gateway3DeclarationPage } from '../../../../page-objects/portal/gw3-application/declaration-page.ts';
+import { openSeededGateway3DeclarationPage } from '../../../../flows/portal/gateway-3-submission-flow.ts';
+
+const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+
+describe('Gateway 3 application complete page journeys', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+		portalLogin();
+		loadPlanDetails().then((plan) => {
+			openSeededGateway3DeclarationPage(plan);
+		});
+	});
+
+	it('Navigates to the plan details page', { tags: ['smoke'] }, () => {
+		loadPlanDetails().then((plan) => {
+			gateway3DeclarationPage.confirmSubmissionButton.click();
+
+			gateway3SubmissionCompletePage.verifyLoaded();
+			gateway3SubmissionCompletePage.checkSubmissionStatusLink(plan.urlReference).click();
+		});
+	});
+});

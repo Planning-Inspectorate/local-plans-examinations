@@ -575,8 +575,8 @@ export function buildGetSubmissionCompletePage(): RequestHandler {
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
 
 		return res.render(SUBMISSION_COMPLETE_VIEW_PATH, {
-			pageTitle: 'Submission complete',
-			pageHeading: 'Submission complete',
+			pageTitle: 'Gateway 3 submission complete',
+			pageHeading: 'Gateway 3 submission complete',
 			planOverviewUrl: encodedPlanReference ? `/manage-local-plans/${encodedPlanReference}` : '/manage-local-plans'
 		});
 	};

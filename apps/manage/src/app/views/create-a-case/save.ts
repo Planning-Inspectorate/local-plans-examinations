@@ -64,7 +64,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		service.logger.info(answers, 'case created');
 		const lpaOptions = await loadLpaOptions(service);
 		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
-		const relevantLpaNames = uniqueLpaCodes.map((elem) => lpaOptionsMap.get(elem)).filter((elem) => elem != undefined);
+		const relevantLpaNames = uniqueLpaCodes.map((code) => lpaOptionsMap.get(code) ?? getOptionText('lpa', code));
 
 		// Send email to LPA using Gov Notify
 		if (!service.notifyClient) {
@@ -77,15 +77,17 @@ export function buildSaveController(service: ManageService): RequestHandler {
 			const portalLoginURL = `${portalUrl}/login`;
 			const caseReference = answers.reference;
 			const notifyReference = `create-case:${caseReference}`;
-			// Need to construct the details this way to avoid eslint errors
-			const personalisationDetails: Record<string, string> = { portalLoginURL: portalLoginURL };
-			personalisationDetails['plan_ref'] = caseReference;
-			personalisationDetails['lpa_name'] = String(relevantLpaNames);
-			personalisationDetails['plan_type'] = answers.planType
-				.split('-')
-				.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' ');
-			personalisationDetails['team_email_address'] = service.localPlansTeamEmail;
+			const personalisationDetails = {
+				portalLoginURL,
+				['plan_ref']: caseReference,
+				['authority_name']: relevantLpaNames.join(', '),
+				['plan_type']: answers.planType
+					.split('-')
+					.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+					.join(' '),
+				['contact_info']: service.localPlansTeamEmail,
+				['team_email_address']: service.localPlansTeamEmail
+			};
 
 			await Promise.allSettled(
 				allEmails.map(async (email) => {

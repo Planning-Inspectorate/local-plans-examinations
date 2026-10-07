@@ -1,4 +1,4 @@
-import { skipUnlessEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
+import { getRequiredCypressEnv, skipUnlessEnvironmentSmoke } from '../../../../flows/auth-flow.ts';
 import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import { cleanupPreparedPlanDetails } from '../../../../flows/portal/plan-flow.ts';
@@ -12,8 +12,12 @@ describe('Portal Notify smoke', () => {
 
 	afterEach(cleanupPreparedPlanDetails);
 
-	it('logs in and submits a Gateway 2 application', { tags: ['environment-smoke'] }, () => {
-		startPortalOtpLogin();
+	it('sends login and Gateway 2 submission emails through Notify', { tags: ['environment-smoke'] }, () => {
+		const email = createUniqueSmokeEmail();
+		cy.task<{ reference: string }>('seedPortalSmokeCase', { email }).then(({ reference }) => {
+			Cypress.env('portalSmokeCaseReference', reference);
+		});
+		startPortalOtpLogin(email, { seedCase: false });
 		completePortalLogin();
 		myPlansPage.verifyLoaded();
 
@@ -22,21 +26,24 @@ describe('Portal Notify smoke', () => {
 
 			submitGateway2Application({ reference }, [{ page: gateway2CoverLetterPage, fileNames: ['test-document.pdf'] }]);
 
-			/* Notify API verification is temporarily disabled while the Test service has an unreliable daily send quota.
 			const expectedReferences = [`portal-login:${reference}`, `gateway-2-submission:${reference}`];
 			cy.task<Array<{ id?: string; reference?: string }>>(
 				'waitForNotifyEmailsByReference',
 				{
 					notifications: expectedReferences.map((notifyReference) => ({ reference: notifyReference }))
 				},
-				{ timeout: 750000 }
+				{ timeout: 70000 }
 			).then((notifications) => {
 				expect(notifications.map(({ reference: notifyReference }) => notifyReference)).to.deep.equal(
 					expectedReferences
 				);
 				notifications.forEach(({ id }) => expect(id).to.match(/\S+/));
 			});
-			*/
 		});
 	});
 });
+
+const createUniqueSmokeEmail = () => {
+	const [localPart, domain] = getRequiredCypressEnv('authUsername').split('@');
+	return `${localPart}+portal-notify-${Date.now()}@${domain}`;
+};

@@ -2,7 +2,7 @@ import type { Response, Request } from 'express';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
-import { gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
@@ -12,7 +12,7 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 
 			const casesWithStatus = await Promise.all(
 				cases.map(async (caseRecord) => {
-					const [gateway1Info, gateway2Info] = await Promise.all([
+					const [gateway1Info, gateway2Info, gateway3Info] = await Promise.all([
 						db.gateway1Info.findUnique({
 							where: { caseId: caseRecord.id }
 						}),
@@ -21,6 +21,10 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 							include: {
 								workshops: true
 							}
+						}),
+						db.gateway3Info.findUnique({
+							where: { caseId: caseRecord.id },
+							include: { submissions: true }
 						})
 					]);
 
@@ -30,8 +34,19 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 							documentSetId: { in: gateway2SetIds }
 						}
 					});
-
-					const status = resolveCaseHeaderStatus(gateway2Documents, gateway1Info, gateway2Info);
+					const gateway3Documents = await db.document.findMany({
+						where: {
+							caseId: caseRecord.id,
+							documentSetId: { in: gateway3SetIds }
+						}
+					});
+					const status = resolveCaseHeaderStatus(
+						gateway2Documents,
+						gateway3Documents,
+						gateway1Info,
+						gateway2Info,
+						gateway3Info?.submissions ?? []
+					);
 
 					return {
 						...caseRecord,

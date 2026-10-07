@@ -12,7 +12,7 @@ import {
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
 
-describe.skip('Manage Notify smoke', () => {
+describe('Manage Notify smoke', () => {
 	let createdCaseReference: string | undefined;
 
 	before(function () {
@@ -53,7 +53,7 @@ describe.skip('Manage Notify smoke', () => {
 				createdCaseReference = caseReference;
 				const notifyReference = `create-case:${caseReference}`;
 
-				cy.task('waitForNotifyEmailByReference', { reference: notifyReference }, { timeout: 750000 }).then(
+				cy.task('waitForNotifyEmailByReference', { reference: notifyReference }, { timeout: 70000 }).then(
 					(notification) => {
 						expect(notification).to.include({ reference: notifyReference });
 						const notificationId = (notification as { id?: string }).id;

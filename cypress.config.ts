@@ -4,6 +4,7 @@ import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
+import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 
 // prettier-ignore
@@ -90,6 +91,7 @@ export default defineConfig({
 					return null;
 				},
 				seedDb: seedCy,
+				seedGateway3DeclarationDocuments,
 				seedStaticData: async () => {
 					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;
@@ -107,8 +109,11 @@ export default defineConfig({
 					}
 					return JSON.parse(jsonLine);
 				},
-				seedPortalSmokeCase: async () => {
-					const stdout = await runCommand('node packages/database/src/seed/seed-portal-smoke.ts');
+				seedPortalSmokeCase: async (options?: { email?: string }) => {
+					const stdout = await runCommand(
+						'node packages/database/src/seed/seed-portal-smoke.ts',
+						options?.email ? { CYPRESS_PORTAL_SMOKE_EMAIL: options.email } : {}
+					);
 					const jsonLine = stdout.split('\n').find((line) => line.trim().startsWith('{'));
 					if (!jsonLine) {
 						throw new Error('Portal smoke seed script did not return a result');
