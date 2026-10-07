@@ -3,6 +3,7 @@ import escape from 'escape-html';
 import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
+import { toZonedTime } from 'date-fns-tz';
 
 interface BaseField {
 	fieldName: string;
@@ -153,9 +154,10 @@ export default class CustomMultiFieldInputQuestion extends Question {
 						year = '';
 
 					if (dateValue instanceof Date) {
-						day = String(dateValue.getDate());
-						month = String(dateValue.getMonth() + 1);
-						year = String(dateValue.getFullYear());
+						const zonedDate = toZonedTime(dateValue, 'Europe/London');
+						day = String(zonedDate.getDate());
+						month = String(zonedDate.getMonth() + 1);
+						year = String(zonedDate.getFullYear());
 					} else if (typeof dateValue === 'string') {
 						const parts = dateValue.split('/');
 						day = parts[0];

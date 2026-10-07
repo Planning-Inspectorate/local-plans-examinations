@@ -1812,6 +1812,36 @@ describe('issueGateway2WorkshopDocuments', () => {
 
 		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
 		assert.equal(req.session.alertMessageStatus, 'success');
+		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
+		assert.ok(
+			service.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshopDocumentUploadedDate instanceof Date
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.match(
+			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
+			/^Gateway 2 workshop documents uploaded on /
+		);
 		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/gateway-2`]);
+	});
+
+	it('does not issue workshop documents again', async () => {
+		const service = createService();
+		service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			workshopDocumentUploadedDate: new Date('2026-01-01T00:00:00.000Z')
+		}));
+		const handler = issueGateway2WorkshopDocuments(service, 'gateway-2');
+		const req = {
+			session: {},
+			params: { reference: REFERENCE }
+		};
+		const res = {
+			redirect: mock.fn()
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+
+		assert.equal(req.session.alertMessageStatus, 'important');
+		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});
 });
