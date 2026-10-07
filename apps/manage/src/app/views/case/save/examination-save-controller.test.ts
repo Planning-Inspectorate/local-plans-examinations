@@ -11,7 +11,7 @@ function createMockService(current: { planPauseStartDate: Date | null } | null =
 				findUnique: mock.fn(async () => ({
 					id: 'someCaseId',
 					gateway2Info: {
-						workshops: []
+						workshops: [{}]
 					},
 					gateway3Info: {
 						submissions: [

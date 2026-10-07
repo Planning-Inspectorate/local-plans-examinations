@@ -210,7 +210,7 @@ export function createExaminationHearingJourney(
 		],
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
-		taskListTemplate: 'views/layouts/workshop-check-your-answers.njk',
+		taskListTemplate: 'views/layouts/hearing-check-your-answers.njk',
 		journeyTitle: 'Set up workshop',
 		returnToListing: false,
 		makeBaseUrl: () => examinationHearingUrl,

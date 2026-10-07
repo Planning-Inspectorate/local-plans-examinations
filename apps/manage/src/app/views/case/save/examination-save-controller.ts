@@ -238,6 +238,9 @@ export class ExaminationSaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
+			if (this.req.session) {
+				delete this.req.session.answers;
+			}
 			return true;
 		}
 		return false;
