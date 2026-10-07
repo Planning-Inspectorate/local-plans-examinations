@@ -57,6 +57,7 @@
       </dl>
     {% endfor %}
   {% endif %}
+  {% if not hideNotificationPreview %}
   <details class="govuk-details" data-cy="preview-email-to-lpa">
   <summary class="govuk-details__summary">
     <span class="govuk-details__summary-text">
@@ -67,6 +68,7 @@
     {% include "views/layouts/notification-preview/" + notificationPreviewTemplate + ".njk" %}
   </div>
 </details>
+  {% endif %}
 
     <p class="govuk-body">{{ notificationTextLPA }}</p>
 

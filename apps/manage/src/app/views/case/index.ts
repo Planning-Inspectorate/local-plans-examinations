@@ -19,7 +19,8 @@ import {
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError,
 	preprocessQuestionProperties,
-	issueGateway2WorkshopDocuments
+	issueGateway2WorkshopDocuments,
+	issueMiqs
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -400,7 +401,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
-		supportsFileUpload: false,
+		supportsFileUpload: true,
 		saveController: ExaminationSaveController
 	},
 	{
@@ -513,6 +514,7 @@ function registerCaseJourney(
 
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
+	router.post(`/${path}/hearings/:question/check`, issueMiqs(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service, journeyId));

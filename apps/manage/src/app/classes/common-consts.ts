@@ -30,5 +30,6 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_ASSESSOR_NAME_QUESTION: 'gateway-3-assessor-name',
 	GATEWAY_3_DECISION_QUESTION: 'gateway-3-decision',
 	GATEWAY_3_DOCUMENT_QUESTION: 'gateway-3-document',
-	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date'
+	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date',
+	MIQS_QUESTION: 'miqs'
 };

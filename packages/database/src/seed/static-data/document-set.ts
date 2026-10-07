@@ -292,5 +292,14 @@ export const DOCUMENT_SET = [
 		displayName: 'Other documents',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G3_OTHER_DOCUMENTS,
 		displayOrder: 217
+	},
+	// Others
+	{
+		id: DOCUMENT_SET_ID.EXAMINATION_MIQS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'MIQs',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_MIQS,
+		displayOrder: 1
 	}
 ];

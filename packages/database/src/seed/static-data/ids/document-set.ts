@@ -50,7 +50,10 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_G1_SELF_ASSESSMENT: 'g2-g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'g2-cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'g2-sum-of-cons',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work'
+	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
+
+	// Others
+	EXAMINATION_MIQS: 'ex-miqs'
 };
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
@@ -92,7 +95,10 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_G1_SELF_ASSESSMENT: 'g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan'
+	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
+
+	// Others
+	EXAMINATION_MIQS: 'miqs'
 };
 export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_COVER_LETTER,
