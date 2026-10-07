@@ -33,7 +33,8 @@ export class SignedSLASubmissionCheck extends SubmissionCheckWithDate {
 			backLink: this.generateBackUrl(originalUrl),
 			notificationPreviewTemplate: questionUrl + (complete ? '-complete' : ''),
 			submitButtonText: 'Confirm and issue notification',
-			additionalFields: this.generateAdditionalDateField(existingGatewayDetails?.slaReceivedDate, 'sla-received-date')
+			additionalFields: this.generateAdditionalDateField(existingGatewayDetails?.slaReceivedDate, 'sla-received-date'),
+			notificationTextLPA: undefined
 		};
 	}
 }

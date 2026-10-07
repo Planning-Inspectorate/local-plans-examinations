@@ -1,20 +1,21 @@
 import {
 	gateway2Page,
-	workshopVenuePage,
 	gateway2AssessorPage,
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
 	gateway2ReportCheckPage,
-	gateway2ReportPage
+	gateway2ReportPage,
+	gateway2WorkshopDocumentsCheckPage,
+	gateway2WorkshopDocumentsPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
-import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
-import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
+import { openGateway2Page, openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
+import { cleanupSeededManageCase, type SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
 	gateway2Report,
-	workshopVenueAnswer,
+	gateway2WorkshopDocuments,
 	updatedGateway2ExpectedDateAnswer
 } from '../../../../fixtures/manage/gateway-2.ts';
 
@@ -50,17 +51,6 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
 	});
 
-	it('updates the workshop venue answer', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
-
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
-		workshopVenuePage.verifyWorkshopVenueForm(workshopVenueAnswer.value);
-		workshopVenuePage.enterWorkshopVenue(workshopVenueAnswer.updatedValue);
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-		gateway2Page.verifySummaryRowContains(workshopVenueAnswer.row, workshopVenueAnswer.updatedValue);
-	});
-
 	it('uploads the Gateway 2 report', { tags: ['regression', 'environment-smoke'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2Report.row);
 		gateway2ReportPage.verifyLoaded();
@@ -75,16 +65,27 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
 	});
 
+	it('does not show issued workshop documents against another case', { tags: ['regression'] }, () => {
+		gateway2Page.openActionLinkFor(gateway2WorkshopDocuments.row);
+		gateway2WorkshopDocumentsPage.verifyLoaded();
+		gateway2WorkshopDocumentsPage.uploadAndVerifyFile(gateway2WorkshopDocuments.fileName);
+		gateway2WorkshopDocumentsPage.saveAndReturn();
+		gateway2WorkshopDocumentsCheckPage.verifyLoaded(gateway2WorkshopDocuments.fileName);
+		gateway2WorkshopDocumentsCheckPage.issueDocuments();
+
+		cy.task<SeededManageCase>('seedDb').then((secondCase) => {
+			openGateway2Page(secondCase.reference, secondCase.planTitle);
+			gateway2Page.verifySummaryRowActionHref(
+				gateway2WorkshopDocuments.row,
+				`/case/${secondCase.reference}/gateway-2/workshop/${gateway2WorkshopDocuments.path}`
+			);
+		});
+	});
+
 	it('returns to Gateway 2 from Gateway 2 answer page back links', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2DateAnswers.gateway2ActualDate.row);
 		gateway2ActualDatePage.verifyLoaded(gateway2DateAnswers.gateway2ActualDate.input);
 		gateway2ActualDatePage.goBack();
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-
-		gateway2Page.openActionLinkFor(workshopVenueAnswer.row);
-		workshopVenuePage.verifyLoaded(workshopVenueAnswer.heading);
-		workshopVenuePage.goBack();
 
 		gateway2Page.verifyLoaded(seededCase.planTitle);
 	});
