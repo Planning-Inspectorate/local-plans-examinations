@@ -88,6 +88,7 @@
               {% for section in summaryListData.sections %}
                   {% set formattedRows = [] %}
                   {% set caseNote = null %}
+                  {% set miqsRow = [] %}
                   {% for row in section.list.rows %}
                     {% if row %}
                       {% if "Case notes" in row.key.text %} {# Dynamic forms does not allow html in the key, so handle the case notes separately#}
@@ -111,9 +112,14 @@
                       {% if formattedRow %}
                         {% set _ = formattedRows.push(formattedRow) %}
                       {% endif %}
+                      {% if section.heading == 'Hearings' and row.key.text == 'MIQs' %}
+                        {% set _ = miqsRow.push(formattedRow) %}
+                      {% else %}
+                        {% set _ = formattedRows.push(formattedRow) %}
+                      {% endif %}
                     {% endif %}
                   {% endfor %}
-                  {% if section.list.rows.length %}
+                  {% if formattedRows.length %}
                     <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                     {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
                     {{ govukSummaryList({
@@ -132,6 +138,16 @@
                 {{ hearingDetails(journeyResponse.answers, reference) }}
                 <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link" data-cy="add-hearing">Add hearing</a>
                 <p></p>
+              {% endif %}
+              
+              {% if section.heading == 'Hearings'%} 
+                <h1 class="govuk-heading-l">Hearings</h1>
+                {{ hearingDetails(journeyResponse.answers, reference) }}
+                <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link">Set up hearing</a>
+                <p></p>
+                {% if miqsRow.length %}
+                  {{ govukSummaryList({ rows: miqsRow }) }}
+                {% endif %}
               {% endif %}
               {% endfor %}
           </div>

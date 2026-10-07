@@ -13,6 +13,7 @@ export type SubmissionCheckData = {
 	submitButtonText: string;
 	additionalFields: { name: string; value: string | null; url: string | undefined | null; query?: string }[];
 	notificationTextLPA?: string;
+	hideNotificationPreview?: boolean;
 };
 
 /**
