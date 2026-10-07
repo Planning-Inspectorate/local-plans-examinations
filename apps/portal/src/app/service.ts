@@ -238,12 +238,14 @@ export class PortalService extends Service {
 	readonly clarityId: string | undefined;
 	readonly auth: Config['auth'];
 	readonly environment: Config['environment'];
+	readonly nodeEnv: Config['NODE_ENV'];
 	readonly notifyClient: GovNotifyClient | null;
 
 	constructor(config: Config) {
 		super(config);
 		this.auth = config.auth;
 		this.environment = config.environment;
+		this.nodeEnv = config.NODE_ENV;
 		this.clarityId = config.clarityId;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
