@@ -134,6 +134,9 @@ function registerGateway2WorkshopJourney(
 		const journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
 
 		res.locals.journeyResponse = journeyResponse;
+		if (!res.locals.backLink) {
+			res.locals.backLink = req.baseUrl + '/gateway-2';
+		}
 
 		next();
 	});
@@ -162,6 +165,9 @@ function registerGateway2WorkshopJourney(
 
 		req.session.alertMessage = 'Workshop set up';
 		req.session.alertMessageStatus = 'success';
+		if (req.session.lastQuestionUrl) {
+			delete req.session.lastQuestionUrl;
+		}
 
 		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	});
