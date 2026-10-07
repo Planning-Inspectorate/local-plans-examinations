@@ -1,5 +1,5 @@
 import { describe, it } from 'node:test';
-import { createDownloadDocumentSummaryFormatter } from '../gateway-2-submission/questions.ts';
+import { createDownloadDocumentSummaryFormatter } from './questions.ts';
 import { VIRUS_CHECK_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import assert from 'node:assert/strict';
 
@@ -21,7 +21,7 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 		});
 
 		const expectedLink =
-			`<a href="/manage-local-plans/PLAN-123/gateway-2-submission/download-document/guid-1">scanning.pdf</a> ` +
+			`<a href="/manage-local-plans/PLAN-123/gateway-3-submission/download-document/guid-1">scanning.pdf</a> ` +
 			`<strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong>`;
 		assert.equal(result, expectedLink);
 	});
@@ -74,7 +74,7 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 
 		assert.equal(
 			result,
-			'<a href="/manage-local-plans/PLAN-123/gateway-2-submission/download-document/guid-1">clean.pdf</a> '
+			'<a href="/manage-local-plans/PLAN-123/gateway-3-submission/download-document/guid-1">clean.pdf</a> '
 		);
 	});
 
@@ -103,8 +103,8 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 
 		const expectedList =
 			`<ul class="govuk-list govuk-list--bullet">` +
-			`<li><a href="/manage-local-plans/PLAN-123/gateway-2-submission/download-document/guid-1">clean.pdf</a> </li>` +
-			`<li><a href="/manage-local-plans/PLAN-123/gateway-2-submission/download-document/guid-2">scanning.pdf</a> <strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong></li>` +
+			`<li><a href="/manage-local-plans/PLAN-123/gateway-3-submission/download-document/guid-1">clean.pdf</a> </li>` +
+			`<li><a href="/manage-local-plans/PLAN-123/gateway-3-submission/download-document/guid-2">scanning.pdf</a> <strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong></li>` +
 			`<li>infected.pdf <strong class="govuk-tag govuk-tag--red">Virus detected</strong></li>` +
 			`</ul>`;
 

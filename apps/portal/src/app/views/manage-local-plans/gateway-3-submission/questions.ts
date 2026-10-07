@@ -377,7 +377,7 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 				return `${fileName} ${statusTag}`;
 			}
 
-			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
+			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-3-submission/download-document/${encodeURIComponent(
 				documentGuid
 			)}">${fileName}</a> ${statusTag}`;
 		});
