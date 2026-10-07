@@ -324,6 +324,101 @@ describe('test Gateway2SaveController', () => {
 		};
 		assert.deepEqual(req.session, expectedSession);
 	});
+	it('clears an optional workshop end time when it is removed', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: [{ id: 'someWorkshop', workshopEndTime: '12:30' }]
+			}
+		}));
+		const question = `gateway-2-workshop-date-and-time-${workshopId}`;
+		const req = {
+			params: { question },
+			session: {
+				answers: {
+					workshops: [{ id: 'someWorkshop', workshopEndTime: '12:30' }]
+				}
+			},
+			url: question
+		} as unknown as Request<any, any, any, any, Record<string, any>>;
+		const answers = {
+			[`workshopDate-${workshopId}`]: '01/01/2026',
+			[`workshopTime-${workshopId}`]: '10:00',
+			[`workshopEndTime-${workshopId}`]: undefined
+		};
+
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave(answers);
+
+		assert.equal(req.session.answers.workshops[0].workshopEndTime, undefined);
+	});
+
+	it('removes venue details when a workshop is changed to remote', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		const existingWorkshop = {
+			id: 'someWorkshop',
+			workshopLocationType: 'in-person',
+			workshopVenueName: 'Council offices',
+			workshopAddressLine: '1 High Street',
+			workshopAddressLine2: 'Town Centre',
+			workshopTownOrCity: 'Testford',
+			workshopPostcode: 'TE1 1ST'
+		};
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: { workshops: [existingWorkshop] }
+		}));
+		const question = `gateway-2-location-type-${workshopId}`;
+		const req = {
+			params: { question },
+			session: { answers: { workshops: [existingWorkshop] } },
+			url: question
+		} as unknown as Request<any, any, any, any, Record<string, any>>;
+
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave({
+			[`workshopLocationType-${workshopId}`]: 'remote'
+		});
+
+		assert.deepEqual(req.session.answers.workshops[0], {
+			id: 'someWorkshop',
+			workshopLocationType: 'remote'
+		});
+	});
+
+	it('removes conditional answers when they are no longer applicable', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		const existingWorkshop = {
+			id: 'someWorkshop',
+			workshopExpectedDaysKnown: 'yes',
+			workshopExpectedDays: '3',
+			remoteMeetingLinkKnown: 'yes',
+			remoteMeetingLink: 'https://example.com/workshop'
+		};
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: { workshops: [existingWorkshop] }
+		}));
+		const question = `gateway-2-workshop-expected-days-${workshopId}`;
+		const req = {
+			params: { question },
+			session: { answers: { workshops: [existingWorkshop] } },
+			url: question
+		} as unknown as Request<any, any, any, any, Record<string, any>>;
+
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave({
+			[`workshopExpectedDaysKnown-${workshopId}`]: 'no',
+			[`remoteMeetingLinkKnown-${workshopId}`]: 'no'
+		});
+
+		assert.deepEqual(req.session.answers.workshops[0], {
+			id: 'someWorkshop',
+			workshopExpectedDaysKnown: 'no',
+			remoteMeetingLinkKnown: 'no'
+		});
+	});
 	it('can save the workshop field to the database', async () => {
 		const workshopId = 1;
 		const mockService = createMockService();
