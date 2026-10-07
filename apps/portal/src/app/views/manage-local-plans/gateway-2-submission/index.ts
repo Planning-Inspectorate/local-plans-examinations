@@ -263,7 +263,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				);
 			}
 
-			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId, true);
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),

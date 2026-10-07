@@ -95,7 +95,7 @@
 			{% endif %}
 
 			{% if question.editable %}
-				<form action="{{ currentUrl }}/upload-documents/submit" method="post" novalidate>
+				<form action="{{ submitAction }}" method="post" novalidate>
 					<input type="hidden" name="_csrf" value="{{ _csrf }}">
 					<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
 					{{ govukButton({

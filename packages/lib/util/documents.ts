@@ -95,14 +95,15 @@ export class DocumentUtil {
 	public static async loadUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string
+		documentSetId: string,
+		shouldLoadTempFiles?: boolean
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSetId,
 				isDeleted: false,
-				isTemp: false
+				isTemp: shouldLoadTempFiles ?? false
 			},
 			include: {
 				latestDocumentVersion: true

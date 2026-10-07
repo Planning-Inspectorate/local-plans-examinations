@@ -102,6 +102,7 @@ export default class FileUploaderQuestion extends Question {
 			manageListQuestion,
 			customViewData: {
 				currentUrl: request.originalUrl,
+				submitAction: request.app.locals.appName === 'manage' ? `${req.originalUrl}/upload-documents/submit` : '',
 				sessionKey: request.fileUploaderSessionKey ?? this.fieldName,
 				fileUploader: request.session?.fileUploader,
 				errors: hasBodyErrors

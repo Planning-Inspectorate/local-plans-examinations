@@ -61,9 +61,9 @@ export async function addUploadedDocumentDetailsToAnswers(
 	journeyId: string
 ) {
 	const isUploadPages =
-		req.params.section === 'signed-sla' ||
-		req.params.section === 'report' ||
-		req.params.section === 'gateway-3-submission-1';
+		req.params.question === 'signed-sla' ||
+		req.params.question === 'gateway-2-report' ||
+		req.params.question === 'gateway-3-document-1';
 
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
