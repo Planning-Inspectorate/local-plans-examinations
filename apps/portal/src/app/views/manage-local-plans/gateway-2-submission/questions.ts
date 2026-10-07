@@ -7,6 +7,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import { virusScanStatusTag } from '../utils.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -256,7 +257,7 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 
 			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
 				documentGuid
-			)}">${fileName}</a>${statusTag}`;
+			)}">${fileName}</a> ${statusTag}`;
 		});
 
 		if (linkedFiles.some((file) => file === undefined)) {
@@ -276,20 +277,5 @@ export function decodeFileName(fileName: string) {
 		return decodeURIComponent(fileName);
 	} catch {
 		return fileName;
-	}
-}
-
-/**
- * Builds the GOV.UK status tag markup for a file's virus scan state.
- * Returns an empty string for scanned/clean files (no tag required).
- */
-export function virusScanStatusTag(virusCheckStatus: string | undefined): string {
-	switch (virusCheckStatus) {
-		case VIRUS_CHECK_STATUS_ID.NOT_SCANNED:
-			return '<strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong>';
-		case VIRUS_CHECK_STATUS_ID.AFFECTED:
-			return '<strong class="govuk-tag govuk-tag--red">Virus detected</strong>';
-		default:
-			return '';
 	}
 }

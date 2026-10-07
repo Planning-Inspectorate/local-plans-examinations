@@ -15,6 +15,12 @@
 {% block content %}
 	<div class="govuk-grid-row">
 		<div class="govuk-grid-column-two-thirds">
+			{% if errorSummary and errorSummary.length %}
+				{{ govukErrorSummary({
+					titleText: "There is a problem",
+					errorList: errorSummary
+				}) }}
+			{% endif %}
 			{% if question.text.caption %}
 				<span class="govuk-caption-l">{{ question.text.caption }}</span>
 			{% endif %}
@@ -34,12 +40,6 @@
 
 			{% if question.text.fileRequirementsText %}
 				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText }}</p>
-			{% endif %}
-			{% if errorSummary and errorSummary.length %}
-				{{ govukErrorSummary({
-					titleText: "There is a problem",
-					errorList: errorSummary
-				}) }}
 			{% endif %}
 			{% if virusScanInProgress %}
 				{{ govukNotificationBanner({

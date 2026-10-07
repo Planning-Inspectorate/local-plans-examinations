@@ -7,7 +7,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
 import { VIRUS_CHECK_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-import { virusScanStatusTag } from '../gateway-2-submission/questions.ts';
+import { virusScanStatusTag } from '../utils.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
