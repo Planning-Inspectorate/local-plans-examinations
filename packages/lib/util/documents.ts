@@ -404,7 +404,7 @@ export class DocumentUtil {
 				})
 			);
 		} catch (err) {
-			console.error(err);
+			service.logger.error(err);
 		}
 	}
 

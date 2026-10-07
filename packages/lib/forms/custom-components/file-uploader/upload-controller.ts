@@ -323,14 +323,10 @@ function resolveRedirect(req: Request, options: FileUploaderControllerOptions): 
 
 export function createFileSubmitUploadController(options: FileUploaderControllerOptions): RequestHandler {
 	return async (request: Request, res: Response) => {
-		try {
-			const session = ensureFileUploaderSession(request as RequestWithFiles);
-			const urlPathRoot = request.url.split('/')[1];
-			const uploadedFiles = session.forms?.[urlPathRoot][options.fieldName] ?? [];
-			await options.onSubmit?.({ req: request, uploadedFiles, fieldName: options.fieldName });
-		} catch (error) {
-			console.log(error);
-		}
+		const session = ensureFileUploaderSession(request as RequestWithFiles);
+		const urlPathRoot = request.url.split('/')[1];
+		const uploadedFiles = session.forms?.[urlPathRoot][options.fieldName] ?? [];
+		await options.onSubmit?.({ req: request, uploadedFiles, fieldName: options.fieldName });
 		return redirectSafely(res, resolveRedirect(request, options));
 	};
 }
