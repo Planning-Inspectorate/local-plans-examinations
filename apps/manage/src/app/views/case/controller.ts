@@ -16,11 +16,7 @@ import { getPageLoadHandlerForPage } from './overview-data-handlers/overview-pag
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
-import {
-	gateway2SetIds,
-	NUM_GW3_SUBMISSIONS_QUESTIONS,
-	gateway3SetIds
-} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
