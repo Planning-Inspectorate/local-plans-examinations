@@ -24,7 +24,8 @@ import {
 	issueGateway2WorkshopDocuments,
 	redirectToChecks,
 	preprocessQuestionProperties,
-	handleMulterFileSizeError
+	handleMulterFileSizeError,
+	issueMiqs
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -974,6 +975,7 @@ function registerCaseJourney(
 
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
+	router.post(`/${path}/hearings/:question/check`, issueMiqs(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));

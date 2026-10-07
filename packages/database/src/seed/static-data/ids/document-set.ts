@@ -54,7 +54,9 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
 
 	// Other
-	EXAMINATION_REPORT: 'exam-report'
+	EXAMINATION_REPORT: 'exam-report',
+	// Others
+	EXAMINATION_MIQS: 'ex-miqs'
 };
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
@@ -100,7 +102,9 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
 
 	// Other
-	EXAMINATION_REPORT: 'examination-report'
+	EXAMINATION_REPORT: 'examination-report',
+	// Others
+	EXAMINATION_MIQS: 'miqs'
 };
 export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_COVER_LETTER,
