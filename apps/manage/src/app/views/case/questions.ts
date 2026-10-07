@@ -879,6 +879,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload workshop documents',
 		fieldName: 'gateway2WorkshopDocuments',
 		url: 'gateway-2-workshop-documents',
+		notStartedText: 'Not provided',
 		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
 			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
