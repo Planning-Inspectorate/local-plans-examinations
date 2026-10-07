@@ -30,6 +30,7 @@ import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
 import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
 import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
 import { ExaminationSaveController } from './save/examination-save-controller.ts';
+import { formatDateToString } from '../../../app/util/date.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -814,12 +815,7 @@ export function preprocessQuestionProperties(
 			for (let i = 0; i < workshopAnswers.length; i++) {
 				workshopAnswers[i].workshopDate =
 					workshopAnswers[i].workshopDate && typeof workshopAnswers[i].workshopDate != 'string'
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(workshopAnswers[i].workshopDate)
+						? formatDateToString(workshopAnswers[i].workshopDate)
 						: null;
 			}
 			const caseDetails = await service.db.case.findUnique({
