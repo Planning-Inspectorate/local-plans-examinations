@@ -23,7 +23,7 @@ export function createLoginRoutes(service: PortalService): IRouter {
 	// Rate limiter for auth endpoints - only applied in production
 	const authRateLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000, // 15 minutes
-		max: process.env.NODE_ENV === 'production' ? 10 : 1000, // 10 in production, high limit for E2E tests
+		max: service.nodeEnv === 'production' ? 10 : 1000, // 10 in production, high limit for E2E tests
 		message: 'Too many requests, please try again later',
 		standardHeaders: true,
 		legacyHeaders: false
