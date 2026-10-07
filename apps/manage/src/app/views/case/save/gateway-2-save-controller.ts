@@ -5,6 +5,7 @@ import { parseDate } from '../../../util/date.ts';
 import type { Gateway2Input } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { NUM_GW2_WORKSHOP_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { formatDateToString } from '../../../util/date.ts';
 
 export class Gateway2SaveController extends SaveController {
 	private caseId: string | undefined;
@@ -102,6 +103,12 @@ export class Gateway2SaveController extends SaveController {
 					currentWorkshop[workshopField] = questionAnswer;
 				}
 			});
+			if (currentWorkshop.workshopDetails) {
+				if (typeof currentWorkshop.workshopDetails == 'object') {
+					currentWorkshop.workshopDetails = formatDateToString(currentWorkshop.workshopDetails);
+				}
+			}
+
 			return {
 				workshops: workshopDetails
 			};
@@ -156,10 +163,6 @@ export class Gateway2SaveController extends SaveController {
 		) {
 			answers.assessorAppointmentDate = new Date();
 		}
-
-		if (answers.workshopDate) {
-			answers.workshopDate = parseDate(answers.workshopDate as any);
-		}
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
 		if ('workshops' in answers) {
@@ -205,9 +208,6 @@ export class Gateway2SaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
-			if (this.req.session) {
-				delete this.req.session.answers;
-			}
 			return true;
 		}
 		return false;
