@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { fromZonedTime } from 'date-fns-tz';
-import { parseDate } from './date.ts';
+import { formatDateToString, parseDate } from './date.ts';
 
 describe('parseDate', () => {
 	it('parses a valid date string as a local-midnight date', () => {
@@ -12,5 +12,9 @@ describe('parseDate', () => {
 
 	it('throws when the date string is invalid', () => {
 		assert.throws(() => parseDate('31/02/2026'), /Invalid date: 31\/02\/2026/);
+	});
+
+	it('formats a date in the Europe/London timezone', () => {
+		assert.equal(formatDateToString(parseDate('7/10/2026')), '7 October 2026');
 	});
 });
