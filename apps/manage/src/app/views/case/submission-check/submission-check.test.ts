@@ -1,6 +1,7 @@
 import { SubmissionCheck, type SubmissionCheckData } from './submission-check.ts';
 import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
+import { Gateway2WorkshopDocumentsSubmissionCheck } from './gateway-2-workshop-documents-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
@@ -478,6 +479,89 @@ describe('Test Gateway3SubmissionCheck', () => {
 					]
 				}
 			)
+		);
+	});
+});
+
+describe('Test Gateway2WorkshopDocumentsSubmissionCheck', () => {
+	it('Gateway2WorkshopDocumentsSubmissionCheck.generateDataForPage with no existing data', async () => {
+		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
+			return {
+				workshopDocumentUploadedDate: null
+			};
+		});
+		await testGenerateDataForPage(
+			new Gateway2WorkshopDocumentsSubmissionCheck(),
+			{
+				caseId: '123456',
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				questionUrl: 'my-question',
+				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				service: MockService,
+				uploadedFiles: ['fileA.txt', 'fileB.txt']
+			},
+			{
+				titleHeading: 'Check workshop documents and issue notification',
+				uploadedFiles: ['fileA.txt', 'fileB.txt'],
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				question: 'my-question',
+				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				notificationPreviewTemplate: 'my-question',
+				submitButtonText: 'Issue documents',
+				notificationTextLPA:
+					"We'll send a notification to the LPA to tell them that the workshop documents are available.",
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						value: null,
+						url: undefined
+					}
+				]
+			}
+		);
+	});
+	it('Gateway2WorkshopDocumentsSubmissionCheck.generateDataForPage with existing data', async () => {
+		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
+			return {
+				workshopDocumentUploadedDate: new Date(2026, 0, 1)
+			};
+		});
+		await testGenerateDataForPage(
+			new Gateway2WorkshopDocumentsSubmissionCheck(),
+			{
+				caseId: '123456',
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				questionUrl: 'my-question',
+				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				service: MockService,
+				uploadedFiles: ['fileA.txt', 'fileB.txt']
+			},
+			{
+				titleHeading: 'Check workshop documents and issue notification',
+				uploadedFiles: ['fileA.txt', 'fileB.txt'],
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				question: 'my-question',
+				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				notificationPreviewTemplate: 'my-question-complete',
+				submitButtonText: 'Issue documents',
+				notificationTextLPA:
+					"We'll send a notification to the LPA to tell them that the workshop documents are available.",
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						value: null,
+						url: undefined
+					}
+				]
+			}
 		);
 	});
 });
