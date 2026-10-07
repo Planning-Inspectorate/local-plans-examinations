@@ -39,7 +39,7 @@ apps_config = {
 }
 
 auth_config_portal = {
-  auth_enabled   = true
+  auth_enabled   = false
   auth_client_id = "c991933d-41b2-4d4c-8220-1c9e1ffdbf92"
   application_id = "22869cb0-3992-465d-bca0-49fe26ad6827"
 }
