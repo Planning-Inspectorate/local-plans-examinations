@@ -53,6 +53,16 @@ model Gateway3Decision {
   Gateway3Submissions Gateway3Submission[]
 }
 
+model CaseNote {
+  text        String   @db.NVarChar(500)
+  createdTime DateTime
+  createdBy   String
+  case        Case     @relation(fields: [caseId], references: [id])
+  caseId      String   @db.UniqueIdentifier
+
+  @@id([text, createdTime, createdBy, caseId])
+}
+
 /// Valid statuses for imported planning authorities.
 model AuthorityStatus {
   id           String      @id @db.NVarChar(50)
@@ -115,6 +125,7 @@ model Case {
   gateways                  Gateway[]
   caseHistories             CaseHistory[]
   documents                 Document[]
+  notes                     CaseNote[]
 
   @@index([planType])
   @@index([planBand])
