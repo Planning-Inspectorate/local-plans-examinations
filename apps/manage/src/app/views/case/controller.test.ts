@@ -12,6 +12,7 @@ import {
 	buildCheckReportMiddleware,
 	preprocessQuestionProperties,
 	issueGateway3Document,
+	issueGateway2WorkshopDocuments,
 	fileUploaderCaseSessionKeyForField
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
@@ -1789,5 +1790,28 @@ describe('issueGateway3Document', () => {
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+	});
+});
+
+describe('issueGateway2WorkshopDocuments', () => {
+	it('shows the workshop documents uploaded success message', async () => {
+		const service = createService();
+		service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			workshopDocumentUploadedDate: null
+		}));
+		const handler = issueGateway2WorkshopDocuments(service, 'gateway-2');
+		const req = {
+			session: {},
+			params: { reference: REFERENCE }
+		};
+		const res = {
+			redirect: mock.fn()
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+
+		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
+		assert.equal(req.session.alertMessageStatus, 'success');
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/gateway-2`]);
 	});
 });

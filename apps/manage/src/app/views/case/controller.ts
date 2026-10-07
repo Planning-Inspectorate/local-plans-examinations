@@ -626,7 +626,7 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 2 workshop documents issued';
+			req.session.alertMessage = 'Workshop document(s) uploaded';
 			req.session.alertMessageStatus = 'success';
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
