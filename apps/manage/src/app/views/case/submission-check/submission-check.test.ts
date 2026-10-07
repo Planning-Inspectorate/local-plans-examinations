@@ -31,7 +31,7 @@ async function testGenerateDataForPage(
 }
 
 describe('Test SignedSLASubmissionCheck', () => {
-	it('generateDataForPage with no existing data', async () => {
+	it('SignedSLASubmissionCheck.generateDataForPage with no existing data', async () => {
 		MockService.db.gateway1Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				slaSentDate: null,
@@ -60,6 +60,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Confirm and issue notification',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -70,7 +71,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with existing data', async () => {
+	it('SignedSLASubmissionCheck.generateDataForPage with existing data', async () => {
 		MockService.db.gateway1Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				slaSentDate: new Date(2026, 0, 1),
@@ -99,6 +100,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question-complete',
 				submitButtonText: 'Confirm and issue notification',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -109,7 +111,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with received date set', async () => {
+	it('SignedSLASubmissionCheck.generateDataForPage with received date set', async () => {
 		MockService.db.gateway1Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				slaSentDate: null,
@@ -138,6 +140,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Confirm and issue notification',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -151,7 +154,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 });
 
 describe('Test Gateway2ReportSubmissionCheck', () => {
-	it('generateDataForPage with no existing data', async () => {
+	it('Gateway2ReportSubmissionCheck.generateDataForPage with no existing data', async () => {
 		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				reportIssuedDate: null
@@ -185,6 +188,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Issue report',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -195,7 +199,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with existing data', async () => {
+	it('Gateway2ReportSubmissionCheck.generateDataForPage with existing data', async () => {
 		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				reportIssuedDate: new Date(2026, 0, 1)
@@ -229,6 +233,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question-complete',
 				submitButtonText: 'Issue report',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -242,7 +247,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 });
 
 describe('Test Gateway3SubmissionCheck', () => {
-	it('generateDataForPage with no existing data for decision 1', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with no existing data for decision 1', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -277,6 +282,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Outcome',
@@ -287,7 +293,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with no existing data for decision 2', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with no existing data for decision 2', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -322,6 +328,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Outcome',
@@ -332,7 +339,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with existing data', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with existing data', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -367,6 +374,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey', // Should go back to the journey
 				notificationPreviewTemplate: 'gateway-3-document-complete',
 				submitButtonText: 'Issue decision',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Outcome',
@@ -377,7 +385,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with no decision', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with no decision', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -425,7 +433,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			)
 		);
 	});
-	it('generateDataForPage with undefined decision number', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with undefined decision number', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [

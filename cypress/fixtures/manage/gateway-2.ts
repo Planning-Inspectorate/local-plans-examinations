@@ -52,16 +52,6 @@ export const gateway2DateAnswers = {
 		input: { day: '1', month: '9', year: '2026' },
 		display: '1 September 2026'
 	},
-	workshopDate: {
-		row: 'Workshop date',
-		heading: 'When is the Gateway 2 workshop?',
-		section: 'gateway-2',
-		fieldName: 'workshopDate',
-		path: 'gateway-2-workshop-date',
-		seedDate: '2026-09-01T12:00:00.000Z',
-		input: { day: '1', month: '9', year: '2026' },
-		display: '1 September 2026'
-	},
 	reportPublishedDate: {
 		row: 'Report published by LPA date',
 		heading: 'When was the report published by the LPA?',
@@ -85,15 +75,6 @@ export const gateway2AssessorAnswer = {
 	boxListField: 'assessorName__listbox'
 } as const;
 
-export const workshopVenueAnswer = {
-	row: 'Workshop venue',
-	path: 'gateway-2-workshop-venue',
-	heading: 'What is the venue for the Gateway 2 workshop?',
-	value: 'Workshop venue name',
-	updatedValue: 'Updated Workshop Venue',
-	display: 'Workshop venue'
-} as const;
-
 export const gateway2Report = {
 	row: 'Issue Gateway 2 report',
 	heading: 'Upload Gateway 2 report',
@@ -104,6 +85,14 @@ export const gateway2Report = {
 	validationMessage: 'Please upload your Gateway 2 report'
 } as const;
 
+export const gateway2WorkshopDocuments = {
+	row: 'Workshop documents',
+	heading: 'Upload workshop documents',
+	fieldName: 'gateway2WorkshopDocuments',
+	path: 'gateway-2-workshop-documents',
+	fileName: 'test-document.pdf'
+} as const;
+
 export const updatedGateway2ExpectedDateAnswer = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'
@@ -111,6 +100,5 @@ export const updatedGateway2ExpectedDateAnswer = {
 
 export const gateway2ExpectedAnswers = [
 	...Object.values(gateway2DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display },
-	{ row: workshopVenueAnswer.row, display: workshopVenueAnswer.display }
+	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display }
 ];

@@ -1,0 +1,93 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro workshopDetails(answers, reference) %}
+
+  {% for workshop in answers.workshops %}
+
+    {% set workshopRows = [] %}
+
+    {% if workshop.workshopDate %}
+      {% set _ = workshopRows.push({
+        key: { text: "Start date" },
+        value: { text: workshop.workshopDate },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/gateway-2/set-up-workshop/check-your-answers-" + (loop.index),
+              text: "Change"
+            }
+          ]
+        }
+      }) %}
+    {% endif %}
+
+    {% if workshop.workshopTime %}
+      {% set _ = workshopRows.push({
+        key: { text: "Start time" },
+        value: { text: workshop.workshopTime }
+      }) %}
+    {% endif %}
+
+    {% if workshop.workshopEndTime %}
+      {% set _ = workshopRows.push({
+        key: { text: "Workshop end time" },
+        value: { text: workshop.workshopEndTime }
+      }) %}
+    {% endif %}
+
+    {% if workshop.workshopExpectedDays %}
+      {% set _ = workshopRows.push({
+        key: { text: "Estimated number of days" },
+        value: { text: workshop.workshopExpectedDays }
+      }) %}
+    {% endif %}
+
+    {% if workshop.workshopLocationType %}
+      {% set _ = workshopRows.push({
+        key: { text: "Format" },
+        value: { text: workshop.workshopLocationType }
+      }) %}
+    {% endif %}
+
+    {% if workshop.remoteMeetingLinkKnown %}
+      {% set _ = workshopRows.push({
+        key: { text: "Do you have a virtual meeting link?" },
+        value: { text: workshop.remoteMeetingLinkKnown }
+      }) %}
+    {% endif %}
+
+    {% if workshop.remoteMeetingLink %}
+      {% set _ = workshopRows.push({
+        key: { text: "Virtual meeting link" },
+        value: { text: workshop.remoteMeetingLink }
+      }) %}
+    {% endif %}
+
+    {% if workshop.workshopVenueName %}
+      {% set address = workshop.workshopVenueName %}
+      {% set address = address + "<br>" + workshop.workshopAddressLine %}
+
+      {% if workshop.workshopAddressLine2 %}
+          {% set address = address + "<br>" + workshop.workshopAddressLine2 %}
+      {% endif %}
+
+      {% set address = address + "<br>" + workshop.workshopTownOrCity %}
+      {% set address = address + "<br>" + workshop.workshopPostcode %}
+
+      {% set _ = workshopRows.push({
+          key: { text: "Location" },
+          value: { html: address }
+      }) %}
+    {% endif %}
+
+    {% if workshopRows.length %}
+      <h2 class="govuk-heading-m">Workshop {{ loop.index }} details</h2>
+      <a href="/" class="govuk-link">Cancel workshop {{ loop.index }}</a>
+      <p></p>
+      {{ govukSummaryList({
+        rows: workshopRows
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+{% endmacro %}
