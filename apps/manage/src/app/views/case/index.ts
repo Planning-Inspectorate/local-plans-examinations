@@ -168,6 +168,9 @@ function registerGateway2WorkshopJourney(
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
+		if (req.session) {
+			delete req.session.answers;
+		}
 
 		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	});

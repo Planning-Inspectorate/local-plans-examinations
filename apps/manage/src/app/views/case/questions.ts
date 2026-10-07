@@ -38,6 +38,7 @@ import {
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { sortGateway2Workshops } from '#util/util.ts';
+import { formatDateToString } from '../../../app/util/date.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -1246,19 +1247,17 @@ Object.entries(questions)
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
 			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
-
+			let workshopDateValue = workshopDetails.workshopDate;
+			if (typeof workshopDetails.workshopDate == 'string') {
+				workshopDateValue = new Date(workshopDateValue);
+			}
 			const workshopDate = {
 				key: 'workshop date',
 				value:
-					workshopDetails.workshopDate && typeof workshopDetails.workshopDate != 'string'
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(workshopDetails.workshopDate)
+					workshopDateValue && typeof workshopDateValue != 'string'
+						? formatDateToString(workshopDateValue)
 						: workshopDetails.workshopDate,
-				action: this.getAction(sectionSegment, journey, workshopDetails.workshopDate)
+				action: this.getAction(sectionSegment, journey, workshopDateValue)
 			};
 
 			const workshopStartTime = {
