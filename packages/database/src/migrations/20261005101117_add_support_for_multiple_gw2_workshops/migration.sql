@@ -1,17 +1,6 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `workshopDate` on the `Gateway2Info` table. All the data in the column will be lost.
-  - You are about to drop the column `workshopVenue` on the `Gateway2Info` table. All the data in the column will be lost.
-
-*/
 BEGIN TRY
 
 BEGIN TRAN;
-
--- AlterTable
-ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN [workshopDate],
-[workshopVenue];
 
 -- CreateTable
 CREATE TABLE [dbo].[Gateway2Workshop] (
@@ -37,6 +26,27 @@ CREATE TABLE [dbo].[Gateway2Workshop] (
 
 -- AddForeignKey
 ALTER TABLE [dbo].[Gateway2Workshop] ADD CONSTRAINT [Gateway2Workshop_gateway2InfoId_fkey] FOREIGN KEY ([gateway2InfoId]) REFERENCES [dbo].[Gateway2Info]([id]) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- MigrateData
+INSERT INTO [dbo].[Gateway2Workshop] (
+    [id],
+    [gateway2InfoId],
+    [createdDate],
+    [workshopDate],
+    [workshopVenueName]
+)
+SELECT
+    NEWID(),
+    [id],
+    SYSUTCDATETIME(),
+    [workshopDate],
+    [workshopVenue]
+FROM [dbo].[Gateway2Info]
+WHERE [workshopDate] IS NOT NULL OR [workshopVenue] IS NOT NULL;
+
+-- AlterTable
+ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN [workshopDate],
+[workshopVenue];
 
 COMMIT TRAN;
 
