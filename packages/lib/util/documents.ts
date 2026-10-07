@@ -79,7 +79,7 @@ export class DocumentUtil {
 			where: {
 				caseId,
 				documentSetId,
-				OR: [{ isDeleted: false }, { isTemp: true }]
+				AND: [{ isDeleted: false }, { isTemp: true }]
 			},
 			include: {
 				latestDocumentVersion: true
@@ -197,7 +197,6 @@ export class DocumentUtil {
 				if (existingDocument) {
 					continue;
 				}
-
 				await this.createDocument(tx, { caseId, documentSetId, file });
 			}
 		});
@@ -301,7 +300,8 @@ export class DocumentUtil {
 				guid,
 				name: file.id,
 				caseId,
-				documentSetId
+				documentSetId,
+				isTemp: true
 			}
 		});
 
@@ -382,6 +382,7 @@ export class DocumentUtil {
 	}
 	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
 		try {
+			console.log('Updating temporary documents to permanent', uploadedFiles);
 			await Promise.all(
 				uploadedFiles.map(async (file) => {
 					const fileId = await service.db.document.findFirst({
@@ -389,6 +390,7 @@ export class DocumentUtil {
 							name: file.id
 						}
 					});
+
 					if (!fileId) {
 						throw new Error('File not found');
 					}

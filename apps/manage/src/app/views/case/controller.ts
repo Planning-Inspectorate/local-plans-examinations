@@ -1124,6 +1124,14 @@ export function redirectToFileUploaderQuestion(req: Request) {
 
 export const redirectToChecks = (req: Request, path: string) => {
 	const plan = req.params.reference;
+	const urlPathRoot = req.url.split('/')[1];
+	const session = req.session;
+	const formFiles = session?.forms?.[urlPathRoot] ?? {};
+
+	if (Object.keys(formFiles).length === 0) {
+		return `/case/${plan}/${path}/${req.params.section}/${req.params.question}`;
+	}
+
 	return `/case/${plan}/${path}/${req.params.section}/${req.params.question}/check`;
 };
 

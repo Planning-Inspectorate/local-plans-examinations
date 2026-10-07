@@ -61,9 +61,12 @@ export async function addUploadedDocumentDetailsToAnswers(
 	journeyId: string
 ) {
 	const isUploadPages =
-		req.params.question === 'signed-sla' ||
-		req.params.question === 'gateway-2-report' ||
-		req.params.question === 'gateway-3-document-1';
+		(req.params.question === 'signed-sla' ||
+			req.params.question === 'gateway-2-report' ||
+			req.params.question === 'gateway-3-document-1') &&
+		!req.url.includes('/check');
+
+	console.log(req.params);
 
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
@@ -77,6 +80,7 @@ export async function addUploadedDocumentDetailsToAnswers(
 				: true
 		);
 	}
+
 	if (!relevantFileUploadQuestionConfigs) {
 		return;
 	}
@@ -93,6 +97,8 @@ export async function addUploadedDocumentDetailsToAnswers(
 		const uploadedFiles = isUploadPages
 			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+
+		console.log(uploadedFiles, isUploadPages);
 
 		req.session.fileUploader = {
 			...request.session.fileUploader,
