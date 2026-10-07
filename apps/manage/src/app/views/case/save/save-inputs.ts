@@ -103,6 +103,7 @@ export interface ExaminationInput extends SaveInput {
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
 	hearingExpectedDays?: string;
+	hearingDate?: Date;
 	hearingExpectedDaysKnown_hearingExpectedDays?: string;
 	hearings?: {
 		id: string;

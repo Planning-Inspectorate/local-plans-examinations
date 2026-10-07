@@ -14,7 +14,7 @@ export class ExaminationSaveController extends SaveController {
 		return !!matchedQuestion;
 	}
 	protected async shouldSaveToSession() {
-		return false;
+		return this.isExaminationHearingQuestion();
 	}
 	protected async prepareData(answers: Record<string, any>) {
 		const caseDetails = await this.service.db.case.findUnique({
@@ -174,6 +174,9 @@ export class ExaminationSaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
+			if (this.req.session) {
+				delete this.req.session.answers;
+			}
 			return true;
 		}
 		return false;

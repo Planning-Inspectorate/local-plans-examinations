@@ -68,12 +68,6 @@ export function createExaminationHearingJourney(
 	const examinationHearingUrl = req.baseUrl + '/examination/set-up-hearing';
 	const examinationUrl = req.baseUrl + '/examination';
 	const hearingId = Number(String(req.url).split('-').at(-1));
-	console.log({
-		url: req.url,
-		question: req.params.question,
-		hearingId,
-		sessionHearings: req.session.answers?.hearings
-	});
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
 		sections: [
@@ -110,7 +104,7 @@ export function createExaminationHearingJourney(
 		],
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
-		taskListTemplate: 'views/layouts/workshop-check-your-answers.njk',
+		taskListTemplate: 'views/layouts/hearing-check-your-answers.njk',
 		journeyTitle: 'Set up workshop',
 		returnToListing: false,
 		makeBaseUrl: () => examinationHearingUrl,

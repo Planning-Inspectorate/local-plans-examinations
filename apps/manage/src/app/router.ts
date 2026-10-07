@@ -30,6 +30,14 @@ function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFuncti
 		delete req.session.currentJourney;
 		delete req.session.editingFromCheckAnswers;
 	}
+	if (
+		req.session?.currentJourney === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID &&
+		!req.path.includes('set-up-hearing')
+	) {
+		clearDataFromSession({ req, journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID });
+		delete req.session.currentJourney;
+		delete req.session.editingFromCheckAnswers;
+	}
 	next();
 }
 

@@ -43,17 +43,17 @@
       }) %}
     {% endif %}
 
-    {% if hearing.remoteMeetingLinkKnown %}
+    {% if hearing.hearingRemoteMeetingLinkKnown %}
       {% set _ = hearingRows.push({
         key: { text: "Do you have a virtual meeting link?" },
-        value: { text: hearing.remoteMeetingLinkKnown }
+        value: { text: hearing.hearingRemoteMeetingLinkKnown }
       }) %}
     {% endif %}
 
-    {% if hearing.remoteMeetingLink %}
+    {% if hearing.hearingRemoteMeetingLink %}
       {% set _ = hearingRows.push({
         key: { text: "Virtual meeting link" },
-        value: { text: hearing.remoteMeetingLink }
+        value: { text: hearing.hearingRemoteMeetingLink }
       }) %}
     {% endif %}
 

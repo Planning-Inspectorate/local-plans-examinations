@@ -57,6 +57,9 @@ function createService(): any {
 							gateway3InfoId: undefined
 						}
 					]
+				},
+				examinationInfo: {
+					hearings: []
 				}
 			}))
 		},
@@ -1187,6 +1190,9 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
+			include: {
+				hearings: true
+			},
 			where: {
 				caseId: CASE_ID
 			}

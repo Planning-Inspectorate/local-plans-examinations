@@ -37,7 +37,7 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortExaminationHearings, sortGateway2Workshops } from '#util/util.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -410,13 +410,13 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 			{
 				type: 'time',
 				fieldName: 'hearingTime',
-				label: 'Start time',
+				label: 'Time',
 				caption: 'For example, 14 30',
 				title: 'Examination hearing time',
 				attributes: { 'data-cy': 'examination-hearing-time' }
 			}
 		],
-		question: 'Examination hearing date and time',
+		question: 'Hearing date and time',
 		fieldName: 'examinationHearingDateAndTime',
 		url: 'examination-hearing-date-and-time',
 		title: 'Examination hearing date and time'
@@ -582,11 +582,11 @@ for (let hearingId = 1; hearingId < NUM_GW2_WORKSHOP_QUESTIONS; hearingId++) {
 						fields: [
 							{
 								fieldName: `hearingVenueName-${hearingId}`,
-								validators: [new RequiredValidator('Input a workshop venue name')]
+								validators: [new RequiredValidator('Input a hearing venue name')]
 							},
 							{
 								fieldName: `hearingAddressLine-${hearingId}`,
-								validators: [new RequiredValidator('Input a workshop address')]
+								validators: [new RequiredValidator('Input a hearing address')]
 							},
 							{
 								fieldName: `hearingTownOrCity-${hearingId}`,
@@ -1520,6 +1520,77 @@ Object.entries(questions)
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			return [locationType];
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingDateAndTime'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+
+			const hearingDate = {
+				key: 'hearing date',
+				value: hearingDetails.hearingDate,
+				action: this.getAction(sectionSegment, journey, hearingDetails.hearingDate)
+			};
+
+			const hearingStartTime = {
+				key: 'hearing time',
+				value: hearingDetails.hearingTime,
+				action: this.getAction(sectionSegment, journey, hearingDetails.hearingTime)
+			};
+
+			return [hearingDate, hearingStartTime];
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingExpectedDays'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const expectedDaysKnown = {
+				key: 'Do you know the estimated number of days?',
+				value: hearingDetails.hearingExpectedDaysKnown,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			if (hearingDetails.hearingExpectedDaysKnown != 'no') {
+				const expectedDays = {
+					key: 'Estimated number of days',
+					value: hearingDetails.hearingExpectedDays,
+					action: this.getAction(sectionSegment, journey, answer)
+				};
+
+				return [expectedDaysKnown, expectedDays];
+			} else {
+				return [expectedDaysKnown];
+			}
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingLocationType'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const locationType = {
+				key: 'Examination location type',
+				value: hearingDetails.hearingLocationType,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 

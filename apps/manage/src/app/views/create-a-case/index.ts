@@ -27,7 +27,24 @@ export function shouldReturnToCya(req: { params?: Record<string, string | undefi
 }
 
 export function redirectAfterCyaEdit(req: any, res: any, next: any) {
-	const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+	const editingFromCya = req.session.editingFromCheckAnswers === true;
+
+	const returnToCya = shouldReturnToCya(req, editingFromCya);
+
+	req.log?.info?.(
+		{
+			url: req.originalUrl,
+			journey: req.session.currentJourney,
+			editingFromCya,
+			returnToCya,
+			manageListAction: req.params?.manageListAction,
+			manageListItemId: req.params?.manageListItemId,
+			manageListQuestion: req.params?.manageListQuestion,
+			lastQuestionUrl: req.session.lastQuestionUrl
+		},
+		'redirectAfterCyaEdit'
+	);
+
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 

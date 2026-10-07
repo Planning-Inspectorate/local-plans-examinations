@@ -333,6 +333,17 @@ function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
 		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
 
+		req.log?.info?.(
+			{
+				question: req.params.question,
+				section: req.params.section,
+				editingFromCheckAnswers: req.session.editingFromCheckAnswers,
+				returnToCya,
+				lastQuestionUrl: req.session.lastQuestionUrl
+			},
+			'Redirect after question'
+		);
+
 		buildSave(updateCase, returnToCya)(req, res, next);
 	};
 }
