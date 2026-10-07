@@ -53,6 +53,7 @@ export type FileUploaderControllerOptions = {
 		fileId: string;
 		error: unknown;
 	}) => void | Promise<void>;
+	onSubmit?: (params: { req: Request; fieldName: string; uploadedFiles: UploadedFile[] }) => void | Promise<void>;
 };
 
 type RequestWithFiles = Request & {
@@ -142,7 +143,6 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 		};
 		delete session.errors;
 		delete session.errorSummary;
-
 		return redirectSafely(res, resolveRedirect(request, options));
 	};
 }
@@ -319,4 +319,14 @@ function resolveRedirect(req: Request, options: FileUploaderControllerOptions): 
 	// }
 
 	return '/';
+}
+
+export function createFileSubmitUploadController(options: FileUploaderControllerOptions): RequestHandler {
+	return async (request: Request, res: Response) => {
+		const session = ensureFileUploaderSession(request as RequestWithFiles);
+		const urlPathRoot = request.url.split('/')[1];
+		const uploadedFiles = session.forms?.[urlPathRoot][options.fieldName] ?? [];
+		await options.onSubmit?.({ req: request, uploadedFiles, fieldName: options.fieldName });
+		return redirectSafely(res, resolveRedirect(request, options));
+	};
 }

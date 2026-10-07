@@ -47,6 +47,7 @@ export function fileUploaderQuestionMiddleware(options: FileUploaderQuestionMidd
 					customViewData: {
 						currentUrl: request.originalUrl,
 						sessionKey,
+						submitAction: request.app.locals.appName === 'manage' ? `${req.originalUrl}/upload-documents/submit` : '',
 						fileUploader: request.session?.fileUploader
 					}
 				});

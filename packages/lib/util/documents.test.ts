@@ -25,6 +25,7 @@ describe('loadUploadedDocuments', () => {
 					name: 'stored-file',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 					isDeleted: false,
+					isTemp: false,
 					latestDocumentVersion: {
 						version: 1,
 						originalFilename: 'cover-letter.pdf',
@@ -58,6 +59,7 @@ describe('loadUploadedDocuments', () => {
 				path: 'gateway-2/cover-letter.pdf',
 				url: 'http://storage/cover-letter.pdf',
 				dateCreated: DOCUMENT_CREATED_DATE,
+				isTemp: false,
 				metadata: {
 					documentGuid: 'document-1',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
@@ -69,7 +71,8 @@ describe('loadUploadedDocuments', () => {
 			where: {
 				caseId: 'case-1',
 				documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
-				isDeleted: false
+				isDeleted: false,
+				isTemp: false
 			},
 			include: {
 				latestDocumentVersion: true
@@ -492,6 +495,7 @@ function buildUploadedFile(overrides: Partial<UploadedFile> = {}): UploadedFile 
 		containerName: 'local-planning-documents',
 		path: 'gateway-2/cover-letter.pdf',
 		url: 'http://storage/cover-letter.pdf',
+		isTemp: false,
 		...overrides
 	};
 }

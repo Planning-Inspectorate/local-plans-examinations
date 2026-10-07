@@ -19,6 +19,7 @@ export type Config = ConfigWithBlob & {
 	};
 	// Microsoft Clarity tracking id (optional, set via CLARITY_ID)
 	clarityId?: string;
+	appName: 'portal';
 };
 
 // cache the config
@@ -133,7 +134,8 @@ export function loadConfig(): Config {
 			}
 		},
 		// Microsoft Clarity id for analytics tracking (optional)
-		clarityId: CLARITY_ID || undefined
+		clarityId: CLARITY_ID || undefined,
+		appName: 'portal'
 	};
 
 	return config;

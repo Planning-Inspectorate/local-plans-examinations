@@ -1122,6 +1122,11 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
 }
 
+export const redirectToChecks = (req: Request, path: string) => {
+	const plan = req.params.reference;
+	return `/case/${plan}/${path}/${req.params.section}/${req.params.question}/check`;
+};
+
 export function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {
 	if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
 		const questionUrl = getRouteQuestionUrl(req);
