@@ -360,6 +360,7 @@ describe('test Gateway2SaveController', () => {
 		const existingWorkshop = {
 			id: 'someWorkshop',
 			workshopLocationType: 'in-person',
+			workshopLocationKnown: 'yes',
 			workshopVenueName: 'Council offices',
 			workshopAddressLine: '1 High Street',
 			workshopAddressLine2: 'Town Centre',
@@ -373,7 +374,7 @@ describe('test Gateway2SaveController', () => {
 		const question = `gateway-2-location-type-${workshopId}`;
 		const req = {
 			params: { question },
-			session: { answers: { workshops: [existingWorkshop] } },
+			session: {},
 			url: question
 		} as unknown as Request<any, any, any, any, Record<string, any>>;
 
@@ -384,6 +385,36 @@ describe('test Gateway2SaveController', () => {
 		assert.deepEqual(req.session.answers.workshops[0], {
 			id: 'someWorkshop',
 			workshopLocationType: 'remote'
+		});
+	});
+
+	it('removes remote meeting details when a workshop is changed to in-person', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		const existingWorkshop = {
+			id: 'someWorkshop',
+			workshopLocationType: 'remote',
+			remoteMeetingLinkKnown: 'yes',
+			remoteMeetingLink: 'https://example.com/workshop'
+		};
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: { workshops: [existingWorkshop] }
+		}));
+		const question = `gateway-2-location-type-${workshopId}`;
+		const req = {
+			params: { question },
+			session: { answers: { workshops: [existingWorkshop] } },
+			url: question
+		} as unknown as Request<any, any, any, any, Record<string, any>>;
+
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave({
+			[`workshopLocationType-${workshopId}`]: 'in-person'
+		});
+
+		assert.deepEqual(req.session.answers.workshops[0], {
+			id: 'someWorkshop',
+			workshopLocationType: 'in-person'
 		});
 	});
 
