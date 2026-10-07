@@ -116,6 +116,24 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
+const MIQ_DOCUMENTS_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'png',
+	'tif',
+	'tiff'
+];
+
+const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
@@ -1541,9 +1559,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
 		maxFilesPerUpload: 10,
-		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
-		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
-		multiple: true,
 		text: {
 			caption: 'Examination outcome',
 			introduction: 'You should add the final report and main modifications as separate documents.',
@@ -1575,6 +1590,34 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Hearing dates',
 		fieldName: 'hearings',
 		url: 'examination-hearing-dates'
+	},
+	miqs: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'MIQs',
+		question: 'Upload MIQ documents',
+		fieldName: 'miqs',
+		url: 'miqs',
+		allowedFileExtensions: MIQ_DOCUMENTS_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => MIQ_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'MIQs',
+			introduction: 'Upload files',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(MIQ_DOCUMENTS_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES)}.`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue',
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.'
+		},
+		validators: [new FileUploadRequiredValidator('miqs', 'Choose a file to upload')]
 	},
 	...examinationPauseQuestions,
 	...gateway3Questions

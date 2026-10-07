@@ -408,5 +408,14 @@ export const DOCUMENT_SET = [
 		displayName: 'Representations required in the Gateway 3 report (Examination)',
 		folderName: DOCUMENT_SET_FOLDER_NAME.EX_G3_REPORT_REPS,
 		displayOrder: 313
+	},
+	// Others
+	{
+		id: DOCUMENT_SET_ID.EXAMINATION_MIQS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'MIQs',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_MIQS,
+		displayOrder: 1
 	}
 ];
