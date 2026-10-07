@@ -59,6 +59,7 @@ export class Gateway2SaveController extends SaveController {
 					...filteredSessionAnswerWorkshops[workshopId - 1]
 				};
 			}
+			// Copy answer fields to the workshop
 			const currentWorkshop = workshopDetails[workshopId - 1];
 			const workshopFieldsToAnswerMap = {
 				workshopDate: `workshopDate-${workshopId}`,
@@ -79,11 +80,7 @@ export class Gateway2SaveController extends SaveController {
 			Object.entries(workshopFieldsToAnswerMap).forEach(([workshopField, answerField]) => {
 				const questionAnswer = answers[answerField];
 				if (questionAnswer) {
-					if (workshopField == 'workshopDate') {
-						currentWorkshop[workshopField] = parseDate(questionAnswer);
-					} else {
-						currentWorkshop[workshopField] = questionAnswer;
-					}
+					currentWorkshop[workshopField] = questionAnswer;
 				}
 			});
 			return {
@@ -108,6 +105,21 @@ export class Gateway2SaveController extends SaveController {
 				const sessionAnswers = workshopAnswers[workshopId - 1];
 				const newAnswers = answers.workshops[workshopId - 1];
 				answers.workshops[workshopId - 1] = { ...sessionAnswers, ...newAnswers };
+				// Clean related fields
+				const currentWorkshop = answers.workshops[workshopId - 1];
+				if (currentWorkshop.workshopExpectedDaysKnown == 'no') {
+					delete (currentWorkshop as any).workshopExpectedDays;
+				}
+				if (currentWorkshop.workshopLocationType == 'remote') {
+					delete (currentWorkshop as any).workshopVenueName;
+					delete (currentWorkshop as any).workshopAddressLine;
+					delete (currentWorkshop as any).workshopAddressLine2;
+					delete (currentWorkshop as any).workshopTownOrCity;
+					delete (currentWorkshop as any).workshopPostcode;
+				}
+				if (currentWorkshop.remoteMeetingLinkKnown == 'no') {
+					delete (currentWorkshop as any).remoteMeetingLink;
+				}
 			}
 		}
 		this.req.session.answers = answers;
@@ -137,7 +149,7 @@ export class Gateway2SaveController extends SaveController {
 			}
 			const workshopsCleaned = Object.values(workshops).map((e) => ({
 				createdDate: e.createdDate,
-				workshopDate: e.workshopDate,
+				workshopDate: e.workshopDate && typeof e.workshopDate == 'string' ? parseDate(e.workshopDate) : e.workshopDate,
 				workshopTime: e.workshopTime,
 				workshopEndTime: e.workshopEndTime,
 				workshopExpectedDaysKnown: e.workshopExpectedDaysKnown,

@@ -791,6 +791,36 @@ export function preprocessQuestionProperties(
 ) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
+		if (journeyId == 'gateway-2') {
+			// Format the Start date answer into a human-readable date
+			const workshopAnswers = _res.locals.journeyResponse.answers.workshops ?? [];
+			for (let i = 0; i < workshopAnswers.length; i++) {
+				workshopAnswers[i].workshopDate =
+					workshopAnswers[i].workshopDate && typeof workshopAnswers[i].workshopDate != 'string'
+						? new Intl.DateTimeFormat('en-GB', {
+								day: 'numeric',
+								month: 'long',
+								timeZone: 'Europe/London',
+								year: 'numeric'
+							}).format(workshopAnswers[i].workshopDate)
+						: null;
+			}
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					gateway2Info: true
+				},
+				where: {
+					reference
+				}
+			});
+			const gateway2Complete = !!caseDetails?.gateway2Info?.workshopDocumentUploadedDate;
+			if (gateway2Complete) {
+				questions['gateway2WorkshopDocuments'].actionLink = {
+					href: `/case/${reference}/gateway-2/workshop/gateway-2-workshop-documents/check`,
+					text: 'View'
+				};
+			}
+		}
 		if (journeyId == 'gateway-3') {
 			const decisionMap = {
 				'1': 'Proceed to examination',

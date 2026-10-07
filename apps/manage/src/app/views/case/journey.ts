@@ -294,6 +294,9 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	response.answers.workshops = sortedWorkshops;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
 	}
 	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
 }

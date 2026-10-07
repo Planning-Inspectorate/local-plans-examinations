@@ -38,6 +38,20 @@ function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFuncti
 		delete req.session.currentJourney;
 		delete req.session.editingFromCheckAnswers;
 	}
+	if (
+		req.session?.currentJourney === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID &&
+		req.path.includes('set-up-workshop') &&
+		!req.path.includes('check-your-answers')
+	) {
+		delete req.session.editingFromCheckAnswers;
+	}
+	if (
+		req.session?.currentJourney === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID &&
+		req.path.includes('set-up-hearing') &&
+		!req.path.includes('check-your-answers')
+	) {
+		delete req.session.editingFromCheckAnswers;
+	}
 	next();
 }
 

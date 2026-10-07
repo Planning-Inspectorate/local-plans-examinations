@@ -1458,7 +1458,15 @@ Object.entries(questions)
 
 			const workshopDate = {
 				key: 'workshop date',
-				value: workshopDetails.workshopDate,
+				value:
+					workshopDetails.workshopDate && typeof workshopDetails.workshopDate != 'string'
+						? new Intl.DateTimeFormat('en-GB', {
+								day: 'numeric',
+								month: 'long',
+								timeZone: 'Europe/London',
+								year: 'numeric'
+							}).format(workshopDetails.workshopDate)
+						: workshopDetails.workshopDate,
 				action: this.getAction(sectionSegment, journey, workshopDetails.workshopDate)
 			};
 
