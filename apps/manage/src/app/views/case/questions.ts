@@ -38,7 +38,7 @@ import {
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { sortGateway2Workshops } from '#util/util.ts';
-import { formatDateToString } from '../../../app/util/date.ts';
+import { formatDateToString, parseDate } from '../../../app/util/date.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -1249,7 +1249,7 @@ Object.entries(questions)
 			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
 			let workshopDateValue = workshopDetails.workshopDate;
 			if (typeof workshopDetails.workshopDate == 'string') {
-				workshopDateValue = new Date(workshopDateValue);
+				workshopDateValue = parseDate(workshopDateValue);
 			}
 			const workshopDate = {
 				key: 'workshop date',
