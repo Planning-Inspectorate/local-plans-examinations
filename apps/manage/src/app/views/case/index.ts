@@ -743,6 +743,9 @@ function registerGateway2WorkshopJourney(
 
 		req.session.alertMessage = 'Workshop set up';
 		req.session.alertMessageStatus = 'success';
+		if (req.session.lastQuestionUrl) {
+			delete req.session.lastQuestionUrl;
+		}
 
 		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	});
