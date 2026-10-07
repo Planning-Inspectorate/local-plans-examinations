@@ -66,8 +66,6 @@ export async function addUploadedDocumentDetailsToAnswers(
 			req.params.question === 'gateway-3-document-1') &&
 		!req.url.includes('/check');
 
-	console.log(req.params);
-
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
