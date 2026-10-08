@@ -1,13 +1,12 @@
 import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
-import { VIRUS_CHECK_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import {
 	SINGLE_FILE_UPLOAD_LIMIT,
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
 	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
-import { virusScanStatusTag } from '../utils.ts';
+import { createDownloadDocumentSummaryFormatter as createFormatter } from '../utils.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -222,60 +221,5 @@ export function createGateway2Questions(planReference: string | undefined) {
 }
 
 export function createDownloadDocumentSummaryFormatter(planReference: string | undefined) {
-	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-	return ({
-		formattedAnswer,
-		answer
-	}: {
-		formattedAnswer: string;
-		answer: {
-			fileName?: string;
-			virusCheckStatus?: string;
-			metadata?: {
-				documentGuid?: string;
-			};
-		}[];
-	}) => {
-		if (!encodedPlanReference || !Array.isArray(answer) || answer.length === 0) {
-			return formattedAnswer;
-		}
-
-		const linkedFiles = answer.map((file) => {
-			const documentGuid = file.metadata?.documentGuid;
-
-			if (typeof documentGuid !== 'string' || !documentGuid) {
-				return undefined;
-			}
-
-			const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
-			const statusTag = virusScanStatusTag(file.virusCheckStatus);
-
-			// When a virus has been detected, users are unable to download it - no download link
-			if (file.virusCheckStatus === VIRUS_CHECK_STATUS_ID.AFFECTED) {
-				return `${fileName} ${statusTag}`;
-			}
-
-			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
-				documentGuid
-			)}">${fileName}</a> ${statusTag}`;
-		});
-
-		if (linkedFiles.some((file) => file === undefined)) {
-			return formattedAnswer;
-		}
-
-		if (linkedFiles.length === 1) {
-			return linkedFiles[0];
-		}
-
-		return `<ul class="govuk-list govuk-list--bullet">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
-	};
-}
-
-export function decodeFileName(fileName: string) {
-	try {
-		return decodeURIComponent(fileName);
-	} catch {
-		return fileName;
-	}
+	return createFormatter(planReference, 'gateway-2-submission');
 }
