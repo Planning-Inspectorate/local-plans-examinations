@@ -3,6 +3,7 @@
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -29,6 +30,7 @@ function buildCase(overrides = {}) {
 			actualDate: null,
 			submissions: [
 				{
+					decision: null,
 					completionDate: null
 				}
 			]
@@ -164,6 +166,72 @@ describe('PortalService', () => {
 			);
 		});
 
+		it('returns Gateway 3 under review when actualDate is set but the decision is not complete', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: new Date('2026-10-01T12:00:00.000Z'),
+							submissions: [{ decision: null, completionDate: null }]
+						}
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
+		it('returns Gateway 3 ready to start when a resubmission has been requested but not sent', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: new Date('2026-10-01T12:00:00.000Z'),
+							submissions: [
+								{
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+									completionDate: new Date('2026-10-15T12:00:00.000Z')
+								},
+								{ decision: null, completionDate: null }
+							]
+						}
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.ReadyToStart
+				}
+			);
+		});
+
+		it('returns Gateway 3 under review when a requested resubmission has been sent', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: new Date('2026-10-20T12:00:00.000Z'),
+							submissions: [
+								{
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+									completionDate: new Date('2026-10-15T12:00:00.000Z')
+								},
+								{ decision: null, completionDate: null }
+							]
+						}
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
 		it('returns Examination ready to start when Gateway 3 has been completed', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
@@ -172,6 +240,7 @@ describe('PortalService', () => {
 							actualDate: null,
 							submissions: [
 								{
+									decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
 									completionDate: new Date('2026-12-01T12:00:00.000Z')
 								}
 							]
@@ -328,6 +397,49 @@ describe('PortalService', () => {
 					dateCreated: new Date('2026-09-02T12:00:00.000Z')
 				}
 			]);
+		});
+
+		it('maps a submitted Gateway 3 plan to Under review using its actual date', async () => {
+			const actualDate = new Date('2026-10-01T12:00:00.000Z');
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate,
+						submissions: [{ decision: null, completionDate: null }]
+					}
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
+			assert.strictEqual(plans[0].status, STATUS.UnderReview);
+			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
+		});
+
+		it('maps an open Gateway 3 resubmission to Ready to start using the expected date', async () => {
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-10-01T12:00:00.000Z'),
+						submissions: [
+							{
+								decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+								completionDate: new Date('2026-10-15T12:00:00.000Z')
+							},
+							{ decision: null, completionDate: null }
+						]
+					}
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
+			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
 		});
 
 		it('maps missing info table dates to Not set', async () => {

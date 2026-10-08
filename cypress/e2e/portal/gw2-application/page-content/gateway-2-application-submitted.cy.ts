@@ -19,7 +19,7 @@ describe('Gateway 2 application page content after submission', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('shows the Gateway 2 submission data has been recorded correctly', { tags: ['regression'] }, () => {
+	it('Shows the Gateway 2 submission data has been recorded correctly', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			submitGateway2Application(plan, [
 				{ page: gateway2CoverLetterPage, fileNames: ['test-document.pdf'] },
