@@ -61,12 +61,7 @@ import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
 import { loadLpaOptions } from '../../util/options-helper.ts';
-import {
-	saveLastQuestionUrl,
-	setBackLinkFromSession,
-	setAsEditingFromCya,
-	shouldReturnToCya
-} from '../create-a-case/index.ts';
+import { saveLastQuestionUrl, setBackLinkFromSession, setAsEditingFromCya } from '../create-a-case/index.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -219,9 +214,7 @@ function registerGateway2WorkshopJourney(
 
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
-		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
-
-		buildSave(updateCase, returnToCya)(req, res, next);
+		buildSave(updateCase, req.session.editingFromCheckAnswers === true)(req, res, next);
 	};
 }
 
