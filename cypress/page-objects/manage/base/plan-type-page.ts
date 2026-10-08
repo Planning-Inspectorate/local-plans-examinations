@@ -9,7 +9,7 @@ export class PlanTypeBasePage extends BasePage {
 		this.verifyHeading('What is the plan type?');
 		this.planTypeOption('local-plan').should('exist');
 		this.planTypeOption('other').should('exist');
-		this.verifyMainContains('Local Plan', 'Other');
+		this.verifyMainContains('Local plan', 'Other');
 		this.verifySaveAndContinueVisible();
 	}
 

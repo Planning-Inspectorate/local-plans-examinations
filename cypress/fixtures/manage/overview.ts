@@ -9,13 +9,13 @@ export const planTitle = {
 export const planType = {
 	row: 'Plan type',
 	path: 'plan-type',
-	display: 'Local Plan',
+	display: 'Local plan',
 	updatedValue: 'other',
 	updatedDisplay: 'Other'
 } as const;
 
 export const localPlanningAuthority = {
-	row: 'Local Planning Authority',
+	row: 'Planning authorities',
 	path: 'local-planning-authority',
 	lpa1Value: 'Local Planning Authority 1',
 	lpa2Value: 'Local Planning Authority 2'

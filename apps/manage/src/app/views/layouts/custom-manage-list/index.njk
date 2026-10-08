@@ -55,7 +55,7 @@
                 </dl>
                 {% if not hideAddButton %}
                     <p class="govuk-body">
-                        <a href="{{ util.trimTrailingSlash(originalUrl) }}/{{ question.addAnotherLink }}" class="govuk-link" data-cy="add-list-item">Add another</a>
+                        <a href="{{ util.trimTrailingSlash(originalUrl) }}/{{ question.addAnotherLink }}" class="govuk-link" data-cy="add-list-item">Add a {{ singularLowerCase }}</a>
                     </p>
                 {% endif %}
 
