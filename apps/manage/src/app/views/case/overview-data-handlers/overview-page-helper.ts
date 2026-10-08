@@ -7,6 +7,7 @@ import {
 	fileUploaderCaseSessionKeyForField,
 	type UploadDocumentRequest
 } from '../controller.ts';
+import { fileUploadQuestionProperties } from '../questions.ts';
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
@@ -60,11 +61,14 @@ export async function addUploadedDocumentDetailsToAnswers(
 	answers: any,
 	journeyId: string
 ) {
+	const uploadPageUrls = new Set(
+		Object.values(fileUploadQuestionProperties)
+			.map((question) => question.url)
+			.filter((url): url is string => Boolean(url))
+	);
+
 	const isUploadPages =
-		(req.params.question === 'signed-sla' ||
-			req.params.question === 'gateway-2-report' ||
-			req.params.question?.includes('gateway-3-document')) &&
-		!req.url.includes('/check');
+		!!req.params.question && uploadPageUrls.has(req.params.question as string) && !req.url.includes('/check');
 
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;

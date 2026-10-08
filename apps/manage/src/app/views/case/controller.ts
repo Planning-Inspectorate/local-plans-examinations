@@ -1122,6 +1122,17 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
 }
 
+/**
+ * Works out where to send the user after an upload action on a question page.
+ *
+ * If the session holds uploaded files for this form, the user goes to the
+ * question's "check submission pages". Otherwise they go back to the question
+ * page itself to upload.
+ *
+ * @param req - Express request; uses `params.reference`, `params.section`, `params.question` and the session
+ * @param path - Route segment between the case reference and the section (e.g. 'edit' or 'manage')
+ * @returns The URL to redirect to
+ */
 export const redirectToChecks = (req: Request, path: string) => {
 	const plan = req.params.reference;
 	const urlPathRoot = req.url.split('/')[1];
