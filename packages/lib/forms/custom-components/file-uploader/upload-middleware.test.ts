@@ -21,6 +21,11 @@ describe('fileUploaderQuestionMiddleware', () => {
 		const middleware = fileUploaderQuestionMiddleware();
 		const req = buildRequest({
 			originalUrl: '/case/gateway-2/documents',
+			app: {
+				locals: {
+					appName: 'manage'
+				}
+			},
 			session: {
 				fileUploader: {
 					documents: {
@@ -40,7 +45,8 @@ describe('fileUploaderQuestionMiddleware', () => {
 		assert.deepEqual(toViewModelCall.arguments[0].customViewData, {
 			currentUrl: '/case/gateway-2/documents',
 			sessionKey: 'documents',
-			fileUploader: req.session.fileUploader
+			fileUploader: req.session.fileUploader,
+			submitAction: '/case/gateway-2/documents/upload-documents/submit'
 		});
 		assert.deepEqual(question.renderAction.mock.calls[0].arguments, [res, { rendered: 'view-model' }]);
 	});
@@ -114,6 +120,11 @@ function buildQuestion() {
 
 function buildRequest(overrides: Record<string, any> = {}) {
 	return {
+		app: {
+			locale: {
+				appName: 'manage'
+			}
+		},
 		params: {
 			section: 'case',
 			question: 'documents'

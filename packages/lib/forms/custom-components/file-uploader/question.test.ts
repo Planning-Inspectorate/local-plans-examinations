@@ -104,6 +104,11 @@ describe('FileUploaderQuestion', () => {
 				},
 				session: {},
 				originalUrl: '/documents',
+				app: {
+					locals: {
+						appName: 'manage'
+					}
+				},
 				params: {}
 			} as any,
 			'section',
