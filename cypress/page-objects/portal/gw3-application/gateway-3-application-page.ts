@@ -46,6 +46,24 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 	verifySubmitGateway3Button() {
 		this.submitGateway3Button.should('be.visible').and('contain.text', 'Submit').and('have.attr', 'type', 'submit');
 	}
+
+	verifySubmissionData(todayDisplay: string, submitterEmail: string) {
+		cy.getByData('submission-copy')
+			.should('be.visible')
+			.invoke('text')
+			.should('match', /^Your submission was sent on .+ at \d{2}:\d{2} by .+$/)
+			.and('include', todayDisplay)
+			.and('include', submitterEmail);
+	}
+
+	verifyNoAddOrChangeLinks() {
+		cy.get('[data-cy^="add-"]').should('not.exist');
+		cy.contains('a', 'Change').should('not.exist');
+	}
+
+	verifySubmitGateway3ButtonNotShown() {
+		this.submitGateway3Button.should('not.exist');
+	}
 }
 
 export const gateway3ApplicationPage = new Gateway3ApplicationPage();

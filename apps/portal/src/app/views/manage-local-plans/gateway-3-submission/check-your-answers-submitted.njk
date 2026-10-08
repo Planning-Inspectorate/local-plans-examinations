@@ -1,0 +1,61 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageTitle %}Gateway 3 submission{% endblock %}
+
+{% block pageHeading %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
+                {% if pageCaption %}
+                    <span class="govuk-caption-xl">{{ pageCaption }}</span>
+                {% endif %}
+                {{ pageHeading or pageTitle }}
+            </h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        <p class="govuk-body" data-cy="submission-copy">Your submission was sent on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
+
+        {% for section in summaryListData.sections %}
+            {% if section.list.rows.length %}
+                {% set sectionHeading = section.heading %}
+                {% if section.heading === 'Required Information' %}
+                    {% set sectionHeading = 'Required information' %}
+                {% elif section.heading === 'Optional Documents' %}
+                    {% set sectionHeading = 'Optional documents' %}
+                {% endif %}
+                <div class="govuk-!-margin-bottom-8" data-cy="{{ sectionHeading | lower | replace(' ', '-') }}-section">
+                    <h2 class="govuk-heading-m" id="{{ sectionHeading | lower | replace(' ', '-') }}">{{ sectionHeading }}</h2>
+                    <table class="govuk-table" data-cy="{{ sectionHeading | lower | replace(' ', '-') }}-table">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden govuk-!-width-one-third">Document</th>
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="govuk-table__body">
+                            {% for row in section.list.rows %}
+                                <tr class="govuk-table__row">
+                                    <td class="govuk-table__cell govuk-!-width-one-third">{{ row.key.text }}</td>
+                                    <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
+                                        {% if row.value.html %}
+                                            {{ row.value.html | safe }}
+                                        {% else %}
+                                            {{ row.value.text }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}

@@ -5,6 +5,7 @@ import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
+import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type PortalCase = {
@@ -24,6 +25,7 @@ type PortalCase = {
 		expectedDate: Date | null;
 		actualDate: Date | null;
 		submissions: {
+			decision: string | null;
 			completionDate: Date | null;
 		}[];
 	} | null;
@@ -87,10 +89,26 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 }
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
-	if (caseRecord.gateway3Info?.submissions.at(-1)?.completionDate || caseRecord.gateway3Info?.actualDate) {
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+
+	if (gateway3SubmissionState.latestSubmission?.completionDate) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
+		};
+	}
+
+	if (gateway3SubmissionState.resubmissionAwaitingSubmission) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.ReadyToStart
+		};
+	}
+
+	if (caseRecord.gateway3Info?.actualDate) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.UnderReview
 		};
 	}
 
@@ -130,10 +148,12 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const gateway2Date = hasIssuedGateway2Report(caseRecord)
 		? caseRecord.gateway2Info?.reportIssuedDate
 		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
-	const gateway3Date =
-		caseRecord.gateway3Info?.submissions[-1]?.completionDate ??
-		caseRecord.gateway3Info?.actualDate ??
-		caseRecord.gateway3Info?.expectedDate;
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+	const gateway3Date = gateway3SubmissionState.resubmissionAwaitingSubmission
+		? caseRecord.gateway3Info?.expectedDate
+		: (gateway3SubmissionState.latestSubmission?.completionDate ??
+			caseRecord.gateway3Info?.actualDate ??
+			caseRecord.gateway3Info?.expectedDate);
 	const examinationDate =
 		caseRecord.examinationInfo?.submissionForExaminationDate ??
 		caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
