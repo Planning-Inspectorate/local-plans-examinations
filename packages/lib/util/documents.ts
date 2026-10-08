@@ -411,6 +411,7 @@ export class DocumentUtil {
 			await Promise.all(
 				foundFiles.map(async (file) => {
 					if (!file) {
+						service.logger.warn('file not found');
 						return;
 					}
 
