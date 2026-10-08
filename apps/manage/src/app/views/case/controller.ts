@@ -1129,7 +1129,7 @@ export function redirectToFileUploaderQuestion(req: Request) {
  * @param {string} path - The base path to append to the generated URL.
  * @returns {string} The constructed redirect URL.
  */
-export const redirectToChecks = (req: Request, path: string) => {
+export const redirectToChecks = (req: Request, path: string): string => {
 	const plan = req.params.reference;
 	const urlPathRoot = req.url.split('/')[1];
 	const session = req.session;
