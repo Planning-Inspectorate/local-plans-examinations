@@ -8,7 +8,7 @@ export async function loadGateway3DocumentsByDocumentSetId(
 	caseId: string,
 	documentSetId: string
 ): Promise<UploadedFile[]> {
-	return DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId, true);
+	return DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId);
 }
 
 export async function saveGateway3Documents(
@@ -17,7 +17,7 @@ export async function saveGateway3Documents(
 	documentSetFolderName: string,
 	uploadedFiles: UploadedFile[]
 ): Promise<void> {
-	return DocumentUtil.saveDocuments(service, req, documentSetFolderName, uploadedFiles);
+	return DocumentUtil.saveDocuments(service, req, documentSetFolderName, uploadedFiles, false);
 }
 
 export async function getDocumentSetIdsByFolderName(

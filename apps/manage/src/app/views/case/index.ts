@@ -236,7 +236,7 @@ function registerCaseJourney(
 							};
 						},
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, true);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
@@ -263,7 +263,7 @@ function registerCaseJourney(
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, false);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
 						},
@@ -285,6 +285,7 @@ function registerCaseJourney(
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
 						onSubmit: async ({ uploadedFiles }) => {
+							console.log('----> submitted 2', uploadedFiles.length);
 							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
 						},
 						redirect: (req) => redirectToChecks(req, path)

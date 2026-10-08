@@ -63,7 +63,7 @@ export async function addUploadedDocumentDetailsToAnswers(
 	const isUploadPages =
 		(req.params.question === 'signed-sla' ||
 			req.params.question === 'gateway-2-report' ||
-			req.params.question === 'gateway-3-document-1') &&
+			req.params.question?.includes('gateway-3-document')) &&
 		!req.url.includes('/check');
 
 	const request = req as UploadDocumentRequest;
@@ -95,8 +95,6 @@ export async function addUploadedDocumentDetailsToAnswers(
 		const uploadedFiles = isUploadPages
 			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
-
-		console.log(uploadedFiles, isUploadPages);
 
 		req.session.fileUploader = {
 			...request.session.fileUploader,

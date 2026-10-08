@@ -347,7 +347,7 @@ model Document {
   latestDocumentVersion DocumentVersion?  @relation("LatestVersion", fields: [guid, latestVersionId], references: [documentGuid, version], onUpdate: NoAction, onDelete: NoAction)
   latestVersionId       Int?
   versions              DocumentVersion[] @relation("VersionHistory")
-  isTemp                Boolean           @default(true)
+  isTemp                Boolean           @default(false)
 
   @@unique([name, documentSetId])
   @@unique([guid, latestVersionId])

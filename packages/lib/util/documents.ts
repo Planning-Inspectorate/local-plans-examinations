@@ -54,7 +54,8 @@ export class DocumentUtil {
 		service: Service,
 		req: Request,
 		documentSetFolderName: string,
-		uploadedFiles: UploadedFile[]
+		uploadedFiles: UploadedFile[],
+		isTemp?: boolean
 	): Promise<void> {
 		const caseId = (req as RequestWithCurrentCase).currentCase?.id;
 		if (!caseId) {
@@ -63,11 +64,15 @@ export class DocumentUtil {
 
 		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
 
-		await this.syncDocuments(service, {
-			caseId,
-			documentSetId,
-			uploadedFiles
-		});
+		await this.syncDocuments(
+			service,
+			{
+				caseId,
+				documentSetId,
+				uploadedFiles
+			},
+			isTemp
+		);
 	}
 
 	public static async loadTempUploadedDocuments(
@@ -95,15 +100,14 @@ export class DocumentUtil {
 	public static async loadUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string,
-		shouldLoadTempFiles?: boolean
+		documentSetId: string
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSetId,
 				isDeleted: false,
-				isTemp: shouldLoadTempFiles ?? false
+				isTemp: false
 			},
 			include: {
 				latestDocumentVersion: true
@@ -156,7 +160,8 @@ export class DocumentUtil {
 	// Makes the database match the uploaded file list.
 	protected static async syncDocuments(
 		service: Service,
-		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
+		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams,
+		isTemp?: boolean
 	): Promise<void> {
 		const existingDocuments = (await service.db.document.findMany({
 			where: {
@@ -197,7 +202,7 @@ export class DocumentUtil {
 				if (existingDocument) {
 					continue;
 				}
-				await this.createDocument(tx, { caseId, documentSetId, file });
+				await this.createDocument(tx, { caseId, documentSetId, file, isTemp: isTemp });
 			}
 		});
 	}
@@ -290,7 +295,12 @@ export class DocumentUtil {
 	// Creates the document and its first version.
 	protected static async createDocument(
 		tx: TransactionClient,
-		{ caseId, documentSetId, file }: { caseId: string; documentSetId: string; file: UploadedFile }
+		{
+			caseId,
+			documentSetId,
+			file,
+			isTemp
+		}: { caseId: string; documentSetId: string; file: UploadedFile; isTemp?: boolean }
 	) {
 		const guid = randomUUID();
 		const version = 1;
@@ -301,7 +311,7 @@ export class DocumentUtil {
 				name: file.id,
 				caseId,
 				documentSetId,
-				isTemp: true
+				isTemp: isTemp
 			}
 		});
 
@@ -382,22 +392,31 @@ export class DocumentUtil {
 	}
 	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
 		try {
-			console.log('Updating temporary documents to permanent', uploadedFiles);
-			await Promise.all(
-				uploadedFiles.map(async (file) => {
-					const fileId = await service.db.document.findFirst({
-						where: {
-							name: file.id
-						}
-					});
+			const foundFiles = await Promise.all(
+				uploadedFiles
+					.map(async (file) => {
+						return service.db.document.findFirst({
+							where: {
+								name: file.path
+							}
+						});
+					})
+					.filter((file) => file)
+			);
 
-					if (!fileId) {
-						throw new Error('File not found');
+			if (foundFiles.length !== uploadedFiles.length) {
+				throw new Error('not all files found');
+			}
+
+			await Promise.all(
+				foundFiles.map(async (file) => {
+					if (!file) {
+						return;
 					}
 
 					await service.db.document.update({
 						where: {
-							guid: fileId.guid
+							guid: file.guid
 						},
 						data: {
 							isTemp: false
@@ -413,7 +432,7 @@ export class DocumentUtil {
 	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {
 		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId);
 		const blobPath = blobDetails.blobPath;
-		const fileName = blobDetails.fileName;
+		const fileName = blobDetails.fileName.trim();
 		const blobStorageUtil = service.createFileStorage(blobPath);
 		await blobStorageUtil.downloadToExpressResponse(blobPath, fileName, res);
 	}
