@@ -145,6 +145,13 @@ export class Gateway2SaveController extends SaveController {
 			delete (currentWorkshop as any).workshopTownOrCity;
 			delete (currentWorkshop as any).workshopPostcode;
 		}
+		if (currentWorkshop?.workshopLocationKnown == 'no') {
+			delete (currentWorkshop as any).workshopVenueName;
+			delete (currentWorkshop as any).workshopAddressLine;
+			delete (currentWorkshop as any).workshopAddressLine2;
+			delete (currentWorkshop as any).workshopTownOrCity;
+			delete (currentWorkshop as any).workshopPostcode;
+		}
 		if (currentWorkshop?.workshopLocationType == 'in-person') {
 			delete (currentWorkshop as any).remoteMeetingLinkKnown;
 			delete (currentWorkshop as any).remoteMeetingLink;

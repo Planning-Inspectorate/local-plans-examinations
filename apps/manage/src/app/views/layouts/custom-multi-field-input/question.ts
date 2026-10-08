@@ -153,11 +153,14 @@ export default class CustomMultiFieldInputQuestion extends Question {
 						month = '',
 						year = '';
 
-					if (dateValue instanceof Date) {
-						const zonedDate = toZonedTime(dateValue, 'Europe/London');
-						day = String(zonedDate.getDate());
-						month = String(zonedDate.getMonth() + 1);
-						year = String(zonedDate.getFullYear());
+					if (dateValue instanceof Date || (typeof dateValue === 'string' && !dateValue.includes('/'))) {
+						const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+						if (!Number.isNaN(date.getTime())) {
+							const zonedDate = toZonedTime(date, 'Europe/London');
+							day = String(zonedDate.getDate());
+							month = String(zonedDate.getMonth() + 1);
+							year = String(zonedDate.getFullYear());
+						}
 					} else if (typeof dateValue === 'string') {
 						const parts = dateValue.split('/');
 						day = parts[0];
