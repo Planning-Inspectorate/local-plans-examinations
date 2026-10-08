@@ -1271,14 +1271,14 @@ Object.entries(questions)
 			};
 
 			const workshopStartTime = {
-				key: 'workshop time',
+				key: 'Workshop start time',
 				value: workshopDetails.workshopTime,
 				action: this.getAction(sectionSegment, journey, workshopDetails.workshopTime)
 			};
 
 			if (workshopDetails.workshopEndTime != null) {
 				const workshopEndTime = {
-					key: 'workshop time',
+					key: 'Workshop end time',
 					value: workshopDetails.workshopEndTime,
 					action: this.getAction(sectionSegment, journey, workshopDetails.workshopEndTime)
 				};

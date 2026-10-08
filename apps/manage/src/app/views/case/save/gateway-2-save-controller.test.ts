@@ -388,6 +388,41 @@ describe('test Gateway2SaveController', () => {
 		});
 	});
 
+	it('removes venue details when the address is no longer known', async () => {
+		const workshopId = 1;
+		const mockService = createMockService();
+		const existingWorkshop = {
+			id: 'someWorkshop',
+			workshopLocationType: 'in-person',
+			workshopLocationKnown: 'yes',
+			workshopVenueName: 'Council offices',
+			workshopAddressLine: '1 High Street',
+			workshopAddressLine2: 'Town Centre',
+			workshopTownOrCity: 'Testford',
+			workshopPostcode: 'TE1 1ST'
+		};
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: { workshops: [existingWorkshop] }
+		}));
+		const question = `gateway-2-workshop-location-known-${workshopId}`;
+		const req = {
+			params: { question },
+			session: { answers: { workshops: [existingWorkshop] } },
+			url: question
+		} as unknown as Request<any, any, any, any, Record<string, any>>;
+
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave({
+			[`workshopLocationKnown-${workshopId}`]: 'no'
+		});
+
+		assert.deepEqual(req.session.answers.workshops[0], {
+			id: 'someWorkshop',
+			workshopLocationType: 'in-person',
+			workshopLocationKnown: 'no'
+		});
+	});
+
 	it('removes remote meeting details when a workshop is changed to in-person', async () => {
 		const workshopId = 1;
 		const mockService = createMockService();
@@ -452,6 +487,7 @@ describe('test Gateway2SaveController', () => {
 	});
 	it('can save the workshop field to the database', async () => {
 		const workshopId = 1;
+		const workshopDate = new Date('2026-12-12T00:00:00.000Z');
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => ({
 			id: 'someCaseId',
@@ -482,7 +518,7 @@ describe('test Gateway2SaveController', () => {
 		} as Request<any, any, any, any, Record<string, any>>;
 		req.params.question = question;
 		const answers = {
-			[`workshopDate-${workshopId}`]: '01/01/2026',
+			[`workshopDate-${workshopId}`]: workshopDate.toISOString(),
 			[`workshopTime-${workshopId}`]: '00:00',
 			[`workshopEndTime-${workshopId}`]: '00:00',
 			[`workshopExpectedDaysKnown-${workshopId}`]: true,
@@ -509,7 +545,7 @@ describe('test Gateway2SaveController', () => {
 								remoteMeetingLinkKnown: true,
 								workshopAddressLine2: 'e',
 								workshopAddressLine: 'd',
-								workshopDate: mockDate,
+								workshopDate,
 								workshopEndTime: '00:00',
 								workshopExpectedDays: 2,
 								workshopExpectedDaysKnown: true,
@@ -534,7 +570,7 @@ describe('test Gateway2SaveController', () => {
 								remoteMeetingLinkKnown: true,
 								workshopAddressLine2: 'e',
 								workshopAddressLine: 'd',
-								workshopDate: mockDate,
+								workshopDate,
 								workshopEndTime: '00:00',
 								workshopExpectedDays: 2,
 								workshopExpectedDaysKnown: true,
