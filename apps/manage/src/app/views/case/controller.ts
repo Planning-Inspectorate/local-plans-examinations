@@ -26,6 +26,7 @@ import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
 import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
 import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
 import { ExaminationSaveController } from './save/examination-save-controller.ts';
+import { formatDateToString } from '../../../app/util/date.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -221,12 +222,8 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 
 		const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 		const journey2Data = await db.gateway2Info.findUnique({
-			where: {
-				caseId: caseRecord.id
-			},
-			include: {
-				workshops: true
-			}
+			where: { caseId: caseRecord.id },
+			include: { workshops: true }
 		});
 		const journey3Data = await db.gateway3Info.findUnique({
 			where: { caseId: caseRecord.id },
@@ -450,6 +447,98 @@ export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 	};
 }
 
+export function getDeleteWorkshop(): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const workshopToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(workshopToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
+		res.render('views/layouts/delete-workshop.njk', { reference: reference, workshopIndex: workshopToDelete });
+	};
+}
+
+/**
+ * For deleting a hearing
+ * @param service
+ * @returns Redirects back to the examination tab
+ */
+export function postDeleteHearing(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the hearing number from the url');
+		}
+		const returnUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		new ExaminationSaveController(service, req, reference).deleteHearing(hearingToDelete);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				hearings: null // Will be overridden by overrideLabels
+			},
+			{},
+			reference,
+			currentUser,
+			{
+				hearings: 'Hearing cancelled'
+			}
+		);
+		return res.redirect(returnUrl);
+	};
+}
+
+export function getDeleteHearing(): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		res.render('views/layouts/delete-hearing.njk', { reference: reference, hearingIndex: hearingToDelete });
+	};
+}
+
+/**
+ * For deleting a workshop
+ * @param service
+ * @returns Redirects back to the GW2 tab
+ */
+export function postDeleteWorkshop(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const workshopToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(workshopToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		const returnUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
+		new Gateway2SaveController(service, req, reference).deleteWorkshop(workshopToDelete);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				workshops: null // Will be overridden by overrideLabels
+			},
+			{},
+			reference,
+			currentUser,
+			{
+				workshops: 'Workshop cancelled'
+			}
+		);
+		return res.redirect(returnUrl);
+	};
+}
+
 export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
 		const reference = getParam(req.params.reference);
@@ -509,7 +598,7 @@ export function getRouteFileUploadQuestion(req: Request): FileUploadQuestion {
 }
 
 /**
- * Retrieves the plan reference from the params and creates the file upload session key.
+ * Retrieves the case reference from the params and creates the file upload session key.
  * Example format: LP-TEST-001:gateway2CoverLetter.
  * @param req The request that holds the question
  * @returns A URL segment of the form `planReference:fieldName`
@@ -528,7 +617,7 @@ export function fileUploaderCaseSessionKey(req: Request) {
  * @returns A string of the form `planReference:fieldName`
  */
 export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
-	return `${req.params.planReference}:${fieldName}`;
+	return `${getParam(req.params.reference)}:${fieldName}`;
 }
 
 export function downloadDocument(service: ManageService): AsyncRequestHandler {
@@ -626,7 +715,7 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 2 workshop documents issued';
+			req.session.alertMessage = 'Workshop document(s) uploaded';
 			req.session.alertMessageStatus = 'success';
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
@@ -814,12 +903,7 @@ export function preprocessQuestionProperties(
 			for (let i = 0; i < workshopAnswers.length; i++) {
 				workshopAnswers[i].workshopDate =
 					workshopAnswers[i].workshopDate && typeof workshopAnswers[i].workshopDate != 'string'
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(workshopAnswers[i].workshopDate)
+						? formatDateToString(workshopAnswers[i].workshopDate)
 						: null;
 			}
 			const caseDetails = await service.db.case.findUnique({
@@ -836,6 +920,8 @@ export function preprocessQuestionProperties(
 					href: `/case/${reference}/gateway-2/workshop/gateway-2-workshop-documents/check`,
 					text: 'View'
 				};
+			} else {
+				delete questions['gateway2WorkshopDocuments'].actionLink;
 			}
 		}
 		if (journeyId == 'gateway-3') {

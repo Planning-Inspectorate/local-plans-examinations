@@ -20,6 +20,15 @@ export function parseDate(value: string): Date {
 	return date;
 }
 
+export function formatDateToString(date: Date): string {
+	return new Intl.DateTimeFormat('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		timeZone: 'Europe/London',
+		year: 'numeric'
+	}).format(date);
+}
+
 function pad(num: any, length = 2) {
 	return num.toString().padStart(length, '0');
 }

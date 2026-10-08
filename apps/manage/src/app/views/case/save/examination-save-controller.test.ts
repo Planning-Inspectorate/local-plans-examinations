@@ -41,7 +41,7 @@ function createMockService(): MockServiceType {
 				findUnique: mock.fn(async () => ({
 					id: 'someCaseId',
 					gateway2Info: {
-						workshops: [{}]
+						workshops: []
 					},
 					gateway3Info: {
 						submissions: [
@@ -54,7 +54,7 @@ function createMockService(): MockServiceType {
 						]
 					},
 					examinationInfo: {
-						hearings: [{}]
+						hearings: []
 					}
 				})),
 				upsert: mock.fn(async () => ({}))

@@ -1105,6 +1105,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload workshop documents',
 		fieldName: 'gateway2WorkshopDocuments',
 		url: 'gateway-2-workshop-documents',
+		notStartedText: 'Not provided',
 		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
 			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
@@ -1472,19 +1473,17 @@ Object.entries(questions)
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
 			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
-
+			let workshopDateValue = workshopDetails.workshopDate;
+			if (typeof workshopDetails.workshopDate == 'string') {
+				workshopDateValue = parseDate(workshopDateValue);
+			}
 			const workshopDate = {
 				key: 'workshop date',
 				value:
-					workshopDetails.workshopDate && typeof workshopDetails.workshopDate != 'string'
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(workshopDetails.workshopDate)
+					workshopDateValue && typeof workshopDateValue != 'string'
+						? formatDateToString(workshopDateValue)
 						: workshopDetails.workshopDate,
-				action: this.getAction(sectionSegment, journey, workshopDetails.workshopDate)
+				action: this.getAction(sectionSegment, journey, workshopDateValue)
 			};
 
 			const workshopStartTime = {
@@ -1561,10 +1560,17 @@ Object.entries(questions)
 			const answersFull = journey.response.answers;
 			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
 
+			let hearingDateValue = hearingDetails.hearingDate;
+			if (typeof hearingDetails.workshopDate == 'string') {
+				hearingDateValue = parseDate(hearingDateValue);
+			}
 			const hearingDate = {
-				key: 'hearing date',
-				value: hearingDetails.hearingDate,
-				action: this.getAction(sectionSegment, journey, hearingDetails.hearingDate)
+				key: 'workshop date',
+				value:
+					hearingDateValue && typeof hearingDateValue != 'string'
+						? formatDateToString(hearingDateValue)
+						: hearingDetails.workshopDate,
+				action: this.getAction(sectionSegment, journey, hearingDateValue)
 			};
 
 			const hearingStartTime = {

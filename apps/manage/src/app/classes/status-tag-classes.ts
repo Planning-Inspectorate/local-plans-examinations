@@ -120,12 +120,21 @@ export function resolveCaseHeaderStatus(
 		return resolveStatus('GW3 pending');
 	}
 
-	if (gateway2Data?.workshops.every((workshop) => workshop.workshopDate && workshop.workshopDate < dateNow)) {
+	if (
+		gateway2Data?.workshops &&
+		gateway2Data?.workshops.length > 0 &&
+		gateway2Data?.workshops.every((workshop) => workshop.workshopDate && workshop.workshopDate < dateNow)
+	) {
 		return resolveStatus('GW2 report');
 	}
 	if (
+		gateway2Data?.workshops &&
+		gateway2Data?.workshops.length > 0 &&
 		gateway2Data?.workshops.every(
-			(workshop) => workshop.workshopVenueName && workshop.workshopDate && workshop.workshopDate > dateNow
+			(workshop) =>
+				(workshop.workshopLocationType || workshop.workshopVenueName) &&
+				workshop.workshopDate &&
+				workshop.workshopDate > dateNow
 		)
 	) {
 		return resolveStatus('GW2 workshop confirmed');

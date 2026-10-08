@@ -3,6 +3,8 @@ import {
 	buildGetJourneyMiddleware,
 	updateCaseField,
 	getDeleteCase,
+	getDeleteWorkshop,
+	postDeleteWorkshop,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
 	fileUploadQuestionConfigs,
@@ -169,6 +171,9 @@ function registerGateway2WorkshopJourney(
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
+		if (req.session) {
+			delete req.session.answers;
+		}
 
 		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	});
@@ -193,6 +198,8 @@ function registerGateway2WorkshopJourney(
 		saveLastQuestionUrl,
 		completeWorkshop
 	);
+	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
+	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
 
 	router.get(
 		'/gateway-2/set-up-workshop/:section/:question',
@@ -289,7 +296,12 @@ function registerExaminationHearingJourney(
 
 		req.session.alertMessage = 'Hearing set up';
 		req.session.alertMessageStatus = 'success';
-
+		if (req.session.lastQuestionUrl) {
+			delete req.session.lastQuestionUrl;
+		}
+		if (req.session) {
+			delete req.session.answers;
+		}
 		res.redirect(`/case/${encodeURIComponent(reference)}/examination`);
 	});
 
@@ -313,6 +325,9 @@ function registerExaminationHearingJourney(
 		saveLastQuestionUrl,
 		completeHearing
 	);
+
+	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
+	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
 
 	router.get(
 		'/examination/set-up-hearing/:section/:question',
@@ -338,17 +353,6 @@ function registerExaminationHearingJourney(
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
 		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
-
-		req.log?.info?.(
-			{
-				question: req.params.question,
-				section: req.params.section,
-				editingFromCheckAnswers: req.session.editingFromCheckAnswers,
-				returnToCya,
-				lastQuestionUrl: req.session.lastQuestionUrl
-			},
-			'Redirect after question'
-		);
 
 		buildSave(updateCase, returnToCya)(req, res, next);
 	};
@@ -424,6 +428,7 @@ export function caseRouter(service: ManageService): IRouter {
 	const workshopConfig = CASE_JOURNEYS.find(
 		(config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID
 	);
+
 	if (workshopConfig) {
 		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
 	}
@@ -540,12 +545,13 @@ function registerCaseJourney(
 						sessionKey: fileUploaderCaseSessionKey,
 						destination: (req) => {
 							const request = req as UploadDocumentRequest;
+							const caseReference = getRoutePlanReference(req);
 							return {
-								folderPath: `${request.currentCase?.id ?? req.params.planReference}/${questionConfig.url}`,
+								folderPath: `${request.currentCase?.id ?? caseReference}/${questionConfig.url}`,
 								metadata: {
 									journeyId: journeyId,
 									caseId: request.currentCase?.id,
-									caseReference: req.params.planReference,
+									caseReference,
 									fieldName: questionConfig.fieldName,
 									documentSetFolderName: questionConfig.url
 								}
@@ -708,11 +714,7 @@ function logUploadCleanupFailed(
 }
 
 function getRoutePlanReference(req: Request): string | undefined {
-	const planReference = Array.isArray(req.params.planReference)
-		? req.params.planReference[0]
-		: req.params.planReference;
-
-	return planReference || undefined;
+	return getParam(req.params.reference) || undefined;
 }
 
 function uploadLogContext(req: Request, questionConfig: FileUploadQuestion) {

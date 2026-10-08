@@ -85,6 +85,14 @@ export const gateway2Report = {
 	validationMessage: 'Please upload your Gateway 2 report'
 } as const;
 
+export const gateway2WorkshopDocuments = {
+	row: 'Workshop documents',
+	heading: 'Upload workshop documents',
+	fieldName: 'gateway2WorkshopDocuments',
+	path: 'gateway-2-workshop-documents',
+	fileName: 'test-document.pdf'
+} as const;
+
 export const updatedGateway2ExpectedDateAnswer = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'

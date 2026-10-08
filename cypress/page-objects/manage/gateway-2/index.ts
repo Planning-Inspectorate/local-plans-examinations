@@ -3,3 +3,4 @@ export * from './gateway-2-venue-page.ts';
 export * from './gateway-2-assessor-page.ts';
 export * from './gateway-2-date-page.ts';
 export * from './gateway-2-report-page.ts';
+export * from './gateway-2-workshop-documents-page.ts';

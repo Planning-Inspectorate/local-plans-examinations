@@ -82,7 +82,7 @@
 
     {% if workshopRows.length %}
       <h2 class="govuk-heading-m">Workshop {{ loop.index }} details</h2>
-      <a href="/" class="govuk-link">Cancel workshop {{ loop.index }}</a>
+      <a href="/case/{{ reference }}/gateway-2/set-up-workshop/delete-{{ loop.index }}" class="govuk-link">Cancel workshop {{ loop.index }}</a>
       <p></p>
       {{ govukSummaryList({
         rows: workshopRows

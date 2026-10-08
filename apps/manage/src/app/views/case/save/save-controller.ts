@@ -39,7 +39,6 @@ export abstract class SaveController {
 		if (await this.shouldSaveToSession()) {
 			return { dataWritten: this.saveToSession(answers), writtenToDB: false };
 		}
-		console.log(answers);
 		return { dataWritten: await this.saveToDatabase(answers), writtenToDB: true };
 	}
 

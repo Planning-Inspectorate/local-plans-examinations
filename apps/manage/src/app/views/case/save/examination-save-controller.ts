@@ -22,6 +22,51 @@ export class ExaminationSaveController extends SaveController {
 		}
 		return this.isExaminationHearingQuestion();
 	}
+	/**
+	 * Delete the hearing at the given index
+	 * @param hearingId The hearing id to delete (from the URL, not the index in the hearing list)
+	 * @returns The result of the save operation
+	 */
+	public async deleteHearing(hearingId: number) {
+		const hearingIndex = hearingId - 1;
+		const caseDetails = await this.service.db.case.findUnique({
+			select: {
+				id: true,
+				examinationInfo: {
+					select: {
+						hearings: true
+					}
+				}
+			},
+			where: { reference: this.caseReference }
+		});
+		if (!caseDetails) {
+			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
+		}
+		if (!this.caseId) {
+			this.caseId = caseDetails.id;
+		}
+		if (caseDetails.examinationInfo?.hearings == undefined) {
+			throw Error(`Could not find hearing data for case with reference '${this.caseReference}'`);
+		}
+		const hearingDetails = sortExaminationHearings(caseDetails.examinationInfo?.hearings);
+		if (hearingDetails.length == 0) {
+			throw Error(`There are no hearings to delete for the case with reference '${this.caseReference}'`);
+		}
+		if (hearingIndex < 0) {
+			throw Error(`Given hearing id '${hearingIndex}' must be greater than '0'`);
+		}
+		if (hearingIndex >= hearingDetails.length) {
+			throw Error(
+				`Given hearing id '${hearingIndex}' is greater than the number of hearings '${hearingDetails.length}'`
+			);
+		}
+		hearingDetails.splice(hearingIndex, 1);
+		return this.save({
+			hearings: hearingDetails
+		});
+	}
+
 	protected async prepareData(answers: Record<string, any>) {
 		const caseDetails = await this.service.db.case.findUnique({
 			select: {

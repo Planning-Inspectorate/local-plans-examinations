@@ -6,6 +6,7 @@ import {
 	createOverviewJourney,
 	createGateway1Journey,
 	createGateway2Journey,
+	createGateway2WorkshopJourney,
 	createExaminationJourney,
 	createGateway3Journey
 } from './journey.ts';
@@ -32,6 +33,19 @@ function createGateway2JourneyForTest() {
 	return createGateway2Journey(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', { workshops: [] }),
+		questions
+	);
+}
+
+function createGateway2WorkshopJourneyForTest(workshop: Record<string, unknown>) {
+	return createGateway2WorkshopJourney(
+		{
+			baseUrl: '/case/LP-TEST-001',
+			params: { reference: 'LP-TEST-001' } as any,
+			session: {},
+			url: '/gateway-2/set-up-workshop/workshop/gateway-2-location-type-1'
+		} as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', { workshops: [workshop] }),
 		questions
 	);
 }
@@ -123,6 +137,46 @@ describe('gateway2Journey', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/gateway-2');
 		});
+	});
+});
+
+describe('gateway2WorkshopJourney', () => {
+	it('only shows venue details for in-person or hybrid workshops', () => {
+		const remoteJourney = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'remote',
+			workshopLocationKnown: 'yes'
+		});
+		const venueQuestion = remoteJourney.sections[0].questions.find(
+			(question) => question.fieldName === 'gateway2WorkshopVenueAddress-1'
+		);
+
+		assert.equal(venueQuestion?.shouldDisplay(remoteJourney.response), false);
+
+		const hybridJourney = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'hybrid',
+			workshopLocationKnown: 'yes'
+		});
+
+		assert.equal(venueQuestion?.shouldDisplay(hybridJourney.response), true);
+	});
+
+	it('only shows remote meeting details for remote or hybrid workshops', () => {
+		const inPersonJourney = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'in-person',
+			remoteMeetingLinkKnown: 'yes'
+		});
+		const remoteMeetingQuestion = inPersonJourney.sections[0].questions.find(
+			(question) => question.fieldName === 'remoteMeetingLink-1'
+		);
+
+		assert.equal(remoteMeetingQuestion?.shouldDisplay(inPersonJourney.response), false);
+
+		const hybridJourney = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'hybrid',
+			remoteMeetingLinkKnown: 'yes'
+		});
+
+		assert.equal(remoteMeetingQuestion?.shouldDisplay(hybridJourney.response), true);
 	});
 });
 
