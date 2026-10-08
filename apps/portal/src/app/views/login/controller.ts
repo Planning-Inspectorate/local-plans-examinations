@@ -64,15 +64,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt with unrecognised email');
-				return res.render('views/login/enter-email-page.njk', {
-					pageTitle: 'Sign-in',
-					pageHeading: 'Sign-in',
-					emailQuestionText: 'What is your email address?',
-					backLinkUrl: `/`,
-					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
-					errorSummaryTitle: 'There is a problem',
-					errorSummary: [{ text: 'We did not recognise that email address', href: '#email' }]
-				});
+				req.session.email = sanitisedEmail;
+				return res.redirect(`${req.baseUrl}/enter-code`);
 			}
 
 			const otpRecord = await db.oneTimePassword.findUnique({
@@ -86,17 +79,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info({ email: sanitisedEmail }, 'Login attempt while locked out');
-				return res.render('views/login/enter-email-page.njk', {
-					pageTitle: 'Sign-in',
-					pageHeading: 'Sign-in',
-					emailQuestionText: 'What is your email address?',
-					backLinkUrl: `/`,
-					errors: { email: { msg: 'You have been locked out for 24 hours due to too many failed attempts' } },
-					errorSummaryTitle: 'Your account is temporarily locked',
-					errorSummary: [
-						{ text: 'You have been locked out for 24 hours due to too many failed attempts', href: '#email' }
-					]
-				});
+				req.session.email = sanitisedEmail;
+				return res.redirect(`${req.baseUrl}/enter-code`);
 			} else if (otpRecord && otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now()) {
 				await db.oneTimePassword.update({
 					where: { email: sanitisedEmail },
@@ -235,11 +219,9 @@ export function buildSubmitOtpPage(service: PortalService) {
 				return res.render('views/login/enter-otp.njk', {
 					pageTitle: 'Enter your one-time password',
 					pageHeading: 'Enter your one-time password',
-					errors: { otp: { msg: 'Enter the code we sent to your email address' } },
+					errors: { otp: { msg: enterCorrectCodeMessage } },
 					errorSummaryTitle: errorTitle,
-					errorSummary: [
-						{ text: 'We could not find a code for your email address. Go back and try again.', href: '#otp' }
-					],
+					errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
 				});
@@ -380,6 +362,12 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 		}
 
 		try {
+			const caseRecord = await db.case.findFirst({ where: { email, deletedDate: null } });
+			if (!caseRecord) {
+				logger.info({ email }, 'New code requested for unrecognised email');
+				return res.redirect(`${req.baseUrl}/enter-code`);
+			}
+
 			// Delete the existing OTP record to invalidate it
 			await db.oneTimePassword.delete({
 				where: { email }
@@ -407,7 +395,6 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 			});
 
 			// Send the new OTP email
-			const caseRecord = await db.case.findFirst({ where: { email } });
 			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
 			await sendAuthCodeNotification(service, email, {
 				authCode: otp,
