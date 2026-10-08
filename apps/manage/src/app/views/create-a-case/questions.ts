@@ -39,13 +39,13 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'planTitle',
 		url: 'plan-title',
 		title: 'Plan title',
-		validators: [new RequiredValidator('Input a plan title')],
+		validators: [new RequiredValidator('Enter a plan title')],
 		inputAttributes: { 'data-cy': 'plan-title-input' }
 	},
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local Plan' },
+			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local plan' },
 			{ value: PLAN_TYPE_ID.OTHER, text: 'Other' }
 		],
 		question: 'What is the plan type?',
@@ -63,17 +63,20 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'lpa-3', text: 'Local Planning Authority 3' },
 			{ value: 'lpa-4', text: 'Local Planning Authority 4' }
 		],
-		question: 'Select the Local Planning Authority for this plan',
+		question: 'Select a planning authority',
 		fieldName: 'lpa',
 		url: 'select-lpa',
 		title: 'Local Planning Authority',
-		validators: [new RequiredValidator('Select a Local Planning Authority')],
+		validators: [new RequiredValidator('You need to select a planning authority')],
 		disableAccessibleAutocomplete: true
 	},
 	checkLpas: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
-		title: 'Local Planning Authorities',
+		title: 'Planning authorities',
 		titleSingular: 'Local Planning Authority',
+		singularLowerCase: 'planning authority',
+		multipleLowerCase: 'planning authorities',
+		emptyListText: 'No planning authorities added',
 		showManageListQuestions: true,
 		fieldName: 'checkLpas',
 		url: 'check-lpas',
@@ -82,7 +85,7 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new ManageListValidator({
 				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one Local Planning Authority' }
+				errorMessages: { minimumAnswers: 'You need to add a planning authority' }
 			})
 		]
 	},
@@ -125,19 +128,19 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 				fields: [
 					{
 						fieldName: 'firstName',
-						validators: [new RequiredValidator('Input a first name')]
+						validators: [new RequiredValidator('Enter a first name')]
 					},
 					{
 						fieldName: 'lastName',
-						validators: [new RequiredValidator('Input a last name')]
+						validators: [new RequiredValidator('Enter a last name')]
 					},
 					{
 						fieldName: 'email',
-						validators: [new RequiredValidator('Input an email address')]
+						validators: [new RequiredValidator('Enter an email address')]
 					},
 					{
 						fieldName: 'lpaContact',
-						validators: [new RequiredValidator('Select the organisation for this contact')]
+						validators: [new RequiredValidator('Select a planning authority')]
 					}
 				]
 			})
@@ -151,6 +154,9 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
 		title: 'Contact details',
 		titleSingular: 'Contact',
+		singularLowerCase: 'contact',
+		multipleLowerCase: 'contacts',
+		emptyListText: 'No contacts added',
 		showManageListQuestions: true,
 		fieldName: 'contactDetails',
 		url: 'check-contact-details',
@@ -159,7 +165,7 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new ManageListValidator({
 				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one contact' }
+				errorMessages: { minimumAnswers: 'You need to add a contact' }
 			})
 		]
 	},
@@ -172,19 +178,19 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 				label: 'Date the Notice of Intention to Commence Plan Making was published (optional)',
 				hint: 'For example, 27 3 2007'
 			},
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 expected date (optional)' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 expected date (optional)' },
-			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 expected date (optional)' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway1Date', label: 'Gateway 1 submission expected (optional)' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway2Date', label: 'Gateway 2 submission expected (optional)' },
+			{ type: COMPONENT_TYPES.DATE, fieldName: 'gateway3Date', label: 'Gateway 3 submission expected (optional)' },
 			{
 				type: COMPONENT_TYPES.DATE,
 				fieldName: 'expectedSubmissionForExaminationDate',
-				label: 'Expected submission for examination date (optional)'
+				label: 'Examination submission expected (optional)'
 			}
 		],
-		question: 'Enter dates for key stages of the local plan',
+		question: 'Plan timetable',
 		fieldName: 'keyStageDates',
 		url: 'key-stage-dates',
-		title: 'Dates',
+		title: 'Timetable',
 		listSeparate: true,
 		validators: [
 			new MultiFieldInputValidator({
@@ -199,19 +205,19 @@ const createACaseQuestions: Record<string, ManageQuestionConfig> = {
 					},
 					{
 						fieldName: 'gateway1Date',
-						validators: [new DateValidator('Gateway 1 estimated date', { optional: true })]
+						validators: [new DateValidator('Gateway 1 submission expected', { optional: true })]
 					},
 					{
 						fieldName: 'gateway2Date',
-						validators: [new DateValidator('Gateway 2 estimated date', { optional: true })]
+						validators: [new DateValidator('Gateway 2 submission expected', { optional: true })]
 					},
 					{
 						fieldName: 'gateway3Date',
-						validators: [new DateValidator('Gateway 3 estimated date', { optional: true })]
+						validators: [new DateValidator('Gateway 3 submission expected', { optional: true })]
 					},
 					{
 						fieldName: 'expectedSubmissionForExaminationDate',
-						validators: [new DateValidator('Expected submission for examination date', { optional: true })]
+						validators: [new DateValidator('Examination submission expected', { optional: true })]
 					}
 				]
 			})

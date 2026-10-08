@@ -47,7 +47,7 @@ describe('Create a case', () => {
 				checkYourAnswersPage.verifyLoaded();
 				checkYourAnswersPage.verifyAnswers(data);
 				checkYourAnswersPage.verifyChangeLinksNavigateToExpectedPages(data);
-				checkYourAnswersPage.openChangeLinkFor('Gateway 1 expected date');
+				checkYourAnswersPage.openChangeLinkFor('Gateway 1 submission expected');
 				keyStageDatesPage.verifyLoaded();
 				keyStageDatesPage.verifyKeyStageDatesPopulated(data.dates);
 				cy.go('back');
@@ -106,7 +106,7 @@ describe('Create a case', () => {
 		{ tags: ['regression'] },
 		() => {
 			loadCreateCaseData().then((data) => {
-				const rowName = 'Local Planning Authorities';
+				const rowName = 'Planning authorities';
 				const addedLpa = {
 					value: 'Local Planning Authority 3',
 					label: 'lpaContact-3'

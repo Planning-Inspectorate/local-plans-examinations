@@ -53,7 +53,7 @@ export class CheckYourAnswersPage extends BasePage {
 				changeHref: '/create-a-case/case-details/plan-type'
 			},
 			{
-				key: 'Local Planning Authorities',
+				key: 'Planning authorities',
 				values: lpaArray.map((l) => l.value),
 				changeHref: '/create-a-case/case-details/check-lpas'
 			},
@@ -71,27 +71,27 @@ export class CheckYourAnswersPage extends BasePage {
 			{
 				key: 'Date the Notice of Intention to Commence Plan Making was published',
 				values: [data.dates.intentionToCommenceDate.display],
-				changeHref: '/create-a-case/dates/key-stage-dates'
+				changeHref: '/create-a-case/timetable/key-stage-dates'
 			},
 			{
-				key: 'Gateway 1 expected date',
+				key: 'Gateway 1 submission expected',
 				values: [data.dates.gateway1Date.display],
-				changeHref: '/create-a-case/dates/key-stage-dates'
+				changeHref: '/create-a-case/timetable/key-stage-dates'
 			},
 			{
-				key: 'Gateway 2 expected date',
+				key: 'Gateway 2 submission expected',
 				values: [data.dates.gateway2Date.display],
-				changeHref: '/create-a-case/dates/key-stage-dates'
+				changeHref: '/create-a-case/timetable/key-stage-dates'
 			},
 			{
-				key: 'Gateway 3 expected date',
+				key: 'Gateway 3 submission expected',
 				values: [data.dates.gateway3Date.display],
-				changeHref: '/create-a-case/dates/key-stage-dates'
+				changeHref: '/create-a-case/timetable/key-stage-dates'
 			},
 			{
-				key: 'Expected submission for examination date',
+				key: 'Examination submission expected',
 				values: [data.dates.expectedSubmissionForExaminationDate.display],
-				changeHref: '/create-a-case/dates/key-stage-dates'
+				changeHref: '/create-a-case/timetable/key-stage-dates'
 			}
 		];
 	}
