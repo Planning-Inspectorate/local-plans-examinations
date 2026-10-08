@@ -433,7 +433,7 @@ export class DocumentUtil {
 	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {
 		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId);
 		const blobPath = blobDetails.blobPath;
-		const fileName = blobDetails.fileName.trim();
+		const fileName = blobDetails.fileName;
 		const blobStorageUtil = service.createFileStorage(blobPath);
 		await blobStorageUtil.downloadToExpressResponse(blobPath, fileName, res);
 	}
