@@ -14,6 +14,12 @@ export class ExaminationSaveController extends SaveController {
 		return !!matchedQuestion;
 	}
 	protected async shouldSaveToSession() {
+		const question = String(this.req.params.question);
+
+		if (question.startsWith('examination-hearing-end-date-')) {
+			console.log('here');
+			return false;
+		}
 		return this.isExaminationHearingQuestion();
 	}
 	protected async prepareData(answers: Record<string, any>) {
@@ -73,7 +79,9 @@ export class ExaminationSaveController extends SaveController {
 				hearingAddressLine: `hearingAddressLine-${hearingId}`,
 				hearingAddressLine2: `hearingAddressLine2-${hearingId}`,
 				hearingTownOrCity: `hearingTownOrCity-${hearingId}`,
-				hearingPostcode: `hearingPostcode-${hearingId}`
+				hearingPostcode: `hearingPostcode-${hearingId}`,
+				hearingDuration: `hearingDuration-${hearingId}`,
+				hearingEndDate: `hearingEndDate-${hearingId}`
 			};
 			Object.entries(hearingFieldsToAnswerMap).forEach(([hearingField, answerField]) => {
 				const questionAnswer = answers[answerField];
@@ -150,7 +158,9 @@ export class ExaminationSaveController extends SaveController {
 				hearingAddressLine: e.hearingAddressLine,
 				hearingAddressLine2: e.hearingAddressLine2,
 				hearingTownOrCity: e.hearingTownOrCity,
-				hearingPostcode: e.hearingPostcode
+				hearingPostcode: e.hearingPostcode,
+				hearingDuration: e.hearingDuration,
+				hearingEndDate: e.hearingEndDate
 			}));
 			if (hearingsCleaned.length > NUM_EXAMINATION_HEARING_QUESTIONS) {
 				throw Error('Max number of hearings has been exceeded');

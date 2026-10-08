@@ -252,6 +252,8 @@ model ExaminationHearing {
   hearingAddressLine2           String?
   hearingTownOrCity             String?
   hearingPostcode               String?
+  hearingDuration               String?
+  hearingEndDate                DateTime?
 }
 
 /// Local planning authority linked to one or more cases.

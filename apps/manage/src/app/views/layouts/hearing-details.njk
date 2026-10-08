@@ -14,7 +14,7 @@
         actions: {
           items: [
             {
-              href: "/case/" + reference + "/gateway-2/set-up-hearing/check-your-answers-" + (loop.index),
+              href: "/case/" + reference + "/examination/set-up-hearing/check-your-answers-" + (loop.index),
               text: "Change"
             }
           ]
@@ -74,6 +74,52 @@
       }) %}
     {% endif %}
 
+    {% if hearing.hearingDuration %}
+      {% set durationValueText = hearing.hearingDuration %}
+      {% set durationActionsText = "Change" %}
+    {% else %}
+      {% set durationValueText = "Not started" %}
+      {% set durationActionsText = "Add" %}
+    {% endif %}
+
+
+    {% if hearing.hearingDate %}
+      {% set _ = hearingRows.push({
+        key: { text: "Duration" },
+        value: { text: durationValueText },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination/set-up-hearing/hearing/examination-hearing-duration-" + (loop.index),
+              text: durationActionsText
+            }
+          ]
+        }
+      }) %}
+    {% endif %}
+
+    {% if hearing.hearingEndDate %}
+      {% set dateValueText = hearing.hearingEndDate %}
+      {% set dateActionsText = "Change" %}
+    {% else %}
+      {% set dateValueText = "Not started" %}
+      {% set dateActionsText = "Add" %}
+    {% endif %}
+
+    {% if hearing.hearingDate %}
+      {% set _ = hearingRows.push({
+        key: { text: "End date" },
+        value: { text: dateValueText },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination/set-up-hearing/hearing/examination-hearing-end-date-" + loop.index,
+              text: dateActionsText
+            }
+          ]
+        }
+      }) %}
+    {% endif %}
     {% if hearingRows.length %}
       <h2 class="govuk-heading-m">Hearing {{ loop.index }} details</h2>
       <a href="/" class="govuk-link">Cancel hearing {{ loop.index }}</a>
@@ -83,6 +129,5 @@
       }) }}
     {% endif %}
   {% endfor %}
-
 
 {% endmacro %}
