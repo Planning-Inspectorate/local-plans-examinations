@@ -1,7 +1,6 @@
 import { GatewayBasePage } from '../base/gateway-page.ts';
 import {
 	gateway2DateAnswers,
-	workshopVenueAnswer,
 	gateway2AssessorAnswer,
 	gateway2ExpectedAnswers,
 	gateway2Report
@@ -9,7 +8,6 @@ import {
 
 const gateway2Rows = [
 	...Object.values(gateway2DateAnswers).map(({ row }) => row),
-	workshopVenueAnswer.row,
 	gateway2AssessorAnswer.row,
 	gateway2Report.row
 ];
@@ -19,7 +17,6 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 		row,
 		new RegExp(`^/case/.+/gateway-2/${section}/${path}$`)
 	]),
-	[workshopVenueAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${workshopVenueAnswer.path}$`)],
 	[gateway2AssessorAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${gateway2AssessorAnswer.path}$`)],
 	[gateway2Report.row, new RegExp(`^/case/.+/gateway-2/report/${gateway2Report.path}$`)]
 ];

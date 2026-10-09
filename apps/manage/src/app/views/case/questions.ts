@@ -24,6 +24,7 @@ import {
 import {
 	DSA_CHECKED_ID,
 	GATEWAY_3_DECISION_ID,
+	NUM_GW2_WORKSHOP_QUESTIONS,
 	NUM_GW3_SUBMISSIONS_QUESTIONS,
 	PLAN_BAND_ID,
 	PLAN_TYPE_ID
@@ -36,6 +37,8 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
+import { sortGateway2Workshops } from '#util/util.ts';
+import { formatDateToString, parseDate } from '../../../app/util/date.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -67,6 +70,28 @@ const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'mpeg',
+	'mp3',
+	'mp4',
+	'mov',
+	'png',
+	'tif',
+	'tiff'
+];
+
+const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+
+const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
 	'docx',
@@ -153,6 +178,221 @@ for (let i = 1; i < NUM_GW3_SUBMISSIONS_QUESTIONS; i++) {
 			];
 		}
 		gateway3Questions[`${key}-${i}`] = questionConfigCopy;
+	}
+}
+
+const gateway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
+	gateway2WorkshopDateAndTime: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.DATE,
+				fieldName: 'workshopDate',
+				label: 'Date',
+				caption: 'For example, 21 7 2024',
+				title: 'Gateway 2 workshop date',
+				attributes: { 'data-cy': 'gateway-2-workshop-date' }
+			},
+			{
+				type: 'time',
+				fieldName: 'workshopTime',
+				label: 'Start time',
+				caption: 'For example, 14 30',
+				title: 'Gateway 2 workshop time',
+				attributes: { 'data-cy': 'gateway-2-workshop-time' }
+			},
+			{
+				type: 'time',
+				fieldName: 'workshopEndTime',
+				label: 'End time (optional)',
+				title: 'Gateway 2 workshop end time',
+				attributes: { 'data-cy': 'gateway-2-workshop-end-time' }
+			}
+		],
+		question: 'Gateway 2 workshop date and time',
+		fieldName: 'gateway2WorkshopDateAndTime',
+		url: 'gateway-2-workshop-date-and-time',
+		title: 'Gateway 2 workshop date and time'
+	},
+	gateway2WorkshopExpectedDays: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you know the expected number of days to carry out the workshop?',
+		fieldName: 'workshopExpectedDaysKnown',
+		url: 'gateway-2-workshop-expected-days',
+		title: 'Gateway 2 expected number of days',
+		options: [
+			{
+				value: 'yes',
+				text: 'Yes',
+				conditional: {
+					question: 'Number of days',
+					type: 'number',
+					fieldName: 'workshopExpectedDays'
+				}
+			},
+			{
+				value: 'no',
+				text: 'No'
+			}
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2WorkshopLocationType: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Is the workshop in-person, hybrid or remote?',
+		fieldName: 'workshopLocationType',
+		url: 'gateway-2-location-type',
+		title: 'Gateway 2 location type',
+		options: [
+			{ value: 'in-person', text: 'In-person' },
+			{ value: 'hybrid', text: 'Hybrid' },
+			{ value: 'remote', text: 'Remote' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2WorkshopLocationKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you know the address of where the workshop will take place?',
+		fieldName: 'workshopLocationKnown',
+		url: 'gateway-2-workshop-location-known',
+		title: 'Gateway 2 location known',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2WorkshopVenueAddress: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopVenueName',
+				label: 'Venue name',
+				title: 'Gateway 2 workshop venue name',
+				attributes: { 'data-cy': 'gateway-2-workshop-venue-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopAddressLine',
+				label: 'Address line 1',
+				title: 'Gateway 2 workshop address line 1',
+				attributes: { 'data-cy': 'gateway-2-workshop-address-line-1' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopAddressLine2',
+				label: 'Address line 2 (optional)',
+				title: 'Gateway 2 workshop address line 2',
+				attributes: { 'data-cy': 'gateway-2-workshop-address-line-2' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopTownOrCity',
+				label: 'Town or city',
+				title: 'Gateway 2 workshop town or city',
+				attributes: { 'data-cy': 'gateway-2-workshop-town-or-city' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'workshopPostcode',
+				label: 'Postcode',
+				title: 'Gateway 2 workshop postcode',
+				attributes: { 'data-cy': 'gateway-2-workshop-postcode' }
+			}
+		],
+		question: 'Workshop venue address',
+		fieldName: 'gateway2WorkshopVenueAddress',
+		url: 'gateway-2-workshop-venue-address',
+		title: 'Gateway 2 workshop venue address'
+	},
+	gateway2RemoteMeetingLinkKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you have a remote meeting link?',
+		fieldName: 'remoteMeetingLinkKnown',
+		url: 'gateway-2-remote-meeting-link-known',
+		title: 'Gateway 2 remote meeting link known',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	gateway2RemoteMeetingLink: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'What is the remote meeting link?',
+		fieldName: 'remoteMeetingLink',
+		url: 'gateway-2-remote-meeting-link',
+		title: 'Gateway 2 remote meeting link',
+		validators: [new RequiredValidator('Input a remote meeting link')]
+	}
+};
+export const gatway2WorkshopBaseUrls = Object.values(gateway2WorkshopBaseQuestions)
+	.map((value) => value.url)
+	.filter((value) => value != undefined);
+
+// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshops to be made
+const gateway2WorkshopQuestions: Record<string, ManageQuestionConfig> = {};
+for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) {
+	for (const key in gateway2WorkshopBaseQuestions) {
+		const questionConfigCopy = { ...gateway2WorkshopBaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${workshopId}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${workshopId}`;
+		gateway2WorkshopQuestions[`${key}-${workshopId}`] = questionConfigCopy;
+		if (questionConfigCopy.type == CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT) {
+			const inputFields = structuredClone(questionConfigCopy.inputFields);
+			if (inputFields) {
+				for (let inputFieldIndex = 0; inputFieldIndex < inputFields.length; inputFieldIndex++) {
+					inputFields[inputFieldIndex].url = `${inputFields[inputFieldIndex].url}-${workshopId}`;
+					inputFields[inputFieldIndex].fieldName = `${inputFields[inputFieldIndex].fieldName}-${workshopId}`;
+				}
+				questionConfigCopy.inputFields = inputFields;
+			}
+			if (questionConfigCopy.fieldName.startsWith('gateway2WorkshopDateAndTime')) {
+				questionConfigCopy.validators = [
+					new MultiFieldInputValidator({
+						fields: [
+							{
+								fieldName: `workshopDate-${workshopId}`,
+								validators: [new DateValidator('Input a valid date')]
+							},
+							{
+								fieldName: `workshopTime-${workshopId}_hour`,
+								validators: [new RequiredValidator(' a valid time')]
+							},
+							{
+								fieldName: `workshopTime-${workshopId}_minute`,
+								validators: [new RequiredValidator(' a valid time')]
+							}
+						]
+					})
+				];
+			}
+			if (questionConfigCopy.fieldName.startsWith('gateway2WorkshopVenueAddress')) {
+				questionConfigCopy.validators = [
+					new MultiFieldInputValidator({
+						fields: [
+							{
+								fieldName: `workshopVenueName-${workshopId}`,
+								validators: [new RequiredValidator('Input a workshop venue name')]
+							},
+							{
+								fieldName: `workshopAddressLine-${workshopId}`,
+								validators: [new RequiredValidator('Input a workshop address')]
+							},
+							{
+								fieldName: `workshopTownOrCity-${workshopId}`,
+								validators: [new RequiredValidator('Input the town or city')]
+							},
+							{
+								fieldName: `workshopPostcode-${workshopId}`,
+								validators: [new RequiredValidator('Input the postcode')]
+							}
+						]
+					})
+				];
+			}
+		}
 	}
 }
 
@@ -641,27 +881,43 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorAppointmentDate',
 		url: 'gateway-2-assessor-appointed',
 		title: 'Appointed',
-		validators: [new DateValidator(' a valid date')],
+		validators: [new DateValidator(' Input a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor-appointed' }
 	},
-	workshopDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When is the Gateway 2 workshop?',
-		fieldName: 'workshopDate',
-		url: 'gateway-2-workshop-date',
-		title: 'Workshop date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-workshop-date' }
+	gateway2WorkshopDocuments: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Workshop documents',
+		question: 'Upload workshop documents',
+		fieldName: 'gateway2WorkshopDocuments',
+		url: 'gateway-2-workshop-documents',
+		notStartedText: 'Not provided',
+		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: undefined, //written to in journey.ts
+			introduction: 'Upload a file',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES)}.<br><br>The total size of your uploaded files must be smaller than 1GB.`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
+		},
+		validators: [
+			new FileUploadRequiredValidator(
+				'gateway2WorkshopDocuments',
+				'Upload at least one tbd workshop document before continuing'
+			)
+		]
 	},
-	workshopVenue: {
-		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-		question: 'What is the venue for the Gateway 2 workshop?',
-		fieldName: 'workshopVenue',
-		url: 'gateway-2-workshop-venue',
-		title: 'Workshop venue',
-		validators: [new RequiredValidator('Enter a venue name')],
-		inputAttributes: { 'data-cy': 'gateway-2-workshop-venue' }
-	},
+	...gateway2WorkshopQuestions,
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',
@@ -992,3 +1248,89 @@ export async function getQuestions(
 	await updateQuestionsWithOptions(service, req, questions);
 	return questions;
 }
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('gateway2WorkshopDateAndTime'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
+			const workshopId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			let workshopDateValue = workshopDetails.workshopDate;
+			if (typeof workshopDetails.workshopDate == 'string') {
+				workshopDateValue = parseDate(workshopDateValue);
+			}
+			const workshopDate = {
+				key: 'workshop date',
+				value:
+					workshopDateValue && typeof workshopDateValue != 'string'
+						? formatDateToString(workshopDateValue)
+						: workshopDetails.workshopDate,
+				action: this.getAction(sectionSegment, journey, workshopDateValue)
+			};
+
+			const workshopStartTime = {
+				key: 'workshop time',
+				value: workshopDetails.workshopTime,
+				action: this.getAction(sectionSegment, journey, workshopDetails.workshopTime)
+			};
+
+			if (workshopDetails.workshopEndTime != null) {
+				const workshopEndTime = {
+					key: 'workshop time',
+					value: workshopDetails.workshopEndTime,
+					action: this.getAction(sectionSegment, journey, workshopDetails.workshopEndTime)
+				};
+				return [workshopDate, workshopStartTime, workshopEndTime];
+			} else {
+				return [workshopDate, workshopStartTime];
+			}
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('gateway2WorkshopExpectedDays'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const workshopId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const expectedDaysKnown = {
+				key: 'Do you know the estimated number of days?',
+				value: workshopDetails.workshopExpectedDaysKnown,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			if (workshopDetails.workshopExpectedDaysKnown != 'no') {
+				const expectedDays = {
+					key: 'Estimated number of days',
+					value: workshopDetails.workshopExpectedDays,
+					action: this.getAction(sectionSegment, journey, answer)
+				};
+
+				return [expectedDaysKnown, expectedDays];
+			} else {
+				return [expectedDaysKnown];
+			}
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('gateway2WorkshopLocationType'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const workshopId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const locationType = {
+				key: 'Gateway 2 location type',
+				value: workshopDetails.workshopLocationType,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			return [locationType];
+		};
+	});

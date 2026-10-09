@@ -27,12 +27,6 @@ export const assessorDateOfAppointmentPage = new DateQuestionPage(
 	gateway2DateAnswers.assessorDateOfAppointment.heading
 );
 
-export const workshopDatePage = new DateQuestionPage(
-	gateway2QuestionPath(gateway2DateAnswers.workshopDate.path),
-	gateway2DateAnswers.workshopDate.fieldName,
-	gateway2DateAnswers.workshopDate.heading
-);
-
 export const reportPublishedByLPADatePage = new DateQuestionPage(
 	gateway2QuestionPath(gateway2DateAnswers.reportPublishedDate.path),
 	gateway2DateAnswers.reportPublishedDate.fieldName,

@@ -3,10 +3,10 @@ import { DocumentUpload } from '../../components/document-upload.ts';
 
 export class DocumentUploadPage extends BasePage {
 	private readonly heading: string;
-	private readonly caption: string;
+	private readonly caption?: string;
 	private readonly documentUpload: DocumentUpload;
 
-	constructor(path: string | RegExp, fieldName: string, heading: string, caption: string) {
+	constructor(path: string | RegExp, fieldName: string, heading: string, caption?: string) {
 		super(path);
 		this.heading = heading;
 		this.caption = caption;
@@ -42,7 +42,9 @@ export class DocumentUploadPage extends BasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(this.heading);
-		this.verifyCaptionL(this.caption);
+		if (this.caption) {
+			this.verifyCaptionL(this.caption);
+		}
 		this.documentUpload.chooseFilesButton.should('be.visible');
 	}
 }

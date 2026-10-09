@@ -38,6 +38,14 @@ describe('FileUploaderQuestion', () => {
 		assert.equal(row.value, 'Not started');
 	});
 
+	it('uses the configured text for a missing file upload answer', () => {
+		const question = buildQuestion({ formatSummaryValue: undefined, notStartedText: 'Not provided' });
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), []);
+
+		assert.equal(row.value, 'Not provided');
+	});
+
 	it('formats one uploaded file as a download link', () => {
 		const question = buildQuestion();
 
