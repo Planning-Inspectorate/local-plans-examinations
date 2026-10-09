@@ -35,7 +35,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '13', folderName: 'gateway-2-report' },
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
-	{ id: '16', folderName: 'gateway-3-document-1' }
+	{ id: '16', folderName: 'gateway-3-document-1' },
+	{ id: '17', folderName: 'gateway-2-workshop-documents' }
 ];
 
 function createService(): any {
@@ -43,7 +44,23 @@ function createService(): any {
 		case: {
 			update: mock.fn(async () => ({})),
 			findUnique: mock.fn(async () => ({
-				id: CASE_ID
+				id: CASE_ID,
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				},
+				examinationInfo: {
+					hearings: []
+				}
 			}))
 		},
 		contact: {
@@ -1055,7 +1072,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 		ctx.service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
 			caseId: CASE_ID,
-			assessorName: 'Alex Assessor'
+			assessorName: 'Alex Assessor',
+			workshops: []
 		}));
 
 		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
@@ -1064,6 +1082,9 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.gateway2Info.findUnique.mock.calls[0].arguments[0], {
+			include: {
+				workshops: true
+			},
 			where: {
 				caseId: CASE_ID
 			}
@@ -1172,6 +1193,9 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
+			include: {
+				hearings: true
+			},
 			where: {
 				caseId: CASE_ID
 			}
@@ -1348,6 +1372,7 @@ describe('buildCheckReportMiddleware', () => {
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
+				notificationTextLPA: undefined,
 				notificationPreviewTemplate: 'signed-sla',
 				question: 'signed-sla',
 				section: 'gateway-1',
@@ -1405,6 +1430,7 @@ describe('buildCheckReportMiddleware', () => {
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla-complete',
+				notificationTextLPA: undefined,
 				question: 'signed-sla',
 				section: 'gateway-1',
 				submitButtonText: 'Confirm and issue notification',
@@ -1460,6 +1486,7 @@ describe('buildCheckReportMiddleware', () => {
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
@@ -1515,6 +1542,7 @@ describe('buildCheckReportMiddleware', () => {
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report-complete',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',

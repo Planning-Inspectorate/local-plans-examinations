@@ -2,11 +2,6 @@ import {
 	addCaseNavigation,
 	buildGetJourneyMiddleware,
 	updateCaseField,
-	type UpdateFunction,
-	updateGateway1,
-	updateGateway2,
-	updateGateway3,
-	updateExamination,
 	getDeleteCase,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
@@ -23,10 +18,17 @@ import {
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	handleMulterFileSizeError,
-	preprocessQuestionProperties
+	preprocessQuestionProperties,
+	issueGateway2WorkshopDocuments
 } from './controller.ts';
+import { type SaveController } from './save/save-controller.ts';
+import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
+import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
+import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
+import { ExaminationSaveController } from './save/examination-save-controller.ts';
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
+import * as authSession from '@planning-inspectorate/core/auth';
 import {
 	buildGetJourney,
 	buildList,
@@ -35,15 +37,17 @@ import {
 	validate,
 	validationErrorHandler,
 	type Journey,
-	type JourneyResponse
+	JourneyResponse
 } from '@planning-inspectorate/dynamic-forms';
 import { questions, getQuestions } from './questions.ts';
 import {
 	createOverviewJourney,
 	createGateway1Journey,
 	createGateway2Journey,
+	createGateway2WorkshopJourney,
 	createGateway3Journey,
-	createExaminationJourney
+	createExaminationJourney,
+	createExaminationHearingJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -57,6 +61,13 @@ import lusca from 'lusca';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
+import { loadLpaOptions } from '../../util/options-helper.ts';
+import {
+	saveLastQuestionUrl,
+	setBackLinkFromSession,
+	setAsEditingFromCya,
+	shouldReturnToCya
+} from '../create-a-case/index.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -73,7 +84,274 @@ interface CaseJourneyConfig {
 	createJourney: JourneyFactory;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
-	updateFunction?: UpdateFunction;
+	saveController?: new (...args: any[]) => SaveController;
+}
+
+function registerGateway2WorkshopJourney(
+	router: IRouter,
+	service: ManageService,
+	config: CaseJourneyConfig,
+	updateCase: ReturnType<typeof updateCaseField>
+): void {
+	const { createJourney } = config;
+
+	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
+		const loaded = await loadLpaOptions(service);
+
+		if (loaded.length > 0) {
+			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+		}
+
+		next();
+	});
+
+	const getWorkshopJourneyResponse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference },
+			select: {
+				id: true,
+				planTitle: true
+			}
+		});
+
+		if (!caseRecord) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		const gateway2Data = await service.db.gateway2Info.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				workshops: true
+			}
+		});
+
+		res.locals.planTitle = caseRecord.planTitle;
+		res.locals.reference = reference;
+
+		const journeyResponse = new JourneyResponse(COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID, '', gateway2Data);
+
+		res.locals.journeyResponse = journeyResponse;
+		if (!res.locals.backLink) {
+			res.locals.backLink = req.baseUrl + '/gateway-2';
+		}
+
+		next();
+	});
+
+	const completeWorkshop = asyncHandler(async (req: Request, res: Response) => {
+		const reference = getParam(req.params.reference);
+
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		//const workshopId = String(req.url).split('-')[-1];
+		//reqCopy.params.question = `check-your-answers-${workshopId}`;
+		await new Gateway2SaveController(service, req, reference).prepareAndSave({});
+		await updateCaseField(service);
+
+		await service.db.case.update({
+			where: { reference },
+			data: {
+				caseHistories: {
+					create: {
+						event: 'Workshop set up',
+						username: currentUser
+					}
+				}
+			}
+		});
+
+		req.session.alertMessage = 'Workshop set up';
+		req.session.alertMessageStatus = 'success';
+		if (req.session.lastQuestionUrl) {
+			delete req.session.lastQuestionUrl;
+		}
+
+		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
+	});
+
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+
+	router.get(
+		'/gateway-2/set-up-workshop/check-your-answers-*workshopId',
+		buildLpaOptions,
+		getWorkshopJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		setAsEditingFromCya,
+		buildList({ notificationPreviewTemplate: 'gateway-2-report' })
+	);
+
+	router.post(
+		'/gateway-2/set-up-workshop/check-your-answers-*workshopId',
+		buildLpaOptions,
+		getWorkshopJourneyResponse,
+		getJourney,
+		saveLastQuestionUrl,
+		completeWorkshop
+	);
+
+	router.get(
+		'/gateway-2/set-up-workshop/:section/:question',
+		buildLpaOptions,
+		getWorkshopJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		question
+	);
+
+	router.post(
+		'/gateway-2/set-up-workshop/:section/:question',
+		buildLpaOptions,
+		getWorkshopJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		saveLastQuestionUrl,
+		redirectAfterCyaEdit(updateCase)
+	);
+}
+
+function registerExaminationHearingJourney(
+	router: IRouter,
+	service: ManageService,
+	config: CaseJourneyConfig,
+	updateCase: ReturnType<typeof updateCaseField>
+): void {
+	const { createJourney } = config;
+
+	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
+		const loaded = await loadLpaOptions(service);
+
+		if (loaded.length > 0) {
+			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+		}
+
+		next();
+	});
+
+	const getHearingJourneyResponse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference },
+			select: {
+				id: true,
+				planTitle: true
+			}
+		});
+
+		if (!caseRecord) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		const examinationData = await service.db.examinationInfo.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				hearings: true
+			}
+		});
+
+		res.locals.planTitle = caseRecord.planTitle;
+		res.locals.reference = reference;
+
+		const journeyResponse = new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', examinationData);
+
+		res.locals.journeyResponse = journeyResponse;
+
+		next();
+	});
+
+	const completeHearing = asyncHandler(async (req: Request, res: Response) => {
+		const reference = getParam(req.params.reference);
+
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await new ExaminationSaveController(service, req, reference).prepareAndSave({});
+		await updateCaseField(service);
+
+		await service.db.case.update({
+			where: { reference },
+			data: {
+				caseHistories: {
+					create: {
+						event: 'Hearing set up',
+						username: currentUser
+					}
+				}
+			}
+		});
+
+		req.session.alertMessage = 'Hearing set up';
+		req.session.alertMessageStatus = 'success';
+
+		res.redirect(`/case/${encodeURIComponent(reference)}/examination`);
+	});
+
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+
+	router.get(
+		'/examination/set-up-hearing/check-your-answers-*hearingId',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		setAsEditingFromCya,
+		buildList({ notificationPreviewTemplate: 'gateway-2-report' })
+	);
+
+	router.post(
+		'/examination/set-up-hearing/check-your-answers-*hearingId',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		saveLastQuestionUrl,
+		completeHearing
+	);
+
+	router.get(
+		'/examination/set-up-hearing/:section/:question',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		question
+	);
+
+	router.post(
+		'/examination/set-up-hearing/:section/:question',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		saveLastQuestionUrl,
+		redirectAfterCyaEdit(updateCase)
+	);
+}
+
+function redirectAfterCyaEdit(updateCase: any) {
+	return (req: any, res: Response, next: NextFunction) => {
+		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+
+		req.log?.info?.(
+			{
+				question: req.params.question,
+				section: req.params.section,
+				editingFromCheckAnswers: req.session.editingFromCheckAnswers,
+				returnToCya,
+				lastQuestionUrl: req.session.lastQuestionUrl
+			},
+			'Redirect after question'
+		);
+
+		buildSave(updateCase, returnToCya)(req, res, next);
+	};
 }
 
 /** To add a new route, add a new object here **/
@@ -84,7 +362,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createOverviewJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
-		updateFunction: undefined
+		saveController: undefined
 	},
 	{
 		path: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
@@ -92,7 +370,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway1Journey,
 		supportsManageList: true,
 		supportsFileUpload: true,
-		updateFunction: updateGateway1
+		saveController: Gateway1SaveController
 	},
 	{
 		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
@@ -100,14 +378,22 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway2Journey,
 		supportsManageList: true,
 		supportsFileUpload: true,
-		updateFunction: updateGateway2
+		saveController: Gateway2SaveController
+	},
+	{
+		path: 'gateway-2/set-up-workshop',
+		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
+		createJourney: createGateway2WorkshopJourney,
+		supportsManageList: false,
+		supportsFileUpload: false,
+		saveController: Gateway2SaveController
 	},
 	{
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
 		supportsFileUpload: true,
-		updateFunction: updateGateway3
+		saveController: Gateway3SaveController
 	},
 	{
 		path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
@@ -115,11 +401,19 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
 		supportsFileUpload: false,
-		updateFunction: updateExamination
+		saveController: ExaminationSaveController
+	},
+	{
+		path: 'examination/set-up-hearing',
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		createJourney: createExaminationHearingJourney,
+		supportsManageList: true,
+		supportsFileUpload: false,
+		saveController: ExaminationSaveController
 	}
 ];
 
-const CASE_JOURNEY_MAP = Object.fromEntries(CASE_JOURNEYS.map((elem) => [elem.path, elem.updateFunction]));
+const CASE_JOURNEY_MAP = Object.fromEntries(CASE_JOURNEYS.map((elem) => [elem.path, elem.saveController]));
 
 export function caseRouter(service: ManageService): IRouter {
 	const router = createRouter({ mergeParams: true });
@@ -127,7 +421,28 @@ export function caseRouter(service: ManageService): IRouter {
 
 	router.use(addCaseNavigation());
 
+	const workshopConfig = CASE_JOURNEYS.find(
+		(config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID
+	);
+	if (workshopConfig) {
+		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
+	}
+
+	const hearingConfig = CASE_JOURNEYS.find(
+		(config) => config.journeyId === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID
+	);
+	if (hearingConfig) {
+		registerExaminationHearingJourney(router, service, hearingConfig, updateCase);
+	}
+
 	for (const config of CASE_JOURNEYS) {
+		if (
+			config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID ||
+			config.journeyId === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID
+		) {
+			continue;
+		}
+
 		registerCaseJourney(router, service, config, updateCase);
 	}
 
@@ -195,6 +510,9 @@ function registerCaseJourney(
 		buildCheckReportMiddleware(service, journeyId),
 		question
 	);
+
+	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service, journeyId));
@@ -238,9 +556,10 @@ function registerCaseJourney(
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
-							const saveFunction = CASE_JOURNEY_MAP[journeyId];
-							if (saveFunction) {
-								saveFunction(service.db, {}, getParam(req.params.reference), questionConfig.url);
+							const saveController = CASE_JOURNEY_MAP[journeyId];
+							if (saveController) {
+								//reqCopy.params.question = questionConfig.url;
+								await new saveController(service, req, getParam(req.params.reference)).prepareAndSave({});
 							}
 						},
 						onUploadError: ({ req, errors, error }) => logUploadFailed(service, req, questionConfig, { errors, error }),
