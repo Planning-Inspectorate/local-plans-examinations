@@ -121,7 +121,7 @@ function buildQuestion() {
 function buildRequest(overrides: Record<string, any> = {}) {
 	return {
 		app: {
-			locale: {
+			locals: {
 				appName: 'manage'
 			}
 		},

@@ -392,41 +392,23 @@ export class DocumentUtil {
 	}
 	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
 		try {
-			const foundFiles = await Promise.all(
-				uploadedFiles
-					.map(async (file) => {
-						return service.db.document.findFirst({
-							where: {
-								name: file.path
-							}
-						});
-					})
-					.filter((file) => file)
+			const results = await Promise.all(
+				uploadedFiles.map(async (file) => (await service.db.document.findFirst({ where: { name: file.path } })) ?? null)
 			);
+
+			const foundFiles = results.filter((file) => file !== null);
 
 			if (foundFiles.length !== uploadedFiles.length) {
 				throw new Error('not all files found');
 			}
 
-			await Promise.all(
-				foundFiles.map(async (file) => {
-					if (!file) {
-						service.logger.warn('file not found');
-						return;
-					}
-
-					await service.db.document.update({
-						where: {
-							guid: file.guid
-						},
-						data: {
-							isTemp: false
-						}
-					});
-				})
-			);
+			await service.db.document.updateMany({
+				where: { guid: { in: foundFiles.map((file) => file.guid) } },
+				data: { isTemp: false }
+			});
 		} catch (err) {
 			service.logger.error(err);
+			throw err;
 		}
 	}
 
