@@ -80,7 +80,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			});
 
 			if (
-				process.env.NODE_ENV === 'production' &&
+				service.nodeEnv === 'production' &&
 				otpRecord &&
 				otpRecord.lockedOutUntil &&
 				otpRecord.lockedOutUntil.getTime() > Date.now()
@@ -247,7 +247,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 
 			// user is locked out
 			if (
-				process.env.NODE_ENV === 'production' &&
+				service.nodeEnv === 'production' &&
 				otpRecord.lockedOutUntil &&
 				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
@@ -367,7 +367,7 @@ function isOneTimePasswordBypass(service: PortalService, req: Request, otp: stri
 	const hostname = host.split(':')[0];
 	const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(hostname);
 
-	return process.env.NODE_ENV !== 'production' && isLocalHost && submittedOtp === LOCAL_ONE_TIME_PASSWORD;
+	return service.nodeEnv !== 'production' && isLocalHost && submittedOtp === LOCAL_ONE_TIME_PASSWORD;
 }
 
 export function buildRequestNewCode(service: PortalService): AsyncRequestHandler {
