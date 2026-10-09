@@ -4,7 +4,7 @@ export type GW3Decision = 'Proceed' | 'Resubmit';
 
 export class Gateway3DecisionPage extends BasePage {
 	constructor() {
-		super(/^\/case\/.+\/gateway-3\/gateway-3-submission-(\d+)\/gateway-3-decision-(\d+)$/);
+		super(/^\/case\/.+\/gateway-3-report\/gateway-3-submission-(\d+)\/gateway-3-decision-(\d+)$/);
 	}
 
 	private decisionMap: Record<GW3Decision, number> = {

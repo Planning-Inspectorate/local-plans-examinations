@@ -34,8 +34,25 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '12', folderName: 'subsequent-work-towards-a-draft-plan' },
 	{ id: '13', folderName: 'gateway-2-report' },
 	{ id: '14', folderName: 'signed-sla' },
-	{ id: '15', folderName: 'gateway-3-document' },
-	{ id: '16', folderName: 'gateway-3-document-1' }
+	{ id: '15', folderName: 'gateway-3-document-1' },
+	{ id: '16', folderName: 'gateway-3-document-exam-website-1' },
+	{ id: '17', folderName: 'gateway-3-document-proposed-plan-1' },
+	{ id: '18', folderName: 'gateway-3-document-map-of-proposed-plan-1' },
+	{ id: '19', folderName: 'gateway-3-document-statement-of-compliance-1' },
+	{ id: '20', folderName: 'gateway-3-document-statement-of-soundness-1' },
+	{ id: '21', folderName: 'gateway-3-document-summary-of-engagement-1' },
+	{ id: '22', folderName: 'gateway-3-document-summary-of-scoping-consultation-1' },
+	{ id: '23', folderName: 'gateway-3-document-summary-of-consultation-and-evidence-1' },
+	{ id: '24', folderName: 'gateway-3-document-summary-of-consultation-1' },
+	{ id: '25', folderName: 'gateway-3-document-statement-of-practical-arrangements-1' },
+	{ id: '26', folderName: 'gateway-3-document-copies-of-representations-1' },
+	{ id: '27', folderName: 'gateway-3-document-supplementary-exams-statement-1' },
+	{ id: '28', folderName: 'gateway-3-document-environmental-report-1' },
+	{ id: '29', folderName: 'gateway-3-document-statement-of-environment-reasons-1' },
+	{ id: '30', folderName: 'gateway-3-document-summary-of-representations-1' },
+	{ id: '31', folderName: 'gateway-3-document-summary-of-gw2-remediations-1' },
+	{ id: '32', folderName: 'gateway-3-document-summary-of-changes-1' },
+	{ id: '33', folderName: 'gateway-3-document-other-documents-1' }
 ];
 
 function createService(): any {
@@ -1589,10 +1606,7 @@ describe('preprocessQuestionProperties', () => {
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
-				editable: true,
-				config: {
-					actionButtonVisibleInSummary: false
-				}
+				config: {}
 			}
 		};
 		const myNextFunction = mock.fn(() => {});
@@ -1640,10 +1654,7 @@ describe('preprocessQuestionProperties', () => {
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
-				editable: false,
-				config: {
-					actionButtonVisibleInSummary: true
-				}
+				config: {}
 			}
 		};
 		const myNextFunction = mock.fn(() => {});
@@ -1655,7 +1666,7 @@ describe('preprocessQuestionProperties', () => {
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
 		assert.deepEqual(actualDecisionQuestion.actionLink, {
-			href: `/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
+			href: `/case/some-case-reference/gateway-3-report/gateway-3-submission-1/gateway-3-document-1/check`, //
 			text: 'View'
 		});
 	});
@@ -1675,7 +1686,7 @@ describe('issueGateway3Document', () => {
 				}
 			]
 		}));
-		const handler = issueGateway3Document(service, 'some-journey');
+		const handler = issueGateway3Document(service);
 		const res = {
 			redirect: mock.fn(() => {})
 		};
@@ -1704,7 +1715,7 @@ describe('issueGateway3Document', () => {
 				}
 			]
 		}));
-		const handler = issueGateway3Document(service, 'some-journey');
+		const handler = issueGateway3Document(service);
 		const res = {
 			redirect: mock.fn(() => {})
 		};

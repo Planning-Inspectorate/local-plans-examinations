@@ -60,14 +60,14 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	if (submissionData.length == 1) {
 		submissionSections.push(
 			new Section('Gateway 3 submission', 'gateway-3-submission-1')
-				.addQuestion(questions['gateway3Documents-1'])
+				.addQuestion(questions['gateway3FrontOfficeDocuments-1'])
 				.addQuestion(questions['gateway3Decision-1'])
 		);
 	} else {
 		submissionSections = sortGateway3Submissions(submissionData).map((submission, index) => {
 			const rowId = index + 1;
 			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
-				.addQuestion(questions[`gateway3Documents-${rowId}`])
+				.addQuestion(questions[`gateway3FrontOfficeDocuments-${rowId}`])
 				.addQuestion(questions[`gateway3Decision-${rowId}`]);
 		});
 	}
@@ -94,6 +94,31 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	});
 
 	return getBackLinksAndSetReference(journey, gateway3Url, req.params.reference);
+}
+
+export function createGateway3ReportJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway3ReportUrl = req.baseUrl + '/gateway-3-report';
+	const submissionData = Array.isArray(response.answers.submissions) ? response.answers.submissions : null;
+	if (!submissionData) {
+		throw Error('submissionData is null');
+	}
+	const submissionId = Number(String(req.params.question).split('-').at(-1));
+	return new Journey({
+		journeyId: COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 3 report', `gateway-3-submission-${submissionId}`)
+				.addQuestion(questions[`gateway3Decision-${submissionId}`])
+				.addQuestion(questions[`gateway3Documents-${submissionId}`])
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		taskListUrl: 'gateway-3',
+		journeyTitle: 'Gateway 2',
+		returnToListing: false,
+		makeBaseUrl: () => gateway3ReportUrl,
+		initialBackLink: gateway3ReportUrl,
+		response
+	});
 }
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -272,7 +297,7 @@ const gateway3QuestionNames = new Set<string>([
 	...Array.from(
 		// Gateway 3 submission questions
 		{ length: 50 },
-		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
+		() => ['gateway3FrontOfficeDocuments', 'gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()
 		.map((item, index) => `${item}-${Math.trunc(index / 3) + 1}`)
@@ -312,5 +337,6 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
+	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
 };

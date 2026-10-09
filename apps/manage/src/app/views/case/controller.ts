@@ -22,7 +22,6 @@ import {
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
-import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import type { CaseRelation } from '../../classes/case-field-mappings.ts';
@@ -1037,7 +1036,7 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 	};
 }
 
-export function issueGateway3Document(service: ManageService, journeyId: string): AsyncRequestHandler {
+export function issueGateway3Document(service: ManageService): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
@@ -1054,21 +1053,22 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			throw Error('No gateway3info data could be found');
 		}
 		const existingSubmissions = sortGateway3Submissions(gateway3Info.submissions);
-		const lastSubmission = existingSubmissions.at(-1);
-		if (!lastSubmission) {
+		const submissionId = Number(String(req.params.question).replace('gateway-3-document-', ''));
+		const submission = existingSubmissions.at(submissionId - 1);
+		if (!submission) {
 			throw Error('Could not find a submission');
 		}
-		if (!lastSubmission?.completionDate) {
+		if (!submission?.completionDate) {
 			// Try to update the reportIssuedDate
 			const completionDate = new Date();
-			lastSubmission.completionDate = new Date();
-			if (lastSubmission.decision == '2') {
+			submission.completionDate = new Date();
+			if (submission.decision == '2') {
 				// If a submission was rejected by the inspector, then add a new gw3 submission details block
 				existingSubmissions.push({
 					id: crypto.randomUUID(),
 					decision: null,
 					completionDate: null,
-					gateway3InfoId: lastSubmission.gateway3InfoId
+					gateway3InfoId: submission.gateway3InfoId
 				});
 			}
 			const account = authSession.getAccount(req.session);
@@ -1103,7 +1103,9 @@ export function issueGateway3Document(service: ManageService, journeyId: string)
 			req.session.alertMessage = 'Gateway 3 decision already issued';
 			req.session.alertMessageStatus = 'important';
 		}
-		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		res.redirect(
+			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`
+		);
 		return;
 	};
 }
@@ -1113,10 +1115,10 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	// Any questions that need to route to new subjourneys can be defined here
 	if (req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION) {
-		return `${req.baseUrl}${planPath}/gateway-2/${req.params.section}/${req.params.question}`;
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	if (req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION) {
-		return `${req.baseUrl}${planPath}/gateway-1/${req.params.section}/${req.params.question}`;
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
@@ -1160,7 +1162,7 @@ export function preprocessQuestionProperties(
 ) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
-		if (journeyId == 'gateway-3') {
+		if (journeyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
 			const decisionMap = {
 				'1': 'Proceed to examination',
 				'2': 'Resubmission required'
@@ -1194,15 +1196,12 @@ export function preprocessQuestionProperties(
 				const completionDate = submissionDetailsSorted[i].completionDate;
 				questions[gateway3Documents].changeActionText = 'View';
 				const gateway3Complete = !!submission.completionDate;
-				questions[gateway3Documents].editable = !gateway3Complete;
-				(questions[gateway3Documents] as unknown as FileUploaderQuestion).config.actionButtonVisibleInSummary =
-					gateway3Complete;
 				if (gateway3Complete) {
 					if (!decisionValue) {
 						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
 					}
 					questions[gateway3Decision].actionLink = {
-						href: `/case/${reference}/gateway-3/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
+						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
 					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;
