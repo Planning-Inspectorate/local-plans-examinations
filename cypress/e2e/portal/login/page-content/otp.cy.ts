@@ -8,7 +8,9 @@ describe('Portal login OTP page', () => {
 
 	it('displays the OTP page content', { tags: ['smoke'] }, () => {
 		portalLoginOtpPage.verifyHeading('Enter your one-time password');
-		portalLoginOtpPage.verifyHintText('We sent a code to');
+		portalLoginOtpPage.verifyHintText(
+			'If your email address is linked to a case, we will send a code. It may take a few minutes to arrive.'
+		);
 		portalLoginOtpPage.verifySaveAndContinueVisible();
 		portalLoginOtpPage.verifyMainContains(
 			'If you do not receive the email:',
