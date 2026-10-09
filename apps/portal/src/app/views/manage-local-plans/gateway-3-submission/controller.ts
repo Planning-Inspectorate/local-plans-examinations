@@ -634,6 +634,34 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			return res.status(500).send('Failed to record submission');
 		}
 
+		// Complete any pending Gateway 3 submission (placeholder created by the BO
+		// when the assessor requires a resubmission, or by the system for the
+		// initial submission).
+		try {
+			const gateway3Info = await service.db.gateway3Info.findUnique({
+				where: { caseId },
+				include: {
+					submissions: {
+						orderBy: { completionDate: 'asc' }
+					}
+				}
+			});
+
+			const submissions = gateway3Info?.submissions ?? [];
+			const pendingSubmission = submissions.find((s) => !s.completionDate && !s.decision);
+
+			if (pendingSubmission) {
+				await service.db.gateway3Submission.update({
+					where: { id: pendingSubmission.id },
+					data: { completionDate: submissionDate }
+				});
+				service.logger.info({ submissionId: pendingSubmission.id }, 'Gateway 3 submission completionDate set');
+			}
+		} catch (error) {
+			service.logger.error({ error }, 'Failed to update Gateway3Submission completionDate');
+			return res.status(500).send('Failed to complete submission record');
+		}
+
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);
 	};
 }
@@ -746,7 +774,7 @@ export function buildGateway3Middleware(service: PortalService) {
 		validateGateway3Submission: buildValidateGateway3Submission(),
 		guardDeclarationPage: buildGuardDeclarationPage(),
 		getDeclarationPage: buildGetDeclarationPage(),
-		postDeclarationPage: buildPostDeclarationPage(service),
+		postDeclarationPage: asyncHandler(buildPostDeclarationPage(service)),
 		getSubmissionCompletePage: buildGetSubmissionCompletePage()
 	};
 }

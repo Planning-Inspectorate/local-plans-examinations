@@ -7,6 +7,7 @@ import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
 import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
 	reference: string;
@@ -90,17 +91,34 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+	const submissions = caseRecord.gateway3Info?.submissions ?? [];
+
+	// The latest completed submission has a RESUBMISSION_REQUIRED decision and
+	// the BO placeholder has not yet been submitted → LPA action needed.
+	if (gateway3SubmissionState.resubmissionAwaitingSubmission) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.ResubmissionRequired
+		};
+	}
+
+	// A resubmission was submitted (completionDate set, no decision yet) after a
+	// previous RESUBMISSION_REQUIRED decision — the assessor has not yet reviewed it.
+	const hadResubmissionRequired = submissions.some((s) => s.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED);
+	if (
+		hadResubmissionRequired &&
+		gateway3SubmissionState.latestSubmission?.completionDate &&
+		!gateway3SubmissionState.latestSubmission?.decision
+	) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.UnderReview
+		};
+	}
 
 	if (gateway3SubmissionState.latestSubmission?.completionDate) {
 		return {
 			stage: STAGE.Examination,
-			status: STATUS.ReadyToStart
-		};
-	}
-
-	if (gateway3SubmissionState.resubmissionAwaitingSubmission) {
-		return {
-			stage: STAGE.Gateway3,
 			status: STATUS.ReadyToStart
 		};
 	}

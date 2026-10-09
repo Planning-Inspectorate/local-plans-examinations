@@ -665,20 +665,38 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
+	function buildMockService(submissions: { id: string; completionDate: Date | null; decision: string | null }[] = []) {
+		const updatedIds: string[] = [];
 		const caseUpdate = mock.fn(async () => ({}));
 		const gateway3InfoUpdate = mock.fn(async () => ({}));
+		const gateway3InfoFindUnique = mock.fn(async () => ({ submissions }));
 		const transaction = mock.fn(async (updates: unknown[]) => Promise.all(updates));
-		const service = {
-			db: {
-				$transaction: transaction,
-				case: { update: caseUpdate },
-				gateway3Info: { update: gateway3InfoUpdate }
-			},
-			logger: {
-				error: mock.fn()
-			}
-		} as unknown as PortalService;
+		return {
+			service: {
+				db: {
+					$transaction: transaction,
+					case: { update: caseUpdate },
+					gateway3Info: { update: gateway3InfoUpdate, findUnique: gateway3InfoFindUnique },
+					gateway3Submission: {
+						update: mock.fn(async (args: { where: { id: string }; data: Record<string, unknown> }) => {
+							updatedIds.push(args.where.id);
+						})
+					}
+				},
+				logger: {
+					info: mock.fn(),
+					error: mock.fn()
+				}
+			} as unknown as PortalService,
+			updatedIds,
+			caseUpdate,
+			gateway3InfoUpdate,
+			transaction
+		};
+	}
+
+	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
+		const { service, caseUpdate, gateway3InfoUpdate, transaction } = buildMockService();
 		const handler = buildPostDeclarationPage(service);
 		const req = {
 			currentCase: { id: 'case-1' },
@@ -701,6 +719,44 @@ describe('buildPostDeclarationPage', () => {
 		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { caseId: 'case-1' });
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
 
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+
+	it('sets completionDate on a pending submission', async () => {
+		const { service, updatedIds } = buildMockService([
+			{ id: 'sub-1', completionDate: new Date('2026-10-01'), decision: 'RESUBMISSION_REQUIRED' },
+			{ id: 'sub-2', completionDate: null, decision: null }
+		]);
+		const handler = buildPostDeclarationPage(service);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(updatedIds.length, 1);
+		assert.strictEqual(updatedIds[0], 'sub-2');
+		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+
+	it('does not update when there is no pending submission', async () => {
+		const { service, updatedIds } = buildMockService([
+			{ id: 'sub-1', completionDate: new Date('2026-10-01'), decision: 'RESUBMISSION_REQUIRED' }
+		]);
+		const handler = buildPostDeclarationPage(service);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(updatedIds.length, 0);
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 	});
 });
