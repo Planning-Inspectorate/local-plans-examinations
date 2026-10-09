@@ -605,7 +605,8 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
 		assert.strictEqual(service.logger.error.mock.callCount(), 1);
 		const logArgs = service.logger.error.mock.calls[0].arguments;
-		assert.strictEqual(logArgs[0].email, 'test@example.com');
+		assert.strictEqual(logArgs[0], 'Error during OTP verification');
+		assert.strictEqual(logArgs.length, 1);
 	});
 });
 
