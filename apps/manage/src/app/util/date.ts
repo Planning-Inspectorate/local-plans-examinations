@@ -1,6 +1,14 @@
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export function parseDate(value: string): Date {
+	if (!value.includes('/')) {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) {
+			throw new Error(`Invalid date: ${value}`);
+		}
+		return date;
+	}
+
 	const [dayStr, monthStr, yearStr] = value.split('/');
 	const day = Number(dayStr);
 	const month = Number(monthStr);
@@ -18,6 +26,15 @@ export function parseDate(value: string): Date {
 		throw new Error(`Invalid date: ${value}`);
 	}
 	return date;
+}
+
+export function formatDateToString(date: Date): string {
+	return new Intl.DateTimeFormat('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		timeZone: 'Europe/London',
+		year: 'numeric'
+	}).format(date);
 }
 
 function pad(num: any, length = 2) {

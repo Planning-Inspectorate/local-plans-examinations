@@ -1,9 +1,16 @@
-import { Journey, ManageListSection, Section } from '@planning-inspectorate/dynamic-forms';
-import { type JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import {
+	Journey,
+	ManageListSection,
+	Section,
+	whenQuestionHasAnswer,
+	questionsHaveAnswers
+} from '@planning-inspectorate/dynamic-forms';
+import type { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { sortGateway2Workshops } from '#util/util.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -46,6 +53,9 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		initialBackLink: overviewUrl,
 		response
 	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.OVERVIEW_JOURNEY_ID;
+	}
 
 	return getBackLinksAndSetReference(journey, overviewUrl, req.params.reference);
 }
@@ -92,12 +102,92 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway3Url,
 		response
 	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_3_JOURNEY_ID;
+	}
 
 	return getBackLinksAndSetReference(journey, gateway3Url, req.params.reference);
 }
 
+export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop';
+	const gateway2Url = req.baseUrl + '/gateway-2';
+	const workshopId = Number(String(req.url).split('-').at(-1));
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
+		sections: [
+			new Section('Workshop', 'workshop')
+				.addQuestion(questions[`gateway2WorkshopDateAndTime-${workshopId}`])
+				.addQuestion(questions[`gateway2WorkshopExpectedDays-${workshopId}`])
+				.addQuestion(questions[`gateway2WorkshopLocationType-${workshopId}`])
+				.startMultiQuestionCondition('workshop-location', (response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'in-person'],
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions[`gateway2WorkshopLocationKnown-${workshopId}`])
+				.addQuestion(questions[`gateway2WorkshopVenueAddress-${workshopId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`gateway2WorkshopLocationKnown-${workshopId}`], 'yes'))
+				.endMultiQuestionCondition('workshop-location')
+				.startMultiQuestionCondition('remote-meeting', (response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'remote'],
+							[questions[`gateway2WorkshopLocationType-${workshopId}`], 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`])
+				.addQuestion(questions[`gateway2RemoteMeetingLink-${workshopId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`], 'yes'))
+				.endMultiQuestionCondition('remote-meeting')
+		],
+		taskListUrl: `check-your-answers-${workshopId}`,
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/workshop-check-your-answers.njk',
+		journeyTitle: 'Set up workshop',
+		returnToListing: false,
+		makeBaseUrl: () => gateway2WorkshopUrl,
+		initialBackLink: gateway2Url,
+		response
+	});
+	let currentWorkshopAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const workshopAnswers: object[] = sortGateway2Workshops(req.session.answers.workshops);
+		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
+			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+		) as object[];
+		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
+	}
+	if (currentWorkshopAnswers) {
+		Object.entries(currentWorkshopAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${workshopId}`] = value;
+			//response.answers[key] = value
+		});
+		response.answers[`workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`] =
+			currentWorkshopAnswers.workshopExpectedDays;
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID;
+	}
+	return journey;
+}
+
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
+
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		sections: [
@@ -107,12 +197,10 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2Documents)
 				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment)
-				.addQuestion(questions.workshopDate)
-				.addQuestion(questions.workshopVenue),
+				.addQuestion(questions.assessorDateOfAppointment),
+			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
 			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],
-		//taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
 		journeyTitle: 'Gateway 2',
@@ -121,7 +209,20 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway2Url,
 		response
 	});
+	if (!response.answers.workshops) {
+		throw Error('workshops property missing from answers for gateway2 journey');
+	}
+	const sortedWorkshops = sortGateway2Workshops(
+		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+	);
 
+	response.answers.workshops = sortedWorkshops;
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_2_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
+	}
 	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
 }
 
@@ -148,7 +249,9 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 		initialBackLink: gateway1Url,
 		response
 	});
-
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.GATEWAY_1_JOURNEY_ID;
+	}
 	return getBackLinksAndSetReference(journey, gateway1Url, req.params.reference);
 }
 
@@ -200,6 +303,9 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
+	}
 	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
 }
 
@@ -258,8 +364,8 @@ const gateway2QuestionNames = new Set<string>([
 	'gateway2AssessorsName',
 	'assessorDateOfAppointment',
 	'gateway2Report',
-	'workshopDate',
-	'workshopVenue'
+	'gateway2WorkshopDocuments',
+	'workshops'
 ]);
 
 const gateway3QuestionNames = new Set<string>([

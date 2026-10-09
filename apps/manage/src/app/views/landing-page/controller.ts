@@ -17,7 +17,10 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 							where: { caseId: caseRecord.id }
 						}),
 						db.gateway2Info.findUnique({
-							where: { caseId: caseRecord.id }
+							where: { caseId: caseRecord.id },
+							include: {
+								workshops: true
+							}
 						}),
 						db.gateway3Info.findUnique({
 							where: { caseId: caseRecord.id },

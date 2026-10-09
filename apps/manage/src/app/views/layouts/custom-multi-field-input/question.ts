@@ -3,6 +3,7 @@ import escape from 'escape-html';
 import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
+import { toZonedTime } from 'date-fns-tz';
 
 interface BaseField {
 	fieldName: string;
@@ -52,6 +53,13 @@ interface DateField extends BaseField {
 	attributes?: Record<string, string>;
 }
 
+interface TimeField extends BaseField {
+	type: 'time';
+	hour: string;
+	minute: string;
+	attributes?: Record<string, string>;
+}
+
 type CustomMultiFieldQuestionViewData = QuestionViewModel['question'] & {
 	label?: string;
 	attributes?: Record<string, string>;
@@ -61,7 +69,7 @@ export const HIDDEN_TYPE = 'hidden';
 
 export default class CustomMultiFieldInputQuestion extends Question {
 	inputAttributes: Record<string, string>;
-	inputFields: (InputField | RadioField | HiddenField | BooleanFieldInput | DateField)[];
+	inputFields: (InputField | RadioField | HiddenField | BooleanFieldInput | DateField | TimeField)[];
 	label: string;
 	listSeparate: boolean;
 
@@ -98,7 +106,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	/**
 	 * Process answers for the view model
 	 */
-	answerForViewModel(answers: Record<string, string>) {
+	answerForViewModel(answers: Record<string, any>) {
 		return this.inputFields.map((inputField: any) => {
 			if (inputField.type === 'hidden') {
 				return inputField;
@@ -145,7 +153,15 @@ export default class CustomMultiFieldInputQuestion extends Question {
 						month = '',
 						year = '';
 
-					if (typeof dateValue === 'string') {
+					if (dateValue instanceof Date || (typeof dateValue === 'string' && !dateValue.includes('/'))) {
+						const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+						if (!Number.isNaN(date.getTime())) {
+							const zonedDate = toZonedTime(date, 'Europe/London');
+							day = String(zonedDate.getDate());
+							month = String(zonedDate.getMonth() + 1);
+							year = String(zonedDate.getFullYear());
+						}
+					} else if (typeof dateValue === 'string') {
 						const parts = dateValue.split('/');
 						day = parts[0];
 						month = parts[1];
@@ -155,6 +171,45 @@ export default class CustomMultiFieldInputQuestion extends Question {
 					if (day) items[0].value = day;
 					if (month) items[1].value = month;
 					if (year) items[2].value = year;
+				}
+
+				return {
+					...inputField,
+					items: items
+				};
+			}
+
+			if (inputField.type === 'time') {
+				const timeValue = answers[inputField.fieldName];
+				const items = [
+					{
+						name: `${inputField.fieldName}_hour`,
+						id: `${inputField.fieldName}_hour`,
+						label: 'Hour',
+						value: '',
+						classes: 'govuk-input--width-2'
+					},
+					{
+						name: `${inputField.fieldName}_minute`,
+						id: `${inputField.fieldName}_minute`,
+						label: 'Minute',
+						value: '',
+						classes: 'govuk-input--width-2'
+					}
+				];
+
+				if (timeValue) {
+					let hour = '',
+						minute = '';
+
+					if (timeValue) {
+						const parts = timeValue.split(':');
+						hour = parts[0];
+						minute = parts[1];
+					}
+
+					if (hour) items[0].value = hour;
+					if (minute) items[1].value = minute;
 				}
 
 				return {
@@ -193,6 +248,13 @@ export default class CustomMultiFieldInputQuestion extends Question {
 
 				if (day && month && year) {
 					value = `${day}/${month}/${year}`;
+				}
+			} else if (inputField.type === 'time') {
+				const hour = req.body[`${inputField.fieldName}_hour`];
+				const minute = req.body[`${inputField.fieldName}_minute`];
+
+				if (hour && minute) {
+					value = `${hour}:${minute}`;
 				}
 			} else {
 				value = req.body[inputField.fieldName];

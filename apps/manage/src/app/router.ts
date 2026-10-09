@@ -13,10 +13,20 @@ import { createACaseRoutes } from './views/create-a-case/index.ts';
 import { caseRouter } from './views/case/index.ts';
 import { clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './views/create-a-case/journey.ts';
+import { COMMON_CONSTS } from './classes/common-consts.ts';
 
-function clearCreateCaseWhenLeaving(req: Request, _: Response, next: NextFunction) {
+function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFunction) {
+	// clearCreateCaseWhenLeaving
 	if (req.session?.currentJourney === JOURNEY_ID && !req.path.startsWith('/create-a-case')) {
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });
+		delete req.session.currentJourney;
+		delete req.session.editingFromCheckAnswers;
+	}
+	if (
+		req.session?.currentJourney === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID &&
+		!req.path.includes('set-up-workshop')
+	) {
+		clearDataFromSession({ req, journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID });
 		delete req.session.currentJourney;
 		delete req.session.editingFromCheckAnswers;
 	}
@@ -31,7 +41,7 @@ export function buildRouter(service: ManageService): IRouter {
 	const monitoringRoutes = createMonitoringRoutes(service);
 	const { router: authRoutes, guards: authGuards } = createAuthRoutesAndGuards(service);
 
-	router.use(clearCreateCaseWhenLeaving);
+	router.use(clearSessionDataWhenLeaving);
 	router.use('/', monitoringRoutes);
 
 	// don't cache responses, note no-cache allows some caching, but with revalidation

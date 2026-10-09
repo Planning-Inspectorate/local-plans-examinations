@@ -112,6 +112,71 @@ describe('CustomMultiFieldInputQuestion', () => {
 		assert.deepEqual(result, { answers: { name: 'Bob', age: 42 } });
 	});
 
+	it('should populate date and time fields from saved answers', () => {
+		const question = buildQuestion({
+			inputFields: [
+				{ type: 'date', fieldName: 'workshopDate', label: 'Date' },
+				{ type: 'time', fieldName: 'workshopTime', label: 'Start time' }
+			]
+		});
+
+		const result = question.answerForViewModel({
+			workshopDate: new Date('2026-10-06T23:00:00.000Z'),
+			workshopTime: '09:30'
+		});
+
+		assert.deepEqual(
+			result.map((field) => field.items?.map((item: { value: string }) => item.value)),
+			[
+				['7', '10', '2026'],
+				['09', '30']
+			]
+		);
+
+		const serialisedResult = question.answerForViewModel({
+			workshopDate: '2026-10-07T00:00:00.000Z',
+			workshopTime: '09:30'
+		});
+
+		assert.deepEqual(
+			serialisedResult.map((field) => field.items?.map((item: { value: string }) => item.value)),
+			[
+				['7', '10', '2026'],
+				['09', '30']
+			]
+		);
+	});
+
+	it('should combine split date and time fields when saving data', async () => {
+		const question = buildQuestion({
+			inputFields: [
+				{ type: 'date', fieldName: 'workshopDate', label: 'Date' },
+				{ type: 'time', fieldName: 'workshopTime', label: 'Start time' },
+				{ type: 'time', fieldName: 'workshopEndTime', label: 'End time' }
+			]
+		});
+
+		const result = await question.getDataToSave({
+			body: {
+				workshopDate_day: '7',
+				workshopDate_month: '10',
+				workshopDate_year: '2026',
+				workshopTime_hour: '09',
+				workshopTime_minute: '30',
+				workshopEndTime_hour: '',
+				workshopEndTime_minute: ''
+			}
+		});
+
+		assert.deepEqual(result, {
+			answers: {
+				workshopDate: '7/10/2026',
+				workshopTime: '09:30',
+				workshopEndTime: undefined
+			}
+		});
+	});
+
 	it('should return not started when all unanswered', () => {
 		const question = buildQuestion();
 		question.notStartedText = 'Not started';
