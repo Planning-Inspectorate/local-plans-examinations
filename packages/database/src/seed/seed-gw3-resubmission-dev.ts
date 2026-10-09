@@ -53,9 +53,17 @@ async function run() {
 			process.exit(1);
 		}
 
-		// Remove any existing submissions so the seed is idempotent
+		// Remove any existing submissions and reset actualDate so the seed is idempotent
 		await dbClient.gateway3Submission.deleteMany({
 			where: { gateway3InfoId: caseRecord.gateway3Info.id }
+		});
+		await dbClient.gateway3Info.update({
+			where: { id: caseRecord.gateway3Info.id },
+			data: { actualDate: null }
+		});
+		await dbClient.case.update({
+			where: { id: caseRecord.id },
+			data: { submissionDate: null }
 		});
 
 		// Create the first completed submission with resubmission decision
