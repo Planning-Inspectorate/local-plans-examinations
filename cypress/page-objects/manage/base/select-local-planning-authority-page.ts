@@ -11,7 +11,7 @@ export class SelectLocalPlanningAuthorityBasePage extends BasePage {
 	}
 
 	verifySelectLocalPlanningAuthorityForm() {
-		this.verifyHeading('Select the Local Planning Authority for this plan');
+		this.verifyHeading('Select a planning authority');
 		this.localPlanningAuthoritySelect.should('be.visible');
 		this.verifySaveAndContinueVisible();
 	}

@@ -19,8 +19,14 @@ import { checkCaseOwnership, checkIsAuthenticated, exposeAuthToViews } from './a
  */
 export function buildRouter(service: PortalService): IRouter {
 	const router = createRouter();
-
 	const monitoringRoutes = createMonitoringRoutes(service);
+
+	if (service.environment === 'training') {
+		router.use((req, res, next) => {
+			res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+			next();
+		});
+	}
 
 	router.use('/', monitoringRoutes);
 

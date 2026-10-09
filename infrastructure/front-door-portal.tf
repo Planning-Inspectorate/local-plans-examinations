@@ -173,6 +173,27 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "portal" {
         rule_id = "200003"
       }
     }
+
+    #--------------------------------------------------------------------------
+    # RFI - Remote File Inclusion (931xxx)
+    #--------------------------------------------------------------------------
+    override {
+      rule_group_name = "RFI"
+
+      # Possible Remote File Inclusion (RFI) Attack: Off-Domain Reference/Link
+      rule {
+        action  = "AnomalyScoring"
+        enabled = true
+        rule_id = "931130"
+
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "Equals"
+          selector       = "examinationWebsite"
+          # False positive: PostParamValue:examinationWebsite can contain an off-domain examination website URL.
+        }
+      }
+    }
   }
 
   managed_rule {

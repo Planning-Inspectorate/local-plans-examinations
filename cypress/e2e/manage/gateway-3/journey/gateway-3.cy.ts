@@ -23,6 +23,7 @@ import {
 	gateway3DocumentsAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
+import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const today = new Date();
 const todayDisplay = today.toLocaleDateString('en-GB', {
@@ -187,5 +188,9 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 		gateway3Page.verifyGateway3SubmissionIssued();
 		gateway3Page.verifySubHeading('Gateway 3 submission 2');
+		gateway3Page.verifyHeaderStatus('GW3 pending');
+
+		gateway3Page.goBack();
+		manageHomePage.verifyCaseStatus(seededCase.planTitle, 'GW3 pending');
 	});
 });

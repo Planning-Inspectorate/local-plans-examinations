@@ -8,11 +8,11 @@ const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.
 
 describe('Create a case - Local Planning Authorities', () => {
 	it('requires at least one Local Planning Authority before continuing', { tags: ['regression'] }, () => {
-		localPlanningAuthoritiesPage.visitAndSubmitForValidation('You must add at least one Local Planning Authority');
+		localPlanningAuthoritiesPage.visitAndSubmitForValidation('You need to add a planning authority');
 	});
 
 	it('shows validation when no Local Planning Authority is selected', { tags: ['regression'] }, () => {
-		selectLocalPlanningAuthorityPage.visitForNewItemAndSubmitForValidation('Select a Local Planning Authority');
+		selectLocalPlanningAuthorityPage.visitForNewItemAndSubmitForValidation('You need to select a planning authority');
 	});
 
 	it(

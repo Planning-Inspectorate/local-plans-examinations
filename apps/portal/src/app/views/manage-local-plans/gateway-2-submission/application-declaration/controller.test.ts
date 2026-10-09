@@ -9,6 +9,7 @@ process.env.SESSION_SECRET = 'not-a-real-secret';
 process.env.GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID = 'abc';
 process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID = '123';
 process.env.GOV_NOTIFY_API_KEY = 'xyz';
+process.env.LOCAL_PLANS_TEAM_EMAIL = 'team@email.co.uk';
 
 function createReq(overrides: { params?: Record<string, string>; body?: Record<string, unknown> } = {}) {
 	const req = {
@@ -58,7 +59,12 @@ function createMockService() {
 				findUnique: async () => {
 					return {
 						id: 'case-1',
-						contacts: [{ email: 'lpa@example.com' }]
+						contacts: [
+							{
+								email: 'lpa@example.com',
+								lpa: { lpaCode: 'TEST', lpaName: 'Test Planning Authority' }
+							}
+						]
 					};
 				},
 				update: async () => ({})
@@ -114,7 +120,15 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(service.sendCalls.length, 1);
 		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
 		assert.equal(service.sendCalls[0].to, 'lpa@example.com');
-		assert.equal(service.sendCalls[0].options.personalisation.planRef, 'PLAN-123456');
+		assert.deepEqual(service.sendCalls[0].options.personalisation, {
+			planRef: 'PLAN-123456',
+			authority_name: 'Test Planning Authority',
+			contact_info: 'team@email.co.uk',
+			planType: 'plan type',
+			workshopWeekMonday: 'workshop week monday',
+			teamEmailAddress: 'team email address',
+			teamPhone: 'team phone'
+		});
 		assert.equal(service.sendCalls[0].options.reference, 'gateway-2-submission:PLAN-123456');
 	});
 

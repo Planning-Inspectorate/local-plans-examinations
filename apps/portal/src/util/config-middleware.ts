@@ -3,7 +3,7 @@ import type { Handler } from 'express';
 /**
  * Add configuration values to locals.
  */
-export function addLocalsConfiguration(clarityId?: string): Handler {
+export function addLocalsConfiguration(clarityId?: string, environment = 'local'): Handler {
 	return (req, res, next) => {
 		const path = req.path;
 		const cookieConsent = req.cookies?.cookie_consent;
@@ -20,8 +20,9 @@ export function addLocalsConfiguration(clarityId?: string): Handler {
 		];
 
 		res.locals.config = {
-			styleFile: 'style.css?v=53b6ffa7',
+			styleFile: 'style.css?v=44395b43',
 			cspNonce: res.locals.cspNonce,
+			environmentBanner: environment === 'training',
 			headerTitle: 'Submit development plans',
 			footerLinks: [
 				{

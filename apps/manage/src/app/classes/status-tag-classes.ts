@@ -1,9 +1,12 @@
 import type {
 	DocumentModel,
 	Gateway1InfoModel,
-	Gateway2InfoModel
+	Gateway2InfoModel,
+	Gateway3SubmissionModel
 } from '@pins/local-plans-database/src/client/models.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
+import { sortGateway3Submissions } from '../../util/util.ts';
 
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Submitted: 'govuk-tag--green',
@@ -49,15 +52,43 @@ export function getPlanStatusClasses(statusText: string) {
 
 export function resolveCaseHeaderStatus(
 	gateway2Documents: DocumentModel[],
+	gateway3Documents: DocumentModel[],
 	gateway1Data: Gateway1InfoModel | null,
-	gateway2Data: Gateway2InfoModel | null
+	gateway2Data: Gateway2InfoModel | null,
+	gateway3Submissions: Gateway3SubmissionModel[]
 ) {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
+	const activeGateway3Documents = gateway3Documents.filter((doc) => !doc.isDeleted);
+
 	const hasGateway2Report = activeGateway2Documents.some((doc) => doc.documentSetId === DOCUMENT_SET_ID.G2_REPORT);
 	const hasGateway2SubmissionDocuments = activeGateway2Documents.some(
 		(doc) => doc.documentSetId !== DOCUMENT_SET_ID.G2_REPORT
 	);
+	const gateway3Received = activeGateway3Documents.length > 0 && gateway3Submissions.some((s) => s.completionDate);
+	const sortedSubmissions = sortGateway3Submissions(gateway3Submissions);
+	const latestSubmission = sortedSubmissions.at(-1);
+	const rejected = sortedSubmissions
+		.filter(
+			(submission) => submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED && submission.completionDate
+		)
+		.at(-1);
+	const resubmissionRequired = !!rejected;
+	const rejectedAt = rejected?.completionDate;
+
+	const resubmissionReceived =
+		rejected &&
+		latestSubmission &&
+		latestSubmission.id !== rejected.id &&
+		latestSubmission.decision == null &&
+		latestSubmission.completionDate == null &&
+		rejectedAt &&
+		activeGateway3Documents.some((document) => document.createdAt > rejectedAt);
+
+	const passDecisionGiven =
+		latestSubmission?.completionDate && latestSubmission.decision == GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
+			? true
+			: false;
 
 	const resolveStatus = (statusText: string) => {
 		return {
@@ -65,6 +96,22 @@ export function resolveCaseHeaderStatus(
 			headerStatusClasses: getPlanStatusClasses(statusText)
 		};
 	};
+
+	if (passDecisionGiven) {
+		return resolveStatus('Submission pending');
+	}
+
+	if (resubmissionReceived) {
+		return resolveStatus('GW3 received');
+	}
+
+	if (resubmissionRequired) {
+		return resolveStatus('GW3 pending');
+	}
+
+	if (gateway3Received) {
+		return resolveStatus('GW3 received');
+	}
 
 	if (hasGateway2Report) {
 		return resolveStatus('GW3 pending');

@@ -25,6 +25,10 @@ export class AssignedToMePage extends BasePage {
 	verifyCaseNotVisible(reference: string) {
 		this.mainContent.should('not.contain.text', reference);
 	}
+
+	verifyCaseStatus(reference: string, status: string) {
+		this.casesTable.contains('tr', reference).find('[data-cy="status-tag"]').should('contain.text', status);
+	}
 }
 
 export const assignedToMePage = new AssignedToMePage();

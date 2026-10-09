@@ -4,6 +4,7 @@ import {
 	buildGetJourneyResponseFromCase,
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
+	buildSubmittedGateway3View,
 	buildGuardDeclarationPage,
 	buildGetDeclarationPage,
 	buildPostDeclarationPage,
@@ -20,6 +21,7 @@ import {
 import type { PortalService } from '#service';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 function buildMockDocumentSets() {
 	const folderNames = [
@@ -48,7 +50,7 @@ function buildMockService(caseRecord: unknown) {
 	return {
 		db: {
 			case: {
-				findUnique: async () => caseRecord
+				findUnique: mock.fn(async () => caseRecord)
 			},
 			documentSet: {
 				findMany: async () => buildMockDocumentSets()
@@ -117,6 +119,59 @@ describe('setGateway3ViewLocals', () => {
 		assert.strictEqual(locals.saveAndComeBackUrl, undefined);
 	});
 
+	it('sets the Under review status tag when Gateway 3 has an actual date', () => {
+		const req = {
+			currentCase: {
+				planTitle: 'Test Local Plan',
+				gateway3Info: {
+					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
+					actualDate: new Date('2026-10-01T12:00:00.000Z')
+				}
+			},
+			params: { planReference: 'PLAN-003' }
+		} as any;
+
+		const locals: Record<string, unknown> = {};
+		const res = { locals } as unknown as Response;
+
+		setGateway3ViewLocals(req as unknown as Request, res);
+
+		assert.deepStrictEqual(locals.statusTag, {
+			label: 'Under review',
+			class: 'govuk-tag govuk-tag--yellow'
+		});
+	});
+
+	it('sets the Ready to start status tag when a Gateway 3 resubmission has been requested but not sent', () => {
+		const req = {
+			currentCase: {
+				planTitle: 'Test Local Plan',
+				gateway3Info: {
+					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
+					actualDate: new Date('2026-10-01T12:00:00.000Z'),
+					submissions: [
+						{
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+							completionDate: new Date('2026-10-15T12:00:00.000Z')
+						},
+						{ decision: null, completionDate: null }
+					]
+				}
+			},
+			params: { planReference: 'PLAN-003' }
+		} as any;
+
+		const locals: Record<string, unknown> = {};
+		const res = { locals } as unknown as Response;
+
+		setGateway3ViewLocals(req as unknown as Request, res);
+
+		assert.deepStrictEqual(locals.statusTag, {
+			label: 'Ready to start',
+			class: 'govuk-tag govuk-tag--green'
+		});
+	});
+
 	it('does not set targetDate when case has no gateway3Info.expectedDate', () => {
 		const req = {
 			currentCase: {
@@ -138,7 +193,8 @@ describe('setGateway3ViewLocals', () => {
 describe('buildGetJourneyResponseFromCase', () => {
 	it('loads the case and calls next when a matching reference is found', async () => {
 		const currentCase = { id: 'case-1', reference: 'PLAN-001', planTitle: 'Test' };
-		const handler = buildGetJourneyResponseFromCase(buildMockService(currentCase));
+		const service = buildMockService(currentCase) as any;
+		const handler = buildGetJourneyResponseFromCase(service);
 		const req = { params: { planReference: 'PLAN-001' }, session: {} } as unknown as Request;
 		const { res } = buildMockResponse();
 		let called = false;
@@ -151,6 +207,10 @@ describe('buildGetJourneyResponseFromCase', () => {
 		assert.strictEqual(called, true);
 		assert.strictEqual((req as any).currentCase, currentCase);
 		assert.ok(res.locals.journeyResponse);
+		assert.deepStrictEqual(service.db.case.findUnique.mock.calls[0].arguments[0], {
+			where: { reference: 'PLAN-001' },
+			include: { gateway3Info: { include: { submissions: true } } }
+		});
 	});
 
 	it('renders 404 when the plan reference is missing', async () => {
@@ -193,6 +253,131 @@ describe('setGateway3ViewData', () => {
 
 		assert.strictEqual(res.locals.pageTitle, 'Gateway 3 submission');
 		assert.strictEqual(called, true);
+	});
+});
+
+describe('buildSubmittedGateway3View', () => {
+	it('sets the submitted template and locals when Gateway 3 has an actual date', () => {
+		const middleware = buildSubmittedGateway3View();
+		const actualDate = new Date('2026-10-01T12:30:00.000Z');
+		const req = {
+			currentCase: {
+				email: 'user@example.com',
+				gateway3Info: { actualDate }
+			}
+		} as any;
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' },
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001'
+		};
+		const res = { locals } as any;
+		let nextCalled = false;
+
+		middleware(req, res, () => {
+			nextCalled = true;
+		});
+
+		assert.ok(nextCalled, 'expected next() to be called');
+		assert.strictEqual(
+			(locals.journey as { taskListTemplate: string }).taskListTemplate,
+			'views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk'
+		);
+		assert.ok(locals.submissionDate, 'expected submissionDate to be set');
+		assert.ok(locals.submissionTime, 'expected submissionTime to be set');
+		assert.strictEqual(locals.submitter, 'user@example.com');
+		assert.strictEqual(locals.saveAndComeBackUrl, undefined, 'expected saveAndComeBackUrl to be removed');
+	});
+
+	it('calls next without changes when Gateway 3 has no actual date', () => {
+		const middleware = buildSubmittedGateway3View();
+		const req = {
+			currentCase: {
+				email: 'user@example.com',
+				gateway3Info: { actualDate: null }
+			}
+		} as any;
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' },
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001'
+		};
+		const res = { locals } as any;
+		let nextCalled = false;
+
+		middleware(req, res, () => {
+			nextCalled = true;
+		});
+
+		assert.ok(nextCalled, 'expected next() to be called');
+		assert.strictEqual((locals.journey as { taskListTemplate: string }).taskListTemplate, 'original-template.njk');
+		assert.strictEqual(locals.saveAndComeBackUrl, '/manage-local-plans/PLAN-001');
+		assert.strictEqual(locals.submissionDate, undefined);
+	});
+
+	it('calls next without showing the submitted view when a Gateway 3 resubmission has been requested but not sent', () => {
+		const middleware = buildSubmittedGateway3View();
+		const req = {
+			currentCase: {
+				email: 'user@example.com',
+				gateway3Info: {
+					actualDate: new Date('2026-10-01T12:00:00.000Z'),
+					submissions: [
+						{
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+							completionDate: new Date('2026-10-15T12:00:00.000Z')
+						},
+						{ decision: null, completionDate: null }
+					]
+				}
+			}
+		} as any;
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' },
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001'
+		};
+		const res = { locals } as any;
+		let nextCalled = false;
+
+		middleware(req, res, () => {
+			nextCalled = true;
+		});
+
+		assert.ok(nextCalled, 'expected next() to be called');
+		assert.strictEqual((locals.journey as { taskListTemplate: string }).taskListTemplate, 'original-template.njk');
+		assert.strictEqual(locals.saveAndComeBackUrl, '/manage-local-plans/PLAN-001');
+		assert.strictEqual(locals.submissionDate, undefined);
+	});
+
+	it('sets the submitted template when a requested Gateway 3 resubmission has been sent', () => {
+		const middleware = buildSubmittedGateway3View();
+		const req = {
+			currentCase: {
+				email: 'user@example.com',
+				gateway3Info: {
+					actualDate: new Date('2026-10-20T12:00:00.000Z'),
+					submissions: [
+						{
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+							completionDate: new Date('2026-10-15T12:00:00.000Z')
+						},
+						{ decision: null, completionDate: null }
+					]
+				}
+			}
+		} as any;
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' },
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001'
+		};
+		const res = { locals } as any;
+
+		middleware(req, res, () => {});
+
+		assert.strictEqual(
+			(locals.journey as { taskListTemplate: string }).taskListTemplate,
+			'views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk'
+		);
+		assert.ok(locals.submissionDate, 'expected submissionDate to be set');
+		assert.strictEqual(locals.saveAndComeBackUrl, undefined, 'expected saveAndComeBackUrl to be removed');
 	});
 });
 
@@ -482,35 +667,63 @@ describe('buildGetDeclarationPage', () => {
 describe('buildPostDeclarationPage', () => {
 	function buildMockService(submissions: { id: string; completionDate: Date | null; decision: string | null }[] = []) {
 		const updatedIds: string[] = [];
+		const caseUpdate = mock.fn(async () => ({}));
+		const gateway3InfoUpdate = mock.fn(async () => ({}));
+		const transaction = mock.fn(async (updates: unknown[]) => Promise.all(updates));
 		return {
 			service: {
 				db: {
+					$transaction: transaction,
 					case: {
+						update: caseUpdate,
 						findFirst: mock.fn(async () => ({
 							gateway3Info: {
 								submissions
 							}
 						}))
 					},
+					gateway3Info: { update: gateway3InfoUpdate },
 					gateway3Submission: {
 						update: mock.fn(async (args: { where: { id: string }; data: Record<string, unknown> }) => {
 							updatedIds.push(args.where.id);
 						})
 					}
+				},
+				logger: {
+					info: mock.fn(),
+					error: mock.fn()
 				}
 			} as unknown as PortalService,
-			updatedIds
+			updatedIds,
+			caseUpdate,
+			gateway3InfoUpdate,
+			transaction
 		};
 	}
 
-	it('redirects to the submission-complete page', async () => {
-		const { service } = buildMockService();
+	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
+		const { service, caseUpdate, gateway3InfoUpdate, transaction } = buildMockService();
 		const handler = buildPostDeclarationPage(service);
-		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
 		let redirectUrl = '';
 		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
 
 		await handler(req, res, () => {});
+
+		assert.strictEqual(transaction.mock.callCount(), 1);
+		assert.strictEqual(caseUpdate.mock.callCount(), 1);
+		assert.strictEqual(gateway3InfoUpdate.mock.callCount(), 1);
+
+		const caseUpdateArgs = caseUpdate.mock.calls[0].arguments[0];
+		assert.deepStrictEqual(caseUpdateArgs.where, { id: 'case-1' });
+		assert.ok(caseUpdateArgs.data.submissionDate instanceof Date);
+
+		const gateway3InfoUpdateArgs = gateway3InfoUpdate.mock.calls[0].arguments[0];
+		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { caseId: 'case-1' });
+		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 	});
@@ -521,7 +734,10 @@ describe('buildPostDeclarationPage', () => {
 			{ id: 'sub-2', completionDate: null, decision: null }
 		]);
 		const handler = buildPostDeclarationPage(service);
-		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
 		let redirectUrl = '';
 		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
 
@@ -537,7 +753,10 @@ describe('buildPostDeclarationPage', () => {
 			{ id: 'sub-1', completionDate: new Date('2026-10-01'), decision: 'RESUBMISSION_REQUIRED' }
 		]);
 		const handler = buildPostDeclarationPage(service);
-		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
 		let redirectUrl = '';
 		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
 

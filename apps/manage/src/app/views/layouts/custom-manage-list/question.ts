@@ -15,6 +15,8 @@ interface CustomManageListQuestionParameters extends QuestionParameters, ManageL
 	isAllowedEmpty?: boolean;
 	confirmRemoveButtonText?: string;
 	removalPrompt?: string;
+	singularLowerCase?: string;
+	multipleLowerCase?: string;
 }
 
 type CustomManageListQuestionViewData = QuestionViewModel['question'] & {
@@ -29,6 +31,8 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	isAllowedEmpty: boolean;
 	confirmRemoveButtonText: string;
 	removalPrompt: string;
+	singularLowerCase: string;
+	multipleLowerCase: string;
 
 	constructor(params: CustomManageListQuestionParameters) {
 		super(params);
@@ -40,6 +44,8 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 		this.confirmRemoveButtonText = params.confirmRemoveButtonText || `Remove ${params.titleSingular.toLowerCase()}`;
 		this.removalPrompt =
 			params.removalPrompt || `Are you sure you want to remove this ${params.titleSingular.toLowerCase()}?`;
+		this.singularLowerCase = params.singularLowerCase || '';
+		this.multipleLowerCase = params.multipleLowerCase || '';
 	}
 
 	addCustomDataToViewModel(viewModel: QuestionViewModel) {
@@ -54,6 +60,8 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 		viewModel.emptyListText = this.emptyListText;
 		viewModel.hideAddButton = this.maximumAnswers !== null && answers.length >= this.maximumAnswers;
 		viewModel.removalPrompt = this.removalPrompt;
+		viewModel.singularLowerCase = this.singularLowerCase;
+		viewModel.multipleLowerCase = this.multipleLowerCase;
 	}
 
 	/**

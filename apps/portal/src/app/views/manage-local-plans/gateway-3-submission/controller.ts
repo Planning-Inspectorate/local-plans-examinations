@@ -41,12 +41,21 @@ import {
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
 import lusca from 'lusca';
+import { STATUS, StatusTag } from '../../../types.ts';
+import {
+	isGateway3ResubmissionAwaitingSubmission,
+	type Gateway3SubmissionSummary
+} from '#util/gateway-3-submission.ts';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type CaseWithGateway3Info = CaseModel & { gateway3Info?: Gateway3InfoModel | null };
+type Gateway3InfoWithSubmissions = Gateway3InfoModel & {
+	submissions?: Gateway3SubmissionSummary[] | null;
+};
+
+type CaseWithGateway3Info = CaseModel & { gateway3Info?: Gateway3InfoWithSubmissions | null };
 
 type Gateway3Session = Request['session'] &
 	FileUploaderSession & {
@@ -131,7 +140,16 @@ function formatDisplayDate(date: Date | null | undefined) {
 	});
 }
 
+function formatDisplayTime(date: Date) {
+	return date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
+}
+
 const DECLARATION_VIEW_PATH = 'views/manage-local-plans/gateway-3-submission/declaration/declaration.njk';
+const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk';
 
 function renderNotFound(res: Response) {
 	return res.status(404).render('views/layouts/error', {
@@ -232,7 +250,10 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 3 submission';
 	res.locals.pageHeading = 'Gateway 3 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
-	res.locals.statusTag = { label: 'Ready to start', class: 'govuk-tag govuk-tag--green' };
+	res.locals.statusTag =
+		currentCase?.gateway3Info?.actualDate && !isGateway3ResubmissionAwaitingSubmission(currentCase.gateway3Info)
+			? StatusTag[STATUS.UnderReview]
+			: StatusTag[STATUS.ReadyToStart];
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);
@@ -248,6 +269,30 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 export function setGateway3ViewData(req: Request, res: Response, next: NextFunction) {
 	setGateway3ViewLocals(req, res);
 	next();
+}
+
+export function buildSubmittedGateway3View(): RequestHandler {
+	return (req, res, next) => {
+		const request = req as Gateway3Request;
+		const gateway3Info = request.currentCase?.gateway3Info;
+		const actualDate = gateway3Info?.actualDate;
+
+		if (!actualDate || isGateway3ResubmissionAwaitingSubmission(gateway3Info)) {
+			return next();
+		}
+
+		const journey = res.locals.journey;
+		if (journey) {
+			journey.taskListTemplate = SUBMITTED_TEMPLATE;
+		}
+
+		res.locals.submissionDate = formatDisplayDate(actualDate);
+		res.locals.submissionTime = formatDisplayTime(actualDate);
+		res.locals.submitter = request.currentCase?.email;
+		delete res.locals.saveAndComeBackUrl;
+
+		return next();
+	};
 }
 
 export function buildGateway3CheckAnswersList(): RequestHandler {
@@ -429,7 +474,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 
 		const currentCase = await service.db.case.findUnique({
 			where: { reference: routePlanReference },
-			include: { gateway3Info: true }
+			include: { gateway3Info: { include: { submissions: true } } }
 		});
 
 		if (!currentCase) {
@@ -562,8 +607,32 @@ const SUBMISSION_COMPLETE_VIEW_PATH =
 
 export function buildPostDeclarationPage(service: PortalService): RequestHandler {
 	return async (req, res) => {
+		const request = req as Gateway3Request;
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+		const submissionDate = new Date();
+		const caseId = request.currentCase?.id;
+
+		if (!caseId) {
+			service.logger.error(`No case loaded for Gateway 3 declaration submission ${planReference ?? ''}`);
+			return res.status(500).send('No case found');
+		}
+
+		try {
+			await service.db.$transaction([
+				service.db.case.update({
+					where: { id: caseId },
+					data: { submissionDate }
+				}),
+				service.db.gateway3Info.update({
+					where: { caseId },
+					data: { actualDate: submissionDate }
+				})
+			]);
+		} catch (error) {
+			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);
+			return res.status(500).send('Failed to record submission');
+		}
 
 		// Complete any pending Gateway 3 submission (placeholder created by the BO
 		// when the assessor requires a resubmission, or by the system for the

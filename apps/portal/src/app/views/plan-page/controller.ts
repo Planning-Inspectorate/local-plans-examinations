@@ -56,6 +56,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				break;
 			case STAGE.Gateway3:
 				dateTextG2 = 'Completed: ';
+				if (plan.status === STATUS.UnderReview) {
+					dateTextG3 = 'Submitted: ';
+				}
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';

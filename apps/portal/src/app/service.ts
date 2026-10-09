@@ -5,6 +5,7 @@ import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
+import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
 import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
@@ -25,6 +26,7 @@ type PortalCase = {
 		expectedDate: Date | null;
 		actualDate: Date | null;
 		submissions: {
+			decision: string | null;
 			completionDate: Date | null;
 			decision: string | null;
 		}[];
@@ -89,12 +91,12 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 }
 
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
 	const submissions = caseRecord.gateway3Info?.submissions ?? [];
-	// The last completed submission is the one with a decision or completion date set.
-	// The BO pre-creates an empty submission after a decision, so the latest may be a placeholder.
-	const lastCompletedSubmission = [...submissions].reverse().find((s) => s.decision || s.completionDate);
 
-	if (lastCompletedSubmission?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
+	// The latest completed submission has a RESUBMISSION_REQUIRED decision and
+	// the BO placeholder has not yet been submitted → LPA action needed.
+	if (gateway3SubmissionState.resubmissionAwaitingSubmission) {
 		return {
 			stage: STAGE.Gateway3,
 			status: STATUS.ResubmissionRequired
@@ -104,17 +106,28 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 	// A resubmission was submitted (completionDate set, no decision yet) after a
 	// previous RESUBMISSION_REQUIRED decision — the assessor has not yet reviewed it.
 	const hadResubmissionRequired = submissions.some((s) => s.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED);
-	if (hadResubmissionRequired && lastCompletedSubmission?.completionDate && !lastCompletedSubmission?.decision) {
+	if (
+		hadResubmissionRequired &&
+		gateway3SubmissionState.latestSubmission?.completionDate &&
+		!gateway3SubmissionState.latestSubmission?.decision
+	) {
 		return {
 			stage: STAGE.Gateway3,
 			status: STATUS.UnderReview
 		};
 	}
 
-	if (lastCompletedSubmission?.completionDate || caseRecord.gateway3Info?.actualDate) {
+	if (gateway3SubmissionState.latestSubmission?.completionDate) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
+		};
+	}
+
+	if (caseRecord.gateway3Info?.actualDate) {
+		return {
+			stage: STAGE.Gateway3,
+			status: STATUS.UnderReview
 		};
 	}
 
@@ -154,10 +167,12 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const gateway2Date = hasIssuedGateway2Report(caseRecord)
 		? caseRecord.gateway2Info?.reportIssuedDate
 		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
-	const gateway3Date =
-		caseRecord.gateway3Info?.submissions[-1]?.completionDate ??
-		caseRecord.gateway3Info?.actualDate ??
-		caseRecord.gateway3Info?.expectedDate;
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+	const gateway3Date = gateway3SubmissionState.resubmissionAwaitingSubmission
+		? caseRecord.gateway3Info?.expectedDate
+		: (gateway3SubmissionState.latestSubmission?.completionDate ??
+			caseRecord.gateway3Info?.actualDate ??
+			caseRecord.gateway3Info?.expectedDate);
 	const examinationDate =
 		caseRecord.examinationInfo?.submissionForExaminationDate ??
 		caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
