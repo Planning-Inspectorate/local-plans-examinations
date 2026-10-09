@@ -25,7 +25,7 @@
 			<h1 class="govuk-heading-l">{{ question.question }}</h1>
 
 			{% if question.text.introduction %}
-				<p class="govuk-body">{{ question.text.introduction }}</p>
+				<h2 class="govuk-heading-m">{{ question.text.introduction }}</h2>
 			{% endif %}
 
 			{% if question.text.bulletList and question.text.bulletList.length %}
@@ -37,7 +37,7 @@
 			{% endif %}
 
 			{% if question.text.fileRequirementsText %}
-				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText }}</p>
+				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText  | safe}}</p>
 			{% endif %}
 
 			{% if question.text.totalUploadSizeText %}

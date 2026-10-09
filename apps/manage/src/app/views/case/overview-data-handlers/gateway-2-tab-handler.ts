@@ -16,7 +16,8 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 				{ folderName: 'local-plan-timetable', title: 'Local plan timetable' },
 				{ folderName: 'project-initiation-document', title: 'Project initiation document' },
 				{ folderName: 'draft-stat-compliance', title: 'Draft statement of compliance' },
-				{ folderName: 'draft-stat-soundness', title: 'Draft statement of soundness' }
+				{ folderName: 'draft-stat-soundness', title: 'Draft statement of soundness' },
+				{ folderName: 'gateway-2-workshop-documents', title: 'Workshop document' }
 			],
 			consultation: [
 				{ folderName: 'notice-of-intent', title: 'Notice of intention to commence local plan preparation' },
@@ -64,7 +65,14 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 			}))
 		);
 
-		const journey2Data = await db.gateway2Info.findUnique({ where: { caseId: caseRecord.id } });
+		const journey2Data = await db.gateway2Info.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				workshops: true
+			}
+		});
 		await addUploadedDocumentDetailsToAnswers(
 			service,
 			caseRecord,
@@ -75,17 +83,32 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 		journeyResponse.answers.gateway2Documents = documentsByCategory;
+		console.log('journeyResponse.answers');
+		console.log(journeyResponse.answers);
 		res.locals.journeyResponse = journeyResponse;
 		if (
 			req.method === 'POST' &&
-			req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION &&
+			(req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION ||
+				req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) &&
 			req.originalUrl.endsWith(req.params.question)
 		) {
-			const uploadedGateway2Reports =
-				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
-			if (uploadedGateway2Reports.length > 0) {
-				res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION}/check`);
-				return;
+			let uploadedGateway2Reports;
+			if (req.params.question == 'gateway-2-report') {
+				uploadedGateway2Reports =
+					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
+				if (uploadedGateway2Reports.length > 0) {
+					res.redirect(303, 'gateway-2-report/check');
+					return;
+				}
+			}
+			if (req.params.question == 'gateway-2-workshop-documents') {
+				uploadedGateway2Reports =
+					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2WorkshopDocuments')]
+						?.uploadedFiles ?? [];
+				if (uploadedGateway2Reports.length > 0) {
+					res.redirect(303, 'gateway-2-workshop-documents/check');
+					return;
+				}
 			}
 		}
 

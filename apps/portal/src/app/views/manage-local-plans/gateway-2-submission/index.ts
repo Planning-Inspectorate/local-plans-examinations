@@ -407,7 +407,9 @@ export function buildSubmittedGateway2View(): RequestHandler {
 		res.locals.submitter = currentCase.email;
 		delete res.locals.saveAndComeBackUrl;
 
+		/*
 		const gw2Info = currentCase.gateway2Info;
+		// TODO Need to update this logic to work with multiple gw2 workshops 
 		if (gw2Info) {
 			if (gw2Info.workshopVenue) {
 				res.locals.workshopVenue = gw2Info.workshopVenue;
@@ -417,6 +419,7 @@ export function buildSubmittedGateway2View(): RequestHandler {
 					formatDisplayDate(gw2Info.workshopDate) + ' at ' + formatDisplayTime(gw2Info.workshopDate);
 			}
 		}
+		*/
 
 		return next();
 	};
