@@ -32,16 +32,6 @@ export const gateway2DateAnswers = {
 		input: { day: '1', month: '7', year: '2026' },
 		display: '1 July 2026'
 	},
-	gateway2ValidDate: {
-		row: 'Gateway 2 valid date',
-		heading: 'What is the Gateway 2 valid date?',
-		section: 'gateway-2',
-		fieldName: 'validDate',
-		path: 'gateway-2-valid-date',
-		seedDate: '2026-08-01T12:00:00.000Z',
-		input: { day: '1', month: '8', year: '2026' },
-		display: '1 August 2026'
-	},
 	assessorDateOfAppointment: {
 		row: 'Appointed',
 		heading: 'When was the Gateway 2 assessor appointed?',

@@ -104,7 +104,6 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 			new Section('Gateway 2', 'gateway-2')
 				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
-				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2Documents)
 				.addQuestion(questions.gateway2AssessorsName)
 				.addQuestion(questions.assessorDateOfAppointment)
@@ -254,7 +253,6 @@ const gateway1QuestionNames = new Set<string>([
 const gateway2QuestionNames = new Set<string>([
 	'gateway2ExpectedDate',
 	'gateway2ActualDate',
-	'gateway2ValidDate',
 	'gateway2AssessorsName',
 	'assessorDateOfAppointment',
 	'gateway2Report',

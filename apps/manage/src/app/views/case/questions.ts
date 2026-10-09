@@ -604,15 +604,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-actual-date' }
 	},
-	gateway2ValidDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'What is the Gateway 2 valid date?',
-		fieldName: 'validDate',
-		url: 'gateway-2-valid-date',
-		title: 'Gateway 2 valid date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'gateway-2-valid-date' }
-	},
 	gateway2Documents: {
 		type: CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER,
 		title: 'Submission documents',

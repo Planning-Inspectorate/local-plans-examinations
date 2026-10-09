@@ -79,7 +79,6 @@ interface Gateway1Input {
 interface Gateway2Input {
 	expectedDate?: Date;
 	actualDate?: Date;
-	validDate?: Date;
 	assessorName?: string;
 	assessorDate?: Date;
 	assessorAppointmentDate?: Date;

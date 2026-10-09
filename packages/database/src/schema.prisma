@@ -143,7 +143,6 @@ model Gateway2Info {
   caseId                       String    @unique @db.UniqueIdentifier
   expectedDate                 DateTime? @db.DateTime2
   actualDate                   DateTime? @db.DateTime2
-  validDate                    DateTime? @db.DateTime2
   assessorName                 String?
   assessorAppointmentDate      DateTime? @db.DateTime2
   workshopDate                 DateTime? @db.DateTime2
