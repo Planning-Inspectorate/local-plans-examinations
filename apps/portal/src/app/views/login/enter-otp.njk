@@ -20,7 +20,7 @@
         <div class="govuk-grid-column-two-thirds govuk-grid-column-full-from-desktop">
             {% if showNewCodeMessage %}
                 {{ govukNotificationBanner({
-                    text: "If your email address is linked to a case, a new code will be sent.",
+                    text: "We've sent a code to your email address.",
                     type: 'success',
                     attributes: {
                         "data-cy": "new-code-banner"
@@ -39,7 +39,7 @@
                         classes: "govuk-visually-hidden"
                     },
                     hint: {
-                        text: "If your email address is linked to a case, we will send a code. It may take a few minutes to arrive.",
+                        text: "We sent a code to " + userEmail + ". It may take a few minutes to arrive.",
                         attributes: {
                             "data-cy": "otp-hint"
                         }
