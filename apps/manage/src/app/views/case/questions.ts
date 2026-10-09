@@ -323,7 +323,7 @@ const gateway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the remote meeting link?',
 		fieldName: 'remoteMeetingLink',
 		url: 'gateway-2-remote-meeting-link',
-		title: 'Gateway 2 remote meeting link',
+		title: 'Remote meeting link',
 		validators: [new RequiredValidator('Input a remote meeting link')]
 	}
 };
