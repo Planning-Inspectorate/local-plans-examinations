@@ -6,6 +6,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	TOTAL_FILE_UPLOAD_LIMIT_LABEL
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/constants.ts';
+import { createDownloadDocumentSummaryFormatter as createFormatter } from '../utils.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -220,53 +221,5 @@ export function createGateway2Questions(planReference: string | undefined) {
 }
 
 export function createDownloadDocumentSummaryFormatter(planReference: string | undefined) {
-	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-	return ({
-		formattedAnswer,
-		answer
-	}: {
-		formattedAnswer: string;
-		answer: {
-			fileName?: string;
-			metadata?: {
-				documentGuid?: string;
-			};
-		}[];
-	}) => {
-		if (!encodedPlanReference || !Array.isArray(answer) || answer.length === 0) {
-			return formattedAnswer;
-		}
-
-		const linkedFiles = answer.map((file) => {
-			const documentGuid = file.metadata?.documentGuid;
-
-			if (typeof documentGuid !== 'string' || !documentGuid) {
-				return undefined;
-			}
-
-			const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
-
-			return `<a href="/manage-local-plans/${encodedPlanReference}/gateway-2-submission/download-document/${encodeURIComponent(
-				documentGuid
-			)}">${fileName}</a>`;
-		});
-
-		if (linkedFiles.some((file) => file === undefined)) {
-			return formattedAnswer;
-		}
-
-		if (linkedFiles.length === 1) {
-			return linkedFiles[0];
-		}
-
-		return `<ul class="govuk-list govuk-list--bullet">${linkedFiles.map((file) => `<li>${file}</li>`).join('')}</ul>`;
-	};
-}
-
-export function decodeFileName(fileName: string) {
-	try {
-		return decodeURIComponent(fileName);
-	} catch {
-		return fileName;
-	}
+	return createFormatter(planReference, 'gateway-2-submission');
 }

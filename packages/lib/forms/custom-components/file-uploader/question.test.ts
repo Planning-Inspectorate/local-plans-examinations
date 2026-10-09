@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import FileUploaderQuestion, { fileUploadBulletListFormat, fileUploadCountFormat } from './question.ts';
+import FileUploaderQuestion, {
+	buildVirusScanViewData,
+	fileUploadBulletListFormat,
+	fileUploadCountFormat
+} from './question.ts';
 
 describe('FileUploaderQuestion', () => {
 	it('is not answered when the uploaded files answer is missing', () => {
@@ -110,6 +114,60 @@ describe('FileUploaderQuestion', () => {
 			buildJourney() as any
 		);
 		assert.equal(result, viewModel);
+	});
+});
+
+describe('buildVirusScanViewData', () => {
+	it('reports scan in progress when a file is not yet scanned', () => {
+		const { virusScanInProgress, errorSummary } = buildVirusScanViewData([
+			{ id: 'file-1', fileName: 'plan.pdf', virusCheckStatus: 'not_scanned' } as never
+		]);
+
+		assert.equal(virusScanInProgress, true);
+		assert.equal(errorSummary, undefined);
+	});
+
+	it('does not report scan in progress when all files are scanned', () => {
+		const { virusScanInProgress, errorSummary } = buildVirusScanViewData([
+			{ id: 'file-1', fileName: 'plan.pdf', virusCheckStatus: 'scanned' } as never
+		]);
+
+		assert.equal(virusScanInProgress, false);
+		assert.equal(errorSummary, undefined);
+	});
+
+	it('adds a virus error for each affected file', () => {
+		const { errorSummary } = buildVirusScanViewData([
+			{ id: 'file-1', fileName: 'bad-one.pdf', virusCheckStatus: 'affected' } as never,
+			{ id: 'file-2', fileName: 'good.pdf', virusCheckStatus: 'scanned' } as never,
+			{ id: 'file-3', fileName: 'bad-two.pdf', virusCheckStatus: 'affected' } as never
+		]);
+
+		assert.deepEqual(errorSummary, [
+			{
+				text: 'bad-one.pdf contains a virus. Remove the file and upload a different version.',
+				href: '#uploaded-file-file-1'
+			},
+			{
+				text: 'bad-two.pdf contains a virus. Remove the file and upload a different version.',
+				href: '#uploaded-file-file-3'
+			}
+		]);
+	});
+
+	it('appends virus errors after any existing error summary entries', () => {
+		const { errorSummary } = buildVirusScanViewData(
+			[{ id: 'file-1', fileName: 'bad.pdf', virusCheckStatus: 'affected' } as never],
+			[{ text: 'Existing error', href: '#upload-form' }]
+		);
+
+		assert.deepEqual(errorSummary, [
+			{ text: 'Existing error', href: '#upload-form' },
+			{
+				text: 'bad.pdf contains a virus. Remove the file and upload a different version.',
+				href: '#uploaded-file-file-1'
+			}
+		]);
 	});
 });
 

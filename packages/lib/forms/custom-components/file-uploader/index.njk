@@ -3,22 +3,24 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block before_content %}
 	{% if backLink %}
 		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
-	{% endif %}
-	{% if errorSummary %}
-		{{ govukErrorSummary({
-			titleText: "There is a problem",
-			errorList: errorSummary
-		}) }}
 	{% endif %}
 {% endblock before_content %}
 
 {% block content %}
 	<div class="govuk-grid-row">
 		<div class="govuk-grid-column-two-thirds">
+			{% if errorSummary and errorSummary.length %}
+				{{ govukErrorSummary({
+					titleText: "There is a problem",
+					errorList: errorSummary
+				}) }}
+			{% endif %}
 			{% if question.text.caption %}
 				<span class="govuk-caption-l">{{ question.text.caption }}</span>
 			{% endif %}
@@ -38,6 +40,13 @@
 
 			{% if question.text.fileRequirementsText %}
 				<p class="govuk-body" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText }}</p>
+			{% endif %}
+			{% if virusScanInProgress %}
+				{{ govukNotificationBanner({
+					titleText: "Important",
+					html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+					attributes: { "data-cy": "virus-scan-in-progress-banner" }
+				}) }}
 			{% endif %}
 
 			{% if question.text.totalUploadSizeText %}
@@ -74,8 +83,23 @@
 			{% if uploadedFiles and uploadedFiles.length %}
 				<dl class="govuk-summary-list">
 					{% for file in uploadedFiles %}
-						<div class="govuk-summary-list__row">
-							<dt class="govuk-summary-list__value">{{ file.fileName }}</dt>
+						<div class="govuk-summary-list__row" id="uploaded-file-{{ file.id }}">
+							<dt class="govuk-summary-list__value">
+								{{ file.fileName }}
+								{% if file.virusCheckStatus === "not_scanned" %}
+									{{ govukTag({
+										text: "Virus scanning",
+										classes: "govuk-tag--yellow",
+										attributes: { "data-cy": "virus-scanning-tag" }
+									}) }}
+								{% elif file.virusCheckStatus === "affected" %}
+									{{ govukTag({
+										text: "Virus detected",
+										classes: "govuk-tag--red",
+										attributes: { "data-cy": "virus-detected-tag" }
+									}) }}
+								{% endif %}
+							</dt>
 							<dd class="govuk-summary-list__actions">
 								{% if question.editable %}
 									<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
