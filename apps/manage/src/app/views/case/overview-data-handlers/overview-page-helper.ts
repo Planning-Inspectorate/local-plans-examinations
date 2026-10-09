@@ -7,6 +7,7 @@ import {
 	fileUploaderCaseSessionKeyForField,
 	type UploadDocumentRequest
 } from '../controller.ts';
+import { fileUploadQuestionProperties } from '../questions.ts';
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
@@ -45,20 +46,30 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 	});
 }
 
-export /**
+/**
  * Load the documents for the given case and prepopulate the answer fields with their names
  * @param service The manage service
  * @param currentCase The case from the database
  * @param req The request object
  * @param answers The answers that the details should be added to
+ * @param journeyId
  */
-async function addUploadedDocumentDetailsToAnswers(
+export async function addUploadedDocumentDetailsToAnswers(
 	service: ManageService,
 	currentCase: any,
 	req: Request,
 	answers: any,
 	journeyId: string
 ) {
+	const uploadPageUrls = new Set(
+		Object.values(fileUploadQuestionProperties)
+			.map((question) => question.url)
+			.filter((url): url is string => Boolean(url))
+	);
+
+	const isUploadPages =
+		!!req.params.question && uploadPageUrls.has(req.params.question as string) && !req.url.includes('/check');
+
 	const request = req as UploadDocumentRequest;
 	request.currentCase = currentCase;
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[journeyId];
@@ -71,6 +82,7 @@ async function addUploadedDocumentDetailsToAnswers(
 				: true
 		);
 	}
+
 	if (!relevantFileUploadQuestionConfigs) {
 		return;
 	}
@@ -84,7 +96,10 @@ async function addUploadedDocumentDetailsToAnswers(
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
 		}
 
-		const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+		const uploadedFiles = isUploadPages
+			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
+			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+
 		req.session.fileUploader = {
 			...request.session.fileUploader,
 			[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]: {

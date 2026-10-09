@@ -32,6 +32,7 @@ type DocumentRow = {
 	documentSetId: string;
 	isDeleted: boolean;
 	latestDocumentVersion: DocumentVersionRow | null;
+	isTemp: boolean;
 };
 
 type SyncDocumentsParams = {
@@ -53,7 +54,8 @@ export class DocumentUtil {
 		service: Service,
 		req: Request,
 		documentSetFolderName: string,
-		uploadedFiles: UploadedFile[]
+		uploadedFiles: UploadedFile[],
+		isTemp?: boolean
 	): Promise<void> {
 		const caseId = (req as RequestWithCurrentCase).currentCase?.id;
 		if (!caseId) {
@@ -62,11 +64,36 @@ export class DocumentUtil {
 
 		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
 
-		await this.syncDocuments(service, {
-			caseId,
-			documentSetId,
-			uploadedFiles
-		});
+		await this.syncDocuments(
+			service,
+			{
+				caseId,
+				documentSetId,
+				uploadedFiles
+			},
+			isTemp
+		);
+	}
+
+	public static async loadTempUploadedDocuments(
+		service: Service,
+		caseId: string,
+		documentSetId: string
+	): Promise<UploadedFile[]> {
+		const documents = (await service.db.document.findMany({
+			where: {
+				caseId,
+				documentSetId,
+				AND: [{ isDeleted: false }, { isTemp: true }]
+			},
+			include: {
+				latestDocumentVersion: true
+			},
+			orderBy: {
+				createdAt: 'asc'
+			}
+		})) as DocumentRow[];
+		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
 	// Reads active documents from the database.
@@ -79,7 +106,8 @@ export class DocumentUtil {
 			where: {
 				caseId,
 				documentSetId,
-				isDeleted: false
+				isDeleted: false,
+				isTemp: false
 			},
 			include: {
 				latestDocumentVersion: true
@@ -88,7 +116,6 @@ export class DocumentUtil {
 				createdAt: 'asc'
 			}
 		})) as DocumentRow[];
-
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
@@ -133,7 +160,8 @@ export class DocumentUtil {
 	// Makes the database match the uploaded file list.
 	protected static async syncDocuments(
 		service: Service,
-		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
+		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams,
+		isTemp?: boolean
 	): Promise<void> {
 		const existingDocuments = (await service.db.document.findMany({
 			where: {
@@ -174,8 +202,7 @@ export class DocumentUtil {
 				if (existingDocument) {
 					continue;
 				}
-
-				await this.createDocument(tx, { caseId, documentSetId, file });
+				await this.createDocument(tx, { caseId, documentSetId, file, isTemp: isTemp });
 			}
 		});
 	}
@@ -201,7 +228,8 @@ export class DocumentUtil {
 				documentGuid: document.guid,
 				documentSetId: document.documentSetId,
 				version: version.version
-			}
+			},
+			isTemp: document.isTemp
 		};
 	}
 
@@ -267,7 +295,12 @@ export class DocumentUtil {
 	// Creates the document and its first version.
 	protected static async createDocument(
 		tx: TransactionClient,
-		{ caseId, documentSetId, file }: { caseId: string; documentSetId: string; file: UploadedFile }
+		{
+			caseId,
+			documentSetId,
+			file,
+			isTemp
+		}: { caseId: string; documentSetId: string; file: UploadedFile; isTemp?: boolean }
 	) {
 		const guid = randomUUID();
 		const version = 1;
@@ -277,7 +310,8 @@ export class DocumentUtil {
 				guid,
 				name: file.id,
 				caseId,
-				documentSetId
+				documentSetId,
+				isTemp: isTemp
 			}
 		});
 
@@ -355,6 +389,27 @@ export class DocumentUtil {
 				isDeleted: false
 			}
 		});
+	}
+	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
+		try {
+			const results = await Promise.all(
+				uploadedFiles.map(async (file) => (await service.db.document.findFirst({ where: { name: file.path } })) ?? null)
+			);
+
+			const foundFiles = results.filter((file) => file !== null);
+
+			if (foundFiles.length !== uploadedFiles.length) {
+				throw new Error('not all files found');
+			}
+
+			await service.db.document.updateMany({
+				where: { guid: { in: foundFiles.map((file) => file.guid) } },
+				data: { isTemp: false }
+			});
+		} catch (err) {
+			service.logger.error(err);
+			throw err;
+		}
 	}
 
 	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {

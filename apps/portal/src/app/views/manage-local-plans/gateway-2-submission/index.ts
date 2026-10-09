@@ -677,7 +677,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 						};
 					},
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, false);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
@@ -719,7 +719,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 					storage: fileUploaderStorage,
 					sessionKey: fileUploaderCaseSessionKey,
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, false);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Deleted(service, req, questionConfig, uploadedFiles);
 					},

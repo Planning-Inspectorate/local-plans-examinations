@@ -40,6 +40,7 @@ export interface Config extends ConfigWithBlob {
 		};
 		localPlansTeamEmail: string;
 	};
+	appName: 'manage';
 	notifyCallbackEnabled: boolean;
 }
 
@@ -208,6 +209,7 @@ export function loadConfig(): Config {
 			templateIds: {},
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
+		appName: 'manage',
 		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
 	};
 

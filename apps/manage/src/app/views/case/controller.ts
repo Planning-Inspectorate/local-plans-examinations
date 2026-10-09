@@ -1122,6 +1122,26 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
 }
 
+/**
+ * Constructs a redirect URL for a case based on the provided request parameters and session data.
+ *
+ * @param {Request} req - The HTTP request object containing parameters, URL, and session data.
+ * @param {string} path - The base path to append to the generated URL.
+ * @returns {string} The constructed redirect URL.
+ */
+export const redirectToChecks = (req: Request, path: string): string => {
+	const plan = req.params.reference;
+	const urlPathRoot = req.url.split('/')[1];
+	const session = req.session;
+	const formFiles = session?.forms?.[urlPathRoot] ?? {};
+
+	if (Object.keys(formFiles).length === 0) {
+		return `/case/${plan}/${path}/${req.params.section}/${req.params.question}`;
+	}
+
+	return `/case/${plan}/${path}/${req.params.section}/${req.params.question}/check`;
+};
+
 export function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {
 	if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
 		const questionUrl = getRouteQuestionUrl(req);
