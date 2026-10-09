@@ -1,0 +1,49 @@
+<details id="case-notes-details" class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">
+        {{ notes.length }} case note{% if notes.length != 1 %}s{% endif %}
+      </span>
+    </summary>
+    <div class="govuk-details__text">
+      <form method="POST" action="/case/PLAN-614829/overview/case-details/case-notes">
+        {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-full">
+            <div class="govuk-form-group govuk-character-count" data-module="govuk-character-count" data-maxlength="500"
+              data-govuk-character-count-init="">
+              <label class="govuk-label" for="comment">
+                These notes are only visible to PINS staff and should be used to share informal progress updates
+              </label>
+              <textarea class="govuk-textarea govuk-js-character-count" id="comment" name="comment" rows="5"
+                aria-describedby="comment-info"></textarea>
+              <div id="comment-info" class="govuk-hint govuk-character-count__message govuk-visually-hidden">
+                You can enter up to 500 characters
+              </div>
+              <div class="govuk-hint govuk-character-count__message govuk-character-count__status" aria-hidden="true">You
+                have 500 characters remaining</div>
+              <div class="govuk-character-count__sr-status govuk-visually-hidden" aria-live="polite">You have 500
+                characters remaining</div>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-1"
+          data-module="govuk-button" data-govuk-button-init="">
+          Add case note
+        </button>
+      </form>
+      {% for note in notes %}
+        <div>
+          <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+          <section>
+            <p class="govuk-body govuk-!-margin-bottom-1 govuk-!-text-break-word">
+              {{ note.text }}
+            </p>
+            <p class="govuk-hint govuk-!-margin-bottom-6">
+              {{ note.dateCreated }} by {{ note.createdBy }}
+            </p>
+            <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+          </section>
+        </div>
+      {% endfor %}
+    </div>
+  </details>

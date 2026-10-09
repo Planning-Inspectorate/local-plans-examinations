@@ -55,6 +55,13 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 		res.locals.currentCase = overviewData;
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
 		res.locals.currentSection = (req.query?.section as string) ?? '';
+		if (req.method == 'POST' && String(req.url).includes('case-details/case-notes')) {
+			// Need to save the note here
+			//req.params.question = 'case-notes'
+			//req.params.section = 'case-details'
+			res.redirect(`${res.locals.baseUrl}/overview`);
+			return;
+		}
 
 		if (next) next();
 	}
