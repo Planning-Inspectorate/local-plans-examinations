@@ -17,6 +17,7 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		journeyId: COMMON_CONSTS.OVERVIEW_JOURNEY_ID,
 		sections: [
 			new Section('Overview', 'case-details')
+				.addQuestion(questions.caseNotes)
 				.addQuestion(questions.planTitle)
 				.addQuestion(questions.planType)
 				.addQuestion(questions.checkLpas, Object.assign(new ManageListSection().addQuestion(questions.lpa)))

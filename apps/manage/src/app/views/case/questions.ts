@@ -941,6 +941,17 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
 	},
+	caseNotes: {
+		type: CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT,
+		question: 'Case notes',
+		fieldName: 'caseNotes',
+		title: 'Case notes',
+		titleSingular: 'Case note',
+		url: 'case-notes',
+		showManageListQuestions: true,
+		showAnswersInSummary: true,
+		validators: [new DateValidator(' a valid date')]
+	},
 	...gateway3Questions
 };
 
