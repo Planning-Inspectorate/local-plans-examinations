@@ -1,5 +1,6 @@
 import type { PortalService } from '#service';
 import { type IRouter, Router as createRouter } from 'express';
+import lusca from 'lusca';
 import { buildGateway3ResubmissionMiddleware, handleMulterFileSizeError } from './controller.ts';
 
 export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
@@ -14,8 +15,7 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 		postUploadPage,
 		upload,
 		uploadDocuments,
-		deleteDocument,
-		lusca
+		deleteDocument
 	} = buildGateway3ResubmissionMiddleware(service);
 
 	// Resubmission landing page

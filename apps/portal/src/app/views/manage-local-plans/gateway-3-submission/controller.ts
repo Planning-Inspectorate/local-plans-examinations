@@ -637,36 +637,29 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		// Complete any pending Gateway 3 submission (placeholder created by the BO
 		// when the assessor requires a resubmission, or by the system for the
 		// initial submission).
-		if (planReference) {
-			try {
-				const caseRecord = await service.db.case.findFirst({
-					where: { reference: planReference },
-					include: {
-						gateway3Info: {
-							include: {
-								submissions: {
-									orderBy: { completionDate: 'asc' }
-								}
-							}
-						}
+		try {
+			const gateway3Info = await service.db.gateway3Info.findUnique({
+				where: { caseId },
+				include: {
+					submissions: {
+						orderBy: { completionDate: 'asc' }
 					}
-				});
-
-				const submissions = caseRecord?.gateway3Info?.submissions ?? [];
-				const pendingSubmission = submissions.find((s) => !s.completionDate && !s.decision);
-
-				if (pendingSubmission) {
-					await service.db.gateway3Submission.update({
-						where: { id: pendingSubmission.id },
-						data: { completionDate: new Date() }
-					});
-					service.logger.info({ submissionId: pendingSubmission.id }, 'Gateway 3 submission completionDate set');
 				}
-			} catch (error) {
-				// Log but don't block the redirect — the submission confirmation
-				// page should still be shown even if the DB update fails.
-				service.logger.error({ error }, 'Failed to update Gateway3Submission completionDate');
+			});
+
+			const submissions = gateway3Info?.submissions ?? [];
+			const pendingSubmission = submissions.find((s) => !s.completionDate && !s.decision);
+
+			if (pendingSubmission) {
+				await service.db.gateway3Submission.update({
+					where: { id: pendingSubmission.id },
+					data: { completionDate: submissionDate }
+				});
+				service.logger.info({ submissionId: pendingSubmission.id }, 'Gateway 3 submission completionDate set');
 			}
+		} catch (error) {
+			service.logger.error({ error }, 'Failed to update Gateway3Submission completionDate');
+			return res.status(500).send('Failed to complete submission record');
 		}
 
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);

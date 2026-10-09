@@ -12,7 +12,7 @@ import { asyncHandler } from '@planning-inspectorate/core/util';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
-import lusca from 'lusca';
+import { sortGateway3Submissions, type Gateway3SubmissionSummary } from '#util/gateway-3-submission.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -132,8 +132,8 @@ function getUploadedDocuments(req: Request): UploadedFile[] {
 
 /**
  * Derives the current submission number from the case's Gateway 3 submissions.
- * The submissions list is ordered by completionDate; the last entry is the
- * current (pending) resubmission.
+ * The submissions are sorted via sortGateway3Submissions so the pending
+ * (null completionDate) placeholder is always last.
  */
 function getSubmissionNumber(req: Request): number {
 	const request = req as ResubmissionRequest;
@@ -167,9 +167,7 @@ export function buildLoadResubmissionCase(service: PortalService): RequestHandle
 			include: {
 				gateway3Info: {
 					include: {
-						submissions: {
-							orderBy: { completionDate: 'asc' as const }
-						}
+						submissions: true
 					}
 				},
 				documents: {
@@ -197,6 +195,14 @@ export function buildLoadResubmissionCase(service: PortalService): RequestHandle
 
 		if (!currentCase) {
 			return renderNotFound(res);
+		}
+
+		// Sort submissions so null completionDate (placeholder) is always last,
+		// regardless of SQL Server NULL ordering.
+		if (currentCase.gateway3Info?.submissions) {
+			currentCase.gateway3Info.submissions = sortGateway3Submissions(
+				currentCase.gateway3Info.submissions as unknown as Gateway3SubmissionSummary[]
+			) as typeof currentCase.gateway3Info.submissions;
 		}
 
 		const request = req as ResubmissionRequest;
@@ -297,10 +303,13 @@ export function buildGetResubmissionPage(): RequestHandler {
 
 		// Get uploaded resubmission documents from session
 		const uploadedFiles = getUploadedDocuments(req);
-		const uploadedDocuments = uploadedFiles.map((file) => ({
-			fileName: file.fileName,
-			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${file.id}`
-		}));
+		const uploadedDocuments = uploadedFiles.map((file) => {
+			const documentGuid = (file.metadata as Record<string, unknown> | undefined)?.documentGuid ?? file.id;
+			return {
+				fileName: file.fileName,
+				downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${documentGuid}`
+			};
+		});
 
 		return res.render(RESUBMISSION_VIEW_PATH, {
 			pageCaption: currentCase?.planTitle,
@@ -474,7 +483,6 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 		postUploadPage,
 		upload,
 		uploadDocuments,
-		deleteDocument,
-		lusca: lusca
+		deleteDocument
 	};
 }

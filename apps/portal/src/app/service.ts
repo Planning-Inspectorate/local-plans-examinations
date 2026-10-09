@@ -28,7 +28,6 @@ type PortalCase = {
 		submissions: {
 			decision: string | null;
 			completionDate: Date | null;
-			decision: string | null;
 		}[];
 	} | null;
 	examinationInfo: {

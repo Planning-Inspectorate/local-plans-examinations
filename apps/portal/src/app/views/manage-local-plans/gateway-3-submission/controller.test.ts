@@ -669,20 +669,14 @@ describe('buildPostDeclarationPage', () => {
 		const updatedIds: string[] = [];
 		const caseUpdate = mock.fn(async () => ({}));
 		const gateway3InfoUpdate = mock.fn(async () => ({}));
+		const gateway3InfoFindUnique = mock.fn(async () => ({ submissions }));
 		const transaction = mock.fn(async (updates: unknown[]) => Promise.all(updates));
 		return {
 			service: {
 				db: {
 					$transaction: transaction,
-					case: {
-						update: caseUpdate,
-						findFirst: mock.fn(async () => ({
-							gateway3Info: {
-								submissions
-							}
-						}))
-					},
-					gateway3Info: { update: gateway3InfoUpdate },
+					case: { update: caseUpdate },
+					gateway3Info: { update: gateway3InfoUpdate, findUnique: gateway3InfoFindUnique },
 					gateway3Submission: {
 						update: mock.fn(async (args: { where: { id: string }; data: Record<string, unknown> }) => {
 							updatedIds.push(args.where.id);
