@@ -5,6 +5,8 @@
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "views/layouts/workshop-details.njk" import workshopDetails %}
+{% from "views/layouts/hearing-details.njk" import hearingDetails %}
 
 {% block backLink %}
   <nav aria-label="Back">
@@ -77,6 +79,7 @@
           <div class="govuk-grid-column-full">
               {% for section in summaryListData.sections %}
                   {% set formattedRows = [] %}
+                  {% set miqsRow = [] %}
                   {% for row in section.list.rows %}
                     {% if row %}
                       {% if row.actions.items[0].text == "Answer" %}
@@ -92,15 +95,35 @@
                           actions: row.actions
                         } %}
                       {% endif %}
-                    {% set _ = formattedRows.push(formattedRow) %}
+                      {% if section.heading == 'Hearings' and row.key.text == 'MIQs' %}
+                        {% set _ = miqsRow.push(formattedRow) %}
+                      {% else %}
+                        {% set _ = formattedRows.push(formattedRow) %}
+                      {% endif %}
                     {% endif %}
                   {% endfor %}
-                  {% if section.list.rows.length %}
+                  {% if formattedRows.length %}
                     <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                     {{ govukSummaryList({
                           rows: formattedRows
                       }) }}
                   {% endif %}
+              {% if section.heading == 'Workshop'%} 
+
+                {{ workshopDetails(journeyResponse.answers, reference) }}
+                <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link">Set up workshop</a>
+                <p></p>
+              {% endif %}
+              
+              {% if section.heading == 'Hearings'%} 
+                <h1 class="govuk-heading-l">Hearings</h1>
+                {{ hearingDetails(journeyResponse.answers, reference) }}
+                <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link">Set up hearing</a>
+                <p></p>
+                {% if miqsRow.length %}
+                  {{ govukSummaryList({ rows: miqsRow }) }}
+                {% endif %}
+              {% endif %}
               {% endfor %}
           </div>
       </div>

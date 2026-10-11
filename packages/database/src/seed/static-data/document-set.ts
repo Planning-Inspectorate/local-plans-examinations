@@ -134,12 +134,20 @@ export const DOCUMENT_SET = [
 		displayOrder: 16
 	},
 	{
+		id: DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Gateway 2 Workshop Documents',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP_DOCUMENTS,
+		displayOrder: 17
+	},
+	{
 		id: DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Subsequent work towards draft plan',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
-		displayOrder: 17
+		displayOrder: 18
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 
@@ -284,5 +292,14 @@ export const DOCUMENT_SET = [
 		displayName: 'Other documents',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G3_OTHER_DOCUMENTS,
 		displayOrder: 217
+	},
+	// Others
+	{
+		id: DOCUMENT_SET_ID.EXAMINATION_MIQS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'MIQs',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_MIQS,
+		displayOrder: 1
 	}
 ];

@@ -11,7 +11,7 @@ interface Field {
  * as it allows for any validator to be used on each individual field.
  */
 export default class MultiFieldInputValidator extends BaseValidator {
-	private fields: Field[];
+	public fields: Field[];
 
 	constructor({ fields } = { fields: [] as Field[] }) {
 		super();

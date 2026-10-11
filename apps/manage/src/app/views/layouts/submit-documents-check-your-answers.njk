@@ -19,7 +19,7 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
 
-    <span class="govuk-caption-l">{{ caseReference }}</span>
+    <span class="govuk-caption-l">{{ caseReference.replace('-','/') }}</span>
     <h1 class="govuk-heading-l">{{ titleHeading }}</h1>
 
     
@@ -57,6 +57,7 @@
       </dl>
     {% endfor %}
   {% endif %}
+  {% if not hideNotificationPreview %}
   <details class="govuk-details" data-cy="preview-email-to-lpa">
   <summary class="govuk-details__summary">
     <span class="govuk-details__summary-text">
@@ -67,8 +68,9 @@
     {% include "views/layouts/notification-preview/" + notificationPreviewTemplate + ".njk" %}
   </div>
 </details>
+  {% endif %}
 
-    <p class="govuk-body">We'll send a notification to the LPA to tell them that the report is available</p>
+    <p class="govuk-body">{{ notificationTextLPA }}</p>
 
       <form method="post" action="">
         {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}

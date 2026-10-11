@@ -138,19 +138,39 @@ model Gateway1Info {
 
 /// Gateway 2 stage dates, assessor details and report/workshop tracking for a case.
 model Gateway2Info {
-  id                           String    @id @default(uuid()) @db.UniqueIdentifier
-  case                         Case      @relation(fields: [caseId], references: [id])
-  caseId                       String    @unique @db.UniqueIdentifier
-  expectedDate                 DateTime? @db.DateTime2
-  actualDate                   DateTime? @db.DateTime2
-  validDate                    DateTime? @db.DateTime2
+  id                           String             @id @default(uuid()) @db.UniqueIdentifier
+  case                         Case               @relation(fields: [caseId], references: [id])
+  caseId                       String             @unique @db.UniqueIdentifier
+  expectedDate                 DateTime?          @db.DateTime2
+  actualDate                   DateTime?          @db.DateTime2
+  validDate                    DateTime?          @db.DateTime2
   assessorName                 String?
-  assessorAppointmentDate      DateTime? @db.DateTime2
-  workshopDate                 DateTime? @db.DateTime2
-  workshopVenue                String?
-  reportIssuedDate             DateTime? @db.DateTime2
-  reportPublishedByLPA         DateTime? @db.DateTime2
+  assessorAppointmentDate      DateTime?          @db.DateTime2
+  reportIssuedDate             DateTime?          @db.DateTime2
+  reportPublishedByLPA         DateTime?          @db.DateTime2
   workshopDocumentUploadedDate DateTime?
+  workshops                    Gateway2Workshop[]
+}
+
+model Gateway2Workshop {
+  id                        String        @id @default(uuid()) @db.UniqueIdentifier
+  gateway2Info              Gateway2Info? @relation(fields: [gateway2InfoId], references: [id])
+  gateway2InfoId            String?       @db.UniqueIdentifier
+  createdDate               DateTime
+  workshopDate              DateTime?
+  workshopTime              String?
+  workshopEndTime           String?
+  workshopExpectedDaysKnown String?
+  workshopExpectedDays      String?
+  workshopLocationType      String?
+  remoteMeetingLinkKnown    String?
+  remoteMeetingLink         String?
+  workshopLocationKnown     String?
+  workshopVenueName         String?
+  workshopAddressLine       String?
+  workshopAddressLine2      String?
+  workshopTownOrCity        String?
+  workshopPostcode          String?
 }
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
@@ -180,36 +200,58 @@ model Gateway3Submission {
 
 /// Examination stage dates, inspectors, QA, fact check and final outcome fields.
 model ExaminationInfo {
-  id                                   String    @id @default(uuid()) @db.UniqueIdentifier
-  case                                 Case      @relation(fields: [caseId], references: [id])
-  caseId                               String    @unique @db.UniqueIdentifier
-  expectedSubmissionForExaminationDate DateTime? @db.DateTime2
-  submissionForExaminationDate         DateTime? @db.DateTime2
+  id                                   String               @id @default(uuid()) @db.UniqueIdentifier
+  case                                 Case                 @relation(fields: [caseId], references: [id])
+  caseId                               String               @unique @db.UniqueIdentifier
+  expectedSubmissionForExaminationDate DateTime?            @db.DateTime2
+  submissionForExaminationDate         DateTime?            @db.DateTime2
   examiningInspector1                  String?
   examiningInspector2                  String?
   examiningInspector3                  String?
-  examiningInspectorAppointmentDate    DateTime? @db.DateTime2
+  examiningInspectorAppointmentDate    DateTime?            @db.DateTime2
   examinationWebsite                   String?
-  letterSentToMHCLGDate                DateTime? @db.DateTime2
-  letterIssueDate                      DateTime? @db.DateTime2
-  QADate                               DateTime? @db.DateTime2
+  letterSentToMHCLGDate                DateTime?            @db.DateTime2
+  letterIssueDate                      DateTime?            @db.DateTime2
+  QADate                               DateTime?            @db.DateTime2
   qaInspector1                         String?
   qaInspector2                         String?
   qaInspector3                         String?
-  reportSentToPanelDate                DateTime? @db.DateTime2
-  panelResponseToInspectorDate         DateTime? @db.DateTime2
-  factCheckDateReceivedFromInspector   DateTime? @db.DateTime2
-  factCheckDueDate                     DateTime? @db.DateTime2
-  factCheckActualDate                  DateTime? @db.DateTime2
-  factCheckReceivedBackFromLPADate     DateTime? @db.DateTime2
-  finalReportIssueDate                 DateTime? @db.DateTime2
-  planPauseStartDate                   DateTime? @db.DateTime2
-  planPauseEndDate                     DateTime? @db.DateTime2
-  withdrawnDate                        DateTime? @db.DateTime2
-  isSound                              Boolean?  @db.Bit
-  soundUnsoundDate                     DateTime? @db.DateTime2
-  adoptionDate                         DateTime? @db.DateTime2
-  approvedForCILDate                   DateTime? @db.DateTime2
+  reportSentToPanelDate                DateTime?            @db.DateTime2
+  panelResponseToInspectorDate         DateTime?            @db.DateTime2
+  factCheckDateReceivedFromInspector   DateTime?            @db.DateTime2
+  factCheckDueDate                     DateTime?            @db.DateTime2
+  factCheckActualDate                  DateTime?            @db.DateTime2
+  factCheckReceivedBackFromLPADate     DateTime?            @db.DateTime2
+  finalReportIssueDate                 DateTime?            @db.DateTime2
+  planPauseStartDate                   DateTime?            @db.DateTime2
+  planPauseEndDate                     DateTime?            @db.DateTime2
+  withdrawnDate                        DateTime?            @db.DateTime2
+  isSound                              Boolean?             @db.Bit
+  soundUnsoundDate                     DateTime?            @db.DateTime2
+  adoptionDate                         DateTime?            @db.DateTime2
+  approvedForCILDate                   DateTime?            @db.DateTime2
+  hearings                             ExaminationHearing[]
+}
+
+model ExaminationHearing {
+  id                            String           @id @default(uuid()) @db.UniqueIdentifier
+  ExaminationInfo               ExaminationInfo? @relation(fields: [ExaminationInfoID], references: [id])
+  ExaminationInfoID             String?          @db.UniqueIdentifier
+  createdDate                   DateTime
+  hearingComplete               Boolean          @default(false) // Hearings are saved during journey progress, but should only be permanent if submitted - this is used to identify hearings that should be cleaned up if exiting the journey
+  hearingDate                   DateTime?
+  hearingTime                   String?
+  hearingExpectedDaysKnown      String?
+  hearingExpectedDays           String?
+  hearingLocationType           String?
+  hearingRemoteMeetingLinkKnown String?
+  hearingRemoteMeetingLink      String?
+  hearingLocationKnown          String?
+  hearingVenueName              String?
+  hearingAddressLine            String?
+  hearingAddressLine2           String?
+  hearingTownOrCity             String?
+  hearingPostcode               String?
 }
 
 /// Local planning authority linked to one or more cases.

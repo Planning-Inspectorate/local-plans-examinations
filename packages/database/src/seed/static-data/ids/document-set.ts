@@ -1,4 +1,6 @@
+export const NUM_GW2_WORKSHOP_QUESTIONS = 200;
 export const NUM_GW3_SUBMISSIONS_QUESTIONS = 200;
+export const NUM_EXAMINATION_HEARING_QUESTIONS = 200;
 
 // Create multiple entries to support multiple gw3 submissions
 const GATEWAY_3_DOCUMENT_FOLDERS: Record<string, string> = {};
@@ -39,6 +41,7 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G3_GATEWAY_2_ISSUES_SUMMARY: 'g3-g2-issues-summ',
 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'g3-changes-stmt',
 	G3_OTHER_DOCUMENTS: 'g3-other-documents',
+	G2_WORKSHOP_DOCUMENTS: 'g2-workshop-docs',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
@@ -47,7 +50,10 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_G1_SELF_ASSESSMENT: 'g2-g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'g2-cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'g2-sum-of-cons',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work'
+	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
+
+	// Others
+	EXAMINATION_MIQS: 'ex-miqs'
 };
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
@@ -80,6 +86,7 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G3_GATEWAY_2_ISSUES_SUMMARY: 'gateway-2-issues-summary',
 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'changes-since-consultation-statement',
 	G3_OTHER_DOCUMENTS: 'other-documents',
+	G2_WORKSHOP_DOCUMENTS: 'gateway-2-workshop-documents',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',
@@ -88,7 +95,10 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_G1_SELF_ASSESSMENT: 'g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan'
+	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
+
+	// Others
+	EXAMINATION_MIQS: 'miqs'
 };
 export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_COVER_LETTER,

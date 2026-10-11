@@ -15,7 +15,7 @@ import { getQuestions, questions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 
-function setAsEditingFromCya(req: any, _: any, next: any) {
+export function setAsEditingFromCya(req: any, _: any, next: any) {
 	req.session.editingFromCheckAnswers = true;
 	next();
 }
@@ -26,17 +26,34 @@ export function shouldReturnToCya(req: { params?: Record<string, string | undefi
 	return editingFromCya && !hasManageListItemParams;
 }
 
-function redirectAfterCyaEdit(req: any, res: any, next: any) {
-	const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+export function redirectAfterCyaEdit(req: any, res: any, next: any) {
+	const editingFromCya = req.session.editingFromCheckAnswers === true;
+
+	const returnToCya = shouldReturnToCya(req, editingFromCya);
+
+	req.log?.info?.(
+		{
+			url: req.originalUrl,
+			journey: req.session.currentJourney,
+			editingFromCya,
+			returnToCya,
+			manageListAction: req.params?.manageListAction,
+			manageListItemId: req.params?.manageListItemId,
+			manageListQuestion: req.params?.manageListQuestion,
+			lastQuestionUrl: req.session.lastQuestionUrl
+		},
+		'redirectAfterCyaEdit'
+	);
+
 	buildSave(saveDataToSession, returnToCya)(req, res, next);
 }
 
-function saveLastQuestionUrl(req: any, _: any, next: any) {
+export function saveLastQuestionUrl(req: any, _: any, next: any) {
 	req.session.lastQuestionUrl = req.originalUrl;
 	next();
 }
 
-function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
+export function setBackLinkFromSession(req: any, res: Response, next: NextFunction) {
 	if (req.session.lastQuestionUrl) {
 		res.locals.backLink = req.session.lastQuestionUrl;
 	}
