@@ -1,3 +1,5 @@
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
+
 <details id="case-notes-details" class="govuk-details">
     <summary class="govuk-details__summary">
       <span class="govuk-details__summary-text">
@@ -7,25 +9,14 @@
     <div class="govuk-details__text">
       <form method="POST" action="/case/{{ reference }}/overview/case-details/case-notes">
         {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-full">
-            <div class="govuk-form-group govuk-character-count" data-module="govuk-character-count" data-maxlength="500"
-              data-govuk-character-count-init="">
-              <label class="govuk-label" for="note">
-                These notes are only visible to PINS staff and should be used to share informal progress updates
-              </label>
-              <textarea class="govuk-textarea govuk-js-character-count" id="note" name="note" rows="5"
-                aria-describedby="note-info"></textarea>
-              <div id="note-info" class="govuk-hint govuk-character-count__message govuk-visually-hidden">
-                You can enter up to 500 characters
-              </div>
-              <div class="govuk-hint govuk-character-count__message govuk-character-count__status" aria-hidden="true">You
-                have 500 characters remaining</div>
-              <div class="govuk-character-count__sr-status govuk-visually-hidden" aria-live="polite">You have 500
-                characters remaining</div>
-            </div>
-          </div>
-        </div>
+        {{ govukCharacterCount({
+          name: "note",
+          id: "note",
+          maxlength: 500,
+          hint: {
+            text: "These notes are only visible to PINS staff and should be used to share informal progress updates"
+          }
+        }) }}
         <button type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-1"
           data-module="govuk-button" data-govuk-button-init="">
           Add case note
