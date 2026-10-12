@@ -27,6 +27,12 @@ export interface CaseOverviewInput extends SaveInput {
 	programmeOfficerFirstName?: string;
 	programmeOfficerLastName?: string;
 	programmeOfficerEmail?: string;
+	notes?: {
+		text: string;
+		createdTime: Date;
+		createdBy: string;
+		caseId: string;
+	}[];
 }
 
 export interface Gateway1Input extends SaveInput {
