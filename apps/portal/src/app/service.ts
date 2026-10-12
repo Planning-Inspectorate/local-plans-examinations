@@ -101,7 +101,7 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 	if (gateway3SubmissionState.resubmissionAwaitingSubmission) {
 		return {
 			stage: STAGE.Gateway3,
-			status: STATUS.ReadyToStart
+			status: STATUS.ResubmissionRequired
 		};
 	}
 

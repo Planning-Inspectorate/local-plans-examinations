@@ -1,0 +1,116 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block pageTitle %}Gateway 3; submission {{ submissionNumber }}{% endblock %}
+
+{% block pageHeading %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
+                {% if pageCaption %}
+                    <span class="govuk-caption-xl">{{ pageCaption }}</span>
+                {% endif %}
+                Gateway 3 submission {{ submissionNumber }}
+            </h1>
+            <p class="govuk-body govuk-!-margin-top-2 govuk-!-margin-bottom-6">
+                {{ govukTag({
+                    text: "Resubmission required",
+                    classes: "govuk-tag govuk-tag--red"
+                }) }}
+            </p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+
+        {% if errorSummary %}
+            {{ govukErrorSummary({
+                titleText: "There is a problem",
+                errorList: errorSummary
+            }) }}
+        {% endif %}
+
+        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-cy="previous-submissions-table">
+            {% if reportDocument %}
+            <div class="govuk-summary-list__row" data-cy="submission-report-row">
+                <dt class="govuk-summary-list__key"><strong>Submission {{ previousSubmissions | length }} report</strong></dt>
+                <dd class="govuk-summary-list__value">
+                    <a href="{{ reportDocument.downloadUrl }}" class="govuk-link" data-cy="download-report">{{ reportDocument.fileName }}</a>
+                    {% if reportDocument.dateIssued %}
+                        (shared on {{ reportDocument.dateIssued }})
+                    {% endif %}
+                </dd>
+            </div>
+            {% endif %}
+            <div class="govuk-summary-list__row" data-cy="previous-submissions-row">
+                <dt class="govuk-summary-list__key"><strong>Previous submissions</strong></dt>
+                <dd class="govuk-summary-list__value">
+                    {% for submission in previousSubmissions %}
+                        Submission {{ submission.number }}
+                        {% if submission.submittedDate %}
+                            (submitted on {{ submission.submittedDate }})
+                        {% endif %}
+                        {% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                </dd>
+            </div>
+        </dl>
+
+        {% if saveAndComeBackUrl %}
+            <p class="govuk-body">
+                <a href="{{ saveAndComeBackUrl }}" class="govuk-link" data-cy="save-and-come-back">Save and come back later</a>
+            </p>
+        {% endif %}
+
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+        <h2 class="govuk-heading-m" data-cy="new-documents-heading">New or updated documents</h2>
+        <p class="govuk-body">Add any new documents or updated documents that are relevant to your resubmission as outlined in the report.</p>
+
+        <dl class="govuk-summary-list" data-cy="new-documents-table">
+            <div class="govuk-summary-list__row" data-cy="documents-row">
+                <dt class="govuk-summary-list__key"><strong>Documents</strong></dt>
+                <dd class="govuk-summary-list__value" style="overflow-wrap: break-word; word-break: break-word">
+                    {% if uploadedDocuments and uploadedDocuments.length > 0 %}
+                        {% if uploadedDocuments.length === 1 %}
+                            <a href="{{ uploadedDocuments[0].downloadUrl }}" class="govuk-link">{{ uploadedDocuments[0].fileName }}</a>
+                        {% else %}
+                            <ul class="govuk-list govuk-list--bullet">
+                                {% for doc in uploadedDocuments %}
+                                    <li><a href="{{ doc.downloadUrl }}" class="govuk-link">{{ doc.fileName }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    {% else %}
+                        <span data-cy="documents-status">Not added</span>
+                    {% endif %}
+                </dd>
+                <dd class="govuk-summary-list__actions">
+                    <a href="{{ addDocumentsUrl }}" class="govuk-link" data-cy="add-documents">
+                        {% if uploadedDocuments and uploadedDocuments.length > 0 %}
+                            Change
+                        {% else %}
+                            Add
+                        {% endif %}
+                    </a>
+                </dd>
+            </div>
+        </dl>
+
+        <form method="post" novalidate>
+            <input type="hidden" name="_csrf" value="{{ _csrf }}">
+            {{ govukButton({
+                text: "Submit",
+                attributes: { "data-cy": "submit-resubmission" }
+            }) }}
+        </form>
+
+    </div>
+</div>
+{% endblock %}
