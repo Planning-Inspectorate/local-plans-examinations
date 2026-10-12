@@ -5,6 +5,7 @@ import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
 import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
+import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway-3-submitted.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 
 // prettier-ignore
@@ -92,6 +93,7 @@ export default defineConfig({
 				},
 				seedDb: seedCy,
 				seedGateway3DeclarationDocuments,
+				seedGateway3Submitted,
 				seedStaticData: async () => {
 					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;

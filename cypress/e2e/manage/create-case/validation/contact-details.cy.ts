@@ -8,14 +8,15 @@ const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.
 
 describe('Create a case - contact details', () => {
 	it('requires at least one contact before continuing', { tags: ['regression'] }, () => {
-		contactDetailsListPage.visitAndSubmitForValidation('You must add at least one contact');
+		contactDetailsListPage.visitAndSubmitForValidation('You need to add a contact');
 	});
 
 	it('shows validation for required contact fields', { tags: ['regression'] }, () => {
 		contactDetailsPage.visitForNewItemAndSubmitForValidation(
-			'Input a first name',
-			'Input a last name',
-			'Input an email address'
+			'Enter a first name',
+			'Enter a last name',
+			'Enter an email address',
+			'Select a planning authority'
 		);
 	});
 

@@ -8,6 +8,7 @@ import { buildEnterEmailPage, buildEnterOtpPage, buildSubmitEmailPage, buildSubm
 function createMockService(overrides = {}) {
 	return {
 		environment: 'local',
+		nodeEnv: 'development',
 		auth: {
 			otpBypassCode: ''
 		},
@@ -128,9 +129,7 @@ describe('buildSubmitEmailPage', () => {
 	});
 
 	it('should render lockout error when user is locked out', async () => {
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'production';
-		const service = createMockService();
+		const service = createMockService({ nodeEnv: 'production' });
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
 			email: 'test@example.com',
@@ -150,7 +149,6 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 0);
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should reset lockout when lock time has expired', async () => {
@@ -292,9 +290,8 @@ describe('buildSubmitOtpPage', () => {
 	});
 
 	it('should allow the configured OTP bypass when NODE_ENV is production in non-prod Azure', async () => {
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'production';
 		const service = createMockService({
+			nodeEnv: 'production',
 			environment: 'training',
 			auth: { otpBypassCode: '12345' }
 		});
@@ -313,12 +310,9 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
 		assert.strictEqual(req.session.email, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should allow the local OTP fallback when running on localhost outside production', async () => {
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'development';
 		const service = createMockService();
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' });
@@ -331,7 +325,6 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
 		assert.strictEqual(req.session.email, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should not allow the configured OTP bypass in prod', async () => {
@@ -371,9 +364,7 @@ describe('buildSubmitOtpPage', () => {
 	});
 
 	it('should not allow the local OTP fallback in production', async () => {
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'production';
-		const service = createMockService();
+		const service = createMockService({ nodeEnv: 'production' });
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({ otp: '12345' }, { email: 'test@example.com' });
@@ -385,12 +376,9 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(req.session.isAuthenticated, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should not allow the local OTP for non-localhost hosts outside production', async () => {
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'development';
 		const service = createMockService();
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
 		const handler = buildSubmitOtpPage(service);
@@ -403,7 +391,6 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.strictEqual(req.session.isAuthenticated, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 1);
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should render error when no OTP record found in DB', async () => {
@@ -424,7 +411,7 @@ describe('buildSubmitOtpPage', () => {
 	});
 
 	it('should render lockout error when user is locked out', async () => {
-		const service = createMockService();
+		const service = createMockService({ nodeEnv: 'production' });
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
 			email: 'test@example.com',
 			hashedOtp: 'hashed',
@@ -433,8 +420,6 @@ describe('buildSubmitOtpPage', () => {
 			lockedOutUntil: new Date(Date.now() + 60 * 60 * 1000)
 		}));
 
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'production';
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({ otp: 'ABCDEFGH' }, { email: 'test@example.com' });
 		const res = createMockRes();
@@ -446,7 +431,6 @@ describe('buildSubmitOtpPage', () => {
 		assert.match(data.errors.otp.msg, /locked out/i);
 		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 0);
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should render expiry error when OTP has expired', async () => {
@@ -519,8 +503,6 @@ describe('buildSubmitOtpPage', () => {
 			return {};
 		});
 
-		const originalEnv = process.env.NODE_ENV;
-		process.env.NODE_ENV = 'production';
 		const handler = buildSubmitOtpPage(service);
 		const req = createMockReq({ otp: 'WRONGCODE' }, { email: 'test@example.com' });
 		const res = createMockRes();
@@ -532,7 +514,6 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(data.pageHeading, 'Enter your one-time password');
 		assert.match(data.errors.otp.msg, /locked out/i);
 		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
-		process.env.NODE_ENV = originalEnv;
 	});
 
 	it('should redirect to home on successful OTP verification and clear session email', async () => {

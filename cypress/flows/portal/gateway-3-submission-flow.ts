@@ -4,6 +4,8 @@ import { examinationWebsitePage } from '../../page-objects/portal/gw3-applicatio
 import type { DocumentUploadPage } from '../../page-objects/portal/base/document-upload-page.ts';
 import { gateway3DeclarationPage } from '../../page-objects/portal/gw3-application/declaration-page.ts';
 import { examinationWebsite } from '../../fixtures/portal/examination.ts';
+import { gateway3SubmissionCompletePage } from '../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
+import { planDetailsPage } from '../../page-objects/portal/plan-details/plan-details-page.ts';
 
 export type Gateway3DocumentUpload = {
 	page: DocumentUploadPage;
@@ -45,4 +47,12 @@ export const openSeededGateway3DeclarationPage = (plan: Pick<PlanDetailsFixture,
 	gateway3ApplicationPage.verifyLoaded();
 	gateway3ApplicationPage.submitGateway3Button.click();
 	gateway3DeclarationPage.verifyLoaded();
+};
+
+export const openSeededGateway3Submission = (plan: Pick<PlanDetailsFixture, 'urlReference'>) => {
+	openSeededGateway3DeclarationPage(plan);
+	gateway3DeclarationPage.confirmSubmissionButton.click();
+	gateway3SubmissionCompletePage.verifyLoaded();
+	gateway3SubmissionCompletePage.checkSubmissionStatusLink(plan.urlReference).click();
+	planDetailsPage.verifyLoaded();
 };

@@ -10,8 +10,10 @@ export interface PlanDetailsFixture {
 	urlReference: string;
 	title: string;
 	currentStage: string;
+	currentStage2: string;
 	status: string;
 	status2: string;
+	status3: string;
 	leadLpa: string;
 	linkedLpa: string;
 	dates: PlanDetailsDates;
