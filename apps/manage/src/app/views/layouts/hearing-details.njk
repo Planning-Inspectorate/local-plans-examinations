@@ -122,7 +122,7 @@
     {% endif %}
     {% if hearingRows.length %}
       <h2 class="govuk-heading-m">Hearing {{ loop.index }} details</h2>
-      <a href="/" class="govuk-link">Cancel hearing {{ loop.index }}</a>
+      <a href="/case/{{ reference }}/examination/set-up-hearing/delete-{{ loop.index }}" class="govuk-link">Cancel hearing {{ loop.index }}</a>
       <p></p>
       {{ govukSummaryList({
         rows: hearingRows

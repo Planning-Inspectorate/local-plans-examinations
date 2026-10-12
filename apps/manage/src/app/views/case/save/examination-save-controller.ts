@@ -16,7 +16,7 @@ export class ExaminationSaveController extends SaveController {
 	protected async shouldSaveToSession() {
 		const question = String(this.req.params.question);
 
-		if (question.startsWith('examination-hearing-end-date-')) {
+		if (question.startsWith('examination-hearing-end-date-') || question.startsWith('examination-hearing-duration-')) {
 			console.log('here');
 			return false;
 		}
@@ -128,6 +128,9 @@ export class ExaminationSaveController extends SaveController {
 				hearingDuration: `hearingDuration-${hearingId}`,
 				hearingEndDate: `hearingEndDate-${hearingId}`
 			};
+			console.log('Submitted question:', question);
+			console.log('Duration answer:', answers[`hearingDuration-${hearingId}`]);
+			console.log('End-date answer:', answers[`hearingEndDate-${hearingId}`]);
 			Object.entries(hearingFieldsToAnswerMap).forEach(([hearingField, answerField]) => {
 				const questionAnswer = answers[answerField];
 				if (questionAnswer) {

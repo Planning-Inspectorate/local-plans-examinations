@@ -110,7 +110,7 @@ export function createExaminationHearingJourney(
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/hearing-check-your-answers.njk',
 		journeyTitle: 'Set up workshop',
-		returnToListing: false,
+		returnToListing: true,
 		makeBaseUrl: () => examinationHearingUrl,
 		initialBackLink: examinationUrl,
 		response
@@ -138,6 +138,27 @@ export function createExaminationHearingJourney(
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
 	}
+
+	const getBackLink = journey.getBackLink.bind(journey); // overide back links for hearing duration + end date
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		if (
+			options.params.question.startsWith('examination-hearing-duration-') ||
+			options.params.question.startsWith('examination-hearing-end-date-')
+		) {
+			return examinationUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	const redirectToNextQuestion = journey.redirectToNextQuestion.bind(journey); // overide next question for hearing duration + end date (stops it going to CYA when submit is clicked)
+	journey.redirectToNextQuestion = (res, params, manageListQuestion) => {
+		if (res.locals.redirectToExamination) {
+			return res.redirect(examinationUrl);
+		}
+		return redirectToNextQuestion(res, params, manageListQuestion);
+	};
+
 	return journey;
 }
 

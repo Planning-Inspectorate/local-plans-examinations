@@ -5,6 +5,8 @@ import {
 	getDeleteCase,
 	getDeleteWorkshop,
 	postDeleteWorkshop,
+	getDeleteHearing,
+	postDeleteHearing,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
 	fileUploadQuestionConfigs,
@@ -326,8 +328,8 @@ function registerExaminationHearingJourney(
 		completeHearing
 	);
 
-	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
-	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
+	router.get('/examination/set-up-hearing/delete-*hearingId', getDeleteHearing());
+	router.post('/examination/set-up-hearing/delete-*hearingId', postDeleteHearing(service));
 
 	router.get(
 		'/examination/set-up-hearing/:section/:question',
@@ -352,8 +354,16 @@ function registerExaminationHearingJourney(
 
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
-		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
-
+		let returnToCya;
+		if (
+			req.params.question.startsWith('examination-hearing-duration-') ||
+			req.params.question.startsWith('examination-hearing-end-date-')
+		) {
+			returnToCya = false;
+			res.locals.redirectToExamination = true;
+		} else {
+			returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+		}
 		buildSave(updateCase, returnToCya)(req, res, next);
 	};
 }
