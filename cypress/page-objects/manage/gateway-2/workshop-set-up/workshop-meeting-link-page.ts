@@ -7,7 +7,7 @@ class WorkshopRemoteLinkPage extends BasePage {
 	}
 
 	get venueRemoteLinkField() {
-		return cy.get(`[name="${workshopSetUp.workshopMeetingLink.fieldName}"`);
+		return cy.get(`[name="${workshopSetUp.workshopMeetingLink.fieldName}"]`);
 	}
 
 	enterRemoteLink(link: string) {

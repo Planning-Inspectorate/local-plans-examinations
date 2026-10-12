@@ -72,6 +72,17 @@ export const workshopSetUpFlow = (planTitle: string) => {
 	workshopCYAPage.verifyExpectedRows();
 	workshopCYAPage.verifyExpectedSeededAnswers();
 	workshopCYAPage.verifyExpectedActionLinkHrefs();
+	workshopCYAPage.openChangeLinkFor(workshopSetUp.expectedNumberOfDays.row);
+	workshopExpectedDaysPage.verifyLoaded(workshopSetUp.expectedNumberOfDays.inputRadio);
+	workshopExpectedDaysPage.enterRadioAndNumberOfDays(
+		workshopSetUp.expectedNumberOfDays.inputRadio,
+		workshopSetUp.expectedNumberOfDays.updatedInputDays
+	);
+	workshopCYAPage.verifyLoaded();
+	workshopCYAPage.verifySummaryRowContains(
+		workshopSetUp.expectedNumberOfDays.rowNumberOfDays,
+		workshopSetUp.expectedNumberOfDays.updatedDisplayNumberOfDays
+	);
 	workshopCYAPage.submitWorkshop();
 	gateway2Page.verifyLoaded(planTitle);
 };

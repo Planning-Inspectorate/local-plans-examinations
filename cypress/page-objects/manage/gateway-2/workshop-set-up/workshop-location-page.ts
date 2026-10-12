@@ -12,7 +12,7 @@ export class WorkshopLocationPage extends RadioQuestionPage {
 			[
 				{ value: 'in-person', text: 'In-person' },
 				{ value: 'hybrid', text: 'Hybrid' },
-				{ value: 'hybrid', text: 'Hybrid' }
+				{ value: 'remote', text: 'Remote' }
 			]
 		);
 	}
