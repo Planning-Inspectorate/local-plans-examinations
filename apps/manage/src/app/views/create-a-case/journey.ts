@@ -68,7 +68,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				questions.checkContactDetails,
 				new ManageListSection().addQuestion(questions.contactDetails)
 			),
-			new Section('Dates', 'dates').addQuestion(questions.keyStageDates)
+			new Section('Timetable', 'timetable').addQuestion(questions.keyStageDates)
 		],
 		taskListUrl: 'check-your-answers',
 		journeyTemplate: 'views/layouts/forms-question.njk',

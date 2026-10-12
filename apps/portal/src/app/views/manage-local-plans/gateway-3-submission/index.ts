@@ -3,6 +3,7 @@ import { type IRouter, Router as createRouter } from 'express';
 import {
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
+	buildSubmittedGateway3View,
 	handleMulterFileSizeError,
 	setAsEditingFromCya,
 	setGateway3ViewData
@@ -39,6 +40,7 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 		getJourney,
 		setAsEditingFromCya,
 		setGateway3ViewData,
+		buildSubmittedGateway3View(),
 		buildGateway3CheckAnswersList()
 	);
 

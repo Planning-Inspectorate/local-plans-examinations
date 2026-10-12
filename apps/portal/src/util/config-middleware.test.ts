@@ -3,6 +3,17 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 
 describe('addLocalsConfiguration', () => {
+	it('enables the environment banner only in training', () => {
+		const trainingRes = { locals: {} as { config?: { environmentBanner?: boolean } } };
+		const testRes = { locals: {} as { config?: { environmentBanner?: boolean } } };
+
+		addLocalsConfiguration(undefined, 'training')({ path: '/', cookies: {} } as any, trainingRes as any, mock.fn());
+		addLocalsConfiguration(undefined, 'test')({ path: '/', cookies: {} } as any, testRes as any, mock.fn());
+
+		assert.strictEqual(trainingRes.locals.config?.environmentBanner, true);
+		assert.strictEqual(testRes.locals.config?.environmentBanner, false);
+	});
+
 	it('adds accepted cookie consent to locals', () => {
 		const req = { path: '/', cookies: { cookie_consent: 'accept' } };
 		const res = { locals: {} as { config?: { clarityId?: string }; cookieConsent?: string } };

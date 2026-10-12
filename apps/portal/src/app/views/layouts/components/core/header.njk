@@ -1,6 +1,10 @@
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 {% from "ui/header/pins-header.njk" import pinsHeader %}
 
+{% if config.environmentBanner %}
+	<div class="pins-environment-banner">Training environment</div>
+{% endif %}
+
 {{ pinsHeader({isExternal: true}) }}
 
 {% if config.inBeta %}

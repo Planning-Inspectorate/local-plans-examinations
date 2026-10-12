@@ -7,7 +7,7 @@ export class KeyStageDatesPage extends BasePage {
 	private readonly dateInput = new DateInput();
 
 	constructor() {
-		super('/create-a-case/dates/key-stage-dates');
+		super('/create-a-case/timetable/key-stage-dates');
 	}
 
 	verifyKeyStageDatesPopulated(dates: CreateCaseData['dates']) {
@@ -20,13 +20,13 @@ export class KeyStageDatesPage extends BasePage {
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('Enter dates for key stages of the local plan');
+		this.verifyHeading('Plan timetable');
 		this.verifyMainContains(
 			'Date the Notice of Intention to Commence Plan Making was published',
-			'Gateway 1 expected date',
-			'Gateway 2 expected date',
-			'Gateway 3 expected date',
-			'Expected submission for examination date'
+			'Gateway 1 submission expected',
+			'Gateway 2 submission expected',
+			'Gateway 3 submission expected',
+			'Examination submission expected'
 		);
 		this.dateInput.verifyVisible('intentionToCommenceDate');
 		this.dateInput.verifyVisible('gateway1Date');

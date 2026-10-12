@@ -16,11 +16,15 @@ describe('gateway3SubmissionRoutes', () => {
 });
 
 describe('Gateway 3 check answers page', () => {
-	function renderCheckAnswers(sections: unknown[]) {
+	function renderCheckAnswers(
+		sections: unknown[],
+		statusTag: { label: string; class: string } | undefined = undefined
+	) {
 		const nunjucks = configureNunjucks();
 		return nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers.njk', {
 			targetDate: '1 August 2026',
 			saveAndComeBackUrl: '/manage-local-plans/PLAN-001',
+			statusTag,
 			summaryListData: { sections },
 			config: {
 				styleFile: 'style.css',
@@ -48,6 +52,58 @@ describe('Gateway 3 check answers page', () => {
 		};
 	}
 
+	function renderSubmittedCheckAnswers(sections: unknown[]) {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 3 submission',
+			pageHeading: 'Gateway 3 submission',
+			pageCaption: 'Test Local Plan',
+			submissionDate: '1 October 2026',
+			submissionTime: '12:30',
+			submitter: 'user@example.com',
+			summaryListData: { sections },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+	}
+
+	function buildSubmittedSections() {
+		return [
+			{
+				heading: 'Required Information',
+				list: {
+					rows: [
+						{
+							key: { text: 'Proposed local plan' },
+							value: { html: '<a class="govuk-link" href="/documents/proposed-plan">proposed-plan.pdf</a>' }
+						},
+						{
+							key: { text: 'Map of policies' },
+							value: {
+								html: '<ul class="govuk-list govuk-list--bullet"><li><a class="govuk-link" href="/documents/map-1">map-1.pdf</a></li><li><a class="govuk-link" href="/documents/map-2">map-2.pdf</a></li></ul>'
+							}
+						}
+					]
+				}
+			},
+			{
+				heading: 'Optional Documents',
+				list: {
+					rows: [
+						{
+							key: { text: 'Other documents' },
+							value: { html: '<a class="govuk-link" href="/documents/other">other.pdf</a>' }
+						}
+					]
+				}
+			}
+		];
+	}
+
 	it('renders the submit section with heading, copy and a submit button', () => {
 		const html = renderCheckAnswers([]);
 
@@ -57,6 +113,16 @@ describe('Gateway 3 check answers page', () => {
 			'expected submit copy'
 		);
 		assert.ok(html.includes('data-cy="submit-gateway-3"'), 'expected submit button data-cy');
+	});
+
+	it('renders the Under review status tag', () => {
+		const html = renderCheckAnswers([], {
+			label: 'Under review',
+			class: 'govuk-tag govuk-tag--yellow'
+		});
+
+		assert.ok(html.includes('Under review'));
+		assert.ok(html.includes('govuk-tag--yellow'));
 	});
 
 	it('renders the Optional Documents section with copy and an Add action', () => {
@@ -79,6 +145,28 @@ describe('Gateway 3 check answers page', () => {
 			!html.includes('Add the documents that are relevant to your plan.'),
 			'expected no optional documents guidance copy'
 		);
+	});
+
+	it('renders the submitted view with read-only document tables', () => {
+		const html = renderSubmittedCheckAnswers(buildSubmittedSections());
+
+		assert.ok(html.includes('Test Local Plan'), 'expected plan title caption');
+		assert.ok(html.includes('Gateway 3 submission'), 'expected Gateway 3 submission heading');
+		assert.ok(
+			html.includes('Your submission was sent on 1 October 2026 at 12:30 by user@example.com'),
+			'expected submitted copy'
+		);
+		assert.ok(html.includes('Required information'), 'expected Required information heading');
+		assert.ok(html.includes('Optional documents'), 'expected Optional documents heading');
+		assert.ok(html.includes('Proposed local plan'), 'expected document name in the first column');
+		assert.ok(html.includes('proposed-plan.pdf'), 'expected uploaded document link in the second column');
+		assert.ok(html.includes('govuk-list govuk-list--bullet'), 'expected bullet list for multiple documents');
+		assert.ok(html.includes('map-1.pdf'), 'expected first document in bullet list');
+		assert.ok(html.includes('map-2.pdf'), 'expected second document in bullet list');
+		assert.ok(!html.includes('govuk-visually-hidden">Action'), 'expected no action column');
+		assert.ok(!html.includes('data-cy="submit-gateway-3"'), 'expected no submit button');
+		assert.ok(!html.includes('Ready to submit for Gateway 3'), 'expected no resubmission section');
+		assert.doesNotMatch(html, />\s*(Add|Change|Submit)\s*</, 'expected no add, change or submit actions');
 	});
 });
 

@@ -449,6 +449,22 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes('Ready to start'), 'expected Gateway 3 status to be Ready to start');
 	});
 
+	it('should render Under review and Submitted hint text for Gateway 3', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.UnderReview,
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 October 2026', E: '1 November 2026' }
+		};
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const expectedTag = '<strong class="govuk-tag govuk-tag--yellow">Under review</strong>';
+
+		assert.strictEqual(data.tagG3, expectedTag);
+		assert.strictEqual(data.dateTextG3, 'Submitted: ');
+		assert.ok(html.includes('Submitted: 1 October 2026'));
+		assert.ok(html.includes(expectedTag));
+	});
+
 	describe('should render task tag correctly for case 2 (G1, G2 complete) if status != 0', () => {
 		const testCases = [
 			{ refNum: 'PLAN-002', status: STATUS.InProgress },

@@ -6,7 +6,7 @@ describe('Create a case - case details', () => {
 	});
 
 	it('shows validation when the plan title is not entered', { tags: ['regression'] }, () => {
-		planTitlePage.visitAndSubmitForValidation('Input a plan title');
+		planTitlePage.visitAndSubmitForValidation('Enter a plan title');
 	});
 
 	it('shows validation when no plan type is selected', { tags: ['regression'] }, () => {
