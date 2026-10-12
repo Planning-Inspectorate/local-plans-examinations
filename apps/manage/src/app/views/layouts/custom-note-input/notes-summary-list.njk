@@ -5,7 +5,7 @@
       </span>
     </summary>
     <div class="govuk-details__text">
-      <form method="POST" action="/case/PLAN-614829/overview/case-details/case-notes">
+      <form method="POST" action="/case/{{ reference }}/overview/case-details/case-notes">
         {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
         <div class="govuk-grid-row">
           <div class="govuk-grid-column-full">
