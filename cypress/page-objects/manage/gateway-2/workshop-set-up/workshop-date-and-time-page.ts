@@ -40,7 +40,7 @@ class WorkshopDateAndTimePage extends DateQuestionPage {
 
 	enterDateAndTime(date: DateAnswer, time: TimeAnswer) {
 		this.enterTime(time);
-		this.enterDate(date); //enterDate function includes save and continue
+		this.enterDate(date);
 	}
 }
 export const workshopDateAndTimePage = new WorkshopDateAndTimePage();

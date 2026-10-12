@@ -1252,7 +1252,7 @@ Object.entries(questions)
 				workshopDateValue = parseDate(workshopDateValue);
 			}
 			const workshopDate = {
-				key: 'workshop date',
+				key: 'Workshop date',
 				value:
 					workshopDateValue && typeof workshopDateValue != 'string'
 						? formatDateToString(workshopDateValue)
