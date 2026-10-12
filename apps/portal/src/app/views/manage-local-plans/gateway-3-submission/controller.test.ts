@@ -62,6 +62,26 @@ function buildMockService(caseRecord: unknown) {
 	} as unknown as PortalService;
 }
 
+function buildDocumentVersion(overrides: Record<string, unknown> = {}) {
+	return {
+		version: 1,
+		lastModified: null,
+		sourceSystem: 'front-office',
+		virusCheckStatus: 'not_scanned',
+		originalFilename: 'submitted-document.pdf',
+		fileName: 'submitted-document.pdf',
+		owner: null,
+		mime: 'application/pdf',
+		size: 123,
+		blobStorageContainer: 'documents',
+		blobStoragePath: 'gateway-3/submitted-document.pdf',
+		documentURI: 'https://example.com/submitted-document.pdf',
+		dateCreated: new Date('2026-10-01T10:00:00.000Z'),
+		isDeleted: false,
+		...overrides
+	};
+}
+
 function buildMockResponse() {
 	const calls: { method: string; args: unknown[] }[] = [];
 	const res = {
@@ -665,15 +685,68 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
+	it('snapshots submitted documents, updates submission dates and redirects to the submission-complete page', async () => {
 		const caseUpdate = mock.fn(async () => ({}));
 		const gateway3InfoUpdate = mock.fn(async () => ({}));
-		const transaction = mock.fn(async (updates: unknown[]) => Promise.all(updates));
+		const gateway3SubmissionDocumentCreate = mock.fn(async () => ({}));
+		const documentCreate = mock.fn(async () => ({}));
+		const documentVersionCreate = mock.fn(async () => ({}));
+		const documentUpdate = mock.fn(async () => ({}));
+		const tx = {
+			documentSet: {
+				findMany: mock.fn(async () => buildMockDocumentSets()),
+				findFirst: mock.fn(async () => ({ id: 'g3-document-1' }))
+			},
+			case: {
+				findUnique: mock.fn(async () => ({
+					id: 'case-1',
+					gateway3Info: {
+						id: 'gateway-3-info-1',
+						submissions: [{ decision: null, completionDate: null }]
+					},
+					documents: [
+						{
+							guid: 'document-1',
+							documentSetId: 'ds-proposed-local-plan',
+							latestDocumentVersion: buildDocumentVersion({ version: 1, originalFilename: 'plan.pdf' })
+						},
+						{
+							guid: 'document-2',
+							documentSetId: 'ds-map-of-policies',
+							latestDocumentVersion: buildDocumentVersion({ version: 3, originalFilename: 'map.pdf' })
+						},
+						{
+							guid: 'document-3',
+							documentSetId: 'ds-statement-of-compliance',
+							latestDocumentVersion: buildDocumentVersion({ version: 1, isDeleted: true })
+						}
+					]
+				})),
+				update: caseUpdate
+			},
+			document: {
+				findMany: mock.fn(async () => []),
+				create: documentCreate,
+				update: documentUpdate
+			},
+			documentVersion: {
+				create: documentVersionCreate
+			},
+			gateway3Info: {
+				update: gateway3InfoUpdate
+			},
+			gateway3SubmissionDocument: {
+				findMany: mock.fn(async () => []),
+				create: gateway3SubmissionDocumentCreate
+			}
+		};
+		const transaction = mock.fn(async (callback: (client: typeof tx) => unknown) => callback(tx));
 		const service = {
 			db: {
 				$transaction: transaction,
-				case: { update: caseUpdate },
-				gateway3Info: { update: gateway3InfoUpdate }
+				case: {},
+				gateway3Info: {},
+				gateway3SubmissionDocument: {}
 			},
 			logger: {
 				error: mock.fn()
@@ -690,6 +763,13 @@ describe('buildPostDeclarationPage', () => {
 		await handler(req, res, () => {});
 
 		assert.strictEqual(transaction.mock.callCount(), 1);
+		assert.strictEqual(tx.documentSet.findMany.mock.callCount(), 1);
+		assert.strictEqual(tx.case.findUnique.mock.callCount(), 1);
+		assert.deepStrictEqual(tx.case.findUnique.mock.calls[0].arguments[0].where, { id: 'case-1' });
+		assert.strictEqual(gateway3SubmissionDocumentCreate.mock.callCount(), 2);
+		assert.strictEqual(documentCreate.mock.callCount(), 2);
+		assert.strictEqual(documentVersionCreate.mock.callCount(), 2);
+		assert.strictEqual(documentUpdate.mock.callCount(), 2);
 		assert.strictEqual(caseUpdate.mock.callCount(), 1);
 		assert.strictEqual(gateway3InfoUpdate.mock.callCount(), 1);
 
@@ -698,12 +778,195 @@ describe('buildPostDeclarationPage', () => {
 		assert.ok(caseUpdateArgs.data.submissionDate instanceof Date);
 
 		const gateway3InfoUpdateArgs = gateway3InfoUpdate.mock.calls[0].arguments[0];
-		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { caseId: 'case-1' });
+		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { id: 'gateway-3-info-1' });
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
+		assert.deepStrictEqual(gateway3InfoUpdateArgs.data, { actualDate: caseUpdateArgs.data.submissionDate });
+
+		const firstSnapshot = gateway3SubmissionDocumentCreate.mock.calls[0].arguments[0];
+		assert.deepStrictEqual(firstSnapshot.data, {
+			gateway3InfoId: 'gateway-3-info-1',
+			submissionNumber: 1,
+			documentGuid: 'document-1',
+			version: 1,
+			documentSetId: 'ds-proposed-local-plan',
+			submittedAt: caseUpdateArgs.data.submissionDate
+		});
+
+		assert.deepStrictEqual(tx.documentSet.findFirst.mock.calls[0].arguments[0], {
+			where: { folderName: 'gateway-3-document-1' },
+			select: { id: true }
+		});
+		const firstManageDocument = documentCreate.mock.calls[0].arguments[0].data;
+		assert.strictEqual(firstManageDocument.name, 'document-1');
+		assert.strictEqual(firstManageDocument.caseId, 'case-1');
+		assert.strictEqual(firstManageDocument.documentSetId, 'g3-document-1');
+		assert.strictEqual(firstManageDocument.createdAt, caseUpdateArgs.data.submissionDate);
+		assert.ok(firstManageDocument.guid, 'expected a generated manage document guid');
+
+		assert.deepStrictEqual(documentVersionCreate.mock.calls[0].arguments[0].data, {
+			documentGuid: firstManageDocument.guid,
+			version: 1,
+			lastModified: null,
+			sourceSystem: 'front-office',
+			virusCheckStatus: 'not_scanned',
+			originalFilename: 'plan.pdf',
+			fileName: 'submitted-document.pdf',
+			owner: null,
+			mime: 'application/pdf',
+			size: 123,
+			blobStorageContainer: 'documents',
+			blobStoragePath: 'gateway-3/submitted-document.pdf',
+			documentURI: 'https://example.com/submitted-document.pdf',
+			dateCreated: new Date('2026-10-01T10:00:00.000Z'),
+			isDeleted: false
+		});
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 	});
+
+	it('uses the next numbered submission for a Gateway 3 resubmission snapshot', async () => {
+		const caseUpdate = mock.fn(async () => ({}));
+		const gateway3InfoUpdate = mock.fn(async () => ({}));
+		const gateway3SubmissionDocumentCreate = mock.fn(async () => ({}));
+		const tx = buildPostDeclarationTransaction({
+			caseUpdate,
+			gateway3InfoUpdate,
+			gateway3SubmissionDocumentCreate,
+			submissions: [
+				{
+					decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+					completionDate: new Date('2026-10-15T12:00:00.000Z')
+				},
+				{ decision: null, completionDate: null }
+			]
+		});
+		const service = buildPostDeclarationService(tx);
+		const handler = buildPostDeclarationPage(service);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const res = { redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		const snapshot = gateway3SubmissionDocumentCreate.mock.calls[0].arguments[0];
+		assert.strictEqual(snapshot.data.submissionNumber, 2);
+		assert.deepStrictEqual(tx.documentSet.findFirst.mock.calls[0].arguments[0].where, {
+			folderName: 'gateway-3-document-2'
+		});
+		assert.deepStrictEqual(gateway3InfoUpdate.mock.calls[0].arguments[0].data, {
+			actualDate: caseUpdate.mock.calls[0].arguments[0].data.submissionDate
+		});
+	});
+
+	it('reuses the existing submitted date when the same final submission is repeated', async () => {
+		const existingSubmittedAt = new Date('2026-10-20T12:00:00.000Z');
+		const caseUpdate = mock.fn(async () => ({}));
+		const gateway3InfoUpdate = mock.fn(async () => ({}));
+		const gateway3SubmissionDocumentCreate = mock.fn(async () => ({}));
+		const tx = buildPostDeclarationTransaction({
+			caseUpdate,
+			gateway3InfoUpdate,
+			gateway3SubmissionDocumentCreate,
+			existingSubmittedAt
+		});
+		const service = buildPostDeclarationService(tx);
+		const handler = buildPostDeclarationPage(service);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const res = { redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(caseUpdate.mock.calls[0].arguments[0].data.submissionDate, existingSubmittedAt);
+		assert.strictEqual(gateway3InfoUpdate.mock.calls[0].arguments[0].data.actualDate, existingSubmittedAt);
+		assert.strictEqual(gateway3SubmissionDocumentCreate.mock.callCount(), 0);
+		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.createdAt, existingSubmittedAt);
+	});
 });
+
+function buildPostDeclarationTransaction({
+	caseUpdate = mock.fn(async () => ({})),
+	gateway3InfoUpdate = mock.fn(async () => ({})),
+	gateway3SubmissionDocumentCreate = mock.fn(async () => ({})),
+	submissions = [{ decision: null, completionDate: null }],
+	existingSubmittedAt
+}: {
+	caseUpdate?: ReturnType<typeof mock.fn>;
+	gateway3InfoUpdate?: ReturnType<typeof mock.fn>;
+	gateway3SubmissionDocumentCreate?: ReturnType<typeof mock.fn>;
+	submissions?: Array<{ decision: string | null; completionDate: Date | null }>;
+	existingSubmittedAt?: Date;
+} = {}) {
+	return {
+		documentSet: {
+			findMany: mock.fn(async () => buildMockDocumentSets()),
+			findFirst: mock.fn(async ({ where }: { where: { folderName: string } }) => ({
+				id: where.folderName.replace('gateway-3-document-', 'g3-document-')
+			}))
+		},
+		case: {
+			findUnique: mock.fn(async () => ({
+				id: 'case-1',
+				gateway3Info: {
+					id: 'gateway-3-info-1',
+					submissions
+				},
+				documents: [
+					{
+						guid: 'document-1',
+						documentSetId: 'ds-proposed-local-plan',
+						latestDocumentVersion: buildDocumentVersion({ version: 1 })
+					}
+				]
+			})),
+			update: caseUpdate
+		},
+		document: {
+			findMany: mock.fn(async () => []),
+			create: mock.fn(async () => ({})),
+			update: mock.fn(async () => ({}))
+		},
+		documentVersion: {
+			create: mock.fn(async () => ({}))
+		},
+		gateway3Info: {
+			update: gateway3InfoUpdate
+		},
+		gateway3SubmissionDocument: {
+			findMany: mock.fn(async () =>
+				existingSubmittedAt
+					? [
+							{
+								gateway3InfoId: 'gateway-3-info-1',
+								submissionNumber: 1,
+								documentGuid: 'document-1',
+								version: 1,
+								documentSetId: 'ds-proposed-local-plan',
+								submittedAt: existingSubmittedAt,
+								documentVersion: buildDocumentVersion({ version: 1 })
+							}
+						]
+					: []
+			),
+			create: gateway3SubmissionDocumentCreate
+		}
+	};
+}
+
+function buildPostDeclarationService(tx: ReturnType<typeof buildPostDeclarationTransaction>) {
+	return {
+		db: {
+			$transaction: mock.fn(async (callback: (client: typeof tx) => unknown) => callback(tx))
+		},
+		logger: {
+			error: mock.fn()
+		}
+	} as unknown as PortalService;
+}
 
 describe('buildGetSubmissionCompletePage', () => {
 	it('renders the submission complete page with plan overview link', () => {
