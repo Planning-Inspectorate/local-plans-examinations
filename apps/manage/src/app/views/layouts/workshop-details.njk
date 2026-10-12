@@ -8,7 +8,7 @@
 
     {% if workshop.workshopDate %}
       {% set _ = workshopRows.push({
-        key: { text: "Start date" },
+        key: { text: "Workshop date" },
         value: { text: workshop.workshopDate },
         actions: {
           items: [
@@ -23,7 +23,7 @@
 
     {% if workshop.workshopTime %}
       {% set _ = workshopRows.push({
-        key: { text: "Start time" },
+        key: { text: "Workshop start time" },
         value: { text: workshop.workshopTime }
       }) %}
     {% endif %}
@@ -44,21 +44,21 @@
 
     {% if workshop.workshopLocationType %}
       {% set _ = workshopRows.push({
-        key: { text: "Format" },
+        key: { text: "Gateway 2 location type" },
         value: { text: workshop.workshopLocationType }
       }) %}
     {% endif %}
 
     {% if workshop.remoteMeetingLinkKnown %}
       {% set _ = workshopRows.push({
-        key: { text: "Do you have a virtual meeting link?" },
+        key: { text: "Gateway 2 remote meeting link known" },
         value: { text: workshop.remoteMeetingLinkKnown }
       }) %}
     {% endif %}
 
     {% if workshop.remoteMeetingLink %}
       {% set _ = workshopRows.push({
-        key: { text: "Virtual meeting link" },
+        key: { text: "Remote meeting link" },
         value: { text: workshop.remoteMeetingLink }
       }) %}
     {% endif %}
@@ -75,7 +75,7 @@
       {% set address = address + "<br>" + workshop.workshopPostcode %}
 
       {% set _ = workshopRows.push({
-          key: { text: "Location" },
+          key: { text: "Workshop venue address" },
           value: { html: address }
       }) %}
     {% endif %}
