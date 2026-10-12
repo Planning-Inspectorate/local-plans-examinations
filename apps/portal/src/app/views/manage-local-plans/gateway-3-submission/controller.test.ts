@@ -685,10 +685,9 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('snapshots submitted documents, updates submission dates and redirects to the submission-complete page', async () => {
+	it('mirrors submitted documents, updates submission dates and redirects to the submission-complete page', async () => {
 		const caseUpdate = mock.fn(async () => ({}));
 		const gateway3InfoUpdate = mock.fn(async () => ({}));
-		const gateway3SubmissionDocumentCreate = mock.fn(async () => ({}));
 		const documentCreate = mock.fn(async () => ({}));
 		const documentVersionCreate = mock.fn(async () => ({}));
 		const documentUpdate = mock.fn(async () => ({}));
@@ -734,10 +733,6 @@ describe('buildPostDeclarationPage', () => {
 			},
 			gateway3Info: {
 				update: gateway3InfoUpdate
-			},
-			gateway3SubmissionDocument: {
-				findMany: mock.fn(async () => []),
-				create: gateway3SubmissionDocumentCreate
 			}
 		};
 		const transaction = mock.fn(async (callback: (client: typeof tx) => unknown) => callback(tx));
@@ -745,8 +740,7 @@ describe('buildPostDeclarationPage', () => {
 			db: {
 				$transaction: transaction,
 				case: {},
-				gateway3Info: {},
-				gateway3SubmissionDocument: {}
+				gateway3Info: {}
 			},
 			logger: {
 				error: mock.fn()
@@ -766,7 +760,6 @@ describe('buildPostDeclarationPage', () => {
 		assert.strictEqual(tx.documentSet.findMany.mock.callCount(), 1);
 		assert.strictEqual(tx.case.findUnique.mock.callCount(), 1);
 		assert.deepStrictEqual(tx.case.findUnique.mock.calls[0].arguments[0].where, { id: 'case-1' });
-		assert.strictEqual(gateway3SubmissionDocumentCreate.mock.callCount(), 2);
 		assert.strictEqual(documentCreate.mock.callCount(), 2);
 		assert.strictEqual(documentVersionCreate.mock.callCount(), 2);
 		assert.strictEqual(documentUpdate.mock.callCount(), 2);
@@ -781,16 +774,6 @@ describe('buildPostDeclarationPage', () => {
 		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { id: 'gateway-3-info-1' });
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
 		assert.deepStrictEqual(gateway3InfoUpdateArgs.data, { actualDate: caseUpdateArgs.data.submissionDate });
-
-		const firstSnapshot = gateway3SubmissionDocumentCreate.mock.calls[0].arguments[0];
-		assert.deepStrictEqual(firstSnapshot.data, {
-			gateway3InfoId: 'gateway-3-info-1',
-			submissionNumber: 1,
-			documentGuid: 'document-1',
-			version: 1,
-			documentSetId: 'ds-proposed-local-plan',
-			submittedAt: caseUpdateArgs.data.submissionDate
-		});
 
 		assert.deepStrictEqual(tx.documentSet.findFirst.mock.calls[0].arguments[0], {
 			where: { folderName: 'gateway-3-document-1' },
@@ -824,14 +807,12 @@ describe('buildPostDeclarationPage', () => {
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 	});
 
-	it('uses the next numbered submission for a Gateway 3 resubmission snapshot', async () => {
+	it('uses the next numbered manage document set for a Gateway 3 resubmission', async () => {
 		const caseUpdate = mock.fn(async () => ({}));
 		const gateway3InfoUpdate = mock.fn(async () => ({}));
-		const gateway3SubmissionDocumentCreate = mock.fn(async () => ({}));
 		const tx = buildPostDeclarationTransaction({
 			caseUpdate,
 			gateway3InfoUpdate,
-			gateway3SubmissionDocumentCreate,
 			submissions: [
 				{
 					decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
@@ -850,26 +831,18 @@ describe('buildPostDeclarationPage', () => {
 
 		await handler(req, res, () => {});
 
-		const snapshot = gateway3SubmissionDocumentCreate.mock.calls[0].arguments[0];
-		assert.strictEqual(snapshot.data.submissionNumber, 2);
 		assert.deepStrictEqual(tx.documentSet.findFirst.mock.calls[0].arguments[0].where, {
 			folderName: 'gateway-3-document-2'
 		});
+		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.documentSetId, 'g3-document-2');
 		assert.deepStrictEqual(gateway3InfoUpdate.mock.calls[0].arguments[0].data, {
 			actualDate: caseUpdate.mock.calls[0].arguments[0].data.submissionDate
 		});
 	});
 
-	it('reuses the existing submitted date when the same final submission is repeated', async () => {
-		const existingSubmittedAt = new Date('2026-10-20T12:00:00.000Z');
-		const caseUpdate = mock.fn(async () => ({}));
-		const gateway3InfoUpdate = mock.fn(async () => ({}));
-		const gateway3SubmissionDocumentCreate = mock.fn(async () => ({}));
+	it('does not duplicate manage documents when the same final submission is repeated', async () => {
 		const tx = buildPostDeclarationTransaction({
-			caseUpdate,
-			gateway3InfoUpdate,
-			gateway3SubmissionDocumentCreate,
-			existingSubmittedAt
+			existingManageDocuments: [{ name: 'document-1' }]
 		});
 		const service = buildPostDeclarationService(tx);
 		const handler = buildPostDeclarationPage(service);
@@ -881,25 +854,22 @@ describe('buildPostDeclarationPage', () => {
 
 		await handler(req, res, () => {});
 
-		assert.strictEqual(caseUpdate.mock.calls[0].arguments[0].data.submissionDate, existingSubmittedAt);
-		assert.strictEqual(gateway3InfoUpdate.mock.calls[0].arguments[0].data.actualDate, existingSubmittedAt);
-		assert.strictEqual(gateway3SubmissionDocumentCreate.mock.callCount(), 0);
-		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.createdAt, existingSubmittedAt);
+		assert.strictEqual(tx.document.create.mock.callCount(), 0);
+		assert.strictEqual(tx.documentVersion.create.mock.callCount(), 0);
+		assert.strictEqual(tx.document.update.mock.callCount(), 0);
 	});
 });
 
 function buildPostDeclarationTransaction({
 	caseUpdate = mock.fn(async () => ({})),
 	gateway3InfoUpdate = mock.fn(async () => ({})),
-	gateway3SubmissionDocumentCreate = mock.fn(async () => ({})),
 	submissions = [{ decision: null, completionDate: null }],
-	existingSubmittedAt
+	existingManageDocuments = []
 }: {
 	caseUpdate?: ReturnType<typeof mock.fn>;
 	gateway3InfoUpdate?: ReturnType<typeof mock.fn>;
-	gateway3SubmissionDocumentCreate?: ReturnType<typeof mock.fn>;
 	submissions?: Array<{ decision: string | null; completionDate: Date | null }>;
-	existingSubmittedAt?: Date;
+	existingManageDocuments?: Array<{ name: string }>;
 } = {}) {
 	return {
 		documentSet: {
@@ -926,7 +896,7 @@ function buildPostDeclarationTransaction({
 			update: caseUpdate
 		},
 		document: {
-			findMany: mock.fn(async () => []),
+			findMany: mock.fn(async () => existingManageDocuments),
 			create: mock.fn(async () => ({})),
 			update: mock.fn(async () => ({}))
 		},
@@ -935,24 +905,6 @@ function buildPostDeclarationTransaction({
 		},
 		gateway3Info: {
 			update: gateway3InfoUpdate
-		},
-		gateway3SubmissionDocument: {
-			findMany: mock.fn(async () =>
-				existingSubmittedAt
-					? [
-							{
-								gateway3InfoId: 'gateway-3-info-1',
-								submissionNumber: 1,
-								documentGuid: 'document-1',
-								version: 1,
-								documentSetId: 'ds-proposed-local-plan',
-								submittedAt: existingSubmittedAt,
-								documentVersion: buildDocumentVersion({ version: 1 })
-							}
-						]
-					: []
-			),
-			create: gateway3SubmissionDocumentCreate
 		}
 	};
 }

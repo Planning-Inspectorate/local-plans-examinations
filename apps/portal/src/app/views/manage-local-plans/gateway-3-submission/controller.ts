@@ -80,9 +80,8 @@ type TransactionClient = Omit<
 	'$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
 >;
 
-type Gateway3SubmissionDocumentCandidate = {
+type Gateway3UploadedDocumentCandidate = {
 	guid: string;
-	documentSetId: string;
 	latestDocumentVersion: {
 		version: number;
 		lastModified: Date | null;
@@ -101,11 +100,9 @@ type Gateway3SubmissionDocumentCandidate = {
 	} | null;
 };
 
-type Gateway3DocumentVersionSnapshot = {
+type Gateway3SubmittedDocument = {
 	documentGuid: string;
-	version: number;
-	documentSetId: string;
-	documentVersion: NonNullable<Gateway3SubmissionDocumentCandidate['latestDocumentVersion']>;
+	documentVersion: NonNullable<Gateway3UploadedDocumentCandidate['latestDocumentVersion']>;
 };
 
 type Gateway3CaseForSubmission = {
@@ -114,7 +111,7 @@ type Gateway3CaseForSubmission = {
 		id: string;
 		submissions?: Gateway3SubmissionSummary[] | null;
 	} | null;
-	documents: Gateway3SubmissionDocumentCandidate[];
+	documents: Gateway3UploadedDocumentCandidate[];
 };
 
 // ---------------------------------------------------------------------------
@@ -499,7 +496,7 @@ function getCurrentGateway3SubmissionNumber(gateway3Info: Gateway3CaseForSubmiss
 	return Math.max(submissions.length, 1);
 }
 
-function getSubmittedGateway3Documents(caseRecord: Gateway3CaseForSubmission): Gateway3DocumentVersionSnapshot[] {
+function getSubmittedGateway3Documents(caseRecord: Gateway3CaseForSubmission): Gateway3SubmittedDocument[] {
 	return caseRecord.documents.flatMap((document) => {
 		const version = document.latestDocumentVersion;
 		if (!version || version.isDeleted) {
@@ -509,77 +506,18 @@ function getSubmittedGateway3Documents(caseRecord: Gateway3CaseForSubmission): G
 		return [
 			{
 				documentGuid: document.guid,
-				version: version.version,
-				documentSetId: document.documentSetId,
 				documentVersion: version
 			}
 		];
 	});
 }
 
-async function getGateway3SubmissionDocumentSnapshots(
-	tx: TransactionClient,
-	gateway3InfoId: string,
-	submissionNumber: number
-) {
-	return tx.gateway3SubmissionDocument.findMany({
-		where: {
-			gateway3InfoId,
-			submissionNumber
-		},
-		include: {
-			documentVersion: {
-				select: {
-					version: true,
-					lastModified: true,
-					sourceSystem: true,
-					virusCheckStatus: true,
-					originalFilename: true,
-					fileName: true,
-					owner: true,
-					mime: true,
-					size: true,
-					blobStorageContainer: true,
-					blobStoragePath: true,
-					documentURI: true,
-					dateCreated: true,
-					isDeleted: true
-				}
-			}
-		},
-		orderBy: {
-			submittedAt: 'asc'
-		}
-	});
-}
-
-async function createGateway3SubmissionDocumentSnapshots(
-	tx: TransactionClient,
-	gateway3InfoId: string,
-	submissionNumber: number,
-	submissionDate: Date,
-	documents: Gateway3DocumentVersionSnapshot[]
-) {
-	for (const document of documents) {
-		await tx.gateway3SubmissionDocument.create({
-			data: {
-				gateway3InfoId,
-				submissionNumber,
-				documentGuid: document.documentGuid,
-				version: document.version,
-				documentSetId: document.documentSetId,
-				submittedAt: submissionDate
-			}
-		});
-	}
-}
-
-async function mirrorGateway3SubmissionDocumentsForManage(
+async function mirrorGateway3DocumentsForManage(
 	tx: TransactionClient,
 	caseId: string,
 	submissionNumber: number,
 	submissionDate: Date,
-	documents: Gateway3DocumentVersionSnapshot[]
+	documents: Gateway3SubmittedDocument[]
 ) {
 	const documentSetId = await getGateway3ManageDocumentSetId(tx, submissionNumber);
 	const existingDocumentNames = new Set(
@@ -676,7 +614,6 @@ async function recordGateway3PortalSubmission(
 					},
 					select: {
 						guid: true,
-						documentSetId: true,
 						latestDocumentVersion: {
 							select: {
 								version: true,
@@ -705,49 +642,20 @@ async function recordGateway3PortalSubmission(
 		}
 
 		const submissionNumber = getCurrentGateway3SubmissionNumber(caseRecord.gateway3Info);
-		const existingSubmissionDocuments = await getGateway3SubmissionDocumentSnapshots(
-			tx,
-			caseRecord.gateway3Info.id,
-			submissionNumber
-		);
-		const recordedSubmissionDate = existingSubmissionDocuments[0]?.submittedAt ?? submissionDate;
-		const submittedDocuments =
-			existingSubmissionDocuments.length > 0
-				? existingSubmissionDocuments.map((document) => ({
-						documentGuid: document.documentGuid,
-						version: document.version,
-						documentSetId: document.documentSetId,
-						documentVersion: document.documentVersion
-					}))
-				: getSubmittedGateway3Documents(caseRecord);
+		const submittedDocuments = getSubmittedGateway3Documents(caseRecord);
 
 		if (submittedDocuments.length === 0) {
 			throw new Error(`No active Gateway 3 documents found for case ${caseId}`);
 		}
 
-		if (existingSubmissionDocuments.length === 0) {
-			await createGateway3SubmissionDocumentSnapshots(
-				tx,
-				caseRecord.gateway3Info.id,
-				submissionNumber,
-				recordedSubmissionDate,
-				submittedDocuments
-			);
-		}
-		await mirrorGateway3SubmissionDocumentsForManage(
-			tx,
-			caseRecord.id,
-			submissionNumber,
-			recordedSubmissionDate,
-			submittedDocuments
-		);
+		await mirrorGateway3DocumentsForManage(tx, caseRecord.id, submissionNumber, submissionDate, submittedDocuments);
 
 		await tx.case.update({
 			where: {
 				id: caseRecord.id
 			},
 			data: {
-				submissionDate: recordedSubmissionDate
+				submissionDate
 			}
 		});
 
@@ -756,7 +664,7 @@ async function recordGateway3PortalSubmission(
 				id: caseRecord.gateway3Info.id
 			},
 			data: {
-				actualDate: recordedSubmissionDate
+				actualDate: submissionDate
 			}
 		});
 	});

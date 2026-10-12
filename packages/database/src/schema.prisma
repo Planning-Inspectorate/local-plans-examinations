@@ -155,18 +155,17 @@ model Gateway2Info {
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
 model Gateway3Info {
-  id                        String                       @id @default(uuid()) @db.UniqueIdentifier
-  case                      Case                         @relation(fields: [caseId], references: [id])
-  caseId                    String                       @unique @db.UniqueIdentifier
-  expectedDate              DateTime?                    @db.DateTime2
-  actualDate                DateTime?                    @db.DateTime2
+  id                        String               @id @default(uuid()) @db.UniqueIdentifier
+  case                      Case                 @relation(fields: [caseId], references: [id])
+  caseId                    String               @unique @db.UniqueIdentifier
+  expectedDate              DateTime?            @db.DateTime2
+  actualDate                DateTime?            @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorName              String?
-  assessorAppointmentDate   DateTime?                    @db.DateTime2
+  assessorAppointmentDate   DateTime?            @db.DateTime2
   submissions               Gateway3Submission[]
-  submissionDocuments       Gateway3SubmissionDocument[]
 }
 
 model Gateway3Submission {
@@ -311,11 +310,10 @@ model DocumentSet {
   documentCategoryId String           @db.NVarChar(4)
   documentCategory   DocumentCategory @relation(fields: [documentCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  displayName                 String                       @db.NVarChar(200) // Covering Letter, Initiation Document
-  folderName                  String                       @db.NVarChar(200)
-  displayOrder                Int?
-  documents                   Document[]
-  gateway3SubmissionDocuments Gateway3SubmissionDocument[]
+  displayName  String     @db.NVarChar(200) // Covering Letter, Initiation Document
+  folderName   String     @db.NVarChar(200)
+  displayOrder Int?
+  documents    Document[]
 
   @@unique([documentCategoryId, displayName])
   @@index([documentCategoryId])
@@ -360,51 +358,32 @@ model Document {
 /// Versions are stored against the `version` value (starting with 1).
 /// The physical location of these documents should be stored here on azurite or blob storage.
 model DocumentVersion {
-  documentGuid                String                       @db.UniqueIdentifier
-  version                     Int
-  lastModified                DateTime?
-  sourceSystem                String                       @default("front-office") @db.NVarChar(50)
-  sourceSystemLookup          DocumentSourceSystem         @relation(fields: [sourceSystem], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  virusCheckStatus            String                       @default("not_scanned") @db.NVarChar(50)
-  virusCheckStatusLookup      VirusCheckStatus             @relation(fields: [virusCheckStatus], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  originalFilename            String?                      @db.NVarChar(1000)
-  fileName                    String?                      @db.NVarChar(1000)
-  owner                       String?                      @db.NVarChar(1000)
-  mime                        String?                      @db.NVarChar(1000)
-  size                        Int?
-  blobStorageContainer        String?                      @db.NVarChar(1000)
-  blobStoragePath             String?                      @db.NVarChar(1000)
-  documentURI                 String?                      @db.NVarChar(1000)
-  dateCreated                 DateTime?                    @default(now())
-  isDeleted                   Boolean                      @default(false)
-  document                    Document                     @relation("VersionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
-  latestVersion               Document?                    @relation("LatestVersion")
-  avScan                      DocumentVersionAvScan?
-  gateway3SubmissionDocuments Gateway3SubmissionDocument[]
+  documentGuid           String                 @db.UniqueIdentifier
+  version                Int
+  lastModified           DateTime?
+  sourceSystem           String                 @default("front-office") @db.NVarChar(50)
+  sourceSystemLookup     DocumentSourceSystem   @relation(fields: [sourceSystem], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  virusCheckStatus       String                 @default("not_scanned") @db.NVarChar(50)
+  virusCheckStatusLookup VirusCheckStatus       @relation(fields: [virusCheckStatus], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  originalFilename       String?                @db.NVarChar(1000)
+  fileName               String?                @db.NVarChar(1000)
+  owner                  String?                @db.NVarChar(1000)
+  mime                   String?                @db.NVarChar(1000)
+  size                   Int?
+  blobStorageContainer   String?                @db.NVarChar(1000)
+  blobStoragePath        String?                @db.NVarChar(1000)
+  documentURI            String?                @db.NVarChar(1000)
+  dateCreated            DateTime?              @default(now())
+  isDeleted              Boolean                @default(false)
+  document               Document               @relation("VersionHistory", fields: [documentGuid], references: [guid], onUpdate: NoAction, onDelete: NoAction)
+  latestVersion          Document?              @relation("LatestVersion")
+  avScan                 DocumentVersionAvScan?
 
   @@id([documentGuid, version])
   @@index([documentGuid], map: "documentGuid")
   @@index([documentURI])
   @@index([sourceSystem])
   @@index([virusCheckStatus])
-}
-
-/// Snapshot of an LPA document version submitted for a numbered Gateway 3 submission.
-model Gateway3SubmissionDocument {
-  gateway3InfoId   String          @db.UniqueIdentifier
-  submissionNumber Int
-  documentGuid     String          @db.UniqueIdentifier
-  version          Int
-  documentSetId    String          @db.NVarChar(20)
-  submittedAt      DateTime        @db.DateTime2
-  gateway3Info     Gateway3Info    @relation(fields: [gateway3InfoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  documentVersion  DocumentVersion @relation(fields: [documentGuid, version], references: [documentGuid, version], onDelete: NoAction, onUpdate: NoAction)
-  documentSet      DocumentSet     @relation(fields: [documentSetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@id([gateway3InfoId, submissionNumber, documentGuid])
-  @@index([gateway3InfoId, submissionNumber])
-  @@index([documentGuid, version])
-  @@index([documentSetId])
 }
 
 /// DocumentVersionAvScan model
