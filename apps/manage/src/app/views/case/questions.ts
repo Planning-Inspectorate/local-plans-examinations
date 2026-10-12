@@ -1201,7 +1201,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	caseNotes: {
 		type: CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT,
 		question: 'Case notes',
-		fieldName: 'caseNotes',
+		fieldName: 'notes',
 		title: 'Case notes',
 		titleSingular: 'Case note',
 		url: 'case-notes',

@@ -3,6 +3,8 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { questions } from '../questions.ts';
 import { loadCaseOfficerOptions, loadInspectorOptions, loadLpaOptions } from '../../../util/options-helper.ts';
 import { getOverviewData } from './overview-page-helper.ts';
+import { OverviewSaveController } from '../save/overview-save-controller.ts';
+import * as authSession from '@planning-inspectorate/core/auth';
 
 type OverviewData = NonNullable<Awaited<ReturnType<typeof getOverviewData>>>;
 
@@ -56,9 +58,21 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
 		res.locals.currentSection = (req.query?.section as string) ?? '';
 		if (req.method == 'POST' && String(req.url).includes('case-details/case-notes')) {
+			const newNote = String(req.body.note);
 			// Need to save the note here
 			//req.params.question = 'case-notes'
 			//req.params.section = 'case-details'
+			const currentUserAccount = authSession.getAccount(req.session);
+			const currentUserName = currentUserAccount?.name ?? 'Unknown';
+			await new OverviewSaveController(service, req, reference, String(req.params.section)).prepareAndSave({
+				notes: [
+					{
+						text: newNote,
+						createdTime: new Date(),
+						createdBy: currentUserName
+					}
+				]
+			});
 			res.redirect(`${res.locals.baseUrl}/overview`);
 			return;
 		}
