@@ -392,6 +392,10 @@ export class DocumentUtil {
 	}
 	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
 		try {
+			if (uploadedFiles.length === 0) {
+				return;
+			}
+
 			const results = await Promise.all(
 				uploadedFiles.map(async (file) => (await service.db.document.findFirst({ where: { name: file.path } })) ?? null)
 			);

@@ -460,7 +460,8 @@ function createMockService({
 			document: {
 				findMany: mock.fn(async () => existingDocuments),
 				findFirst: mock.fn(async () => existingDocuments[0]),
-				update: mock.fn(async () => ({}))
+				update: mock.fn(async () => ({})),
+				updateMany: mock.fn(async () => ({}))
 			},
 			$transaction: mock.fn(async (callback: (tx: typeof tx) => unknown) => callback(tx))
 		},
@@ -472,7 +473,8 @@ function createTransactionClient() {
 	return {
 		document: {
 			create: mock.fn(async () => ({})),
-			update: mock.fn(async () => ({}))
+			update: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({}))
 		},
 		documentVersion: {
 			create: mock.fn(async () => ({})),
@@ -540,60 +542,49 @@ describe('updateTemporaryDocumentToPermanent', () => {
 	const run = (files: ReturnType<typeof buildUploadedFile>[]) =>
 		DocumentUtil.updateTemporaryDocumentToPermanent(service as unknown as Service, files);
 
-	it('should change temp documents into permanent documents', async () => {
-		service.db.document.findFirst.mock.mockImplementationOnce(async () => ({
-			guid: 'g1',
-			path: 'a.pdf',
-			isTemp: true
-		}));
+	const row = (guid: string, name: string) => ({ guid, name, isTemp: true });
 
-		await run([buildUploadedFile({ isTemp: true })]);
+	it('should change a temp document into a permanent document', async () => {
+		service.db.document.findFirst.mock.mockImplementation(async () => row('g1', 'a.pdf'));
 
-		assert.equal(service.db.document.update.mock.callCount(), 1);
-		assert.deepEqual(service.db.document.update.mock.calls[0].arguments[0], {
-			where: { guid: 'g1' },
+		await run([buildUploadedFile({ path: 'a.pdf' })]);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 1);
+		assert.deepEqual(service.db.document.updateMany.mock.calls[0].arguments[0], {
+			where: { guid: { in: ['g1'] } },
 			data: { isTemp: false }
 		});
+		assert.equal(service.logger.error.mock.callCount(), 0);
 	});
 
 	it('should look up each uploaded file by its path', async () => {
-		const fileA = buildUploadedFile({ path: 'a.pdf' });
-		const fileB = buildUploadedFile({ path: 'b.pdf' });
-		service.db.document.findFirst.mock.mockImplementationOnce(async () => ({
-			guid: 'g1',
-			path: 'a.pdf',
-			isTemp: true
-		}));
-		service.db.document.findFirst.mock.mockImplementationOnce(async () => ({
-			guid: 'g2',
-			path: 'b.pdf',
-			isTemp: true
-		}));
+		const rows: Record<string, ReturnType<typeof row>> = {
+			'a.pdf': row('g1', 'a.pdf'),
+			'b.pdf': row('g2', 'b.pdf')
+		};
+		service.db.document.findFirst.mock.mockImplementation(async ({ where }) => rows[where.name] ?? null);
 
-		await run([fileA, fileB]);
+		await run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'b.pdf' })]);
 
 		assert.equal(service.db.document.findFirst.mock.callCount(), 2);
 		assert.deepEqual(service.db.document.findFirst.mock.calls[0].arguments[0], { where: { name: 'a.pdf' } });
 		assert.deepEqual(service.db.document.findFirst.mock.calls[1].arguments[0], { where: { name: 'b.pdf' } });
 	});
 
-	it('should update every found document', async () => {
-		const rows: Record<string, { guid: string; path: string; isTemp: boolean }> = {
-			'a.pdf': { guid: 'g1', path: 'a.pdf', isTemp: true },
-			'b.pdf': { guid: 'g2', path: 'b.pdf', isTemp: true }
+	it('should update every found document in a single query', async () => {
+		const rows: Record<string, ReturnType<typeof row>> = {
+			'a.pdf': row('g1', 'a.pdf'),
+			'b.pdf': row('g2', 'b.pdf')
 		};
 		service.db.document.findFirst.mock.mockImplementation(async ({ where }) => rows[where.name] ?? null);
 
 		await run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'b.pdf' })]);
 
-		assert.deepEqual(
-			service.db.document.update.mock.calls.map((c) => c.arguments[0]),
-			[
-				{ where: { guid: 'g1' }, data: { isTemp: false } },
-				{ where: { guid: 'g2' }, data: { isTemp: false } }
-			]
-		);
-		assert.equal(service.logger.warn.mock.callCount(), 0);
+		assert.equal(service.db.document.updateMany.mock.callCount(), 1);
+		assert.deepEqual(service.db.document.updateMany.mock.calls[0].arguments[0], {
+			where: { guid: { in: ['g1', 'g2'] } },
+			data: { isTemp: false }
+		});
 		assert.equal(service.logger.error.mock.callCount(), 0);
 	});
 
@@ -601,53 +592,54 @@ describe('updateTemporaryDocumentToPermanent', () => {
 		await run([]);
 
 		assert.equal(service.db.document.findFirst.mock.callCount(), 0);
-		assert.equal(service.db.document.update.mock.callCount(), 0);
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
 		assert.equal(service.logger.error.mock.callCount(), 0);
 	});
 
-	it('should warn and skip a missing file but still update the rest (current behaviour)', async () => {
-		const rows: Record<string, { guid: string; path: string; isTemp: boolean }> = {
-			'a.pdf': { guid: 'g1', path: 'a.pdf', isTemp: true }
-		};
-		service.db.document.findFirst.mock.mockImplementation(async ({ where }) => rows[where.name] ?? null);
+	it('should throw and not update when some files are not found', async () => {
+		service.db.document.findFirst.mock.mockImplementation(async ({ where }) =>
+			where.name === 'a.pdf' ? row('g1', 'a.pdf') : null
+		);
 
-		await run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'missing.pdf' })]);
+		await assert.rejects(
+			run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'missing.pdf' })]),
+			/not all files found/
+		);
 
-		assert.equal(service.db.document.update.mock.callCount(), 1);
-		assert.deepEqual(service.db.document.update.mock.calls[0].arguments[0], {
-			where: { guid: 'g1' },
-			data: { isTemp: false }
-		});
-		assert.equal(service.logger.warn.mock.callCount(), 1);
-		assert.equal(service.logger.warn.mock.calls[0].arguments[0], 'file not found');
-		assert.equal(service.logger.error.mock.callCount(), 0);
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 1);
 	});
 
-	it('should log and swallow errors from findFirst', async () => {
-		const dbError = new Error('db down');
-		service.db.document.findFirst.mock.mockImplementationOnce(async () => {
+	it('should throw and not update when no files are found', async () => {
+		service.db.document.findFirst.mock.mockImplementation(async () => null);
+
+		await assert.rejects(run([buildUploadedFile({ path: 'missing.pdf' })]), /not all files found/);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 1);
+	});
+
+	it('should log and rethrow when a lookup fails', async () => {
+		const dbError = new Error('lookup failed');
+		service.db.document.findFirst.mock.mockImplementation(async () => {
 			throw dbError;
 		});
 
-		await assert.doesNotReject(run([buildUploadedFile({ isTemp: true })]));
+		await assert.rejects(run([buildUploadedFile({ path: 'a.pdf' })]), dbError);
 
-		assert.equal(service.db.document.update.mock.callCount(), 0);
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
 		assert.equal(service.logger.error.mock.callCount(), 1);
 		assert.equal(service.logger.error.mock.calls[0].arguments[0], dbError);
 	});
 
-	it('should log and swallow errors from update', async () => {
+	it('should log and rethrow when the update fails', async () => {
 		const dbError = new Error('update failed');
-		service.db.document.findFirst.mock.mockImplementationOnce(async () => ({
-			guid: 'g1',
-			path: 'a.pdf',
-			isTemp: true
-		}));
-		service.db.document.update.mock.mockImplementationOnce(async () => {
+		service.db.document.findFirst.mock.mockImplementation(async () => row('g1', 'a.pdf'));
+		service.db.document.updateMany.mock.mockImplementation(async () => {
 			throw dbError;
 		});
 
-		await assert.doesNotReject(run([buildUploadedFile({ isTemp: true })]));
+		await assert.rejects(run([buildUploadedFile({ path: 'a.pdf' })]), dbError);
 
 		assert.equal(service.logger.error.mock.callCount(), 1);
 		assert.equal(service.logger.error.mock.calls[0].arguments[0], dbError);
