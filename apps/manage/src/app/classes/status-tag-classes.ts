@@ -23,8 +23,13 @@ const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	'GW3 received': 'govuk-tag--turquoise',
 	Examination: 'govuk-tag--yellow',
 	'Exam pending': 'govuk-tag--yellow',
+	'Exam paused': 'govuk-tag--grey',
+	'Plan adopted': 'govuk-tag--green',
 	'Hearing pending': 'govuk-tag--blue',
 	'Exam in progress': 'govuk-tag--blue',
+	'Submission pending': 'govuk-tag--yellow',
+	'Submission received': 'govuk-tag-green',
+	'Report Issued': 'govuk-tag--blue',
 	QA: 'govuk-tag--blue',
 	'Fact check': 'govuk-tag--turquoise',
 	Completed: 'govuk-tag--green',
@@ -50,12 +55,63 @@ export function getPlanStatusClasses(statusText: string) {
 	return PLAN_STATUS_CLASS_MAP[statusText] ?? 'govuk-tag--turquoise';
 }
 
+type ExaminationStage = {
+	examiningInspector1?: string;
+	planPauseStartDate?: string;
+	planPauseEndDate?: string;
+	examiningInspectorAppointmentDate?: string;
+	submissionForExaminationDate?: string;
+	QADate?: string;
+	factCheckDateReceivedFromInspector?: string;
+	factCheckActualDate: string;
+	finalReportIssueDate?: string;
+	adoptionDate?: string;
+};
+
+export const resolveExaminationStage = (examinationStatus?: ExaminationStage) => {
+	if (!examinationStatus) return;
+
+	const isAtExamStage = Object.keys(examinationStatus as ExaminationStage).some(
+		(key) => examinationStatus[key as keyof ExaminationStage] != null
+	);
+
+	if (!isAtExamStage) return;
+
+	const isPaused = examinationStatus.planPauseStartDate != null && examinationStatus.planPauseEndDate == null;
+	if (isPaused) return 'Paused';
+
+	const stages = {
+		submissionForExaminationDate: 'submission received',
+		examiningInspectorAppointmentDate: 'Exam in progress',
+		QADate: 'QA',
+		factCheckDateReceivedFromInspector: 'Fact check',
+		factCheckActualDate: 'Fact check',
+		finalReportIssueDate: 'Report Issued',
+		adoptionDate: 'Plan adopted'
+	};
+	const stageKeys = Object.keys(stages) as (keyof typeof stages)[];
+
+	const resolvedStageValue = stageKeys
+		.filter((key) => examinationStatus[key] != null)
+		.sort(
+			(a, b) =>
+				new Date(examinationStatus[a]!).getTime() - new Date(examinationStatus[b]!).getTime() ||
+				stageKeys.indexOf(a) - stageKeys.indexOf(b)
+		);
+
+	const resolvedStage = resolvedStageValue.pop();
+	if (!resolvedStage) return 'Submission pending';
+
+	return stages[resolvedStage];
+};
+
 export function resolveCaseHeaderStatus(
 	gateway2Documents: DocumentModel[],
 	gateway3Documents: DocumentModel[],
 	gateway1Data: Gateway1InfoModel | null,
 	gateway2Data: Gateway2InfoModel | null,
-	gateway3Submissions: Gateway3SubmissionModel[]
+	gateway3Submissions: Gateway3SubmissionModel[],
+	examinationStatus?: ExaminationStage
 ) {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
@@ -97,6 +153,8 @@ export function resolveCaseHeaderStatus(
 		};
 	};
 
+	const examStage = resolveExaminationStage(examinationStatus);
+
 	if (passDecisionGiven) {
 		return resolveStatus('Submission pending');
 	}
@@ -115,6 +173,10 @@ export function resolveCaseHeaderStatus(
 
 	if (hasGateway2Report) {
 		return resolveStatus('GW3 pending');
+	}
+
+	if (examStage) {
+		return resolveStatus(examStage);
 	}
 
 	if (gateway2Data?.workshopDate && gateway2Data.workshopDate < dateNow) {

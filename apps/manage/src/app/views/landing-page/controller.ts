@@ -37,12 +37,31 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 							documentSetId: { in: gateway3SetIds }
 						}
 					});
+
+					const examinationStatus = await db.examinationInfo.findFirst({
+						where: { caseId: caseRecord.id },
+						select: {
+							expectedSubmissionForExaminationDate: true,
+							examiningInspectorAppointmentDate: true,
+							planPauseStartDate: true,
+							planPauseEndDate: true,
+							factCheckDateReceivedFromInspector: true,
+							factCheckActualDate: true,
+							finalReportIssueDate: true,
+							QADate: true,
+							adoptionDate: true
+						}
+					});
+
+					console.log(examinationStatus);
+
 					const status = resolveCaseHeaderStatus(
 						gateway2Documents,
 						gateway3Documents,
 						gateway1Info,
 						gateway2Info,
-						gateway3Info?.submissions ?? []
+						gateway3Info?.submissions ?? [],
+						examinationStatus
 					);
 
 					return {

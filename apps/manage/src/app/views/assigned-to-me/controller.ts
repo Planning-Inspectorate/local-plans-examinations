@@ -13,6 +13,8 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 		const caseOfficerText = account?.name;
 		const caseOfficer = account?.localAccountId;
 
+		console.log('----->', caseOfficerText);
+
 		try {
 			const unmappedCases = await db.case.findMany({
 				where: {
@@ -79,6 +81,7 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 							documentSetId: { in: gateway3SetIds }
 						}
 					});
+
 					const status = resolveCaseHeaderStatus(
 						gateway2Documents,
 						gateway3Documents,

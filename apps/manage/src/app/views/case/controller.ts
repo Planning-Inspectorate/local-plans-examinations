@@ -638,12 +638,28 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 		});
 
+		const examinationStatus = await db.examinationInfo.findFirst({
+			where: { caseId: caseRecord.id },
+			select: {
+				expectedSubmissionForExaminationDate: true,
+				examiningInspectorAppointmentDate: true,
+				planPauseStartDate: true,
+				planPauseEndDate: true,
+				factCheckDateReceivedFromInspector: true,
+				factCheckActualDate: true,
+				finalReportIssueDate: true,
+				QADate: true,
+				adoptionDate: true
+			}
+		});
+
 		const headerStatus = resolveCaseHeaderStatus(
 			gateway2Documents,
 			gateway3Documents,
 			journey1Data,
 			journey2Data,
-			journey3Data?.submissions ?? []
+			journey3Data?.submissions ?? [],
+			examinationStatus
 		);
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;
