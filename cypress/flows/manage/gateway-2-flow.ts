@@ -42,13 +42,13 @@ export const issueGateway2Report = (planTitle: string) => {
 };
 
 export const workshopSetUpFlow = (planTitle: string) => {
-	cy.contains('Set up workshop').click(); //improve this
+	cy.contains('Set up workshop').click();
 	workshopDateAndTimePage.verifyLoaded();
 	workshopDateAndTimePage.enterDateAndTime(
 		workshopSetUp.workshopDateAndTime.inputDate,
-		workshopSetUp.workshopDateAndTime.inputTime //maybe add optional end time too
+		workshopSetUp.workshopDateAndTime.inputTime
 	);
-	workshopExpectedDaysPage.verifyLoaded(); //make all verify loadeds better
+	workshopExpectedDaysPage.verifyLoaded();
 	workshopExpectedDaysPage.enterRadioAndNumberOfDays(
 		workshopSetUp.expectedNumberOfDays.inputRadio,
 		workshopSetUp.expectedNumberOfDays.inputDays
