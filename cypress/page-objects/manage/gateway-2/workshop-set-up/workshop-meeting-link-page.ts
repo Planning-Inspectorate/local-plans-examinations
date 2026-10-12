@@ -14,5 +14,11 @@ class WorkshopRemoteLinkPage extends BasePage {
 		this.venueRemoteLinkField.clearAndWrite(link);
 		this.saveAndContinue();
 	}
+
+	verifyLoaded() {
+		super.verifyLoaded();
+		this.verifyHeading(workshopSetUp.workshopMeetingLink.heading);
+		this.venueRemoteLinkField.should('be.visible');
+	}
 }
 export const workshopRemoteLinkPage = new WorkshopRemoteLinkPage();

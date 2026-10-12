@@ -26,5 +26,18 @@ class WorkshopVenueAddressPage extends BasePage {
 		this.venuePostcodeField.clearAndWrite(postcode);
 		this.saveAndContinue();
 	}
+
+	verifyLoaded() {
+		super.verifyLoaded();
+		this.verifyHeading(workshopSetUp.workshopVenueAddress.heading);
+		this.verifyFieldsLoaded();
+	}
+
+	verifyFieldsLoaded() {
+		this.venueNameField.should('be.visible');
+		this.venueAddressLine1field.should('be.visible');
+		this.venueTownOrCityField.should('be.visible');
+		this.venuePostcodeField.should('be.visible');
+	}
 }
 export const workshopVenueAddressPage = new WorkshopVenueAddressPage();
