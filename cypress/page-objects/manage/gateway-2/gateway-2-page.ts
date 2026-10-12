@@ -46,11 +46,23 @@ export class Gateway2Page extends GatewayBasePage {
 		});
 	}
 
-	verifyWorkshopSetUp(workshopNumber: string) {
+	verifyWorkshopSetUp(
+		workshopNumber: string,
+		expectedNumberOfDays = workshopSetUp.expectedNumberOfDays.displayNumberOfDays
+	) {
 		this.verifySubHeading(`Workshop ${workshopNumber} details`);
-		workshopSetupExpectedAnswers.forEach(({ row, display }) => {
-			this.verifySummaryRowContains(row, display);
-		});
+		const overviewDisplayValues: Record<string, string> = {
+			[workshopSetUp.expectedNumberOfDays.rowNumberOfDays]: expectedNumberOfDays,
+			[workshopSetUp.workshopMeetingLinkKnown.row]: workshopSetUp.workshopMeetingLinkKnown.inputRadio,
+			[workshopSetUp.workshopMeetingLink.row]: workshopSetUp.workshopMeetingLink.input
+		};
+		workshopSetupExpectedAnswers
+			.filter(
+				({ row }) => row !== workshopSetUp.expectedNumberOfDays.row && row !== workshopSetUp.workshopAddressKnown.row
+			)
+			.forEach(({ row, display }) => {
+				this.verifySummaryRowContains(row, overviewDisplayValues[row] ?? display);
+			});
 		this.verifySummaryRowContains(
 			workshopSetUp.workshopVenueAddress.row,
 			workshopSetUp.workshopVenueAddress.values.venueName,

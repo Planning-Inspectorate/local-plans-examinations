@@ -120,10 +120,12 @@ export const workshopSetUp = {
 		path: 'gateway-2-workshop-expected-days-1',
 		inputRadio: 'yes',
 		inputDays: '1',
+		updatedInputDays: '2',
 		row: 'Do you know the estimated number of days?',
 		rowNumberOfDays: 'Estimated number of days',
 		display: 'yes',
-		displayNumberOfDays: '1'
+		displayNumberOfDays: '1',
+		updatedDisplayNumberOfDays: '2'
 	},
 	workshopRemoteOrInPerson: {
 		section: 'set-up-workshop/workshop',

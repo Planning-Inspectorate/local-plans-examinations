@@ -21,6 +21,7 @@ import {
 	gateway2DateAnswers,
 	gateway2Report,
 	gateway2WorkshopDocuments,
+	workshopSetUp,
 	updatedGateway2ExpectedDateAnswer
 } from '../../../../fixtures/manage/gateway-2.ts';
 
@@ -80,10 +81,9 @@ describe('Gateway 2 updates', () => {
 
 		cy.task<SeededManageCase>('seedDb').then((secondCase) => {
 			openGateway2Page(secondCase.reference, secondCase.planTitle);
-			gateway2Page.verifySummaryRowActionHref(
-				gateway2WorkshopDocuments.row,
-				`/case/${secondCase.reference}/gateway-2/workshop/${gateway2WorkshopDocuments.path}`
-			);
+			gateway2Page.openActionLinkFor(gateway2WorkshopDocuments.row);
+			gateway2WorkshopDocumentsPage.verifyLoaded();
+			gateway2WorkshopDocumentsPage.verifyFileNotUploaded(gateway2WorkshopDocuments.fileName);
 		});
 	});
 
@@ -95,12 +95,10 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifyLoaded(seededCase.planTitle);
 	});
 
-	//add doc test
-
-	it('sets up a new workshop event', { tags: ['regression'] }, () => {
+	it('sets up and updates a new workshop event', { tags: ['regression'] }, () => {
 		workshopSetUpFlow(seededCase.planTitle);
 
-		gateway2Page.verifyWorkshopSetUp('1');
+		gateway2Page.verifyWorkshopSetUp('1', workshopSetUp.expectedNumberOfDays.updatedDisplayNumberOfDays);
 		gateway2Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		caseHistoryPage.verifyHistoryEvent('Workshop set up');

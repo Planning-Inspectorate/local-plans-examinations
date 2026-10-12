@@ -27,6 +27,10 @@ class WorkshopCYAPage extends BasePage {
 		this.submitButton.click();
 	}
 
+	openChangeLinkFor(key: string) {
+		this.summaryRowActionLink(key).should('be.visible').click();
+	}
+
 	verifyExpectedRows() {
 		workshopSetupRows.forEach((key) => {
 			this.summaryRow(key).should('be.visible');
