@@ -38,6 +38,11 @@ import {
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { sortExaminationHearings, sortGateway2Workshops } from '#util/util.ts';
+import {
+	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
+} from '../../classes/common-consts.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -66,8 +71,6 @@ const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
-
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -88,8 +91,6 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
-
 const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -109,8 +110,6 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'tif',
 	'tiff'
 ];
-
-const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
