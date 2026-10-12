@@ -20,6 +20,7 @@ export default class CustomNoteQuestion extends Question {
 			});
 		}
 		const formattedAnswer = nunjucks.render(`${this.viewFolder}/notes-summary-list.njk`, {
+			reference: journey.response.answers.reference,
 			notes,
 			_csrf: journey._csrf
 		});
