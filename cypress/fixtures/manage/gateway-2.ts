@@ -109,8 +109,8 @@ export const workshopSetUp = {
 		inputTime: { hour: '14', minute: '30' },
 		display: '10 October 2026',
 		displayTime: '14:30',
-		row: 'workshop date',
-		rowTime: 'workshop time'
+		row: 'Workshop date',
+		rowTime: 'Workshop start time'
 	},
 	expectedNumberOfDays: {
 		section: 'set-up-workshop/workshop',
@@ -175,8 +175,8 @@ export const workshopSetUp = {
 		fieldName: 'remoteMeetingLink-1',
 		path: 'gateway-2-remote-meeting-link-1',
 		input: 'linkToMeeting',
-		display: 'linkToMeeting',
-		row: 'Gateway 2 remote meeting link'
+		display: '\n          LinkToMeeting\n        ',
+		row: 'Remote meeting link'
 	}
 };
 

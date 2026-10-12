@@ -19,6 +19,14 @@ class WorkshopCYAPage extends BasePage {
 		super(/^\/case\/.+\/gateway-2\/set-up-workshop\/check-your-answers-1$/);
 	}
 
+	get submitButton() {
+		return cy.getByData('submit-case');
+	}
+
+	submitWorkshop() {
+		this.submitButton.click();
+	}
+
 	verifyExpectedRows() {
 		workshopSetupRows.forEach((key) => {
 			this.summaryRow(key).should('be.visible');
@@ -30,7 +38,8 @@ class WorkshopCYAPage extends BasePage {
 			this.verifySummaryRowContains(row, display);
 		});
 		this.verifySummaryRowContains(
-			//row and venue name checked in loop
+			workshopSetUp.workshopVenueAddress.row,
+			workshopSetUp.workshopVenueAddress.values.venueName,
 			workshopSetUp.workshopVenueAddress.values.addressLine1,
 			workshopSetUp.workshopVenueAddress.values.townOrCity,
 			workshopSetUp.workshopVenueAddress.values.postcode
