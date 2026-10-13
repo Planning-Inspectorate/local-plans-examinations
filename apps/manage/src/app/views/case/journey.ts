@@ -324,7 +324,7 @@ export function createTimetableJourney(req: Request, response: JourneyResponse, 
 			new Section('Gateway 2', 'gateway-2')
 				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
-				// TODO Add workshop dates in here once developed
+				.addQuestion(questions.gateway2WorkshopDates)
 				.addQuestion(questions.reportIssuedDate)
 				.addQuestion(questions.reportPublishedDate),
 			new Section('Gateway 3', 'gateway-3')
