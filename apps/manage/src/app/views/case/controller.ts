@@ -27,6 +27,8 @@ import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
 import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
 import { ExaminationSaveController } from './save/examination-save-controller.ts';
 import { formatDateToString } from '../../../app/util/date.ts';
+import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -772,13 +774,17 @@ export function redirectToFileUploaderQuestion(req: Request) {
  *
  * @param {Request} req - The HTTP request object containing parameters, URL, and session data.
  * @param {string} path - The base path to append to the generated URL.
+ * @param options
  * @returns {string} The constructed redirect URL.
  */
-export const redirectToChecks = (req: Request, path: string): string => {
+export const redirectToChecks = (req: Request, path: string, options: FileUploaderControllerOptions): string => {
 	const plan = req.params.reference;
 	const urlPathRoot = req.url.split('/')[1];
 	const session = req.session;
-	const formFiles = session?.forms?.[urlPathRoot] ?? {};
+	const sessionKey = resolveSessionKey(req, options);
+	const formFiles = session?.forms?.[urlPathRoot]
+		? session?.forms?.[urlPathRoot]
+		: (session.fileUploader?.[sessionKey]?.uploadedFiles ?? undefined);
 
 	if (Object.keys(formFiles).length === 0) {
 		return `/case/${plan}/${path}/${req.params.section}/${req.params.question}`;

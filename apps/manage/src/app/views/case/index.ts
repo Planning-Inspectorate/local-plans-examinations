@@ -455,7 +455,7 @@ function registerCaseJourney(
 						onSubmit: async ({ uploadedFiles }) => {
 							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
 						},
-						redirect: (req) => redirectToChecks(req, path)
+						redirect: (req, options) => redirectToChecks(req, path, options)
 					})
 				])
 			)

@@ -25,7 +25,7 @@ export type FileUploaderControllerOptions = {
 	>;
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
-	redirect?: string | ((req: Request) => string);
+	redirect?: string | ((req: Request, options?: FileUploaderControllerOptions) => string);
 	onFilesChange?: (params: {
 		req: Request;
 		sessionKey: string;
@@ -256,7 +256,7 @@ function ensureFileUploaderSession(req: RequestWithFiles): FileUploaderSession {
 	return req.session;
 }
 
-function resolveSessionKey(req: Request, options: FileUploaderControllerOptions): string {
+export function resolveSessionKey(req: Request, options: FileUploaderControllerOptions): string {
 	if (typeof options.sessionKey === 'function') {
 		return options.sessionKey(req);
 	}
@@ -301,7 +301,7 @@ function redirectSafely(res: Response, target: string): void {
 
 function resolveRedirect(req: Request, options: FileUploaderControllerOptions): string {
 	if (typeof options.redirect === 'function') {
-		const redirect = options.redirect(req);
+		const redirect = options.redirect(req, options);
 		if (isSafeLocalRedirect(redirect)) {
 			return redirect;
 		}
@@ -333,9 +333,14 @@ export function createFileSubmitUploadController(options: FileUploaderController
 		};
 
 		const session = ensureFileUploaderSession(request as RequestWithFiles);
+
 		const urlPathRoot = request.url.split('/')[1];
-		const formFiles = session?.forms?.[urlPathRoot] ?? {};
-		const uploadedFiles = formFiles?.[options.fieldName] ?? [];
+		const sessionKey = resolveSessionKey(request, options);
+		const formFiles = session?.forms?.[urlPathRoot]
+			? session?.forms?.[urlPathRoot]
+			: (session.fileUploader?.[sessionKey]?.uploadedFiles ?? undefined);
+		const formKey = options.fieldName;
+		const uploadedFiles = formFiles?.[formKey] ? formFiles?.[formKey] : formFiles;
 
 		if (uploadedFiles.length === 0) {
 			session.errors = { 'upload-form': { msg: `${uploadErrors[urlPathRoot]}` } };
