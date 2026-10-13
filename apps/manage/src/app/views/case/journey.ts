@@ -324,13 +324,13 @@ export function createTimetableJourney(req: Request, response: JourneyResponse, 
 			new Section('Gateway 2', 'gateway-2')
 				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
-				.addQuestion(questions.workshopDate)
+				// TODO Add workshop dates in here once developed
 				.addQuestion(questions.reportIssuedDate)
 				.addQuestion(questions.reportPublishedDate),
 			new Section('Gateway 3', 'gateway-3')
 				.addQuestion(questions.gateway3ExpectedDate)
 				.addQuestion(questions.gateway3ActualDate)
-				.addQuestion(questions.gateway3CompletionDate),
+				.addQuestion(questions[`gateway3CompletionDate-1`]),
 			new Section('Examination', 'examination')
 				.addQuestion(questions.expectedSubmissionForExaminationDate)
 				.addQuestion(questions.submissionForExaminationDate)
