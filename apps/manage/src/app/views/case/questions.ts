@@ -1116,6 +1116,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		]
 	},
 	...gateway2WorkshopQuestions,
+	gateway2WorkshopDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES,
+		title: 'Workshop dates',
+		question: 'Workshop dates',
+		fieldName: 'workshops',
+		url: 'gateway-2-workshop-dates',
+		notStartedText: 'Not provided'
+	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',

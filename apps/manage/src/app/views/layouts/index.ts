@@ -7,6 +7,7 @@ import {
 import CustomFileReviewerQuestion from './custom-file-reviewer/question.ts';
 import CustomNoteQuestion from './custom-note-input/question.ts';
 import CustomFileManagerQuestion from './custom-file-manager/question.ts';
+import CustomWorkshopDatesQuestion from './custom-workshop-dates/question.ts';
 
 /**
  * Typed wrapper around Object.freeze() to preserve inference for object literals.
@@ -22,6 +23,7 @@ export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_FILE_REVIEWER: 'custom-file-reviewer',
 	CUSTOM_NOTE_INPUT: 'custom-note-input',
 	CUSTOM_FILE_MANAGER: 'custom-file-manager',
+	CUSTOM_WORKSHOP_DATES: 'custom-workshop-dates',
 	...CUSTOM_DYNAMIC_FORM_COMPONENTS
 });
 
@@ -31,5 +33,6 @@ export const CUSTOM_COMPONENT_CLASSES = freeze({
 	[CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER]: CustomFileReviewerQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT]: CustomNoteQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER]: CustomFileManagerQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES]: CustomWorkshopDatesQuestion,
 	...CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES
 });

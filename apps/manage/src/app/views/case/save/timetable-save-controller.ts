@@ -16,7 +16,6 @@ const timetableGateway1Questions = new Set([
 const timetableGateway2Questions = new Set([
 	'gateway-2-expected-date',
 	'gateway-2-actual-date',
-	'gateway-2-workshop-date',
 	'gateway-2-report-issued-date',
 	'gateway-2-report-published-date'
 ]);
