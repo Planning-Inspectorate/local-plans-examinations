@@ -777,8 +777,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
  * @param options
  * @returns {string} The constructed redirect URL.
  */
-export const redirectToChecks = (req: Request, path: string, options: FileUploaderControllerOptions): string => {
+export const redirectToChecks = (req: Request, path: string, options?: FileUploaderControllerOptions): string => {
 	const plan = req.params.reference;
+	if (!options) return `/case/${plan}/${path}/${req.params.section}/${req.params.question}`;
 	const urlPathRoot = req.url.split('/')[1];
 	const session = req.session;
 	const sessionKey = resolveSessionKey(req, options);
