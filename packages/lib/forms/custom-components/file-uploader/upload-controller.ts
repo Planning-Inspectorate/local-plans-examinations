@@ -340,9 +340,9 @@ export function createFileSubmitUploadController(options: FileUploaderController
 			? session?.forms?.[urlPathRoot]
 			: (session.fileUploader?.[sessionKey]?.uploadedFiles ?? undefined);
 		const formKey = options.fieldName;
-		const uploadedFiles = formFiles?.[formKey] ? formFiles?.[formKey] : formFiles;
+		const uploadedFiles = Array.isArray(formFiles) ? formFiles : (formFiles?.[formKey] ?? []);
 
-		if (uploadedFiles.length === 0) {
+		if (uploadedFiles?.length === 0) {
 			session.errors = { 'upload-form': { msg: `${uploadErrors[urlPathRoot]}` } };
 			session.errorSummary = [{ href: '#upload-form', text: `${uploadErrors[urlPathRoot]}` }];
 			return redirectSafely(res, resolveRedirect(request, options));
