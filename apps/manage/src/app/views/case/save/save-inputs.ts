@@ -42,7 +42,6 @@ export interface Gateway1Input extends SaveInput {
 export interface Gateway2Input extends SaveInput {
 	expectedDate?: Date;
 	actualDate?: Date;
-	validDate?: Date;
 	assessorName?: string;
 	assessorDate?: Date;
 	assessorAppointmentDate?: Date;
