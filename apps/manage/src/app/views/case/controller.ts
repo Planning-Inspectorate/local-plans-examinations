@@ -987,6 +987,20 @@ export function preprocessQuestionProperties(
 				}
 			}
 		}
+		if (journeyId == 'examination') {
+			// Format the Start date answer into a human-readable date
+			const hearingAnswers = _res.locals.journeyResponse.answers.hearings ?? [];
+			for (let i = 0; i < hearingAnswers.length; i++) {
+				hearingAnswers[i].hearingDate =
+					hearingAnswers[i].hearingDate && typeof hearingAnswers[i].hearingDate != 'string'
+						? formatDateToString(hearingAnswers[i].hearingDate)
+						: null;
+				hearingAnswers[i].hearingEndDate =
+					hearingAnswers[i].hearingEndDate && typeof hearingAnswers[i].hearingEndDate != 'string'
+						? formatDateToString(hearingAnswers[i].hearingEndDate)
+						: null;
+			}
+		}
 		next();
 	});
 }

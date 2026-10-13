@@ -1562,15 +1562,15 @@ Object.entries(questions)
 			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
 
 			let hearingDateValue = hearingDetails.hearingDate;
-			if (typeof hearingDetails.workshopDate == 'string') {
+			if (typeof hearingDetails.hearingDate == 'string') {
 				hearingDateValue = parseDate(hearingDateValue);
 			}
 			const hearingDate = {
-				key: 'workshop date',
+				key: 'hearing date',
 				value:
 					hearingDateValue && typeof hearingDateValue != 'string'
 						? formatDateToString(hearingDateValue)
-						: hearingDetails.workshopDate,
+						: hearingDetails.hearingDate,
 				action: this.getAction(sectionSegment, journey, hearingDateValue)
 			};
 

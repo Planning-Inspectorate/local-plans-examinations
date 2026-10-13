@@ -5,6 +5,7 @@ import { parseDate } from '../../../util/date.ts';
 import type { ExaminationInput } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { NUM_EXAMINATION_HEARING_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { formatDateToString } from '../../../util/date.ts';
 
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
@@ -137,6 +138,13 @@ export class ExaminationSaveController extends SaveController {
 					}
 				}
 			});
+
+			if (currentHearing.hearingDetails) {
+				if (typeof currentHearing.hearingDetails == 'object') {
+					currentHearing.hearingDetails = formatDateToString(currentHearing.hearingDetails);
+				}
+			}
+
 			return {
 				hearings: hearingDetails
 			};
@@ -161,6 +169,7 @@ export class ExaminationSaveController extends SaveController {
 				answers.hearings[hearingId - 1] = { ...sessionAnswers, ...newAnswers };
 			}
 		}
+
 		this.req.session.answers = answers;
 		return true;
 	}
