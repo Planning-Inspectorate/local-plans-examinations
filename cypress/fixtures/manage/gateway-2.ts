@@ -105,9 +105,9 @@ export const workshopSetUp = {
 		fieldNameDate: 'workshopDate-1',
 		fieldNameTime: 'workshopTime-1',
 		path: 'gateway-2-workshop-date-and-time-1',
-		inputDate: { day: '10', month: '10', year: '2026' },
+		inputDate: { day: '10', month: '12', year: '2026' },
 		inputTime: { hour: '14', minute: '30' },
-		display: '10 October 2026',
+		display: '10 December 2026',
 		displayTime: '14:30',
 		row: 'Workshop date',
 		rowTime: 'Workshop start time'

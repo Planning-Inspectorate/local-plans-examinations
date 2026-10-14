@@ -1,6 +1,6 @@
 {% extends "views/layouts/main.njk" %}
 {% from "views/components/gateway-2-report-summary.njk" import gateway2ReportSummary %}
-{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "views/components/gateway-2-workshop-summary.njk" import gateway2WorkshopSummary %}
 
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
@@ -20,28 +20,9 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
-        {% set workshopRows = [] %}
-        {% if workshopVenue %}
-            {% set _ = workshopRows.push({
-                key: { text: "Workshop venue" },
-                value: { text: workshopVenue }
-            }) %}
-        {% endif %}
-        {% if workshopDateAndTime %}
-            {% set _ = workshopRows.push({
-                key: { text: "Workshop date and time" },
-                value: { text: workshopDateAndTime }
-            }) %}
-        {% endif %}
-
+        {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
-            {{ gateway2ReportSummary(gateway2ReportFiles, workshopRows) }}
-        {% elif workshopRows.length %}
-            <div data-cy="workshop-details-section">
-                {{ govukSummaryList({
-                    rows: workshopRows
-                }) }}
-            </div>
+            {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}
 
         <p class="govuk-body" data-cy="submission-copy">Your application was submitted on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
