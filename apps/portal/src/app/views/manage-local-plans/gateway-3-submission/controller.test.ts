@@ -706,16 +706,19 @@ describe('buildPostDeclarationPage', () => {
 					documents: [
 						{
 							guid: 'document-1',
+							name: 'uploaded-document-1',
 							documentSetId: 'ds-proposed-local-plan',
 							latestDocumentVersion: buildDocumentVersion({ version: 1, originalFilename: 'plan.pdf' })
 						},
 						{
 							guid: 'document-2',
+							name: 'uploaded-document-2',
 							documentSetId: 'ds-map-of-policies',
 							latestDocumentVersion: buildDocumentVersion({ version: 3, originalFilename: 'map.pdf' })
 						},
 						{
 							guid: 'document-3',
+							name: 'uploaded-document-3',
 							documentSetId: 'ds-statement-of-compliance',
 							latestDocumentVersion: buildDocumentVersion({ version: 1, isDeleted: true })
 						}
@@ -760,6 +763,9 @@ describe('buildPostDeclarationPage', () => {
 		assert.strictEqual(tx.documentSet.findMany.mock.callCount(), 1);
 		assert.strictEqual(tx.case.findUnique.mock.callCount(), 1);
 		assert.deepStrictEqual(tx.case.findUnique.mock.calls[0].arguments[0].where, { id: 'case-1' });
+		assert.strictEqual(tx.case.findUnique.mock.calls[0].arguments[0].select.documents.select.name, true);
+		assert.strictEqual(tx.case.findUnique.mock.calls[0].arguments[0].select.documents.select.documentSetId, true);
+		assert.strictEqual(tx.documentSet.findFirst.mock.callCount(), 0);
 		assert.strictEqual(documentCreate.mock.callCount(), 2);
 		assert.strictEqual(documentVersionCreate.mock.callCount(), 2);
 		assert.strictEqual(documentUpdate.mock.callCount(), 2);
@@ -775,16 +781,15 @@ describe('buildPostDeclarationPage', () => {
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
 		assert.deepStrictEqual(gateway3InfoUpdateArgs.data, { actualDate: caseUpdateArgs.data.submissionDate });
 
-		assert.deepStrictEqual(tx.documentSet.findFirst.mock.calls[0].arguments[0], {
-			where: { folderName: 'gateway-3-document-1' },
-			select: { id: true }
-		});
 		const firstManageDocument = documentCreate.mock.calls[0].arguments[0].data;
-		assert.strictEqual(firstManageDocument.name, 'document-1');
+		assert.strictEqual(firstManageDocument.name, 'gateway-3-submission-1:document-1');
 		assert.strictEqual(firstManageDocument.caseId, 'case-1');
-		assert.strictEqual(firstManageDocument.documentSetId, 'g3-document-1');
+		assert.strictEqual(firstManageDocument.documentSetId, 'ds-proposed-local-plan');
 		assert.strictEqual(firstManageDocument.createdAt, caseUpdateArgs.data.submissionDate);
 		assert.ok(firstManageDocument.guid, 'expected a generated manage document guid');
+		const secondManageDocument = documentCreate.mock.calls[1].arguments[0].data;
+		assert.strictEqual(secondManageDocument.name, 'gateway-3-submission-1:document-2');
+		assert.strictEqual(secondManageDocument.documentSetId, 'ds-map-of-policies');
 
 		assert.deepStrictEqual(documentVersionCreate.mock.calls[0].arguments[0].data, {
 			documentGuid: firstManageDocument.guid,
@@ -800,14 +805,13 @@ describe('buildPostDeclarationPage', () => {
 			blobStorageContainer: 'documents',
 			blobStoragePath: 'gateway-3/submitted-document.pdf',
 			documentURI: 'https://example.com/submitted-document.pdf',
-			dateCreated: new Date('2026-10-01T10:00:00.000Z'),
-			isDeleted: false
+			dateCreated: new Date('2026-10-01T10:00:00.000Z')
 		});
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 	});
 
-	it('uses the next numbered manage document set for a Gateway 3 resubmission', async () => {
+	it('uses the next submission number while preserving the uploaded document category for a Gateway 3 resubmission', async () => {
 		const caseUpdate = mock.fn(async () => ({}));
 		const gateway3InfoUpdate = mock.fn(async () => ({}));
 		const tx = buildPostDeclarationTransaction({
@@ -831,10 +835,9 @@ describe('buildPostDeclarationPage', () => {
 
 		await handler(req, res, () => {});
 
-		assert.deepStrictEqual(tx.documentSet.findFirst.mock.calls[0].arguments[0].where, {
-			folderName: 'gateway-3-document-2'
-		});
-		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.documentSetId, 'g3-document-2');
+		assert.strictEqual(tx.documentSet.findFirst.mock.callCount(), 0);
+		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.name, 'gateway-3-submission-2:document-1');
+		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.documentSetId, 'ds-proposed-local-plan');
 		assert.deepStrictEqual(gateway3InfoUpdate.mock.calls[0].arguments[0].data, {
 			actualDate: caseUpdate.mock.calls[0].arguments[0].data.submissionDate
 		});
@@ -842,7 +845,7 @@ describe('buildPostDeclarationPage', () => {
 
 	it('does not duplicate manage documents when the same final submission is repeated', async () => {
 		const tx = buildPostDeclarationTransaction({
-			existingManageDocuments: [{ name: 'document-1' }]
+			existingManageDocuments: [{ name: 'gateway-3-submission-1:document-1', documentSetId: 'ds-proposed-local-plan' }]
 		});
 		const service = buildPostDeclarationService(tx);
 		const handler = buildPostDeclarationPage(service);
@@ -858,19 +861,152 @@ describe('buildPostDeclarationPage', () => {
 		assert.strictEqual(tx.documentVersion.create.mock.callCount(), 0);
 		assert.strictEqual(tx.document.update.mock.callCount(), 0);
 	});
+
+	it('does not resubmit previously snapshotted Gateway 3 submission documents', async () => {
+		const tx = buildPostDeclarationTransaction({
+			submissions: [
+				{
+					decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+					completionDate: new Date('2026-10-15T12:00:00.000Z')
+				},
+				{ decision: null, completionDate: null }
+			],
+			documents: [
+				{
+					guid: 'document-1',
+					name: 'uploaded-document-1',
+					documentSetId: 'ds-proposed-local-plan',
+					latestDocumentVersion: buildDocumentVersion({ version: 1 })
+				},
+				{
+					guid: 'submitted-document-1',
+					name: 'gateway-3-submission-1:document-1',
+					documentSetId: 'ds-proposed-local-plan',
+					latestDocumentVersion: buildDocumentVersion({ version: 1 })
+				}
+			]
+		});
+		const service = buildPostDeclarationService(tx);
+		const handler = buildPostDeclarationPage(service);
+		const req = buildPostDeclarationRequest();
+		const res = { redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(tx.document.create.mock.callCount(), 1);
+		assert.strictEqual(tx.document.create.mock.calls[0].arguments[0].data.name, 'gateway-3-submission-2:document-1');
+	});
+
+	it('returns 500 when no Gateway 3 info exists for the case', async () => {
+		const loggerError = mock.fn();
+		const tx = buildPostDeclarationTransaction({
+			gateway3Info: null
+		});
+		const service = buildPostDeclarationService(tx, loggerError);
+		const handler = buildPostDeclarationPage(service);
+		const req = buildPostDeclarationRequest();
+		const { res, calls } = buildPostDeclarationFailureResponse();
+
+		await handler(req, res, () => {});
+
+		assertPostDeclarationFailure(calls);
+		assert.strictEqual(tx.document.create.mock.callCount(), 0);
+		assert.strictEqual(tx.case.update.mock.callCount(), 0);
+		assert.strictEqual(tx.gateway3Info.update.mock.callCount(), 0);
+		assert.strictEqual(loggerError.mock.callCount(), 1);
+		assert.match(getLoggedErrorMessage(loggerError), /No Gateway 3 info found for case case-1/);
+	});
+
+	it('returns 500 when no active Gateway 3 documents exist for the case', async () => {
+		const loggerError = mock.fn();
+		const tx = buildPostDeclarationTransaction({
+			documents: []
+		});
+		const service = buildPostDeclarationService(tx, loggerError);
+		const handler = buildPostDeclarationPage(service);
+		const req = buildPostDeclarationRequest();
+		const { res, calls } = buildPostDeclarationFailureResponse();
+
+		await handler(req, res, () => {});
+
+		assertPostDeclarationFailure(calls);
+		assert.strictEqual(tx.document.create.mock.callCount(), 0);
+		assert.strictEqual(tx.case.update.mock.callCount(), 0);
+		assert.strictEqual(tx.gateway3Info.update.mock.callCount(), 0);
+		assert.strictEqual(loggerError.mock.callCount(), 1);
+		assert.match(getLoggedErrorMessage(loggerError), /No active Gateway 3 documents found for case case-1/);
+	});
+
+	it('returns 500 when recording the Gateway 3 submission transaction fails', async () => {
+		const transactionError = new Error('transaction failed');
+		const loggerError = mock.fn();
+		const transaction = mock.fn(async () => {
+			throw transactionError;
+		});
+		const service = {
+			db: {
+				$transaction: transaction
+			},
+			logger: {
+				error: loggerError
+			}
+		} as unknown as PortalService;
+		const handler = buildPostDeclarationPage(service);
+		const req = buildPostDeclarationRequest();
+		const { res, calls } = buildPostDeclarationFailureResponse();
+
+		await handler(req, res, () => {});
+
+		assertPostDeclarationFailure(calls);
+		assert.strictEqual(transaction.mock.callCount(), 1);
+		assert.strictEqual(loggerError.mock.callCount(), 1);
+		assert.strictEqual((loggerError.mock.calls[0].arguments[0] as { error: Error }).error, transactionError);
+		assert.match(
+			String(loggerError.mock.calls[0].arguments[1]),
+			/Failed to update Gateway 3 submission date for case PLAN-001/
+		);
+	});
 });
 
 function buildPostDeclarationTransaction({
 	caseUpdate = mock.fn(async () => ({})),
 	gateway3InfoUpdate = mock.fn(async () => ({})),
 	submissions = [{ decision: null, completionDate: null }],
-	existingManageDocuments = []
+	existingManageDocuments = [],
+	gateway3Info,
+	documents
 }: {
 	caseUpdate?: ReturnType<typeof mock.fn>;
 	gateway3InfoUpdate?: ReturnType<typeof mock.fn>;
 	submissions?: Array<{ decision: string | null; completionDate: Date | null }>;
-	existingManageDocuments?: Array<{ name: string }>;
+	existingManageDocuments?: Array<{ name: string; documentSetId: string }>;
+	gateway3Info?: {
+		id: string;
+		submissions?: Array<{ decision: string | null; completionDate: Date | null }> | null;
+	} | null;
+	documents?: Array<{
+		guid: string;
+		name: string;
+		documentSetId: string;
+		latestDocumentVersion: ReturnType<typeof buildDocumentVersion> | null;
+	}>;
 } = {}) {
+	const gateway3InfoForCase =
+		gateway3Info === undefined
+			? {
+					id: 'gateway-3-info-1',
+					submissions
+				}
+			: gateway3Info;
+	const documentsForCase = documents ?? [
+		{
+			guid: 'document-1',
+			name: 'uploaded-document-1',
+			documentSetId: 'ds-proposed-local-plan',
+			latestDocumentVersion: buildDocumentVersion({ version: 1 })
+		}
+	];
+
 	return {
 		documentSet: {
 			findMany: mock.fn(async () => buildMockDocumentSets()),
@@ -881,17 +1017,8 @@ function buildPostDeclarationTransaction({
 		case: {
 			findUnique: mock.fn(async () => ({
 				id: 'case-1',
-				gateway3Info: {
-					id: 'gateway-3-info-1',
-					submissions
-				},
-				documents: [
-					{
-						guid: 'document-1',
-						documentSetId: 'ds-proposed-local-plan',
-						latestDocumentVersion: buildDocumentVersion({ version: 1 })
-					}
-				]
+				gateway3Info: gateway3InfoForCase,
+				documents: documentsForCase
 			})),
 			update: caseUpdate
 		},
@@ -909,15 +1036,52 @@ function buildPostDeclarationTransaction({
 	};
 }
 
-function buildPostDeclarationService(tx: ReturnType<typeof buildPostDeclarationTransaction>) {
+function buildPostDeclarationService(tx: ReturnType<typeof buildPostDeclarationTransaction>, loggerError = mock.fn()) {
 	return {
 		db: {
 			$transaction: mock.fn(async (callback: (client: typeof tx) => unknown) => callback(tx))
 		},
 		logger: {
-			error: mock.fn()
+			error: loggerError
 		}
 	} as unknown as PortalService;
+}
+
+function buildPostDeclarationRequest() {
+	return {
+		currentCase: { id: 'case-1' },
+		params: { planReference: 'PLAN-001' }
+	} as unknown as Request;
+}
+
+function buildPostDeclarationFailureResponse() {
+	const calls: { method: string; args: unknown[] }[] = [];
+	const res = {
+		status(code: number) {
+			calls.push({ method: 'status', args: [code] });
+			return res;
+		},
+		send(body: string) {
+			calls.push({ method: 'send', args: [body] });
+			return res;
+		},
+		redirect(url: string) {
+			calls.push({ method: 'redirect', args: [url] });
+			return res;
+		}
+	} as unknown as Response;
+	return { res, calls };
+}
+
+function assertPostDeclarationFailure(calls: { method: string; args: unknown[] }[]) {
+	assert.deepStrictEqual(calls, [
+		{ method: 'status', args: [500] },
+		{ method: 'send', args: ['Failed to record submission'] }
+	]);
+}
+
+function getLoggedErrorMessage(loggerError: ReturnType<typeof mock.fn>) {
+	return (loggerError.mock.calls[0].arguments[0] as { error?: Error }).error?.message ?? '';
 }
 
 describe('buildGetSubmissionCompletePage', () => {
