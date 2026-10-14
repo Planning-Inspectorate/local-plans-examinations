@@ -7,28 +7,37 @@ const workshopSetupRows = [
 	workshopSetUp.expectedNumberOfDays.rowNumberOfDays
 ];
 
-const actionLinkHrefs: Array<[string, RegExp]> = [
-	...Object.values(workshopSetUp).map(({ row, section, path }): [string, RegExp] => [
-		row,
-		new RegExp(`^/case/.+/gateway-2/${section}/${path}$`)
-	])
-];
+export class WorkshopCYAPage extends BasePage {
+	private readonly workshopNumber: number;
 
-class WorkshopCYAPage extends BasePage {
-	constructor() {
-		super(/^\/case\/.+\/gateway-2\/set-up-workshop\/check-your-answers-1$/);
+	constructor(workshopNumber = 1) {
+		super(new RegExp(`^/case/.+/gateway-2/set-up-workshop/check-your-answers-${workshopNumber}$`));
+		this.workshopNumber = workshopNumber;
 	}
 
 	get submitButton() {
 		return cy.getByData('submit-case');
 	}
 
+	verifyLoaded() {
+		super.verifyLoaded();
+		this.verifyHeading('Check workshop details and issue notification');
+	}
+
 	submitWorkshop() {
-		this.submitButton.click();
+		this.submitButton.should('be.visible').click();
 	}
 
 	openChangeLinkFor(key: string) {
 		this.summaryRowActionLink(key).should('be.visible').click();
+	}
+
+	verifyRemoteWorkshopDetails(meetingLink: string) {
+		this.verifySummaryRowContains(workshopSetUp.workshopRemoteOrInPerson.row, 'remote');
+		this.mainContent
+			.should('not.contain.text', workshopSetUp.workshopAddressKnown.row)
+			.and('not.contain.text', workshopSetUp.workshopVenueAddress.row);
+		this.verifySummaryRowContains(workshopSetUp.workshopMeetingLink.row, meetingLink);
 	}
 
 	verifyExpectedRows() {
@@ -51,8 +60,9 @@ class WorkshopCYAPage extends BasePage {
 	}
 
 	verifyExpectedActionLinkHrefs() {
-		actionLinkHrefs.forEach(([key, href]) => {
-			this.verifySummaryRowActionHref(key, href);
+		Object.values(workshopSetUp).forEach(({ row, section, path }) => {
+			const questionPath = path.replace(/-1$/, `-${this.workshopNumber}`);
+			this.verifySummaryRowActionHref(row, new RegExp(`^/case/.+/gateway-2/${section}/${questionPath}$`));
 		});
 	}
 }

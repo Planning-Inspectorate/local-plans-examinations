@@ -5,11 +5,16 @@ import { loadConfig } from '../configuration/config.ts';
 import { seedStaticData } from './data-static.ts';
 import { DSA_CHECKED_ID, PLAN_TYPE_ID } from './static-data/ids/index.ts';
 import { assertEnvironmentSmokeDatabase } from './environment-smoke-safety.ts';
+import type { Prisma } from '../client/client.ts';
+
+export type SeedCyOptions = {
+	workshops?: Prisma.Gateway2WorkshopCreateWithoutGateway2InfoInput[];
+};
 
 // prettier-ignore
 try { loadEnvFile(path.resolve(__dirname, '../../.env')); } catch {/* ignore errors*/}
 
-export async function seedCy() {
+export async function seedCy(options: SeedCyOptions | null = {}) {
 	const config = loadConfig();
 	const environmentSmoke = process.env.ENVIRONMENT_SMOKE === 'true';
 	if (environmentSmoke) {
@@ -94,7 +99,7 @@ export async function seedCy() {
 						reportPublishedByLPA: new Date('2026-09-01T12:00:00.000Z'),
 						assessorName: 'assessor-1',
 						workshops: {
-							create: []
+							create: options?.workshops ?? []
 						}
 					}
 				},
