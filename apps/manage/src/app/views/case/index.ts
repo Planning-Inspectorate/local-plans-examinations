@@ -169,6 +169,9 @@ function registerGateway2WorkshopJourney(
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
+		if (req.session) {
+			delete req.session.answers;
+		}
 
 		res.redirect(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	});
@@ -289,6 +292,13 @@ function registerExaminationHearingJourney(
 
 		req.session.alertMessage = 'Hearing set up';
 		req.session.alertMessageStatus = 'success';
+
+		if (req.session.lastQuestionUrl) {
+			delete req.session.lastQuestionUrl;
+		}
+		if (req.session) {
+			delete req.session.answers;
+		}
 
 		res.redirect(`/case/${encodeURIComponent(reference)}/examination`);
 	});
@@ -424,6 +434,7 @@ export function caseRouter(service: ManageService): IRouter {
 	const workshopConfig = CASE_JOURNEYS.find(
 		(config) => config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID
 	);
+
 	if (workshopConfig) {
 		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
 	}
@@ -540,12 +551,13 @@ function registerCaseJourney(
 						sessionKey: fileUploaderCaseSessionKey,
 						destination: (req) => {
 							const request = req as UploadDocumentRequest;
+							const caseReference = getRoutePlanReference(req);
 							return {
-								folderPath: `${request.currentCase?.id ?? req.params.planReference}/${questionConfig.url}`,
+								folderPath: `${request.currentCase?.id ?? caseReference}/${questionConfig.url}`,
 								metadata: {
 									journeyId: journeyId,
 									caseId: request.currentCase?.id,
-									caseReference: req.params.planReference,
+									caseReference,
 									fieldName: questionConfig.fieldName,
 									documentSetFolderName: questionConfig.url
 								}
@@ -708,11 +720,7 @@ function logUploadCleanupFailed(
 }
 
 function getRoutePlanReference(req: Request): string | undefined {
-	const planReference = Array.isArray(req.params.planReference)
-		? req.params.planReference[0]
-		: req.params.planReference;
-
-	return planReference || undefined;
+	return getParam(req.params.reference) || undefined;
 }
 
 function uploadLogContext(req: Request, questionConfig: FileUploadQuestion) {

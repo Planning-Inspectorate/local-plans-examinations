@@ -19,7 +19,7 @@ const serviceNavigationItems = [
 const actionLinkHrefs: Array<[string, RegExp]> = [
 	['Plan title', /^\/case\/.+\/overview\/case-details\/plan-title$/],
 	['Plan type', /^\/case\/.+\/overview\/case-details\/plan-type$/],
-	['Local Planning Authority', /^\/case\/.+\/overview\/case-details\/check-lpas$/],
+	['Planning authorities', /^\/case\/.+\/overview\/case-details\/check-lpas$/],
 	['Case officer', /^\/case\/.+\/overview\/case-details\/case-officer$/],
 	['Plan band', /^\/case\/.+\/overview\/case-details\/plan-band$/],
 	['Contact details', /^\/case\/.+\/overview\/contacts\/check-contact-details$/],

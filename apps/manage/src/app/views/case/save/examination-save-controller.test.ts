@@ -41,7 +41,7 @@ function createMockService(): MockServiceType {
 				findUnique: mock.fn(async () => ({
 					id: 'someCaseId',
 					gateway2Info: {
-						workshops: [{}]
+						workshops: []
 					},
 					gateway3Info: {
 						submissions: [
@@ -317,7 +317,7 @@ describe('test ExaminationSaveController', () => {
 				hearings: [
 					{
 						id: 'someHearing',
-						hearingDate: mockDate,
+						hearingDate: '01/01/2026',
 						hearingTime: '00:00',
 						hearingExpectedDaysKnown: true,
 						hearingExpectedDays: 2, // Radio button with nested field

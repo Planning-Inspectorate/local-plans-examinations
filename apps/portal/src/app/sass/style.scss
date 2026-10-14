@@ -10,6 +10,18 @@
 @use 'node_modules/@planning-inspectorate/core/dist/ui/footer/pins-footer';
 @use 'node_modules/@planning-inspectorate/core/dist/ui/brand/pins-colors' as pins;
 
+.pins-environment-banner {
+	min-height: 2em;
+	margin-top: 0;
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 1.2em;
+	font-weight: 800;
+	line-height: 2em;
+	color: govuk.govuk-colour('white');
+	text-align: center;
+	background-color: govuk.govuk-colour('black');
+}
+
 .govuk-summary-list--no-border .govuk-summary-list__key {
 	width: 50%;
 }

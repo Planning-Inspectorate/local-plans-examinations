@@ -20,7 +20,7 @@ export class LocalPlanningAuthoritiesBasePage extends BasePage {
 	}
 
 	verifyLocalPlanningAuthoritiesList() {
-		this.verifyHeading('Local Planning Authorities');
+		this.verifyHeading('Planning authorities');
 		this.addListItemButton.should('be.visible');
 		this.verifySaveAndContinueVisible();
 	}

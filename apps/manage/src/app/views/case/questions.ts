@@ -43,6 +43,7 @@ import {
 	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
 	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
 } from '../../classes/common-consts.ts';
+import { formatDateToString, parseDate } from '../../../app/util/date.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -321,7 +322,7 @@ const gateway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the remote meeting link?',
 		fieldName: 'remoteMeetingLink',
 		url: 'gateway-2-remote-meeting-link',
-		title: 'Gateway 2 remote meeting link',
+		title: 'Remote meeting link',
 		validators: [new RequiredValidator('Input a remote meeting link')]
 	}
 };
@@ -611,7 +612,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'planTitle',
 		url: 'plan-title',
 		title: 'Plan title',
-		validators: [new RequiredValidator('Input a plan title')]
+		validators: [new RequiredValidator('Enter a plan title')]
 	},
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,
@@ -629,7 +630,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local Plan' },
+			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local plan' },
 			{ value: PLAN_TYPE_ID.OTHER, text: 'Other' }
 		],
 		question: 'What is the plan type?',
@@ -647,17 +648,20 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'lpa-3', text: 'Local Planning Authority 3' },
 			{ value: 'lpa-4', text: 'Local Planning Authority 4' }
 		],
-		question: 'Select the Local Planning Authority for this plan',
+		question: 'Select a planning authority',
 		fieldName: 'lpa',
 		url: 'select-lpa',
 		title: 'Local Planning Authority',
-		validators: [new RequiredValidator('Select a Local Planning Authority')],
+		validators: [new RequiredValidator('You need to select a planning authority')],
 		disableAccessibleAutocomplete: true
 	},
 	checkLpas: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
-		title: 'Local Planning Authority',
+		title: 'Planning authorities',
 		titleSingular: 'Local Planning Authority',
+		singularLowerCase: 'planning authority',
+		multipleLowerCase: 'planning authorities',
+		emptyListText: 'No planning authorities added',
 		showManageListQuestions: true,
 		fieldName: 'checkLpas',
 		url: 'check-lpas',
@@ -666,7 +670,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new ManageListValidator({
 				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one Local Planning Authority' }
+				errorMessages: { minimumAnswers: 'You need to add a planning authority' }
 			})
 		]
 	},
@@ -719,15 +723,19 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				fields: [
 					{
 						fieldName: 'firstName',
-						validators: [new RequiredValidator('Input a first name')]
+						validators: [new RequiredValidator('Enter a first name')]
 					},
 					{
 						fieldName: 'lastName',
-						validators: [new RequiredValidator('Input a last name')]
+						validators: [new RequiredValidator('Enter a last name')]
 					},
 					{
 						fieldName: 'email',
-						validators: [new RequiredValidator('Input an email address')]
+						validators: [new RequiredValidator('Enter an email address')]
+					},
+					{
+						fieldName: 'lpaContact',
+						validators: [new RequiredValidator('Select a planning authority')]
 					}
 				]
 			})
@@ -741,6 +749,9 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
 		title: 'Contact details',
 		titleSingular: 'Contact',
+		singularLowerCase: 'contact',
+		multipleLowerCase: 'contacts',
+		emptyListText: 'No contacts added',
 		showManageListQuestions: true,
 		fieldName: 'contactDetails',
 		url: 'check-contact-details',
@@ -749,7 +760,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new ManageListValidator({
 				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one contact' }
+				errorMessages: { minimumAnswers: 'You need to add a contact' }
 			})
 		]
 	},
@@ -1087,6 +1098,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload workshop documents',
 		fieldName: 'gateway2WorkshopDocuments',
 		url: 'gateway-2-workshop-documents',
+		notStartedText: 'Not provided',
 		allowedFileExtensions: GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
 			.filter((key) => GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
@@ -1454,30 +1466,28 @@ Object.entries(questions)
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
 			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
-
+			let workshopDateValue = workshopDetails.workshopDate;
+			if (typeof workshopDetails.workshopDate == 'string') {
+				workshopDateValue = parseDate(workshopDateValue);
+			}
 			const workshopDate = {
-				key: 'workshop date',
+				key: 'Workshop date',
 				value:
-					workshopDetails.workshopDate && typeof workshopDetails.workshopDate != 'string'
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(workshopDetails.workshopDate)
+					workshopDateValue && typeof workshopDateValue != 'string'
+						? formatDateToString(workshopDateValue)
 						: workshopDetails.workshopDate,
-				action: this.getAction(sectionSegment, journey, workshopDetails.workshopDate)
+				action: this.getAction(sectionSegment, journey, workshopDateValue)
 			};
 
 			const workshopStartTime = {
-				key: 'workshop time',
+				key: 'Workshop start time',
 				value: workshopDetails.workshopTime,
 				action: this.getAction(sectionSegment, journey, workshopDetails.workshopTime)
 			};
 
 			if (workshopDetails.workshopEndTime != null) {
 				const workshopEndTime = {
-					key: 'workshop time',
+					key: 'Workshop end time',
 					value: workshopDetails.workshopEndTime,
 					action: this.getAction(sectionSegment, journey, workshopDetails.workshopEndTime)
 				};
@@ -1543,10 +1553,17 @@ Object.entries(questions)
 			const answersFull = journey.response.answers;
 			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
 
+			let hearingDateValue = hearingDetails.hearingDate;
+			if (typeof hearingDetails.hearingDate == 'string') {
+				hearingDateValue = parseDate(hearingDateValue);
+			}
 			const hearingDate = {
 				key: 'hearing date',
-				value: hearingDetails.hearingDate,
-				action: this.getAction(sectionSegment, journey, hearingDetails.hearingDate)
+				value:
+					hearingDateValue && typeof hearingDateValue != 'string'
+						? formatDateToString(hearingDateValue)
+						: hearingDetails.hearingDate,
+				action: this.getAction(sectionSegment, journey, hearingDateValue)
 			};
 
 			const hearingStartTime = {

@@ -133,6 +133,9 @@ export function createExaminationHearingJourney(
 	}
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
 	}
 	return journey;
 }
@@ -198,8 +201,7 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 				.addQuestion(questions[`gateway2WorkshopDateAndTime-${workshopId}`])
 				.addQuestion(questions[`gateway2WorkshopExpectedDays-${workshopId}`])
 				.addQuestion(questions[`gateway2WorkshopLocationType-${workshopId}`])
-				.addQuestion(questions[`gateway2WorkshopLocationKnown-${workshopId}`])
-				.withCondition((response) =>
+				.startMultiQuestionCondition('workshop-location', (response) =>
 					questionsHaveAnswers(
 						response,
 						[
@@ -209,10 +211,11 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 						{ logicalCombinator: 'or' }
 					)
 				)
+				.addQuestion(questions[`gateway2WorkshopLocationKnown-${workshopId}`])
 				.addQuestion(questions[`gateway2WorkshopVenueAddress-${workshopId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`gateway2WorkshopLocationKnown-${workshopId}`], 'yes'))
-				.addQuestion(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`])
-				.withCondition((response) =>
+				.endMultiQuestionCondition('workshop-location')
+				.startMultiQuestionCondition('remote-meeting', (response) =>
 					questionsHaveAnswers(
 						response,
 						[
@@ -222,8 +225,10 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 						{ logicalCombinator: 'or' }
 					)
 				)
+				.addQuestion(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`])
 				.addQuestion(questions[`gateway2RemoteMeetingLink-${workshopId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`gateway2RemoteMeetingLinkKnown-${workshopId}`], 'yes'))
+				.endMultiQuestionCondition('remote-meeting')
 		],
 		taskListUrl: `check-your-answers-${workshopId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',

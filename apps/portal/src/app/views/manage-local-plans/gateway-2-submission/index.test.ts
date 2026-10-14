@@ -323,6 +323,36 @@ describe('Gateway 2 post-submission view template', () => {
 		assert.ok(html.includes('(shared on 24 September 2026)'));
 	});
 
+	it('renders workshop details in the Gateway 2 report summary list', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 2 submission',
+			pageHeading: 'Gateway 2 submission',
+			submissionDate: '1 September 2026',
+			gateway2ReportFiles: [
+				{
+					fileName: 'gateway-2-report.pdf',
+					href: '/manage-local-plans/PLAN-001/gateway-2-submission/download-document/report-guid',
+					sharedDate: '24 September 2026'
+				}
+			],
+			workshopDateAndTime: '11 November 2026 at 12:30 to 13:30',
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="gateway-2-report-section"'));
+		assert.ok(html.includes('Gateway 2 report'));
+		assert.ok(html.includes('Workshop date and time'));
+		assert.ok(html.includes('11 November 2026 at 12:30 to 13:30'));
+		assert.ok(!html.includes('data-cy="workshop-details-table"'));
+	});
+
 	it('renders section headings for Procedural, Consultation and Additional Documents', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk', {
@@ -454,6 +484,52 @@ describe('buildSubmittedGateway2View middleware', () => {
 		assert.ok(locals.submissionTime, 'expected submissionTime to be set');
 		assert.strictEqual(locals.submitter, 'user@example.com');
 		assert.strictEqual(locals.saveAndComeBackUrl, undefined, 'expected saveAndComeBackUrl to be removed');
+	});
+
+	it('sets workshop locals from the latest workshop', () => {
+		const middleware = buildSubmittedGateway2View();
+		const req = {
+			currentCase: {
+				submissionDate: new Date('2026-09-01T14:30:00Z'),
+				email: 'user@example.com',
+				gateway2Info: {
+					workshops: [
+						{
+							createdDate: new Date('2026-09-01T09:00:00Z'),
+							workshopDate: new Date('2026-10-01T12:00:00Z'),
+							workshopTime: '09:30',
+							workshopEndTime: '12:00',
+							workshopVenueName: 'Old venue',
+							workshopAddressLine: '1 Old Street',
+							workshopAddressLine2: null,
+							workshopTownOrCity: 'Oldtown',
+							workshopPostcode: 'OL1 1AA'
+						},
+						{
+							createdDate: new Date('2026-09-02T09:00:00Z'),
+							workshopDate: new Date('2026-11-03T12:00:00Z'),
+							workshopTime: '10:15',
+							workshopEndTime: '15:45',
+							workshopVenueName: 'Latest venue',
+							workshopAddressLine: '1 Latest Street',
+							workshopAddressLine2: null,
+							workshopTownOrCity: 'Newtown',
+							workshopPostcode: 'NW1 1AA'
+						}
+					]
+				}
+			}
+		} as any;
+
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' }
+		};
+		const res = { locals } as any;
+
+		middleware(req, res, () => {});
+
+		assert.strictEqual(locals.workshopVenue, 'Latest venue, 1 Latest Street, Newtown, NW1 1AA');
+		assert.strictEqual(locals.workshopDateAndTime, '3 November 2026 at 10:15 to 15:45');
 	});
 
 	it('calls next without changes when case has no submissionDate', () => {

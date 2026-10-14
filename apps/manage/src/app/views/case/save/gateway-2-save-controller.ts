@@ -5,6 +5,7 @@ import { parseDate } from '../../../util/date.ts';
 import type { Gateway2Input } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { NUM_GW2_WORKSHOP_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { formatDateToString } from '../../../util/date.ts';
 
 export class Gateway2SaveController extends SaveController {
 	private caseId: string | undefined;
@@ -61,28 +62,53 @@ export class Gateway2SaveController extends SaveController {
 			}
 			// Copy answer fields to the workshop
 			const currentWorkshop = workshopDetails[workshopId - 1];
-			const workshopFieldsToAnswerMap = {
-				workshopDate: `workshopDate-${workshopId}`,
-				workshopTime: `workshopTime-${workshopId}`,
-				workshopEndTime: `workshopEndTime-${workshopId}`,
-				workshopExpectedDaysKnown: `workshopExpectedDaysKnown-${workshopId}`,
-				workshopExpectedDays: `workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`, // Radio button with nested field
-				workshopLocationType: `workshopLocationType-${workshopId}`,
-				remoteMeetingLinkKnown: `remoteMeetingLinkKnown-${workshopId}`,
-				remoteMeetingLink: `remoteMeetingLink-${workshopId}`,
-				workshopLocationKnown: `workshopLocationKnown-${workshopId}`,
-				workshopVenueName: `workshopVenueName-${workshopId}`,
-				workshopAddressLine: `workshopAddressLine-${workshopId}`,
-				workshopAddressLine2: `workshopAddressLine2-${workshopId}`,
-				workshopTownOrCity: `workshopTownOrCity-${workshopId}`,
-				workshopPostcode: `workshopPostcode-${workshopId}`
+			const questionFieldsMap = {
+				[`gateway-2-workshop-date-and-time-${workshopId}`]: {
+					workshopDate: `workshopDate-${workshopId}`,
+					workshopTime: `workshopTime-${workshopId}`,
+					workshopEndTime: `workshopEndTime-${workshopId}`
+				},
+				[`gateway-2-workshop-expected-days-${workshopId}`]: {
+					workshopExpectedDaysKnown: `workshopExpectedDaysKnown-${workshopId}`,
+					workshopExpectedDays: `workshopExpectedDaysKnown-${workshopId}_workshopExpectedDays`
+				},
+				[`gateway-2-location-type-${workshopId}`]: {
+					workshopLocationType: `workshopLocationType-${workshopId}`
+				},
+				[`gateway-2-workshop-location-known-${workshopId}`]: {
+					workshopLocationKnown: `workshopLocationKnown-${workshopId}`
+				},
+				[`gateway-2-workshop-venue-address-${workshopId}`]: {
+					workshopVenueName: `workshopVenueName-${workshopId}`,
+					workshopAddressLine: `workshopAddressLine-${workshopId}`,
+					workshopAddressLine2: `workshopAddressLine2-${workshopId}`,
+					workshopTownOrCity: `workshopTownOrCity-${workshopId}`,
+					workshopPostcode: `workshopPostcode-${workshopId}`
+				},
+				[`gateway-2-remote-meeting-link-known-${workshopId}`]: {
+					remoteMeetingLinkKnown: `remoteMeetingLinkKnown-${workshopId}`
+				},
+				[`gateway-2-remote-meeting-link-${workshopId}`]: {
+					remoteMeetingLink: `remoteMeetingLink-${workshopId}`
+				}
 			};
+			const workshopFieldsToAnswerMap: Record<string, string> = Object.assign({}, ...Object.values(questionFieldsMap));
 			Object.entries(workshopFieldsToAnswerMap).forEach(([workshopField, answerField]) => {
 				const questionAnswer = answers[answerField];
-				if (questionAnswer) {
+				const matchedSpecificQuestion = Boolean(questionFieldsMap[question]);
+				const fieldIsForcurrentQuestion = matchedSpecificQuestion
+					? Object.values(questionFieldsMap[question]).includes(answerField)
+					: false;
+				if (questionAnswer ?? (matchedSpecificQuestion && fieldIsForcurrentQuestion)) {
 					currentWorkshop[workshopField] = questionAnswer;
 				}
 			});
+			if (currentWorkshop.workshopDetails) {
+				if (typeof currentWorkshop.workshopDetails == 'object') {
+					currentWorkshop.workshopDetails = formatDateToString(currentWorkshop.workshopDetails);
+				}
+			}
+
 			return {
 				workshops: workshopDetails
 			};
@@ -105,26 +131,38 @@ export class Gateway2SaveController extends SaveController {
 				const sessionAnswers = workshopAnswers[workshopId - 1];
 				const newAnswers = answers.workshops[workshopId - 1];
 				answers.workshops[workshopId - 1] = { ...sessionAnswers, ...newAnswers };
-				// Clean related fields
-				const currentWorkshop = answers.workshops[workshopId - 1];
-				if (currentWorkshop.workshopExpectedDaysKnown == 'no') {
-					delete (currentWorkshop as any).workshopExpectedDays;
-				}
-				if (currentWorkshop.workshopLocationType == 'remote') {
-					delete (currentWorkshop as any).workshopVenueName;
-					delete (currentWorkshop as any).workshopAddressLine;
-					delete (currentWorkshop as any).workshopAddressLine2;
-					delete (currentWorkshop as any).workshopTownOrCity;
-					delete (currentWorkshop as any).workshopPostcode;
-				}
-				if (currentWorkshop.remoteMeetingLinkKnown == 'no') {
-					delete (currentWorkshop as any).remoteMeetingLink;
-				}
 			}
+		}
+		const currentWorkshop = answers.workshops?.[workshopId - 1];
+		if (currentWorkshop?.workshopExpectedDaysKnown == 'no') {
+			delete (currentWorkshop as any).workshopExpectedDays;
+		}
+		if (currentWorkshop?.workshopLocationType == 'remote') {
+			delete (currentWorkshop as any).workshopLocationKnown;
+			delete (currentWorkshop as any).workshopVenueName;
+			delete (currentWorkshop as any).workshopAddressLine;
+			delete (currentWorkshop as any).workshopAddressLine2;
+			delete (currentWorkshop as any).workshopTownOrCity;
+			delete (currentWorkshop as any).workshopPostcode;
+		}
+		if (currentWorkshop?.workshopLocationKnown == 'no') {
+			delete (currentWorkshop as any).workshopVenueName;
+			delete (currentWorkshop as any).workshopAddressLine;
+			delete (currentWorkshop as any).workshopAddressLine2;
+			delete (currentWorkshop as any).workshopTownOrCity;
+			delete (currentWorkshop as any).workshopPostcode;
+		}
+		if (currentWorkshop?.workshopLocationType == 'in-person') {
+			delete (currentWorkshop as any).remoteMeetingLinkKnown;
+			delete (currentWorkshop as any).remoteMeetingLink;
+		}
+		if (currentWorkshop?.remoteMeetingLinkKnown == 'no') {
+			delete (currentWorkshop as any).remoteMeetingLink;
 		}
 		this.req.session.answers = answers;
 		return true;
 	}
+
 	protected async saveToDatabase(answers: Gateway2Input) {
 		const question = String(this.req.params.question);
 		if (!this.caseId) {
@@ -135,10 +173,6 @@ export class Gateway2SaveController extends SaveController {
 			question === COMMON_CONSTS.ASSESSOR_GATEWAY_2_QUESTION
 		) {
 			answers.assessorAppointmentDate = new Date();
-		}
-
-		if (answers.workshopDate) {
-			answers.workshopDate = parseDate(answers.workshopDate as any);
 		}
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
@@ -185,9 +219,6 @@ export class Gateway2SaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
-			if (this.req.session) {
-				delete this.req.session.answers;
-			}
 			return true;
 		}
 		return false;

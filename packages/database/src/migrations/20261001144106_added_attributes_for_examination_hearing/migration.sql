@@ -9,6 +9,7 @@ CREATE TABLE [dbo].[ExaminationHearing] (
     [createdDate] DATETIME2 NOT NULL,
     [hearingComplete] BIT NOT NULL CONSTRAINT [ExaminationHearing_hearingComplete_df] DEFAULT 0,
     [hearingDate] DATETIME2,
+    [hearingEndDate] DATETIME2,
     [hearingTime] NVARCHAR(1000),
     [hearingExpectedDaysKnown] NVARCHAR(1000),
     [hearingExpectedDays] NVARCHAR(1000),

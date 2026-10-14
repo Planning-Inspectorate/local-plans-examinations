@@ -7,7 +7,7 @@ ALTER TABLE [dbo].[Gateway2Info] ADD [remoteMeetingLink] NVARCHAR(1000),
 [remoteMeetingLinkKnown] NVARCHAR(1000),
 [workshopAddressLine] NVARCHAR(1000),
 [workshopAddressLine2] NVARCHAR(1000),
-[workshopDocumentUploadedDate] DATETIME2,
+
 [workshopEndTime] NVARCHAR(1000),
 [workshopExpectedDays] NVARCHAR(1000),
 [workshopExpectedDaysKnown] NVARCHAR(1000),
