@@ -1,3 +1,4 @@
+export const NUM_GW2_WORKSHOP_QUESTIONS = 200;
 export const NUM_GW3_SUBMISSIONS_QUESTIONS = 200;
 
 // Create multiple entries to support multiple gw3 submissions
@@ -39,6 +40,7 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G3_GATEWAY_2_ISSUES_SUMMARY: 'g3-g2-issues-summ',
 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'g3-changes-stmt',
 	G3_OTHER_DOCUMENTS: 'g3-other-documents',
+	G2_WORKSHOP_DOCUMENTS: 'g2-workshop-docs',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
@@ -80,6 +82,7 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G3_GATEWAY_2_ISSUES_SUMMARY: 'gateway-2-issues-summary',
 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'changes-since-consultation-statement',
 	G3_OTHER_DOCUMENTS: 'other-documents',
+	G2_WORKSHOP_DOCUMENTS: 'gateway-2-workshop-documents',
 
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',
