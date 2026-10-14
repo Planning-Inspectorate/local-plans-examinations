@@ -7,7 +7,7 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -32,6 +32,7 @@ function buildCase(overrides = {}) {
 		gateway3Info: {
 			expectedDate: new Date('2026-08-01T12:00:00.000Z'),
 			actualDate: null,
+			status: GATEWAY_3_STATUS.UNAVAILABLE,
 			submissions: [
 				{
 					decision: null,
@@ -170,7 +171,7 @@ describe('PortalService', () => {
 			);
 		});
 
-		it('returns Gateway 3 in progress when a Gateway 3 document has been uploaded', () => {
+		it('returns Gateway 3 in progress when the persisted status flag is IN_PROGRESS', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
 					buildCase({
@@ -179,12 +180,43 @@ describe('PortalService', () => {
 							actualDate: null,
 							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
 						},
-						documents: [buildGateway2ReportDocument(), { documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN }]
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: null,
+							status: GATEWAY_3_STATUS.IN_PROGRESS,
+							submissions: [{ decision: null, completionDate: null }]
+						},
+						documents: [buildGateway2ReportDocument()]
 					})
 				),
 				{
 					stage: STAGE.Gateway3,
 					status: STATUS.InProgress
+				}
+			);
+		});
+
+		it('returns Gateway 3 ready to start when the persisted status flag is not IN_PROGRESS even if a document is uploaded', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: null,
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: null,
+							status: GATEWAY_3_STATUS.READY_TO_START,
+							submissions: [{ decision: null, completionDate: null }]
+						},
+						documents: [buildGateway2ReportDocument(), { documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN }]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.ReadyToStart
 				}
 			);
 		});
@@ -307,6 +339,7 @@ describe('PortalService', () => {
 						select: {
 							expectedDate: true,
 							actualDate: true,
+							status: true,
 							submissions: true
 						}
 					},

@@ -11,6 +11,8 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
 	reference: string;
@@ -28,6 +30,7 @@ type PortalCase = {
 	gateway3Info: {
 		expectedDate: Date | null;
 		actualDate: Date | null;
+		status: Gateway3Status | string | null;
 		submissions: {
 			decision: string | null;
 			completionDate: Date | null;
@@ -78,9 +81,11 @@ function hasUploadedGateway2SubmissionDocuments(caseRecord: PortalCase): boolean
 	);
 }
 
-// Mirrors the Gateway 2 logic: a file has been uploaded against any of the Gateway 3 document sets.
-function hasUploadedGateway3Documents(caseRecord: PortalCase): boolean {
-	return caseRecord.documents.some((document) => gateway3SetIds.includes(document.documentSetId));
+// The Gateway 3 "In progress" status tag is driven by the persisted status flag on
+// Gateway3Info, which is set to IN_PROGRESS when a file is uploaded or a question is
+// answered (and never reverted).
+function isGateway3InProgress(caseRecord: PortalCase): boolean {
+	return caseRecord.gateway3Info?.status === GATEWAY_3_STATUS.IN_PROGRESS;
 }
 
 function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFiles'] {
@@ -129,9 +134,9 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 	}
 
 	if (hasIssuedGateway2Report(caseRecord)) {
-		// Mirror the Gateway 2 behaviour: once Gateway 3 can be started, uploading a
-		// file moves the status from "Ready to start" to "In progress".
-		if (hasUploadedGateway3Documents(caseRecord)) {
+		// Once Gateway 3 can be started, the "In progress" tag is driven by the
+		// persisted status flag (set when a file is uploaded or a question is answered).
+		if (isGateway3InProgress(caseRecord)) {
 			return {
 				stage: STAGE.Gateway3,
 				status: STATUS.InProgress
@@ -219,6 +224,7 @@ const planCaseInclude = {
 		select: {
 			expectedDate: true,
 			actualDate: true,
+			status: true,
 			submissions: true
 		}
 	},

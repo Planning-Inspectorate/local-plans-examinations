@@ -16,12 +16,13 @@ import {
 	setAsEditingFromCya,
 	setGateway3ViewData,
 	setGateway3ViewLocals,
-	syncGateway3UploadAnswer
+	syncGateway3UploadAnswer,
+	buildSaveDataToCase
 } from './controller.ts';
 import type { PortalService } from '#service';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
-import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 function buildMockDocumentSets() {
 	const folderNames = [
@@ -142,11 +143,37 @@ describe('setGateway3ViewLocals', () => {
 		});
 	});
 
-	it('sets the In progress status tag when a Gateway 3 document has been uploaded but not submitted', () => {
+	it('sets the In progress status tag when the persisted Gateway 3 status is IN_PROGRESS', () => {
 		const req = {
 			currentCase: {
 				planTitle: 'Test Local Plan',
-				gateway3Info: { expectedDate: new Date('2026-06-12T00:00:00.000Z') }
+				gateway3Info: {
+					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
+					status: GATEWAY_3_STATUS.IN_PROGRESS
+				}
+			},
+			params: { planReference: 'PLAN-003' }
+		} as any;
+
+		const locals: Record<string, unknown> = {};
+		const res = { locals } as unknown as Response;
+
+		setGateway3ViewLocals(req as unknown as Request, res);
+
+		assert.deepStrictEqual(locals.statusTag, {
+			label: 'In progress',
+			class: 'govuk-tag govuk-tag--blue'
+		});
+	});
+
+	it('keeps the Ready to start status tag when the persisted status is not IN_PROGRESS even if answers exist', () => {
+		const req = {
+			currentCase: {
+				planTitle: 'Test Local Plan',
+				gateway3Info: {
+					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
+					status: GATEWAY_3_STATUS.READY_TO_START
+				}
 			},
 			params: { planReference: 'PLAN-003' }
 		} as any;
@@ -159,8 +186,8 @@ describe('setGateway3ViewLocals', () => {
 		setGateway3ViewLocals(req as unknown as Request, res);
 
 		assert.deepStrictEqual(locals.statusTag, {
-			label: 'In progress',
-			class: 'govuk-tag govuk-tag--blue'
+			label: 'Ready to start',
+			class: 'govuk-tag govuk-tag--green'
 		});
 	});
 
@@ -583,6 +610,84 @@ describe('redirectAfterCaseQuestionEdit', () => {
 		const saveDataFn = async () => {};
 		const middleware = redirectAfterCaseQuestionEdit(saveDataFn);
 		assert.strictEqual(typeof middleware, 'function');
+	});
+});
+
+describe('buildSaveDataToCase', () => {
+	function buildStatusService() {
+		const update = mock.fn(async () => ({}));
+		const service = {
+			db: {
+				gateway3Info: { update }
+			},
+			logger: { error: mock.fn() }
+		} as unknown as PortalService;
+		return { service, update };
+	}
+
+	function buildSaveParams(answers: Record<string, unknown>, gateway3Info?: Record<string, unknown>) {
+		return {
+			req: {
+				params: { planReference: 'PLAN-001' },
+				session: {},
+				currentCase: { id: 'case-1', gateway3Info }
+			},
+			res: {},
+			journeyId: 'gateway-3-submission',
+			referenceId: 'case-1',
+			isManageListItem: false,
+			data: { answers }
+		} as any;
+	}
+
+	it('sets the Gateway 3 status to IN_PROGRESS when a non-empty answer is saved', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams({ examinationWebsite: 'https://example.com' }, { status: GATEWAY_3_STATUS.UNAVAILABLE })
+		);
+
+		assert.strictEqual(update.mock.callCount(), 1);
+		const args = update.mock.calls[0].arguments[0] as { where: unknown; data: unknown };
+		assert.deepStrictEqual(args.where, { caseId: 'case-1' });
+		assert.deepStrictEqual(args.data, { status: GATEWAY_3_STATUS.IN_PROGRESS });
+	});
+
+	it('does not change the status when an answer is cleared/removed', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(buildSaveParams({ examinationWebsite: '' }, { status: GATEWAY_3_STATUS.UNAVAILABLE }));
+
+		assert.strictEqual(update.mock.callCount(), 0);
+	});
+
+	it('does not update when the status is already IN_PROGRESS', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams({ examinationWebsite: 'https://example.com' }, { status: GATEWAY_3_STATUS.IN_PROGRESS })
+		);
+
+		assert.strictEqual(update.mock.callCount(), 0);
+	});
+
+	it('still saves the answer to the session when the answer is non-empty', async () => {
+		const { service } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+		const params = buildSaveParams(
+			{ examinationWebsite: 'https://example.com' },
+			{ status: GATEWAY_3_STATUS.UNAVAILABLE }
+		);
+
+		await save(params);
+
+		assert.strictEqual(
+			params.req.session.forms['PLAN-001']['gateway-3-submission'].examinationWebsite,
+			'https://example.com'
+		);
 	});
 });
 

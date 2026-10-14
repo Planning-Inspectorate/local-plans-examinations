@@ -18,3 +18,12 @@ export const GATEWAY_3_DECISION_ID = {
 	PROCEED_TO_EXAMINATION: '1',
 	RESUBMISSION_REQUIRED: '2'
 } as const;
+
+/// Progress statuses for a Gateway 3 submission stored on Gateway3Info.status.
+export const GATEWAY_3_STATUS = {
+	UNAVAILABLE: 'UNAVAILABLE',
+	READY_TO_START: 'READY_TO_START',
+	IN_PROGRESS: 'IN_PROGRESS'
+} as const;
+
+export type Gateway3Status = (typeof GATEWAY_3_STATUS)[keyof typeof GATEWAY_3_STATUS];

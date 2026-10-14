@@ -40,6 +40,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
+import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
 import {
@@ -228,13 +229,66 @@ export function syncGateway3UploadAnswer(req: Request, fieldName: string, upload
 }
 
 // ---------------------------------------------------------------------------
+// Gateway 3 status helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Mark a case's Gateway 3 submission as in progress.
+ *
+ * Called when a file is uploaded or a question is answered. The status is only
+ * ever moved forward to IN_PROGRESS; removing a file or clearing an answer does
+ * not revert it. Failures are logged but never block the user's action, as the
+ * underlying upload/answer has already been persisted.
+ */
+async function markGateway3InProgress(service: PortalService, req: Request) {
+	const request = req as Gateway3Request;
+	const caseId = request.currentCase?.id;
+	if (!caseId || request.currentCase?.gateway3Info?.status === GATEWAY_3_STATUS.IN_PROGRESS) {
+		return;
+	}
+
+	try {
+		await service.db.gateway3Info.update({
+			where: { caseId },
+			data: { status: GATEWAY_3_STATUS.IN_PROGRESS }
+		});
+		if (request.currentCase?.gateway3Info) {
+			request.currentCase.gateway3Info.status = GATEWAY_3_STATUS.IN_PROGRESS;
+		}
+	} catch (error) {
+		service.logger.error(
+			{ error, caseId, planReference: getRoutePlanReference(req) },
+			'Failed to set Gateway 3 status to IN_PROGRESS'
+		);
+	}
+}
+
+/** Determine whether a saved answer value represents a non-empty answer. */
+function isNonEmptyAnswer(value: unknown): boolean {
+	if (Array.isArray(value)) {
+		return value.length > 0;
+	}
+	if (typeof value === 'string') {
+		return value.trim().length > 0;
+	}
+	return value !== null && value !== undefined;
+}
+
+// ---------------------------------------------------------------------------
 // Save-to-session for case-scoped answers
 // ---------------------------------------------------------------------------
 
-function buildSaveDataToCase(): SaveDataFn {
+export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
+
+		// Mark Gateway 3 as in progress when a question is answered, but not when
+		// an answer is cleared/removed.
+		const answers = (params.data?.answers ?? {}) as Record<string, unknown>;
+		if (Object.values(answers).some(isNonEmptyAnswer)) {
+			await markGateway3InProgress(service, params.req);
+		}
 	};
 }
 
@@ -254,15 +308,14 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	const isUnderReview = Boolean(
 		currentCase?.gateway3Info?.actualDate && !isGateway3ResubmissionAwaitingSubmission(currentCase.gateway3Info)
 	);
-	const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
-	const answers = journeyResponse?.answers ?? {};
-	const hasUploadedGateway3Document = gateway3FileUploadQuestionConfigs.some((questionConfig) =>
-		hasRequiredQuestionAnswer(answers, questionConfig.fieldName)
-	);
+	// The "In progress" tag is driven by the persisted status flag on Gateway3Info,
+	// which is set to IN_PROGRESS when a file is uploaded or a question is answered
+	// (and never reverted).
+	const isInProgress = currentCase?.gateway3Info?.status === GATEWAY_3_STATUS.IN_PROGRESS;
 
 	if (isUnderReview) {
 		res.locals.statusTag = StatusTag[STATUS.UnderReview];
-	} else if (hasUploadedGateway3Document) {
+	} else if (isInProgress) {
 		res.locals.statusTag = StatusTag[STATUS.InProgress];
 	} else {
 		res.locals.statusTag = StatusTag[STATUS.ReadyToStart];
@@ -674,7 +727,7 @@ export function buildGateway3Middleware(service: PortalService) {
 		createJourney(req, journeyResponse, createGateway3Questions(getRoutePlanReference(req)))
 	);
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
-	const saveDataToCase = buildSaveDataToCase();
+	const saveDataToCase = buildSaveDataToCase(service);
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
 
 	const uploadGateway3DocumentForCase = buildFileUploadRouteHandler(
@@ -702,6 +755,9 @@ export function buildGateway3Middleware(service: PortalService) {
 					onFilesChange: async ({ req, uploadedFiles }) => {
 						await saveGateway3Documents(service, req, questionConfig.url, uploadedFiles);
 						syncGateway3UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						if (uploadedFiles.length > 0) {
+							await markGateway3InProgress(service, req);
+						}
 						logGateway3Uploaded(service, req, questionConfig, uploadedFiles);
 					},
 					onUploadError: ({ req, errors, error }) =>
