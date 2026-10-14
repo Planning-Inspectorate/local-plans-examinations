@@ -232,20 +232,8 @@ export function syncGateway3UploadAnswer(req: Request, fieldName: string, upload
 // Gateway 3 status helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Field name of the examination website question, which maps to the
- * Gateway3Info.examinationWebsiteUrl database column.
- */
+// Field name of the examination website question, which maps to the Gateway3Info.examinationWebsiteUrl database column.
 const EXAMINATION_WEBSITE_FIELD = 'examinationWebsite';
-
-/**
- * Persist Gateway 3 journey answers that map to Gateway3Info columns.
- *
- * The dynamic forms library only writes answers to the session, so non-document
- * answers (currently the examination website URL) would otherwise be lost. This
- * stores them in the database so they survive beyond the session. Failures are
- * logged but never block the user's action.
- */
 async function saveGateway3AnswersToDatabase(service: PortalService, req: Request, answers: Record<string, unknown>) {
 	const request = req as Gateway3Request;
 	const caseId = request.currentCase?.id;
@@ -272,14 +260,6 @@ async function saveGateway3AnswersToDatabase(service: PortalService, req: Reques
 	}
 }
 
-/**
- * Mark a case's Gateway 3 submission as in progress.
- *
- * Called when a file is uploaded or a question is answered. The status is only
- * ever moved forward to IN_PROGRESS; removing a file or clearing an answer does
- * not revert it. Failures are logged but never block the user's action, as the
- * underlying upload/answer has already been persisted.
- */
 async function markGateway3InProgress(service: PortalService, req: Request) {
 	const request = req as Gateway3Request;
 	const caseId = request.currentCase?.id;
@@ -325,12 +305,8 @@ export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 
 		const answers = (params.data?.answers ?? {}) as Record<string, unknown>;
 
-		// Persist answers that map to database columns (e.g. the examination website URL)
-		// so they are not lost when the session ends.
 		await saveGateway3AnswersToDatabase(service, params.req, answers);
 
-		// Mark Gateway 3 as in progress when a question is answered, but not when
-		// an answer is cleared/removed.
 		if (Object.values(answers).some(isNonEmptyAnswer)) {
 			await markGateway3InProgress(service, params.req);
 		}
@@ -353,9 +329,6 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	const isUnderReview = Boolean(
 		currentCase?.gateway3Info?.actualDate && !isGateway3ResubmissionAwaitingSubmission(currentCase.gateway3Info)
 	);
-	// The "In progress" tag is driven by the persisted status flag on Gateway3Info,
-	// which is set to IN_PROGRESS when a file is uploaded or a question is answered
-	// (and never reverted).
 	const isInProgress = currentCase?.gateway3Info?.status === GATEWAY_3_STATUS.IN_PROGRESS;
 
 	if (isUnderReview) {
@@ -621,8 +594,6 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 			}
 		}
 
-		// Hydrate the examination website answer from the database (the source of
-		// truth), so it persists across sessions.
 		const examinationWebsiteUrl = currentCase.gateway3Info?.examinationWebsiteUrl;
 		if (examinationWebsiteUrl) {
 			answers[EXAMINATION_WEBSITE_FIELD] = examinationWebsiteUrl;

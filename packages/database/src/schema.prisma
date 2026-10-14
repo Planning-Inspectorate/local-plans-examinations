@@ -158,9 +158,7 @@ model Gateway3Info {
   id                        String    @id @default(uuid()) @db.UniqueIdentifier
   case                      Case      @relation(fields: [caseId], references: [id])
   caseId                    String    @unique @db.UniqueIdentifier
-  /// Progress status for the Gateway 3 submission; values are defined by GATEWAY_3_STATUS.
   status                    String    @default("UNAVAILABLE") @db.NVarChar(50)
-  /// URL of the LPA's examination website, captured during the Gateway 3 submission journey.
   examinationWebsiteUrl     String?
   expectedDate              DateTime? @db.DateTime2
   actualDate                DateTime? @db.DateTime2

@@ -81,9 +81,6 @@ function hasUploadedGateway2SubmissionDocuments(caseRecord: PortalCase): boolean
 	);
 }
 
-// The Gateway 3 "In progress" status tag is driven by the persisted status flag on
-// Gateway3Info, which is set to IN_PROGRESS when a file is uploaded or a question is
-// answered (and never reverted).
 function isGateway3InProgress(caseRecord: PortalCase): boolean {
 	return caseRecord.gateway3Info?.status === GATEWAY_3_STATUS.IN_PROGRESS;
 }

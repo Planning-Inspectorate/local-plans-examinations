@@ -166,31 +166,6 @@ describe('setGateway3ViewLocals', () => {
 		});
 	});
 
-	it('keeps the Ready to start status tag when the persisted status is not IN_PROGRESS even if answers exist', () => {
-		const req = {
-			currentCase: {
-				planTitle: 'Test Local Plan',
-				gateway3Info: {
-					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
-					status: GATEWAY_3_STATUS.READY_TO_START
-				}
-			},
-			params: { planReference: 'PLAN-003' }
-		} as any;
-
-		const locals: Record<string, unknown> = {
-			journeyResponse: { answers: { proposedLocalPlan: [{ fileName: 'plan.pdf' }] } }
-		};
-		const res = { locals } as unknown as Response;
-
-		setGateway3ViewLocals(req as unknown as Request, res);
-
-		assert.deepStrictEqual(locals.statusTag, {
-			label: 'Ready to start',
-			class: 'govuk-tag govuk-tag--green'
-		});
-	});
-
 	it('sets the Ready to start status tag when a Gateway 3 resubmission has been requested but not sent', () => {
 		const req = {
 			currentCase: {

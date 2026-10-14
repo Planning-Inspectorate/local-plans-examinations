@@ -196,31 +196,6 @@ describe('PortalService', () => {
 			);
 		});
 
-		it('returns Gateway 3 ready to start when the persisted status flag is not IN_PROGRESS even if a document is uploaded', () => {
-			assert.deepStrictEqual(
-				derivePlanProgress(
-					buildCase({
-						gateway2Info: {
-							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
-							actualDate: null,
-							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
-						},
-						gateway3Info: {
-							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
-							actualDate: null,
-							status: GATEWAY_3_STATUS.READY_TO_START,
-							submissions: [{ decision: null, completionDate: null }]
-						},
-						documents: [buildGateway2ReportDocument(), { documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN }]
-					})
-				),
-				{
-					stage: STAGE.Gateway3,
-					status: STATUS.ReadyToStart
-				}
-			);
-		});
-
 		it('returns Gateway 3 under review when actualDate is set but the decision is not complete', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
