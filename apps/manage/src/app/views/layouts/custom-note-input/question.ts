@@ -29,7 +29,8 @@ export default class CustomNoteQuestion extends Question {
 		const formattedAnswer = nunjucks.render(`${this.viewFolder}/notes-summary-list.njk`, {
 			reference: journey.response.answers.reference,
 			notes: cleanNotes,
-			_csrf: journey._csrf
+			_csrf: journey._csrf, // This needed because the csrf token is not propagated from the case-overview
+			errorSummary: journey.response.error?.errorSummary // This needed because the message is not propagated from the case-overview
 		});
 		return [
 			{
