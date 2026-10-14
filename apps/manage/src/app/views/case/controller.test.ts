@@ -11,7 +11,9 @@ import {
 	downloadDocument,
 	buildCheckReportMiddleware,
 	preprocessQuestionProperties,
-	issueGateway3Document
+	issueGateway3Document,
+	issueGateway2WorkshopDocuments,
+	fileUploaderCaseSessionKeyForField
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
@@ -35,7 +37,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '13', folderName: 'gateway-2-report' },
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
-	{ id: '16', folderName: 'gateway-3-document-1' }
+	{ id: '16', folderName: 'gateway-3-document-1' },
+	{ id: '17', folderName: 'gateway-2-workshop-documents' }
 ];
 
 function createService(): any {
@@ -43,7 +46,20 @@ function createService(): any {
 		case: {
 			update: mock.fn(async () => ({})),
 			findUnique: mock.fn(async () => ({
-				id: CASE_ID
+				id: CASE_ID,
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				}
 			}))
 		},
 		contact: {
@@ -1055,7 +1071,8 @@ describe('buildGetJourneyMiddleware', () => {
 
 		ctx.service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
 			caseId: CASE_ID,
-			assessorName: 'Alex Assessor'
+			assessorName: 'Alex Assessor',
+			workshops: []
 		}));
 
 		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
@@ -1064,6 +1081,9 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.gateway2Info.findUnique.mock.calls[0].arguments[0], {
+			include: {
+				workshops: true
+			},
 			where: {
 				caseId: CASE_ID
 			}
@@ -1297,6 +1317,16 @@ describe('downloadDocument', () => {
 	});
 });
 
+describe('fileUploaderCaseSessionKeyForField', () => {
+	it('scopes uploaded files to the case reference', () => {
+		const firstCase = { params: { reference: 'PLAN-111111' } } as unknown as Request;
+		const secondCase = { params: { reference: 'PLAN-222222' } } as unknown as Request;
+
+		assert.equal(fileUploaderCaseSessionKeyForField(firstCase, 'gateway2Report'), 'PLAN-111111:gateway2Report');
+		assert.equal(fileUploaderCaseSessionKeyForField(secondCase, 'gateway2Report'), 'PLAN-222222:gateway2Report');
+	});
+});
+
 describe('buildCheckReportMiddleware', () => {
 	const service = createService();
 	const caseId = 'some-case-id';
@@ -1348,6 +1378,7 @@ describe('buildCheckReportMiddleware', () => {
 				backLink: 'url-to-redirect-do',
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
+				notificationTextLPA: undefined,
 				notificationPreviewTemplate: 'signed-sla',
 				question: 'signed-sla',
 				section: 'gateway-1',
@@ -1405,6 +1436,7 @@ describe('buildCheckReportMiddleware', () => {
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'signed-sla-complete',
+				notificationTextLPA: undefined,
 				question: 'signed-sla',
 				section: 'gateway-1',
 				submitButtonText: 'Confirm and issue notification',
@@ -1460,6 +1492,7 @@ describe('buildCheckReportMiddleware', () => {
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
@@ -1515,6 +1548,7 @@ describe('buildCheckReportMiddleware', () => {
 				caseReference: 'some-case-reference',
 				journeyId: 'some-journey-id',
 				notificationPreviewTemplate: 'gateway-2-report-complete',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
@@ -1551,6 +1585,42 @@ describe('buildCheckReportMiddleware', () => {
 describe('preprocessQuestionProperties', () => {
 	const caseReference = 'some-case-reference';
 	const journeyId = 'gateway-3';
+	it('removes the completed workshop document link for an incomplete Gateway 2 case', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => ({
+			gateway2Info: {
+				workshopDocumentUploadedDate: null
+			}
+		}));
+		const req = {
+			session: {},
+			params: { reference: 'PLAN-222222' }
+		};
+		const res = {
+			locals: {
+				journeyResponse: { answers: { workshops: [] } }
+			}
+		};
+		const questions: Record<string, any> = {
+			gateway2WorkshopDocuments: {
+				actionLink: {
+					href: '/case/PLAN-111111/gateway-2/workshop/gateway-2-workshop-documents/check',
+					text: 'View'
+				}
+			}
+		};
+		const next = mock.fn();
+
+		await preprocessQuestionProperties(service, 'gateway-2', questions)(
+			req as unknown as Request,
+			res as unknown as Response,
+			next
+		);
+
+		assert.equal(questions.gateway2WorkshopDocuments.actionLink, undefined);
+		assert.equal(next.mock.callCount(), 1);
+	});
+
 	it('can preprocess gateway3 when the documents have not been submitted', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -1720,5 +1790,58 @@ describe('issueGateway3Document', () => {
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+	});
+});
+
+describe('issueGateway2WorkshopDocuments', () => {
+	it('shows the workshop documents uploaded success message', async () => {
+		const service = createService();
+		service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			workshopDocumentUploadedDate: null
+		}));
+		const handler = issueGateway2WorkshopDocuments(service, 'gateway-2');
+		const req = {
+			session: {},
+			params: { reference: REFERENCE }
+		};
+		const res = {
+			redirect: mock.fn()
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+
+		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
+		assert.equal(req.session.alertMessageStatus, 'success');
+		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
+		assert.ok(
+			service.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshopDocumentUploadedDate instanceof Date
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.match(
+			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
+			/^Gateway 2 workshop documents uploaded on /
+		);
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/gateway-2`]);
+	});
+
+	it('does not issue workshop documents again', async () => {
+		const service = createService();
+		service.db.gateway2Info.findUnique.mock.mockImplementation(async () => ({
+			workshopDocumentUploadedDate: new Date('2026-01-01T00:00:00.000Z')
+		}));
+		const handler = issueGateway2WorkshopDocuments(service, 'gateway-2');
+		const req = {
+			session: {},
+			params: { reference: REFERENCE }
+		};
+		const res = {
+			redirect: mock.fn()
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+
+		assert.equal(req.session.alertMessageStatus, 'important');
+		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});
 });

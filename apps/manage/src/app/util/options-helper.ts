@@ -50,6 +50,12 @@ export function retrieveDefaultCaseOfficers() {
 	];
 }
 
+/**
+ * Loads Local Planning Authority (LPA) options either from a database or a predefined list.
+ *
+ * @param {ManageService} service - The service instance containing the database and other configurations.
+ * @return {Promise<LpaOption[]>} A promise that resolves to an array of LPA options. Each option includes a value and text property.
+ */
 export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
 	const { db } = service;
 
@@ -70,7 +76,9 @@ export async function loadLpaOptions(service: ManageService): Promise<LpaOption[
 		];
 	}
 
-	const authorities = await db.authority.findMany({});
+	const authorities = await db.authority.findMany({
+		orderBy: { name: 'asc' }
+	});
 
 	return authorities.map((authority) => ({
 		value: authority.pinsCode,

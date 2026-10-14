@@ -1,5 +1,7 @@
 import type { ManageService } from '#service';
 
+import type { ManageService } from '#service';
+
 /**
  * Immutably sort the given list submission details, with null completionDate values at the end
  * @param dates The submissions to sort
@@ -15,7 +17,6 @@ export function sortGateway3Submissions(
 		return a.completionDate.getTime() - b.completionDate.getTime();
 	});
 }
-
 
 export const getExaminationStages = async (service: ManageService, caseId: string) => {
 	const examinationStatus = await service.db.examinationInfo.findFirst({
@@ -34,8 +35,22 @@ export const getExaminationStages = async (service: ManageService, caseId: strin
 			adoptionDate: true
 		}
 	});
-	if(examinationStatus !== null) {
+	if (examinationStatus !== null) {
 		return examinationStatus;
 	}
-
 };
+/**
+ * Immutably sort the given list workshops details, with null createdDate values at the end
+ * @param workshops The workshops to filter and sort
+ * @returns The sorted workshops
+ */
+export function sortGateway2Workshops(workshops: { createdDate: Date; [key: string]: any }[]) {
+	return workshops.toSorted((a, b) => {
+		if (!(a.createdDate || b.createdDate)) return 0;
+		if (!a.createdDate) return 1;
+		if (!b.createdDate) return -1;
+		const aCreatedDate = typeof a.createdDate === 'string' ? new Date(a.createdDate) : a.createdDate;
+		const bCreatedDate = typeof b.createdDate === 'string' ? new Date(b.createdDate) : b.createdDate;
+		return aCreatedDate.getTime() - bCreatedDate.getTime();
+	});
+}

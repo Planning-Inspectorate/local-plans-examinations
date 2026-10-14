@@ -171,15 +171,34 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: new Date(),
-				workshopVenue: 'Somewhere',
-				workshopDate: futureDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopDate: futureDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			},
 			[]
 		);
@@ -210,15 +229,34 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: new Date(),
-				workshopVenue: 'Somewhere',
-				workshopDate: pastDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopDate: pastDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			},
 			[]
 		);
@@ -229,7 +267,7 @@ describe('resolveCaseHeaderStatus', () => {
 		});
 	});
 
-	it('returns GW2 received when gateway 2 documents exist', () => {
+	it('returns GW2 received when gateway 2 documents exist and no workshop data exists', () => {
 		const result = resolveCaseHeaderStatus(
 			[
 				{
@@ -263,7 +301,7 @@ describe('resolveCaseHeaderStatus', () => {
 		});
 	});
 
-	it('returns GW2 workshop confirmed when the workshop is in the future and gateway 2 documents exist', () => {
+	it('returns GW2 workshop confirmed for a future remote workshop without a physical venue', () => {
 		const futureDate = new Date(Date.now() + 60_000);
 
 		const result = resolveCaseHeaderStatus(
@@ -293,15 +331,34 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: null,
-				workshopVenue: 'Somewhere',
-				workshopDate: futureDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopDate: futureDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: 'remote',
+						remoteMeetingLinkKnown: 'yes',
+						remoteMeetingLink: 'https://example.com/workshop',
+						workshopLocationKnown: null,
+						workshopVenueName: null,
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			},
 			[]
 		);
@@ -312,6 +369,41 @@ describe('resolveCaseHeaderStatus', () => {
 		});
 	});
 
+	it('returns GW2 pending when there are no workshops or gateway 2 documents', () => {
+		const result = resolveCaseHeaderStatus(
+			[],
+			[],
+			{
+				id: '1',
+				caseId: 'case-1',
+				noticeOfIntention: null,
+				expectedGateway1Date: null,
+				completedGateway1Date: null,
+				slaSentDate: null,
+				slaReceivedDate: new Date(),
+				dsaChecked: null
+			},
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshopDocumentUploadedDate: null,
+				workshops: []
+			},
+			[]
+		);
+
+		assert.deepEqual(result, {
+			headerStatusText: 'GW2 pending',
+			headerStatusClasses: 'govuk-tag--yellow'
+		});
+	});
 	it('returns GW2 report when the workshop date has passed and gateway 2 documents exist', () => {
 		const pastDate = new Date(Date.now() - 60_000);
 
@@ -342,15 +434,34 @@ describe('resolveCaseHeaderStatus', () => {
 				id: 'g2',
 				caseId: 'case-1',
 				actualDate: new Date(),
-				workshopVenue: 'Somewhere',
-				workshopDate: pastDate,
 				assessorName: 'Assessor',
 				expectedDate: null,
 				validDate: null,
 				assessorAppointmentDate: null,
 				reportIssuedDate: null,
 				reportPublishedByLPA: null,
-				workshopDocumentUploadedDate: null
+				workshopDocumentUploadedDate: null,
+				workshops: [
+					{
+						id: 'workshop_g2',
+						gateway2InfoId: 'g2',
+						createdDate: new Date(),
+						workshopDate: pastDate,
+						workshopTime: null,
+						workshopEndTime: null,
+						workshopExpectedDaysKnown: null,
+						workshopExpectedDays: null,
+						workshopLocationType: null,
+						remoteMeetingLinkKnown: null,
+						remoteMeetingLink: null,
+						workshopLocationKnown: null,
+						workshopVenueName: 'Somewhere',
+						workshopAddressLine: null,
+						workshopAddressLine2: null,
+						workshopTownOrCity: null,
+						workshopPostcode: null
+					}
+				]
 			},
 			[]
 		);

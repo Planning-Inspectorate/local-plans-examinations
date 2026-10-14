@@ -50,6 +50,7 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 			backLink: complete ? this.generateBackUrl(this.generateBackUrl(baseBackLink)) : baseBackLink,
 			notificationPreviewTemplate: 'gateway-3-document' + (complete ? '-complete' : ''),
 			submitButtonText: 'Issue decision',
+			notificationTextLPA: undefined,
 			additionalFields: [
 				{
 					name: 'Outcome',

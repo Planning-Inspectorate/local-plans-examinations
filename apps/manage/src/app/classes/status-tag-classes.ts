@@ -88,6 +88,7 @@ export const resolveExaminationStage = (
 };
 
 type Gateway2ModelWithWorkshops = Gateway2InfoModel & { workshops: Gateway2WorkshopModel[] };
+
 export type ResolvedCaseHeaderStatus = {
 	headerStatusText: string;
 	headerStatusClasses: string;
@@ -110,7 +111,7 @@ export function resolveCaseHeaderStatus(
 	gateway1Data: Gateway1InfoModel | null,
 	gateway2Data: Gateway2ModelWithWorkshops | null,
 	gateway3Submissions: Gateway3SubmissionModel[],
-	examinationStatus?: ExaminationStage | null
+	examinationStatus: ExaminationStage | null
 ): ResolvedCaseHeaderStatus {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
@@ -178,11 +179,23 @@ export function resolveCaseHeaderStatus(
 		return resolveStatus('GW3 pending');
 	}
 
-	if (gateway2Data?.workshopDate && gateway2Data.workshopDate < dateNow) {
+	if (
+		gateway2Data?.workshops &&
+		gateway2Data?.workshops.length > 0 &&
+		gateway2Data?.workshops.every((workshop) => workshop.workshopDate && workshop.workshopDate < dateNow)
+	) {
 		return resolveStatus('GW2 report');
 	}
-
-	if (gateway2Data?.workshopVenue && gateway2Data.workshopDate && gateway2Data.workshopDate > dateNow) {
+	if (
+		gateway2Data?.workshops &&
+		gateway2Data?.workshops.length > 0 &&
+		gateway2Data?.workshops.every(
+			(workshop) =>
+				(workshop.workshopLocationType || workshop.workshopVenueName) &&
+				workshop.workshopDate &&
+				workshop.workshopDate > dateNow
+		)
+	) {
 		return resolveStatus('GW2 workshop confirmed');
 	}
 
