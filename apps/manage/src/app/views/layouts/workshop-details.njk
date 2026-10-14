@@ -81,11 +81,12 @@
     {% endif %}
 
     {% if workshopRows.length %}
-      <h2 class="govuk-heading-m">Workshop {{ loop.index }} details</h2>
-      <a href="/" class="govuk-link">Cancel workshop {{ loop.index }}</a>
+      <h2 class="govuk-heading-m" data-cy="workshop-heading">Workshop {{ loop.index }} details</h2>
+      <a href="/case/{{ reference }}/gateway-2/set-up-workshop/delete-{{ loop.index }}" class="govuk-link" data-cy="cancel-workshop-{{ loop.index }}">Cancel workshop {{ loop.index }}</a>
       <p></p>
       {{ govukSummaryList({
-        rows: workshopRows
+        rows: workshopRows,
+        attributes: { "data-cy": "workshop-details-" + loop.index }
       }) }}
     {% endif %}
   {% endfor %}
