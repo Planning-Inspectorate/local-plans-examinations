@@ -32,7 +32,6 @@ type Gateway3UploadedDocumentCandidate = {
 
 type Gateway3SubmittedDocument = {
 	documentGuid: string;
-	documentSetId: string;
 	documentVersion: NonNullable<Gateway3UploadedDocumentCandidate['latestDocumentVersion']>;
 };
 
@@ -46,8 +45,6 @@ type Gateway3CaseForSubmission = {
 };
 
 const gateway3LpaDocumentSetFolderNames = Object.values(GW3_FILE_UPLOAD_QUESTIONS).map((q) => q.url);
-const gateway3SubmissionDocumentNamePrefix = 'gateway-3-submission-';
-
 async function getGateway3LpaDocumentSetIds(tx: TransactionClient): Promise<string[]> {
 	const documentSets = await tx.documentSet.findMany({
 		where: {
@@ -73,18 +70,32 @@ async function getGateway3LpaDocumentSetIds(tx: TransactionClient): Promise<stri
 	return [...documentSetIdsByFolderName.values()];
 }
 
+async function getGateway3ManageDocumentSetId(tx: TransactionClient, submissionNumber: number): Promise<string> {
+	const folderName = `gateway-3-document-${submissionNumber}`;
+	const documentSet = await tx.documentSet.findFirst({
+		where: {
+			folderName
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (!documentSet) {
+		throw new Error(`Missing document set reference data for "${folderName}". Run the database static seed.`);
+	}
+
+	return documentSet.id;
+}
+
 function getCurrentGateway3SubmissionNumber(gateway3Info: Gateway3CaseForSubmission['gateway3Info']): number {
 	const submissions = sortGateway3Submissions(gateway3Info?.submissions ?? []);
 	return Math.max(submissions.length, 1);
 }
 
-function getGateway3SubmissionDocumentName(submissionNumber: number, documentGuid: string): string {
-	return `${gateway3SubmissionDocumentNamePrefix}${submissionNumber}:${documentGuid}`;
-}
-
 function getSubmittedGateway3Documents(caseRecord: Gateway3CaseForSubmission): Gateway3SubmittedDocument[] {
 	return caseRecord.documents.flatMap((document) => {
-		if (document.name.startsWith(gateway3SubmissionDocumentNamePrefix)) {
+		if (document.name.startsWith('gateway-3-submission-')) {
 			return [];
 		}
 
@@ -96,61 +107,53 @@ function getSubmittedGateway3Documents(caseRecord: Gateway3CaseForSubmission): G
 		return [
 			{
 				documentGuid: document.guid,
-				documentSetId: document.documentSetId,
 				documentVersion: version
 			}
 		];
 	});
 }
 
-async function snapshotGateway3SubmittedDocuments(
+async function mirrorGateway3DocumentsForManage(
 	tx: TransactionClient,
 	caseId: string,
 	submissionNumber: number,
 	submissionDate: Date,
 	documents: Gateway3SubmittedDocument[]
 ) {
-	const submittedDocumentNames = documents.map((document) =>
-		getGateway3SubmissionDocumentName(submissionNumber, document.documentGuid)
-	);
-	const existingDocumentKeys = new Set(
+	const documentSetId = await getGateway3ManageDocumentSetId(tx, submissionNumber);
+	const existingDocumentNames = new Set(
 		(
 			await tx.document.findMany({
 				where: {
 					caseId,
-					name: {
-						in: submittedDocumentNames
-					}
+					documentSetId
 				},
 				select: {
-					name: true,
-					documentSetId: true
+					name: true
 				}
 			})
-		).map((document) => `${document.name}:${document.documentSetId}`)
+		).map((document) => document.name)
 	);
 
 	for (const document of documents) {
-		const documentName = getGateway3SubmissionDocumentName(submissionNumber, document.documentGuid);
-		const documentKey = `${documentName}:${document.documentSetId}`;
-		if (existingDocumentKeys.has(documentKey)) {
+		if (existingDocumentNames.has(document.documentGuid)) {
 			continue;
 		}
 
-		const snapshotDocumentGuid = randomUUID();
+		const mirroredDocumentGuid = randomUUID();
 		await tx.document.create({
 			data: {
-				guid: snapshotDocumentGuid,
-				name: documentName,
+				guid: mirroredDocumentGuid,
+				name: document.documentGuid,
 				caseId,
-				documentSetId: document.documentSetId,
+				documentSetId,
 				createdAt: submissionDate
 			}
 		});
 
 		await tx.documentVersion.create({
 			data: {
-				documentGuid: snapshotDocumentGuid,
+				documentGuid: mirroredDocumentGuid,
 				version: 1,
 				lastModified: document.documentVersion.lastModified,
 				sourceSystem: document.documentVersion.sourceSystem,
@@ -169,11 +172,11 @@ async function snapshotGateway3SubmittedDocuments(
 
 		await tx.document.update({
 			where: {
-				guid: snapshotDocumentGuid
+				guid: mirroredDocumentGuid
 			},
 			data: {
-				// Submitted document snapshots are created once per final submission and always start at version 1.
-				// Existing snapshots are skipped above by submission number, source document GUID and document set.
+				// Mirrored Manage documents are created once per final submission and always start at version 1.
+				// Existing mirrors are skipped above by source document GUID.
 				latestVersionId: 1
 			}
 		});
@@ -249,7 +252,7 @@ export async function recordGateway3PortalSubmission(
 			throw new Error(`No active Gateway 3 documents found for case ${caseId}`);
 		}
 
-		await snapshotGateway3SubmittedDocuments(tx, caseRecord.id, submissionNumber, submissionDate, submittedDocuments);
+		await mirrorGateway3DocumentsForManage(tx, caseRecord.id, submissionNumber, submissionDate, submittedDocuments);
 
 		await tx.case.update({
 			where: {
