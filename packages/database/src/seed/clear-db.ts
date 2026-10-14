@@ -19,6 +19,7 @@ async function run() {
 		await dbClient.document.updateMany({ data: { latestVersionId: null } });
 		await dbClient.documentVersion.deleteMany({});
 		await dbClient.document.deleteMany({});
+		await dbClient.caseNote.deleteMany({});
 		await dbClient.case.deleteMany({});
 		await dbClient.contact.deleteMany({});
 		await dbClient.lPA.deleteMany({});
