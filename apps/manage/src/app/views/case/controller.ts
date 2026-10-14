@@ -21,7 +21,7 @@ import {
 	NUM_GW3_SUBMISSIONS_QUESTIONS,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { sortGateway3Submissions } from '#util/util.ts';
+import { getExaminationStages, sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
@@ -638,20 +638,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 		});
 
-		const examinationStatus = await db.examinationInfo.findFirst({
-			where: { caseId: caseRecord.id },
-			select: {
-				expectedSubmissionForExaminationDate: true,
-				examiningInspectorAppointmentDate: true,
-				planPauseStartDate: true,
-				planPauseEndDate: true,
-				factCheckDateReceivedFromInspector: true,
-				factCheckActualDate: true,
-				finalReportIssueDate: true,
-				QADate: true,
-				adoptionDate: true
-			}
-		});
+		const examinationStatus = await getExaminationStages(service, caseRecord.id);
 
 		const headerStatus = resolveCaseHeaderStatus(
 			gateway2Documents,
