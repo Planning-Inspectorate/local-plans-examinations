@@ -6,7 +6,11 @@ import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
 import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
-import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import {
+	DOCUMENT_SET_ID,
+	gateway2SetIds,
+	gateway3SetIds
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type PortalCase = {
 	reference: string;
@@ -67,6 +71,18 @@ function hasIssuedGateway2Report(caseRecord: PortalCase): boolean {
 	return Boolean(caseRecord.gateway2Info?.reportIssuedDate && getGateway2ReportUploadedDate(caseRecord));
 }
 
+// A Gateway 2 submission document is any non-report document belonging to the Gateway 2 document sets.
+function hasUploadedGateway2SubmissionDocuments(caseRecord: PortalCase): boolean {
+	return caseRecord.documents.some(
+		(document) => gateway2SetIds.includes(document.documentSetId) && !isGateway2ReportDocument(document)
+	);
+}
+
+// Mirrors the Gateway 2 logic: a file has been uploaded against any of the Gateway 3 document sets.
+function hasUploadedGateway3Documents(caseRecord: PortalCase): boolean {
+	return caseRecord.documents.some((document) => gateway3SetIds.includes(document.documentSetId));
+}
+
 function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFiles'] {
 	if (!caseRecord.gateway2Info?.reportIssuedDate) {
 		return [];
@@ -113,6 +129,15 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 	}
 
 	if (hasIssuedGateway2Report(caseRecord)) {
+		// Mirror the Gateway 2 behaviour: once Gateway 3 can be started, uploading a
+		// file moves the status from "Ready to start" to "In progress".
+		if (hasUploadedGateway3Documents(caseRecord)) {
+			return {
+				stage: STAGE.Gateway3,
+				status: STATUS.InProgress
+			};
+		}
+
 		return {
 			stage: STAGE.Gateway3,
 			status: STATUS.ReadyToStart
@@ -126,7 +151,7 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		};
 	}
 
-	if (caseRecord.documents.some((document) => !isGateway2ReportDocument(document))) {
+	if (hasUploadedGateway2SubmissionDocuments(caseRecord)) {
 		return {
 			stage: STAGE.Gateway2,
 			status: STATUS.InProgress
@@ -211,7 +236,7 @@ const planCaseInclude = {
 	documents: {
 		where: {
 			// A soft-deleted document still means the submission was started.
-			documentSetId: { in: gateway2SetIds }
+			documentSetId: { in: [...gateway2SetIds, ...gateway3SetIds] }
 		},
 		orderBy: {
 			createdAt: 'asc' as const

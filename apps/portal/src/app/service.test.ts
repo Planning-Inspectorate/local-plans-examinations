@@ -2,7 +2,11 @@
 
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
-import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import {
+	DOCUMENT_SET_ID,
+	gateway2SetIds,
+	gateway3SetIds
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
@@ -166,6 +170,25 @@ describe('PortalService', () => {
 			);
 		});
 
+		it('returns Gateway 3 in progress when a Gateway 3 document has been uploaded', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: null,
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						documents: [buildGateway2ReportDocument(), { documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN }]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.InProgress
+				}
+			);
+		});
+
 		it('returns Gateway 3 under review when actualDate is set but the decision is not complete', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
@@ -301,7 +324,7 @@ describe('PortalService', () => {
 					documents: {
 						where: {
 							documentSetId: {
-								in: gateway2SetIds
+								in: [...gateway2SetIds, ...gateway3SetIds]
 							}
 						},
 						orderBy: {

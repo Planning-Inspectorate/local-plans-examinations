@@ -250,10 +250,23 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 3 submission';
 	res.locals.pageHeading = 'Gateway 3 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
-	res.locals.statusTag =
+
+	const isUnderReview = Boolean(
 		currentCase?.gateway3Info?.actualDate && !isGateway3ResubmissionAwaitingSubmission(currentCase.gateway3Info)
-			? StatusTag[STATUS.UnderReview]
-			: StatusTag[STATUS.ReadyToStart];
+	);
+	const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+	const answers = journeyResponse?.answers ?? {};
+	const hasUploadedGateway3Document = gateway3FileUploadQuestionConfigs.some((questionConfig) =>
+		hasRequiredQuestionAnswer(answers, questionConfig.fieldName)
+	);
+
+	if (isUnderReview) {
+		res.locals.statusTag = StatusTag[STATUS.UnderReview];
+	} else if (hasUploadedGateway3Document) {
+		res.locals.statusTag = StatusTag[STATUS.InProgress];
+	} else {
+		res.locals.statusTag = StatusTag[STATUS.ReadyToStart];
+	}
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);
