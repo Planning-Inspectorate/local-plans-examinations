@@ -101,7 +101,7 @@
                             {{ govukDateInput({
                                 id: inputField.fieldName,
                                 hint: {
-                                    text: inputField.hint
+                                    text: inputField.caption
                                 },
                                 fieldset: {
                                     legend: {
@@ -114,6 +114,65 @@
                                 },
                                 items: inputField.items
                             }) }}
+                        {% elseif inputField.type == 'time' %}
+                            {% set timeError =
+                                errors[inputField.fieldName]
+                                or errors[inputField.fieldName + '_hour']
+                                or errors[inputField.fieldName + '_minute']
+                            %}
+
+                            <div class="govuk-form-group{% if timeError %} govuk-form-group--error{% endif %}">
+                                <fieldset class="govuk-fieldset">
+                                    <legend class="govuk-fieldset__legend govuk-label govuk-!-font-weight-bold">
+                                        {{ inputField.label }}
+                                    </legend>
+
+                                    {% if inputField.caption %}
+                                        <div class="govuk-hint">
+                                            {{ inputField.caption }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if timeError %}
+                                        <p class="govuk-error-message">
+                                            <span class="govuk-visually-hidden">Error:</span>
+                                            Time is not valid
+                                        </p>
+                                    {% endif %}
+
+                                    <div class="govuk-date-input">
+                                        {{ govukInput({
+                                            label: {
+                                                text: 'Hour',
+                                                classes: 'govuk-date-input__label'
+                                            },
+                                            id: inputField.items[0].id,
+                                            name: inputField.items[0].name,
+                                            value: inputField.items[0].value,
+                                            classes: inputField.items[0].classes,
+                                            attributes: inputField.attributes,
+                                            formGroup: {
+                                                classes: 'govuk-date-input__item'
+                                            }
+                                        }) }}
+
+                                        {{ govukInput({
+                                            label: {
+                                                text: 'Minute',
+                                                classes: 'govuk-date-input__label'
+                                            },
+                                            id: inputField.items[1].id,
+                                            name: inputField.items[1].name,
+                                            value: inputField.items[1].value,
+                                            classes: inputField.items[1].classes,
+                                            attributes: inputField.attributes,
+                                            formGroup: {
+                                                classes: 'govuk-date-input__item'
+                                            }
+                                        }) }}
+                                    </div>
+                                </fieldset>
+                            </div>
                         {% elseif inputField.type == 'boolean' %}
                             {{ govukRadios({
                                 classes: "govuk-radios",

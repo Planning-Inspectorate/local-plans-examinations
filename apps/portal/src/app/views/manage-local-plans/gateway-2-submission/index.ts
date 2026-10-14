@@ -42,6 +42,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
+import type { Gateway2WorkshopModel } from '@pins/local-plans-database/src/client/models/Gateway2Workshop.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
 
@@ -57,8 +58,12 @@ type Gateway2ReportDocument = {
 	} | null;
 };
 
+type Gateway2InfoWithWorkshops = Gateway2InfoModel & {
+	workshops?: Gateway2WorkshopModel[];
+};
+
 type CaseWithGateway2Info = CaseModel & {
-	gateway2Info?: Gateway2InfoModel | null;
+	gateway2Info?: Gateway2InfoWithWorkshops | null;
 	documents?: Gateway2ReportDocument[];
 };
 import { getRoutePlanReference } from './utils.ts';
@@ -219,7 +224,13 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 		const currentCase = await service.db.case.findUnique({
 			where: { reference: planReference },
 			include: {
-				gateway2Info: true,
+				gateway2Info: {
+					include: {
+						workshops: {
+							orderBy: { createdDate: 'desc' }
+						}
+					}
+				},
 				documents: {
 					where: {
 						documentSetId: DOCUMENT_SET_ID.G2_REPORT,
@@ -386,6 +397,49 @@ function formatDisplayTime(date: Date) {
 	});
 }
 
+function toDate(value: Date | string): Date {
+	return value instanceof Date ? value : new Date(value);
+}
+
+function getLatestWorkshop(workshops: Gateway2WorkshopModel[] | undefined): Gateway2WorkshopModel | undefined {
+	return workshops?.toSorted((a, b) => toDate(b.createdDate).getTime() - toDate(a.createdDate).getTime())[0];
+}
+
+function formatWorkshopTimeRange(workshop: Gateway2WorkshopModel): string | undefined {
+	if (workshop.workshopTime && workshop.workshopEndTime) {
+		return `${workshop.workshopTime} to ${workshop.workshopEndTime}`;
+	}
+
+	return workshop.workshopTime ?? workshop.workshopEndTime ?? undefined;
+}
+
+function formatWorkshopDateAndTime(workshop: Gateway2WorkshopModel): string | undefined {
+	const workshopDate = workshop.workshopDate ? formatDisplayDate(toDate(workshop.workshopDate)) : undefined;
+	const workshopTime = formatWorkshopTimeRange(workshop);
+
+	if (workshopDate && workshopTime) {
+		return `${workshopDate} at ${workshopTime}`;
+	}
+
+	return workshopDate ?? workshopTime;
+}
+
+function isNonEmptyString(value: string | null | undefined): value is string {
+	return typeof value === 'string' && value.trim() !== '';
+}
+
+function formatWorkshopVenue(workshop: Gateway2WorkshopModel): string | undefined {
+	const addressParts = [
+		workshop.workshopVenueName,
+		workshop.workshopAddressLine,
+		workshop.workshopAddressLine2,
+		workshop.workshopTownOrCity,
+		workshop.workshopPostcode
+	].filter(isNonEmptyString);
+
+	return addressParts.length ? addressParts.join(', ') : undefined;
+}
+
 const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk';
 
 export function buildSubmittedGateway2View(): RequestHandler {
@@ -407,15 +461,10 @@ export function buildSubmittedGateway2View(): RequestHandler {
 		res.locals.submitter = currentCase.email;
 		delete res.locals.saveAndComeBackUrl;
 
-		const gw2Info = currentCase.gateway2Info;
-		if (gw2Info) {
-			if (gw2Info.workshopVenue) {
-				res.locals.workshopVenue = gw2Info.workshopVenue;
-			}
-			if (gw2Info.workshopDate) {
-				res.locals.workshopDateAndTime =
-					formatDisplayDate(gw2Info.workshopDate) + ' at ' + formatDisplayTime(gw2Info.workshopDate);
-			}
+		const latestWorkshop = getLatestWorkshop(currentCase.gateway2Info?.workshops);
+		if (latestWorkshop) {
+			res.locals.workshopVenue = formatWorkshopVenue(latestWorkshop);
+			res.locals.workshopDateAndTime = formatWorkshopDateAndTime(latestWorkshop);
 		}
 
 		return next();

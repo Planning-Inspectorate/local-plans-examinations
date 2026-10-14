@@ -52,16 +52,6 @@ export const gateway2DateAnswers = {
 		input: { day: '1', month: '9', year: '2026' },
 		display: '1 September 2026'
 	},
-	workshopDate: {
-		row: 'Workshop date',
-		heading: 'When is the Gateway 2 workshop?',
-		section: 'gateway-2',
-		fieldName: 'workshopDate',
-		path: 'gateway-2-workshop-date',
-		seedDate: '2026-09-01T12:00:00.000Z',
-		input: { day: '1', month: '9', year: '2026' },
-		display: '1 September 2026'
-	},
 	reportPublishedDate: {
 		row: 'Report published by LPA date',
 		heading: 'When was the report published by the LPA?',
@@ -85,15 +75,6 @@ export const gateway2AssessorAnswer = {
 	boxListField: 'assessorName__listbox'
 } as const;
 
-export const workshopVenueAnswer = {
-	row: 'Workshop venue',
-	path: 'gateway-2-workshop-venue',
-	heading: 'What is the venue for the Gateway 2 workshop?',
-	value: 'Workshop venue name',
-	updatedValue: 'Updated Workshop Venue',
-	display: 'Workshop venue'
-} as const;
-
 export const gateway2Report = {
 	row: 'Issue Gateway 2 report',
 	heading: 'Upload Gateway 2 report',
@@ -104,13 +85,113 @@ export const gateway2Report = {
 	validationMessage: 'Please upload your Gateway 2 report'
 } as const;
 
+export const gateway2WorkshopDocuments = {
+	row: 'Workshop documents',
+	heading: 'Upload workshop documents',
+	fieldName: 'gateway2WorkshopDocuments',
+	path: 'gateway-2-workshop-documents',
+	fileName: 'test-document.pdf'
+} as const;
+
 export const updatedGateway2ExpectedDateAnswer = {
 	input: { day: '15', month: '10', year: '2026' },
 	display: '15 October 2026'
 } as const;
 
+export const workshopSetUp = {
+	workshopDateAndTime: {
+		section: 'set-up-workshop/workshop',
+		heading: 'Gateway 2 workshop date and time',
+		fieldNameDate: 'workshopDate-1',
+		fieldNameTime: 'workshopTime-1',
+		path: 'gateway-2-workshop-date-and-time-1',
+		inputDate: { day: '10', month: '10', year: '2026' },
+		inputTime: { hour: '14', minute: '30' },
+		display: '10 October 2026',
+		displayTime: '14:30',
+		row: 'Workshop date',
+		rowTime: 'Workshop start time'
+	},
+	expectedNumberOfDays: {
+		section: 'set-up-workshop/workshop',
+		heading: 'Do you know the expected number of days to carry out the workshop?',
+		fieldNameRadio: 'workshopExpectedDaysKnown-1',
+		fieldNameDays: 'workshopExpectedDaysKnown-1_workshopExpectedDays',
+		path: 'gateway-2-workshop-expected-days-1',
+		inputRadio: 'yes',
+		inputDays: '1',
+		updatedInputDays: '2',
+		row: 'Do you know the estimated number of days?',
+		rowNumberOfDays: 'Estimated number of days',
+		display: 'yes',
+		displayNumberOfDays: '1',
+		updatedDisplayNumberOfDays: '2'
+	},
+	workshopRemoteOrInPerson: {
+		section: 'set-up-workshop/workshop',
+		heading: 'Is the workshop in-person, hybrid or remote?',
+		fieldNameRadio: 'workshopLocationType-1',
+		path: 'gateway-2-location-type-1',
+		inputRadio: 'hybrid',
+		display: 'hybrid',
+		row: 'Gateway 2 location type'
+	},
+	workshopAddressKnown: {
+		section: 'set-up-workshop/workshop',
+		heading: 'Do you know the address of where the workshop will take place?',
+		fieldName: 'workshopLocationKnown-1',
+		path: 'gateway-2-workshop-location-known-1',
+		inputRadio: 'yes',
+		display: 'Yes',
+		row: 'Gateway 2 location known'
+	},
+	workshopVenueAddress: {
+		section: 'set-up-workshop/workshop',
+		heading: 'Workshop venue address',
+		fieldNameVenueName: 'gateway-2-workshop-venue-name',
+		fieldNameAddressLine1: 'gateway-2-workshop-address-line-1',
+		fieldNameTownOrCity: 'gateway-2-workshop-town-or-city',
+		fieldNamePostcode: 'gateway-2-workshop-postcode',
+		path: 'gateway-2-workshop-venue-address-1',
+		values: {
+			venueName: 'The workshop venue',
+			addressLine1: '10 workshop Rd',
+			townOrCity: 'London',
+			postcode: 'N1 10'
+		},
+		row: 'Gateway 2 workshop venue address',
+		display: 'The workshop venue'
+	},
+	workshopMeetingLinkKnown: {
+		section: 'set-up-workshop/workshop',
+		heading: 'Do you have a remote meeting link?',
+		fieldName: 'remoteMeetingLinkKnown-1',
+		path: 'gateway-2-remote-meeting-link-known-1',
+		inputRadio: 'yes',
+		display: 'Yes',
+		row: 'Gateway 2 remote meeting link known'
+	},
+	workshopMeetingLink: {
+		section: 'set-up-workshop/workshop',
+		heading: 'What is the remote meeting link?',
+		fieldName: 'remoteMeetingLink-1',
+		path: 'gateway-2-remote-meeting-link-1',
+		input: 'linkToMeeting',
+		display: '\n          LinkToMeeting\n        ',
+		row: 'Remote meeting link'
+	}
+};
+
 export const gateway2ExpectedAnswers = [
 	...Object.values(gateway2DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display },
-	{ row: workshopVenueAnswer.row, display: workshopVenueAnswer.display }
+	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display }
+];
+
+export const workshopSetupExpectedAnswers = [
+	...Object.values(workshopSetUp).map(({ row, display }) => ({ row, display })),
+	{ row: workshopSetUp.workshopDateAndTime.rowTime, display: workshopSetUp.workshopDateAndTime.displayTime },
+	{
+		row: workshopSetUp.expectedNumberOfDays.rowNumberOfDays,
+		display: workshopSetUp.expectedNumberOfDays.displayNumberOfDays
+	}
 ];
