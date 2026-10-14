@@ -640,6 +640,49 @@ describe('buildSaveDataToCase', () => {
 		} as any;
 	}
 
+	function getUpdateData(update: ReturnType<typeof mock.fn>) {
+		return update.mock.calls.map((call) => (call.arguments[0] as { data: Record<string, unknown> }).data);
+	}
+
+	function statusUpdates(update: ReturnType<typeof mock.fn>) {
+		return getUpdateData(update).filter((data) => 'status' in data);
+	}
+
+	function websiteUpdates(update: ReturnType<typeof mock.fn>) {
+		return getUpdateData(update).filter((data) => 'examinationWebsiteUrl' in data);
+	}
+
+	it('persists the examination website URL to the database', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams({ examinationWebsite: 'https://example.com' }, { status: GATEWAY_3_STATUS.UNAVAILABLE })
+		);
+
+		assert.deepStrictEqual(websiteUpdates(update), [{ examinationWebsiteUrl: 'https://example.com' }]);
+	});
+
+	it('clears the examination website URL in the database when the answer is removed', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(buildSaveParams({ examinationWebsite: '' }, { status: GATEWAY_3_STATUS.UNAVAILABLE }));
+
+		assert.deepStrictEqual(websiteUpdates(update), [{ examinationWebsiteUrl: null }]);
+	});
+
+	it('does not persist the examination website URL when the question is not part of the answers', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams({ proposedLocalPlan: [{ fileName: 'plan.pdf' }] }, { status: GATEWAY_3_STATUS.UNAVAILABLE })
+		);
+
+		assert.deepStrictEqual(websiteUpdates(update), []);
+	});
+
 	it('sets the Gateway 3 status to IN_PROGRESS when a non-empty answer is saved', async () => {
 		const { service, update } = buildStatusService();
 		const save = buildSaveDataToCase(service);
@@ -648,10 +691,7 @@ describe('buildSaveDataToCase', () => {
 			buildSaveParams({ examinationWebsite: 'https://example.com' }, { status: GATEWAY_3_STATUS.UNAVAILABLE })
 		);
 
-		assert.strictEqual(update.mock.callCount(), 1);
-		const args = update.mock.calls[0].arguments[0] as { where: unknown; data: unknown };
-		assert.deepStrictEqual(args.where, { caseId: 'case-1' });
-		assert.deepStrictEqual(args.data, { status: GATEWAY_3_STATUS.IN_PROGRESS });
+		assert.deepStrictEqual(statusUpdates(update), [{ status: GATEWAY_3_STATUS.IN_PROGRESS }]);
 	});
 
 	it('does not change the status when an answer is cleared/removed', async () => {
@@ -660,10 +700,10 @@ describe('buildSaveDataToCase', () => {
 
 		await save(buildSaveParams({ examinationWebsite: '' }, { status: GATEWAY_3_STATUS.UNAVAILABLE }));
 
-		assert.strictEqual(update.mock.callCount(), 0);
+		assert.deepStrictEqual(statusUpdates(update), []);
 	});
 
-	it('does not update when the status is already IN_PROGRESS', async () => {
+	it('does not update the status when it is already IN_PROGRESS', async () => {
 		const { service, update } = buildStatusService();
 		const save = buildSaveDataToCase(service);
 
@@ -671,7 +711,7 @@ describe('buildSaveDataToCase', () => {
 			buildSaveParams({ examinationWebsite: 'https://example.com' }, { status: GATEWAY_3_STATUS.IN_PROGRESS })
 		);
 
-		assert.strictEqual(update.mock.callCount(), 0);
+		assert.deepStrictEqual(statusUpdates(update), []);
 	});
 
 	it('still saves the answer to the session when the answer is non-empty', async () => {

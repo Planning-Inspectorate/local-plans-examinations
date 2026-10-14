@@ -233,6 +233,46 @@ export function syncGateway3UploadAnswer(req: Request, fieldName: string, upload
 // ---------------------------------------------------------------------------
 
 /**
+ * Field name of the examination website question, which maps to the
+ * Gateway3Info.examinationWebsiteUrl database column.
+ */
+const EXAMINATION_WEBSITE_FIELD = 'examinationWebsite';
+
+/**
+ * Persist Gateway 3 journey answers that map to Gateway3Info columns.
+ *
+ * The dynamic forms library only writes answers to the session, so non-document
+ * answers (currently the examination website URL) would otherwise be lost. This
+ * stores them in the database so they survive beyond the session. Failures are
+ * logged but never block the user's action.
+ */
+async function saveGateway3AnswersToDatabase(service: PortalService, req: Request, answers: Record<string, unknown>) {
+	const request = req as Gateway3Request;
+	const caseId = request.currentCase?.id;
+	if (!caseId || !Object.prototype.hasOwnProperty.call(answers, EXAMINATION_WEBSITE_FIELD)) {
+		return;
+	}
+
+	const rawValue = answers[EXAMINATION_WEBSITE_FIELD];
+	const examinationWebsiteUrl = typeof rawValue === 'string' && rawValue.trim().length > 0 ? rawValue.trim() : null;
+
+	try {
+		await service.db.gateway3Info.update({
+			where: { caseId },
+			data: { examinationWebsiteUrl }
+		});
+		if (request.currentCase?.gateway3Info) {
+			request.currentCase.gateway3Info.examinationWebsiteUrl = examinationWebsiteUrl;
+		}
+	} catch (error) {
+		service.logger.error(
+			{ error, caseId, planReference: getRoutePlanReference(req) },
+			'Failed to save Gateway 3 answers to the database'
+		);
+	}
+}
+
+/**
  * Mark a case's Gateway 3 submission as in progress.
  *
  * Called when a file is uploaded or a question is answered. The status is only
@@ -283,9 +323,14 @@ export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
 
+		const answers = (params.data?.answers ?? {}) as Record<string, unknown>;
+
+		// Persist answers that map to database columns (e.g. the examination website URL)
+		// so they are not lost when the session ends.
+		await saveGateway3AnswersToDatabase(service, params.req, answers);
+
 		// Mark Gateway 3 as in progress when a question is answered, but not when
 		// an answer is cleared/removed.
-		const answers = (params.data?.answers ?? {}) as Record<string, unknown>;
 		if (Object.values(answers).some(isNonEmptyAnswer)) {
 			await markGateway3InProgress(service, params.req);
 		}
@@ -574,6 +619,15 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 			} else {
 				delete answers[questionConfig.fieldName];
 			}
+		}
+
+		// Hydrate the examination website answer from the database (the source of
+		// truth), so it persists across sessions.
+		const examinationWebsiteUrl = currentCase.gateway3Info?.examinationWebsiteUrl;
+		if (examinationWebsiteUrl) {
+			answers[EXAMINATION_WEBSITE_FIELD] = examinationWebsiteUrl;
+		} else {
+			delete answers[EXAMINATION_WEBSITE_FIELD];
 		}
 
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
