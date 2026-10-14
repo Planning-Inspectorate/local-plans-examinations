@@ -1,4 +1,4 @@
-import { portalLogin, THIRD_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin, THIRD_TEST_EMAIL, FIFTH_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
 import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import {
@@ -6,9 +6,10 @@ import {
 	gateway2CoverLetterPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture, Gateway2ReportIssuedFixture } from '../../../../fixtures/portal/types.ts';
-import { openGateway2ApplicationPage } from 'cypress/flows/portal/plan-flow.ts';
+import { openGateway2ApplicationPage } from '../../../../flows/portal/plan-flow.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+const loadReportIssuedPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('portal/gateway-2-report-issued.json');
 const today = new Date();
 const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -50,8 +51,6 @@ describe('Gateway 2 application page content after submission', () => {
 	});
 });
 
-const loadReportIssuedPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('portal/gateway-2-report-issued.json');
-
 describe('Gateway 2 application page content after submission and GW2 report issued', () => {
 	beforeEach(() => {
 		portalLogin(THIRD_TEST_EMAIL);
@@ -74,5 +73,45 @@ describe('Gateway 2 application page content after submission and GW2 report iss
 				/\/gateway-2-submission\/download-document\/.+/
 			);
 		});
+	});
+});
+
+describe('Gateway 2 application page content after workshop fields filled in BO', () => {
+	beforeEach(() => {
+		portalLogin(FIFTH_TEST_EMAIL);
+	});
+
+	after(() => cy.task('clearDb'));
+
+	it('Shows all the workshop data that was entered in the BO and the updated ', { tags: ['regression'] }, () => {
+		openGateway2ApplicationPage('PLAN-D01');
+		gateway2ApplicationPage.verifyWorkshopData(gateway2ApplicationPage.workshopDetailsTable, [
+			['Workshop venue', 'Conference Hall, 12 Milton Lane, Westside, London, WW1 2RT'],
+			['Workshop date and time', '8 March 2027 at 11:44 to 15:45'],
+			['Workshop documents', 'test-document.docx', 'test-document.pdf', '(shared on 14 October 2026']
+		]);
+
+		cy.task('seedUpdateGateway2Workshop', {
+			reference: 'PLAN-D01',
+			workshopData: {
+				workshopDate: '2027-02-15T00:00:00.000Z',
+				workshopTime: '14:30',
+				workshopEndTime: '16:20',
+				workshopExpectedDaysKnown: 'no',
+				workshopLocationType: 'in-person',
+				workshopVenueName: 'London Workshop Centre',
+				workshopAddressLine: '88 Test place',
+				workshopAddressLine2: 'Eastside',
+				workshopTownOrCity: 'Manchester',
+				workshopPostcode: 'ME1 9PL'
+			}
+		});
+
+		cy.reload();
+
+		gateway2ApplicationPage.verifyWorkshopData(gateway2ApplicationPage.workshopDetailsTable, [
+			['Workshop venue', 'London Workshop Centre, 88 Test place, Eastside, Manchester, ME1 9PL'],
+			['Workshop date and time', '15 February 2027 at 14:30 to 16:20']
+		]);
 	});
 });
