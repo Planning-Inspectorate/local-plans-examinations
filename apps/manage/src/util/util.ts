@@ -1,7 +1,5 @@
 import type { ManageService } from '#service';
 
-import type { ManageService } from '#service';
-
 /**
  * Immutably sort the given list submission details, with null completionDate values at the end
  * @param dates The submissions to sort

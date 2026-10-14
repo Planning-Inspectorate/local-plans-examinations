@@ -70,7 +70,7 @@ const EXAMINATION_FIELDS = [
 	['adoptionDate', 'Plan adopted']
 ] as const;
 
-export type ExaminationStage = Partial<Record<(typeof EXAMINATION_FIELDS)[number][0], string>>;
+export type ExaminationStage = Partial<Record<(typeof EXAMINATION_FIELDS)[number][0], string | null | Date>>;
 
 export const resolveExaminationStage = (
 	status?: ExaminationStage | null,
