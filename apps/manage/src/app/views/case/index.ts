@@ -13,6 +13,7 @@ import {
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
 	buildCheckReportMiddleware,
+	buildRemoveDocumentConfirmMiddleware,
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
@@ -460,6 +461,18 @@ function registerCaseJourney(
 							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
+							if (questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+								req.session.alertMessage = 'Document removed';
+								req.session.alertMessageStatus = 'success';
+							}
+							const caseId = (req as UploadDocumentRequest).currentCase?.id;
+							if (
+								caseId &&
+								uploadedFiles.length === 0 &&
+								questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION
+							) {
+								await service.db.examinationInfo.updateMany({ where: { caseId }, data: { soundUnsoundDate: null } });
+							}
 						},
 						onDeleteError: ({ req, fileId, error }) =>
 							logDocumentDeleteFailed(service, req, questionConfig, fileId, error),
@@ -467,6 +480,11 @@ function registerCaseJourney(
 					})
 				])
 			)
+		);
+		router.get(
+			`/${path}/:section/:question/remove/:fileId`,
+			getJourneyResponse,
+			buildRemoveDocumentConfirmMiddleware(journeyId)
 		);
 		router.post(
 			`${questionPath}/upload-documents`,

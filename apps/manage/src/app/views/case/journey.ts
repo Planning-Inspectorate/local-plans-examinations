@@ -284,9 +284,8 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 	const reportUploaded =
 		Array.isArray(response.answers.examinationReport) && response.answers.examinationReport.length > 0;
 
-	// Adding a report starts at the plan outcome question, then continues to the upload
 	questions.examinationReport.actionLink = reportUploaded
-		? undefined
+		? { href: `${examinationUrl}/outcome/${questions.examinationReportManage.url}`, text: 'Manage' }
 		: { href: `${examinationUrl}/outcome/${questions.isSound.url}`, text: 'Add' };
 
 	const journey = new Journey({
@@ -320,6 +319,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			new Section('Outcome', 'outcome')
 				.addQuestion(questions.isSoundNavigation)
 				.addQuestion(questions.examinationReport)
+				.addQuestion(questions.examinationReportManage)
 				.startMultiQuestionCondition('report-uploaded', () => reportUploaded)
 				.addQuestion(questions.isSoundOutcome)
 				.addQuestion(questions.soundUnsoundDateOutcome)
@@ -350,8 +350,11 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		journey,
 		examinationUrl,
 		req.params.reference,
-		// The upload page goes back to the plan outcome question
-		(params) => params.section === 'outcome' && params.question === questions.examinationReport.url
+		// The upload page goes back to the Manage page, or to plan outcome for the first report
+		(params) =>
+			params.section === 'outcome' && params.question === questions.examinationReport.url
+				? `${examinationUrl}/outcome/${reportUploaded ? questions.examinationReportManage.url : questions.isSound.url}`
+				: undefined
 	);
 }
 
@@ -359,7 +362,7 @@ function getBackLinksAndSetReference(
 	journey: Journey,
 	overviewUrl: string,
 	caseReference: string | string[],
-	usesJourneyBackLink: (params: Record<string, string | string[] | undefined>) => boolean = () => false
+	backLinkOverride: (params: Record<string, string | string[] | undefined>) => string | undefined = () => undefined
 ): Journey {
 	const getBackLink = journey.getBackLink.bind(journey);
 	const caseJourney = journey as JourneyWithReference;
@@ -369,7 +372,12 @@ function getBackLinksAndSetReference(
 		const { params, manageListQuestion } = options;
 		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
 
-		if (!manageListQuestion && !isManageListStep && !usesJourneyBackLink(params)) {
+		const override = backLinkOverride(params);
+		if (override) {
+			return override;
+		}
+
+		if (!manageListQuestion && !isManageListStep) {
 			return overviewUrl;
 		}
 

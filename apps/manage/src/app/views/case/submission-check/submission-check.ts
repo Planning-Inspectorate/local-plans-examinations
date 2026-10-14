@@ -8,7 +8,7 @@ export type SubmissionCheckData = {
 	section: string;
 	question: string;
 	backLink: string;
-	notificationPreviewTemplate: string;
+	notificationPreviewTemplate?: string;
 	submitButtonText: string;
 	additionalFields: { name: string; value: string | null; url: string | undefined | null; query?: string }[];
 	notificationTextLPA?: string;

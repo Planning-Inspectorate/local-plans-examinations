@@ -23,30 +23,33 @@ export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 				caseId: caseId
 			}
 		});
-		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate;
+		const isAdditionalDocument = Boolean(existingExaminationDetails?.soundUnsoundDate);
 		const fileUploadedDate = uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined;
 		const planOutcomeText = questions.isSound.options?.find(
 			(option: { value: string }) => option.value === existingExaminationDetails?.isSound
 		)?.text;
 		return {
-			titleHeading: 'Check documents and send notification',
+			titleHeading: isAdditionalDocument
+				? 'Check details and send notification'
+				: 'Check documents and send notification',
 			uploadedFiles: uploadedFiles,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,
 			question: questionUrl,
 			backLink: this.generateBackUrl(originalUrl),
-			notificationPreviewTemplate: questionUrl + (reportIssuedDate ? '-complete' : ''),
 			submitButtonText: 'Confirm and notify',
-			additionalFields: [
-				{
-					name: questions.isSound.title,
-					value: planOutcomeText ?? null,
-					url: questions.isSound.url,
-					query: 'returnTo=check'
-				},
-				...this.generateAdditionalDateField(fileUploadedDate, undefined)
-			],
+			additionalFields: isAdditionalDocument
+				? []
+				: [
+						{
+							name: questions.isSound.title,
+							value: planOutcomeText ?? null,
+							url: questions.isSound.url,
+							query: 'returnTo=check'
+						},
+						...this.generateAdditionalDateField(fileUploadedDate, undefined)
+					],
 			notificationTextLPA: "We'll notify the planning authority and MHCLG that the report is ready"
 		};
 	}

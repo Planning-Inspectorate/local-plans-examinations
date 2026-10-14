@@ -1197,6 +1197,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Upload final report and supporting documents',
 		fieldName: 'examinationReport',
 		url: 'examination-report',
+		formatSummaryValue: ({ answer }: { answer: unknown }) => {
+			const count = Array.isArray(answer) ? answer.length : 0;
+			return count === 0 ? 'Not provided' : `${count} document${count === 1 ? '' : 's'} added`;
+		},
 		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
 		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
 			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
@@ -1204,7 +1208,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			.flat(),
 		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: 1,
+		maxFilesPerUpload: 10,
 		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
 		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
 		multiple: true,
@@ -1224,6 +1228,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			totalFileSizeTooLarge: 'Total file size is too large'
 		},
 		validators: [new FileUploadRequiredValidator('examinationReport', 'Please upload the examination report')]
+	},
+	examinationReportManage: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER,
+		title: 'Manage report and main modifications',
+		question: 'Examination report',
+		fieldName: 'examinationReport',
+		url: 'examination-report-manage',
+		viewData: { uploadQuestionUrl: 'examination-report' }
 	},
 	...gateway3Questions
 };
@@ -1247,6 +1259,7 @@ export const questions = createQuestions(
 
 // Plan outcome step that precedes the report upload; the listed row is isSoundOutcome
 questions.isSoundNavigation.taskList = false;
+questions.examinationReportManage.taskList = false;
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 	// Prepend https:// to the answer if it doesn't already start with http:// or https://
 	const href = answer && !/^https?:\/\//i.test(answer) ? `https://${answer}` : answer;
