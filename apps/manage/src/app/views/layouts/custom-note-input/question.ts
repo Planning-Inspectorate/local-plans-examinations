@@ -9,8 +9,7 @@ export default class CustomNoteQuestion extends Question {
 			viewFolder: 'views/layouts/custom-note-input'
 		});
 	}
-	formatAnswerForSummary(sectionSegment: string, journey: any, answer: { id: string; [k: string]: string }) {
-		console.log(`temp log to allow a commit while logic is still TBC ${answer}`);
+	formatAnswerForSummary(sectionSegment: string, journey: any) {
 		const key = this.title ?? this.question;
 		const notes: {
 			text: string;
