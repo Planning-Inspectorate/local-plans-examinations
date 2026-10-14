@@ -554,16 +554,6 @@ describe('resolveCaseHeaderStatus', () => {
 		const pastDate = new Date(Date.now() - 60_000);
 		const examinationStatus: ExaminationStage = {
 			examiningInspector1: 'Alice'
-			// examiningInspector2: 'Alice',
-			// examiningInspector3: 'Alice'
-			// qaInspector1: 'Bob',
-			// qaInspector2: 'Bob',
-			// qaInspector3: 'Bob',
-			// planResponseToInspectorDate: undefined,
-			// planPauseStartDate: null,
-			// planPauseEndDate: null,
-			// finalReportIssueDate: null,
-			// adoptionDate: null
 		};
 		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
 			[],
