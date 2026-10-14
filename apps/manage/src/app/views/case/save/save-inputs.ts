@@ -97,7 +97,7 @@ export interface ExaminationInput extends SaveInput {
 	planPauseStartDate?: Date;
 	planPauseEndDate?: Date;
 	withdrawnDate?: Date;
-	isSound?: boolean;
+	isSound?: string;
 	soundUnsoundDate?: Date;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;

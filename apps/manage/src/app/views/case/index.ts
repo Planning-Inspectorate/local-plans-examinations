@@ -16,6 +16,7 @@ import {
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
+	issueExaminationReport,
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
@@ -276,7 +277,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
-		supportsFileUpload: false,
+		supportsFileUpload: true,
 		saveController: ExaminationSaveController
 	}
 ];
@@ -373,6 +374,7 @@ function registerCaseJourney(
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
@@ -384,7 +386,22 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true)
+		(req, res, next) => {
+			// Saving the plan outcome continues to the report upload until a report exists
+			const answers = res.locals.journeyResponse?.answers;
+			const isPlanOutcome =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				req.params.question === questions.isSound.url;
+			if (isPlanOutcome && req.query.returnTo === 'check') {
+				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check`;
+			}
+			const continueToReportUpload =
+				isPlanOutcome &&
+				req.query.returnTo !== 'check' &&
+				!(Array.isArray(answers?.examinationReport) && answers.examinationReport.length > 0);
+			buildSave(updateCase, !continueToReportUpload)(req, res, next);
+		}
 	);
 	if (supportsFileUpload) {
 		const fileUploaderStorage = () => service.createFileStorage(journeyId);

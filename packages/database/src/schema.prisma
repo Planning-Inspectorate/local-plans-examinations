@@ -225,7 +225,7 @@ model ExaminationInfo {
   planPauseStartDate                   DateTime? @db.DateTime2
   planPauseEndDate                     DateTime? @db.DateTime2
   withdrawnDate                        DateTime? @db.DateTime2
-  isSound                              Boolean?  @db.Bit
+  isSound                              String?   @db.NVarChar(50)
   soundUnsoundDate                     DateTime? @db.DateTime2
   adoptionDate                         DateTime? @db.DateTime2
   approvedForCILDate                   DateTime? @db.DateTime2

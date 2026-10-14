@@ -10,7 +10,7 @@ export type SubmissionCheckData = {
 	backLink: string;
 	notificationPreviewTemplate: string;
 	submitButtonText: string;
-	additionalFields: { name: string; value: string | null; url: string | undefined | null }[];
+	additionalFields: { name: string; value: string | null; url: string | undefined | null; query?: string }[];
 	notificationTextLPA?: string;
 };
 

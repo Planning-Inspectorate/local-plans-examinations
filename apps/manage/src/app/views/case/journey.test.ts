@@ -237,7 +237,7 @@ describe('createExaminationJourney', () => {
 			'plan-pause-start-date',
 			'plan-pause-end-date',
 			'withdrawn-date',
-			'is-sound',
+			'plan-outcome',
 			'sound-unsound-date',
 			'adoption-date',
 			'approved-for-cil-date'

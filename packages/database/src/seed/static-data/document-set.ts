@@ -151,6 +151,14 @@ export const DOCUMENT_SET = [
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 
+	{
+		id: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Examination Report',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_REPORT,
+		displayOrder: 100
+	},
 	// Gateway 3 portal required documents
 	{
 		id: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,

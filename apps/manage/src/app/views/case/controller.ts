@@ -387,13 +387,12 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	}
 
 	if (question == 'isSound') {
-		if (typeof value === 'boolean') {
-			return value ? 'Sound' : 'Unsound';
-		}
-		if (typeof value === 'string') {
-			return value == 'yes' ? 'Sound' : 'Unsound';
-		}
-		return value;
+		const planOutcomeLabels: Record<string, string> = {
+			sound: 'Sound',
+			'sound-with-modifications': 'Sound with modifications',
+			unsound: 'Unsound'
+		};
+		return typeof value === 'string' ? (planOutcomeLabels[value] ?? value) : value;
 	}
 
 	if (typeof value === 'boolean') {
@@ -627,6 +626,38 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			req.session.alertMessage = 'Gateway 2 report already issued';
 			req.session.alertMessageStatus = 'important';
 		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		return;
+	};
+}
+
+export function issueExaminationReport(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+
+		const reportIssuedDate = new Date();
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			soundUnsoundDate: reportIssuedDate
+		});
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				examinationReport: null // Will be overridden by overrideLabels
+			},
+			{},
+			caseReference,
+			currentUser,
+			{
+				examinationReport: `Examination report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
+			}
+		);
+		req.session.alertMessage = 'Final report and supporting documents saved and notification sent';
+		req.session.alertMessageStatus = 'success';
+
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};

@@ -266,13 +266,13 @@ export const withdrawnDate = {
 };
 
 export const soundUnsound = {
-	row: 'Sound / unsound',
-	heading: 'Was the plan found to be sound or unsound?',
+	row: 'Plan outcome',
+	heading: 'Plan outcome',
 	fieldName: 'isSound',
-	path: 'is-sound',
-	value: 'yes',
+	path: 'plan-outcome',
+	value: 'sound',
 	display: 'Sound',
-	updatedValue: 'no',
+	updatedValue: 'unsound',
 	updatedDisplay: 'Unsound'
 };
 
