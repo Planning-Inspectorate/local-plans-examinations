@@ -3,7 +3,9 @@ import {
 	gateway2DateAnswers,
 	gateway2AssessorAnswer,
 	gateway2ExpectedAnswers,
-	gateway2Report
+	gateway2Report,
+	workshopSetupExpectedAnswers,
+	workshopSetUp
 } from '../../../fixtures/manage/gateway-2.ts';
 
 const gateway2Rows = [
@@ -42,6 +44,32 @@ export class Gateway2Page extends GatewayBasePage {
 		actionLinkHrefs.forEach(([key, href]) => {
 			this.verifySummaryRowActionHref(key, href);
 		});
+	}
+
+	verifyWorkshopSetUp(
+		workshopNumber: string,
+		expectedNumberOfDays = workshopSetUp.expectedNumberOfDays.displayNumberOfDays
+	) {
+		this.verifySubHeading(`Workshop ${workshopNumber} details`);
+		const overviewDisplayValues: Record<string, string> = {
+			[workshopSetUp.expectedNumberOfDays.rowNumberOfDays]: expectedNumberOfDays,
+			[workshopSetUp.workshopMeetingLinkKnown.row]: workshopSetUp.workshopMeetingLinkKnown.inputRadio,
+			[workshopSetUp.workshopMeetingLink.row]: workshopSetUp.workshopMeetingLink.input
+		};
+		workshopSetupExpectedAnswers
+			.filter(
+				({ row }) => row !== workshopSetUp.expectedNumberOfDays.row && row !== workshopSetUp.workshopAddressKnown.row
+			)
+			.forEach(({ row, display }) => {
+				this.verifySummaryRowContains(row, overviewDisplayValues[row] ?? display);
+			});
+		this.verifySummaryRowContains(
+			workshopSetUp.workshopVenueAddress.row,
+			workshopSetUp.workshopVenueAddress.values.venueName,
+			workshopSetUp.workshopVenueAddress.values.addressLine1,
+			workshopSetUp.workshopVenueAddress.values.townOrCity,
+			workshopSetUp.workshopVenueAddress.values.postcode
+		);
 	}
 }
 

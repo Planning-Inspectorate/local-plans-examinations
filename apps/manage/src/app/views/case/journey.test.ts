@@ -156,8 +156,13 @@ describe('gateway2WorkshopJourney', () => {
 			workshopLocationType: 'hybrid',
 			workshopLocationKnown: 'yes'
 		});
+		const inPersonJourney = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'in-person',
+			workshopLocationKnown: 'yes'
+		});
 
 		assert.equal(venueQuestion?.shouldDisplay(hybridJourney.response), true);
+		assert.equal(venueQuestion?.shouldDisplay(inPersonJourney.response), true);
 	});
 
 	it('only shows remote meeting details for remote or hybrid workshops', () => {
@@ -175,8 +180,13 @@ describe('gateway2WorkshopJourney', () => {
 			workshopLocationType: 'hybrid',
 			remoteMeetingLinkKnown: 'yes'
 		});
+		const remoteJourney = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'remote',
+			remoteMeetingLinkKnown: 'yes'
+		});
 
 		assert.equal(remoteMeetingQuestion?.shouldDisplay(hybridJourney.response), true);
+		assert.equal(remoteMeetingQuestion?.shouldDisplay(remoteJourney.response), true);
 	});
 });
 

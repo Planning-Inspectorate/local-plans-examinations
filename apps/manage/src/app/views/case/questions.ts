@@ -38,6 +38,11 @@ import {
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { sortExaminationHearings, sortGateway2Workshops } from '#util/util.ts';
+import {
+	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
+} from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
@@ -67,8 +72,6 @@ const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
-
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -89,8 +92,6 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
-
 const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -110,8 +111,6 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'tif',
 	'tiff'
 ];
-
-const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
@@ -323,7 +322,7 @@ const gateway2WorkshopBaseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the remote meeting link?',
 		fieldName: 'remoteMeetingLink',
 		url: 'gateway-2-remote-meeting-link',
-		title: 'Gateway 2 remote meeting link',
+		title: 'Remote meeting link',
 		validators: [new RequiredValidator('Input a remote meeting link')]
 	}
 };
@@ -630,7 +629,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'planTitle',
 		url: 'plan-title',
 		title: 'Plan title',
-		validators: [new RequiredValidator('Input a plan title')]
+		validators: [new RequiredValidator('Enter a plan title')]
 	},
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,
@@ -648,7 +647,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	planType: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local Plan' },
+			{ value: PLAN_TYPE_ID.LOCAL_PLAN, text: 'Local plan' },
 			{ value: PLAN_TYPE_ID.OTHER, text: 'Other' }
 		],
 		question: 'What is the plan type?',
@@ -666,17 +665,20 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			{ value: 'lpa-3', text: 'Local Planning Authority 3' },
 			{ value: 'lpa-4', text: 'Local Planning Authority 4' }
 		],
-		question: 'Select the Local Planning Authority for this plan',
+		question: 'Select a planning authority',
 		fieldName: 'lpa',
 		url: 'select-lpa',
 		title: 'Local Planning Authority',
-		validators: [new RequiredValidator('Select a Local Planning Authority')],
+		validators: [new RequiredValidator('You need to select a planning authority')],
 		disableAccessibleAutocomplete: true
 	},
 	checkLpas: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
-		title: 'Local Planning Authority',
+		title: 'Planning authorities',
 		titleSingular: 'Local Planning Authority',
+		singularLowerCase: 'planning authority',
+		multipleLowerCase: 'planning authorities',
+		emptyListText: 'No planning authorities added',
 		showManageListQuestions: true,
 		fieldName: 'checkLpas',
 		url: 'check-lpas',
@@ -685,7 +687,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new ManageListValidator({
 				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one Local Planning Authority' }
+				errorMessages: { minimumAnswers: 'You need to add a planning authority' }
 			})
 		]
 	},
@@ -738,15 +740,19 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				fields: [
 					{
 						fieldName: 'firstName',
-						validators: [new RequiredValidator('Input a first name')]
+						validators: [new RequiredValidator('Enter a first name')]
 					},
 					{
 						fieldName: 'lastName',
-						validators: [new RequiredValidator('Input a last name')]
+						validators: [new RequiredValidator('Enter a last name')]
 					},
 					{
 						fieldName: 'email',
-						validators: [new RequiredValidator('Input an email address')]
+						validators: [new RequiredValidator('Enter an email address')]
+					},
+					{
+						fieldName: 'lpaContact',
+						validators: [new RequiredValidator('Select a planning authority')]
 					}
 				]
 			})
@@ -760,6 +766,9 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		type: CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST,
 		title: 'Contact details',
 		titleSingular: 'Contact',
+		singularLowerCase: 'contact',
+		multipleLowerCase: 'contacts',
+		emptyListText: 'No contacts added',
 		showManageListQuestions: true,
 		fieldName: 'contactDetails',
 		url: 'check-contact-details',
@@ -768,7 +777,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new ManageListValidator({
 				minimumAnswers: 1,
-				errorMessages: { minimumAnswers: 'You must add at least one contact' }
+				errorMessages: { minimumAnswers: 'You need to add a contact' }
 			})
 		]
 	},
@@ -1479,7 +1488,7 @@ Object.entries(questions)
 				workshopDateValue = parseDate(workshopDateValue);
 			}
 			const workshopDate = {
-				key: 'workshop date',
+				key: 'Workshop date',
 				value:
 					workshopDateValue && typeof workshopDateValue != 'string'
 						? formatDateToString(workshopDateValue)
@@ -1488,14 +1497,14 @@ Object.entries(questions)
 			};
 
 			const workshopStartTime = {
-				key: 'workshop time',
+				key: 'Workshop start time',
 				value: workshopDetails.workshopTime,
 				action: this.getAction(sectionSegment, journey, workshopDetails.workshopTime)
 			};
 
 			if (workshopDetails.workshopEndTime != null) {
 				const workshopEndTime = {
-					key: 'workshop time',
+					key: 'Workshop end time',
 					value: workshopDetails.workshopEndTime,
 					action: this.getAction(sectionSegment, journey, workshopDetails.workshopEndTime)
 				};

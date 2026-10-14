@@ -132,6 +132,19 @@ describe('CustomMultiFieldInputQuestion', () => {
 				['09', '30']
 			]
 		);
+
+		const serialisedResult = question.answerForViewModel({
+			workshopDate: '2026-10-07T00:00:00.000Z',
+			workshopTime: '09:30'
+		});
+
+		assert.deepEqual(
+			serialisedResult.map((field) => field.items?.map((item: { value: string }) => item.value)),
+			[
+				['7', '10', '2026'],
+				['09', '30']
+			]
+		);
 	});
 
 	it('should combine split date and time fields when saving data', async () => {

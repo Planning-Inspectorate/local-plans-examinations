@@ -298,12 +298,14 @@ function registerExaminationHearingJourney(
 
 		req.session.alertMessage = 'Hearing set up';
 		req.session.alertMessageStatus = 'success';
+
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
 		if (req.session) {
 			delete req.session.answers;
 		}
+
 		res.redirect(`/case/${encodeURIComponent(reference)}/examination`);
 	});
 

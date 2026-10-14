@@ -137,6 +137,9 @@ export function createExaminationHearingJourney(
 	}
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
 	}
 
 	const getBackLink = journey.getBackLink.bind(journey); // overide back links for hearing duration + end date

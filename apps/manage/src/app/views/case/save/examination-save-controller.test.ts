@@ -317,7 +317,7 @@ describe('test ExaminationSaveController', () => {
 				hearings: [
 					{
 						id: 'someHearing',
-						hearingDate: mockDate,
+						hearingDate: '01/01/2026',
 						hearingTime: '00:00',
 						hearingExpectedDaysKnown: true,
 						hearingExpectedDays: 2, // Radio button with nested field
