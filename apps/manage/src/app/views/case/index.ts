@@ -394,7 +394,6 @@ function registerCaseJourney(
 	// Save answer
 	router.post(
 		questionPath,
-		preprocessQuestionProperties(service, journeyId, questions),
 		getJourneyResponse,
 		resolveQuestions,
 		getJourney,
