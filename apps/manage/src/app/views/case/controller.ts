@@ -244,7 +244,7 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 		});
 
-		const examinationStatus = (await getExaminationStages(service, caseRecord.id)) ?? {};
+		const examinationStatus = await getExaminationStages(service, caseRecord.id);
 
 		const headerStatus = resolveCaseHeaderStatus(
 			gateway2Documents,

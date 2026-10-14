@@ -111,7 +111,7 @@ export function resolveCaseHeaderStatus(
 	gateway1Data: Gateway1InfoModel | null,
 	gateway2Data: Gateway2ModelWithWorkshops | null,
 	gateway3Submissions: Gateway3SubmissionModel[],
-	examinationStatus: ExaminationStage | null
+	examinationStatus?: ExaminationStage | null
 ): ResolvedCaseHeaderStatus {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
