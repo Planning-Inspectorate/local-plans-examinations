@@ -923,8 +923,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Workshop dates',
 		question: 'Workshop dates',
 		fieldName: 'workshops',
-		url: 'gateway-2-workshop-dates',
-		notStartedText: 'Not provided'
+		url: 'gateway-2-workshop-dates'
 	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,

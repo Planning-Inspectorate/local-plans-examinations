@@ -15,7 +15,7 @@ export class Gateway2SaveController extends SaveController {
 		return !!matchedQuestion;
 	}
 	protected async shouldSaveToSession() {
-		return this.isGateway2WorkshopQuestion() && !this.req.originalUrl.includes('/timetable/');
+		return this.isGateway2WorkshopQuestion();
 	}
 	protected async prepareData(answers: Record<string, any>) {
 		const caseDetails = await this.service.db.case.findUnique({
