@@ -12,6 +12,7 @@ export const TEST_EMAIL = 'test@planninginspectorate.gov.uk';
 export const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
 export const THIRD_TEST_EMAIL = 'test3@planninginspectorate.gov.uk';
 export const FOURTH_TEST_EMAIL = 'test4@planninginspectorate.gov.uk';
+export const FIFTH_TEST_EMAIL = 'test5@planninginspectorate.gov.uk';
 export const FIXTURE_TEST_EMAIL = 'jane@lpa.gov.uk';
 const LOCAL_TEST_OTP = '12345';
 

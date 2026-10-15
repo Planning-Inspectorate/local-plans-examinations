@@ -31,14 +31,16 @@ export default class FileUploaderQuestion extends Question {
 		text = {},
 		validationMessages = {},
 		actionButtonVisibleInSummary = true,
+		notStartedText = 'Not started',
 		...params
 	}: FileUploaderQuestionProps) {
 		super({
 			...params,
 			viewFolder: 'forms/custom-components/file-uploader'
 		});
+		this.notStartedText = notStartedText;
 		if (this.formatSummaryValue == undefined) {
-			this.formatSummaryValue = fileUploadBulletListFormat;
+			this.formatSummaryValue = (context) => fileUploadBulletListFormat(context, this.notStartedText);
 		}
 
 		this.config = {
@@ -154,11 +156,11 @@ export default class FileUploaderQuestion extends Question {
 	}
 }
 
-export function fileUploadBulletListFormat(context: any): string {
+export function fileUploadBulletListFormat(context: any, emptyValue = 'Not started'): string {
 	const answer = context.answer;
 	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 	if (files.length === 0) {
-		return 'Not started';
+		return emptyValue;
 	}
 
 	const isPortalRoute = context.journey?.baseUrl?.startsWith('/manage-local-plans');

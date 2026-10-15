@@ -167,7 +167,10 @@ async function saveDataToDatabase(
 					caseId: createdCase.id,
 					...(answers.gateway2Date && {
 						expectedDate: parseDate(answers.gateway2Date)
-					})
+					}),
+					workshops: {
+						create: []
+					}
 				}
 			}),
 			tx.gateway3Info.create({

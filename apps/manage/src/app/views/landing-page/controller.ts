@@ -8,7 +8,7 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		const { db, logger } = service;
 		try {
-			const cases = await db.case.findMany({ where: { deletedDate: null } });
+			const cases = await db.case.findMany({ where: { deletedDate: null }, orderBy: { createdAt: 'desc' } });
 
 			const casesWithStatus = await Promise.all(
 				cases.map(async (caseRecord) => {
@@ -17,7 +17,10 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 							where: { caseId: caseRecord.id }
 						}),
 						db.gateway2Info.findUnique({
-							where: { caseId: caseRecord.id }
+							where: { caseId: caseRecord.id },
+							include: {
+								workshops: true
+							}
 						}),
 						db.gateway3Info.findUnique({
 							where: { caseId: caseRecord.id },

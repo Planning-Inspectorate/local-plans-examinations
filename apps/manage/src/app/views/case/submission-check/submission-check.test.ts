@@ -1,6 +1,7 @@
 import { SubmissionCheck, type SubmissionCheckData } from './submission-check.ts';
 import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
+import { Gateway2WorkshopDocumentsSubmissionCheck } from './gateway-2-workshop-documents-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,7 +32,7 @@ async function testGenerateDataForPage(
 }
 
 describe('Test SignedSLASubmissionCheck', () => {
-	it('generateDataForPage with no existing data', async () => {
+	it('SignedSLASubmissionCheck.generateDataForPage with no existing data', async () => {
 		MockService.db.gateway1Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				slaSentDate: null,
@@ -60,6 +61,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Confirm and issue notification',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -70,7 +72,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with existing data', async () => {
+	it('SignedSLASubmissionCheck.generateDataForPage with existing data', async () => {
 		MockService.db.gateway1Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				slaSentDate: new Date(2026, 0, 1),
@@ -99,6 +101,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question-complete',
 				submitButtonText: 'Confirm and issue notification',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -109,7 +112,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with received date set', async () => {
+	it('SignedSLASubmissionCheck.generateDataForPage with received date set', async () => {
 		MockService.db.gateway1Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				slaSentDate: null,
@@ -138,6 +141,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Confirm and issue notification',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -151,7 +155,7 @@ describe('Test SignedSLASubmissionCheck', () => {
 });
 
 describe('Test Gateway2ReportSubmissionCheck', () => {
-	it('generateDataForPage with no existing data', async () => {
+	it('Gateway2ReportSubmissionCheck.generateDataForPage with no existing data', async () => {
 		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				reportIssuedDate: null
@@ -185,6 +189,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question',
 				submitButtonText: 'Issue report',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -195,7 +200,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with existing data', async () => {
+	it('Gateway2ReportSubmissionCheck.generateDataForPage with existing data', async () => {
 		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				reportIssuedDate: new Date(2026, 0, 1)
@@ -229,6 +234,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'my-question-complete',
 				submitButtonText: 'Issue report',
+				notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available",
 				additionalFields: [
 					{
 						name: 'Date uploaded',
@@ -242,7 +248,7 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 });
 
 describe('Test Gateway3SubmissionCheck', () => {
-	it('generateDataForPage with no existing data for decision 1', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with no existing data for decision 1', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -277,6 +283,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Outcome',
@@ -287,7 +294,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with no existing data for decision 2', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with no existing data for decision 2', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -322,6 +329,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey/some-section/my-question',
 				notificationPreviewTemplate: 'gateway-3-document',
 				submitButtonText: 'Issue decision',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Outcome',
@@ -332,7 +340,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with existing data', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with existing data', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -367,6 +375,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 				backLink: '/PLAN-12345/some-journey', // Should go back to the journey
 				notificationPreviewTemplate: 'gateway-3-document-complete',
 				submitButtonText: 'Issue decision',
+				notificationTextLPA: undefined,
 				additionalFields: [
 					{
 						name: 'Outcome',
@@ -377,7 +386,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			}
 		);
 	});
-	it('generateDataForPage with no decision', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with no decision', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -425,7 +434,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 			)
 		);
 	});
-	it('generateDataForPage with undefined decision number', async () => {
+	it('Gateway3SubmissionCheck.generateDataForPage with undefined decision number', async () => {
 		MockService.db.gateway3Info.findUnique.mock.mockImplementation(async () => {
 			return {
 				submissions: [
@@ -470,6 +479,89 @@ describe('Test Gateway3SubmissionCheck', () => {
 					]
 				}
 			)
+		);
+	});
+});
+
+describe('Test Gateway2WorkshopDocumentsSubmissionCheck', () => {
+	it('Gateway2WorkshopDocumentsSubmissionCheck.generateDataForPage with no existing data', async () => {
+		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
+			return {
+				workshopDocumentUploadedDate: null
+			};
+		});
+		await testGenerateDataForPage(
+			new Gateway2WorkshopDocumentsSubmissionCheck(),
+			{
+				caseId: '123456',
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				questionUrl: 'my-question',
+				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				service: MockService,
+				uploadedFiles: ['fileA.txt', 'fileB.txt']
+			},
+			{
+				titleHeading: 'Check workshop documents and issue notification',
+				uploadedFiles: ['fileA.txt', 'fileB.txt'],
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				question: 'my-question',
+				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				notificationPreviewTemplate: 'my-question',
+				submitButtonText: 'Issue documents',
+				notificationTextLPA:
+					"We'll send a notification to the LPA to tell them that the workshop documents are available.",
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						value: null,
+						url: undefined
+					}
+				]
+			}
+		);
+	});
+	it('Gateway2WorkshopDocumentsSubmissionCheck.generateDataForPage with existing data', async () => {
+		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
+			return {
+				workshopDocumentUploadedDate: new Date(2026, 0, 1)
+			};
+		});
+		await testGenerateDataForPage(
+			new Gateway2WorkshopDocumentsSubmissionCheck(),
+			{
+				caseId: '123456',
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				questionUrl: 'my-question',
+				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				service: MockService,
+				uploadedFiles: ['fileA.txt', 'fileB.txt']
+			},
+			{
+				titleHeading: 'Check workshop documents and issue notification',
+				uploadedFiles: ['fileA.txt', 'fileB.txt'],
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				question: 'my-question',
+				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				notificationPreviewTemplate: 'my-question-complete',
+				submitButtonText: 'Issue documents',
+				notificationTextLPA:
+					"We'll send a notification to the LPA to tell them that the workshop documents are available.",
+				additionalFields: [
+					{
+						name: 'Date uploaded',
+						value: null,
+						url: undefined
+					}
+				]
+			}
 		);
 	});
 });

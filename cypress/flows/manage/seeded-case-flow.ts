@@ -2,6 +2,7 @@ import { seededCase } from '../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 import { authenticateManageIfRequired, isEnvironmentSmoke } from '../auth-flow.ts';
+import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
 
 export type SeededManageCase = {
 	planTitle: string;
@@ -19,8 +20,8 @@ export const openManageCase = (seededManageCase: SeededManageCase) => {
 	return cy.wrap(seededManageCase, { log: false });
 };
 
-export const openSeededManageCase = () => {
-	return cy.task<SeededManageCase>('seedDb').then((result) => {
+export const openSeededManageCase = (options?: SeedCyOptions) => {
+	return cy.task<SeededManageCase>('seedDb', options ?? {}).then((result) => {
 		if (isEnvironmentSmoke()) {
 			Cypress.env(smokeCaseReferenceKey, result.reference);
 		}

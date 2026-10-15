@@ -2,12 +2,8 @@ import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
-import {
-	fileUploadQuestionConfigs,
-	fileUploaderCaseSessionKeyForField,
-	getParam,
-	updateGateway3
-} from '../controller.ts';
+import { fileUploadQuestionConfigs, fileUploaderCaseSessionKeyForField, getParam } from '../controller.ts';
+import { Gateway3SaveController } from '../save/gateway-3-save-controller.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 
 export class Gateway3TabHandler extends OverviewPageLoadHandler {
@@ -61,14 +57,9 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 				throw Error('Last submission was undefined');
 			}
 			currentSubmission.decision = body[`decision-${submissionNumber}` as keyof typeof body] ?? null;
-			await updateGateway3(
-				db,
-				{
-					submissions: updatedSubmissions
-				},
-				caseReference,
-				String(req.params.question)
-			);
+			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
+				submissions: updatedSubmissions
+			});
 			res.redirect(303, `gateway-3-document-${submissionNumber}`);
 			return;
 		}
