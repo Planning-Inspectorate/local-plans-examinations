@@ -17,6 +17,7 @@ const SALT_ROUNDS = 10;
 const SECOND_TEST_EMAIL = 'test2@planninginspectorate.gov.uk';
 const THIRD_TEST_EMAIL = 'test3@planninginspectorate.gov.uk';
 const FOURTH_TEST_EMAIL = 'test4@planninginspectorate.gov.uk';
+const FIFTH_TEST_EMAIL = 'test5@planninginspectorate.gov.uk';
 const CASE_REFERENCE = 'PLAN-C01';
 const PLAN_TITLE = 'GW2ReportIssued';
 const REPORT_ISSUED_DATE = new Date('2026-09-15T12:00:00.000Z');
@@ -147,7 +148,8 @@ async function run() {
 		planTitle,
 		createdAt,
 		submissionDate = null,
-		gateway2InfoUpsert = gateway2Info
+		gateway2InfoUpsert = gateway2Info,
+		workshopData
 	}: {
 		reference: string;
 		caseEmail: string;
@@ -155,7 +157,29 @@ async function run() {
 		createdAt?: Date;
 		submissionDate?: Date | null;
 		gateway2InfoUpsert?: typeof gateway2Info | typeof gateway2InfoReportIssued | typeof gateway2InfoSubmitted;
+		workshopData?: any;
 	}) {
+		const workshopPrismaQuery = workshopData
+			? {
+					workshops: {
+						create: {
+							createdDate: new Date(),
+							...workshopData
+						}
+					}
+				}
+			: {};
+
+		const gateway2Update = {
+			...gateway2InfoUpsert.upsert.update,
+			...workshopPrismaQuery
+		};
+
+		const gateway2Create = {
+			...gateway2InfoUpsert.upsert.create,
+			...workshopPrismaQuery
+		};
+
 		return dbClient.case.upsert({
 			where: { reference },
 			update: {
@@ -168,7 +192,12 @@ async function run() {
 				...(createdAt ? { createdAt } : {}),
 				lpas: lpaRelations,
 				gateway1Info,
-				gateway2Info: gateway2InfoUpsert,
+				gateway2Info: {
+					upsert: {
+						update: gateway2Update,
+						create: gateway2Create
+					}
+				},
 				gateway3Info,
 				examinationInfo
 			},
@@ -185,7 +214,7 @@ async function run() {
 					create: gateway1Info.upsert.create
 				},
 				gateway2Info: {
-					create: gateway2InfoUpsert.upsert.create
+					create: gateway2Create
 				},
 				gateway3Info: {
 					create: gateway3Info.upsert.create
@@ -208,6 +237,39 @@ async function run() {
 			where: { email: otpEmail },
 			update: { hashedOtp, expiresAt, attempts: 0, lockedOutUntil: null },
 			create: { email: otpEmail, hashedOtp, expiresAt }
+		});
+	}
+
+	async function upsertDocument(
+		guid: string,
+		name: string,
+		caseId: string,
+		documentSetId: string,
+		dateCreated: Date = new Date()
+	) {
+		await dbClient.document.upsert({
+			where: { guid },
+			update: {},
+			create: {
+				guid,
+				name,
+				caseId,
+				documentSetId,
+				versions: {
+					create: {
+						version: 1,
+						originalFilename: name,
+						fileName: name,
+						sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.BACK_OFFICE,
+						virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED,
+						dateCreated
+					}
+				}
+			}
+		});
+		await dbClient.document.update({
+			where: { guid },
+			data: { latestVersionId: 1 }
 		});
 	}
 
@@ -282,6 +344,40 @@ async function run() {
 			where: { guid: DOCUMENT_GUID },
 			data: { latestVersionId: 1 }
 		});
+
+		// Case for fifth user, GW2 submitted and Workshop fields filled in BO
+		const planD01Case = await upsertCase({
+			reference: 'PLAN-D01',
+			caseEmail: FIFTH_TEST_EMAIL,
+			planTitle: 'Workshop info submitted',
+			submissionDate: SUBMISSION_DATE,
+			gateway2InfoUpsert: gateway2InfoSubmitted,
+			workshopData: {
+				workshopDate: new Date('2027-03-08T00:00:00.000Z'),
+				workshopTime: '11:44',
+				workshopEndTime: '15:45',
+				workshopExpectedDaysKnown: 'no',
+				workshopLocationType: 'in-person',
+				workshopVenueName: 'Conference Hall',
+				workshopAddressLine: '12 Milton Lane',
+				workshopAddressLine2: 'Westside',
+				workshopTownOrCity: 'London',
+				workshopPostcode: 'WW1 2RT'
+			}
+		});
+
+		await upsertDocument(
+			'8f5b12a4-569a-4c2f-b489-321a9c7b8e56',
+			'test-document.docx',
+			planD01Case.id,
+			DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS
+		);
+		await upsertDocument(
+			'd2a93c71-8b4e-41f2-9d3a-6c5b8e7f1a2b',
+			'test-document.pdf',
+			planD01Case.id,
+			DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS
+		);
 
 		if (!caseOnly) {
 			// Seed the same known OTP for both test emails so either can log in during a test
