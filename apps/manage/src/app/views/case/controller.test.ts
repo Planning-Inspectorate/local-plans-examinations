@@ -1731,7 +1731,7 @@ describe('preprocessQuestionProperties', () => {
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
 		assert.deepEqual(actualDecisionQuestion.actionLink, {
-			href: `/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-document-1/check`,
+			href: `/case/some-case-reference/gateway-3-report/gateway-3-submission-1/gateway-3-document-1/check`,
 			text: 'View'
 		});
 	});
@@ -1751,7 +1751,7 @@ describe('issueGateway3Document', () => {
 				}
 			]
 		}));
-		const handler = issueGateway3Document(service, 'some-journey');
+		const handler = issueGateway3Document(service);
 		const res = {
 			redirect: mock.fn(() => {})
 		};
@@ -1780,7 +1780,7 @@ describe('issueGateway3Document', () => {
 				}
 			]
 		}));
-		const handler = issueGateway3Document(service, 'some-journey');
+		const handler = issueGateway3Document(service);
 		const res = {
 			redirect: mock.fn(() => {})
 		};

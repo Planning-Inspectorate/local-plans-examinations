@@ -73,7 +73,7 @@ export class Gateway3Page extends GatewayBasePage {
 		this.summaryRowActionLink(gateway3DocumentsAnswer.row).should('contain.text', 'View');
 		this.verifySummaryRowActionHref(
 			gateway3DecisionAnswer.row,
-			new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${gateway3DocumentsAnswer.path}-(\\d+)/check$`)
+			new RegExp(`^/case/.+/gateway-3-report/gateway-3-submission-(\\d+)/${gateway3DocumentsAnswer.path}-(\\d+)/check$`)
 		);
 		this.summaryRowActionLink(gateway3DecisionAnswer.row).should('contain.text', 'View');
 	}
