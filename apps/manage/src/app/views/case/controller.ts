@@ -17,7 +17,7 @@ import { asyncHandler } from '@planning-inspectorate/core/util';
 import multer from 'multer';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { sortGateway3Submissions } from '#util/util.ts';
+import { getExaminationStages, sortGateway3Submissions } from '#util/util.ts';
 import type FileUploaderQuestion from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import { journeyQuestions } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
@@ -244,12 +244,15 @@ export function buildGetJourneyMiddleware(service: ManageService, journeyId: str
 			}
 		});
 
+		const examinationStatus = await getExaminationStages(service, caseRecord.id);
+
 		const headerStatus = resolveCaseHeaderStatus(
 			gateway2Documents,
 			gateway3Documents,
 			journey1Data,
 			journey2Data,
-			journey3Data?.submissions ?? []
+			journey3Data?.submissions ?? [],
+			examinationStatus
 		);
 		res.locals.headerStatusText = headerStatus.headerStatusText;
 		res.locals.headerStatusClasses = headerStatus.headerStatusClasses;

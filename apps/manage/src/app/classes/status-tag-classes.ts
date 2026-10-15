@@ -24,8 +24,13 @@ const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	'GW3 received': 'govuk-tag--turquoise',
 	Examination: 'govuk-tag--yellow',
 	'Exam pending': 'govuk-tag--yellow',
+	'Exam paused': 'govuk-tag--grey',
+	'Plan adopted': 'govuk-tag--green',
 	'Hearing pending': 'govuk-tag--blue',
 	'Exam in progress': 'govuk-tag--blue',
+	'Submission pending': 'govuk-tag--yellow',
+	'Submission received': 'govuk-tag-green',
+	'Report Issued': 'govuk-tag--blue',
 	QA: 'govuk-tag--blue',
 	'Fact check': 'govuk-tag--turquoise',
 	Completed: 'govuk-tag--green',
@@ -51,15 +56,63 @@ export function getPlanStatusClasses(statusText: string) {
 	return PLAN_STATUS_CLASS_MAP[statusText] ?? 'govuk-tag--turquoise';
 }
 
+const EXAMINATION_FIELDS = [
+	['examiningInspector1', 'Exam in progress'],
+	['examiningInspector2', 'Exam in progress'],
+	['examiningInspector3', 'Exam in progress'],
+	['qaInspector1', 'QA'],
+	['qaInspector2', 'QA'],
+	['qaInspector3', 'QA'],
+	['planResponseToInspectorDate', 'Fact check'],
+	['planPauseStartDate', null],
+	['planPauseEndDate', null],
+	['finalReportIssueDate', 'Report issued'],
+	['adoptionDate', 'Plan adopted']
+] as const;
+
+export type ExaminationStage = Partial<Record<(typeof EXAMINATION_FIELDS)[number][0], string | null | Date>>;
+
+export const resolveExaminationStage = (
+	status?: ExaminationStage | null,
+	passDecisionGiven?: boolean
+): string | null => {
+	if (!passDecisionGiven || !status) return null;
+	if (status.planPauseStartDate != null && status.planPauseEndDate == null) return 'Paused';
+	const latest = EXAMINATION_FIELDS.findLast(([field, label]) => label && status[field] != null);
+
+	if (!latest) return null;
+
+	const [, label] = latest;
+
+	return label;
+};
+
 type Gateway2ModelWithWorkshops = Gateway2InfoModel & { workshops: Gateway2WorkshopModel[] };
 
+export type ResolvedCaseHeaderStatus = {
+	headerStatusText: string;
+	headerStatusClasses: string;
+};
+
+/**
+ * Resolves the case header status based on the provided data from multiple gateways and examination statuses.
+ *
+ * @param {DocumentModel[]} gateway2Documents - An array of gateway 2 documents.
+ * @param {DocumentModel[]} gateway3Documents - An array of gateway 3 documents.
+ * @param {Gateway1InfoModel | null} gateway1Data - Data related to gateway 1, or null if not available.
+ * @param {Gateway2ModelWithWorkshops | null} gateway2Data - Data related to gateway 2, including workshop information, or null if not available.
+ * @param {Gateway3SubmissionModel[]} gateway3Submissions - An array of gateway 3 submission records.
+ * @param {ExaminationStage | null} [examinationStatus] - The current examination stage status, or null if not provided.
+ * @return {ResolvedCaseHeaderStatus} An object containing the resolved case header status text and corresponding CSS classes.
+ */
 export function resolveCaseHeaderStatus(
 	gateway2Documents: DocumentModel[],
 	gateway3Documents: DocumentModel[],
 	gateway1Data: Gateway1InfoModel | null,
 	gateway2Data: Gateway2ModelWithWorkshops | null,
-	gateway3Submissions: Gateway3SubmissionModel[]
-) {
+	gateway3Submissions: Gateway3SubmissionModel[],
+	examinationStatus?: ExaminationStage | null
+): ResolvedCaseHeaderStatus {
 	const dateNow = new Date();
 	const activeGateway2Documents = gateway2Documents.filter((doc) => !doc.isDeleted);
 	const activeGateway3Documents = gateway3Documents.filter((doc) => !doc.isDeleted);
@@ -99,6 +152,12 @@ export function resolveCaseHeaderStatus(
 			headerStatusClasses: getPlanStatusClasses(statusText)
 		};
 	};
+
+	const examStage = resolveExaminationStage(examinationStatus, passDecisionGiven);
+
+	if (passDecisionGiven && examStage) {
+		return resolveStatus(examStage);
+	}
 
 	if (passDecisionGiven) {
 		return resolveStatus('Submission pending');

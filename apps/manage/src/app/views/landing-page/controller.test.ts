@@ -44,7 +44,8 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 			gateway1Info: { findUnique: async () => null },
 			gateway2Info: { findUnique: async () => null },
 			gateway3Info: { findUnique: async () => null },
-			document: { findMany: async () => [] }
+			document: { findMany: async () => [] },
+			examinationInfo: { findFirst: async () => null }
 		},
 		logger: { error: loggerError }
 	} as unknown as ManageService;
