@@ -10,7 +10,7 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -162,11 +162,11 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	let currentWorkshopAnswers: any | undefined;
 	if (req.session.answers) {
 		response.answers = req.session.answers;
-		const workshopAnswers: object[] = sortGateway2Workshops(req.session.answers.workshops);
+		const workshopAnswers: object[] = sortByCreatedDate(req.session.answers.workshops);
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
+		const workshopAnswers: Record<string, any>[] = sortByCreatedDate(
 			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
 		) as object[];
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
@@ -212,9 +212,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	if (!response.answers.workshops) {
 		throw Error('workshops property missing from answers for gateway2 journey');
 	}
-	const sortedWorkshops = sortGateway2Workshops(
-		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
-	);
+	const sortedWorkshops = sortByCreatedDate(response.answers.workshops as { createdDate: Date; [key: string]: any }[]);
 
 	response.answers.workshops = sortedWorkshops;
 	if (req.session) {
@@ -257,6 +255,21 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 
 export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const examinationUrl = req.baseUrl + '/examination';
+	const pauseSection = new Section('Pause examination', 'pause-examination');
+	const pauseData = Array.isArray(response.answers.pauses) ? response.answers.pauses : null;
+	if (!pauseData) {
+		throw Error('pauseData is null');
+	}
+	for (let i = 1; i <= pauseData.length; i++) {
+		pauseSection.addQuestion(questions[`examinationPauseStartDate-${i}`]);
+		pauseSection.addQuestion(questions[`examinationPauseDetail-${i}`]);
+		pauseSection.addQuestion(questions[`examinationPauseEndDate-${i}`]);
+	}
+	if (pauseData.length == 0) {
+		pauseSection.addQuestion(questions['examinationPauseStartDate-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationPauseDetail-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationPauseEndDate-1']).withCondition(() => false);
+	}
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
@@ -286,6 +299,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.factCheckActualDate)
 				.addQuestion(questions.factCheckReceivedBackFromLPADate)
 				.addQuestion(questions.finalReportIssueDate),
+			pauseSection,
 			new Section('Important dates for this plan', 'important-dates')
 				.addQuestion(questions.planPauseStartDate)
 				.addQuestion(questions.planPauseEndDate)
@@ -303,10 +317,64 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+	const sortedPauses = sortByCreatedDate(response.answers.pauses as { createdDate: Date; [key: string]: any }[]);
+
+	response.answers.pauses = sortedPauses;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
 	}
 	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
+}
+
+export function createExaminationPauseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const examinationUrl = req.baseUrl + '/examination';
+	const examinationPauseUrl = req.baseUrl + '/examination-pause';
+	let pauseId = Number(String(req.url).split('-').at(-1));
+	if (isNaN(pauseId)) {
+		// temp to avoid a crash while debugging the routing
+		pauseId = 1;
+	}
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		sections: [
+			new Section('Pause examination', 'pause-examination')
+				.addQuestion(questions[`examinationPauseStartDate-${pauseId}`])
+				.addQuestion(questions[`examinationPauseDetail-${pauseId}`])
+				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`])
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Pause examination',
+		returnToListing: false,
+		makeBaseUrl: () => examinationPauseUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+	let currentPauseAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const pauseAnswers: object[] = sortByCreatedDate(req.session.answers.pauses);
+		currentPauseAnswers = pauseAnswers[pauseId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current examination pause answers
+		const pauseAnswers: Record<string, any>[] = sortByCreatedDate(
+			response.answers.pauses as { createdDate: Date; [key: string]: any }[]
+		) as object[];
+		currentPauseAnswers = pauseAnswers[pauseId - 1];
+	}
+	if (currentPauseAnswers) {
+		Object.entries(currentPauseAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${pauseId}`] = value;
+		});
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID;
+	}
+	return getBackLinksAndSetReference(journey, examinationPauseUrl, req.params.reference);
 }
 
 function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, caseReference: string | string[]): Journey {

@@ -5,6 +5,7 @@ export const COMMON_CONSTS = {
 	GATEWAY_2_WORKSHOP_JOURNEY_ID: 'gateway-2-workshop',
 	GATEWAY_3_JOURNEY_ID: 'gateway-3',
 	EXAMINATION_JOURNEY_ID: 'examination',
+	EXAMINATION_PAUSE_JOURNEY_ID: 'examination-pause',
 	OVERVIEW: 'overview',
 	GATEWAY_2_INFO: 'gateway2Info',
 	GATEWAY_3_INFO: 'gateway3Info',
@@ -29,5 +30,6 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_ASSESSOR_NAME_QUESTION: 'gateway-3-assessor-name',
 	GATEWAY_3_DECISION_QUESTION: 'gateway-3-decision',
 	GATEWAY_3_DOCUMENT_QUESTION: 'gateway-3-document',
-	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date'
+	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date',
+	NUM_EXAM_PAUSE_QUESTIONS: 200
 };

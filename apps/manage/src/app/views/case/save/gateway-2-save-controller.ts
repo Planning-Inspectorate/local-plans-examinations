@@ -1,6 +1,6 @@
 import { SaveController } from './save-controller.ts';
 import { gatway2WorkshopBaseUrls } from '../questions.ts';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 import { parseDate } from '../../../util/date.ts';
 import type { Gateway2Input } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
@@ -44,7 +44,7 @@ export class Gateway2SaveController extends SaveController {
 		if (caseDetails.gateway2Info?.workshops == undefined) {
 			throw Error(`Could not find workshop data for case with reference '${this.caseReference}'`);
 		}
-		const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
+		const workshopDetails = sortByCreatedDate(caseDetails.gateway2Info?.workshops);
 		if (workshopDetails.length == 0) {
 			throw Error(`There are no workshops to delete for the case with reference '${this.caseReference}'`);
 		}
@@ -93,13 +93,13 @@ export class Gateway2SaveController extends SaveController {
 			if (!workshopId) {
 				throw Error('Could not extract the workshop id');
 			}
-			const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
+			const workshopDetails = sortByCreatedDate(caseDetails.gateway2Info?.workshops);
 			if (workshopId > workshopDetails.length) {
 				workshopDetails.push({ workshopDate: null, createdDate: new Date() });
 			}
 			// Enrich the current workshop with the answers
 			if (this.req.session && this.req.session.answers && this.req.session.answers.workshops) {
-				const filteredSessionAnswerWorkshops = sortGateway2Workshops(this.req.session.answers.workshops);
+				const filteredSessionAnswerWorkshops = sortByCreatedDate(this.req.session.answers.workshops);
 				workshopDetails[workshopId - 1] = {
 					...workshopDetails[workshopId - 1],
 					...filteredSessionAnswerWorkshops[workshopId - 1]
@@ -222,7 +222,7 @@ export class Gateway2SaveController extends SaveController {
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
 		if ('workshops' in answers) {
-			const workshops = sortGateway2Workshops(answers.workshops as { createdDate: Date; [key: string]: any }[]);
+			const workshops = sortByCreatedDate(answers.workshops as { createdDate: Date; [key: string]: any }[]);
 			if (!workshops) {
 				throw Error('No workshop entries found');
 			}

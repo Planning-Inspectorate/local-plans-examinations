@@ -37,8 +37,9 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -393,6 +394,50 @@ for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) 
 				];
 			}
 		}
+	}
+}
+// Examination pause
+const examinationPauseBaseQuestions: Record<string, ManageQuestionConfig> = {
+	examinationPauseStartDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the examination paused from?',
+		fieldName: 'startDate', // In the ExaminationPause model
+		url: 'examination-pause-start-date',
+		title: 'Examination pause date',
+		validators: [new DateValidator('Input an exam pause start date')],
+		inputAttributes: { 'data-cy': 'examination-pause-start-date' }
+	},
+	examinationPauseDetail: {
+		type: COMPONENT_TYPES.TEXT_ENTRY,
+		question: 'Pause details',
+		fieldName: 'details', // In the ExaminationPause model
+		url: 'examination-pause-details',
+		title: 'Pause details',
+		validators: [],
+		inputAttributes: { 'data-cy': 'examination-pause-details' }
+	},
+	examinationPauseEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the examination restart date?',
+		fieldName: 'endDate', // In the ExaminationPause model
+		url: 'examination-pause-end-date',
+		title: 'Examination restart date',
+		validators: [new DateValidator('Input an exam pause restart date')],
+		inputAttributes: { 'data-cy': 'examination-pause-end-date' }
+	}
+};
+export const examinationPauseBaseUrls = Object.values(examinationPauseBaseQuestions)
+	.map((value) => value.url)
+	.filter((value) => value != undefined);
+
+// Repeat the base exam pause questions multiple times, to allow multiple pauses to be created
+const examinationPauseQuestions: Record<string, ManageQuestionConfig> = {};
+for (let pauseId = 1; pauseId < COMMON_CONSTS.NUM_EXAM_PAUSE_QUESTIONS; pauseId++) {
+	for (const key in examinationPauseBaseQuestions) {
+		const questionConfigCopy = { ...examinationPauseBaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${pauseId}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${pauseId}`;
+		examinationPauseQuestions[`${key}-${pauseId}`] = questionConfigCopy;
 	}
 }
 
@@ -1207,7 +1252,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
 	},
-	...gateway3Questions
+	...gateway3Questions,
+	...examinationPauseQuestions
 };
 
 export const fileUploadQuestionProperties = Object.fromEntries(
@@ -1256,7 +1302,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
 			let workshopDateValue = workshopDetails.workshopDate;
 			if (typeof workshopDetails.workshopDate == 'string') {
 				workshopDateValue = parseDate(workshopDateValue);
@@ -1296,7 +1342,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: workshopDetails.workshopExpectedDaysKnown,
@@ -1324,7 +1370,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,

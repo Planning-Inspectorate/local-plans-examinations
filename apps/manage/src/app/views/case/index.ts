@@ -48,7 +48,8 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createGateway3Journey,
-	createExaminationJourney
+	createExaminationJourney,
+	createExaminationPauseJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -268,6 +269,14 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
 		supportsManageList: true,
+		supportsFileUpload: false,
+		saveController: ExaminationSaveController
+	},
+	{
+		path: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		createJourney: createExaminationPauseJourney,
+		supportsManageList: false,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
 	}

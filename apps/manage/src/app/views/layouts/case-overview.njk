@@ -96,8 +96,8 @@
                     {% set _ = formattedRows.push(formattedRow) %}
                     {% endif %}
                   {% endfor %}
+                  <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                   {% if section.list.rows.length %}
-                    <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                     {{ govukSummaryList({
                           rows: formattedRows
                       }) }}
@@ -108,6 +108,10 @@
                 <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
                 <p></p>
               {% endif %}
+                {% if section.heading == 'Pause examination' %}
+                  <a href="/case/{{ reference }}/examination-pause/pause-examination/examination-pause-start-date-{{ (journeyResponse.answers.pauses | length) + 1 }}" class="govuk-link" data-cy="pause-examination">Pause examination</a>
+                  <p></p>
+                {% endif %}
               {% endfor %}
           </div>
       </div>
