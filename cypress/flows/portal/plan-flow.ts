@@ -30,9 +30,10 @@ export const cleanupPreparedPlanDetails = () => {
 	}
 };
 
-export const openGateway2ApplicationPage = (plan: Pick<PlanDetailsFixture, 'reference'>) => {
+export const openGateway2ApplicationPage = (plan: Pick<PlanDetailsFixture, 'reference'> | string) => {
+	const reference = typeof plan === 'string' ? plan : plan.reference;
 	myPlansPage.verifyLoaded();
-	myPlansPage.openPlan(plan.reference);
+	myPlansPage.openPlan(reference);
 	planDetailsPage.verifyLoaded();
 	planDetailsPage.gateway2Link.click();
 	gateway2ApplicationPage.verifyLoaded();

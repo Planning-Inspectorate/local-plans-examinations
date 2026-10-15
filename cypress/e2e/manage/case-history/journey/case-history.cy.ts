@@ -104,7 +104,6 @@ describe('Case history', () => {
 		);
 
 		openCaseHistory();
-		// Known gap: Gateway 3 fields aren't in caseHistoryLabels; asserting only the prefix since raw Date.toString() is timezone dependent
-		caseHistoryPage.verifyHistoryEvent('Expected updated from');
+		caseHistoryPage.verifyHistoryEvent('Expected updated from', expectedHistoryUser());
 	});
 });

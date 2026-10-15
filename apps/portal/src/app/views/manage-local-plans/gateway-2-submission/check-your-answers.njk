@@ -3,6 +3,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "views/components/gateway-2-report-summary.njk" import gateway2ReportSummary %}
+{% from "views/components/gateway-2-workshop-summary.njk" import gateway2WorkshopSummary %}
 
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
@@ -41,6 +42,7 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}

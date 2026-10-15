@@ -1,16 +1,20 @@
 import { BasePage } from '../../../base-page.ts';
 import { workshopSetUp } from '../../../../fixtures/manage/gateway-2.ts';
 
-class WorkshopRemoteLinkPage extends BasePage {
-	constructor() {
-		super(/^\/case\/.+\/gateway-2\/set-up-workshop\/workshop\/gateway-2-remote-meeting-link-1$/);
+export class WorkshopRemoteLinkPage extends BasePage {
+	private readonly workshopNumber: number;
+
+	constructor(workshopNumber = 1) {
+		super(new RegExp(`^/case/.+/gateway-2/set-up-workshop/workshop/gateway-2-remote-meeting-link-${workshopNumber}$`));
+		this.workshopNumber = workshopNumber;
 	}
 
 	get venueRemoteLinkField() {
-		return cy.get(`[name="${workshopSetUp.workshopMeetingLink.fieldName}"]`);
+		return cy.get(`[name="remoteMeetingLink-${this.workshopNumber}"]`);
 	}
 
 	enterRemoteLink(link: string) {
+		this.verifyLoaded();
 		this.venueRemoteLinkField.clearAndWrite(link);
 		this.saveAndContinue();
 	}
