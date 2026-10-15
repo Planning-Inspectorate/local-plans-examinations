@@ -9,6 +9,17 @@ describe('FileUploadRequiredValidator', () => {
 		const validator = new FileUploadRequiredValidator('documents');
 
 		assert.equal(validator instanceof RequiredValidator, true);
+		assert.equal(validator.isRequired(), true);
+	});
+
+	it('can validate the page without being required for journey completion', async () => {
+		const validator = new FileUploadRequiredValidator('documents', undefined, { requiredForJourney: false });
+		const req = { body: { documents: encodeUploadedFiles([]) } };
+
+		await validator.validate().run(req);
+
+		assert.equal(validator.isRequired(), false);
+		assert.equal(validationResult(req).isEmpty(), false);
 	});
 
 	it('passes when the encoded uploaded files value contains at least one file', async () => {

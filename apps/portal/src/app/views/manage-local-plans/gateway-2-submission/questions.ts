@@ -1,5 +1,6 @@
 import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
+import { FileUploadRequiredValidator } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
 	SINGLE_FILE_UPLOAD_LIMIT,
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
@@ -192,7 +193,8 @@ export const GW2QUESTIONS = Object.fromEntries(
 			text: {
 				...fileUploadText,
 				...question.text
-			}
+			},
+			validators: [new FileUploadRequiredValidator(question.fieldName, undefined, { requiredForJourney: false })]
 		}
 	])
 );

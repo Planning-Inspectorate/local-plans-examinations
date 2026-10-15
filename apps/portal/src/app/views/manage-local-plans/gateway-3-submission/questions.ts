@@ -1,5 +1,6 @@
 import { createQuestions, questionClasses, type Question, StringValidator } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
+import { FileUploadRequiredValidator } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
 	SINGLE_FILE_UPLOAD_LIMIT,
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
@@ -278,7 +279,8 @@ function buildFileUploadQuestions(
 	questions: Record<
 		string,
 		{ title: string; question: string; fieldName: string; url: string; text: { caption: string } }
-	>
+	>,
+	requiredForJourney: boolean
 ) {
 	return Object.fromEntries(
 		Object.entries(questions).map(([key, questionDef]) => [
@@ -289,15 +291,16 @@ function buildFileUploadQuestions(
 				text: {
 					...fileUploadText,
 					...questionDef.text
-				}
+				},
+				validators: [new FileUploadRequiredValidator(questionDef.fieldName, undefined, { requiredForJourney })]
 			}
 		])
 	);
 }
 
-export const GW3_REQUIRED_FILE_UPLOAD_QUESTIONS = buildFileUploadQuestions(gateway3FileUploadQuestions);
+export const GW3_REQUIRED_FILE_UPLOAD_QUESTIONS = buildFileUploadQuestions(gateway3FileUploadQuestions, true);
 
-export const GW3_OPTIONAL_FILE_UPLOAD_QUESTIONS = buildFileUploadQuestions(gateway3OptionalFileUploadQuestions);
+export const GW3_OPTIONAL_FILE_UPLOAD_QUESTIONS = buildFileUploadQuestions(gateway3OptionalFileUploadQuestions, false);
 
 export const GW3_FILE_UPLOAD_QUESTIONS = {
 	...GW3_REQUIRED_FILE_UPLOAD_QUESTIONS,
