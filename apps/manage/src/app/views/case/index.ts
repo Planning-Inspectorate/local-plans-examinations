@@ -420,7 +420,6 @@ function registerCaseJourney(
 								documentSetFolderName: questionConfig.url,
 								request: req
 							});
-							console.log('existingDocuments', questionConfig.url);
 							await DocumentUtil.saveDocumentsOverride({
 								service,
 								request: req,
