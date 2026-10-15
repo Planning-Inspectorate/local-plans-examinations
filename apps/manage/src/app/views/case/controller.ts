@@ -129,6 +129,10 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
+			case COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID: {
+				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				break;
+			}
 			default: {
 				logger.info(`url - ${req.url} not found`);
 				return res.status(404).render('views/errors/404.njk');
@@ -968,6 +972,41 @@ export function preprocessQuestionProperties(
 					delete questions[gateway3Decision].actionLink;
 					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
 				}
+			}
+		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: {
+						include: {
+							pauses: true
+						}
+					}
+				},
+				where: {
+					reference
+				}
+			});
+			const pauseDetails = caseDetails?.examinationInfo?.pauses;
+			if (!pauseDetails) {
+				throw new Error(`No pause details found for case reference '${reference}'`);
+			}
+			const pauseQuestionPrefixes = ['examinationPauseStartDate', 'examinationPauseDetail', 'examinationPauseEndDate'];
+			pauseQuestionPrefixes.forEach((prefix) => {
+				const questionName = `${prefix}-1`;
+				questions[questionName].actionLink = {
+					href: `/case/${reference}/examination-pause/pause-examination/${questions[questionName].url}`,
+					text: 'View'
+				};
+			});
+			for (let i = 2; i <= pauseDetails.length; i++) {
+				pauseQuestionPrefixes.forEach((prefix) => {
+					const questionName = `${prefix}-${i}`;
+					questions[questionName].actionLink = {
+						href: `/case/${reference}/examination-pause/pause-examination/${questions[questionName].url}`,
+						text: 'View'
+					};
+				});
 			}
 		}
 		next();

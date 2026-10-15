@@ -50,7 +50,8 @@ import {
 	createGateway2WorkshopJourney,
 	createGateway3Journey,
 	createGateway3ReportJourney,
-	createExaminationJourney
+	createExaminationJourney,
+	createExaminationPauseJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -73,6 +74,7 @@ import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handl
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
+import { ExaminationPauseHandler } from './overview-data-handlers/examination-pause-handler.ts';
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
@@ -293,6 +295,15 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createExaminationJourney,
 		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
+		supportsFileUpload: false,
+		saveController: ExaminationSaveController
+	},
+	{
+		path: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		createJourney: createExaminationPauseJourney,
+		pageLoadHandler: ExaminationPauseHandler,
+		supportsManageList: false,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
 	}

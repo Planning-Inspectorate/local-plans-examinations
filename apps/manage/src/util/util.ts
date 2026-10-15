@@ -19,7 +19,7 @@ export function sortGateway3Submissions(
  * @param workshops The workshops to filter and sort
  * @returns The sorted workshops
  */
-export function sortGateway2Workshops(workshops: { createdDate: Date; [key: string]: any }[]) {
+export function sortByCreatedDate(workshops: { createdDate: Date; [key: string]: any }[]) {
 	return workshops.toSorted((a, b) => {
 		if (!(a.createdDate || b.createdDate)) return 0;
 		if (!a.createdDate) return 1;

@@ -107,6 +107,12 @@ export interface ExaminationInput extends SaveInput {
 	soundUnsoundDate?: Date;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
+	pauses: {
+		createdDate: Date;
+		startDate: Date;
+		details: string;
+		endDate: Date;
+	}[];
 }
 
 export interface Gateway3Input extends SaveInput {
