@@ -48,7 +48,8 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createGateway3Journey,
-	createExaminationJourney
+	createExaminationJourney,
+	createTimetableJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -64,6 +65,7 @@ import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
 import { loadLpaOptions } from '../../util/options-helper.ts';
 import { saveLastQuestionUrl, setBackLinkFromSession, setAsEditingFromCya } from '../create-a-case/index.ts';
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -270,6 +272,12 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
+	},
+	{
+		path: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		createJourney: createTimetableJourney,
+		saveController: TimetableSaveController
 	}
 ];
 
