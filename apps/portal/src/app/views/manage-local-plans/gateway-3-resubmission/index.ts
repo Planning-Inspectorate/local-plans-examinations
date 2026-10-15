@@ -1,0 +1,71 @@
+import type { PortalService } from '#service';
+import { type IRouter, Router as createRouter } from 'express';
+import lusca from 'lusca';
+import { buildGateway3ResubmissionMiddleware, handleMulterFileSizeError } from './controller.ts';
+
+export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
+	const router = createRouter({ mergeParams: true });
+
+	const {
+		loadCase,
+		guardResubmission,
+		getResubmissionPage,
+		postResubmission,
+		getUploadPage,
+		postUploadPage,
+		getPreviousSubmissionPage,
+		downloadDocument,
+		upload,
+		uploadDocuments,
+		deleteDocument
+	} = buildGateway3ResubmissionMiddleware(service);
+
+	// Resubmission landing page
+	router.get('/:planReference/gateway-3-resubmission', loadCase, guardResubmission, getResubmissionPage);
+
+	// Submit resubmission
+	router.post('/:planReference/gateway-3-resubmission', loadCase, guardResubmission, postResubmission);
+
+	// Previous submission detail page
+	router.get(
+		'/:planReference/gateway-3-resubmission/submission/:submissionNumber',
+		loadCase,
+		guardResubmission,
+		getPreviousSubmissionPage
+	);
+
+	// Download document
+	router.get('/:planReference/gateway-3-resubmission/download-document/:documentId', loadCase, downloadDocument);
+
+	// Upload documents page
+	router.get('/:planReference/gateway-3-resubmission/additional-documents', loadCase, guardResubmission, getUploadPage);
+
+	// Save and return from upload page
+	router.post(
+		'/:planReference/gateway-3-resubmission/additional-documents',
+		loadCase,
+		guardResubmission,
+		postUploadPage
+	);
+
+	// Upload files
+	router.post(
+		'/:planReference/gateway-3-resubmission/additional-documents/upload-documents',
+		loadCase,
+		guardResubmission,
+		upload.array('files[]'),
+		lusca.csrf(),
+		uploadDocuments,
+		handleMulterFileSizeError
+	);
+
+	// Delete uploaded file
+	router.post(
+		'/:planReference/gateway-3-resubmission/additional-documents/delete-document/:fileId',
+		loadCase,
+		guardResubmission,
+		deleteDocument
+	);
+
+	return router;
+}
