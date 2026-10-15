@@ -7,7 +7,7 @@ import {
 	VIRUS_CHECK_STATUS_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
-type RequestWithCurrentCase = Request & {
+export type RequestWithCurrentCase = Request & {
 	currentCase?: {
 		id?: string;
 	};
@@ -75,6 +75,122 @@ export class DocumentUtil {
 		);
 	}
 
+	public static async findExistingDocuments({
+		service,
+		request,
+		documentSetFolderName
+	}: {
+		service: Service;
+		request: Request;
+		documentSetFolderName: string;
+	}): Promise<DocumentRow[]> {
+		const caseId = (request as RequestWithCurrentCase).currentCase?.id;
+		if (!caseId) {
+			throw new Error('Cannot find documents without a loaded case');
+		}
+
+		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
+
+		const existingDocuments = await service.db.document.findMany({
+			where: {
+				caseId,
+				documentSetId
+			},
+			include: {
+				latestDocumentVersion: true
+			}
+		});
+
+		if (!existingDocuments?.length) {
+			return [];
+		}
+
+		return existingDocuments;
+	}
+
+	public static async saveDocumentsOverride({
+		service,
+		request,
+		documentSetFolderName,
+		temporaryUploadedFiles,
+		existingDocuments,
+		isTemp
+	}: {
+		service: Service;
+		request: Request;
+		documentSetFolderName: string;
+		temporaryUploadedFiles: UploadedFile[];
+		existingDocuments: DocumentRow[];
+		isTemp: boolean;
+	}) {
+		const caseId = (request as RequestWithCurrentCase).currentCase?.id;
+		if (!caseId) {
+			throw new Error('Cannot save documents without a loaded case');
+		}
+
+		const existingDocsNames = new Set(
+			existingDocuments.filter((existingDocument) => !existingDocument.isDeleted).map((file) => file.name)
+		);
+		const docsToUpload = temporaryUploadedFiles.filter((file) => !existingDocsNames.has(file.path ?? ''));
+
+		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
+		const tempDocs = docsToUpload.map((file) => ({ caseId, documentSetId, isTemp, file }));
+
+		await service.db.$transaction(async (tx) => {
+			for (const file of tempDocs) {
+				await this.createDocument(tx, file);
+			}
+		});
+	}
+
+	public static async restoreDocuments({
+		service,
+		temporaryUploadedFiles,
+		existingDocuments
+	}: {
+		service: Service;
+		temporaryUploadedFiles: UploadedFile[];
+		existingDocuments: DocumentRow[];
+	}) {
+		const uploadedFileIds = new Set(temporaryUploadedFiles.map((file) => file.id));
+		const documentsToRestore = existingDocuments.filter((document) => {
+			const fileId = this.getDocumentUploadedFileId(document);
+			return fileId && uploadedFileIds.has(fileId) && (document.isDeleted || document.latestDocumentVersion?.isDeleted);
+		});
+
+		for (const document of documentsToRestore) {
+			await service.db.$transaction(async (tx) => {
+				await this.restoreDocument(tx, document);
+			});
+		}
+	}
+
+	public static async deleteDocuments({
+		service,
+		temporaryUploadedFiles,
+		existingDocuments
+	}: {
+		service: Service;
+		temporaryUploadedFiles: UploadedFile[];
+		existingDocuments: DocumentRow[];
+	}) {
+		const docsToDelete = existingDocuments
+			.filter((document) => {
+				const fileId = this.getDocumentUploadedFileId(document);
+				if (fileId && temporaryUploadedFiles.some((file) => file.id === fileId)) {
+					return false;
+				}
+				return !document.isDeleted || !document.latestDocumentVersion?.isDeleted;
+			})
+			.map((document) => document.guid);
+
+		await service.db.$transaction(async (tx) => {
+			for (const document of docsToDelete) {
+				await this.softDeleteDocument(tx, document);
+			}
+		});
+	}
+
 	public static async loadTempUploadedDocuments(
 		service: Service,
 		caseId: string,
@@ -93,9 +209,19 @@ export class DocumentUtil {
 				createdAt: 'asc'
 			}
 		})) as DocumentRow[];
+
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
+	public static async cleanUpTempDocuments(service: Service, caseId: string, documentSetFolderName: string) {
+		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
+		const documents = await this.loadTempUploadedDocuments(service, caseId, documentSetId);
+		for (const document of documents) {
+			await service.db.$transaction(async (tx) => {
+				await this.softDeleteDocument(tx, document.id);
+			});
+		}
+	}
 	// Reads active documents from the database.
 	public static async loadUploadedDocuments(
 		service: Service,

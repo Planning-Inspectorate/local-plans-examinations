@@ -403,7 +403,20 @@ function registerCaseJourney(
 							};
 						},
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, true);
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								documentSetFolderName: questionConfig.url,
+								request: req
+							});
+							console.log('existingDocuments', questionConfig.url);
+							await DocumentUtil.saveDocumentsOverride({
+								service,
+								request: req,
+								documentSetFolderName: questionConfig.url,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments,
+								isTemp: true
+							});
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
@@ -452,8 +465,23 @@ function registerCaseJourney(
 						question: questionConfig,
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
-						onSubmit: async ({ uploadedFiles }) => {
+						onSubmit: async ({ req, uploadedFiles }) => {
 							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								documentSetFolderName: questionConfig.url,
+								request: req
+							});
+							await DocumentUtil.restoreDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments
+							});
+							await DocumentUtil.deleteDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments
+							});
 						},
 						redirect: (req, options) => redirectToChecks(req, path, options)
 					})

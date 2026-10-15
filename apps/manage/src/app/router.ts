@@ -14,6 +14,7 @@ import { caseRouter } from './views/case/index.ts';
 import { clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './views/create-a-case/journey.ts';
 import { COMMON_CONSTS } from './classes/common-consts.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFunction) {
 	// clearCreateCaseWhenLeaving
@@ -33,6 +34,28 @@ function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFuncti
 	next();
 }
 
+function clearTempDocuments(req: Request, _: Response, next: NextFunction, service: ManageService) {
+	const GateWayPages = /^\/case\/PLAN-[^/]+\/(overview|gateway-\d+|examination)\/?$/;
+
+	const session = req.session.id;
+	const hasTempDocuments = req.session?.hasTempDocuments?.[session];
+	if (hasTempDocuments) {
+		const isGatewayPages = hasTempDocuments && GateWayPages.test(req.path);
+
+		if (!isGatewayPages) {
+			next();
+		}
+		if (req.method === 'GET' && isGatewayPages) {
+			const caseId = hasTempDocuments.caseId as string;
+			const question = hasTempDocuments.question;
+			DocumentUtil.cleanUpTempDocuments(service, caseId, question).catch((e) => console.error(e));
+			next();
+		}
+	} else {
+		next();
+	}
+}
+
 /**
  * Main app router
  */
@@ -47,6 +70,7 @@ export function buildRouter(service: ManageService): IRouter {
 	// don't cache responses, note no-cache allows some caching, but with revalidation
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
+	router.use((req, res, next) => clearTempDocuments(req, res, next, service));
 
 	router.get('/unauthenticated', (req, res) => res.status(401).render('views/errors/401.njk'));
 

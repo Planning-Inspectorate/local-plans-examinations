@@ -191,12 +191,12 @@ function getCaseScopedSessionAnswers(req: Request, planReference: string): Recor
 	);
 }
 
-function fileUploaderCaseSessionKey(req: Request) {
+export function fileUploaderCaseSessionKey(req: Request) {
 	const questionConfig = getRouteFileUploadQuestion(req);
 	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
 }
 
-function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
+export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
 	return `${req.params.planReference}:${fieldName}`;
 }
 

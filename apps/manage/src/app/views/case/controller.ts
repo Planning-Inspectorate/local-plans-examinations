@@ -788,6 +788,7 @@ export const redirectToChecks = (req: Request, path: string, options?: FileUploa
 		: (session.fileUploader?.[sessionKey]?.uploadedFiles ?? undefined);
 
 	if (Object.keys(formFiles).length === 0) {
+		console.log('redirectToChecks no files uploaded');
 		return `/case/${plan}/${path}/${req.params.section}/${req.params.question}`;
 	}
 

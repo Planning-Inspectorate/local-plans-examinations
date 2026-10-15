@@ -22,6 +22,7 @@ export type FileUploaderControllerOptions = {
 		| 'maxFilesPerUpload'
 		| 'maxTotalUploadSizeBytes'
 		| 'validationMessages'
+		| 'url'
 	>;
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
@@ -141,6 +142,15 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 				uploadedFiles: nextUploadedFiles
 			}
 		};
+
+		session.hasTempDocuments = {
+			[request.session.id]: {
+				question: options.question.url,
+				caseId: nextUploadedFiles[0]?.metadata?.caseId as string,
+				hasUploadedFiles: true
+			}
+		};
+
 		delete session.errors;
 		delete session.errorSummary;
 		return redirectSafely(res, resolveRedirect(request, options));
@@ -253,6 +263,7 @@ function ensureFileUploaderSession(req: RequestWithFiles): FileUploaderSession {
 		throw new Error('File uploader requires session middleware');
 	}
 	req.session.fileUploader ??= {};
+	req.session.hasTempDocuments ??= {};
 	return req.session;
 }
 
@@ -328,6 +339,7 @@ function resolveRedirect(req: Request, options: FileUploaderControllerOptions): 
 export function createFileSubmitUploadController(options: FileUploaderControllerOptions): RequestHandler {
 	return async (request: Request, res: Response) => {
 		const uploadErrors: Record<string, string> = {
+			'gateway-1': 'Please upload your Gateway 1 report',
 			'gateway-2': 'Please upload your Gateway 2 report',
 			'gateway-3': 'Please upload your Gateway 3 report'
 		};
@@ -345,8 +357,15 @@ export function createFileSubmitUploadController(options: FileUploaderController
 		if (uploadedFiles?.length === 0) {
 			session.errors = { 'upload-form': { msg: `${uploadErrors[urlPathRoot]}` } };
 			session.errorSummary = [{ href: '#upload-form', text: `${uploadErrors[urlPathRoot]}` }];
+			console.log('createFileSubmitUploadController uploadedFiles', uploadedFiles, session);
 			return redirectSafely(res, resolveRedirect(request, options));
 		}
+
+		session.hasTempDocuments = {
+			[request.session.id]: {
+				hasUploadedFiles: false
+			}
+		};
 
 		await options.onSubmit?.({ req: request, uploadedFiles, fieldName: options.fieldName });
 		return redirectSafely(res, resolveRedirect(request, options));
