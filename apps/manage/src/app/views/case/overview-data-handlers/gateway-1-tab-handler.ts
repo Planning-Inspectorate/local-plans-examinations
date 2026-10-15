@@ -2,6 +2,7 @@ import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
+import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
 
 export class Gateway1TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -22,9 +23,12 @@ export class Gateway1TabHandler extends OverviewPageLoadHandler {
 			req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION &&
 			req.originalUrl.endsWith(req.params.question)
 		) {
-			// TODO need to check if there are documents - only redirect if there are documents
-			res.redirect(303, `${COMMON_CONSTS.SIGNED_SLA_QUESTION}/check`);
-			return;
+			const uploadedSignedSlas =
+				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'signedSla')]?.uploadedFiles ?? [];
+			if (uploadedSignedSlas.length > 0) {
+				res.redirect(303, `${COMMON_CONSTS.SIGNED_SLA_QUESTION}/check`);
+				return;
+			}
 		}
 		if (next) next();
 	}

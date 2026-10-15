@@ -4,10 +4,10 @@ import { workshopSetUp } from '../../../../fixtures/manage/gateway-2.ts';
 const workshopSetUpPath = (path: string) => new RegExp(`^/case/.+/gateway-2/set-up-workshop/workshop/${path}$`);
 
 export class WorkshopRemoteLinkKnownPage extends RadioQuestionPage {
-	constructor() {
+	constructor(workshopNumber = 1) {
 		super(
-			workshopSetUpPath(workshopSetUp.workshopMeetingLinkKnown.path),
-			workshopSetUp.workshopMeetingLinkKnown.fieldName,
+			workshopSetUpPath(`gateway-2-remote-meeting-link-known-${workshopNumber}`),
+			`remoteMeetingLinkKnown-${workshopNumber}`,
 			workshopSetUp.workshopMeetingLinkKnown.heading,
 			[
 				{ value: 'yes', text: 'Yes' },

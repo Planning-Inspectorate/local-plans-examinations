@@ -84,11 +84,17 @@ describe('Gateway 2 application page content after workshop fields filled in BO'
 	after(() => cy.task('clearDb'));
 
 	it('Shows all the workshop data that was entered in the BO and the updated ', { tags: ['regression'] }, () => {
+		const dateShared = new Date().toLocaleDateString('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+			timeZone: 'GMT'
+		});
 		openGateway2ApplicationPage('PLAN-D01');
 		gateway2ApplicationPage.verifyWorkshopData(gateway2ApplicationPage.workshopDetailsTable, [
 			['Workshop venue', 'Conference Hall, 12 Milton Lane, Westside, London, WW1 2RT'],
 			['Workshop date and time', '8 March 2027 at 11:44 to 15:45'],
-			['Workshop documents', 'test-document.docx', 'test-document.pdf', '(shared on 14 October 2026']
+			['Workshop documents', 'test-document.docx', 'test-document.pdf', `(shared on ${dateShared}`]
 		]);
 
 		cy.task('seedUpdateGateway2Workshop', {

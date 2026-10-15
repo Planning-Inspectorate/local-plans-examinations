@@ -32,16 +32,6 @@ export const gateway2DateAnswers = {
 		input: { day: '1', month: '7', year: '2026' },
 		display: '1 July 2026'
 	},
-	gateway2ValidDate: {
-		row: 'Gateway 2 valid date',
-		heading: 'What is the Gateway 2 valid date?',
-		section: 'gateway-2',
-		fieldName: 'validDate',
-		path: 'gateway-2-valid-date',
-		seedDate: '2026-08-01T12:00:00.000Z',
-		input: { day: '1', month: '8', year: '2026' },
-		display: '1 August 2026'
-	},
 	assessorDateOfAppointment: {
 		row: 'Appointed',
 		heading: 'When was the Gateway 2 assessor appointed?',
@@ -186,6 +176,27 @@ export const gateway2ExpectedAnswers = [
 	...Object.values(gateway2DateAnswers).map(({ row, display }) => ({ row, display })),
 	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display }
 ];
+
+export const seededWorkshopMeetingLink = {
+	input: 'https://example.com/first-workshop',
+	display: 'Https://example.com/first-workshop'
+};
+
+export const seededGateway2Workshop = {
+	createdDate: '2026-09-01T12:00:00.000Z',
+	workshopDate: '2026-10-01T12:00:00.000Z',
+	workshopTime: '09:00',
+	workshopExpectedDaysKnown: workshopSetUp.expectedNumberOfDays.inputRadio,
+	workshopExpectedDays: workshopSetUp.expectedNumberOfDays.inputDays,
+	workshopLocationType: 'hybrid',
+	workshopLocationKnown: workshopSetUp.workshopAddressKnown.inputRadio,
+	workshopVenueName: workshopSetUp.workshopVenueAddress.values.venueName,
+	workshopAddressLine: workshopSetUp.workshopVenueAddress.values.addressLine1,
+	workshopTownOrCity: workshopSetUp.workshopVenueAddress.values.townOrCity,
+	workshopPostcode: workshopSetUp.workshopVenueAddress.values.postcode,
+	remoteMeetingLinkKnown: 'yes',
+	remoteMeetingLink: seededWorkshopMeetingLink.input
+};
 
 export const workshopSetupExpectedAnswers = [
 	...Object.values(workshopSetUp).map(({ row, display }) => ({ row, display })),

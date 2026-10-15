@@ -1,9 +1,11 @@
 import { BasePage } from '../../../base-page.ts';
 import { workshopSetUp } from '../../../../fixtures/manage/gateway-2.ts';
 
-class WorkshopVenueAddressPage extends BasePage {
-	constructor() {
-		super(/^\/case\/.+\/gateway-2\/set-up-workshop\/workshop\/gateway-2-workshop-venue-address-1$/);
+export class WorkshopVenueAddressPage extends BasePage {
+	constructor(workshopNumber = 1) {
+		super(
+			new RegExp(`^/case/.+/gateway-2/set-up-workshop/workshop/gateway-2-workshop-venue-address-${workshopNumber}$`)
+		);
 	}
 
 	get venueNameField() {
@@ -20,6 +22,7 @@ class WorkshopVenueAddressPage extends BasePage {
 	}
 
 	enterAddressDetails(name: string, addressLine1: string, townOrCity: string, postcode: string) {
+		this.verifyLoaded();
 		this.venueNameField.clearAndWrite(name);
 		this.venueAddressLine1field.clearAndWrite(addressLine1);
 		this.venueTownOrCityField.clearAndWrite(townOrCity);

@@ -14,8 +14,8 @@
           <form method="post" action="/case/{{ reference }}/gateway-2/set-up-workshop/delete-{{ workshopIndex }}">
             {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
             <div class="govuk-button-group">
-              <button type="submit" class="govuk-button govuk-button--warning">Cancel workshop</button>
-              <a href= {{ baseUrl }} class="govuk-link">Do not cancel</a>
+              <button type="submit" class="govuk-button govuk-button--warning" data-cy="confirm-cancel-workshop">Cancel workshop</button>
+              <a href= {{ baseUrl }} class="govuk-link" data-cy="do-not-cancel-workshop">Do not cancel</a>
             </div>
           </form>
         </div>

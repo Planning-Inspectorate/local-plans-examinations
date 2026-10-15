@@ -4,10 +4,10 @@ import { workshopSetUp } from '../../../../fixtures/manage/gateway-2.ts';
 const workshopSetUpPath = (path: string) => new RegExp(`^/case/.+/gateway-2/set-up-workshop/workshop/${path}$`);
 
 export class WorkshopExpectedDaysPage extends RadioQuestionPage {
-	constructor() {
+	constructor(workshopNumber = 1) {
 		super(
-			workshopSetUpPath(workshopSetUp.expectedNumberOfDays.path),
-			workshopSetUp.expectedNumberOfDays.fieldNameRadio,
+			workshopSetUpPath(`gateway-2-workshop-expected-days-${workshopNumber}`),
+			`workshopExpectedDaysKnown-${workshopNumber}`,
 			workshopSetUp.expectedNumberOfDays.heading,
 			[
 				{ value: 'yes', text: 'Yes' },
@@ -16,12 +16,13 @@ export class WorkshopExpectedDaysPage extends RadioQuestionPage {
 		);
 	}
 	get numberOfDaysField() {
-		return cy.get(`[id="${workshopSetUp.expectedNumberOfDays.fieldNameDays}"]`);
+		return cy.get(`[id="${this.fieldName}_workshopExpectedDays"]`);
 	}
 	enterNumberOfDays(numberOfDays: string) {
 		this.numberOfDaysField.clearAndWrite(numberOfDays);
 	}
 	enterRadioAndNumberOfDays(value: string, numberOfDays: string) {
+		this.verifyLoaded();
 		this.answerOption(value).check({ force: true });
 		this.enterNumberOfDays(numberOfDays);
 		this.saveAndContinue();

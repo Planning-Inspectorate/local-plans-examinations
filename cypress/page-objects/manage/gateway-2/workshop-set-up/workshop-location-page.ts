@@ -4,10 +4,10 @@ import { workshopSetUp } from '../../../../fixtures/manage/gateway-2.ts';
 const workshopSetUpPath = (path: string) => new RegExp(`^/case/.+/gateway-2/set-up-workshop/workshop/${path}$`);
 
 export class WorkshopLocationPage extends RadioQuestionPage {
-	constructor() {
+	constructor(workshopNumber = 1) {
 		super(
-			workshopSetUpPath(workshopSetUp.workshopRemoteOrInPerson.path),
-			workshopSetUp.workshopRemoteOrInPerson.fieldNameRadio,
+			workshopSetUpPath(`gateway-2-location-type-${workshopNumber}`),
+			`workshopLocationType-${workshopNumber}`,
 			workshopSetUp.workshopRemoteOrInPerson.heading,
 			[
 				{ value: 'in-person', text: 'In-person' },

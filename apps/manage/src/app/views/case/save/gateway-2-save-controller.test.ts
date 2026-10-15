@@ -354,12 +354,17 @@ describe('test Gateway2SaveController', () => {
 		assert.equal(req.session.answers.workshops[0].workshopEndTime, undefined);
 	});
 
-	it('removes venue details when a workshop is changed to remote', async () => {
+	it('clears venue details when a hybrid workshop is changed to remote and submitted', async () => {
 		const workshopId = 1;
 		const mockService = createMockService();
 		const existingWorkshop = {
 			id: 'someWorkshop',
-			workshopLocationType: 'in-person',
+			createdDate: mockDate,
+			workshopDate: mockDate,
+			workshopTime: '09:00',
+			workshopLocationType: 'hybrid',
+			remoteMeetingLinkKnown: 'yes',
+			remoteMeetingLink: 'https://example.com/workshop',
 			workshopLocationKnown: 'yes',
 			workshopVenueName: 'Council offices',
 			workshopAddressLine: '1 High Street',
@@ -369,7 +374,7 @@ describe('test Gateway2SaveController', () => {
 		};
 		mockService.db.case.findUnique = mock.fn(async () => ({
 			id: 'someCaseId',
-			gateway2Info: { workshops: [existingWorkshop] }
+			gateway2Info: { workshops: [{ ...existingWorkshop }] }
 		}));
 		const question = `gateway-2-location-type-${workshopId}`;
 		const req = {
@@ -382,10 +387,30 @@ describe('test Gateway2SaveController', () => {
 			[`workshopLocationType-${workshopId}`]: 'remote'
 		});
 
-		assert.deepEqual(req.session.answers.workshops[0], {
-			id: 'someWorkshop',
-			workshopLocationType: 'remote'
+		assert.equal(req.session.answers.workshops[0].workshopLocationType, 'remote');
+		assert.equal(mockService.db.gateway2Info.upsert.mock.callCount(), 0);
+
+		req.params.question = undefined;
+		req.url = `/check-your-answers-${workshopId}`;
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave({});
+
+		assert.equal(mockService.db.gateway2Info.upsert.mock.callCount(), 1);
+		const savedWorkshop =
+			mockService.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshops.createMany.data[0];
+		const expectedWorkshop = {
+			...existingWorkshop,
+			workshopLocationType: 'remote',
+			workshopLocationKnown: null,
+			workshopVenueName: null,
+			workshopAddressLine: null,
+			workshopAddressLine2: null,
+			workshopTownOrCity: null,
+			workshopPostcode: null
+		};
+		Object.entries(expectedWorkshop).forEach(([field, value]) => {
+			assert.deepEqual(savedWorkshop[field], value, field);
 		});
+		assert.deepEqual(req.session.answers.workshops[0], expectedWorkshop);
 	});
 
 	it('removes venue details when the address is no longer known', async () => {
