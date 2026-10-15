@@ -34,8 +34,8 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('additional-documents-table');
 	}
 
-	get workshopPreferencesTable() {
-		return cy.getByData('workshop-preferences-table');
+	get workshopDetailsTable() {
+		return cy.getByData('gateway-2-workshop-section');
 	}
 
 	verifyLoaded() {
@@ -96,6 +96,16 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 
 	verifySubmitGateway2ButtonNotShown() {
 		this.submitGateway2AssessmentButton.should('not.exist');
+	}
+
+	verifyWorkshopData(table: Cypress.Chainable, rows: string[][]) {
+		table.within(() => {
+			rows.forEach(([key, ...values]) => {
+				const row = cy.contains('.govuk-summary-list__row', key);
+				row.should('be.visible');
+				values.forEach((value) => row.should('contain.text', value));
+			});
+		});
 	}
 }
 

@@ -354,12 +354,17 @@ describe('test Gateway2SaveController', () => {
 		assert.equal(req.session.answers.workshops[0].workshopEndTime, undefined);
 	});
 
-	it('removes venue details when a workshop is changed to remote', async () => {
+	it('clears venue details when a hybrid workshop is changed to remote and submitted', async () => {
 		const workshopId = 1;
 		const mockService = createMockService();
 		const existingWorkshop = {
 			id: 'someWorkshop',
-			workshopLocationType: 'in-person',
+			createdDate: mockDate,
+			workshopDate: mockDate,
+			workshopTime: '09:00',
+			workshopLocationType: 'hybrid',
+			remoteMeetingLinkKnown: 'yes',
+			remoteMeetingLink: 'https://example.com/workshop',
 			workshopLocationKnown: 'yes',
 			workshopVenueName: 'Council offices',
 			workshopAddressLine: '1 High Street',
@@ -369,7 +374,7 @@ describe('test Gateway2SaveController', () => {
 		};
 		mockService.db.case.findUnique = mock.fn(async () => ({
 			id: 'someCaseId',
-			gateway2Info: { workshops: [existingWorkshop] }
+			gateway2Info: { workshops: [{ ...existingWorkshop }] }
 		}));
 		const question = `gateway-2-location-type-${workshopId}`;
 		const req = {
@@ -382,10 +387,30 @@ describe('test Gateway2SaveController', () => {
 			[`workshopLocationType-${workshopId}`]: 'remote'
 		});
 
-		assert.deepEqual(req.session.answers.workshops[0], {
-			id: 'someWorkshop',
-			workshopLocationType: 'remote'
+		assert.equal(req.session.answers.workshops[0].workshopLocationType, 'remote');
+		assert.equal(mockService.db.gateway2Info.upsert.mock.callCount(), 0);
+
+		req.params.question = undefined;
+		req.url = `/check-your-answers-${workshopId}`;
+		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave({});
+
+		assert.equal(mockService.db.gateway2Info.upsert.mock.callCount(), 1);
+		const savedWorkshop =
+			mockService.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshops.createMany.data[0];
+		const expectedWorkshop = {
+			...existingWorkshop,
+			workshopLocationType: 'remote',
+			workshopLocationKnown: null,
+			workshopVenueName: null,
+			workshopAddressLine: null,
+			workshopAddressLine2: null,
+			workshopTownOrCity: null,
+			workshopPostcode: null
+		};
+		Object.entries(expectedWorkshop).forEach(([field, value]) => {
+			assert.deepEqual(savedWorkshop[field], value, field);
 		});
+		assert.deepEqual(req.session.answers.workshops[0], expectedWorkshop);
 	});
 
 	it('removes venue details when the address is no longer known', async () => {
@@ -540,6 +565,7 @@ describe('test Gateway2SaveController', () => {
 					createMany: {
 						data: [
 							{
+								id: 'someWorkshop',
 								createdDate: undefined,
 								remoteMeetingLink: 'b',
 								remoteMeetingLinkKnown: true,
@@ -565,6 +591,7 @@ describe('test Gateway2SaveController', () => {
 					createMany: {
 						data: [
 							{
+								id: 'someWorkshop',
 								createdDate: undefined,
 								remoteMeetingLink: 'b',
 								remoteMeetingLinkKnown: true,
@@ -593,5 +620,194 @@ describe('test Gateway2SaveController', () => {
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await gateway2Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+	});
+	it('Can delete a workshop and save to the database', async () => {
+		const mockService = createMockService();
+		const workshopA = {
+			id: 'someWorkshop-a',
+			createdDate: new Date(),
+			remoteMeetingLink: 'b',
+			remoteMeetingLinkKnown: true,
+			workshopAddressLine2: 'e',
+			workshopAddressLine: 'd',
+			workshopDate: mockDate,
+			workshopEndTime: '00:00',
+			workshopExpectedDays: 2,
+			workshopExpectedDaysKnown: true,
+			workshopLocationKnown: true,
+			workshopLocationType: 'a',
+			workshopPostcode: 'g',
+			workshopTime: '00:00',
+			workshopTownOrCity: 'f',
+			workshopVenueName: 'c'
+		};
+		const workshopC = {
+			id: 'someWorkshop-c',
+			createdDate: undefined,
+			remoteMeetingLink: 'x',
+			remoteMeetingLinkKnown: false,
+			workshopAddressLine2: 'y',
+			workshopAddressLine: 'z',
+			workshopDate: mockDate,
+			workshopEndTime: '01:00',
+			workshopExpectedDays: 3,
+			workshopExpectedDaysKnown: false,
+			workshopLocationKnown: false,
+			workshopLocationType: 'k',
+			workshopPostcode: 'm',
+			workshopTime: '00:05',
+			workshopTownOrCity: 'n',
+			workshopVenueName: 'p'
+		};
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: [
+					workshopA,
+					{
+						id: 'someWorkshop-b' // Attempt to delete this workshop
+					},
+					workshopC
+				]
+			},
+			gateway3Info: {
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						gateway3InfoId: undefined
+					}
+				]
+			}
+		}));
+		const workshopId = 2;
+		const req = {
+			params: {},
+			url: `/check-your-answers-${workshopId}`
+		} as Request<any, any, any, any, Record<string, any>>;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await gateway2Controller.deleteWorkshop(workshopId);
+		const modifiedWorkshops = [workshopA, workshopC];
+		const expectedQuery = {
+			create: {
+				caseId: 'someCaseId',
+				workshops: {
+					createMany: {
+						data: modifiedWorkshops
+					}
+				}
+			},
+			update: {
+				workshops: {
+					createMany: {
+						data: modifiedWorkshops
+					},
+					deleteMany: {}
+				}
+			},
+			where: {
+				caseId: 'someCaseId'
+			}
+		};
+		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+	});
+	it('Rejects when attempting to delete a workshop id greater than the number of workshops', async () => {
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: [
+					{
+						id: 'someWorkshop-a'
+					},
+					{
+						id: 'someWorkshop-b'
+					},
+					{
+						id: 'someWorkshop-c'
+					}
+				]
+			},
+			gateway3Info: {
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						gateway3InfoId: undefined
+					}
+				]
+			}
+		}));
+		const workshopId = 4;
+		const req = {
+			params: {},
+			url: `/check-your-answers-${workshopId}`
+		} as Request<any, any, any, any, Record<string, any>>;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway2Controller.deleteWorkshop(workshopId));
+	});
+	it('Rejects when attempting to delete a workshop with id less than 0', async () => {
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: [
+					{
+						id: 'someWorkshop-a'
+					},
+					{
+						id: 'someWorkshop-b'
+					},
+					{
+						id: 'someWorkshop-c'
+					}
+				]
+			},
+			gateway3Info: {
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						gateway3InfoId: undefined
+					}
+				]
+			}
+		}));
+		const workshopId = -1;
+		const req = {
+			params: {},
+			url: `/check-your-answers-${workshopId}`
+		} as Request<any, any, any, any, Record<string, any>>;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway2Controller.deleteWorkshop(workshopId));
+	});
+	it('Rejects when attempting to delete the first workshop when there are no workshops', async () => {
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			gateway2Info: {
+				workshops: []
+			},
+			gateway3Info: {
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						gateway3InfoId: undefined
+					}
+				]
+			}
+		}));
+		const workshopId = 1;
+		const req = {
+			params: {},
+			url: `/check-your-answers-${workshopId}`
+		} as Request<any, any, any, any, Record<string, any>>;
+		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
+		await assert.rejects(gateway2Controller.deleteWorkshop(workshopId));
 	});
 });

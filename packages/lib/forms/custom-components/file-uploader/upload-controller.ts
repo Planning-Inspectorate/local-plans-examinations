@@ -339,7 +339,7 @@ function resolveRedirect(req: Request, options: FileUploaderControllerOptions): 
 export function createFileSubmitUploadController(options: FileUploaderControllerOptions): RequestHandler {
 	return async (request: Request, res: Response) => {
 		const uploadErrors: Record<string, string> = {
-			'gateway-1': 'Please upload your Gateway 1 report',
+			'gateway-1': 'Upload at least one signed SLA document before continuing',
 			'gateway-2': 'Please upload your Gateway 2 report',
 			'gateway-3': 'Please upload your Gateway 3 report'
 		};

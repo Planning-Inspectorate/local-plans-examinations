@@ -7,20 +7,23 @@ export type TimeAnswer = {
 	minute: string;
 };
 const workshopSetUpPath = (path: string) => new RegExp(`^/case/.+/gateway-2/set-up-workshop/workshop/${path}$`);
-class WorkshopDateAndTimePage extends DateQuestionPage {
-	constructor() {
+export class WorkshopDateAndTimePage extends DateQuestionPage {
+	private readonly timeFieldName: string;
+
+	constructor(workshopNumber = 1) {
 		super(
-			workshopSetUpPath(workshopSetUp.workshopDateAndTime.path),
-			workshopSetUp.workshopDateAndTime.fieldNameDate,
+			workshopSetUpPath(`gateway-2-workshop-date-and-time-${workshopNumber}`),
+			`workshopDate-${workshopNumber}`,
 			workshopSetUp.workshopDateAndTime.heading
 		);
+		this.timeFieldName = `workshopTime-${workshopNumber}`;
 	}
 	get hourField() {
-		return cy.get(`[name="${workshopSetUp.workshopDateAndTime.fieldNameTime}_hour"]`);
+		return cy.get(`[name="${this.timeFieldName}_hour"]`);
 	}
 
 	get minuteField() {
-		return cy.get(`[name="${workshopSetUp.workshopDateAndTime.fieldNameTime}_minute"]`);
+		return cy.get(`[name="${this.timeFieldName}_minute"]`);
 	}
 
 	verifyLoaded() {
@@ -39,6 +42,7 @@ class WorkshopDateAndTimePage extends DateQuestionPage {
 	}
 
 	enterDateAndTime(date: DateAnswer, time: TimeAnswer) {
+		this.verifyLoaded();
 		this.enterTime(time);
 		this.enterDate(date);
 	}

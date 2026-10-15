@@ -146,6 +146,7 @@ function buildQuestion(overrides = {}) {
 		maxTotalUploadSizeLabel: '2KB',
 		formatSummaryValue: fileUploadBulletListFormat,
 		actionButtonVisibleInSummary: true,
+		type: 'file-uploader',
 		...overrides
 	});
 }

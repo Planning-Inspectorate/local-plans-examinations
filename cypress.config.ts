@@ -6,6 +6,7 @@ import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from '.
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
 import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
 import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway-3-submitted.ts';
+import { seedUpdateGateway2Workshop } from './packages/database/src/seed/seed-update-gateway-2-workshop.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 
 // prettier-ignore
@@ -94,6 +95,9 @@ export default defineConfig({
 				seedDb: seedCy,
 				seedGateway3DeclarationDocuments,
 				seedGateway3Submitted,
+				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
+					return seedUpdateGateway2Workshop({ reference, workshopData });
+				},
 				seedStaticData: async () => {
 					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;
