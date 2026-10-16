@@ -1,0 +1,20 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- AlterTable
+ALTER TABLE [dbo].[Gateway3Info] ADD [frontOfficeStatus] NVARCHAR(50) NOT NULL CONSTRAINT [Gateway3Info_frontOfficeStatus_df] DEFAULT 'CANNOT_START_YET';
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH
+

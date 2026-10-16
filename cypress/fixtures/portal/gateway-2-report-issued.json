@@ -4,6 +4,8 @@
 	"title": "GW2ReportIssued",
 	"currentStage": "Gateway 3",
 	"status": "Ready to start",
+	"status2": "In progress",
+	"status3": "Under review",
 	"leadLpa": "Romsey Town Council",
 	"linkedLpa": "Southampton City Council",
 	"dates": {
