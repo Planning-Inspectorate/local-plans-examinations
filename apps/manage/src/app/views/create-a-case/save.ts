@@ -65,7 +65,10 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		service.logger.info(answers, 'case created');
 		const lpaOptions = await loadLpaOptions(service, false);
 		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
-		const relevantLpaNames = uniqueLpaCodes.map((code) => lpaOptionsMap.get(code) ?? getOptionText('lpa', code));
+		const questions = await getQuestions(service, req.session);
+		const relevantLpaNames = uniqueLpaCodes.map(
+			(code) => lpaOptionsMap.get(code) ?? getOptionText('lpa', code, questions)
+		);
 
 		// Send email to LPA using Gov Notify
 		if (!service.notifyClient) {
