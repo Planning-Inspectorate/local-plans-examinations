@@ -33,7 +33,7 @@ const REPORT_DOCUMENT_GUID = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
 const REPORT_DOCUMENT_NAME = 'GW3Report-PLAN-001.pdf';
 const CREATE_PLACEHOLDER = process.env.CREATE_PLACEHOLDER !== 'false';
 
-async function run() {
+export async function run() {
 	const config = loadConfig();
 	const dbClient = newDatabaseClient(config.db);
 
