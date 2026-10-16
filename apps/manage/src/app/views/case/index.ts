@@ -71,6 +71,7 @@ import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handl
 import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
+import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -280,7 +281,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-3-report',
 		journeyId: COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID,
 		createJourney: createGateway3ReportJourney,
-		pageLoadHandler: Gateway3TabHandler,
+		pageLoadHandler: Gateway3SubmissionHandler,
 		supportsFileUpload: true,
 		saveController: Gateway3SaveController
 	},
