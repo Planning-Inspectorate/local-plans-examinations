@@ -65,7 +65,12 @@ import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
 import { loadLpaOptions } from '../../util/options-helper.ts';
-import { saveLastQuestionUrl, setBackLinkFromSession, setAsEditingFromCya } from '../create-a-case/index.ts';
+import {
+	saveLastQuestionUrl,
+	setBackLinkFromSession,
+	setAsEditingFromCya,
+	shouldReturnToCya
+} from '../create-a-case/index.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
 import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
