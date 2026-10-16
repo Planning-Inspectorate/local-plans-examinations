@@ -18,6 +18,8 @@ describe('Create a case - contact details', () => {
 			Object.values(data.lpa).forEach((lpa) => {
 				localPlanningAuthoritiesPage.addLocalPlanningAuthority(lpa);
 			});
+
+			localPlanningAuthoritiesPage.saveAndContinue();
 			contactDetailsPage.visitForNewItemAndSubmitForValidation(
 				'Enter a first name',
 				'Enter a last name',
