@@ -1,5 +1,6 @@
 import type { ManageService } from '#service';
 import { type IRouter, type NextFunction, type Response, type Request, Router as createRouter } from 'express';
+import type { ManageQuestionConfig } from './questions.ts';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -11,7 +12,7 @@ import {
 	validationErrorHandler
 } from '@planning-inspectorate/dynamic-forms';
 import { createJourney, JOURNEY_ID } from './journey.ts';
-import { getQuestions, questions } from './questions.ts';
+import { getQuestions } from './questions.ts';
 import { buildSaveController } from './save.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 
@@ -53,10 +54,12 @@ export function createACaseRoutes(service: ManageService): IRouter {
 		next();
 	});
 
+	let questions: Record<string, ManageQuestionConfig>;
+
 	// read answers from the session
 	const getJourneyResponse = buildGetJourneyResponseFromSession(JOURNEY_ID);
 	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-		await getQuestions(service, req);
+		questions = await getQuestions(service, req.session);
 		next();
 	});
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
