@@ -63,7 +63,10 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 				const newNote = String(req.body.note);
 				const currentUserAccount = authSession.getAccount(req.session);
 				const currentUserName = currentUserAccount?.name ?? 'Unknown';
-				if (newNote.length <= (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLength) {
+				if (
+					newNote.length >= (questions.caseNotes.validators[0] as StringValidator).minLength.minLength &&
+					newNote.length <= (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLength
+				) {
 					// Save the case note if below the max character count
 					await new OverviewSaveController(service, req, reference, String(req.params.section)).prepareAndSave({
 						notes: [
@@ -77,14 +80,23 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 					delete req.session.errors;
 					delete req.session.errorSummary;
 				} else {
-					const firstMessage = (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLengthMessage;
+					const message =
+						newNote.length == 0
+							? 'Please ensure your note contains text'
+							: (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLengthMessage;
 					// Add the error message to the session, which will be dealt when redirecting
-					req.session.errors = { notes: { msg: firstMessage } };
+					req.session.errors = { notes: { msg: message } };
 					req.session.errorSummary = (questions.caseNotes.validators as BaseValidator[]).map((elem) => ({
-						text: (elem as StringValidator).maxLength.maxLengthMessage,
+						text:
+							newNote.length > (elem as StringValidator).maxLength.maxLength
+								? (elem as StringValidator).maxLength.maxLengthMessage
+								: (elem as StringValidator).minLength.minLengthMessage,
 						href: '#notes'
 					}));
 				}
+				const caseReference = String(req.params.reference);
+				res.redirect(`/case/${caseReference}/overview`);
+				return;
 			}
 		}
 		if (req.method == 'GET') {

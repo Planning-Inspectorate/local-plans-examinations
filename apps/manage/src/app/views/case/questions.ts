@@ -1211,8 +1211,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [
 			new StringValidator({
 				minLength: {
-					minLength: 0,
-					minLengthMessage: ''
+					minLength: 1,
+					minLengthMessage: 'Please ensure your note contains text'
 				},
 				maxLength: {
 					maxLength: 500,
