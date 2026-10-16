@@ -75,14 +75,7 @@ export default class FileUploaderQuestion extends Question {
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
 		viewModel.currentUrl = options.customViewData?.currentUrl;
 		viewModel.errors = options.customViewData?.errors;
-
-		// Derive virus scan presentation data from the freshly loaded documents.
-		const { virusScanInProgress, errorSummary } = buildVirusScanViewData(
-			uploadedFiles,
-			options.customViewData?.errorSummary
-		);
-		viewModel.virusScanInProgress = virusScanInProgress;
-		viewModel.errorSummary = errorSummary;
+		viewModel.errorSummary = options.customViewData?.errorSummary;
 
 		return viewModel;
 	}

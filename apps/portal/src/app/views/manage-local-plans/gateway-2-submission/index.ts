@@ -40,6 +40,7 @@ import {
 	type FileUploaderSession,
 	type UploadedFile
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { buildVirusScanViewData } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
@@ -324,6 +325,24 @@ function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 				})
 			: []
 	);
+
+	setGateway2VirusScanViewLocals(res);
+}
+
+// Aggregates the virus scan status of every uploaded Gateway 2 document so the
+// check answers page can surface the "scan in progress" banner and any
+// "virus detected" messages at the top of the page.
+function setGateway2VirusScanViewLocals(res: Response) {
+	const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+	const answers = journeyResponse?.answers ?? {};
+	const uploadedFiles = gateway2FileUploadQuestionConfigs.flatMap((questionConfig) => {
+		const answer = answers[questionConfig.fieldName];
+		return Array.isArray(answer) ? (answer as UploadedFile[]) : [];
+	});
+
+	const { virusScanInProgress, errorSummary } = buildVirusScanViewData(uploadedFiles);
+	res.locals.virusScanInProgress = virusScanInProgress;
+	res.locals.virusErrorSummary = errorSummary;
 }
 
 function buildGateway2CheckAnswersList(): RequestHandler {

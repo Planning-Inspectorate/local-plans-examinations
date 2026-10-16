@@ -71,6 +71,45 @@ describe('Gateway 2 submission check answers page', () => {
 		assert.ok(html.includes('gateway-2-report.pdf'));
 		assert.ok(html.includes('(shared on 24 September 2026)'));
 	});
+
+	it('renders the virus scan in progress banner at the top when a scan is in progress', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			virusScanInProgress: true,
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="virus-scan-in-progress-banner"'));
+		assert.ok(html.includes('Virus scan in progress'));
+	});
+
+	it('renders the virus detected banner at the top when a file is affected', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			virusErrorSummary: [
+				{
+					text: 'bad.pdf contains a virus. Remove the file and upload a different version.',
+					href: '#uploaded-file-file-1'
+				}
+			],
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="virus-detected-banner"'));
+		assert.ok(html.includes('bad.pdf contains a virus'));
+	});
 });
 
 describe('Gateway 1 self assessment upload page', () => {
