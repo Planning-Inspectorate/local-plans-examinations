@@ -93,6 +93,7 @@ interface CaseJourneyConfig {
 	pageLoadHandler: new () => OverviewPageLoadHandler;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
+	redirectToTaskListOnSuccess?: boolean;
 	saveController?: new (...args: any[]) => SaveController;
 }
 
@@ -244,6 +245,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: OverviewTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
 		saveController: undefined
 	},
 	{
@@ -253,6 +255,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: Gateway1TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway1SaveController
 	},
 	{
@@ -262,6 +265,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
 	{
@@ -271,6 +275,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: false,
 		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
 	{
@@ -287,6 +292,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway3ReportJourney,
 		pageLoadHandler: Gateway3SubmissionHandler,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway3SaveController
 	},
 	{
@@ -296,6 +302,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
 		saveController: ExaminationSaveController
 	},
 	{
@@ -305,6 +312,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: ExaminationPauseHandler,
 		supportsManageList: false,
 		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: false,
 		saveController: ExaminationSaveController
 	}
 ];
@@ -350,7 +358,8 @@ function registerCaseJourney(
 	config: CaseJourneyConfig,
 	updateCase: ReturnType<typeof updateCaseField>
 ): void {
-	const { path, journeyId, createJourney, pageLoadHandler, supportsManageList, supportsFileUpload } = config;
+	const { path, journeyId, createJourney, pageLoadHandler, supportsManageList, supportsFileUpload, redirectToTaskListOnSuccess } =
+		config;
 
 	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		await getQuestions(service, req);
@@ -412,7 +421,7 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true)
+		buildSave(updateCase, redirectToTaskListOnSuccess)
 	);
 	if (supportsFileUpload) {
 		const fileUploaderStorage = () => service.createFileStorage(journeyId);

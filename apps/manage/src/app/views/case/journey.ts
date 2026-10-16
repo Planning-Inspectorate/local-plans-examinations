@@ -11,6 +11,7 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByCreatedDate } from '#util/util.ts';
+import { questionHasNonEmptyDateAnswer } from '../../util/journey-util.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -359,19 +360,17 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 export function createExaminationPauseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const examinationUrl = req.baseUrl + '/examination';
 	const examinationPauseUrl = req.baseUrl + '/examination-pause';
-	let pauseId = Number(String(req.url).split('-').at(-1));
-	if (isNaN(pauseId)) {
-		// temp to avoid a crash while debugging the routing
-		pauseId = 1;
-	}
+	const pauseId = Number(String(req.url).split('-').at(-1));
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
 		sections: [
 			new Section('Pause examination', 'pause-examination')
 				.addQuestion(questions[`examinationPauseStartDate-${pauseId}`])
-				.addQuestion(questions[`examinationPauseDetail-${pauseId}`])
-				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`])
+				.addQuestion(questions[`examinationPauseDetail-${pauseId}`]) 
+				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`]).withCondition(
+					(response) => questionHasNonEmptyDateAnswer(response, questions[`examinationPauseDetail-${pauseId}`])
+				)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
