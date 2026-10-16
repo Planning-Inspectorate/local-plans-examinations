@@ -444,6 +444,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'examination/set-up-hearing',
 		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
 		createJourney: createExaminationHearingJourney,
+		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
