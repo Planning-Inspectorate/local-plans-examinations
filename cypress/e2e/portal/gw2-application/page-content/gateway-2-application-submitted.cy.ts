@@ -18,7 +18,7 @@ describe('Gateway 2 application page content after submission', () => {
 		portalLogin();
 	});
 
-	after(() => cy.task('clearDb'));
+	afterEach(() => cy.task('clearDb'));
 
 	it('Shows the Gateway 2 submission data has been recorded correctly', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {

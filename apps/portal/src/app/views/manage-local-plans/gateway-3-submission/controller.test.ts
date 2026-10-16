@@ -16,12 +16,13 @@ import {
 	setAsEditingFromCya,
 	setGateway3ViewData,
 	setGateway3ViewLocals,
-	syncGateway3UploadAnswer
+	syncGateway3UploadAnswer,
+	buildSaveDataToCase
 } from './controller.ts';
 import type { PortalService } from '#service';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
-import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 function buildMockDocumentSets() {
 	const folderNames = [
@@ -139,6 +140,29 @@ describe('setGateway3ViewLocals', () => {
 		assert.deepStrictEqual(locals.statusTag, {
 			label: 'Under review',
 			class: 'govuk-tag govuk-tag--yellow'
+		});
+	});
+
+	it('sets the In progress status tag when the persisted Gateway 3 status is IN_PROGRESS', () => {
+		const req = {
+			currentCase: {
+				planTitle: 'Test Local Plan',
+				gateway3Info: {
+					expectedDate: new Date('2026-06-12T00:00:00.000Z'),
+					frontOfficeStatus: GATEWAY_3_STATUS.IN_PROGRESS
+				}
+			},
+			params: { planReference: 'PLAN-003' }
+		} as any;
+
+		const locals: Record<string, unknown> = {};
+		const res = { locals } as unknown as Response;
+
+		setGateway3ViewLocals(req as unknown as Request, res);
+
+		assert.deepStrictEqual(locals.statusTag, {
+			label: 'In progress',
+			class: 'govuk-tag govuk-tag--blue'
 		});
 	});
 
@@ -561,6 +585,136 @@ describe('redirectAfterCaseQuestionEdit', () => {
 		const saveDataFn = async () => {};
 		const middleware = redirectAfterCaseQuestionEdit(saveDataFn);
 		assert.strictEqual(typeof middleware, 'function');
+	});
+});
+
+describe('buildSaveDataToCase', () => {
+	function buildStatusService() {
+		const update = mock.fn(async () => ({}));
+		const service = {
+			db: {
+				gateway3Info: { update }
+			},
+			logger: { error: mock.fn() }
+		} as unknown as PortalService;
+		return { service, update };
+	}
+
+	function buildSaveParams(answers: Record<string, unknown>, gateway3Info?: Record<string, unknown>) {
+		return {
+			req: {
+				params: { planReference: 'PLAN-001' },
+				session: {},
+				currentCase: { id: 'case-1', gateway3Info }
+			},
+			res: {},
+			journeyId: 'gateway-3-submission',
+			referenceId: 'case-1',
+			isManageListItem: false,
+			data: { answers }
+		} as any;
+	}
+
+	function getUpdateData(update: ReturnType<typeof mock.fn>) {
+		return update.mock.calls.map((call) => (call.arguments[0] as { data: Record<string, unknown> }).data);
+	}
+
+	function statusUpdates(update: ReturnType<typeof mock.fn>) {
+		return getUpdateData(update).filter((data) => 'frontOfficeStatus' in data);
+	}
+
+	function websiteUpdates(update: ReturnType<typeof mock.fn>) {
+		return getUpdateData(update).filter((data) => 'examinationWebsiteUrl' in data);
+	}
+
+	it('persists the examination website URL to the database', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams(
+				{ examinationWebsite: 'https://example.com' },
+				{ frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET }
+			)
+		);
+
+		assert.deepStrictEqual(websiteUpdates(update), [{ examinationWebsiteUrl: 'https://example.com' }]);
+	});
+
+	it('clears the examination website URL in the database when the answer is removed', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(buildSaveParams({ examinationWebsite: '' }, { frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET }));
+
+		assert.deepStrictEqual(websiteUpdates(update), [{ examinationWebsiteUrl: null }]);
+	});
+
+	it('does not persist the examination website URL when the question is not part of the answers', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams(
+				{ proposedLocalPlan: [{ fileName: 'plan.pdf' }] },
+				{ frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET }
+			)
+		);
+
+		assert.deepStrictEqual(websiteUpdates(update), []);
+	});
+
+	it('sets the Gateway 3 status to IN_PROGRESS when a non-empty answer is saved', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams(
+				{ examinationWebsite: 'https://example.com' },
+				{ frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET }
+			)
+		);
+
+		assert.deepStrictEqual(statusUpdates(update), [{ frontOfficeStatus: GATEWAY_3_STATUS.IN_PROGRESS }]);
+	});
+
+	it('does not change the status when an answer is cleared/removed', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(buildSaveParams({ examinationWebsite: '' }, { frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET }));
+
+		assert.deepStrictEqual(statusUpdates(update), []);
+	});
+
+	it('does not update the status when it is already IN_PROGRESS', async () => {
+		const { service, update } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+
+		await save(
+			buildSaveParams(
+				{ examinationWebsite: 'https://example.com' },
+				{ frontOfficeStatus: GATEWAY_3_STATUS.IN_PROGRESS }
+			)
+		);
+
+		assert.deepStrictEqual(statusUpdates(update), []);
+	});
+
+	it('still saves the answer to the session when the answer is non-empty', async () => {
+		const { service } = buildStatusService();
+		const save = buildSaveDataToCase(service);
+		const params = buildSaveParams(
+			{ examinationWebsite: 'https://example.com' },
+			{ frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET }
+		);
+
+		await save(params);
+
+		assert.strictEqual(
+			params.req.session.forms['PLAN-001']['gateway-3-submission'].examinationWebsite,
+			'https://example.com'
+		);
 	});
 });
 
