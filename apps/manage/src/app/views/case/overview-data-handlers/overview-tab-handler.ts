@@ -60,7 +60,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 		res.locals.currentSection = (req.query?.section as string) ?? '';
 		if (String(req.url).includes('case-details/case-notes')) {
 			if (req.method == 'POST') {
-				const newNote = String(req.body.note);
+				const newNote = String(req.body.note).trim();
 				const currentUserAccount = authSession.getAccount(req.session);
 				const currentUserName = currentUserAccount?.name ?? 'Unknown';
 				if (
