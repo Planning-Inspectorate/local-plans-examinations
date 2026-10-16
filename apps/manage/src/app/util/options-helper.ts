@@ -91,7 +91,9 @@ export async function loadLpaOptions(service: ManageService, addEmptyValue: bool
 		return retrieveDefaultLpaOptions();
 	}
 
-	const authorities = await db.authority.findMany({});
+	const authorities = await db.authority.findMany({
+		orderBy: { name: 'asc' }
+	});
 
 	if (authorities.length > 0) {
 		if (addEmptyValue) {
