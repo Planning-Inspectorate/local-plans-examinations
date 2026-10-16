@@ -4,7 +4,8 @@ import {
 	RequiredValidator,
 	questionClasses,
 	DateValidator,
-	type BaseQuestionProps
+	type BaseQuestionProps,
+	StringValidator
 } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
@@ -1197,6 +1198,28 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		title: 'Approved for CIL date',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'approved-for-cil-date' }
+	},
+	caseNotes: {
+		type: CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT,
+		question: 'Case notes',
+		fieldName: 'notes',
+		title: 'Case notes',
+		titleSingular: 'Case note',
+		url: 'case-notes',
+		showManageListQuestions: true,
+		showAnswersInSummary: true,
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 0,
+					minLengthMessage: ''
+				},
+				maxLength: {
+					maxLength: 500,
+					maxLengthMessage: 'Please ensure your note contains up to 500 characters'
+				}
+			})
+		]
 	},
 	...gateway3Questions
 };

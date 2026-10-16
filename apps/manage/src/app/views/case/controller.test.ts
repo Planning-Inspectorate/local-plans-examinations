@@ -874,6 +874,7 @@ describe('buildGetJourneyMiddleware', () => {
 		const ctx = createMiddlewareContext({
 			url: '/overview'
 		});
+		const noteCreatedDate = new Date();
 
 		const overviewData = {
 			reference: REFERENCE,
@@ -909,6 +910,13 @@ describe('buildGetJourneyMiddleware', () => {
 					qaInspector1: 'Inspector Goole',
 					qaInspector2: 'Inspector Goolish',
 					qaInspector3: 'Inspector Goolishish'
+				}
+			],
+			notes: [
+				{
+					text: 'some note',
+					createdTime: noteCreatedDate,
+					createdBy: 'Some person'
 				}
 			]
 		};
@@ -963,7 +971,8 @@ describe('buildGetJourneyMiddleware', () => {
 						qaInspector2: true,
 						qaInspector3: true
 					}
-				}
+				},
+				notes: true
 			}
 		});
 
@@ -1004,6 +1013,13 @@ describe('buildGetJourneyMiddleware', () => {
 				qaInspector1: 'Inspector Goole',
 				qaInspector2: 'Inspector Goolish',
 				qaInspector3: 'Inspector Goolishish'
+			}
+		]);
+		assert.deepEqual(ctx.res.locals.journeyResponse.answers.notes, [
+			{
+				text: 'some note',
+				createdTime: noteCreatedDate,
+				createdBy: 'Some person'
 			}
 		]);
 

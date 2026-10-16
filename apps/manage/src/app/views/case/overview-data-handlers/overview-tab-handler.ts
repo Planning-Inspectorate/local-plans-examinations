@@ -1,8 +1,11 @@
+import type { BaseValidator, StringValidator } from '@planning-inspectorate/dynamic-forms';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { questions } from '../questions.ts';
 import { loadCaseOfficerOptions, loadInspectorOptions, loadLpaOptions } from '../../../util/options-helper.ts';
 import { getOverviewData } from './overview-page-helper.ts';
+import { OverviewSaveController } from '../save/overview-save-controller.ts';
+import * as authSession from '@planning-inspectorate/core/auth';
 
 type OverviewData = NonNullable<Awaited<ReturnType<typeof getOverviewData>>>;
 
@@ -55,6 +58,50 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 		res.locals.currentCase = overviewData;
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
 		res.locals.currentSection = (req.query?.section as string) ?? '';
+		if (String(req.url).includes('case-details/case-notes')) {
+			if (req.method == 'POST') {
+				const newNote = String(req.body.note);
+				const currentUserAccount = authSession.getAccount(req.session);
+				const currentUserName = currentUserAccount?.name ?? 'Unknown';
+				if (newNote.length <= (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLength) {
+					// Save the case note if below the max character count
+					await new OverviewSaveController(service, req, reference, String(req.params.section)).prepareAndSave({
+						notes: [
+							{
+								text: newNote,
+								createdTime: new Date(),
+								createdBy: currentUserName
+							}
+						]
+					});
+					delete req.session.errors;
+					delete req.session.errorSummary;
+				} else {
+					const firstMessage = (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLengthMessage;
+					// Add the error message to the session, which will be dealt when redirecting
+					req.session.errors = { notes: { msg: firstMessage } };
+					req.session.errorSummary = (questions.caseNotes.validators as BaseValidator[]).map((elem) => ({
+						text: (elem as StringValidator).maxLength.maxLengthMessage,
+						href: '#notes'
+					}));
+				}
+			}
+		}
+		if (req.method == 'GET') {
+			// If errors are found in the session (from the POST request)
+			if (req.session.errors && req.session.errorSummary) {
+				// Add errors to the journey response (this is for case notes only) - these are attcehed to the form in the question
+				(journeyResponse as any).error = {
+					errors: req.session.errors,
+					errorSummary: req.session.errorSummary
+				};
+				// Add errors to the top of the page
+				res.locals.errors = req.session.errors;
+				res.locals.errorSummary = req.session.errorSummary;
+				delete req.session.errors;
+				delete req.session.errorSummary;
+			}
+		}
 
 		if (next) next();
 	}
