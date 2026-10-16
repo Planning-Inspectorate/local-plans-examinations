@@ -9,42 +9,28 @@
 
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
-{# Temporary placeholder rows. Remove these macros when the remaining Gateway 2 items are converted to dynamic components. #}
-{% macro placeholderRow(text, dataCy) %}
-    <tr class="govuk-table__row">
-        <td class="govuk-table__cell">{{ text }}</td>
-        <td class="govuk-table__cell">Not added</td>
-        <td class="govuk-table__cell" style="text-align: right">
-            <a href="#" class="govuk-link" data-cy="{{ dataCy }}">Add</a>
-        </td>
-    </tr>
-{% endmacro %}
-
-{% macro placeholderTable(heading, id, rows) %}
-    <div class="govuk-!-margin-bottom-8" data-cy="{{ id }}-section">
-        <h2 class="govuk-heading-m" id="{{ id }}">{{ heading }}</h2>
-
-        <table class="govuk-table" data-cy="{{ id }}-table">
-            <thead class="govuk-table__head">
-                <tr class="govuk-table__row">
-                    <th scope="col" class="govuk-table__header govuk-visually-hidden">Document</th>
-                    <th scope="col" class="govuk-table__header govuk-visually-hidden">Status</th>
-                    <th scope="col" class="govuk-table__header govuk-visually-hidden">Action</th>
-                </tr>
-            </thead>
-            <tbody class="govuk-table__body">
-                {% for row in rows %}
-                    {{ placeholderRow(row.text, row.dataCy) }}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endmacro %}
+{% block beforeContent %}
+<div class="govuk-grid-column-two-thirds pins-app-grid-column--80 govuk-!-margin-top-4">
+    {% if virusErrorSummary and virusErrorSummary.length %}
+        {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: virusErrorSummary,
+            attributes: { "data-cy": "virus-detected-banner" }
+        }) }}
+    {% endif %}
+    {% if virusScanInProgress %}
+        {{ govukNotificationBanner({
+            titleText: "Important",
+            html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+            attributes: { "data-cy": "virus-scan-in-progress-banner" }
+        }) }}
+    {% endif %}
+</div>
+{% endblock %}
 
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
-        {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}
