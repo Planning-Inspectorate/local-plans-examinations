@@ -288,6 +288,31 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 	};
 }
 
+export function buildRemoveDocumentConfirmMiddleware(journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const section = getParam(req.params.section);
+		const questionUrl = getParam(req.params.question);
+		const fileId = getParam(req.params.fileId);
+		const caseReference = getParam(req.params.reference);
+		const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == questionUrl);
+		const file = questionConfig
+			? req.session.fileUploader?.[
+					fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)
+				]?.uploadedFiles?.find((uploadedFile: { id: string }) => uploadedFile.id === fileId)
+			: undefined;
+		if (!questionConfig || !file) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+		const journeyUrl = `/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`;
+		res.render('views/layouts/remove-uploaded-document', {
+			caseReference,
+			fileName: file.fileName,
+			formAction: `${journeyUrl}/${encodeURIComponent(section)}/${encodeURIComponent(questionUrl)}/delete-document/${encodeURIComponent(fileId)}`,
+			backLink: `${journeyUrl}/${encodeURIComponent(section)}/${COMMON_CONSTS.EXAMINATION_REPORT_MANAGE_QUESTION}`
+		});
+	};
+}
+
 /** Adds the case section navigation to locals for the case routes. */
 export function addCaseNavigation(): AsyncRequestHandler {
 	return async (req, res, next) => {
@@ -382,13 +407,12 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	}
 
 	if (question == 'isSound') {
-		if (typeof value === 'boolean') {
-			return value ? 'Sound' : 'Unsound';
-		}
-		if (typeof value === 'string') {
-			return value == 'yes' ? 'Sound' : 'Unsound';
-		}
-		return value;
+		const planOutcomeLabels: Record<string, string> = {
+			sound: 'Sound',
+			'sound-with-modifications': 'Sound with modifications',
+			unsound: 'Unsound'
+		};
+		return typeof value === 'string' ? (planOutcomeLabels[value] ?? value) : value;
 	}
 
 	if (typeof value === 'boolean') {
@@ -627,6 +651,60 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 	};
 }
 
+export function issueExaminationReport(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+
+		const existingExaminationDetails = await service.db.examinationInfo.findUnique({
+			select: { soundUnsoundDate: true },
+			where: { caseId }
+		});
+		if (existingExaminationDetails?.soundUnsoundDate && req.query.returnTo !== 'check') {
+			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
+				examinationReport: 'Examination report document added'
+			});
+			req.session.alertMessage = 'Document added and notification sent';
+			req.session.alertMessageStatus = 'success';
+
+			// Go back to Manage docs page after document addition
+			res.redirect(
+				`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/outcome/${questions.examinationReportManage.url}`
+			);
+			return;
+		}
+
+		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
+		if (!existingExaminationDetails?.soundUnsoundDate) {
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				soundUnsoundDate: reportIssuedDate
+			});
+		}
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				examinationReport: null // Will be overridden by overrideLabels
+			},
+			{},
+			caseReference,
+			currentUser,
+			{
+				examinationReport: `Examination report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
+			}
+		);
+		req.session.alertMessage = 'Final report and supporting documents saved and notification sent';
+		req.session.alertMessageStatus = 'success';
+
+		// After first time exam doc upload, go back to examination tab
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		return;
+	};
+}
+
 export function issueGateway2WorkshopDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
@@ -807,6 +885,10 @@ export function redirectToFileUploaderQuestion(req: Request) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
+	if (req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION && req.params.fileId) {
+		// Removing a document returns to the Manage page
+		return `${req.baseUrl}${planPath}${journey}${req.params.section}/${COMMON_CONSTS.EXAMINATION_REPORT_MANAGE_QUESTION}`;
+	}
 	return `${req.baseUrl}${planPath}${journey}${req.params.section}/${req.params.question}`;
 }
 

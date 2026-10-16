@@ -44,7 +44,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
 	{ id: '16', folderName: 'gateway-3-document-1' },
-	{ id: '17', folderName: 'gateway-2-workshop-documents' }
+	{ id: '17', folderName: 'gateway-2-workshop-documents' },
+	{ id: '18', folderName: 'examination-report' }
 ];
 
 function createService(): any {
@@ -741,7 +742,7 @@ describe('updateCaseHistory', () => {
 				planPauseStartDate: new Date('2026-01-06T12:00:00.000Z'),
 				planPauseEndDate: new Date('2026-01-07T12:00:00.000Z'),
 				withdrawnDate: new Date('2026-01-08T12:00:00.000Z'),
-				isSound: false,
+				isSound: 'unsound',
 				soundUnsoundDate: new Date('2026-01-09T12:00:00.000Z'),
 				adoptionDate: new Date('2026-01-10T12:00:00.000Z'),
 				approvedForCILDate: new Date('2026-01-11T12:00:00.000Z')
@@ -755,8 +756,8 @@ describe('updateCaseHistory', () => {
 		assert.equal(entries[0].event, 'Plan pause date updated to 6 January 2026');
 		assert.equal(entries[1].event, 'Plan pause end date updated to 7 January 2026');
 		assert.equal(entries[2].event, 'Withdrawn date updated to 8 January 2026');
-		assert.equal(entries[3].event, 'Sound / unsound updated to Unsound');
-		assert.equal(entries[4].event, 'Sound / unsound date updated to 9 January 2026');
+		assert.equal(entries[3].event, 'Outcome updated to Unsound');
+		assert.equal(entries[4].event, 'Report issued updated to 9 January 2026');
 		assert.equal(entries[5].event, 'Adoption date updated to 10 January 2026');
 		assert.equal(entries[6].event, 'Approved for CIL date updated to 11 January 2026');
 	});

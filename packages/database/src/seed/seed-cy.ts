@@ -147,7 +147,7 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 						planPauseStartDate: new Date('2026-12-04T12:00:00.000Z'),
 						planPauseEndDate: new Date('2026-12-05T12:00:00.000Z'),
 						withdrawnDate: new Date('2026-12-06T12:00:00.000Z'),
-						isSound: true,
+						isSound: 'sound',
 						soundUnsoundDate: new Date('2026-12-07T12:00:00.000Z'),
 						adoptionDate: new Date('2026-12-08T12:00:00.000Z'),
 						approvedForCILDate: new Date('2026-12-09T12:00:00.000Z')

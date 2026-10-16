@@ -3,6 +3,7 @@ import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
 import { Gateway2WorkshopDocumentsSubmissionCheck } from './gateway-2-workshop-documents-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
+import { ExaminationReportSubmissionCheck } from './examination-report-submission-check.ts';
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -15,6 +16,9 @@ const MockService = {
 			findUnique: mock.fn<() => {}>()
 		},
 		gateway3Info: {
+			findUnique: mock.fn<() => {}>()
+		},
+		examinationInfo: {
 			findUnique: mock.fn<() => {}>()
 		}
 	}
@@ -151,6 +155,84 @@ describe('Test SignedSLASubmissionCheck', () => {
 				]
 			}
 		);
+	});
+});
+
+describe('Test ExaminationReportSubmissionCheck', () => {
+	const args = (uploadedFiles: unknown[]) => [
+		'123456',
+		'PLAN-12345',
+		'examination',
+		'outcome',
+		'examination-report',
+		'/PLAN-12345/examination/outcome/examination-report/check',
+		MockService,
+		uploadedFiles
+	];
+
+	it('shows the plan outcome and date for the first report', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: null,
+			isSound: 'sound-with-modifications'
+		}));
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			...(args([{ dateCreated: new Date(2026, 0, 1) }]) as [string, string, string, string, string, string, any, any])
+		);
+
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound with modifications'],
+				['Date', '1 January 2026']
+			]
+		);
+		assert.deepEqual(data.additionalFields[1], {
+			name: 'Date',
+			value: '1 January 2026',
+			url: 'sound-unsound-date',
+			query: 'returnTo=check'
+		});
+	});
+
+	it('keeps the initial check page after its date is changed', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date(2026, 0, 3),
+			isSound: 'sound'
+		}));
+		const checkPageUrl = '/PLAN-12345/examination/outcome/examination-report/check?returnTo=check';
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			'123456',
+			'PLAN-12345',
+			'examination',
+			'outcome',
+			'examination-report',
+			checkPageUrl,
+			MockService as any,
+			[{ dateCreated: new Date(2026, 0, 1) }]
+		);
+
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound'],
+				['Date', '3 January 2026']
+			]
+		);
+	});
+
+	it('omits the plan outcome and date once the report has been issued', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date(2026, 0, 1),
+			isSound: 'sound'
+		}));
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			...(args([{ dateCreated: new Date(2026, 0, 2) }]) as [string, string, string, string, string, string, any, any])
+		);
+
+		assert.deepEqual(data.additionalFields, []);
 	});
 });
 
