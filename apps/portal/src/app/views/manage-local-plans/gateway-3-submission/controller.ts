@@ -40,6 +40,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
+import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
 import {
@@ -228,13 +229,87 @@ export function syncGateway3UploadAnswer(req: Request, fieldName: string, upload
 }
 
 // ---------------------------------------------------------------------------
+// Gateway 3 status helpers
+// ---------------------------------------------------------------------------
+
+// Field name of the examination website question, which maps to the Gateway3Info.examinationWebsiteUrl database column.
+const EXAMINATION_WEBSITE_FIELD = 'examinationWebsite';
+async function saveGateway3AnswersToDatabase(service: PortalService, req: Request, answers: Record<string, unknown>) {
+	const request = req as Gateway3Request;
+	const caseId = request.currentCase?.id;
+	if (!caseId || !Object.prototype.hasOwnProperty.call(answers, EXAMINATION_WEBSITE_FIELD)) {
+		return;
+	}
+
+	const rawValue = answers[EXAMINATION_WEBSITE_FIELD];
+	const examinationWebsiteUrl = typeof rawValue === 'string' && rawValue.trim().length > 0 ? rawValue.trim() : null;
+
+	try {
+		await service.db.gateway3Info.update({
+			where: { caseId },
+			data: { examinationWebsiteUrl }
+		});
+		if (request.currentCase?.gateway3Info) {
+			request.currentCase.gateway3Info.examinationWebsiteUrl = examinationWebsiteUrl;
+		}
+	} catch (error) {
+		service.logger.error(
+			{ error, caseId, planReference: getRoutePlanReference(req) },
+			'Failed to save Gateway 3 answers to the database'
+		);
+	}
+}
+
+async function markGateway3InProgress(service: PortalService, req: Request) {
+	const request = req as Gateway3Request;
+	const caseId = request.currentCase?.id;
+	if (!caseId || request.currentCase?.gateway3Info?.frontOfficeStatus === GATEWAY_3_STATUS.IN_PROGRESS) {
+		return;
+	}
+
+	try {
+		await service.db.gateway3Info.update({
+			where: { caseId },
+			data: { frontOfficeStatus: GATEWAY_3_STATUS.IN_PROGRESS }
+		});
+		if (request.currentCase?.gateway3Info) {
+			request.currentCase.gateway3Info.frontOfficeStatus = GATEWAY_3_STATUS.IN_PROGRESS;
+		}
+	} catch (error) {
+		service.logger.error(
+			{ error, caseId, planReference: getRoutePlanReference(req) },
+			'Failed to set Gateway 3 status to IN_PROGRESS'
+		);
+	}
+}
+
+/** Determine whether a saved answer value represents a non-empty answer. */
+function isNonEmptyAnswer(value: unknown): boolean {
+	if (Array.isArray(value)) {
+		return value.length > 0;
+	}
+	if (typeof value === 'string') {
+		return value.trim().length > 0;
+	}
+	return value !== null && value !== undefined;
+}
+
+// ---------------------------------------------------------------------------
 // Save-to-session for case-scoped answers
 // ---------------------------------------------------------------------------
 
-function buildSaveDataToCase(): SaveDataFn {
+export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
+
+		const answers = (params.data?.answers ?? {}) as Record<string, unknown>;
+
+		await saveGateway3AnswersToDatabase(service, params.req, answers);
+
+		if (Object.values(answers).some(isNonEmptyAnswer)) {
+			await markGateway3InProgress(service, params.req);
+		}
 	};
 }
 
@@ -250,10 +325,19 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 3 submission';
 	res.locals.pageHeading = 'Gateway 3 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
-	res.locals.statusTag =
+
+	const isUnderReview = Boolean(
 		currentCase?.gateway3Info?.actualDate && !isGateway3ResubmissionAwaitingSubmission(currentCase.gateway3Info)
-			? StatusTag[STATUS.UnderReview]
-			: StatusTag[STATUS.ReadyToStart];
+	);
+	const isInProgress = currentCase?.gateway3Info?.frontOfficeStatus === GATEWAY_3_STATUS.IN_PROGRESS;
+
+	if (isUnderReview) {
+		res.locals.statusTag = StatusTag[STATUS.UnderReview];
+	} else if (isInProgress) {
+		res.locals.statusTag = StatusTag[STATUS.InProgress];
+	} else {
+		res.locals.statusTag = StatusTag[STATUS.ReadyToStart];
+	}
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);
@@ -510,6 +594,13 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 			}
 		}
 
+		const examinationWebsiteUrl = currentCase.gateway3Info?.examinationWebsiteUrl;
+		if (examinationWebsiteUrl) {
+			answers[EXAMINATION_WEBSITE_FIELD] = examinationWebsiteUrl;
+		} else {
+			delete answers[EXAMINATION_WEBSITE_FIELD];
+		}
+
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...answers
 		});
@@ -661,7 +752,7 @@ export function buildGateway3Middleware(service: PortalService) {
 		createJourney(req, journeyResponse, createGateway3Questions(getRoutePlanReference(req)))
 	);
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
-	const saveDataToCase = buildSaveDataToCase();
+	const saveDataToCase = buildSaveDataToCase(service);
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
 
 	const uploadGateway3DocumentForCase = buildFileUploadRouteHandler(
@@ -689,6 +780,9 @@ export function buildGateway3Middleware(service: PortalService) {
 					onFilesChange: async ({ req, uploadedFiles }) => {
 						await saveGateway3Documents(service, req, questionConfig.url, uploadedFiles);
 						syncGateway3UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
+						if (uploadedFiles.length > 0) {
+							await markGateway3InProgress(service, req);
+						}
 						logGateway3Uploaded(service, req, questionConfig, uploadedFiles);
 					},
 					onUploadError: ({ req, errors, error }) =>

@@ -8,6 +8,7 @@ import {
 	DSA_CHECKED_VALUES,
 	GATEWAYS,
 	GATEWAY_3_DECISIONS,
+	Gateway3FrontOfficeStatuses,
 	PLAN_BANDS,
 	PLAN_TYPES,
 	VIRUS_CHECK_STATUSES
@@ -52,6 +53,10 @@ export async function seedStaticData(dbClient: PrismaClient) {
 
 	for (const input of GATEWAY_3_DECISIONS) {
 		await upsertReferenceData({ delegate: dbClient.gateway3Decision, input });
+	}
+
+	for (const input of Gateway3FrontOfficeStatuses) {
+		await upsertReferenceData({ delegate: dbClient.gateway3FrontOfficeStatus, input });
 	}
 
 	for (const input of AUTHORITY_STATUSES) {

@@ -69,7 +69,7 @@ describe('My plans page content for gateway 2', () => {
 			applicationCompletePage.returnToYourPlanLink(plan.urlReference).click();
 			planDetailsPage.backLink.click();
 			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, 'Under review']
+				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status3]
 			]);
 		});
 	});
@@ -79,6 +79,7 @@ const loadReportIssuedPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('port
 
 describe('My plans page content for gateway 3', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin(THIRD_TEST_EMAIL);
 	});
 
@@ -88,7 +89,7 @@ describe('My plans page content for gateway 3', () => {
 		loadReportIssuedPlan().then((plan) => {
 			myPlansPage.verifyLoaded();
 			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, 'Ready to start']
+				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status]
 			]);
 		});
 	});
