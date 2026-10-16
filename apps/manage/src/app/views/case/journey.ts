@@ -109,8 +109,8 @@ export function createExaminationHearingJourney(
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/hearing-check-your-answers.njk',
-		journeyTitle: 'Set up workshop',
-		returnToListing: true,
+		journeyTitle: 'Set up hearing',
+		returnToListing: false,
 		makeBaseUrl: () => examinationHearingUrl,
 		initialBackLink: examinationUrl,
 		response
@@ -137,9 +137,6 @@ export function createExaminationHearingJourney(
 	}
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
-		if (req.session.answers) {
-			delete req.session.answers;
-		}
 	}
 
 	const getBackLink = journey.getBackLink.bind(journey); // overide back links for hearing duration + end date
@@ -435,6 +432,9 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 	});
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
 	}
 	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
 }

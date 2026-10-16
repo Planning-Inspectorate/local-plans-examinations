@@ -7,6 +7,32 @@ import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { NUM_EXAMINATION_HEARING_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { formatDateToString } from '../../../util/date.ts';
 
+type Hearing = NonNullable<ExaminationInput['hearings']>[number];
+
+const NO_VENUE = {
+	hearingVenueName: null,
+	hearingAddressLine: null,
+	hearingAddressLine2: null,
+	hearingTownOrCity: null,
+	hearingPostcode: null
+} satisfies Partial<Hearing>;
+
+const NO_REMOTE_LINK = {
+	hearingRemoteMeetingLinkKnown: null,
+	hearingRemoteMeetingLink: null
+} satisfies Partial<Hearing>;
+
+function clearOutdatedAnswers(hearing: Hearing): Hearing {
+	return {
+		...hearing,
+		...(hearing.hearingExpectedDaysKnown === 'no' && { hearingExpectedDays: null }),
+		...(hearing.hearingLocationType === 'remote' && { hearingLocationKnown: null, ...NO_VENUE }),
+		...(hearing.hearingLocationKnown === 'no' && NO_VENUE),
+		...(hearing.hearingLocationType === 'in-person' && NO_REMOTE_LINK),
+		...(hearing.hearingRemoteMeetingLinkKnown === 'no' && { hearingRemoteMeetingLink: null })
+	};
+}
+
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
 	private isExaminationHearingQuestion() {
@@ -16,7 +42,6 @@ export class ExaminationSaveController extends SaveController {
 	}
 	protected async shouldSaveToSession() {
 		const question = String(this.req.params.question);
-
 		if (question.startsWith('examination-hearing-end-date-') || question.startsWith('examination-hearing-duration-')) {
 			return false;
 		}
@@ -112,33 +137,38 @@ export class ExaminationSaveController extends SaveController {
 			}
 			const currentHearing = hearingDetails[hearingId - 1];
 			const questionFieldsMap = {
-				[`gateway-2-hearing-date-and-time-${hearingId}`]: {
+				[`examination-hearing-date-and-time-${hearingId}`]: {
 					hearingDate: `hearingDate-${hearingId}`,
-					hearingTime: `hearingTime-${hearingId}`,
-					hearingEndTime: `hearingEndTime-${hearingId}`
+					hearingTime: `hearingTime-${hearingId}`
 				},
-				[`gateway-2-hearing-expected-days-${hearingId}`]: {
+				[`examination-hearing-expected-days-${hearingId}`]: {
 					hearingExpectedDaysKnown: `hearingExpectedDaysKnown-${hearingId}`,
 					hearingExpectedDays: `hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`
 				},
-				[`gateway-2-location-type-${hearingId}`]: {
+				[`examination-location-type-${hearingId}`]: {
 					hearingLocationType: `hearingLocationType-${hearingId}`
 				},
-				[`gateway-2-hearing-location-known-${hearingId}`]: {
+				[`examination-hearing-location-known-${hearingId}`]: {
 					hearingLocationKnown: `hearingLocationKnown-${hearingId}`
 				},
-				[`gateway-2-hearing-venue-address-${hearingId}`]: {
+				[`examination-hearing-venue-address-${hearingId}`]: {
 					hearingVenueName: `hearingVenueName-${hearingId}`,
 					hearingAddressLine: `hearingAddressLine-${hearingId}`,
 					hearingAddressLine2: `hearingAddressLine2-${hearingId}`,
 					hearingTownOrCity: `hearingTownOrCity-${hearingId}`,
 					hearingPostcode: `hearingPostcode-${hearingId}`
 				},
-				[`gateway-2-remote-meeting-link-known-${hearingId}`]: {
+				[`examination-remote-meeting-link-known-${hearingId}`]: {
 					hearingRemoteMeetingLinkKnown: `hearingRemoteMeetingLinkKnown-${hearingId}`
 				},
-				[`gateway-2-remote-meeting-link-${hearingId}`]: {
+				[`examination-remote-meeting-link-${hearingId}`]: {
 					hearingRemoteMeetingLink: `hearingRemoteMeetingLink-${hearingId}`
+				},
+				[`examination-hearing-duration-${hearingId}`]: {
+					hearingDuration: `hearingDuration-${hearingId}`
+				},
+				[`examination-hearing-end-date-${hearingId}`]: {
+					hearingEndDate: `hearingEndDate-${hearingId}`
 				}
 			};
 			const hearingFieldsToAnswerMap: Record<string, string> = Object.assign({}, ...Object.values(questionFieldsMap));
@@ -165,51 +195,37 @@ export class ExaminationSaveController extends SaveController {
 		}
 		return this.trimStringValues(answers as ExaminationInput);
 	}
-	protected saveToSession(answers: ExaminationInput) {
+	private getHearingIndex(): number {
 		const hearingIdString = String(this.req.params.question).split('-').at(-1);
 		if (!hearingIdString) {
 			throw Error('Could not extract the hearing id from the question');
 		}
-		const hearingId = parseInt(hearingIdString);
+
+		const hearingId = Number.parseInt(hearingIdString, 10);
+		if (Number.isNaN(hearingId) || hearingId < 1) {
+			throw Error('Invalid hearing id');
+		}
+		return hearingId - 1;
+	}
+	protected saveToSession(answers: ExaminationInput) {
 		if (!this.req.session) {
 			throw Error('request has no session data');
 		}
-		if (this.req.session.answers) {
-			const sessionAnswers = this.req.session.answers as ExaminationInput;
-			const hearingAnswers = sessionAnswers.hearings;
-			if (hearingAnswers && answers.hearings) {
-				const sessionAnswers = hearingAnswers[hearingId - 1];
-				const newAnswers = answers.hearings[hearingId - 1];
-				answers.hearings[hearingId - 1] = { ...sessionAnswers, ...newAnswers };
-			}
+
+		const index = this.getHearingIndex();
+
+		if (!answers.hearings) {
+			this.req.session.answers = answers;
+			return true;
 		}
-		const currentHearing = answers.hearings?.[hearingId - 1];
-		if (currentHearing?.hearingExpectedDaysKnown == 'no') {
-			delete (currentHearing as any).hearingExpectedDays;
-		}
-		if (currentHearing?.hearingLocationType == 'remote') {
-			delete (currentHearing as any).hearingLocationKnown;
-			delete (currentHearing as any).hearingVenueName;
-			delete (currentHearing as any).hearingAddressLine;
-			delete (currentHearing as any).hearingAddressLine2;
-			delete (currentHearing as any).hearingTownOrCity;
-			delete (currentHearing as any).hearingPostcode;
-		}
-		if (currentHearing?.hearingLocationKnown == 'no') {
-			delete (currentHearing as any).hearingVenueName;
-			delete (currentHearing as any).hearingAddressLine;
-			delete (currentHearing as any).hearingAddressLine2;
-			delete (currentHearing as any).hearingTownOrCity;
-			delete (currentHearing as any).hearingPostcode;
-		}
-		if (currentHearing?.hearingLocationType == 'in-person') {
-			delete (currentHearing as any).hearingRemoteMeetingLinkKnown;
-			delete (currentHearing as any).hearingRemoteMeetingLink;
-		}
-		if (currentHearing?.hearingRemoteMeetingLinkKnown == 'no') {
-			delete (currentHearing as any).hearingRemoteMeetingLink;
-		}
-		this.req.session.answers = answers;
+
+		const savedHearing = (this.req.session.answers as ExaminationInput | undefined)?.hearings?.[index];
+		const mergedHearing: Hearing = { ...savedHearing, ...answers.hearings[index] };
+
+		const hearings = [...answers.hearings];
+		hearings[index] = clearOutdatedAnswers(mergedHearing);
+
+		this.req.session.answers = { ...answers, hearings };
 		return true;
 	}
 	protected async saveToDatabase(answers: ExaminationInput) {
@@ -234,6 +250,7 @@ export class ExaminationSaveController extends SaveController {
 				throw Error('No hearing entries found');
 			}
 			const hearingsCleaned = Object.values(hearings).map((e) => ({
+				id: e.id,
 				createdDate: e.createdDate,
 				hearingDate: e.hearingDate && typeof e.hearingDate == 'string' ? parseDate(e.hearingDate) : e.hearingDate,
 				hearingTime: e.hearingTime,

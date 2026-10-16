@@ -21,6 +21,8 @@ CREATE TABLE [dbo].[ExaminationHearing] (
     [hearingAddressLine2] NVARCHAR(1000),
     [hearingTownOrCity] NVARCHAR(1000),
     [hearingPostcode] NVARCHAR(1000),
+    [hearingEndDate] DATETIME2,
+    [hearingDuration] NVARCHAR(1000),
     CONSTRAINT [ExaminationHearing_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
