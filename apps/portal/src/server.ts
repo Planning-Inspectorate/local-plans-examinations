@@ -6,6 +6,8 @@ const config = loadConfig();
 const service = new PortalService(config);
 
 const app = createApp(service);
+app.locals.appName = config.appName; // added to control which app name to use
+
 // Trust proxy, because our application is behind Front Door
 // required for secure session cookies
 // see https://expressjs.com/en/resources/middleware/session.html#cookiesecure

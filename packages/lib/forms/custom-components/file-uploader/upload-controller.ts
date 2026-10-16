@@ -22,10 +22,11 @@ export type FileUploaderControllerOptions = {
 		| 'maxFilesPerUpload'
 		| 'maxTotalUploadSizeBytes'
 		| 'validationMessages'
+		| 'url'
 	>;
 	sessionKey?: string | ((req: Request) => string);
 	destination?: FileUploadDestination | ((req: Request) => FileUploadDestination | Promise<FileUploadDestination>);
-	redirect?: string | ((req: Request) => string);
+	redirect?: string | ((req: Request, options?: FileUploaderControllerOptions) => string);
 	onFilesChange?: (params: {
 		req: Request;
 		sessionKey: string;
@@ -53,12 +54,13 @@ export type FileUploaderControllerOptions = {
 		fileId: string;
 		error: unknown;
 	}) => void | Promise<void>;
+	onSubmit?: (params: { req: Request; fieldName: string; uploadedFiles: UploadedFile[] }) => void | Promise<void>;
 };
 
 type RequestWithFiles = Request & {
 	files?: UploadedRequestFile[];
 	file?: UploadedRequestFile;
-	session: FileUploaderSession & Record<string, unknown>;
+	session?: FileUploaderSession & Record<string, unknown>;
 };
 
 export function createFileUploaderUploadController(options: FileUploaderControllerOptions): RequestHandler {
@@ -140,9 +142,17 @@ export function createFileUploaderUploadController(options: FileUploaderControll
 				uploadedFiles: nextUploadedFiles
 			}
 		};
+
+		session.hasTempDocuments = {
+			[request.session.id]: {
+				question: options.question.url,
+				caseId: nextUploadedFiles[0]?.metadata?.caseId as string,
+				hasUploadedFiles: true
+			}
+		};
+
 		delete session.errors;
 		delete session.errorSummary;
-
 		return redirectSafely(res, resolveRedirect(request, options));
 	};
 }
@@ -198,6 +208,10 @@ export function createFileUploaderDeleteController(options: FileUploaderControll
 			}
 		};
 
+		if (session.forms) {
+			delete session.forms;
+		}
+
 		return redirectSafely(res, resolveRedirect(request, options));
 	};
 }
@@ -249,10 +263,11 @@ function ensureFileUploaderSession(req: RequestWithFiles): FileUploaderSession {
 		throw new Error('File uploader requires session middleware');
 	}
 	req.session.fileUploader ??= {};
+	req.session.hasTempDocuments ??= {};
 	return req.session;
 }
 
-function resolveSessionKey(req: Request, options: FileUploaderControllerOptions): string {
+export function resolveSessionKey(req: Request, options: FileUploaderControllerOptions): string {
 	if (typeof options.sessionKey === 'function') {
 		return options.sessionKey(req);
 	}
@@ -297,7 +312,7 @@ function redirectSafely(res: Response, target: string): void {
 
 function resolveRedirect(req: Request, options: FileUploaderControllerOptions): string {
 	if (typeof options.redirect === 'function') {
-		const redirect = options.redirect(req);
+		const redirect = options.redirect(req, options);
 		if (isSafeLocalRedirect(redirect)) {
 			return redirect;
 		}
@@ -319,4 +334,41 @@ function resolveRedirect(req: Request, options: FileUploaderControllerOptions): 
 	// }
 
 	return '/';
+}
+
+export function createFileSubmitUploadController(options: FileUploaderControllerOptions): RequestHandler {
+	return async (request: Request, res: Response) => {
+		const uploadErrors: Record<string, string> = {
+			'gateway-1': 'Upload at least one signed SLA document before continuing',
+			'gateway-2': 'Please upload your Gateway 2 report',
+			'gateway-3': 'Please upload your Gateway 3 report',
+			'gateway-3-report': 'Please upload your Gateway 3 report'
+		};
+
+		const session = ensureFileUploaderSession(request as RequestWithFiles);
+
+		const urlPathRoot = request.url.split('/')[1];
+		const sessionKey = resolveSessionKey(request, options);
+		const formFiles = session?.forms?.[urlPathRoot]
+			? session?.forms?.[urlPathRoot]
+			: (session.fileUploader?.[sessionKey]?.uploadedFiles ?? undefined);
+		const formKey = options.fieldName;
+		const uploadedFiles = Array.isArray(formFiles) ? formFiles : (formFiles?.[formKey] ?? []);
+
+		if (uploadedFiles?.length === 0) {
+			session.errors = { 'upload-form': { msg: `${uploadErrors[urlPathRoot]}` } };
+			session.errorSummary = [{ href: '#upload-form', text: `${uploadErrors[urlPathRoot]}` }];
+			console.log('createFileSubmitUploadController uploadedFiles', uploadedFiles, session);
+			return redirectSafely(res, resolveRedirect(request, options));
+		}
+
+		session.hasTempDocuments = {
+			[request.session.id]: {
+				hasUploadedFiles: false
+			}
+		};
+
+		await options.onSubmit?.({ req: request, uploadedFiles, fieldName: options.fieldName });
+		return redirectSafely(res, resolveRedirect(request, options));
+	};
 }

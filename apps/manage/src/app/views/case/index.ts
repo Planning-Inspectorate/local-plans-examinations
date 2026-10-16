@@ -19,9 +19,10 @@ import {
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	handleMulterFileSizeError,
+	issueGateway2WorkshopDocuments,
+	redirectToChecks,
 	preprocessQuestionProperties,
-	issueGateway2WorkshopDocuments
+	handleMulterFileSizeError
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -72,6 +73,7 @@ import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handl
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
+import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -427,7 +429,19 @@ function registerCaseJourney(
 							};
 						},
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								documentSetFolderName: questionConfig.url,
+								request: req
+							});
+							await DocumentUtil.saveDocumentsOverride({
+								service,
+								request: req,
+								documentSetFolderName: questionConfig.url,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments,
+								isTemp: true
+							});
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
@@ -455,7 +469,7 @@ function registerCaseJourney(
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, false);
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
 						},
@@ -466,6 +480,40 @@ function registerCaseJourney(
 				])
 			)
 		);
+
+		const onSubmitDocumentRoute = buildFileUploadRouteHandler(
+			new Map(
+				fileUploadQuestionConfigs.map((questionConfig) => [
+					questionConfig.url,
+					createFileSubmitUploadController({
+						fieldName: questionConfig.fieldName,
+						question: questionConfig,
+						storage: fileUploaderStorage,
+						sessionKey: fileUploaderCaseSessionKey,
+						onSubmit: async ({ req, uploadedFiles }) => {
+							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								documentSetFolderName: questionConfig.url,
+								request: req
+							});
+							await DocumentUtil.restoreDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments
+							});
+							await DocumentUtil.deleteDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments
+							});
+						},
+						redirect: (req, options) => redirectToChecks(req, path, options)
+					})
+				])
+			)
+		);
+
 		router.post(
 			`${questionPath}/upload-documents`,
 			getJourneyResponse,
@@ -476,6 +524,18 @@ function registerCaseJourney(
 			uploadDocumentRoute,
 			handleMulterFileSizeError
 		);
+
+		router.post(
+			`${questionPath}/upload-documents/submit`,
+			getJourneyResponse,
+			getJourney,
+			upload.array('files[]'),
+			// Lusca CSRF check performed after Multer handles the multipart/form-data
+			lusca.csrf(),
+			onSubmitDocumentRoute,
+			handleMulterFileSizeError
+		);
+
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,

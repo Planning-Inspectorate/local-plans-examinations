@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
-import { describe, it, mock } from 'node:test';
+import { describe, it, mock, beforeEach } from 'node:test';
 import type { Service } from '@pins/local-plans-lib/app/service.ts';
 import {
 	DOCUMENT_SET_FOLDER_NAME,
@@ -25,6 +25,7 @@ describe('loadUploadedDocuments', () => {
 					name: 'stored-file',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 					isDeleted: false,
+					isTemp: false,
 					latestDocumentVersion: {
 						version: 1,
 						originalFilename: 'cover-letter.pdf',
@@ -58,6 +59,7 @@ describe('loadUploadedDocuments', () => {
 				path: 'gateway-2/cover-letter.pdf',
 				url: 'http://storage/cover-letter.pdf',
 				dateCreated: DOCUMENT_CREATED_DATE,
+				isTemp: false,
 				metadata: {
 					documentGuid: 'document-1',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
@@ -69,7 +71,8 @@ describe('loadUploadedDocuments', () => {
 			where: {
 				caseId: 'case-1',
 				documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
-				isDeleted: false
+				isDeleted: false,
+				isTemp: false
 			},
 			include: {
 				latestDocumentVersion: true
@@ -445,6 +448,10 @@ function createMockService({
 	tx?: ReturnType<typeof createTransactionClient>;
 } = {}) {
 	return {
+		logger: {
+			error: mock.fn(),
+			warn: mock.fn()
+		},
 		db: {
 			documentSet: {
 				findFirst: mock.fn(async () => documentSet),
@@ -452,7 +459,9 @@ function createMockService({
 			},
 			document: {
 				findMany: mock.fn(async () => existingDocuments),
-				findFirst: mock.fn(async () => existingDocuments[0])
+				findFirst: mock.fn(async () => existingDocuments[0]),
+				update: mock.fn(async () => ({})),
+				updateMany: mock.fn(async () => ({}))
 			},
 			$transaction: mock.fn(async (callback: (tx: typeof tx) => unknown) => callback(tx))
 		},
@@ -464,7 +473,8 @@ function createTransactionClient() {
 	return {
 		document: {
 			create: mock.fn(async () => ({})),
-			update: mock.fn(async () => ({}))
+			update: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({}))
 		},
 		documentVersion: {
 			create: mock.fn(async () => ({})),
@@ -492,6 +502,7 @@ function buildUploadedFile(overrides: Partial<UploadedFile> = {}): UploadedFile 
 		containerName: 'local-planning-documents',
 		path: 'gateway-2/cover-letter.pdf',
 		url: 'http://storage/cover-letter.pdf',
+		isTemp: false,
 		...overrides
 	};
 }
@@ -502,6 +513,7 @@ function buildDocumentRow(overrides: Record<string, unknown> = {}) {
 		name: 'gateway-2/cover-letter.pdf',
 		documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
 		isDeleted: false,
+		isTemp: false,
 		latestDocumentVersion: {
 			version: 1,
 			originalFilename: 'cover-letter.pdf',
@@ -517,3 +529,1114 @@ function buildDocumentRow(overrides: Record<string, unknown> = {}) {
 		...overrides
 	};
 }
+
+describe('updateTemporaryDocumentToPermanent', () => {
+	let service: ReturnType<typeof createMockService>;
+
+	beforeEach(() => {
+		const tx = createTransactionClient();
+		const documentRow = buildDocumentRow({ isTemp: true });
+		service = createMockService({ tx, existingDocuments: [documentRow] });
+	});
+
+	const run = (files: ReturnType<typeof buildUploadedFile>[]) =>
+		DocumentUtil.updateTemporaryDocumentToPermanent(service as unknown as Service, files);
+
+	const row = (guid: string, name: string) => ({ guid, name, isTemp: true });
+
+	it('should change a temp document into a permanent document', async () => {
+		service.db.document.findFirst.mock.mockImplementation(async () => row('g1', 'a.pdf'));
+
+		await run([buildUploadedFile({ path: 'a.pdf' })]);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 1);
+		assert.deepEqual(service.db.document.updateMany.mock.calls[0].arguments[0], {
+			where: { guid: { in: ['g1'] } },
+			data: { isTemp: false }
+		});
+		assert.equal(service.logger.error.mock.callCount(), 0);
+	});
+
+	it('should look up each uploaded file by its path', async () => {
+		const rows: Record<string, ReturnType<typeof row>> = {
+			'a.pdf': row('g1', 'a.pdf'),
+			'b.pdf': row('g2', 'b.pdf')
+		};
+		service.db.document.findFirst.mock.mockImplementation(async ({ where }) => rows[where.name] ?? null);
+
+		await run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'b.pdf' })]);
+
+		assert.equal(service.db.document.findFirst.mock.callCount(), 2);
+		assert.deepEqual(service.db.document.findFirst.mock.calls[0].arguments[0], { where: { name: 'a.pdf' } });
+		assert.deepEqual(service.db.document.findFirst.mock.calls[1].arguments[0], { where: { name: 'b.pdf' } });
+	});
+
+	it('should update every found document in a single query', async () => {
+		const rows: Record<string, ReturnType<typeof row>> = {
+			'a.pdf': row('g1', 'a.pdf'),
+			'b.pdf': row('g2', 'b.pdf')
+		};
+		service.db.document.findFirst.mock.mockImplementation(async ({ where }) => rows[where.name] ?? null);
+
+		await run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'b.pdf' })]);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 1);
+		assert.deepEqual(service.db.document.updateMany.mock.calls[0].arguments[0], {
+			where: { guid: { in: ['g1', 'g2'] } },
+			data: { isTemp: false }
+		});
+		assert.equal(service.logger.error.mock.callCount(), 0);
+	});
+
+	it('should do nothing when given no files', async () => {
+		await run([]);
+
+		assert.equal(service.db.document.findFirst.mock.callCount(), 0);
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 0);
+	});
+
+	it('should throw and not update when some files are not found', async () => {
+		service.db.document.findFirst.mock.mockImplementation(async ({ where }) =>
+			where.name === 'a.pdf' ? row('g1', 'a.pdf') : null
+		);
+
+		await assert.rejects(
+			run([buildUploadedFile({ path: 'a.pdf' }), buildUploadedFile({ path: 'missing.pdf' })]),
+			/not all files found/
+		);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 1);
+	});
+
+	it('should throw and not update when no files are found', async () => {
+		service.db.document.findFirst.mock.mockImplementation(async () => null);
+
+		await assert.rejects(run([buildUploadedFile({ path: 'missing.pdf' })]), /not all files found/);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 1);
+	});
+
+	it('should log and rethrow when a lookup fails', async () => {
+		const dbError = new Error('lookup failed');
+		service.db.document.findFirst.mock.mockImplementation(async () => {
+			throw dbError;
+		});
+
+		await assert.rejects(run([buildUploadedFile({ path: 'a.pdf' })]), dbError);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 1);
+		assert.equal(service.logger.error.mock.calls[0].arguments[0], dbError);
+	});
+
+	it('should log and rethrow when the update fails', async () => {
+		const dbError = new Error('update failed');
+		service.db.document.findFirst.mock.mockImplementation(async () => row('g1', 'a.pdf'));
+		service.db.document.updateMany.mock.mockImplementation(async () => {
+			throw dbError;
+		});
+
+		await assert.rejects(run([buildUploadedFile({ path: 'a.pdf' })]), dbError);
+
+		assert.equal(service.logger.error.mock.callCount(), 1);
+		assert.equal(service.logger.error.mock.calls[0].arguments[0], dbError);
+	});
+});
+
+type DocumentRows = Parameters<typeof DocumentUtil.deleteDocuments>[0]['existingDocuments'];
+
+function asDocumentRows(documents: unknown[]): DocumentRows {
+	return documents as DocumentRows;
+}
+describe('findExistingDocuments', () => {
+	const findExistingDocuments = (service: ReturnType<typeof createMockService>, request: Request = buildRequest()) =>
+		DocumentUtil.findExistingDocuments({
+			service: service as unknown as Service,
+			request,
+			documentSetFolderName: TEST_DOCUMENT_SET_FOLDER_NAME
+		});
+
+	it('loads every document in the document set for the current case, including soft-deleted ones', async () => {
+		const activeDocument = buildDocumentRow({ guid: 'document-1' });
+		const deletedDocument = buildDocumentRow({ guid: 'document-2', isDeleted: true });
+		const service = createMockService({ existingDocuments: [activeDocument, deletedDocument] });
+
+		const existingDocuments = await findExistingDocuments(service);
+
+		assert.deepEqual(existingDocuments, [activeDocument, deletedDocument]);
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: COVER_LETTER_DOCUMENT_SET_ID
+			},
+			include: {
+				latestDocumentVersion: true
+			}
+		});
+	});
+
+	it('returns an empty list when the case has no documents in the document set', async () => {
+		const service = createMockService({ existingDocuments: [] });
+
+		const existingDocuments = await findExistingDocuments(service);
+
+		assert.deepEqual(existingDocuments, []);
+	});
+
+	it('rejects when the document set reference data is missing', async () => {
+		const service = createMockService({ documentSet: null });
+
+		await assert.rejects(
+			() => findExistingDocuments(service),
+			/Missing document set reference data for "covering-letter"/
+		);
+		assert.equal(service.db.document.findMany.mock.callCount(), 0);
+	});
+
+	it('requires a loaded case on the request', async () => {
+		const service = createMockService();
+
+		await assert.rejects(
+			() => findExistingDocuments(service, {} as Request),
+			/Cannot find documents without a loaded case/
+		);
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 0);
+	});
+});
+
+describe('saveDocumentsOverride', () => {
+	const saveDocumentsOverride = (
+		service: ReturnType<typeof createMockService>,
+		{
+			request = buildRequest(),
+			uploadedFiles,
+			existingDocuments = [],
+			isTemp = true
+		}: {
+			request?: Request;
+			uploadedFiles: UploadedFile[];
+			existingDocuments?: unknown[];
+			isTemp?: boolean;
+		}
+	) =>
+		DocumentUtil.saveDocumentsOverride({
+			service: service as unknown as Service,
+			request,
+			documentSetFolderName: TEST_DOCUMENT_SET_FOLDER_NAME,
+			temporaryUploadedFiles: uploadedFiles,
+			existingDocuments: asDocumentRows(existingDocuments),
+			isTemp
+		});
+
+	it('creates documents only for uploaded files that are not already stored', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const storedFile = buildUploadedFile({ id: 'gateway-2/stored.pdf', path: 'gateway-2/stored.pdf' });
+		const newFile = buildUploadedFile({ id: 'gateway-2/new.pdf', path: 'gateway-2/new.pdf', fileName: 'new.pdf' });
+		const storedDocument = buildDocumentRow({ guid: 'document-1', name: 'gateway-2/stored.pdf' });
+
+		await saveDocumentsOverride(service, {
+			uploadedFiles: [storedFile, newFile],
+			existingDocuments: [storedDocument]
+		});
+
+		assert.equal(transactionClient.document.create.mock.callCount(), 1);
+		const createdDocumentData = transactionClient.document.create.mock.calls[0].arguments[0].data;
+		assert.equal(createdDocumentData.name, 'gateway-2/new.pdf');
+		assert.equal(createdDocumentData.caseId, 'case-1');
+		assert.equal(createdDocumentData.documentSetId, COVER_LETTER_DOCUMENT_SET_ID);
+	});
+
+	for (const isTemp of [true, false]) {
+		it(`creates documents with isTemp set to ${isTemp}`, async () => {
+			const transactionClient = createTransactionClient();
+			const service = createMockService({ tx: transactionClient });
+
+			await saveDocumentsOverride(service, { uploadedFiles: [buildUploadedFile()], isTemp });
+
+			const createdDocumentData = transactionClient.document.create.mock.calls[0].arguments[0].data;
+			assert.equal(createdDocumentData.isTemp, isTemp);
+		});
+	}
+
+	it('creates a new document when the stored document with the same name is soft-deleted', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const deletedDocument = buildDocumentRow({
+			guid: 'document-1',
+			name: 'gateway-2/cover-letter.pdf',
+			isDeleted: true
+		});
+
+		await saveDocumentsOverride(service, {
+			uploadedFiles: [buildUploadedFile()],
+			existingDocuments: [deletedDocument]
+		});
+
+		assert.equal(transactionClient.document.create.mock.callCount(), 1);
+	});
+
+	it('does not create documents when every uploaded file is already stored', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+
+		await saveDocumentsOverride(service, {
+			uploadedFiles: [buildUploadedFile()],
+			existingDocuments: [buildDocumentRow({ name: 'gateway-2/cover-letter.pdf' })]
+		});
+
+		assert.equal(transactionClient.document.create.mock.callCount(), 0);
+		assert.equal(transactionClient.documentVersion.create.mock.callCount(), 0);
+	});
+
+	it('rejects when the document set reference data is missing', async () => {
+		const service = createMockService({ documentSet: null });
+
+		await assert.rejects(
+			() => saveDocumentsOverride(service, { uploadedFiles: [buildUploadedFile()] }),
+			/Missing document set reference data for "covering-letter"/
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+
+	it('requires a loaded case on the request', async () => {
+		const service = createMockService();
+
+		await assert.rejects(
+			() => saveDocumentsOverride(service, { request: {} as Request, uploadedFiles: [buildUploadedFile()] }),
+			/Cannot save documents without a loaded case/
+		);
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 0);
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+});
+
+describe('restoreDocuments', () => {
+	const restoreDocuments = (
+		service: ReturnType<typeof createMockService>,
+		uploadedFiles: UploadedFile[],
+		existingDocuments: unknown[]
+	) =>
+		DocumentUtil.restoreDocuments({
+			service: service as unknown as Service,
+			temporaryUploadedFiles: uploadedFiles,
+			existingDocuments: asDocumentRows(existingDocuments)
+		});
+
+	it('restores a soft-deleted document that is still in the upload list', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const deletedDocument = buildDocumentRow({
+			guid: 'document-1',
+			isDeleted: true,
+			latestDocumentVersion: { ...buildDocumentRow().latestDocumentVersion, version: 2, isDeleted: true }
+		});
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-1' })], [deletedDocument]);
+
+		assert.deepEqual(transactionClient.document.update.mock.calls[0].arguments[0], {
+			where: {
+				guid: 'document-1'
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+		assert.deepEqual(transactionClient.documentVersion.update.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid_version: {
+					documentGuid: 'document-1',
+					version: 2
+				}
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+	});
+
+	it('restores a document whose latest version alone is soft-deleted', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const documentWithDeletedVersion = buildDocumentRow({
+			guid: 'document-1',
+			isDeleted: false,
+			latestDocumentVersion: { ...buildDocumentRow().latestDocumentVersion, isDeleted: true }
+		});
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-1' })], [documentWithDeletedVersion]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.deepEqual(transactionClient.documentVersion.update.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid_version: {
+					documentGuid: 'document-1',
+					version: 1
+				}
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+	});
+
+	it('restores each document in its own transaction', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const firstDeletedDocument = buildDocumentRow({ guid: 'document-1', isDeleted: true });
+		const secondDeletedDocument = buildDocumentRow({ guid: 'document-2', isDeleted: true });
+
+		await restoreDocuments(
+			service,
+			[buildUploadedFile({ id: 'document-1' }), buildUploadedFile({ id: 'document-2' })],
+			[firstDeletedDocument, secondDeletedDocument]
+		);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 2);
+		const restoredDocumentGuids = transactionClient.document.update.mock.calls.map(
+			(updateCall) => updateCall.arguments[0].where.guid
+		);
+		assert.deepEqual(restoredDocumentGuids, ['document-1', 'document-2']);
+	});
+
+	it('does not restore soft-deleted documents that are not in the upload list', async () => {
+		const service = createMockService();
+		const deletedDocument = buildDocumentRow({ guid: 'document-1', isDeleted: true });
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-2' })], [deletedDocument]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+
+	it('leaves active documents untouched', async () => {
+		const service = createMockService();
+		const activeDocument = buildDocumentRow({ guid: 'document-1' });
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-1' })], [activeDocument]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+});
+
+describe('deleteDocuments', () => {
+	const deleteDocuments = (
+		service: ReturnType<typeof createMockService>,
+		uploadedFiles: UploadedFile[],
+		existingDocuments: unknown[]
+	) =>
+		DocumentUtil.deleteDocuments({
+			service: service as unknown as Service,
+			temporaryUploadedFiles: uploadedFiles,
+			existingDocuments: asDocumentRows(existingDocuments)
+		});
+
+	it('soft-deletes documents that are no longer in the upload list', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const keptDocument = buildDocumentRow({ guid: 'document-1' });
+		const removedDocument = buildDocumentRow({ guid: 'document-2' });
+
+		await deleteDocuments(service, [buildUploadedFile({ id: 'document-1' })], [keptDocument, removedDocument]);
+
+		assert.equal(transactionClient.document.update.mock.callCount(), 1);
+		assert.deepEqual(transactionClient.document.update.mock.calls[0].arguments[0], {
+			where: {
+				guid: 'document-2'
+			},
+			data: {
+				isDeleted: true
+			}
+		});
+		assert.deepEqual(transactionClient.documentVersion.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid: 'document-2'
+			},
+			data: {
+				isDeleted: true
+			}
+		});
+	});
+
+	it('soft-deletes every removed document in a single transaction', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const firstRemovedDocument = buildDocumentRow({ guid: 'document-1' });
+		const secondRemovedDocument = buildDocumentRow({ guid: 'document-2' });
+
+		await deleteDocuments(service, [], [firstRemovedDocument, secondRemovedDocument]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		const deletedDocumentGuids = transactionClient.document.update.mock.calls.map(
+			(updateCall) => updateCall.arguments[0].where.guid
+		);
+		assert.deepEqual(deletedDocumentGuids, ['document-1', 'document-2']);
+	});
+
+	it('skips documents that are already fully soft-deleted', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const fullyDeletedDocument = buildDocumentRow({
+			guid: 'document-1',
+			isDeleted: true,
+			latestDocumentVersion: { ...buildDocumentRow().latestDocumentVersion, isDeleted: true }
+		});
+
+		await deleteDocuments(service, [], [fullyDeletedDocument]);
+
+		assert.equal(transactionClient.document.update.mock.callCount(), 0);
+		assert.equal(transactionClient.documentVersion.updateMany.mock.callCount(), 0);
+	});
+
+	it('soft-deletes the versions of a deleted document whose latest version is still active', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const partiallyDeletedDocument = buildDocumentRow({ guid: 'document-1', isDeleted: true });
+
+		await deleteDocuments(service, [], [partiallyDeletedDocument]);
+
+		assert.deepEqual(transactionClient.documentVersion.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid: 'document-1'
+			},
+			data: {
+				isDeleted: true
+			}
+		});
+	});
+
+	it('does not delete anything when every existing document is still uploaded', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+
+		await deleteDocuments(
+			service,
+			[buildUploadedFile({ id: 'document-1' }), buildUploadedFile({ id: 'document-2' })],
+			[buildDocumentRow({ guid: 'document-1' }), buildDocumentRow({ guid: 'document-2' })]
+		);
+
+		assert.equal(transactionClient.document.update.mock.callCount(), 0);
+		assert.equal(transactionClient.documentVersion.updateMany.mock.callCount(), 0);
+	});
+});
+
+describe('loadTempUploadedDocuments', () => {
+	it('loads temporary documents as uploaded files', async () => {
+		const temporaryDocument = buildDocumentRow({ guid: 'document-1', isTemp: true });
+		const service = createMockService({ existingDocuments: [temporaryDocument] });
+
+		const temporaryFiles = await DocumentUtil.loadTempUploadedDocuments(
+			service as unknown as Service,
+			'case-1',
+			COVER_LETTER_DOCUMENT_SET_ID
+		);
+
+		assert.deepEqual(temporaryFiles, [
+			{
+				id: 'document-1',
+				fileName: 'cover-letter.pdf',
+				mimeType: 'application/pdf',
+				size: 100,
+				storageProvider: 'blob',
+				containerName: 'local-planning-documents',
+				path: 'gateway-2/cover-letter.pdf',
+				url: 'http://storage/cover-letter.pdf',
+				dateCreated: DOCUMENT_CREATED_DATE,
+				isTemp: true,
+				metadata: {
+					documentGuid: 'document-1',
+					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
+					version: 1
+				}
+			}
+		]);
+	});
+
+	it('queries only active temporary documents in creation order', async () => {
+		const service = createMockService({ existingDocuments: [] });
+
+		await DocumentUtil.loadTempUploadedDocuments(service as unknown as Service, 'case-1', COVER_LETTER_DOCUMENT_SET_ID);
+
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
+				AND: [{ isDeleted: false }, { isTemp: true }]
+			},
+			include: {
+				latestDocumentVersion: true
+			},
+			orderBy: {
+				createdAt: 'asc'
+			}
+		});
+	});
+
+	it('skips temporary documents without a latest document version', async () => {
+		const documentWithVersion = buildDocumentRow({ guid: 'document-1', isTemp: true });
+		const documentWithoutVersion = buildDocumentRow({ guid: 'document-2', isTemp: true, latestDocumentVersion: null });
+		const service = createMockService({ existingDocuments: [documentWithVersion, documentWithoutVersion] });
+
+		const temporaryFiles = await DocumentUtil.loadTempUploadedDocuments(
+			service as unknown as Service,
+			'case-1',
+			COVER_LETTER_DOCUMENT_SET_ID
+		);
+
+		assert.deepEqual(
+			temporaryFiles.map((temporaryFile) => temporaryFile.id),
+			['document-1']
+		);
+	});
+});
+
+describe('cleanUpTempDocuments', () => {
+	it('soft-deletes every temporary document in the document set, each in its own transaction', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({
+			tx: transactionClient,
+			existingDocuments: [
+				buildDocumentRow({ guid: 'document-1', isTemp: true }),
+				buildDocumentRow({ guid: 'document-2', isTemp: true })
+			]
+		});
+
+		await DocumentUtil.cleanUpTempDocuments(service as unknown as Service, 'case-1', TEST_DOCUMENT_SET_FOLDER_NAME);
+
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 1);
+		assert.equal(
+			service.db.document.findMany.mock.calls[0].arguments[0].where.documentSetId,
+			COVER_LETTER_DOCUMENT_SET_ID
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 2);
+		assert.deepEqual(
+			transactionClient.document.update.mock.calls.map((updateCall) => updateCall.arguments[0]),
+			[
+				{ where: { guid: 'document-1' }, data: { isDeleted: true } },
+				{ where: { guid: 'document-2' }, data: { isDeleted: true } }
+			]
+		);
+		assert.deepEqual(
+			transactionClient.documentVersion.updateMany.mock.calls.map((updateCall) => updateCall.arguments[0]),
+			[
+				{ where: { documentGuid: 'document-1' }, data: { isDeleted: true } },
+				{ where: { documentGuid: 'document-2' }, data: { isDeleted: true } }
+			]
+		);
+	});
+
+	it('does nothing when there are no temporary documents', async () => {
+		const service = createMockService({ existingDocuments: [] });
+
+		await DocumentUtil.cleanUpTempDocuments(service as unknown as Service, 'case-1', TEST_DOCUMENT_SET_FOLDER_NAME);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+
+	it('rejects when the document set reference data is missing', async () => {
+		const service = createMockService({ documentSet: null });
+
+		await assert.rejects(
+			() => DocumentUtil.cleanUpTempDocuments(service as unknown as Service, 'case-1', TEST_DOCUMENT_SET_FOLDER_NAME),
+			/Missing document set reference data for "covering-letter"/
+		);
+		assert.equal(service.db.document.findMany.mock.callCount(), 0);
+	});
+});
+
+describe('findExistingDocuments', () => {
+	const findExistingDocuments = (service: ReturnType<typeof createMockService>, request: Request = buildRequest()) =>
+		DocumentUtil.findExistingDocuments({
+			service: service as unknown as Service,
+			request,
+			documentSetFolderName: TEST_DOCUMENT_SET_FOLDER_NAME
+		});
+
+	it('loads every document in the document set for the current case, including soft-deleted ones', async () => {
+		const activeDocument = buildDocumentRow({ guid: 'document-1' });
+		const deletedDocument = buildDocumentRow({ guid: 'document-2', isDeleted: true });
+		const service = createMockService({ existingDocuments: [activeDocument, deletedDocument] });
+
+		const existingDocuments = await findExistingDocuments(service);
+
+		assert.deepEqual(existingDocuments, [activeDocument, deletedDocument]);
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: COVER_LETTER_DOCUMENT_SET_ID
+			},
+			include: {
+				latestDocumentVersion: true
+			}
+		});
+	});
+
+	it('returns an empty list when the case has no documents in the document set', async () => {
+		const service = createMockService({ existingDocuments: [] });
+
+		const existingDocuments = await findExistingDocuments(service);
+
+		assert.deepEqual(existingDocuments, []);
+	});
+
+	it('rejects when the document set reference data is missing', async () => {
+		const service = createMockService({ documentSet: null });
+
+		await assert.rejects(
+			() => findExistingDocuments(service),
+			/Missing document set reference data for "covering-letter"/
+		);
+		assert.equal(service.db.document.findMany.mock.callCount(), 0);
+	});
+
+	it('requires a loaded case on the request', async () => {
+		const service = createMockService();
+
+		await assert.rejects(
+			() => findExistingDocuments(service, {} as Request),
+			/Cannot find documents without a loaded case/
+		);
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 0);
+	});
+});
+
+describe('saveDocumentsOverride', () => {
+	const saveDocumentsOverride = (
+		service: ReturnType<typeof createMockService>,
+		{
+			request = buildRequest(),
+			uploadedFiles,
+			existingDocuments = [],
+			isTemp = true
+		}: {
+			request?: Request;
+			uploadedFiles: UploadedFile[];
+			existingDocuments?: unknown[];
+			isTemp?: boolean;
+		}
+	) =>
+		DocumentUtil.saveDocumentsOverride({
+			service: service as unknown as Service,
+			request,
+			documentSetFolderName: TEST_DOCUMENT_SET_FOLDER_NAME,
+			temporaryUploadedFiles: uploadedFiles,
+			existingDocuments: asDocumentRows(existingDocuments),
+			isTemp
+		});
+
+	it('creates documents only for uploaded files that are not already stored', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const storedFile = buildUploadedFile({ id: 'gateway-2/stored.pdf', path: 'gateway-2/stored.pdf' });
+		const newFile = buildUploadedFile({ id: 'gateway-2/new.pdf', path: 'gateway-2/new.pdf', fileName: 'new.pdf' });
+		const storedDocument = buildDocumentRow({ guid: 'document-1', name: 'gateway-2/stored.pdf' });
+
+		await saveDocumentsOverride(service, {
+			uploadedFiles: [storedFile, newFile],
+			existingDocuments: [storedDocument]
+		});
+
+		assert.equal(transactionClient.document.create.mock.callCount(), 1);
+		const createdDocumentData = transactionClient.document.create.mock.calls[0].arguments[0].data;
+		assert.equal(createdDocumentData.name, 'gateway-2/new.pdf');
+		assert.equal(createdDocumentData.caseId, 'case-1');
+		assert.equal(createdDocumentData.documentSetId, COVER_LETTER_DOCUMENT_SET_ID);
+	});
+
+	for (const isTemp of [true, false]) {
+		it(`creates documents with isTemp set to ${isTemp}`, async () => {
+			const transactionClient = createTransactionClient();
+			const service = createMockService({ tx: transactionClient });
+
+			await saveDocumentsOverride(service, { uploadedFiles: [buildUploadedFile()], isTemp });
+
+			const createdDocumentData = transactionClient.document.create.mock.calls[0].arguments[0].data;
+			assert.equal(createdDocumentData.isTemp, isTemp);
+		});
+	}
+
+	it('creates a new document when the stored document with the same name is soft-deleted', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const deletedDocument = buildDocumentRow({
+			guid: 'document-1',
+			name: 'gateway-2/cover-letter.pdf',
+			isDeleted: true
+		});
+
+		await saveDocumentsOverride(service, {
+			uploadedFiles: [buildUploadedFile()],
+			existingDocuments: [deletedDocument]
+		});
+
+		assert.equal(transactionClient.document.create.mock.callCount(), 1);
+	});
+
+	it('does not create documents when every uploaded file is already stored', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+
+		await saveDocumentsOverride(service, {
+			uploadedFiles: [buildUploadedFile()],
+			existingDocuments: [buildDocumentRow({ name: 'gateway-2/cover-letter.pdf' })]
+		});
+
+		assert.equal(transactionClient.document.create.mock.callCount(), 0);
+		assert.equal(transactionClient.documentVersion.create.mock.callCount(), 0);
+	});
+
+	it('rejects when the document set reference data is missing', async () => {
+		const service = createMockService({ documentSet: null });
+
+		await assert.rejects(
+			() => saveDocumentsOverride(service, { uploadedFiles: [buildUploadedFile()] }),
+			/Missing document set reference data for "covering-letter"/
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+
+	it('requires a loaded case on the request', async () => {
+		const service = createMockService();
+
+		await assert.rejects(
+			() => saveDocumentsOverride(service, { request: {} as Request, uploadedFiles: [buildUploadedFile()] }),
+			/Cannot save documents without a loaded case/
+		);
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 0);
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+});
+
+describe('restoreDocuments', () => {
+	const restoreDocuments = (
+		service: ReturnType<typeof createMockService>,
+		uploadedFiles: UploadedFile[],
+		existingDocuments: unknown[]
+	) =>
+		DocumentUtil.restoreDocuments({
+			service: service as unknown as Service,
+			temporaryUploadedFiles: uploadedFiles,
+			existingDocuments: asDocumentRows(existingDocuments)
+		});
+
+	it('restores a soft-deleted document that is still in the upload list', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const deletedDocument = buildDocumentRow({
+			guid: 'document-1',
+			isDeleted: true,
+			latestDocumentVersion: { ...buildDocumentRow().latestDocumentVersion, version: 2, isDeleted: true }
+		});
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-1' })], [deletedDocument]);
+
+		assert.deepEqual(transactionClient.document.update.mock.calls[0].arguments[0], {
+			where: {
+				guid: 'document-1'
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+		assert.deepEqual(transactionClient.documentVersion.update.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid_version: {
+					documentGuid: 'document-1',
+					version: 2
+				}
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+	});
+
+	it('restores a document whose latest version alone is soft-deleted', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const documentWithDeletedVersion = buildDocumentRow({
+			guid: 'document-1',
+			isDeleted: false,
+			latestDocumentVersion: { ...buildDocumentRow().latestDocumentVersion, isDeleted: true }
+		});
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-1' })], [documentWithDeletedVersion]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.deepEqual(transactionClient.documentVersion.update.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid_version: {
+					documentGuid: 'document-1',
+					version: 1
+				}
+			},
+			data: {
+				isDeleted: false
+			}
+		});
+	});
+
+	it('restores each document in its own transaction', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const firstDeletedDocument = buildDocumentRow({ guid: 'document-1', isDeleted: true });
+		const secondDeletedDocument = buildDocumentRow({ guid: 'document-2', isDeleted: true });
+
+		await restoreDocuments(
+			service,
+			[buildUploadedFile({ id: 'document-1' }), buildUploadedFile({ id: 'document-2' })],
+			[firstDeletedDocument, secondDeletedDocument]
+		);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 2);
+		const restoredDocumentGuids = transactionClient.document.update.mock.calls.map(
+			(updateCall) => updateCall.arguments[0].where.guid
+		);
+		assert.deepEqual(restoredDocumentGuids, ['document-1', 'document-2']);
+	});
+
+	it('does not restore soft-deleted documents that are not in the upload list', async () => {
+		const service = createMockService();
+		const deletedDocument = buildDocumentRow({ guid: 'document-1', isDeleted: true });
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-2' })], [deletedDocument]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+
+	it('leaves active documents untouched', async () => {
+		const service = createMockService();
+		const activeDocument = buildDocumentRow({ guid: 'document-1' });
+
+		await restoreDocuments(service, [buildUploadedFile({ id: 'document-1' })], [activeDocument]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+});
+
+describe('deleteDocuments', () => {
+	const deleteDocuments = (
+		service: ReturnType<typeof createMockService>,
+		uploadedFiles: UploadedFile[],
+		existingDocuments: unknown[]
+	) =>
+		DocumentUtil.deleteDocuments({
+			service: service as unknown as Service,
+			temporaryUploadedFiles: uploadedFiles,
+			existingDocuments: asDocumentRows(existingDocuments)
+		});
+
+	it('soft-deletes documents that are no longer in the upload list', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const keptDocument = buildDocumentRow({ guid: 'document-1' });
+		const removedDocument = buildDocumentRow({ guid: 'document-2' });
+
+		await deleteDocuments(service, [buildUploadedFile({ id: 'document-1' })], [keptDocument, removedDocument]);
+
+		assert.equal(transactionClient.document.update.mock.callCount(), 1);
+		assert.deepEqual(transactionClient.document.update.mock.calls[0].arguments[0], {
+			where: {
+				guid: 'document-2'
+			},
+			data: {
+				isDeleted: true
+			}
+		});
+		assert.deepEqual(transactionClient.documentVersion.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid: 'document-2'
+			},
+			data: {
+				isDeleted: true
+			}
+		});
+	});
+
+	it('soft-deletes every removed document in a single transaction', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const firstRemovedDocument = buildDocumentRow({ guid: 'document-1' });
+		const secondRemovedDocument = buildDocumentRow({ guid: 'document-2' });
+
+		await deleteDocuments(service, [], [firstRemovedDocument, secondRemovedDocument]);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		const deletedDocumentGuids = transactionClient.document.update.mock.calls.map(
+			(updateCall) => updateCall.arguments[0].where.guid
+		);
+		assert.deepEqual(deletedDocumentGuids, ['document-1', 'document-2']);
+	});
+
+	it('skips documents that are already fully soft-deleted', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const fullyDeletedDocument = buildDocumentRow({
+			guid: 'document-1',
+			isDeleted: true,
+			latestDocumentVersion: { ...buildDocumentRow().latestDocumentVersion, isDeleted: true }
+		});
+
+		await deleteDocuments(service, [], [fullyDeletedDocument]);
+
+		assert.equal(transactionClient.document.update.mock.callCount(), 0);
+		assert.equal(transactionClient.documentVersion.updateMany.mock.callCount(), 0);
+	});
+
+	it('soft-deletes the versions of a deleted document whose latest version is still active', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+		const partiallyDeletedDocument = buildDocumentRow({ guid: 'document-1', isDeleted: true });
+
+		await deleteDocuments(service, [], [partiallyDeletedDocument]);
+
+		assert.deepEqual(transactionClient.documentVersion.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				documentGuid: 'document-1'
+			},
+			data: {
+				isDeleted: true
+			}
+		});
+	});
+
+	it('does not delete anything when every existing document is still uploaded', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({ tx: transactionClient });
+
+		await deleteDocuments(
+			service,
+			[buildUploadedFile({ id: 'document-1' }), buildUploadedFile({ id: 'document-2' })],
+			[buildDocumentRow({ guid: 'document-1' }), buildDocumentRow({ guid: 'document-2' })]
+		);
+
+		assert.equal(transactionClient.document.update.mock.callCount(), 0);
+		assert.equal(transactionClient.documentVersion.updateMany.mock.callCount(), 0);
+	});
+});
+
+describe('loadTempUploadedDocuments', () => {
+	it('loads temporary documents as uploaded files', async () => {
+		const temporaryDocument = buildDocumentRow({ guid: 'document-1', isTemp: true });
+		const service = createMockService({ existingDocuments: [temporaryDocument] });
+
+		const temporaryFiles = await DocumentUtil.loadTempUploadedDocuments(
+			service as unknown as Service,
+			'case-1',
+			COVER_LETTER_DOCUMENT_SET_ID
+		);
+
+		assert.deepEqual(temporaryFiles, [
+			{
+				id: 'document-1',
+				fileName: 'cover-letter.pdf',
+				mimeType: 'application/pdf',
+				size: 100,
+				storageProvider: 'blob',
+				containerName: 'local-planning-documents',
+				path: 'gateway-2/cover-letter.pdf',
+				url: 'http://storage/cover-letter.pdf',
+				dateCreated: DOCUMENT_CREATED_DATE,
+				isTemp: true,
+				metadata: {
+					documentGuid: 'document-1',
+					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
+					version: 1
+				}
+			}
+		]);
+	});
+
+	it('queries only active temporary documents in creation order', async () => {
+		const service = createMockService({ existingDocuments: [] });
+
+		await DocumentUtil.loadTempUploadedDocuments(service as unknown as Service, 'case-1', COVER_LETTER_DOCUMENT_SET_ID);
+
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
+				AND: [{ isDeleted: false }, { isTemp: true }]
+			},
+			include: {
+				latestDocumentVersion: true
+			},
+			orderBy: {
+				createdAt: 'asc'
+			}
+		});
+	});
+
+	it('skips temporary documents without a latest document version', async () => {
+		const documentWithVersion = buildDocumentRow({ guid: 'document-1', isTemp: true });
+		const documentWithoutVersion = buildDocumentRow({ guid: 'document-2', isTemp: true, latestDocumentVersion: null });
+		const service = createMockService({ existingDocuments: [documentWithVersion, documentWithoutVersion] });
+
+		const temporaryFiles = await DocumentUtil.loadTempUploadedDocuments(
+			service as unknown as Service,
+			'case-1',
+			COVER_LETTER_DOCUMENT_SET_ID
+		);
+
+		assert.deepEqual(
+			temporaryFiles.map((temporaryFile) => temporaryFile.id),
+			['document-1']
+		);
+	});
+});
+
+describe('cleanUpTempDocuments', () => {
+	it('soft-deletes every temporary document in the document set, each in its own transaction', async () => {
+		const transactionClient = createTransactionClient();
+		const service = createMockService({
+			tx: transactionClient,
+			existingDocuments: [
+				buildDocumentRow({ guid: 'document-1', isTemp: true }),
+				buildDocumentRow({ guid: 'document-2', isTemp: true })
+			]
+		});
+
+		await DocumentUtil.cleanUpTempDocuments(service as unknown as Service, 'case-1', TEST_DOCUMENT_SET_FOLDER_NAME);
+
+		assert.equal(service.db.documentSet.findFirst.mock.callCount(), 1);
+		assert.equal(
+			service.db.document.findMany.mock.calls[0].arguments[0].where.documentSetId,
+			COVER_LETTER_DOCUMENT_SET_ID
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 2);
+		assert.deepEqual(
+			transactionClient.document.update.mock.calls.map((updateCall) => updateCall.arguments[0]),
+			[
+				{ where: { guid: 'document-1' }, data: { isDeleted: true } },
+				{ where: { guid: 'document-2' }, data: { isDeleted: true } }
+			]
+		);
+		assert.deepEqual(
+			transactionClient.documentVersion.updateMany.mock.calls.map((updateCall) => updateCall.arguments[0]),
+			[
+				{ where: { documentGuid: 'document-1' }, data: { isDeleted: true } },
+				{ where: { documentGuid: 'document-2' }, data: { isDeleted: true } }
+			]
+		);
+	});
+
+	it('does nothing when there are no temporary documents', async () => {
+		const service = createMockService({ existingDocuments: [] });
+
+		await DocumentUtil.cleanUpTempDocuments(service as unknown as Service, 'case-1', TEST_DOCUMENT_SET_FOLDER_NAME);
+
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+	});
+
+	it('rejects when the document set reference data is missing', async () => {
+		const service = createMockService({ documentSet: null });
+
+		await assert.rejects(
+			() => DocumentUtil.cleanUpTempDocuments(service as unknown as Service, 'case-1', TEST_DOCUMENT_SET_FOLDER_NAME),
+			/Missing document set reference data for "covering-letter"/
+		);
+		assert.equal(service.db.document.findMany.mock.callCount(), 0);
+	});
+});
