@@ -37,7 +37,12 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortExaminationHearings, sortGateway2Workshops } from '#util/util.ts';
+import {
+	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
+} from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
@@ -67,8 +72,6 @@ const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
-
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -89,8 +92,6 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
-
 const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -110,8 +111,6 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'tif',
 	'tiff'
 ];
-
-const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
@@ -386,6 +385,232 @@ for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) 
 							},
 							{
 								fieldName: `workshopPostcode-${workshopId}`,
+								validators: [new RequiredValidator('Input the postcode')]
+							}
+						]
+					})
+				];
+			}
+		}
+	}
+}
+
+const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
+	examinationHearingDateAndTime: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.DATE,
+				fieldName: 'hearingDate',
+				label: 'Date',
+				caption: 'For example, 21 7 2024',
+				title: 'Examination hearing date',
+				attributes: { 'data-cy': 'examination-hearing-date' }
+			},
+			{
+				type: 'time',
+				fieldName: 'hearingTime',
+				label: 'Time',
+				caption: 'For example, 14 30',
+				title: 'Examination hearing time',
+				attributes: { 'data-cy': 'examination-hearing-time' }
+			}
+		],
+		question: 'Hearing date and time',
+		fieldName: 'examinationHearingDateAndTime',
+		url: 'examination-hearing-date-and-time',
+		title: 'Examination hearing date and time'
+	},
+	examinationHearingExpectedDays: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you know the expected number of days to carry out the hearing?',
+		fieldName: 'hearingExpectedDaysKnown',
+		url: 'examination-hearing-expected-days',
+		title: 'Examination hearing expected number of days',
+		options: [
+			{
+				value: 'yes',
+				text: 'Yes',
+				conditional: {
+					question: 'Expected number of days to carry out the hearing',
+					type: 'number',
+					fieldName: 'hearingExpectedDays'
+				}
+			},
+			{
+				value: 'no',
+				text: 'No'
+			}
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingLocationType: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Is the hearing in-person, hybrid or remote?',
+		fieldName: 'hearingLocationType',
+		url: 'examination-hearing-location-type',
+		title: 'Examination hearing location type',
+		options: [
+			{ value: 'in-person', text: 'In-person' },
+			{ value: 'hybrid', text: 'Hybrid' },
+			{ value: 'remote', text: 'Remote' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingLocationKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Does the hearing have a venue address?',
+		fieldName: 'hearingLocationKnown',
+		url: 'examination-hearing-location-known',
+		title: 'Examination hearing location known',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingVenueAddress: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingVenueName',
+				label: 'Venue name',
+				title: 'Examination hearing venue name',
+				attributes: { 'data-cy': 'examination-hearing-venue-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingAddressLine',
+				label: 'Address line 1',
+				title: 'Examination hearing address line 1',
+				attributes: { 'data-cy': 'examination-hearing-address-line-1' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingAddressLine2',
+				label: 'Address line 2 (optional)',
+				title: 'Examination hearing address line 2',
+				attributes: { 'data-cy': 'examination-hearing-address-line-2' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingTownOrCity',
+				label: 'Town or city',
+				title: 'Examination hearing town or city',
+				attributes: { 'data-cy': 'examination-hearing-town-or-city' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingPostcode',
+				label: 'Postcode',
+				title: 'Examination hearing postcode',
+				attributes: { 'data-cy': 'examination-hearing-postcode' }
+			}
+		],
+		question: 'Hearing venue address',
+		fieldName: 'hearingVenueAddress',
+		url: 'examination-hearing-venue-address',
+		title: 'Examination hearing venue address'
+	},
+	examinationHearingRemoteMeetingLinkKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you have a remote meeting link?',
+		fieldName: 'hearingRemoteMeetingLinkKnown',
+		url: 'examination-hearing-remote-meeting-link-known',
+		title: 'Examination hearing remote meeting link known',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingRemoteMeetingLink: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'What is the remote meeting link?',
+		fieldName: 'hearingRemoteMeetingLink',
+		url: 'examination-hearing-remote-meeting-link',
+		title: 'Examination hearing remote meeting link',
+		validators: [new RequiredValidator('Input a remote meeting link')]
+	},
+	examinationHearingDuration: {
+		type: 'number',
+		question: 'How many days did the hearing actually take?',
+		fieldName: 'hearingDuration',
+		url: 'examination-hearing-duration',
+		title: 'Examination hearing duration',
+		validators: [new RequiredValidator('Input hearing duration')]
+	},
+	examinationHearingEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the hearing end date?',
+		fieldName: 'hearingEndDate',
+		url: 'examination-hearing-end-date',
+		title: 'Examination hearing end date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-hearing-end-date' }
+	}
+};
+
+export const examinationHearingBaseUrls = Object.values(examinationHearingBaseQuestions)
+	.map((value) => value.url)
+	.filter((value) => value != undefined);
+
+// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshop documents to be made
+const examinationHearingQuestions: Record<string, ManageQuestionConfig> = {};
+for (let hearingId = 1; hearingId < NUM_GW2_WORKSHOP_QUESTIONS; hearingId++) {
+	for (const key in examinationHearingBaseQuestions) {
+		const questionConfigCopy = { ...examinationHearingBaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${hearingId}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${hearingId}`;
+		examinationHearingQuestions[`${key}-${hearingId}`] = questionConfigCopy;
+		if (questionConfigCopy.type == CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT) {
+			const inputFields = structuredClone(questionConfigCopy.inputFields);
+			if (inputFields) {
+				for (let inputFieldIndex = 0; inputFieldIndex < inputFields.length; inputFieldIndex++) {
+					inputFields[inputFieldIndex].url = `${inputFields[inputFieldIndex].url}-${hearingId}`;
+					inputFields[inputFieldIndex].fieldName = `${inputFields[inputFieldIndex].fieldName}-${hearingId}`;
+				}
+				questionConfigCopy.inputFields = inputFields;
+			}
+			if (questionConfigCopy.fieldName.startsWith('examinationHearingDateAndTime')) {
+				questionConfigCopy.validators = [
+					new MultiFieldInputValidator({
+						fields: [
+							{
+								fieldName: `hearingDate-${hearingId}`,
+								validators: [new DateValidator('Input a valid date')]
+							},
+							{
+								fieldName: `hearingTime-${hearingId}_hour`,
+								validators: [new RequiredValidator(' a valid time')]
+							},
+							{
+								fieldName: `hearingTime-${hearingId}_minute`,
+								validators: [new RequiredValidator(' a valid time')]
+							}
+						]
+					})
+				];
+			}
+			if (questionConfigCopy.fieldName.startsWith('examinationHearingVenueAddress')) {
+				questionConfigCopy.validators = [
+					new MultiFieldInputValidator({
+						fields: [
+							{
+								fieldName: `hearingVenueName-${hearingId}`,
+								validators: [new RequiredValidator('Input a hearing venue name')]
+							},
+							{
+								fieldName: `hearingAddressLine-${hearingId}`,
+								validators: [new RequiredValidator('Input a hearing address')]
+							},
+							{
+								fieldName: `hearingTownOrCity-${hearingId}`,
+								validators: [new RequiredValidator('Input the town or city')]
+							},
+							{
+								fieldName: `hearingPostcode-${hearingId}`,
 								validators: [new RequiredValidator('Input the postcode')]
 							}
 						]
@@ -1033,6 +1258,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
 	},
+	...examinationHearingQuestions,
 	letterSentToMHCLGDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the 48-hour protocol letter sent to MHCLG?',
@@ -1319,6 +1545,84 @@ Object.entries(questions)
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			return [locationType];
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingDateAndTime'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+
+			let hearingDateValue = hearingDetails.hearingDate;
+			if (typeof hearingDetails.hearingDate == 'string') {
+				hearingDateValue = parseDate(hearingDateValue);
+			}
+			const hearingDate = {
+				key: 'hearing date',
+				value:
+					hearingDateValue && typeof hearingDateValue != 'string'
+						? formatDateToString(hearingDateValue)
+						: hearingDetails.hearingDate,
+				action: this.getAction(sectionSegment, journey, hearingDateValue)
+			};
+
+			const hearingStartTime = {
+				key: 'hearing time',
+				value: hearingDetails.hearingTime,
+				action: this.getAction(sectionSegment, journey, hearingDetails.hearingTime)
+			};
+
+			return [hearingDate, hearingStartTime];
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingExpectedDays'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const expectedDaysKnown = {
+				key: 'Do you know the estimated number of days?',
+				value: hearingDetails.hearingExpectedDaysKnown,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			if (hearingDetails.hearingExpectedDaysKnown != 'no') {
+				const expectedDays = {
+					key: 'Estimated number of days',
+					value: hearingDetails.hearingExpectedDays,
+					action: this.getAction(sectionSegment, journey, answer)
+				};
+
+				return [expectedDaysKnown, expectedDays];
+			} else {
+				return [expectedDaysKnown];
+			}
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingLocationType'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const locationType = {
+				key: 'Examination location type',
+				value: hearingDetails.hearingLocationType,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 
