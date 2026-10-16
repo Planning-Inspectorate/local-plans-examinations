@@ -673,6 +673,8 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 			});
 			req.session.alertMessage = 'Document added and notification sent';
 			req.session.alertMessageStatus = 'success';
+
+			// Go back to Manage docs page after document addition
 			res.redirect(
 				`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/outcome/${questions.examinationReportManage.url}`
 			);
@@ -702,6 +704,7 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		req.session.alertMessage = 'Final report and supporting documents saved and notification sent';
 		req.session.alertMessageStatus = 'success';
 
+		// After first time exam doc upload, go back to examination tab
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};

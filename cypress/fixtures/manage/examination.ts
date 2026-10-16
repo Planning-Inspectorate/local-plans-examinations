@@ -266,7 +266,7 @@ export const withdrawnDate = {
 };
 
 export const soundUnsound = {
-	row: 'Plan outcome',
+	row: 'Outcome',
 	heading: 'Plan outcome',
 	fieldName: 'isSound',
 	path: 'plan-outcome',
@@ -277,7 +277,7 @@ export const soundUnsound = {
 };
 
 export const soundUnsoundDate = {
-	row: 'Sound / unsound date',
+	row: 'Report issued',
 	path: 'sound-unsound-date',
 	display: '7 December 2026'
 };
