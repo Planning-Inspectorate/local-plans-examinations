@@ -62,32 +62,31 @@ export class ExaminationSaveController extends SaveController {
 			}
 			const currentHearing = hearingDetails[hearingId - 1];
 			const questionFieldsMap = {
-				[`gateway-2-hearing-date-and-time-${hearingId}`]: {
+				[`examination-hearing-date-and-time-${hearingId}`]: {
 					hearingDate: `hearingDate-${hearingId}`,
-					hearingTime: `hearingTime-${hearingId}`,
-					hearingEndTime: `hearingEndTime-${hearingId}`
+					hearingTime: `hearingTime-${hearingId}`
 				},
-				[`gateway-2-hearing-expected-days-${hearingId}`]: {
+				[`examination-hearing-expected-days-${hearingId}`]: {
 					hearingExpectedDaysKnown: `hearingExpectedDaysKnown-${hearingId}`,
 					hearingExpectedDays: `hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`
 				},
-				[`gateway-2-location-type-${hearingId}`]: {
+				[`examination-location-type-${hearingId}`]: {
 					hearingLocationType: `hearingLocationType-${hearingId}`
 				},
-				[`gateway-2-hearing-location-known-${hearingId}`]: {
+				[`examination-hearing-location-known-${hearingId}`]: {
 					hearingLocationKnown: `hearingLocationKnown-${hearingId}`
 				},
-				[`gateway-2-hearing-venue-address-${hearingId}`]: {
+				[`examination-hearing-venue-address-${hearingId}`]: {
 					hearingVenueName: `hearingVenueName-${hearingId}`,
 					hearingAddressLine: `hearingAddressLine-${hearingId}`,
 					hearingAddressLine2: `hearingAddressLine2-${hearingId}`,
 					hearingTownOrCity: `hearingTownOrCity-${hearingId}`,
 					hearingPostcode: `hearingPostcode-${hearingId}`
 				},
-				[`gateway-2-remote-meeting-link-known-${hearingId}`]: {
+				[`examination-remote-meeting-link-known-${hearingId}`]: {
 					hearingRemoteMeetingLinkKnown: `hearingRemoteMeetingLinkKnown-${hearingId}`
 				},
-				[`gateway-2-remote-meeting-link-${hearingId}`]: {
+				[`examination-remote-meeting-link-${hearingId}`]: {
 					hearingRemoteMeetingLink: `hearingRemoteMeetingLink-${hearingId}`
 				}
 			};
@@ -137,12 +136,12 @@ export class ExaminationSaveController extends SaveController {
 			delete (currentHearing as any).hearingExpectedDays;
 		}
 		if (currentHearing?.hearingLocationType == 'remote') {
-			delete (currentHearing as any).hearingLocationKnown;
-			delete (currentHearing as any).hearingVenueName;
-			delete (currentHearing as any).hearingAddressLine;
-			delete (currentHearing as any).hearingAddressLine2;
-			delete (currentHearing as any).hearingTownOrCity;
-			delete (currentHearing as any).hearingPostcode;
+			currentHearing.hearingLocationKnown = null;
+			currentHearing.hearingVenueName = null;
+			currentHearing.hearingAddressLine = null;
+			currentHearing.hearingAddressLine2 = null;
+			currentHearing.hearingTownOrCity = null;
+			currentHearing.hearingPostcode = null;
 		}
 		if (currentHearing?.hearingLocationKnown == 'no') {
 			delete (currentHearing as any).hearingVenueName;
@@ -183,6 +182,7 @@ export class ExaminationSaveController extends SaveController {
 				throw Error('No hearing entries found');
 			}
 			const hearingsCleaned = Object.values(hearings).map((e) => ({
+				id: e.id,
 				createdDate: e.createdDate,
 				hearingDate: e.hearingDate && typeof e.hearingDate == 'string' ? parseDate(e.hearingDate) : e.hearingDate,
 				hearingTime: e.hearingTime,

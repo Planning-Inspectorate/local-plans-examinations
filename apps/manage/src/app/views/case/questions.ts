@@ -517,7 +517,7 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 		type: COMPONENT_TYPES.RADIO,
 		question: 'Do you have a remote meeting link?',
 		fieldName: 'hearingRemoteMeetingLinkKnown',
-		url: 'hearing-remote-meeting-link-known',
+		url: 'examination-hearing-remote-meeting-link-known',
 		title: 'Examination hearing remote meeting link known',
 		options: [
 			{ value: 'yes', text: 'Yes' },
