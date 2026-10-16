@@ -24,7 +24,7 @@ export default class CustomNoteQuestion extends Question {
 				createdTime: formatDateToString(note.createdTime, true),
 				createdBy: note.createdBy
 			}));
-
+		// Note: ensure that the csrf token is embedded into the journey that contains this question
 		const formattedAnswer = nunjucks.render(`${this.viewFolder}/notes-summary-list.njk`, {
 			reference: journey.response.answers.reference,
 			notes: cleanNotes,
