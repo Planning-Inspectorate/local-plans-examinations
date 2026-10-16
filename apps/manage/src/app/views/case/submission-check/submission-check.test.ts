@@ -183,8 +183,41 @@ describe('Test ExaminationReportSubmissionCheck', () => {
 		assert.deepEqual(
 			data.additionalFields.map((field) => [field.name, field.value]),
 			[
-				['Plan outcome', 'Sound with modifications'],
-				['Date uploaded', '1 January 2026']
+				['Outcome', 'Sound with modifications'],
+				['Date', '1 January 2026']
+			]
+		);
+		assert.deepEqual(data.additionalFields[1], {
+			name: 'Date',
+			value: '1 January 2026',
+			url: 'sound-unsound-date',
+			query: 'returnTo=check'
+		});
+	});
+
+	it('keeps the initial check page after its date is changed', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date(2026, 0, 3),
+			isSound: 'sound'
+		}));
+		const checkPageUrl = '/PLAN-12345/examination/outcome/examination-report/check?returnTo=check';
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			'123456',
+			'PLAN-12345',
+			'examination',
+			'outcome',
+			'examination-report',
+			checkPageUrl,
+			MockService as any,
+			[{ dateCreated: new Date(2026, 0, 1) }]
+		);
+
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound'],
+				['Date', '3 January 2026']
 			]
 		);
 	});

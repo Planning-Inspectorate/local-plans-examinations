@@ -395,8 +395,12 @@ function registerCaseJourney(
 				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
 				req.params.section === 'outcome' &&
 				req.params.question === questions.isSound.url;
-			if (isPlanOutcome && req.query.returnTo === 'check') {
-				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check`;
+			const isCheckPageEdit =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				[questions.isSound.url, questions.soundUnsoundDate.url].includes(String(req.params.question));
+			if (isCheckPageEdit && req.query.returnTo === 'check') {
+				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
 			}
 			const continueToReportUpload =
 				isPlanOutcome &&
@@ -472,7 +476,15 @@ function registerCaseJourney(
 								uploadedFiles.length === 0 &&
 								questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION
 							) {
-								await service.db.examinationInfo.updateMany({ where: { caseId }, data: { soundUnsoundDate: null } });
+								await service.db.examinationInfo.updateMany({
+									where: { caseId },
+									data: {
+										isSound: null,
+										soundUnsoundDate: null,
+										adoptionDate: null,
+										approvedForCILDate: null
+									}
+								});
 							}
 						},
 						onDeleteError: ({ req, fileId, error }) =>

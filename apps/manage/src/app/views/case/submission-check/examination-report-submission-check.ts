@@ -23,8 +23,12 @@ export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 				caseId: caseId
 			}
 		});
-		const isAdditionalDocument = Boolean(existingExaminationDetails?.soundUnsoundDate);
-		const fileUploadedDate = uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined;
+		const queryString = originalUrl.split('?')[1] ?? '';
+		const returnToCheck = new URLSearchParams(queryString).get('returnTo') === 'check';
+		const isAdditionalDocument = Boolean(existingExaminationDetails?.soundUnsoundDate) && !returnToCheck;
+		const fileUploadedDate =
+			existingExaminationDetails?.soundUnsoundDate ??
+			(uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined);
 		const planOutcomeText = questions.isSound.options?.find(
 			(option: { value: string }) => option.value === existingExaminationDetails?.isSound
 		)?.text;
@@ -48,7 +52,12 @@ export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 							url: questions.isSound.url,
 							query: 'returnTo=check'
 						},
-						...this.generateAdditionalDateField(fileUploadedDate, undefined)
+						...this.generateAdditionalDateField(fileUploadedDate, questions.soundUnsoundDate.url, 'Date').map(
+							(field) => ({
+								...field,
+								query: 'returnTo=check'
+							})
+						)
 					],
 			notificationTextLPA: "We'll notify the planning authority and MHCLG that the report is ready"
 		};

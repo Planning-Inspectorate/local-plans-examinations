@@ -667,7 +667,7 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 			select: { soundUnsoundDate: true },
 			where: { caseId }
 		});
-		if (existingExaminationDetails?.soundUnsoundDate) {
+		if (existingExaminationDetails?.soundUnsoundDate && req.query.returnTo !== 'check') {
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: 'Examination report document added'
 			});
@@ -679,10 +679,12 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 			return;
 		}
 
-		const reportIssuedDate = new Date();
-		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-			soundUnsoundDate: reportIssuedDate
-		});
+		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
+		if (!existingExaminationDetails?.soundUnsoundDate) {
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				soundUnsoundDate: reportIssuedDate
+			});
+		}
 		await updateCaseHistory(
 			service,
 			req,

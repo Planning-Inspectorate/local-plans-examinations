@@ -1160,7 +1160,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'Plan outcome',
 		fieldName: 'isSound',
 		url: 'plan-outcome',
-		title: 'Plan outcome',
+		title: 'Outcome',
 		validators: [new RequiredValidator('Select a plan outcome')],
 		inputAttributes: { 'data-cy': 'plan-outcome' }
 	},
