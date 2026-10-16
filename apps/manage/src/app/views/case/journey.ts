@@ -75,8 +75,7 @@ export function createExaminationHearingJourney(
 				.addQuestion(questions[`examinationHearingDateAndTime-${hearingId}`])
 				.addQuestion(questions[`examinationHearingExpectedDays-${hearingId}`])
 				.addQuestion(questions[`examinationHearingLocationType-${hearingId}`])
-				.addQuestion(questions[`examinationHearingLocationKnown-${hearingId}`])
-				.withCondition((response) =>
+				.startMultiQuestionCondition('hearing-location', (response) =>
 					questionsHaveAnswers(
 						response,
 						[
@@ -86,10 +85,11 @@ export function createExaminationHearingJourney(
 						{ logicalCombinator: 'or' }
 					)
 				)
+				.addQuestion(questions[`examinationHearingLocationKnown-${hearingId}`])
 				.addQuestion(questions[`examinationHearingVenueAddress-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingLocationKnown-${hearingId}`], 'yes'))
-				.addQuestion(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`])
-				.withCondition((response) =>
+				.endMultiQuestionCondition('hearing-location')
+				.startMultiQuestionCondition('hearing-remote-meeting', (response) =>
 					questionsHaveAnswers(
 						response,
 						[
@@ -99,8 +99,10 @@ export function createExaminationHearingJourney(
 						{ logicalCombinator: 'or' }
 					)
 				)
+				.addQuestion(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`])
 				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
+				.endMultiQuestionCondition('hearing-remote-meeting')
 				.addQuestion(questions[`examinationHearingDuration-${hearingId}`])
 				.withCondition(() => false)
 				.addQuestion(questions[`examinationHearingEndDate-${hearingId}`])
