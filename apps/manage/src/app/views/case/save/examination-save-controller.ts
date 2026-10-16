@@ -6,20 +6,22 @@ import { sortByCreatedDate } from '#util/util.ts';
 import { parseDate } from '../../../util/date.ts';
 
 export class ExaminationSaveController extends SaveController {
-	private isExaminationPauseQuestion() {
-		const question = String(this.req.params.question);
-		const matchedQuestion = examinationPauseBaseUrls.find((prefix) => question.startsWith(prefix));
-		return !!matchedQuestion;
-	}
-	protected async shouldSaveToSession() {
-		return this.isExaminationPauseQuestion();
-	}
+	private cachedCaseDetails: {
+		id: string;
+		examinationInfo: {
+			pauses: {
+				createdDate: Date;
+				startDate: Date;
+				details: string | null;
+				endDate: Date | null;
+				examinationInfoId: string;
+			}[];
+		} | null;
+	} | null = null;
 
-	protected async prepareData(answers: Record<string, any>) {
-		const question = String(this.req.params.question);
-		const matchedExaminationPauseQuestion = examinationPauseBaseUrls.find((prefix) => question.startsWith(prefix));
-		if (matchedExaminationPauseQuestion) {
-			const caseDetails = await this.service.db.case.findUnique({
+	private async getCaseData() {
+		if (!this.cachedCaseDetails) {
+			this.cachedCaseDetails = await this.service.db.case.findUnique({
 				select: {
 					id: true,
 					examinationInfo: {
@@ -30,6 +32,37 @@ export class ExaminationSaveController extends SaveController {
 				},
 				where: { reference: this.caseReference }
 			});
+		}
+		return this.cachedCaseDetails;
+	}
+
+	protected async shouldSaveToSession() {
+		const caseDetails = await this.getCaseData();
+		if (!caseDetails) {
+			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
+		}
+		if (caseDetails.examinationInfo?.pauses == undefined) {
+			throw Error(`Could not find examination pause data for case with reference '${this.caseReference}'`);
+		}
+		const question = String(this.req.params.question);
+		const pauseId = parseInt(String(question.split('-').at(-1)));
+		if (isNaN(pauseId)) {
+			throw Error('Could not determine the pause id from the question when saving');
+		}
+		const pauses = sortByCreatedDate(caseDetails?.examinationInfo?.pauses);
+		const currentPause = pauses.at(pauseId - 1);
+		if (question.startsWith('examination-pause-start-date')) {
+			// Save to session if there is no pause data for the first question
+			return !currentPause;
+		}
+		return false;
+	}
+
+	protected async prepareData(answers: Record<string, any>) {
+		const question = String(this.req.params.question);
+		const matchedExaminationPauseQuestion = examinationPauseBaseUrls.find((prefix) => question.startsWith(prefix));
+		if (matchedExaminationPauseQuestion) {
+			const caseDetails = await this.getCaseData();
 			if (!caseDetails) {
 				throw Error(`Could not find details for case with reference '${this.caseReference}'`);
 			}
@@ -39,14 +72,27 @@ export class ExaminationSaveController extends SaveController {
 			const pauseId = parseInt(String(this.req.url.split('-').at(-1)));
 			const pauseDetails = sortByCreatedDate(caseDetails?.examinationInfo?.pauses);
 			if (pauseId > pauseDetails.length) {
-				pauseDetails.push({ startDate: answers[`examinationPauseStartDate-${pauseId}`], createdDate: new Date() });
+				pauseDetails.push({ startDate: answers[`startDate-${pauseId}`], createdDate: new Date() });
 			}
+			const questionFieldMap: Record<string, string> = {
+				'examination-pause-start-date': 'startDate',
+				'examination-pause-details': 'details',
+				'examination-pause-end-date': 'endDate'
+			};
+			const questionWithoutPauseId = question.replace(`-${pauseId}`, '');
+
 			// Enrich the current pause item with the answers
 			if (this.req.session && this.req.session.answers && this.req.session.answers.pauses) {
+				const currentQuestionField = questionFieldMap[questionWithoutPauseId];
+				const answersForCurrentQuestion = Object.fromEntries(
+					Object.entries(answers).filter(([key]) => key == `${currentQuestionField}-${pauseId}`)
+				);
+
 				const filteredSessionAnswerPauses = sortByCreatedDate(this.req.session.answers.pauses);
 				pauseDetails[pauseId - 1] = {
 					...pauseDetails[pauseId - 1],
-					...filteredSessionAnswerPauses[pauseId - 1]
+					...filteredSessionAnswerPauses[pauseId - 1],
+					...answersForCurrentQuestion
 				};
 			}
 			return {
