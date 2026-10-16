@@ -49,7 +49,7 @@ describe('loadUploadedDocuments', () => {
 
 		assert.deepEqual(files, [
 			{
-				id: 'document-1',
+				id: 'stored-file',
 				fileName: 'cover-letter.pdf',
 				mimeType: 'application/pdf',
 				size: 123,
@@ -224,7 +224,7 @@ describe('saveDocuments', () => {
 		});
 
 		await DocumentUtil.saveDocuments(service as unknown as Service, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			buildUploadedFile({ id: 'document-1' })
+			buildUploadedFile({ id: 'gateway-2/cover-letter.pdf' })
 		]);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);
@@ -264,7 +264,7 @@ describe('saveDocuments', () => {
 		});
 
 		await DocumentUtil.saveDocuments(service as unknown as Service, buildRequest(), TEST_DOCUMENT_SET_FOLDER_NAME, [
-			buildUploadedFile({ id: 'document-1' })
+			buildUploadedFile({ id: 'gateway-2/cover-letter.pdf' })
 		]);
 
 		assert.equal(tx.document.create.mock.callCount(), 0);

@@ -188,7 +188,7 @@ export class DocumentUtil {
 		}
 
 		return {
-			id: document.guid,
+			id: document.name,
 			fileName: version.originalFilename ?? version.fileName ?? document.name,
 			mimeType: version.mime ?? 'application/octet-stream',
 			size: version.size ?? 0,
@@ -205,9 +205,11 @@ export class DocumentUtil {
 		};
 	}
 
-	// Gets the route-safe id used by the uploader.
+	// Gets the uploaded file id stored on this document row.
+	// This matches the file.id used by the session uploader,
+	// which is persisted as document.name during createDocument.
 	protected static getDocumentUploadedFileId(document: DocumentRow): string | undefined {
-		return document.guid;
+		return document.name;
 	}
 
 	// Finds document set reference data for all configured question URLs/folder names.

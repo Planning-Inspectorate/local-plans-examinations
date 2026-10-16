@@ -115,6 +115,10 @@ export default defineConfig({
 					}
 					return JSON.parse(jsonLine);
 				},
+				seedGateway3Resubmission: async () => {
+					await runCommand('node packages/database/src/seed/seed-gw3-resubmission-dev.ts');
+					return null;
+				},
 				seedPortalSmokeCase: async (options?: { email?: string }) => {
 					const stdout = await runCommand(
 						'node packages/database/src/seed/seed-portal-smoke.ts',
