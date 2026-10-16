@@ -341,7 +341,8 @@ export function createFileSubmitUploadController(options: FileUploaderController
 		const uploadErrors: Record<string, string> = {
 			'gateway-1': 'Upload at least one signed SLA document before continuing',
 			'gateway-2': 'Please upload your Gateway 2 report',
-			'gateway-3': 'Please upload your Gateway 3 report'
+			'gateway-3': 'Please upload your Gateway 3 report',
+			'gateway-3-report': 'Please upload your Gateway 3 report'
 		};
 
 		const session = ensureFileUploaderSession(request as RequestWithFiles);
@@ -353,6 +354,8 @@ export function createFileSubmitUploadController(options: FileUploaderController
 			: (session.fileUploader?.[sessionKey]?.uploadedFiles ?? undefined);
 		const formKey = options.fieldName;
 		const uploadedFiles = Array.isArray(formFiles) ? formFiles : (formFiles?.[formKey] ?? []);
+
+		console.log(urlPathRoot, urlPathRoot);
 
 		if (uploadedFiles?.length === 0) {
 			session.errors = { 'upload-form': { msg: `${uploadErrors[urlPathRoot]}` } };
