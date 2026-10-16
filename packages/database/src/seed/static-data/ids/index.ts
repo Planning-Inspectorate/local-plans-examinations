@@ -1,5 +1,6 @@
 export { AUTHORITY_STATUS_ID } from './authority-status.ts';
-export { PLAN_BAND_ID, PLAN_TYPE_ID, DSA_CHECKED_ID, GATEWAY_3_DECISION_ID } from './case.ts';
+export { PLAN_BAND_ID, PLAN_TYPE_ID, DSA_CHECKED_ID, GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from './case.ts';
+export type { Gateway3Status } from './case.ts';
 export { GATEWAY_ID, GATEWAY_NAME } from './gateway.ts';
 export { DOCUMENT_CATEGORY_ID } from './document-category.ts';
 export {
