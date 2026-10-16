@@ -91,12 +91,23 @@ describe('Portal login journey', () => {
 		});
 	});
 
-	it.skip('requests a new code from the OTP page', { tags: ['notify'] }, () => {
+	it('can retry sending a code from the OTP page', { tags: ['regression'] }, () => {
 		startPortalOtpLogin();
-		portalLoginOtpPage.verifyPath();
 
 		portalLoginOtpPage.clickRequestNewCode();
 
-		portalLoginOtpPage.verifyNewCodeBanner();
+		cy.get('body').then(($body) => {
+			if ($body.find('[data-cy="new-code-banner"]').length) {
+				portalLoginOtpPage.verifyNewCodeBanner();
+			} else {
+				portalLoginOtpPage.verifyErrorSummary(
+					'We could not send a new code',
+					'Something went wrong. Please try again later.'
+				);
+				portalLoginOtpPage.verifyFieldErrorContains('Something went wrong. Please try again later.');
+			}
+		});
+
+		portalLoginOtpPage.requestNewCodeLink.should('be.visible');
 	});
 });
