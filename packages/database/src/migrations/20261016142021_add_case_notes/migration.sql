@@ -4,11 +4,12 @@ BEGIN TRAN;
 
 -- CreateTable
 CREATE TABLE [dbo].[CaseNote] (
+    [id] UNIQUEIDENTIFIER NOT NULL,
     [text] NVARCHAR(500) NOT NULL,
     [createdTime] DATETIME2 NOT NULL,
     [createdBy] NVARCHAR(1000) NOT NULL,
     [caseId] UNIQUEIDENTIFIER NOT NULL,
-    CONSTRAINT [CaseNote_pkey] PRIMARY KEY CLUSTERED ([text],[createdTime],[createdBy],[caseId])
+    CONSTRAINT [CaseNote_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 
 -- AddForeignKey
