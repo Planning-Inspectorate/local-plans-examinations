@@ -355,8 +355,6 @@ export function createFileSubmitUploadController(options: FileUploaderController
 		const formKey = options.fieldName;
 		const uploadedFiles = Array.isArray(formFiles) ? formFiles : (formFiles?.[formKey] ?? []);
 
-		console.log(urlPathRoot, urlPathRoot);
-
 		if (uploadedFiles?.length === 0) {
 			session.errors = { 'upload-form': { msg: `${uploadErrors[urlPathRoot]}` } };
 			session.errorSummary = [{ href: '#upload-form', text: `${uploadErrors[urlPathRoot]}` }];
