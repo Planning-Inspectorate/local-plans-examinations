@@ -154,6 +154,13 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 
 	verifyNoFileUploadedError() {
 		this.clickUploadFiles();
+		this.verifyLoaded();
 		this.verifyErrorSummary(ERROR_MESSAGES.THERE_IS_A_PROBLEM, ERROR_MESSAGES.NO_FILE_UPLOADED);
+
+		cy.reload();
+		this.errorSummary.should('not.exist');
+		this.saveAndReturn();
+		this.verifyLoaded();
+		this.verifyValidationError(ERROR_MESSAGES.NO_FILE_UPLOADED);
 	}
 }

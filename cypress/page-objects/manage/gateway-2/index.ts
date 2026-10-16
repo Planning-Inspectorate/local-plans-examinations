@@ -12,3 +12,4 @@ export * from './workshop-set-up/workshop-venue-address-page.ts';
 export * from './workshop-set-up/workshop-link-known-page.ts';
 export * from './workshop-set-up/workshop-meeting-link-page.ts';
 export * from './workshop-set-up/workshop-check-your-answers-page.ts';
+export * from './workshop-set-up/cancel-workshop-page.ts';

@@ -103,10 +103,10 @@
                           rows: formattedRows
                       }) }}
                   {% endif %}
-              {% if section.heading == 'Workshop'%} 
+              {% if section.heading == 'Workshop'%}
 
                 {{ workshopDetails(journeyResponse.answers, reference) }}
-                <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link">Set up workshop</a>
+                <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
                 <p></p>
               {% endif %}
               

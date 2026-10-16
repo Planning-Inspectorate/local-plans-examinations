@@ -3,6 +3,8 @@ import {
 	buildGetJourneyMiddleware,
 	updateCaseField,
 	getDeleteCase,
+	getDeleteWorkshop,
+	postDeleteWorkshop,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
 	fileUploadQuestionConfigs,
@@ -47,7 +49,8 @@ import {
 	createGateway2WorkshopJourney,
 	createGateway3Journey,
 	createExaminationJourney,
-	createExaminationHearingJourney
+	createExaminationHearingJourney,
+	createGateway3ReportJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -196,6 +199,8 @@ function registerGateway2WorkshopJourney(
 		saveLastQuestionUrl,
 		completeWorkshop
 	);
+	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
+	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
 
 	router.get(
 		'/gateway-2/set-up-workshop/:section/:question',
@@ -406,6 +411,13 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		saveController: Gateway3SaveController
 	},
 	{
+		path: 'gateway-3-report',
+		journeyId: COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID,
+		createJourney: createGateway3ReportJourney,
+		supportsFileUpload: true,
+		saveController: Gateway3SaveController
+	},
+	{
 		path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
@@ -526,7 +538,7 @@ function registerCaseJourney(
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
-	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service, journeyId));
+	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
 	// Save answer
 	router.post(

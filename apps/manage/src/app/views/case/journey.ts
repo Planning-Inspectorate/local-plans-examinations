@@ -189,6 +189,31 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	return getBackLinksAndSetReference(journey, gateway3Url, req.params.reference);
 }
 
+export function createGateway3ReportJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const gateway3ReportUrl = req.baseUrl + '/gateway-3-report';
+	const submissionData = Array.isArray(response.answers.submissions) ? response.answers.submissions : null;
+	if (!submissionData) {
+		throw Error('submissionData is null');
+	}
+	const submissionId = Number(String(req.params.question).split('-').at(-1));
+	return new Journey({
+		journeyId: COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID,
+		sections: [
+			new Section('Gateway 3 report', `gateway-3-submission-${submissionId}`)
+				.addQuestion(questions[`gateway3Decision-${submissionId}`])
+				.addQuestion(questions[`gateway3Documents-${submissionId}`])
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		taskListUrl: 'gateway-3',
+		journeyTitle: 'Gateway 2',
+		returnToListing: false,
+		makeBaseUrl: () => gateway3ReportUrl,
+		initialBackLink: gateway3ReportUrl,
+		response
+	});
+}
+
 export function createGateway2WorkshopJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2WorkshopUrl = req.baseUrl + '/gateway-2/set-up-workshop';
 	const gateway2Url = req.baseUrl + '/gateway-2';
@@ -274,7 +299,6 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 			new Section('Gateway 2', 'gateway-2')
 				.addQuestion(questions.gateway2ExpectedDate)
 				.addQuestion(questions.gateway2ActualDate)
-				.addQuestion(questions.gateway2ValidDate)
 				.addQuestion(questions.gateway2Documents)
 				.addQuestion(questions.gateway2AssessorsName)
 				.addQuestion(questions.assessorDateOfAppointment),
@@ -441,7 +465,6 @@ const gateway1QuestionNames = new Set<string>([
 const gateway2QuestionNames = new Set<string>([
 	'gateway2ExpectedDate',
 	'gateway2ActualDate',
-	'gateway2ValidDate',
 	'gateway2AssessorsName',
 	'assessorDateOfAppointment',
 	'gateway2Report',
@@ -499,5 +522,6 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
+	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
 };

@@ -25,6 +25,15 @@ describe('Gateway 1 validation', () => {
 		noticeOfIntentionPublishDatePage.verifyValidationError('Enter  a valid date');
 	});
 
+	it('shows an error when no signed SLA is uploaded', { tags: ['regression'] }, () => {
+		gateway1Page.openActionLinkFor(signedSLA.row);
+		gateway1SignedSLAPage.verifyLoaded();
+		gateway1SignedSLAPage.saveAndReturn();
+
+		gateway1SignedSLAPage.verifyLoaded();
+		gateway1SignedSLAPage.verifyValidationError('Upload at least one signed SLA document before continuing');
+	});
+
 	it('shows an error when an incorrect file type is uploaded to signed SLA', { tags: ['regression'] }, () => {
 		gateway1Page.openActionLinkFor(signedSLA.row);
 		gateway1SignedSLAPage.verifyLoaded();

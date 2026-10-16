@@ -3,10 +3,17 @@ import { body } from 'express-validator';
 
 export default class FileUploadRequiredValidator extends RequiredValidator {
 	readonly fieldName: string;
+	readonly requiredForJourney: boolean;
 
-	constructor(fieldName: string, errorMessage = 'Upload a file') {
+	constructor(fieldName: string, errorMessage = 'Choose a file to upload', { requiredForJourney = true } = {}) {
 		super(errorMessage);
 		this.fieldName = fieldName;
+		this.requiredForJourney = requiredForJourney;
+	}
+
+	// Journey completion reads this; false still validates the page but leaves the answer optional.
+	isRequired() {
+		return this.requiredForJourney;
 	}
 
 	validate() {
