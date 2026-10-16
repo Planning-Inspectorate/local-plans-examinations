@@ -6,6 +6,7 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_JOURNEY_ID: 'gateway-3',
 	GATEWAY_3_REPORT_JOURNEY_ID: 'gateway-3-report',
 	EXAMINATION_JOURNEY_ID: 'examination',
+	EXAMINATION_HEARING_JOURNEY_ID: 'examination-hearing',
 	OVERVIEW: 'overview',
 	GATEWAY_2_INFO: 'gateway2Info',
 	GATEWAY_3_INFO: 'gateway3Info',
@@ -32,3 +33,6 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_DOCUMENT_QUESTION: 'gateway-3-document',
 	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date'
 };
+export const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+export const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+export const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB

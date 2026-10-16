@@ -29,3 +29,19 @@ export function sortGateway2Workshops(workshops: { createdDate: Date; [key: stri
 		return aCreatedDate.getTime() - bCreatedDate.getTime();
 	});
 }
+
+/**
+ * Immutably sort the given list workshops details, with null createdDate values at the end
+ * @param hearings The workshops to filter and sort
+ * @returns The sorted workshops
+ */
+export function sortExaminationHearings(hearings: { createdDate: Date; [key: string]: any }[]) {
+	return hearings.toSorted((a, b) => {
+		if (!(a.createdDate || b.createdDate)) return 0;
+		if (!a.createdDate) return 1;
+		if (!b.createdDate) return -1;
+		const aCreatedDate = typeof a.createdDate === 'string' ? new Date(a.createdDate) : a.createdDate;
+		const bCreatedDate = typeof b.createdDate === 'string' ? new Date(b.createdDate) : b.createdDate;
+		return aCreatedDate.getTime() - bCreatedDate.getTime();
+	});
+}

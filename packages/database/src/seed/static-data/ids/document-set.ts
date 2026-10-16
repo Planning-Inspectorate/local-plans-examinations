@@ -1,5 +1,6 @@
 export const NUM_GW2_WORKSHOP_QUESTIONS = 200;
 export const NUM_GW3_SUBMISSIONS_QUESTIONS = 200;
+export const NUM_EXAMINATION_HEARING_QUESTIONS = 200;
 
 // Create multiple entries to support multiple gw3 submissions
 const GATEWAY_3_DOCUMENT_FOLDERS: Record<string, string> = {};
