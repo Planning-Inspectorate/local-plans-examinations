@@ -3,8 +3,29 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block pageTitle %}Gateway 3 submission{% endblock %}
+
+{% block beforeContent %}
+<div class="govuk-grid-column-two-thirds pins-app-grid-column--80 govuk-!-margin-top-4">
+    {% if virusErrorSummary and virusErrorSummary.length %}
+        {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: virusErrorSummary,
+            attributes: { "data-cy": "virus-detected-banner" }
+        }) }}
+    {% endif %}
+    {% if virusScanInProgress %}
+        {{ govukNotificationBanner({
+            titleText: "Important",
+            html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+            attributes: { "data-cy": "virus-scan-in-progress-banner" }
+        }) }}
+    {% endif %}
+</div>
+{% endblock %}
 
 {% block pageHeading %}
     <div class="govuk-grid-row">

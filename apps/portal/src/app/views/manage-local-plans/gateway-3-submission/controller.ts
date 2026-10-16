@@ -42,6 +42,7 @@ import type { CaseModel } from '@pins/local-plans-database/src/client/models/Cas
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
+import { setVirusScanViewLocals } from '../utils.ts';
 import {
 	isGateway3ResubmissionAwaitingSubmission,
 	type Gateway3SubmissionSummary
@@ -264,6 +265,11 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	if (currentCase?.gateway3Info?.expectedDate) {
 		res.locals.targetDate = formatDisplayDate(currentCase.gateway3Info.expectedDate);
 	}
+
+	setVirusScanViewLocals(
+		res,
+		gateway3FileUploadQuestionConfigs.map((questionConfig) => questionConfig.fieldName)
+	);
 }
 
 export function setGateway3ViewData(req: Request, res: Response, next: NextFunction) {
