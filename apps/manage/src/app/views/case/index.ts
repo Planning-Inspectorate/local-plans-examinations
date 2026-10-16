@@ -32,7 +32,6 @@ import { ExaminationSaveController } from './save/examination-save-controller.ts
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import * as authSession from '@planning-inspectorate/core/auth';
-
 import {
 	buildGetJourney,
 	buildList,
@@ -67,6 +66,13 @@ import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
 import { loadLpaOptions } from '../../util/options-helper.ts';
 import { saveLastQuestionUrl, setBackLinkFromSession, setAsEditingFromCya } from '../create-a-case/index.ts';
+import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
+import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
+import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
+import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
+import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
+import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
+import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
@@ -82,6 +88,7 @@ interface CaseJourneyConfig {
 	path: string;
 	journeyId: string;
 	createJourney: JourneyFactory;
+	pageLoadHandler: new () => OverviewPageLoadHandler;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
 	saveController?: new (...args: any[]) => SaveController;
@@ -232,6 +239,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.OVERVIEW,
 		journeyId: COMMON_CONSTS.OVERVIEW_JOURNEY_ID,
 		createJourney: createOverviewJourney,
+		pageLoadHandler: OverviewTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: undefined
@@ -240,6 +248,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_1_JOURNEY_ID,
 		createJourney: createGateway1Journey,
+		pageLoadHandler: Gateway1TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
 		saveController: Gateway1SaveController
@@ -248,6 +257,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
+		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
 		saveController: Gateway2SaveController
@@ -256,6 +266,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-2/set-up-workshop',
 		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
 		createJourney: createGateway2WorkshopJourney,
+		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: false,
 		supportsFileUpload: false,
 		saveController: Gateway2SaveController
@@ -264,6 +275,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		createJourney: createGateway3Journey,
+		pageLoadHandler: Gateway3TabHandler,
 		supportsFileUpload: true,
 		saveController: Gateway3SaveController
 	},
@@ -271,6 +283,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: 'gateway-3-report',
 		journeyId: COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID,
 		createJourney: createGateway3ReportJourney,
+		pageLoadHandler: Gateway3SubmissionHandler,
 		supportsFileUpload: true,
 		saveController: Gateway3SaveController
 	},
@@ -278,6 +291,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		createJourney: createExaminationJourney,
+		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
@@ -325,14 +339,14 @@ function registerCaseJourney(
 	config: CaseJourneyConfig,
 	updateCase: ReturnType<typeof updateCaseField>
 ): void {
-	const { path, journeyId, createJourney, supportsManageList, supportsFileUpload } = config;
+	const { path, journeyId, createJourney, pageLoadHandler, supportsManageList, supportsFileUpload } = config;
 
 	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		await getQuestions(service, req);
 		next();
 	});
 	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
-	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId);
+	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId, pageLoadHandler);
 
 	const fileUploadMiddleware = fileUploaderQuestionMiddleware({
 		questionUrls: fileUploadQuestionUrls,
