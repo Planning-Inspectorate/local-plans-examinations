@@ -10,6 +10,7 @@
 {% block pageTitle %}Gateway 2 submission{% endblock %}
 
 {% block beforeContent %}
+{{ super() }}
 <div class="govuk-grid-column-two-thirds pins-app-grid-column--80 govuk-!-margin-top-4">
     {% if virusErrorSummary and virusErrorSummary.length %}
         {{ govukErrorSummary({
