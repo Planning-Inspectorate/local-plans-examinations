@@ -79,10 +79,10 @@ function retrieveDefaultLpaOptions(): LpaOption[] {
 }
 
 /**
- * Loads the LPA options into the provided questions object.
- * @param service The manage service instance.
+ * Loads Local Planning Authority (LPA) options either from a database or a predefined list. To be put directly into a questions options array.
+ * @param {ManageService} service - The service instance containing the database and other configurations.
  * @param addEmptyValue Whether to include an empty value option.
- * @returns A promise that resolves to an array of LPA options.
+ * @return {Promise<LpaOption[]>} A promise that resolves to an array of LPA options. Each option includes a value and text property.
  */
 export async function loadLpaOptions(service: ManageService, addEmptyValue: boolean): Promise<LpaOption[]> {
 	const { db } = service;

@@ -45,7 +45,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 
 		await loadCaseOfficerOptions(service, req, questions);
 		await loadInspectorOptions(service, req, questions);
-		await loadLpaOptions(service, true);
+		questions.lpa.options = await loadLpaOptions(service, true);
 
 		const journeyResponse = new JourneyResponse(journeyId, '', mapOverviewDataToAnswers(overviewData));
 		res.locals.journeyResponse = journeyResponse;
