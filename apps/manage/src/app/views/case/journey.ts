@@ -54,6 +54,8 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 		initialBackLink: overviewUrl,
 		response
 	});
+	// Embed the csrf token into the journey, so that the case note question can present it when rendering the overview
+	(journey as any)._csrf = (req as any).res.locals._csrf;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.OVERVIEW_JOURNEY_ID;
 	}
