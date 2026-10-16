@@ -1650,7 +1650,7 @@ questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: 
 export async function updateQuestionsWithOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	await loadCaseOfficerOptions(service, req, questions);
 	await loadInspectorOptions(service, req, questions);
-	await loadLpaOptions(service, true);
+	questions.lpa.options = await loadLpaOptions(service, true);
 }
 
 export async function getQuestions(
