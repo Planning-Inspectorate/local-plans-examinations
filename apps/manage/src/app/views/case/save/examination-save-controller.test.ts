@@ -392,6 +392,7 @@ describe('test ExaminationSaveController', () => {
 					createMany: {
 						data: [
 							{
+								id: 'someHearing',
 								createdDate: undefined,
 								hearingRemoteMeetingLink: 'b',
 								hearingRemoteMeetingLinkKnown: true,
@@ -416,6 +417,7 @@ describe('test ExaminationSaveController', () => {
 					createMany: {
 						data: [
 							{
+								id: 'someHearing',
 								createdDate: undefined,
 								hearingRemoteMeetingLink: 'b',
 								hearingRemoteMeetingLinkKnown: true,
