@@ -321,8 +321,8 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examinationReport)
 				.addQuestion(questions.examinationReportManage)
 				.startMultiQuestionCondition('report-uploaded', () => reportUploaded)
-				.addQuestion(questions.isSoundOutcome)
 				.addQuestion(questions.soundUnsoundDateOutcome)
+				.addQuestion(questions.isSoundOutcome)
 				.addQuestion(questions.adoptionDateOutcome)
 				.addQuestion(questions.approvedForCILDateOutcome)
 				.endMultiQuestionCondition('report-uploaded'),

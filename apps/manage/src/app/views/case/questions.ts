@@ -1169,7 +1169,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the plan confirmed as sound or unsound?',
 		fieldName: 'soundUnsoundDate',
 		url: 'sound-unsound-date',
-		title: 'Sound / unsound date',
+		title: 'Report issued',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'sound-unsound-date' }
 	},
