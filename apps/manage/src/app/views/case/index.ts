@@ -388,7 +388,8 @@ function registerCaseJourney(
 		validate,
 		validationErrorHandler,
 		(req, res, next) => {
-			// Saving the plan outcome continues to the report upload until a report exists
+			// If the user adds an examination report for the first time, saving the plan outcome takes them to the file uploader.
+			// If a report already exist, saving the plan outcome takes them to the summary as usual.
 			const answers = res.locals.journeyResponse?.answers;
 			const isPlanOutcome =
 				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&

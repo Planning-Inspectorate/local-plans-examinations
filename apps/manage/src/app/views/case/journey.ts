@@ -350,7 +350,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		journey,
 		examinationUrl,
 		req.params.reference,
-		// The upload page goes back to the Manage page, or to plan outcome for the first report
+		// If no file uploaded yet, go back to Plan outcome. Otherwise go back to the Manage page.
 		(params) =>
 			params.section === 'outcome' && params.question === questions.examinationReport.url
 				? `${examinationUrl}/outcome/${reportUploaded ? questions.examinationReportManage.url : questions.isSound.url}`

@@ -1240,7 +1240,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	...gateway3Questions
 };
 
-// The Outcome section reuses these questions, but a question instance holds a single display condition
+// Some questions require copies in order to be used in different conditions.
+// e.g. isSoundNavigation and isSoundOutcome are used in different areas but are the same field/question.
 for (const key of ['isSound', 'soundUnsoundDate', 'adoptionDate', 'approvedForCILDate']) {
 	caseQuestions[`${key}Outcome`] = { ...caseQuestions[key] };
 }
@@ -1257,9 +1258,10 @@ export const questions = createQuestions(
 	{ continueButtonText: 'Save and continue' }
 );
 
-// Plan outcome step that precedes the report upload. The listed row is isSoundOutcome
+// The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
+
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 	// Prepend https:// to the answer if it doesn't already start with http:// or https://
 	const href = answer && !/^https?:\/\//i.test(answer) ? `https://${answer}` : answer;
