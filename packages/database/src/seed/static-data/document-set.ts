@@ -157,7 +157,7 @@ export const DOCUMENT_SET = [
 		gatewayId: GATEWAY_ID.GATEWAY_3,
 		displayName: 'Examination Report',
 		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_REPORT,
-		displayOrder: 100
+		displayOrder: 19
 	},
 	// Gateway 3 portal required documents
 	{

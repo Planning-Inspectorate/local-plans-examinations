@@ -1257,7 +1257,7 @@ export const questions = createQuestions(
 	{ continueButtonText: 'Save and continue' }
 );
 
-// Plan outcome step that precedes the report upload; the listed row is isSoundOutcome
+// Plan outcome step that precedes the report upload. The listed row is isSoundOutcome
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
