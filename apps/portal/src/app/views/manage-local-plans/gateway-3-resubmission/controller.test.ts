@@ -1,13 +1,15 @@
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import type { Request, Response } from 'express';
+import type { NextFunction } from 'express';
 import {
 	buildGuardResubmissionPage,
 	buildGetResubmissionPage,
 	buildPostResubmission,
 	buildGetUploadDocumentsPage,
 	buildLoadResubmissionCase,
-	buildGateway3ResubmissionMiddleware
+	buildGateway3ResubmissionMiddleware,
+	handleMulterFileSizeError
 } from './controller.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
@@ -224,6 +226,46 @@ describe('buildGetUploadDocumentsPage', () => {
 		const question = data.question as Record<string, unknown>;
 		assert.strictEqual(question.question, 'Upload any new or updated documents');
 	});
+
+	it('passes session errors to the template and clears them', () => {
+		const handler = buildGetUploadDocumentsPage();
+		const session: Record<string, unknown> = {
+			fileUploader: {},
+			errors: { 'upload-form': { msg: 'Errors encountered during file upload' } },
+			errorSummary: [{ text: 'The selected file must be smaller than 250MB', href: '#upload-form' }]
+		};
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			session
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const data = calls[0].args[1] as Record<string, unknown>;
+		assert.deepStrictEqual(data.errors, { 'upload-form': { msg: 'Errors encountered during file upload' } });
+		assert.deepStrictEqual(data.errorSummary, [
+			{ text: 'The selected file must be smaller than 250MB', href: '#upload-form' }
+		]);
+		// Session errors should be cleared after reading
+		assert.strictEqual(session.errors, undefined);
+		assert.strictEqual(session.errorSummary, undefined);
+	});
+
+	it('does not pass errors when session has no errors', () => {
+		const handler = buildGetUploadDocumentsPage();
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			session: { fileUploader: {} }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const data = calls[0].args[1] as Record<string, unknown>;
+		assert.strictEqual(data.errors, null);
+		assert.strictEqual(data.errorSummary, null);
+	});
 });
 
 describe('buildLoadResubmissionCase', () => {
@@ -303,5 +345,47 @@ describe('buildGateway3ResubmissionMiddleware', () => {
 		assert.ok(middleware.upload, 'upload');
 		assert.ok(middleware.uploadDocuments, 'uploadDocuments');
 		assert.ok(middleware.deleteDocument, 'deleteDocument');
+	});
+});
+
+describe('handleMulterFileSizeError', () => {
+	it('redirects with session error when file size limit is exceeded', () => {
+		const err = Object.assign(new Error('File too large'), { code: 'LIMIT_FILE_SIZE' });
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			session: {}
+		} as unknown as Request;
+		let redirectUrl = '';
+		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+		const next = mock.fn() as unknown as NextFunction;
+
+		handleMulterFileSizeError(err, req, res, next);
+
+		assert.ok(redirectUrl.includes('/gateway-3-resubmission/additional-documents'));
+		assert.ok(!redirectUrl.includes('?error='));
+		assert.strictEqual((next as unknown as { mock: { callCount: () => number } }).mock.callCount(), 0);
+		const session = req.session as unknown as {
+			errors: Record<string, { msg: string }>;
+			errorSummary: Array<{ text: string; href: string }>;
+		};
+		assert.ok(session.errors['upload-form']);
+		assert.ok(session.errorSummary[0].text.includes('smaller than'));
+		assert.ok(session.errorSummary[0].text.includes('250MB'));
+		assert.strictEqual(session.errorSummary[0].href, '#upload-form');
+	});
+
+	it('calls next for non file-size errors', () => {
+		const err = new Error('something else');
+		const req = { params: {}, session: {} } as unknown as Request;
+		const res = {} as unknown as Response;
+		const next = mock.fn() as unknown as NextFunction;
+
+		handleMulterFileSizeError(err, req, res, next);
+
+		assert.strictEqual((next as unknown as { mock: { callCount: () => number } }).mock.callCount(), 1);
+		assert.strictEqual(
+			(next as unknown as { mock: { calls: Array<{ arguments: unknown[] }> } }).mock.calls[0].arguments[0],
+			err
+		);
 	});
 });

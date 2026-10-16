@@ -150,7 +150,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
 	const gateway3Date = gateway3SubmissionState.resubmissionAwaitingSubmission
-		? caseRecord.gateway3Info?.expectedDate
+		? (caseRecord.gateway3Info?.actualDate ?? caseRecord.gateway3Info?.expectedDate)
 		: (gateway3SubmissionState.latestSubmission?.completionDate ??
 			caseRecord.gateway3Info?.actualDate ??
 			caseRecord.gateway3Info?.expectedDate);

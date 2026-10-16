@@ -21,11 +21,13 @@ describe('Gateway 3 resubmission page', () => {
 		return nunjucks.render('views/manage-local-plans/gateway-3-resubmission/resubmission.njk', {
 			pageCaption: 'East Borough Local Plan',
 			submissionNumber: 2,
-			reportDocument: {
-				fileName: 'gateway-3-report.pdf',
-				downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/abc123',
-				dateIssued: '15 October 2026'
-			},
+			reportDocuments: [
+				{
+					fileName: 'gateway-3-report.pdf',
+					downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/abc123',
+					dateIssued: '15 October 2026'
+				}
+			],
 			previousSubmissions: [{ number: 1, submittedDate: '1 October 2026' }],
 			uploadedDocuments: [],
 			addDocumentsUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/additional-documents',
@@ -58,6 +60,20 @@ describe('Gateway 3 resubmission page', () => {
 		assert.ok(html.includes('Submission 1 report'), 'expected report row heading');
 		assert.ok(html.includes('gateway-3-report.pdf'), 'expected report filename');
 		assert.ok(html.includes('shared on 15 October 2026'), 'expected shared date');
+	});
+
+	it('renders multiple report documents as bullet points', () => {
+		const html = renderResubmission({
+			reportDocuments: [
+				{ fileName: 'report-doc1.pdf', downloadUrl: '#1', dateIssued: '15 October 2026' },
+				{ fileName: 'report-doc2.jpg', downloadUrl: '#2', dateIssued: '15 October 2026' },
+				{ fileName: 'report-doc3.docx', downloadUrl: '#3', dateIssued: '15 October 2026' }
+			]
+		});
+		assert.ok(html.includes('govuk-list--bullet'), 'expected bullet list for multiple reports');
+		assert.ok(html.includes('report-doc1.pdf'), 'expected first report doc');
+		assert.ok(html.includes('report-doc2.jpg'), 'expected second report doc');
+		assert.ok(html.includes('report-doc3.docx'), 'expected third report doc');
 	});
 
 	it('renders previous submissions with submitted date', () => {

@@ -37,13 +37,26 @@
         {% endif %}
 
         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-cy="previous-submissions-table">
-            {% if reportDocument %}
+            {% if reportDocuments and reportDocuments.length > 0 %}
             <div class="govuk-summary-list__row" data-cy="submission-report-row">
                 <dt class="govuk-summary-list__key"><strong>Submission {{ previousSubmissions | length }} report</strong></dt>
                 <dd class="govuk-summary-list__value">
-                    <a href="{{ reportDocument.downloadUrl }}" class="govuk-link" data-cy="download-report">{{ reportDocument.fileName }}</a>
-                    {% if reportDocument.dateIssued %}
-                        (shared on {{ reportDocument.dateIssued }})
+                    {% if reportDocuments.length === 1 %}
+                        <a href="{{ reportDocuments[0].downloadUrl }}" class="govuk-link" data-cy="download-report">{{ reportDocuments[0].fileName }}</a>
+                        {% if reportDocuments[0].dateIssued %}
+                            (shared on {{ reportDocuments[0].dateIssued }})
+                        {% endif %}
+                    {% else %}
+                        <ul class="govuk-list govuk-list--bullet">
+                            {% for doc in reportDocuments %}
+                                <li>
+                                    <a href="{{ doc.downloadUrl }}" class="govuk-link" data-cy="download-report">{{ doc.fileName }}</a>
+                                    {% if doc.dateIssued %}
+                                        (shared on {{ doc.dateIssued }})
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
                     {% endif %}
                 </dd>
             </div>

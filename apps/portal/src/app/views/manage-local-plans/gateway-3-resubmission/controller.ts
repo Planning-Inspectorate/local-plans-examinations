@@ -280,22 +280,16 @@ export function buildGetResubmissionPage(): RequestHandler {
 		const previousSubmissionDocumentSetId =
 			previousSubmissionNumber > 0 ? DOCUMENT_SET_ID[`G3_DOCUMENT_${previousSubmissionNumber}`] : undefined;
 
-		const g3ReportDoc = previousSubmissionDocumentSetId
-			? documents.find((d) => d.documentSetId === previousSubmissionDocumentSetId)
-			: null;
+		const g3ReportDocs = previousSubmissionDocumentSetId
+			? documents.filter((d) => d.documentSetId === previousSubmissionDocumentSetId)
+			: [];
 
-		// Build report document view data
-		const reportDocument = g3ReportDoc
-			? {
-					fileName:
-						g3ReportDoc.latestDocumentVersion?.originalFilename ??
-						g3ReportDoc.latestDocumentVersion?.fileName ??
-						g3ReportDoc.name,
-					downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${g3ReportDoc.guid}`,
-					dateIssued: formatDisplayDate(g3ReportDoc.latestDocumentVersion?.dateCreated)
-				}
-			: null;
-
+		// Build report document view data (multiple documents possible)
+		const reportDocuments = g3ReportDocs.map((doc) => ({
+			fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
+			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`,
+			dateIssued: formatDisplayDate(doc.latestDocumentVersion?.dateCreated)
+		}));
 		const previousSubmissions = completedSubmissions.map((sub, index) => ({
 			number: index + 1,
 			submittedDate: formatDisplayDate(sub.completionDate)
@@ -314,7 +308,7 @@ export function buildGetResubmissionPage(): RequestHandler {
 		return res.render(RESUBMISSION_VIEW_PATH, {
 			pageCaption: currentCase?.planTitle,
 			submissionNumber,
-			reportDocument,
+			reportDocuments,
 			previousSubmissions,
 			uploadedDocuments,
 			addDocumentsUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/additional-documents`,
@@ -408,9 +402,14 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
 	if (err && 'code' in err && (err as { code: string }).code === 'LIMIT_FILE_SIZE') {
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
-		return res.redirect(
-			`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/additional-documents?error=fileSize`
-		);
+		const sizeLabel = RESUBMISSION_DOCUMENTS_QUESTION.maxFileSizeLabel ?? '250MB';
+		const session = req.session as unknown as {
+			errors?: Record<string, { msg: string }>;
+			errorSummary?: Array<{ text: string; href: string }>;
+		};
+		session.errors = { 'upload-form': { msg: 'Errors encountered during file upload' } };
+		session.errorSummary = [{ text: `The selected file must be smaller than ${sizeLabel}`, href: '#upload-form' }];
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/additional-documents`);
 	}
 	return next(err);
 }
