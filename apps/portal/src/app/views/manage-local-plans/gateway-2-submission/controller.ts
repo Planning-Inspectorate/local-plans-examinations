@@ -67,6 +67,7 @@ type CaseWithGateway2Info = CaseModel & {
 	documents?: Gateway2SummaryDocument[];
 };
 import { getRoutePlanReference } from './utils.ts';
+import { setVirusScanViewLocals } from '../utils.ts';
 import { downloadGateway2Document } from './download.ts';
 import lusca from 'lusca';
 
@@ -361,6 +362,10 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		})
 	);
 	setGateway2WorkshopViewLocals(res, gateway2Info);
+	setVirusScanViewLocals(
+		res,
+		gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.fieldName)
+	);
 }
 
 export function buildGateway2CheckAnswersList(): RequestHandler {

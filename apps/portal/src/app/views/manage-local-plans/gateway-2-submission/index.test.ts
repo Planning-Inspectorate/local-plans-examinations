@@ -243,6 +243,49 @@ describe('Gateway 2 summary view data', () => {
 		assert.strictEqual(res.locals.workshopVenue, 'Virtual');
 		assert.strictEqual(res.locals.workshopDateAndTime, '19 May 2026 at 10:00');
 	});
+
+	it('flags a virus scan in progress when an uploaded document has not been scanned', () => {
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: { planTitle: 'East Borough Local Plan' }
+		} as any;
+		const res = {
+			locals: {
+				journeyResponse: {
+					answers: {
+						gateway2CoverLetter: [{ fileName: 'cover-letter.pdf', virusCheckStatus: 'not_scanned' }]
+					}
+				}
+			}
+		} as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		assert.strictEqual(res.locals.virusScanInProgress, true);
+		assert.strictEqual(res.locals.virusErrorSummary, undefined);
+	});
+
+	it('surfaces a virus detected error when an uploaded document is affected', () => {
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: { planTitle: 'East Borough Local Plan' }
+		} as any;
+		const res = {
+			locals: {
+				journeyResponse: {
+					answers: {
+						gateway2CoverLetter: [{ fileName: 'bad.pdf', virusCheckStatus: 'affected' }]
+					}
+				}
+			}
+		} as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		assert.strictEqual(res.locals.virusScanInProgress, false);
+		assert.strictEqual(res.locals.virusErrorSummary.length, 1);
+		assert.match(res.locals.virusErrorSummary[0].text, /bad\.pdf contains a virus/);
+	});
 });
 
 describe('Gateway 1 self assessment upload page', () => {
