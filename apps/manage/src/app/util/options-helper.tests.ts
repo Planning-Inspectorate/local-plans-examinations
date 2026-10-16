@@ -197,7 +197,7 @@ describe('options-helper', () => {
 		it('returns placeholder LPAs and skips the database when auth is disabled', async () => {
 			const { service, findMany } = createService({ authDisabled: true });
 
-			const options = await loadLpaOptions(service);
+			const options = await loadLpaOptions(service, true);
 
 			assert.deepEqual(options, [
 				{ value: 'lpa-1', text: 'Local Planning Authority 1' },
@@ -210,7 +210,7 @@ describe('options-helper', () => {
 		it('queries authorities ordered by name ascending', async () => {
 			const { service, findMany } = createService();
 
-			await loadLpaOptions(service);
+			await loadLpaOptions(service, true);
 
 			assert.equal(findMany.mock.callCount(), 1);
 			assert.deepEqual(findMany.mock.calls[0].arguments[0], { orderBy: { name: 'asc' } });
@@ -224,7 +224,7 @@ describe('options-helper', () => {
 				]
 			});
 
-			const options = await loadLpaOptions(service);
+			const options = await loadLpaOptions(service, true);
 
 			assert.deepEqual(options, [
 				{ value: 'Q0001', text: 'Ashbourne Vale District Council' },
@@ -235,7 +235,7 @@ describe('options-helper', () => {
 		it('returns an empty array when there are no authorities', async () => {
 			const { service } = createService({ authorities: [] });
 
-			const options = await loadLpaOptions(service);
+			const options = await loadLpaOptions(service, true);
 
 			assert.deepEqual(options, []);
 		});
