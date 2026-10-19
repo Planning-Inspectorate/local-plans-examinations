@@ -1,0 +1,59 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro pauseDetails(answers, reference) %}
+
+  {% for pause in answers.pauses %}
+    {% set myvar = "a-b-c" %}
+    {% set pauseRows = [] %}
+
+    {% set _ = pauseRows.push({
+        key: { text: "Pause start date" },
+        value: { text: pause.startDate | date("d MMM yyyy") },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination-pause/pause-examination/examination-pause-start-date-" + (loop.index),
+              text: "Change"
+            }
+          ]
+        }
+      })
+    %}
+    {% set _ = pauseRows.push({
+        key: { text: "Pause details" },
+        value: { text: pause.details },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination-pause/pause-examination/examination-pause-details-" + (loop.index),
+              text: "Change"
+            }
+          ]
+        }
+      })
+    %}
+    {% set _ = pauseRows.push({
+        key: { text: "Examination restart date" },
+        value: { text: pause.endDate | date("d MMM yyyy") },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination-pause/pause-examination/examination-pause-end-date-" + (loop.index),
+              text: "Change"
+            }
+          ]
+        }
+      })
+    %}
+    
+
+    {% if pauseRows.length %}
+      <h2 class="govuk-heading-m" data-cy="pause-heading">Pause {{ loop.index }} details</h2>
+      {{ govukSummaryList({
+        rows: pauseRows,
+        attributes: { "data-cy": "pause-details-" + loop.index }
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+{% endmacro %}
