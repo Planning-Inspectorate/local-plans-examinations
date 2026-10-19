@@ -37,5 +37,9 @@ export const ERROR_MESSAGES = {
 
 	// Gateway 2 application page
 
-	ADD_ALL_REQUIRED_DOCUMENTS: 'Add all required documents before submitting'
+	ADD_ALL_REQUIRED_DOCUMENTS: 'Add all required documents before submitting',
+
+	// Gateway 3 resubmission page
+
+	ADD_NEW_OR_UPDATED_DOCUMENTS: 'Add any new or updated documents before submitting'
 };

@@ -32,10 +32,12 @@ export async function seedGateway3Submitted() {
 			where: { caseId: currentCase.id },
 			create: {
 				caseId: currentCase.id,
-				actualDate: submissionDate
+				actualDate: submissionDate,
+				examinationWebsiteUrl: EXAMINATION_WEBSITE
 			},
 			update: {
-				actualDate: submissionDate
+				actualDate: submissionDate,
+				examinationWebsiteUrl: EXAMINATION_WEBSITE
 			}
 		});
 

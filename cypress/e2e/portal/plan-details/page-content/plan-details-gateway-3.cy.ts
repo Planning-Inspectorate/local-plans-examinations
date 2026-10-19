@@ -10,19 +10,27 @@ const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 
 describe('Plan details page content for gateway 3', () => {
 	beforeEach(() => {
 		portalLogin();
-		cy.task('seedGateway3Submitted');
-		loadPlanDetails().then((plan) => {
-			myPlansPage.openPlan(plan.reference);
-		});
 	});
 
 	after(() => cy.task('clearDb'));
 
 	it('Shows the page content after gateway 3 is submitted', { tags: ['regression'] }, () => {
+		cy.task('seedGateway3Submitted');
 		loadPlanDetails().then((plan) => {
+			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage2, plan.status3);
 			planDetailsPage.verifyProgressRow('Gateway 3 - readiness check', `Submitted: ${todayDisplay}`, plan.status3);
+		});
+	});
+
+	it('Shows the page content after gateway 3 resubmission is requested', { tags: ['regression'] }, () => {
+		cy.task('seedGateway3Resubmission');
+		loadPlanDetails().then((plan) => {
+			myPlansPage.openPlan(plan.reference);
+			planDetailsPage.verifyLoaded();
+			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage2, plan.status4);
+			planDetailsPage.verifyProgressRow('Gateway 3 - readiness check', 'Submitted: 1 October 2026', plan.status4);
 		});
 	});
 });

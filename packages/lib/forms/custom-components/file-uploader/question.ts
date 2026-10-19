@@ -166,14 +166,19 @@ export function fileUploadBulletListFormat(context: any, emptyValue = 'Not start
 	const isPortalRoute = context.journey?.baseUrl?.startsWith('/manage-local-plans');
 	const urlDownloadSegment = isPortalRoute ? 'download-document' : 'download-case-document';
 
+	const getDocumentId = (file: UploadedFile) => {
+		const meta = file.metadata as Record<string, unknown> | undefined;
+		return (typeof meta?.documentGuid === 'string' && meta.documentGuid) || file.id;
+	};
+
 	if (files.length === 1) {
-		const downloadUrl = `/case/${encodeURIComponent(context.journey.caseReference)}/${urlDownloadSegment}/${encodeURIComponent(files[0].id)}`;
+		const downloadUrl = `/case/${encodeURIComponent(context.journey.caseReference)}/${urlDownloadSegment}/${encodeURIComponent(getDocumentId(files[0]))}`;
 		return `<a class="govuk-link" href="${downloadUrl}">${escape(files[0].fileName)}</a>`;
 	}
 
 	const listItems = files
 		.map((file) => {
-			const downloadUrl = `/case/${encodeURIComponent(context.journey.caseReference)}/${urlDownloadSegment}/${encodeURIComponent(file.id)}`;
+			const downloadUrl = `/case/${encodeURIComponent(context.journey.caseReference)}/${urlDownloadSegment}/${encodeURIComponent(getDocumentId(file))}`;
 			return `<li><a class="govuk-link" href="${downloadUrl}">${escape(file.fileName)}</a></li>`;
 		})
 		.join('');

@@ -31,7 +31,8 @@
               {% set viewActions = [] %}
 
               {% for file in document.files %}
-                {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (file.id | urlencode) %}
+                {% set documentGuid = file.metadata.documentGuid if file.metadata else file.id %}
+                {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (documentGuid | urlencode) %}
                 {% set fileName = file.fileName | escape %}
 
                 {% set _ = fileLinks.push(
