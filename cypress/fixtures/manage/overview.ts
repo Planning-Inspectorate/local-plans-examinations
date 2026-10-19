@@ -6,6 +6,11 @@ export const planTitle = {
 	updatedValue: 'Updated Cypress Test Plan'
 } as const;
 
+export const seededCaseNotes = [
+	{ text: 'General Kenobi!', metadata: '3 August 2026 at 01:00 by General Grievous' },
+	{ text: 'Hello there', metadata: '2 August 2026 at 01:00 by Obi Wan' }
+] as const;
+
 export const planType = {
 	row: 'Plan type',
 	path: 'plan-type',
