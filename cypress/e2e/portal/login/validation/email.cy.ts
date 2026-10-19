@@ -1,4 +1,5 @@
 import { portalLoginEmailPage } from '../../../../page-objects/portal/login/email-page.ts';
+import { portalLoginOtpPage } from '../../../../page-objects/portal/login/otp-page.ts';
 import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
 describe('Portal login email validation', () => {
@@ -24,14 +25,16 @@ describe('Portal login email validation', () => {
 		portalLoginEmailPage.verifyFieldErrorContains(ERROR_MESSAGES.INVALID_EMAIL_FORMAT);
 	});
 
-	it('shows an error for an unrecognised email', { tags: ['regression'] }, () => {
-		portalLoginEmailPage.enterEmail('unknown@example.com');
-		portalLoginEmailPage.saveAndContinue();
+	it(
+		'redirects to the OTP page for an unrecognised email without revealing whether it is registered',
+		{ tags: ['regression'] },
+		() => {
+			portalLoginEmailPage.enterEmail('unknown@example.com');
+			portalLoginEmailPage.saveAndContinue();
 
-		portalLoginEmailPage.verifyErrorSummary(
-			ERROR_MESSAGES.UNRECOGNISED_EMAIL_SUMMARY,
-			ERROR_MESSAGES.UNRECOGNISED_EMAIL_SUMMARY
-		);
-		portalLoginEmailPage.verifyFieldErrorContains(ERROR_MESSAGES.UNRECOGNISED_EMAIL);
-	});
+			portalLoginOtpPage.verifyLoaded();
+			portalLoginOtpPage.verifyHintText('We sent a code to unknown@example.com.');
+			cy.get('.govuk-error-summary').should('not.exist');
+		}
+	);
 });
