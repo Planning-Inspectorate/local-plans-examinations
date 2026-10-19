@@ -83,18 +83,26 @@ export class ExaminationSaveController extends SaveController {
 
 			// Enrich the current pause item with the answers
 			if (this.req.session && this.req.session.answers && this.req.session.answers.pauses) {
-				const currentQuestionField = questionFieldMap[questionWithoutPauseId];
-				const answersForCurrentQuestion = Object.fromEntries(
-					Object.entries(answers).filter(([key]) => key == `${currentQuestionField}-${pauseId}`)
-				);
-
 				const filteredSessionAnswerPauses = sortByCreatedDate(this.req.session.answers.pauses);
 				pauseDetails[pauseId - 1] = {
 					...pauseDetails[pauseId - 1],
-					...filteredSessionAnswerPauses[pauseId - 1],
-					...answersForCurrentQuestion
+					...filteredSessionAnswerPauses[pauseId - 1]
 				};
 			}
+			const currentQuestionField = questionFieldMap[questionWithoutPauseId];
+			console.log('currentQuestionField');
+			console.log(currentQuestionField);
+			const answersForCurrentQuestion = Object.fromEntries(
+				Object.entries(answers)
+					.filter(([key]) => key == `${currentQuestionField}-${pauseId}`)
+					.map(([key, value]) => [key.replace(`-${pauseId}`, ''), value])
+			);
+			pauseDetails[pauseId - 1] = {
+				...pauseDetails[pauseId - 1],
+				...answersForCurrentQuestion
+			};
+			console.log('pauseDetails');
+			console.log(pauseDetails);
 			return {
 				pauses: pauseDetails
 			};
