@@ -4,8 +4,11 @@ import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
 describe('Portal login OTP validation', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		startPortalOtpLogin();
 	});
+
+	after(() => cy.task('clearDb'));
 
 	it('shows an error when no code is entered', { tags: ['regression'] }, () => {
 		portalLoginOtpPage.saveAndContinue();
