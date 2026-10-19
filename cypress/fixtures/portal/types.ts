@@ -14,6 +14,7 @@ export interface PlanDetailsFixture {
 	status: string;
 	status2: string;
 	status3: string;
+	status4: string;
 	leadLpa: string;
 	linkedLpa: string;
 	dates: PlanDetailsDates;
