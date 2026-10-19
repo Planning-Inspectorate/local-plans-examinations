@@ -459,3 +459,91 @@ describe('Gateway 3 upload documents page (reusable file-uploader template)', ()
 		);
 	});
 });
+
+describe('Gateway 3 resubmission declaration page', () => {
+	function renderDeclaration(overrides = {}) {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/gateway-3-resubmission/declaration.njk', {
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			goBackUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission',
+			backLinkUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission',
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			},
+			...overrides
+		});
+	}
+
+	it('renders the heading', () => {
+		const html = renderDeclaration();
+		assert.ok(html.includes('Are you sure you&#39;re ready to submit?'), 'expected heading');
+	});
+
+	it('renders the warning copy', () => {
+		const html = renderDeclaration();
+		assert.ok(
+			html.includes("This can't be undone.") || html.includes('This can&#39;t be undone.'),
+			'expected warning copy'
+		);
+	});
+
+	it('renders the green submit button with correct text', () => {
+		const html = renderDeclaration();
+		assert.ok(html.includes('Yes, send my submission'), 'expected submit button text');
+	});
+
+	it('renders the no go back link', () => {
+		const html = renderDeclaration();
+		assert.ok(html.includes('No, go back'), 'expected no go back link');
+		assert.ok(html.includes('/manage-local-plans/PLAN-001/gateway-3-resubmission'), 'expected go back URL');
+	});
+});
+
+describe('Gateway 3 resubmission submission complete page', () => {
+	function renderSubmissionComplete(overrides = {}) {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/gateway-3-resubmission/submission-complete.njk', {
+			pageTitle: 'Gateway 3 submission complete',
+			planOverviewUrl: '/manage-local-plans/PLAN-001',
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			},
+			...overrides
+		});
+	}
+
+	it('renders the panel with correct title', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('Gateway 3 submission complete'), 'expected panel title');
+		assert.ok(html.includes('govuk-panel'), 'expected panel component');
+	});
+
+	it('renders confirmation email copy', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(
+			html.includes("We've sent you a confirmation email.") ||
+				html.includes('We&#39;ve sent you a confirmation email.'),
+			'expected confirmation email copy'
+		);
+	});
+
+	it('renders what happens next heading and bullet points', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('What happens next'), 'expected what happens next heading');
+		assert.ok(html.includes('Your case officer will assign an assessor to your case'), 'expected first bullet');
+		assert.ok(html.includes('The assessor will review your submission'), 'expected second bullet');
+		assert.ok(html.includes('check your submission status'), 'expected third bullet link text');
+	});
+
+	it('renders the check submission status link to plan overview', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('href="/manage-local-plans/PLAN-001"'), 'expected plan overview URL');
+	});
+});
