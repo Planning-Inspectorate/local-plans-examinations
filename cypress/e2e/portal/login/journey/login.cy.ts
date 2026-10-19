@@ -91,23 +91,14 @@ describe('Portal login journey', () => {
 		});
 	});
 
-	it('can retry sending a code from the OTP page', { tags: ['regression'] }, () => {
+	it('shows the new code banner when a new code is requested from the OTP page', { tags: ['regression'] }, () => {
 		startPortalOtpLogin();
 
 		portalLoginOtpPage.clickRequestNewCode();
 
-		cy.get('body').then(($body) => {
-			if ($body.find('[data-cy="new-code-banner"]').length) {
-				portalLoginOtpPage.verifyNewCodeBanner();
-			} else {
-				portalLoginOtpPage.verifyErrorSummary(
-					'We could not send a new code',
-					'Something went wrong. Please try again later.'
-				);
-				portalLoginOtpPage.verifyFieldErrorContains('Something went wrong. Please try again later.');
-			}
-		});
-
+		portalLoginOtpPage.verifyPath();
+		portalLoginOtpPage.verifyNewCodeBanner();
+		portalLoginOtpPage.verifyHintText('We sent a code to');
 		portalLoginOtpPage.requestNewCodeLink.should('be.visible');
 	});
 });

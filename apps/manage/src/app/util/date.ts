@@ -28,13 +28,18 @@ export function parseDate(value: string): Date {
 	return date;
 }
 
-export function formatDateToString(date: Date): string {
-	return new Intl.DateTimeFormat('en-GB', {
+export function formatDateToString(date: Date, includeTime: boolean = false): string {
+	const options: Record<string, string> = {
 		day: 'numeric',
 		month: 'long',
 		timeZone: 'Europe/London',
 		year: 'numeric'
-	}).format(date);
+	};
+	if (includeTime) {
+		options.hour = '2-digit';
+		options.minute = '2-digit';
+	}
+	return new Intl.DateTimeFormat('en-GB', options).format(date);
 }
 
 function pad(num: any, length = 2) {

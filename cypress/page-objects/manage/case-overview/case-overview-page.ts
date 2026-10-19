@@ -2,7 +2,8 @@ import {
 	localPlanningAuthority,
 	overviewExpectedAnswers,
 	overviewSummaryRows,
-	programmeOfficer
+	programmeOfficer,
+	seededCaseNotes
 } from '../../../fixtures/manage/overview.ts';
 import { BasePage } from '../../base-page.ts';
 
@@ -50,6 +51,50 @@ export class CaseOverviewPage extends BasePage {
 
 	get headerStatusTag() {
 		return cy.getByData('status-tag');
+	}
+
+	get caseNotesDetails() {
+		return cy.get('#case-notes-details');
+	}
+
+	get caseNoteEntries() {
+		return this.caseNotesDetails.find('section');
+	}
+
+	openCaseNotes() {
+		this.caseNotesDetails.find('summary').should('be.visible').click();
+		this.caseNotesDetails.find('#note').should('be.visible');
+	}
+
+	addCaseNote(note: string) {
+		this.caseNotesDetails.find('#note').clearAndWrite(note);
+		this.caseNotesDetails.find('button[type="submit"]').should('be.visible').click();
+		this.verifyLoaded();
+		this.openCaseNotes();
+	}
+
+	verifyCaseNotes(...notes: string[]) {
+		this.caseNotesDetails.find('summary').should('contain.text', `${notes.length} case notes`);
+		this.caseNoteEntries.should('have.length', notes.length);
+		notes.forEach((note, index) => {
+			this.caseNoteEntries.eq(index).find('.govuk-body').should('be.visible').and('contain.text', note);
+		});
+	}
+
+	verifyCaseNotesContent() {
+		this.verifySectionHeading('Case Notes');
+		this.caseNotesDetails.should('not.have.attr', 'open');
+		this.openCaseNotes();
+		this.caseNotesDetails.should(
+			'contain.text',
+			'These notes are only visible to PINS staff and should be used to share informal progress updates'
+		);
+		this.caseNotesDetails.should('contain.text', 'You have 500 characters remaining');
+		this.caseNotesDetails.find('button[type="submit"]').should('be.visible').and('contain.text', 'Add case note');
+		this.verifyCaseNotes(...seededCaseNotes.map(({ text }) => text));
+		seededCaseNotes.forEach(({ metadata }, index) => {
+			this.caseNoteEntries.eq(index).should('contain.text', metadata);
+		});
 	}
 
 	sectionHeading(text: string) {

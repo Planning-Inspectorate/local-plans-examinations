@@ -22,7 +22,8 @@ import {
 	examinationWebsite,
 	examiningInspector1,
 	localPlanningAuthority,
-	programmeOfficer
+	programmeOfficer,
+	seededCaseNotes
 } from '../../../../fixtures/manage/overview.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
@@ -87,6 +88,24 @@ describe('Case overview updates', () => {
 	});
 
 	after(() => cy.task('clearDb'));
+
+	it('adds a 500-character case note and retains notes newest first after refresh', { tags: ['regression'] }, () => {
+		const note = 'Case officer handover update. '.padEnd(500, 'a');
+		const expectedNotes = [note, ...seededCaseNotes.map(({ text }) => text)];
+
+		caseOverviewPage.openCaseNotes();
+		caseOverviewPage.addCaseNote(note);
+		caseOverviewPage.verifyCaseNotes(...expectedNotes);
+		caseOverviewPage.caseNoteEntries
+			.first()
+			.find('.govuk-hint')
+			.invoke('text')
+			.should('match', /\d{1,2} [A-Za-z]+ \d{4} at \d{2}:\d{2} by Unknown/);
+
+		cy.reload();
+		caseOverviewPage.openCaseNotes();
+		caseOverviewPage.verifyCaseNotes(...expectedNotes);
+	});
 
 	it('updates the plan title from the overview change link', { tags: ['regression'] }, () => {
 		caseOverviewPage.openActionLinkFor(planTitle.row);

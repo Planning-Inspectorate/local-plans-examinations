@@ -54,6 +54,13 @@ export class OverviewSaveController extends SaveController {
 					disconnect: this.currentItemId ? [{ lpaCode: this.currentItemId }] : undefined
 				};
 			}
+			if (answers.notes) {
+				// When saving a note there will only be 1 note, which is added to the note list for the case
+				const noteToAdd = answers.notes[0];
+				caseUpdate.notes = {
+					create: noteToAdd
+				};
+			}
 
 			let caseRecordChange;
 			if (Object.keys(caseUpdate).length > 0) {

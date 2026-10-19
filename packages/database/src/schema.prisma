@@ -53,6 +53,22 @@ model Gateway3Decision {
   Gateway3Submissions Gateway3Submission[]
 }
 
+/// Valid front office progress statuses for a Gateway 3 submission.
+model Gateway3FrontOfficeStatus {
+  id            String         @id @db.NVarChar(50)
+  displayName   String         @db.NVarChar(100)
+  gateway3Infos Gateway3Info[]
+}
+
+model CaseNote {
+  id          String   @id @default(uuid()) @db.UniqueIdentifier
+  text        String   @db.NVarChar(500)
+  createdTime DateTime
+  createdBy   String
+  case        Case     @relation(fields: [caseId], references: [id])
+  caseId      String   @db.UniqueIdentifier
+}
+
 /// Valid statuses for imported planning authorities.
 model AuthorityStatus {
   id           String      @id @db.NVarChar(50)
@@ -115,6 +131,7 @@ model Case {
   gateways                  Gateway[]
   caseHistories             CaseHistory[]
   documents                 Document[]
+  notes                     CaseNote[]
 
   @@index([planType])
   @@index([planBand])
@@ -174,17 +191,22 @@ model Gateway2Workshop {
 
 /// Gateway 3 stage dates, programme officer details and decision tracking for a case.
 model Gateway3Info {
-  id                        String               @id @default(uuid()) @db.UniqueIdentifier
-  case                      Case                 @relation(fields: [caseId], references: [id])
-  caseId                    String               @unique @db.UniqueIdentifier
-  expectedDate              DateTime?            @db.DateTime2
-  actualDate                DateTime?            @db.DateTime2
+  id                        String                    @id @default(uuid()) @db.UniqueIdentifier
+  case                      Case                      @relation(fields: [caseId], references: [id])
+  caseId                    String                    @unique @db.UniqueIdentifier
+  frontOfficeStatus         String                    @default("CANNOT_START_YET") @db.NVarChar(50)
+  examinationWebsiteUrl     String?
+  expectedDate              DateTime?                 @db.DateTime2
+  actualDate                DateTime?                 @db.DateTime2
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
   assessorName              String?
-  assessorAppointmentDate   DateTime?            @db.DateTime2
+  assessorAppointmentDate   DateTime?                 @db.DateTime2
   submissions               Gateway3Submission[]
+  frontOfficeStatusLookup   Gateway3FrontOfficeStatus @relation(fields: [frontOfficeStatus], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([frontOfficeStatus])
 }
 
 model Gateway3Submission {

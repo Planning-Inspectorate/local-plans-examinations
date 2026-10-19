@@ -3,7 +3,13 @@
 import { mockLogger } from '@planning-inspectorate/core/testing';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
-import { buildEnterEmailPage, buildEnterOtpPage, buildSubmitEmailPage, buildSubmitOtpPage } from './controller.ts';
+import {
+	buildEnterEmailPage,
+	buildEnterOtpPage,
+	buildRequestNewCode,
+	buildSubmitEmailPage,
+	buildSubmitOtpPage
+} from './controller.ts';
 
 function createMockService(overrides = {}) {
 	return {
@@ -16,7 +22,9 @@ function createMockService(overrides = {}) {
 		db: {
 			case: { findFirst: mock.fn() },
 			oneTimePassword: {
+				delete: mock.fn(),
 				findUnique: mock.fn(),
+				create: mock.fn(),
 				upsert: mock.fn(),
 				update: mock.fn()
 			}
@@ -110,7 +118,7 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(service.db.case.findFirst.mock.callCount(), 0);
 	});
 
-	it('should render error when email is not associated with a case', async () => {
+	it('should redirect without creating an OTP or sending email when email is not associated with a case', async () => {
 		const service = createMockService();
 		service.db.case.findFirst.mock.mockImplementation(async () => null);
 
@@ -120,15 +128,14 @@ describe('buildSubmitEmailPage', () => {
 
 		await handler(req, res);
 
-		const data = assertRender(res, 'views/login/enter-email-page.njk');
-		assert.strictEqual(data.pageHeading, 'Sign-in');
-		assert.strictEqual(data.errors.email.msg, 'Enter an email address linked to a case on this service');
-		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
+		assertRedirect(res, '/login/enter-code');
+		assert.strictEqual(req.session.email, 'unknown@example.com');
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 0);
 	});
 
-	it('should render lockout error when user is locked out', async () => {
+	it('should redirect to the OTP page when user is locked out', async () => {
 		const service = createMockService({ nodeEnv: 'production' });
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
@@ -143,10 +150,8 @@ describe('buildSubmitEmailPage', () => {
 
 		await handler(req, res);
 
-		const data = assertRender(res, 'views/login/enter-email-page.njk');
-		assert.strictEqual(data.pageHeading, 'Sign-in');
-		assert.match(data.errors.email.msg, /locked out/i);
-		assert.strictEqual(data.errorSummaryTitle, 'Your account is temporarily locked');
+		assertRedirect(res, '/login/enter-code');
+		assert.strictEqual(req.session.email, 'test@example.com');
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 0);
 	});
@@ -407,9 +412,58 @@ describe('buildSubmitOtpPage', () => {
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
 		assert.strictEqual(data.pageHeading, 'Enter your one-time password');
-		assert.match(data.errors.otp.msg, /Enter the code we sent to your email address/i);
+		assert.strictEqual(data.errors.otp.msg, 'Enter the code we sent to you');
 		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
+		assert.deepStrictEqual(data.errorSummary, [{ text: 'Enter the code we sent to you', href: '#otp' }]);
 		assert.strictEqual(service.db.oneTimePassword.update.mock.callCount(), 0);
+	});
+
+	it('should not create an OTP or send email when requesting a new code for an unregistered address', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => null);
+		const handler = buildRequestNewCode(service);
+		const req = createMockReq({}, { email: 'unknown@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/login/enter-code');
+		assert.strictEqual(service.db.oneTimePassword.delete.mock.callCount(), 0);
+		assert.strictEqual(service.db.oneTimePassword.create.mock.callCount(), 0);
+		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
+	});
+
+	it('should send a new code and show the new code message when resend succeeds', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
+		const handler = buildRequestNewCode(service);
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/login/enter-code');
+		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 1);
+		assert.strictEqual(req.session.showNewCodeMessage, true);
+	});
+
+	it('should render the delivery error and no new code message when resend fails', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
+		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
+			throw new Error('Notify unavailable');
+		});
+		const handler = buildRequestNewCode(service);
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRender(res, 'views/login/enter-otp.njk', (data) => {
+			assert.strictEqual(data.errorSummaryTitle, 'We could not send a new code');
+			assert.strictEqual(data.otpDeliveryFailed, true);
+		});
+		assert.strictEqual(req.session.showNewCodeMessage, undefined);
 	});
 
 	it('should render lockout error when user is locked out', async () => {
@@ -567,7 +621,8 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(data.errorSummaryTitle, 'We could not verify your code');
 		assert.strictEqual(service.logger.error.mock.callCount(), 1);
 		const logArgs = service.logger.error.mock.calls[0].arguments;
-		assert.strictEqual(logArgs[0].email, 'test@example.com');
+		assert.strictEqual(logArgs[0], 'Error during OTP verification');
+		assert.strictEqual(logArgs.length, 1);
 	});
 });
 
@@ -598,6 +653,7 @@ describe('buildEnterOtpPage', () => {
 			assert.strictEqual(data.pageHeading, 'Enter your one-time password');
 			assert.strictEqual(data.userEmail, 'test@example.com');
 			assert.strictEqual(data.errors, undefined);
+			assert.strictEqual(data.otpDeliveryFailed, false);
 		});
 	});
 
@@ -609,6 +665,7 @@ describe('buildEnterOtpPage', () => {
 		await handler(req, res);
 
 		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(data.otpDeliveryFailed, true);
 		assert.match(data.errors.otp.msg, /could not send a code/i);
 		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.deepStrictEqual(data.errorSummary, [{ text: data.errors.otp.msg, href: '#otp' }]);

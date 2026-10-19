@@ -1,0 +1,42 @@
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
+
+<details id="case-notes-details" class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">
+        {{ notes.length }} case note{% if notes.length != 1 %}s{% endif %}
+      </span>
+    </summary>
+    <div class="govuk-details__text">
+      <form method="POST" action="/case/{{ reference }}/overview/case-details/case-notes">
+        {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
+        {% set caseNoteErrorDetails = errorSummary[0] if errorSummary else null %}
+        {{ govukCharacterCount({
+          name: "note",
+          id: "note",
+          maxlength: 500,
+          hint: {
+            text: "These notes are only visible to PINS staff and should be used to share informal progress updates"
+          },
+          errorMessage: caseNoteErrorDetails
+        }) }}
+        <button type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-1"
+          data-module="govuk-button" data-govuk-button-init="">
+          Add case note
+        </button>
+      </form>
+      {% for note in notes %}
+        <div>
+          <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+          <section>
+            <p class="govuk-body govuk-!-margin-bottom-1 govuk-!-text-break-word">
+              {{ note.text }}
+            </p>
+            <p class="govuk-hint govuk-!-margin-bottom-6">
+              {{ note.createdTime }} by {{ note.createdBy }}
+            </p>
+            <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+          </section>
+        </div>
+      {% endfor %}
+    </div>
+  </details>

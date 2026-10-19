@@ -1,6 +1,7 @@
 export { AUTHORITY_STATUSES } from './authority-status.ts';
 export { GATEWAYS } from './gateway.ts';
 export { GATEWAY_3_DECISIONS } from './gateway-3-decision.ts';
+export { Gateway3FrontOfficeStatuses } from './gateway-3-status.ts';
 export { DSA_CHECKED_VALUES } from './dsa-checked.ts';
 export { PLAN_BANDS } from './plan-band.ts';
 export { PLAN_TYPES } from './plan-type.ts';

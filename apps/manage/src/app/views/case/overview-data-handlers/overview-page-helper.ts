@@ -41,7 +41,8 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 					qaInspector2: true,
 					qaInspector3: true
 				}
-			}
+			},
+			notes: true
 		}
 	});
 }

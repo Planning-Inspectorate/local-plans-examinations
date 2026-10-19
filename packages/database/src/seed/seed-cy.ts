@@ -79,6 +79,20 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 						lpaCode: contact.lpaContact
 					}))
 				},
+				notes: {
+					create: [
+						{
+							text: 'Hello there',
+							createdTime: new Date('2026-08-02T00:00:00.000Z'),
+							createdBy: 'Obi Wan'
+						},
+						{
+							text: 'General Kenobi!',
+							createdTime: new Date('2026-08-03T00:00:00.000Z'),
+							createdBy: 'General Grievous'
+						}
+					]
+				},
 				gateway1Info: {
 					create: {
 						noticeOfIntention: new Date('2026-05-01T12:00:00.000Z'),
