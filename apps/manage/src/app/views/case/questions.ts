@@ -37,7 +37,7 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortExaminationHearings, sortGateway2Workshops } from '#util/util.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 import {
 	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
@@ -1456,7 +1456,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
 			let workshopDateValue = workshopDetails.workshopDate;
 			if (typeof workshopDetails.workshopDate == 'string') {
 				workshopDateValue = parseDate(workshopDateValue);
@@ -1496,7 +1496,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: workshopDetails.workshopExpectedDaysKnown,
@@ -1524,7 +1524,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,
@@ -1542,7 +1542,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const hearingId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const hearingDetails = sortByCreatedDate(answersFull.hearings)[hearingId - 1];
 
 			let hearingDateValue = hearingDetails.hearingDate;
 			if (typeof hearingDetails.hearingDate == 'string') {
@@ -1574,7 +1574,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const hearingId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const hearingDetails = sortByCreatedDate(answersFull.hearings)[hearingId - 1];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: hearingDetails.hearingExpectedDaysKnown,
@@ -1602,7 +1602,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const hearingId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const hearingDetails = sortExaminationHearings(answersFull.hearings)[hearingId - 1];
+			const hearingDetails = sortByCreatedDate(answersFull.hearings)[hearingId - 1];
 			const locationType = {
 				key: 'Examination location type',
 				value: hearingDetails.hearingLocationType,

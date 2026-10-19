@@ -61,7 +61,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import lusca from 'lusca';
-import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { COMMON_CONSTS, questionPrefix } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
 import { loadLpaOptions } from '../../util/options-helper.ts';
@@ -360,19 +360,31 @@ function registerExaminationHearingJourney(
 
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
-		const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
-
-		req.log?.info?.(
-			{
-				question: req.params.question,
-				section: req.params.section,
-				editingFromCheckAnswers: req.session.editingFromCheckAnswers,
-				returnToCya,
-				lastQuestionUrl: req.session.lastQuestionUrl
-			},
-			'Redirect after question'
-		);
-
+		let returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+		const answer = Object.values(req.body).find((value) => value === 'yes' || value === 'no');
+		if (req.session.returnToCyaAfterAnswer == true) {
+			//returns to CYA after answering instead of going back though flow
+			req.session.returnToCyaAfterAnswer = false;
+			returnToCya = true;
+			req.session.editingFromCheckAnswers = true;
+		} else {
+			if (questionPrefix.some((q) => req.params.question.startsWith(q)) && returnToCya === true) {
+				if (answer == 'yes') {
+					// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that needs answering
+					returnToCya = false;
+					req.session.editingFromCheckAnswers = false;
+					req.session.returnToCyaAfterAnswer = true;
+				} else if (answer == 'no') {
+					// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that does not need answering
+					returnToCya = true;
+					req.session.editingFromCheckAnswers = true;
+				} else {
+					// type question (e.g. examinationHearingLocationType)
+					returnToCya = false;
+					req.session.editingFromCheckAnswers = false;
+				}
+			}
+		}
 		buildSave(updateCase, returnToCya)(req, res, next);
 	};
 }

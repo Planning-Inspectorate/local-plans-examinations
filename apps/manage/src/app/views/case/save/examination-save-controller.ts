@@ -1,10 +1,9 @@
 import { SaveController } from './save-controller.ts';
 import { examinationHearingBaseUrls } from '../questions.ts';
-import { sortExaminationHearings } from '#util/util.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 import { parseDate } from '../../../util/date.ts';
 import type { ExaminationInput } from './save-inputs.ts';
-import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
-import { NUM_EXAMINATION_HEARING_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../classes/common-consts.ts';
 import { formatDateToString } from '../../../util/date.ts';
 
 export class ExaminationSaveController extends SaveController {
@@ -48,13 +47,13 @@ export class ExaminationSaveController extends SaveController {
 			if (!hearingId) {
 				throw Error('Could not extract the hearing id');
 			}
-			const hearingDetails = sortExaminationHearings(caseDetails.examinationInfo?.hearings);
+			const hearingDetails = sortByCreatedDate(caseDetails.examinationInfo?.hearings);
 			if (hearingId > hearingDetails.length) {
 				hearingDetails.push({ hearingDate: null, createdDate: new Date() });
 			}
 			// Enrich the current hearing with the answers
 			if (this.req.session && this.req.session.answers && this.req.session.answers.hearings) {
-				const filteredSessionAnswerHearings = sortExaminationHearings(this.req.session.answers.hearings);
+				const filteredSessionAnswerHearings = sortByCreatedDate(this.req.session.answers.hearings);
 				hearingDetails[hearingId - 1] = {
 					...hearingDetails[hearingId - 1],
 					...filteredSessionAnswerHearings[hearingId - 1]
@@ -70,7 +69,7 @@ export class ExaminationSaveController extends SaveController {
 					hearingExpectedDaysKnown: `hearingExpectedDaysKnown-${hearingId}`,
 					hearingExpectedDays: `hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`
 				},
-				[`examination-location-type-${hearingId}`]: {
+				[`examination-hearing-location-type-${hearingId}`]: {
 					hearingLocationType: `hearingLocationType-${hearingId}`
 				},
 				[`examination-hearing-location-known-${hearingId}`]: {
@@ -177,7 +176,7 @@ export class ExaminationSaveController extends SaveController {
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
 		if ('hearings' in answers) {
-			const hearings = sortExaminationHearings(answers.hearings as { createdDate: Date; [key: string]: any }[]);
+			const hearings = sortByCreatedDate(answers.hearings as { createdDate: Date; [key: string]: any }[]);
 			if (!hearings) {
 				throw Error('No hearing entries found');
 			}

@@ -36,3 +36,10 @@ export const COMMON_CONSTS = {
 export const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 export const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 export const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+export const NUM_EXAMINATION_HEARING_QUESTIONS = 200;
+
+export const questionPrefix = [
+	'examination-hearing-location-type-',
+	'examination-hearing-remote-meeting-link-known-',
+	'examination-hearing-location-known-'
+];

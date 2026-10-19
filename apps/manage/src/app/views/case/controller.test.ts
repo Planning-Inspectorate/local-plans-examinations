@@ -1808,7 +1808,8 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-
+		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
+		assert.equal(req.session.alertMessageStatus, 'success');
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
 		assert.ok(
 			service.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshopDocumentUploadedDate instanceof Date
@@ -1836,7 +1837,7 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-
+		assert.equal(req.session.alertMessageStatus, 'important');
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});

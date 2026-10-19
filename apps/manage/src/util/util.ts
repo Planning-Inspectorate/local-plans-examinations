@@ -15,28 +15,13 @@ export function sortGateway3Submissions(
 }
 
 /**
- * Immutably sort the given list workshops details, with null createdDate values at the end
+ * Immutably sort the given list workshops or hearings. details, with null createdDate values at the end
  * @param workshops The workshops to filter and sort
- * @returns The sorted workshops
- */
-export function sortGateway2Workshops(workshops: { createdDate: Date; [key: string]: any }[]) {
-	return workshops.toSorted((a, b) => {
-		if (!(a.createdDate || b.createdDate)) return 0;
-		if (!a.createdDate) return 1;
-		if (!b.createdDate) return -1;
-		const aCreatedDate = typeof a.createdDate === 'string' ? new Date(a.createdDate) : a.createdDate;
-		const bCreatedDate = typeof b.createdDate === 'string' ? new Date(b.createdDate) : b.createdDate;
-		return aCreatedDate.getTime() - bCreatedDate.getTime();
-	});
-}
-
-/**
- * Immutably sort the given list workshops details, with null createdDate values at the end
  * @param hearings The workshops to filter and sort
- * @returns The sorted workshops
+ * @returns The sorted workshops or hearings
  */
-export function sortExaminationHearings(hearings: { createdDate: Date; [key: string]: any }[]) {
-	return hearings.toSorted((a, b) => {
+export function sortByCreatedDate(workshops: { createdDate: Date; [key: string]: any }[]) {
+	return workshops.toSorted((a, b) => {
 		if (!(a.createdDate || b.createdDate)) return 0;
 		if (!a.createdDate) return 1;
 		if (!b.createdDate) return -1;

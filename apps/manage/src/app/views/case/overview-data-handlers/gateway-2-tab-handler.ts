@@ -83,8 +83,6 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 		journeyResponse.answers.gateway2Documents = documentsByCategory;
-		console.log('journeyResponse.answers');
-		console.log(journeyResponse.answers);
 		res.locals.journeyResponse = journeyResponse;
 		if (
 			req.method === 'POST' &&

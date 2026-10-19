@@ -10,7 +10,7 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { sortGateway2Workshops, sortExaminationHearings } from '#util/util.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -75,8 +75,7 @@ export function createExaminationHearingJourney(
 				.addQuestion(questions[`examinationHearingDateAndTime-${hearingId}`])
 				.addQuestion(questions[`examinationHearingExpectedDays-${hearingId}`])
 				.addQuestion(questions[`examinationHearingLocationType-${hearingId}`])
-				.addQuestion(questions[`examinationHearingLocationKnown-${hearingId}`])
-				.withCondition((response) =>
+				.startMultiQuestionCondition('hearing-location', (response) =>
 					questionsHaveAnswers(
 						response,
 						[
@@ -86,10 +85,11 @@ export function createExaminationHearingJourney(
 						{ logicalCombinator: 'or' }
 					)
 				)
+				.addQuestion(questions[`examinationHearingLocationKnown-${hearingId}`])
 				.addQuestion(questions[`examinationHearingVenueAddress-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingLocationKnown-${hearingId}`], 'yes'))
-				.addQuestion(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`])
-				.withCondition((response) =>
+				.endMultiQuestionCondition('hearing-location')
+				.startMultiQuestionCondition('hearing-remote-meeting', (response) =>
 					questionsHaveAnswers(
 						response,
 						[
@@ -99,8 +99,10 @@ export function createExaminationHearingJourney(
 						{ logicalCombinator: 'or' }
 					)
 				)
+				.addQuestion(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`])
 				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
+				.endMultiQuestionCondition('hearing-remote-meeting')
 		],
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -114,11 +116,11 @@ export function createExaminationHearingJourney(
 	let currentHearingAnswers: any | undefined;
 	if (req.session.answers) {
 		response.answers = req.session.answers;
-		const hearingAnswers: object[] = sortExaminationHearings(req.session.answers.hearings);
+		const hearingAnswers: object[] = sortByCreatedDate(req.session.answers.hearings);
 		currentHearingAnswers = hearingAnswers[hearingId - 1];
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-		const hearingAnswers: Record<string, any>[] = sortExaminationHearings(
+		const hearingAnswers: Record<string, any>[] = sortByCreatedDate(
 			response.answers.hearings as { createdDate: Date; [key: string]: any }[]
 		) as object[];
 		currentHearingAnswers = hearingAnswers[hearingId - 1];
@@ -126,7 +128,6 @@ export function createExaminationHearingJourney(
 	if (currentHearingAnswers) {
 		Object.entries(currentHearingAnswers).forEach(([key, value]) => {
 			response.answers[`${key}-${hearingId}`] = value;
-			//response.answers[key] = value
 		});
 		response.answers[`hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`] =
 			currentHearingAnswers.hearingExpectedDays;
@@ -134,6 +135,27 @@ export function createExaminationHearingJourney(
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
 	}
+
+	const getBackLink = journey.getBackLink.bind(journey); // overide back links for hearing duration + end date
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		if (
+			options.params.question.startsWith('examination-hearing-duration-') ||
+			options.params.question.startsWith('examination-hearing-end-date-')
+		) {
+			return examinationUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	const redirectToNextQuestion = journey.redirectToNextQuestion.bind(journey); // overide next question for hearing duration + end date (stops it going to CYA when submit is clicked)
+	journey.redirectToNextQuestion = (res, params, manageListQuestion) => {
+		if (res.locals.redirectToExamination) {
+			return res.redirect(examinationUrl);
+		}
+		return redirectToNextQuestion(res, params, manageListQuestion);
+	};
+
 	return journey;
 }
 
@@ -264,11 +286,11 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	let currentWorkshopAnswers: any | undefined;
 	if (req.session.answers) {
 		response.answers = req.session.answers;
-		const workshopAnswers: object[] = sortGateway2Workshops(req.session.answers.workshops);
+		const workshopAnswers: object[] = sortByCreatedDate(req.session.answers.workshops);
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
+		const workshopAnswers: Record<string, any>[] = sortByCreatedDate(
 			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
 		) as object[];
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
@@ -313,9 +335,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	if (!response.answers.workshops) {
 		throw Error('workshops property missing from answers for gateway2 journey');
 	}
-	const sortedWorkshops = sortGateway2Workshops(
-		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
-	);
+	const sortedWorkshops = sortByCreatedDate(response.answers.workshops as { createdDate: Date; [key: string]: any }[]);
 
 	response.answers.workshops = sortedWorkshops;
 	if (req.session) {

@@ -945,10 +945,6 @@ export function preprocessQuestionProperties(
 					hearingAnswers[i].hearingDate && typeof hearingAnswers[i].hearingDate != 'string'
 						? formatDateToString(hearingAnswers[i].hearingDate)
 						: null;
-				//hearingAnswers[i].hearingEndDate =
-				//	hearingAnswers[i].hearingEndDate && typeof hearingAnswers[i].hearingEndDate != 'string'
-				//		? formatDateToString(hearingAnswers[i].hearingEndDate)
-				//		: null;
 			}
 		}
 		next();
