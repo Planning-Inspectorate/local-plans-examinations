@@ -299,10 +299,22 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		const request = req as ExaminationRequest;
 		request.currentCase = currentCase;
 		const answers = getCaseScopedSessionAnswers(req, planReference);
+		const savedExaminationWebsiteUrl = currentCase.examinationInfo?.examinationWebsiteUrl;
+		const gateway3ExaminationWebsiteUrl = currentCase.gateway3Info?.examinationWebsiteUrl;
+		if (!savedExaminationWebsiteUrl && gateway3ExaminationWebsiteUrl) {
+			await service.db.examinationInfo.upsert({
+				where: { caseId: currentCase.id },
+				create: {
+					caseId: currentCase.id,
+					examinationWebsiteUrl: gateway3ExaminationWebsiteUrl
+				},
+				update: {
+					examinationWebsiteUrl: gateway3ExaminationWebsiteUrl
+				}
+			});
+		}
 		const examinationWebsiteUrl =
-			currentCase.examinationInfo?.examinationWebsiteUrl ??
-			currentCase.gateway3Info?.examinationWebsiteUrl ??
-			currentCase.examinationInfo?.examinationWebsite;
+			savedExaminationWebsiteUrl ?? gateway3ExaminationWebsiteUrl ?? currentCase.examinationInfo?.examinationWebsite;
 		if (examinationWebsiteUrl) {
 			answers.examinationWebsiteUrl = examinationWebsiteUrl;
 		}

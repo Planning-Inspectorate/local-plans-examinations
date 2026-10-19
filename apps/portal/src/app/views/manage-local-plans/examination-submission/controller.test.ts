@@ -71,7 +71,7 @@ describe('examination view data', () => {
 });
 
 describe('buildGetJourneyResponseFromCase', () => {
-	it('prepopulates the website from Gateway 3 and loads persisted examination documents', async () => {
+	it('copies and prepopulates the website from Gateway 3 and loads persisted examination documents', async () => {
 		const currentCase = {
 			id: 'case-id',
 			reference: 'PLAN-61797',
@@ -99,7 +99,44 @@ describe('buildGetJourneyResponseFromCase', () => {
 		assert.equal(nextCalled, true);
 		const response = res.locals.journeyResponse as JourneyResponse;
 		assert.equal(response.answers.examinationWebsiteUrl, 'https://gateway-3.example.com');
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
+			where: { caseId: 'case-id' },
+			create: {
+				caseId: 'case-id',
+				examinationWebsiteUrl: 'https://gateway-3.example.com'
+			},
+			update: {
+				examinationWebsiteUrl: 'https://gateway-3.example.com'
+			}
+		});
 		assert.equal(service.db.document.findMany.mock.callCount(), documentSets.length);
+	});
+
+	it('does not overwrite an existing examination website with the Gateway 3 website', async () => {
+		const currentCase = {
+			id: 'case-id',
+			reference: 'PLAN-61797',
+			planTitle: 'Test plan',
+			examinationInfo: {
+				status: 'in-progress',
+				examinationWebsite: null,
+				examinationWebsiteUrl: 'https://examination.example.com',
+				statusLookup: { displayName: 'In progress' }
+			},
+			gateway3Info: {
+				examinationWebsiteUrl: 'https://gateway-3.example.com'
+			}
+		};
+		const service = buildService(currentCase);
+		const handler = buildGetJourneyResponseFromCase(service);
+		const req = { params: { planReference: 'PLAN-61797' }, session: {} } as unknown as Request;
+		const res = { locals: {} } as unknown as Response;
+
+		await handler(req, res, (() => {}) as NextFunction);
+
+		const response = res.locals.journeyResponse as JourneyResponse;
+		assert.equal(response.answers.examinationWebsiteUrl, 'https://examination.example.com');
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
 	});
 });
 

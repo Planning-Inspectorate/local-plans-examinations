@@ -28,6 +28,10 @@ import { ExaminationSaveController } from './save/examination-save-controller.ts
 import { formatDateToString } from '../../../app/util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -751,7 +755,7 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			// Try to update the reportIssuedDate
 			const completionDate = new Date();
 			submission.completionDate = new Date();
-			if (submission.decision == '2') {
+			if (submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
 				// If a submission was rejected by the inspector, then add a new gw3 submission details block
 				existingSubmissions.push({
 					id: crypto.randomUUID(),
@@ -766,6 +770,17 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
 				submissions: existingSubmissions
 			});
+			if (submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION) {
+				await service.db.examinationInfo.updateMany({
+					where: {
+						caseId,
+						status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+					},
+					data: {
+						status: EXAMINATION_STATUS_ID.READY_TO_START
+					}
+				});
+			}
 			await updateCaseHistory(
 				service,
 				req,

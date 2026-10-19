@@ -23,6 +23,10 @@ import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handl
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -88,6 +92,7 @@ function createService(): any {
 		},
 		examinationInfo: {
 			upsert: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({ count: 1 })),
 			findUnique: mock.fn(async () => null)
 		},
 		documentSet: {
@@ -1809,14 +1814,14 @@ describe('preprocessQuestionProperties', () => {
 });
 describe('issueGateway3Document', () => {
 	const caseReference = 'some-case-reference';
-	it('issue document when created date is not already set', async () => {
+	it('sets the examination status to ready to start when issuing a proceed to examination decision', async () => {
 		const service = createService();
 		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			completionDate: undefined,
 			submissions: [
 				{
 					id: 'someId',
-					decision: undefined,
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
 					completionDate: undefined,
 					gateway3InfoId: undefined
 				}
@@ -1838,6 +1843,46 @@ describe('issueGateway3Document', () => {
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: CASE_ID,
+				status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+			},
+			data: {
+				status: EXAMINATION_STATUS_ID.READY_TO_START
+			}
+		});
+	});
+	it('does not change the examination status when issuing a resubmission required decision', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
 	});
 	it('issue document when created date is already set', async () => {
 		const service = createService();
@@ -1867,6 +1912,7 @@ describe('issueGateway3Document', () => {
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
 	});
 });
 
