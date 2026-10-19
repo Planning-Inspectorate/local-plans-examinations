@@ -397,7 +397,7 @@ for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) 
 	}
 }
 
-const caseQuestions: Record<string, ManageQuestionConfig> = {
+const caseQuestions = {
 	//overview
 	planTitle: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -1222,7 +1222,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		]
 	},
 	...gateway3Questions
-};
+} satisfies Record<string, ManageQuestionConfig>;
 
 export const fileUploadQuestionProperties = Object.fromEntries(
 	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
@@ -1255,10 +1255,7 @@ export async function updateQuestionsWithOptions(service: ManageService, req: Re
 	}
 }
 
-export async function getQuestions(
-	service: ManageService,
-	req: Request
-): Promise<Record<string, ManageQuestionConfig>> {
+export async function getQuestions(service: ManageService, req: Request) {
 	await updateQuestionsWithOptions(service, req, questions);
 	return questions;
 }

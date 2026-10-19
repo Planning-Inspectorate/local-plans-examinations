@@ -1,15 +1,15 @@
-import ManageListQuestion from '@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js';
+import { ManageListQuestion } from '@planning-inspectorate/dynamic-forms';
 import nunjucks from 'nunjucks';
 import type {
 	Journey,
 	JourneyResponse,
 	QuestionParameters,
 	QuestionViewModel,
-	Section
+	Section,
+	ManageListQuestionParams
 } from '@planning-inspectorate/dynamic-forms';
-import type { ManageListQuestionParameters } from '@planning-inspectorate/dynamic-forms/src/components/manage-list/question.js';
 
-interface CustomManageListQuestionParameters extends QuestionParameters, ManageListQuestionParameters {
+interface CustomManageListQuestionParameters extends QuestionParameters, ManageListQuestionParams {
 	maximumAnswers?: number;
 	emptyListText?: string;
 	isAllowedEmpty?: boolean;
@@ -41,9 +41,9 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 		this.maximumAnswers = params.maximumAnswers ?? null;
 		this.emptyListText = params.emptyListText || 'No items have been added yet.';
 		this.isAllowedEmpty = params.isAllowedEmpty ?? false;
-		this.confirmRemoveButtonText = params.confirmRemoveButtonText || `Remove ${params.titleSingular.toLowerCase()}`;
+		this.confirmRemoveButtonText = params.confirmRemoveButtonText || `Remove ${params.titleSingular?.toLowerCase()}`;
 		this.removalPrompt =
-			params.removalPrompt || `Are you sure you want to remove this ${params.titleSingular.toLowerCase()}?`;
+			params.removalPrompt || `Are you sure you want to remove this ${params.titleSingular?.toLowerCase()}?`;
 		this.singularLowerCase = params.singularLowerCase || '';
 		this.multipleLowerCase = params.multipleLowerCase || '';
 	}

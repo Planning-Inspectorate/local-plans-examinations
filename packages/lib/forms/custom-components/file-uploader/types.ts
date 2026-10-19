@@ -1,4 +1,4 @@
-import type BaseValidator from '@planning-inspectorate/dynamic-forms/src/validator/base-validator.js';
+import type { BaseQuestionProps } from '@planning-inspectorate/dynamic-forms';
 import type { FileStorageProvider, UploadedFile } from '../../../storage/index.ts';
 export type {
 	FileStorageProvider,
@@ -69,28 +69,10 @@ export type FileUploaderQuestionConfig = {
 	url?: string;
 };
 
-export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
-	title: string;
-	question: string;
-	fieldName: string;
-	url?: string;
-	pageTitle?: string;
-	description?: string;
-	hint?: string;
-	validators?: BaseValidator[];
-	formatSummaryValue?: ({
-		formattedAnswer,
-		answer
-	}: {
-		formattedAnswer: string;
-		answer: {
-			fileName?: string;
-			metadata: { documentGuid: string };
-		}[];
-	}) => string | undefined;
-	actionButtonVisibleInSummary?: boolean;
-	editable?: boolean;
-};
+export type FileUploaderQuestionProps = FileUploaderQuestionConfig &
+	BaseQuestionProps & {
+		actionButtonVisibleInSummary?: boolean;
+	};
 
 export type FileUploaderViewModel = QuestionViewModel & {
 	question: QuestionViewModel['question'] & FileUploaderQuestionConfig;

@@ -1,4 +1,4 @@
-import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { Question } from '@planning-inspectorate/dynamic-forms';
 import { formatDateToString } from '../../../util/date.ts';
 import nunjucks from 'nunjucks';
 

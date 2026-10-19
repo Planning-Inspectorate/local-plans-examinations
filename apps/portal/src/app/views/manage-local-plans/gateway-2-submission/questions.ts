@@ -1,4 +1,5 @@
-import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
+import type { SummaryValueFormatter, Question } from '@planning-inspectorate/dynamic-forms';
+import { createQuestions, questionClasses } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import { FileUploadRequiredValidator } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import {
@@ -206,7 +207,7 @@ export function createGateway2Questions(planReference: string | undefined) {
 			key,
 			{
 				...question,
-				formatSummaryValue: createDownloadDocumentSummaryFormatter(planReference)
+				formatSummaryValue: createDownloadDocumentSummaryFormatter(planReference) as SummaryValueFormatter
 			}
 		])
 	);

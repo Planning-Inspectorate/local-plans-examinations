@@ -1,6 +1,7 @@
 import type { PortalService } from '#service';
 import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import multer from 'multer';
+import type { JourneyLocals } from '@planning-inspectorate/dynamic-forms';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -538,16 +539,16 @@ export function setAsEditingFromCya(req: Request, _: Response, next: NextFunctio
 	next();
 }
 
-export function redirectAfterCyaEdit(req: Request, res: Response, next: NextFunction) {
+export function redirectAfterCyaEdit(req: Request, res: Response<any, JourneyLocals>) {
 	const request = req as Gateway3Request;
 	const returnToCya = getCheckAnswersRedirect(req) ?? request.session.editingFromCheckAnswers === true;
-	buildSave(saveDataToSession, returnToCya)(req, res, next);
+	buildSave(saveDataToSession, returnToCya)(req, res);
 }
 
 export function redirectAfterCaseQuestionEdit(saveDataToCase: SaveDataFn) {
-	return (req: Request, res: Response, next: NextFunction) => {
+	return (req: Request, res: Response<any, JourneyLocals>) => {
 		const returnToCya = getCheckAnswersRedirect(req) ?? true;
-		buildSave(saveDataToCase, returnToCya)(req, res, next);
+		buildSave(saveDataToCase, returnToCya)(req, res);
 	};
 }
 

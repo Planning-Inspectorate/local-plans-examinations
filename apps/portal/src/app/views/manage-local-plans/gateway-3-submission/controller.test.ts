@@ -461,6 +461,7 @@ describe('buildValidateGateway3Submission', () => {
 							name: 'Required Information',
 							segment: 'required-information',
 							getStatus: () => 'in-progress',
+							getResponse: (res) => res,
 							questions: []
 						}
 					],
@@ -576,7 +577,7 @@ describe('setAsEditingFromCya', () => {
 describe('redirectAfterCyaEdit', () => {
 	it('is an express middleware function', () => {
 		assert.strictEqual(typeof redirectAfterCyaEdit, 'function');
-		assert.strictEqual(redirectAfterCyaEdit.length, 3);
+		assert.strictEqual(redirectAfterCyaEdit.length, 2);
 	});
 });
 
