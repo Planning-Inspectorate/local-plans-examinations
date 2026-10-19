@@ -41,5 +41,6 @@ describe('Case overview', () => {
 		caseOverviewPage.verifyExpectedSeededAnswers();
 		caseOverviewPage.verifyExpectedActionLinkHrefs();
 		caseOverviewPage.verifyDeleteCaseButton();
+		caseOverviewPage.verifyCaseNotesContent();
 	});
 });
