@@ -13,9 +13,12 @@ import {
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
 
-function createOverviewJourneyForTest() {
+function createOverviewJourneyForTest(overrideRequest?: Record<string, any>) {
+	const params = overrideRequest
+		? overrideRequest
+		: { baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any };
 	return createOverviewJourney(
-		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
+		params as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', {}),
 		questions
 	);
@@ -92,6 +95,15 @@ describe('createOverviewJourney', () => {
 		});
 
 		assert.equal(backLink, '/case/LP-TEST-001/overview/contacts/check-contact-details');
+	});
+	it('passes a csrf token to the journey', () => {
+		// Case notes requires a csrf token to be passed to the journey in order to work with dynamic forms
+		const journey = createOverviewJourneyForTest({
+			baseUrl: '/case/LP-TEST-001',
+			params: { reference: 'LP-TEST-001' } as any,
+			res: { locals: { _csrf: 'someCsrfToken' } }
+		});
+		assert.equal((journey as any)._csrf, 'someCsrfToken');
 	});
 });
 
