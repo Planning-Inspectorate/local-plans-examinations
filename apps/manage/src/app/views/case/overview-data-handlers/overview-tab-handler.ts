@@ -1,4 +1,4 @@
-import type { BaseValidator, StringValidator } from '@planning-inspectorate/dynamic-forms';
+import type { OptionsQuestion, StringValidator } from '@planning-inspectorate/dynamic-forms';
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { questions } from '../questions.ts';
@@ -50,7 +50,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 		await loadInspectorOptions(service, req, questions);
 		const lpaOptions = await loadLpaOptions(service);
 		if (lpaOptions.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
+			(questions.lpa as OptionsQuestion).options = [{ value: '', text: '' }, ...lpaOptions];
 		}
 
 		const journeyResponse = new JourneyResponse(journeyId, '', mapOverviewDataToAnswers(overviewData));
@@ -86,7 +86,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 							: (questions.caseNotes.validators[0] as StringValidator).maxLength.maxLengthMessage;
 					// Add the error message to the session, which will be dealt when redirecting
 					req.session.errors = { notes: { msg: message } };
-					req.session.errorSummary = (questions.caseNotes.validators as BaseValidator[]).map((elem) => ({
+					req.session.errorSummary = questions.caseNotes.validators.map((elem) => ({
 						text:
 							newNote.length > (elem as StringValidator).maxLength.maxLength
 								? (elem as StringValidator).maxLength.maxLengthMessage

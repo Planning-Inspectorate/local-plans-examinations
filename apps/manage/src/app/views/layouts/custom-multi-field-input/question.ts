@@ -1,4 +1,4 @@
-import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { Question } from '@planning-inspectorate/dynamic-forms';
 import escape from 'escape-html';
 import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
@@ -6,6 +6,7 @@ import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-
 import { toZonedTime } from 'date-fns-tz';
 
 interface BaseField {
+	title?: string;
 	fieldName: string;
 	formatJoinString?: string;
 	formatPrefix?: string;

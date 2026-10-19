@@ -603,7 +603,7 @@ for (let hearingId = 1; hearingId < NUM_GW2_WORKSHOP_QUESTIONS; hearingId++) {
 	}
 }
 
-const caseQuestions: Record<string, ManageQuestionConfig> = {
+const caseQuestions = {
 	//overview
 	planTitle: {
 		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
@@ -1468,7 +1468,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		viewData: { uploadQuestionUrl: 'examination-report' }
 	},
 	...gateway3Questions
-};
+} satisfies Record<string, ManageQuestionConfig>;
 
 // Some questions require copies in order to be used in different conditions.
 // e.g. isSoundNavigation and isSoundOutcome are used in different areas but are the same field/question.
@@ -1516,10 +1516,7 @@ export async function updateQuestionsWithOptions(service: ManageService, req: Re
 	}
 }
 
-export async function getQuestions(
-	service: ManageService,
-	req: Request
-): Promise<Record<string, ManageQuestionConfig>> {
+export async function getQuestions(service: ManageService, req: Request) {
 	await updateQuestionsWithOptions(service, req, questions);
 	return questions;
 }

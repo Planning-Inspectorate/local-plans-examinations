@@ -39,9 +39,12 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 			COMMON_CONSTS.GATEWAY_3_JOURNEY_ID
 		);
 		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
-		res.locals.journeyResponse = journeyResponse;
+
+		// TODO: separate mapper to answers view model
+		res.locals.journeyResponse = new JourneyResponse(journeyId, '', {
+			...journey3Data,
+			examinationWebsite: journey4Data?.examinationWebsite
+		});
 		if (next) next();
 	}
 }
