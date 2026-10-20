@@ -6,7 +6,7 @@ export default class CustomDocumentsQuestion extends Question {
 	constructor({ ...params }) {
 		super({
 			...params,
-			viewFolder: 'views/custom-documents-viewer',
+			viewFolder: 'views/layouts/custom-documents-viewer',
 			title: params.title,
 			question: params.question,
 			fieldName: params.fieldName
@@ -15,9 +15,5 @@ export default class CustomDocumentsQuestion extends Question {
 		this.config = {
 			actionButtonVisibleInSummary: true
 		};
-		// this.actionLink = {
-		// 	href : '#',
-		// 	text : 'Review'
-		// }
 	}
 }
