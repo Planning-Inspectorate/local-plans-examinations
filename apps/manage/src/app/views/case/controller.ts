@@ -909,11 +909,15 @@ export function preprocessQuestionProperties(
 			for (let i = 0; i < submissionDetailsSorted.length; i++) {
 				const submissionId = i + 1;
 				const submission = submissionDetailsSorted[i];
-				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3Documents = `gateway3DocumentsViewer-${submissionId}`;
 				const gateway3Decision = `gateway3Decision-${submissionId}`;
 				const decisionValue = submissionDetailsSorted[i].decision;
 				const completionDate = submissionDetailsSorted[i].completionDate;
-				questions[gateway3Documents].changeActionText = 'View';
+				questions[gateway3Documents].actionLink = {
+					href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
+					text: 'Review'
+				};
+				questions[gateway3Documents].changeActionText = 'Review';
 				const gateway3Complete = !!submission.completionDate;
 				(questions[gateway3Documents] as any).config.actionButtonVisibleInSummary = gateway3Complete;
 				questions[gateway3Documents].editable = !gateway3Complete;

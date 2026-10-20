@@ -117,8 +117,8 @@ const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
-		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-		title: 'Gateway 3 documents',
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
 		question: 'Upload Gateway 3 report',
 		fieldName: 'gateway3Documents',
 		url: 'gateway-3-document',
@@ -143,6 +143,13 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3DocumentsViewer: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documentss',
+		question: 'Review Gateway 3 documents',
+		fieldName: 'gateway3Documents',
+		url: 'gateway-3-document'
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
