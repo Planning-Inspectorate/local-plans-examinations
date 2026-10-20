@@ -71,7 +71,24 @@ describe('Gateway 2 updates', () => {
 			gateway2Page.openActionLinkFor(gateway2Report.row);
 			gateway2ReportPage.verifyLoaded();
 			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.updatedFileName);
+			cy.intercept('POST', '**/delete-document/**').as('removeReport');
 			gateway2ReportPage.removeFile(gateway2Report.updatedFileName);
+			cy.wait('@removeReport').then(({ request, response }) => {
+				const requestPath = new URL(request.url).pathname;
+				const location = response?.headers.location;
+				const redirectPath = location ? new URL(String(location), request.url).pathname : 'none';
+
+				return cy
+					.task(
+						'log',
+						`Remove report: ${requestPath}; status: ${response?.statusCode ?? 'no response'}; redirect: ${redirectPath}`
+					)
+					.then(() => {
+						expect(response?.statusCode, 'Remove report response status').to.eq(302);
+						expect(redirectPath, 'Remove report redirect').to.eq(requestPath.split('/delete-document/')[0]);
+					});
+			});
+			gateway2ReportPage.verifyLoaded();
 			gateway2ReportPage.verifyFileNotUploaded(gateway2Report.updatedFileName);
 			gateway2ReportPage.goBack();
 
