@@ -70,7 +70,10 @@ describe('examination submission page', () => {
 			assert.ok(html.includes(title), `expected row for ${title}`);
 		}
 		assert.equal((html.match(/>Required<\/div>/g) ?? []).length, 8);
-		assert.ok(html.includes('https://example.com'));
+		assert.match(
+			html,
+			/<td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">\s*https:\/\/example\.com\s*<\/td>/
+		);
 		assert.ok(html.includes('Change'));
 		assert.ok(html.includes('Not added'));
 		assert.ok(html.includes('Add'));

@@ -1842,8 +1842,10 @@ describe('issueGateway3Document', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
 		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
 		assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
 			where: {
 				caseId: CASE_ID,
@@ -1881,8 +1883,110 @@ describe('issueGateway3Document', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
 		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+	});
+	it('fails the issue transaction when no examination record can be made ready', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => null);
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Could not find examination information/
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+		assert.equal(req.session.alertMessage, undefined);
+	});
+	it('continues issuing when the examination is already ready to start', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			status: EXAMINATION_STATUS_ID.READY_TO_START
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.examinationInfo.findUnique.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.equal(req.session.alertMessage, 'Gateway 3 decision issued');
+		assert.equal(req.session.alertMessageStatus, 'success');
+	});
+	it('repairs the examination status when a proceed decision was previously issued', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: new Date(2026, 1, 1),
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.equal(req.session.alertMessage, 'Gateway 3 decision already issued. Examination is ready to start');
+		assert.equal(req.session.alertMessageStatus, 'success');
 	});
 	it('issue document when created date is already set', async () => {
 		const service = createService();
