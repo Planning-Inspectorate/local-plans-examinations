@@ -54,7 +54,17 @@ function createMockService(): MockServiceType {
 						]
 					},
 					examinationInfo: {
-						pauses: []
+						pauses: [
+							{
+								createdDate: new Date(2026, 0, 1),
+								startDate: new Date(2026, 0, 2),
+								endDate: new Date(2026, 0, 5)
+							},
+							{
+								createdDate: new Date(2026, 5, 1),
+								startDate: new Date(2026, 5, 2)
+							}
+						]
 					}
 				})),
 				upsert: mock.fn(async () => ({}))
@@ -91,6 +101,21 @@ mock.timers.enable({
 	now: mockDate
 });
 
+class ExamSaveControllerWrapper extends ExaminationSaveController {
+	public async wrapShouldSaveToSession() {
+		return await this.shouldSaveToSession();
+	}
+	public async wrapPrepareData(answers: Record<string, any>) {
+		return await this.prepareData(answers);
+	}
+	public async wrapSaveToSession(answers: any) {
+		return await this.saveToSession(answers);
+	}
+	public async wrapSaveToDatabase(answers: any) {
+		return await this.saveToDatabase(answers);
+	}
+}
+
 describe('test Gateway1SaveController', () => {
 	it('can save an examination', async () => {
 		const mockService = createMockService();
@@ -118,5 +143,508 @@ describe('test Gateway1SaveController', () => {
 		);
 		await examinationController.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+	});
+	describe('should save to session', async () => {
+		it('rejects when there are no case details', async () => {
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => null);
+			const req = {
+				params: {}
+			} as Request;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			await assert.rejects(examinationController.wrapShouldSaveToSession());
+		});
+		it('returns false when pauses is undefined', async () => {
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => ({
+				id: 'someCaseId',
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				},
+				examinationInfo: {
+					pauses: undefined
+				}
+			}));
+			const req = {
+				params: {}
+			} as Request;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+		});
+		it('returns false when attempting to modify the second pause question', async () => {
+			const question = 'examination-pause-details-3';
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => ({
+				id: 'someCaseId',
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				},
+				examinationInfo: {
+					pauses: [
+						{
+							startTime: new Date(),
+							details: 'The first pause'
+						},
+						{
+							startTime: new Date(),
+							details: 'The third pause' // Deliberately out of order, should be sorted
+						},
+						{
+							startTime: new Date(),
+							details: 'The second pause' // Deliberately out of order, should be sorted
+						}
+					]
+				}
+			}));
+			const req = {
+				params: {}
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const result = await examinationController.wrapShouldSaveToSession();
+			assert.equal(result, false);
+		});
+		it('returns false when attempting to modify the first pause question with no existing data', async () => {
+			const question = 'examination-pause-start-date-3';
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => ({
+				id: 'someCaseId',
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				},
+				examinationInfo: {
+					pauses: [
+						{
+							startTime: new Date(),
+							details: 'The first pause'
+						},
+						{
+							startTime: new Date(),
+							details: 'The second pause'
+						}
+					]
+				}
+			}));
+			const req = {
+				params: {}
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const result = await examinationController.wrapShouldSaveToSession();
+			assert.equal(result, true);
+		});
+		it('returns true when attempting to modify the first pause question with existing data', async () => {
+			const question = 'examination-pause-start-date-2';
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => ({
+				id: 'someCaseId',
+				gateway2Info: {
+					workshops: []
+				},
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'someId',
+							decision: undefined,
+							completionDate: undefined,
+							gateway3InfoId: undefined
+						}
+					]
+				},
+				examinationInfo: {
+					pauses: [
+						{
+							startTime: new Date(),
+							details: 'The first pause'
+						},
+						{
+							startTime: new Date(),
+							details: 'The second pause'
+						}
+					]
+				}
+			}));
+			const req = {
+				params: {}
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const result = await examinationController.wrapShouldSaveToSession();
+			assert.equal(result, false);
+		});
+	});
+	describe('prepareData', async () => {
+		it('can prepare pause data for the pause start date question', async () => {
+			const question = 'examination-pause-start-date-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				'startDate-1': new Date(2026, 2, 1),
+				'details-1': 'some details'
+			};
+			const expectedOutput = {
+				pauses: [
+					{
+						createdDate: new Date(2026, 0, 1),
+						endDate: new Date(2026, 0, 5),
+						startDate: new Date(2026, 2, 1)
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2)
+					}
+				]
+			};
+			const actualOutput = await examinationController.wrapPrepareData(answers);
+			assert.deepEqual(actualOutput, expectedOutput);
+		});
+		it('can prepare pause data for the pause details question', async () => {
+			const question = 'examination-pause-details-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				'startDate-1': new Date(2026, 2, 1),
+				'details-1': 'some details'
+			};
+			const expectedOutput = {
+				pauses: [
+					{
+						createdDate: new Date(2026, 0, 1),
+						endDate: new Date(2026, 0, 5),
+						startDate: new Date(2026, 0, 2),
+						details: 'some details'
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2)
+					}
+				]
+			};
+			const actualOutput = await examinationController.wrapPrepareData(answers);
+			assert.deepEqual(actualOutput, expectedOutput);
+		});
+		it('can prepare pause data for the pause end date question', async () => {
+			const question = 'examination-pause-end-date-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				'startDate-1': new Date(2026, 2, 1),
+				'details-1': 'some details',
+				'endDate-1': new Date(2026, 5, 2)
+			};
+			const expectedOutput = {
+				pauses: [
+					{
+						createdDate: new Date(2026, 0, 1),
+						endDate: new Date(2026, 5, 2),
+						startDate: new Date(2026, 0, 2)
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2)
+					}
+				]
+			};
+			const actualOutput = await examinationController.wrapPrepareData(answers);
+			assert.deepEqual(actualOutput, expectedOutput);
+		});
+		it('can prepare pause data for the pause start date question when the pause id is greater than the number of pauses', async () => {
+			const question = 'examination-pause-start-date-3';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				'startDate-3': new Date(2026, 2, 1)
+			};
+			const actualOutput = await examinationController.wrapPrepareData(answers);
+			assert.equal(actualOutput.pauses.length, 3);
+			const pause = actualOutput.pauses.at(2);
+			assert.notEqual(pause, undefined);
+			assert.deepEqual((pause as any).startDate, new Date(2026, 2, 1));
+		});
+	});
+	describe('saveToSession', async () => {
+		it('rejects when there is no pause id in the question', async () => {
+			const question = 'examination-pause-end-date';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`,
+				session: {}
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			await assert.rejects(examinationController.wrapSaveToSession({}));
+		});
+		it('rejects when there is no session data', async () => {
+			const question = 'examination-pause-end-date-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			await assert.rejects(examinationController.wrapSaveToSession({}));
+		});
+		it('can add new answers to the session when there are no existing answers', async () => {
+			const question = 'examination-pause-end-date-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`,
+				session: {}
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				pauses: [
+					{
+						createdDate: new Date(2026, 0, 1),
+						endDate: new Date(2026, 5, 2),
+						startDate: new Date(2026, 0, 2)
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2)
+					}
+				]
+			};
+			await examinationController.wrapSaveToSession(answers);
+			assert.deepEqual(req.session.answers, answers);
+		});
+		it('can add new answers to the session when there are existing answers', async () => {
+			const question = 'examination-pause-end-date-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`,
+				session: {}
+			} as Request;
+			req.session.answers = {
+				pauses: [
+					{
+						createdDate: undefined,
+						endDate: undefined,
+						startDate: undefined
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2),
+						details: 'old details' // Should not be overwritten
+					}
+				]
+			};
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				pauses: [
+					{
+						createdDate: new Date(2026, 0, 1),
+						endDate: new Date(2026, 5, 2),
+						startDate: new Date(2026, 0, 2),
+						details: 'some details'
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2)
+					}
+				]
+			};
+			const expectedSessionAnswers = {
+				pauses: [
+					{
+						createdDate: new Date(2026, 0, 1),
+						endDate: new Date(2026, 5, 2),
+						startDate: new Date(2026, 0, 2),
+						details: 'some details'
+					},
+					{
+						createdDate: new Date(2026, 5, 1),
+						startDate: new Date(2026, 5, 2),
+						details: 'old details' // Should not be overwritten
+					}
+				]
+			};
+			await examinationController.wrapSaveToSession(answers);
+			assert.deepEqual(req.session.answers, expectedSessionAnswers);
+		});
+	});
+	describe('saveToDatabase', async () => {
+		const question = 'examination-pause-end-date-1';
+		const mockService = createMockService();
+		const req = {
+			params: {},
+			url: `some/url/${question}`
+		} as Request;
+		req.params.question = question;
+		const examinationController = new ExamSaveControllerWrapper(
+			mockService as unknown as ManageService,
+			req,
+			'caseRef'
+		);
+		const answers = {
+			pauses: [
+				{
+					createdDate: new Date(2026, 0, 1),
+					details: 'new details 1',
+					endDate: new Date(2026, 5, 2),
+					startDate: new Date(2026, 0, 2)
+				},
+				{
+					createdDate: new Date(2026, 5, 1),
+					details: 'new details 2',
+					startDate: new Date(2026, 5, 2)
+				}
+			]
+		};
+		await examinationController.wrapSaveToDatabase(answers);
+		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
+			create: {
+				caseId: 'someCaseId',
+				pauses: {
+					createMany: {
+						data: [
+							{
+								createdDate: new Date(2026, 0, 1),
+								details: 'new details 1',
+								endDate: new Date(2026, 5, 2),
+								startDate: new Date(2026, 0, 2)
+							},
+							{
+								createdDate: new Date(2026, 5, 1),
+								details: 'new details 2',
+								startDate: new Date(2026, 5, 2),
+								endDate: undefined
+							}
+						]
+					}
+				}
+			},
+			update: {
+				pauses: {
+					createMany: {
+						data: [
+							{
+								createdDate: new Date(2026, 0, 1),
+								details: 'new details 1',
+								endDate: new Date(2026, 5, 2),
+								startDate: new Date(2026, 0, 2)
+							},
+							{
+								createdDate: new Date(2026, 5, 1),
+								details: 'new details 2',
+								startDate: new Date(2026, 5, 2),
+								endDate: undefined
+							}
+						]
+					},
+					deleteMany: {}
+				}
+			},
+			where: {
+				caseId: 'someCaseId'
+			}
+		});
 	});
 });

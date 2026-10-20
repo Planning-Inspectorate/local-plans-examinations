@@ -42,7 +42,7 @@ export class ExaminationSaveController extends SaveController {
 			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
 		}
 		if (caseDetails.examinationInfo?.pauses == undefined) {
-			throw Error(`Could not find examination pause data for case with reference '${this.caseReference}'`);
+			return false;
 		}
 		const question = String(this.req.params.question);
 		const pauseId = parseInt(String(question.split('-').at(-1)));
@@ -106,11 +106,11 @@ export class ExaminationSaveController extends SaveController {
 		return this.trimStringValues(answers as ExaminationInput);
 	}
 	protected saveToSession(answers: ExaminationInput) {
-		const pauseIdString = String(this.req.params.question).split('-').at(-1);
-		if (!pauseIdString) {
+		const pauseIdString = String(String(this.req.params.question).split('-').at(-1));
+		const pauseId = parseInt(pauseIdString);
+		if (isNaN(pauseId)) {
 			throw Error('Could not extract the pause id from the question');
 		}
-		const pauseId = parseInt(pauseIdString);
 		if (!this.req.session) {
 			throw Error('request has no session data');
 		}
@@ -120,10 +120,11 @@ export class ExaminationSaveController extends SaveController {
 			if (pauseAnswers && answers.pauses) {
 				const sessionAnswers = pauseAnswers[pauseId - 1];
 				const newAnswers = answers.pauses[pauseId - 1];
-				answers.pauses[pauseId - 1] = { ...sessionAnswers, ...newAnswers };
+				this.req.session.answers.pauses[pauseId - 1] = { ...sessionAnswers, ...newAnswers };
 			}
+		} else {
+			this.req.session.answers = answers;
 		}
-		this.req.session.answers = answers;
 		return true;
 	}
 
