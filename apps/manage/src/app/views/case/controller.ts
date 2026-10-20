@@ -4,7 +4,7 @@ import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-f
 import type { Request, Response, NextFunction } from 'express';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
-import { questions } from './questions.ts';
+import { examinationPauseBaseUrls, questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
@@ -131,6 +131,18 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			}
 			case COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID: {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				// Tech debt: Would be good to simplify how case history is written - embedding within the save controller
+				// is ideal but will be tricky without tight coupling. For now this quick and dirty if-statement will do
+				const question = String(req.params.question);
+				const matchedExaminationPauseQuestion = examinationPauseBaseUrls.find((prefix) => question.startsWith(prefix));
+				if (matchedExaminationPauseQuestion) {
+					const account = authSession.getAccount(req.session);
+					const currentUser = account?.name ?? 'Unknown';
+					await updateCaseHistory(service, req, db, { examinationPause: null }, {}, reference, currentUser, {
+						examinationPause: 'Plan paused'
+					});
+					return;
+				}
 				break;
 			}
 			default: {
