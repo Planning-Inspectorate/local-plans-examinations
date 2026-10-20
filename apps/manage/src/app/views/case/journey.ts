@@ -367,9 +367,10 @@ export function createExaminationPauseJourney(req: Request, response: JourneyRes
 		sections: [
 			new Section('Pause examination', 'pause-examination')
 				.addQuestion(questions[`examinationPauseStartDate-${pauseId}`])
-				.addQuestion(questions[`examinationPauseDetail-${pauseId}`]) 
-				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`]).withCondition(
-					(response) => questionHasNonEmptyDateAnswer(response, questions[`examinationPauseDetail-${pauseId}`])
+				.addQuestion(questions[`examinationPauseDetail-${pauseId}`])
+				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`])
+				.withCondition((response) =>
+					questionHasNonEmptyDateAnswer(response, questions[`examinationPauseDetail-${pauseId}`])
 				)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',

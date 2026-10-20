@@ -3,6 +3,14 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { formatValue } from '../../../util/util.ts';
 import { sortByCreatedDate } from '#util/util.ts';
 
+type PauseData = {
+	createdDate: Date;
+	startDate: Date;
+	details: string | null;
+	endDate: Date | null;
+	examinationInfoId: string;
+};
+
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { res, next, service, journeyId, caseRecord } = context;
@@ -16,13 +24,32 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 
 		const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
 		journeyResponse.answers.isSound = isSound;
-		const pauseData = sortByCreatedDate(journey4Data?.pauses ? journey4Data?.pauses : []);
-		for (let i = 0; i < pauseData.length; i++) {
-			journeyResponse.answers[`startDate-${i + 1}`] = pauseData[i].startDate;
-			journeyResponse.answers[`details-${i + 1}`] = pauseData[i].details;
-			journeyResponse.answers[`endDate-${i + 1}`] = pauseData[i].endDate;
+		const sortedPauseData = sortByCreatedDate(journey4Data?.pauses ? journey4Data?.pauses : []);
+		for (let i = 0; i < sortedPauseData.length; i++) {
+			journeyResponse.answers[`startDate-${i + 1}`] = sortedPauseData[i].startDate;
+			journeyResponse.answers[`details-${i + 1}`] = sortedPauseData[i].details;
+			journeyResponse.answers[`endDate-${i + 1}`] = sortedPauseData[i].endDate;
+		}
+		if (ExaminationTabHandler.isCurrentlyPaused(sortedPauseData as PauseData[])) {
+			res.locals.alertMessage = 'This examination is paused';
+			res.locals.alertMessageStatus = 'important';
 		}
 		res.locals.journeyResponse = journeyResponse;
 		if (next) next();
+	}
+	/**
+	 * Return true if there are any pauses that overlap with the current datetime
+	 * @param pauses The list of pauses from the database
+	 * @returns True if there is an overlap, false otherwise
+	 */
+	public static isCurrentlyPaused(pauses: PauseData[]) {
+		const currentTime = new Date();
+		for (const pause of pauses) {
+			const indefinitelyPaused = !pause.endDate;
+			if (currentTime >= pause.startDate && (indefinitelyPaused || (pause.endDate && currentTime <= pause.endDate))) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
