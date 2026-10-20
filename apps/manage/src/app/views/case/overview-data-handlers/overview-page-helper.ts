@@ -8,6 +8,8 @@ import {
 	type UploadDocumentRequest
 } from '../controller.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { fileUploadQuestionProperties } from '../questions.ts';
+import { sortGateway3Submissions } from '#util/util.ts';
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
@@ -80,17 +82,38 @@ async function addUploadedDocumentDetailsToAnswers(
 	if (!relevantFileUploadQuestionConfigs) {
 		return;
 	}
+
 	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 		service,
 		relevantFileUploadQuestionConfigs.map((questionConfig: any) => questionConfig.url)
 	);
+
+	const uploadPageUrls = new Set(
+		Object.values(fileUploadQuestionProperties)
+			.map((question) => question.url)
+			.filter((url): url is string => Boolean(url))
+	);
+
+	const gateway3SubmissionNumber = String(req.params.question).match(/^gateway-3-document-(\d+)$/)?.[1];
+	const isIssuedGateway3Document =
+		gateway3SubmissionNumber &&
+		sortGateway3Submissions(answers.submissions ?? [])[Number(gateway3SubmissionNumber) - 1]?.completionDate;
+	const isUploadPages =
+		!!req.params.question &&
+		uploadPageUrls.has(req.params.question as string) &&
+		!req.url.includes('/check') &&
+		!isIssuedGateway3Document;
+
 	for (const questionConfig of relevantFileUploadQuestionConfigs) {
 		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
 		if (!documentSetId) {
 			throw new Error(`Missing document set reference data for "${questionConfig.url}". Run the database static seed.`);
 		}
 
-		const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+		const uploadedFiles = isUploadPages
+			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
+			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+
 		req.session.fileUploader = {
 			...request.session.fileUploader,
 			[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]: {

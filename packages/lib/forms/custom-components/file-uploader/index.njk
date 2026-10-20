@@ -5,6 +5,7 @@
 {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
 
 {% block before_content %}
+
 	{% if backLink %}
 		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
 	{% endif %}
@@ -17,6 +18,7 @@
 {% endblock before_content %}
 
 {% block content %}
+
 	<div class="govuk-grid-row">
 		<div class="govuk-grid-column-two-thirds">
 			{% if question.text.caption %}
@@ -93,7 +95,7 @@
 			{% endif %}
 
 			{% if question.editable %}
-				<form action="" method="post" novalidate>
+				<form action="{{ submitAction }}" method="post" novalidate>
 					<input type="hidden" name="_csrf" value="{{ _csrf }}">
 					<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
 					{{ govukButton({

@@ -22,6 +22,7 @@ import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handl
 import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
+import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -1232,6 +1233,73 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.journeyResponse.answers.factCheckDueDate, factCheckDueDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
+});
+
+describe('Gateway 3 document loading', () => {
+	for (const { name, question, completionDate, check, temporary } of [
+		{
+			name: 'loads drafts in an editable uploader',
+			question: 'gateway-3-document-1',
+			completionDate: null,
+			check: false,
+			temporary: true
+		},
+		{
+			name: 'loads saved files in an issued report View',
+			question: 'gateway-3-document-1',
+			completionDate: new Date('2026-10-01'),
+			check: false,
+			temporary: false
+		},
+		{
+			name: 'keeps the next submission editable after an earlier report is issued',
+			question: 'gateway-3-document-2',
+			completionDate: new Date('2026-10-01'),
+			check: false,
+			temporary: true
+		},
+		{
+			name: 'loads saved files on check answers before the report is issued',
+			question: 'gateway-3-document-1',
+			completionDate: null,
+			check: true,
+			temporary: false
+		}
+	]) {
+		it(name, async (t) => {
+			const service = createService();
+			service.db.documentSet.findMany.mock.mockImplementation(async () => [
+				...MOCK_DOCUMENT_SETS,
+				{ id: '18', folderName: 'gateway-3-document-2' }
+			]);
+			const savedFile = {
+				id: 'saved-file',
+				fileName: 'issued.pdf',
+				mimeType: 'application/pdf',
+				size: 100,
+				storageProvider: 'blob' as const
+			};
+			const draftFile = { ...savedFile, id: 'draft-file', fileName: 'draft.pdf' };
+			t.mock.method(DocumentUtil, 'loadUploadedDocuments', async () => [savedFile]);
+			t.mock.method(DocumentUtil, 'loadTempUploadedDocuments', async () => [draftFile]);
+			const req = {
+				params: { reference: REFERENCE, question },
+				url: `/gateway-3-report/gateway-3-submission-1/${question}${check ? '/check' : ''}`,
+				session: {}
+			} as unknown as Request;
+			const submissions = [{ id: 'submission-1', decision: '1', completionDate, gateway3InfoId: CASE_ID }];
+			if (question.endsWith('-2')) {
+				submissions.unshift({ id: 'submission-2', decision: '2', completionDate: null, gateway3InfoId: CASE_ID });
+			}
+			const answers: Record<string, any> = { submissions };
+
+			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'gateway-3-report');
+
+			const fieldName = question.replace('gateway-3-document-', 'gateway3Documents-');
+			assert.deepEqual(answers[fieldName], [temporary ? draftFile : savedFile]);
+			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
+		});
+	}
 });
 
 describe('DeleteCase', () => {
