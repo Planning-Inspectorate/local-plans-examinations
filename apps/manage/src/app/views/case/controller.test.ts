@@ -1923,6 +1923,63 @@ describe('issueGateway3Document', () => {
 		assert.equal(res.redirect.mock.callCount(), 0);
 		assert.equal(req.session.alertMessage, undefined);
 	});
+	it('fails the issue transaction when more than one examination record is updated', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 2 }));
+		const handler = issueGateway3Document(service);
+		const req = {
+			session: {},
+			params: { reference: caseReference, question: 'gateway-3-document-1' }
+		};
+		const res = { redirect: mock.fn() };
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Expected to update one examination record.*updated 2/
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+	it('fails the issue transaction when the existing examination status is not available', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+		}));
+		const handler = issueGateway3Document(service);
+		const req = {
+			session: {},
+			params: { reference: caseReference, question: 'gateway-3-document-1' }
+		};
+		const res = { redirect: mock.fn() };
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Could not make examination available/
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
 	it('continues issuing when the examination is already ready to start', async () => {
 		const service = createService();
 		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({

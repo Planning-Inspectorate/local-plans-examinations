@@ -50,4 +50,18 @@ describe('createJourney (examination submission)', () => {
 
 		assert.equal(journey.getBackLink({ params: {} as never }), '/manage-local-plans/PLAN-61797/examination-submission');
 	});
+
+	it('uses the standard journey backlink for manage-list steps', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-61797' }
+		} as unknown as Request;
+		const journey = createJourney(req, response, createExaminationQuestions('PLAN-61797'));
+
+		assert.equal(
+			journey.getBackLink({ params: { manageListAction: 'add' } as never }),
+			'/manage-local-plans/PLAN-61797/examination-submission'
+		);
+	});
 });

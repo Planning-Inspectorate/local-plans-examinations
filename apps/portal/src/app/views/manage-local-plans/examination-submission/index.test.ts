@@ -61,6 +61,23 @@ describe('examinationSubmissionRoutes', () => {
 		assert.equal(typeof router.get, 'function');
 		assert.equal(typeof router.post, 'function');
 	});
+
+	it('redirects a valid submission to the declaration page', () => {
+		const router = examinationSubmissionRoutes({ createFileStorage: () => ({}) } as never);
+		const submitRoute = (router as any).stack.find(
+			(layer: any) =>
+				layer.route?.path === '/:planReference/examination-submission' && layer.route.methods.post === true
+		);
+		const submitHandler = submitRoute.route.stack.at(-1).handle;
+		const redirectCalls: string[] = [];
+
+		submitHandler(
+			{ params: { planReference: 'PLAN 61797/1' } },
+			{ redirect: (url: string) => redirectCalls.push(url) }
+		);
+
+		assert.deepEqual(redirectCalls, ['/manage-local-plans/PLAN%2061797%2F1/examination-submission/declaration']);
+	});
 });
 
 describe('examination submission page', () => {
