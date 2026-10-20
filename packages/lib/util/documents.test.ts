@@ -36,7 +36,8 @@ describe('loadUploadedDocuments', () => {
 						blobStoragePath: 'gateway-2/cover-letter.pdf',
 						documentURI: 'http://storage/cover-letter.pdf',
 						isDeleted: false,
-						dateCreated: DOCUMENT_CREATED_DATE
+						dateCreated: DOCUMENT_CREATED_DATE,
+						virusCheckStatus: 'scanned'
 					}
 				}
 			]
@@ -60,6 +61,7 @@ describe('loadUploadedDocuments', () => {
 				url: 'http://storage/cover-letter.pdf',
 				dateCreated: DOCUMENT_CREATED_DATE,
 				isTemp: false,
+				virusCheckStatus: 'scanned',
 				metadata: {
 					documentGuid: 'document-1',
 					documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
@@ -523,6 +525,7 @@ function buildDocumentRow(overrides: Record<string, unknown> = {}) {
 			blobStorageContainer: 'local-planning-documents',
 			blobStoragePath: 'gateway-2/cover-letter.pdf',
 			documentURI: 'http://storage/cover-letter.pdf',
+			virusCheckStatus: 'scanned',
 			isDeleted: false,
 			dateCreated: DOCUMENT_CREATED_DATE
 		},
@@ -1094,6 +1097,7 @@ describe('loadTempUploadedDocuments', () => {
 				path: 'gateway-2/cover-letter.pdf',
 				url: 'http://storage/cover-letter.pdf',
 				dateCreated: DOCUMENT_CREATED_DATE,
+				virusCheckStatus: 'scanned',
 				isTemp: true,
 				metadata: {
 					documentGuid: 'document-1',
@@ -1596,6 +1600,7 @@ describe('loadTempUploadedDocuments', () => {
 				size: 100,
 				storageProvider: 'blob',
 				containerName: 'local-planning-documents',
+				virusCheckStatus: 'scanned',
 				path: 'gateway-2/cover-letter.pdf',
 				url: 'http://storage/cover-letter.pdf',
 				dateCreated: DOCUMENT_CREATED_DATE,
