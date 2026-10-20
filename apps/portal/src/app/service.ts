@@ -6,7 +6,13 @@ import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
 import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
-import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import {
+	DOCUMENT_SET_ID,
+	gateway2SetIds,
+	gateway3SetIds
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
 	reference: string;
@@ -24,6 +30,7 @@ type PortalCase = {
 	gateway3Info: {
 		expectedDate: Date | null;
 		actualDate: Date | null;
+		frontOfficeStatus: Gateway3Status | string | null;
 		submissions: {
 			decision: string | null;
 			completionDate: Date | null;
@@ -67,6 +74,17 @@ function hasIssuedGateway2Report(caseRecord: PortalCase): boolean {
 	return Boolean(caseRecord.gateway2Info?.reportIssuedDate && getGateway2ReportUploadedDate(caseRecord));
 }
 
+// A Gateway 2 submission document is any non-report document belonging to the Gateway 2 document sets.
+function hasUploadedGateway2SubmissionDocuments(caseRecord: PortalCase): boolean {
+	return caseRecord.documents.some(
+		(document) => gateway2SetIds.includes(document.documentSetId) && !isGateway2ReportDocument(document)
+	);
+}
+
+function isGateway3InProgress(caseRecord: PortalCase): boolean {
+	return caseRecord.gateway3Info?.frontOfficeStatus === GATEWAY_3_STATUS.IN_PROGRESS;
+}
+
 function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFiles'] {
 	if (!caseRecord.gateway2Info?.reportIssuedDate) {
 		return [];
@@ -101,7 +119,7 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 	if (gateway3SubmissionState.resubmissionAwaitingSubmission) {
 		return {
 			stage: STAGE.Gateway3,
-			status: STATUS.ReadyToStart
+			status: STATUS.ResubmissionRequired
 		};
 	}
 
@@ -113,6 +131,13 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 	}
 
 	if (hasIssuedGateway2Report(caseRecord)) {
+		if (isGateway3InProgress(caseRecord)) {
+			return {
+				stage: STAGE.Gateway3,
+				status: STATUS.InProgress
+			};
+		}
+
 		return {
 			stage: STAGE.Gateway3,
 			status: STATUS.ReadyToStart
@@ -126,7 +151,7 @@ export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' |
 		};
 	}
 
-	if (caseRecord.documents.some((document) => !isGateway2ReportDocument(document))) {
+	if (hasUploadedGateway2SubmissionDocuments(caseRecord)) {
 		return {
 			stage: STAGE.Gateway2,
 			status: STATUS.InProgress
@@ -150,7 +175,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
 	const gateway3Date = gateway3SubmissionState.resubmissionAwaitingSubmission
-		? caseRecord.gateway3Info?.expectedDate
+		? (caseRecord.gateway3Info?.actualDate ?? caseRecord.gateway3Info?.expectedDate)
 		: (gateway3SubmissionState.latestSubmission?.completionDate ??
 			caseRecord.gateway3Info?.actualDate ??
 			caseRecord.gateway3Info?.expectedDate);
@@ -194,6 +219,7 @@ const planCaseInclude = {
 		select: {
 			expectedDate: true,
 			actualDate: true,
+			frontOfficeStatus: true,
 			submissions: true
 		}
 	},
@@ -211,7 +237,7 @@ const planCaseInclude = {
 	documents: {
 		where: {
 			// A soft-deleted document still means the submission was started.
-			documentSetId: { in: gateway2SetIds }
+			documentSetId: { in: [...gateway2SetIds, ...gateway3SetIds] }
 		},
 		orderBy: {
 			createdAt: 'asc' as const

@@ -87,5 +87,13 @@ export const gateway3UploadAnswers = {
 		path: 'environmental-report',
 		section: 'optional-documents',
 		addCy: 'add-environmental-report'
+	},
+	resubmissionDocuments: {
+		heading: 'Upload any new or updated documents',
+		caption: 'Additional documents',
+		fieldName: 'resubmissionDocuments',
+		path: 'additional-documents',
+		section: 'gateway-3-resubmission',
+		addCy: 'add-documents'
 	}
 } as const satisfies Record<string, Gateway3UploadAnswer>;

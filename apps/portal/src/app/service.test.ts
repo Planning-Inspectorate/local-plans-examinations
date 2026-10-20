@@ -2,8 +2,12 @@
 
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
-import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	DOCUMENT_SET_ID,
+	gateway2SetIds,
+	gateway3SetIds
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -28,6 +32,7 @@ function buildCase(overrides = {}) {
 		gateway3Info: {
 			expectedDate: new Date('2026-08-01T12:00:00.000Z'),
 			actualDate: null,
+			frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET,
 			submissions: [
 				{
 					decision: null,
@@ -166,6 +171,31 @@ describe('PortalService', () => {
 			);
 		});
 
+		it('returns Gateway 3 in progress when the persisted status flag is IN_PROGRESS', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: null,
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+							actualDate: null,
+							frontOfficeStatus: GATEWAY_3_STATUS.IN_PROGRESS,
+							submissions: [{ decision: null, completionDate: null }]
+						},
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.InProgress
+				}
+			);
+		});
+
 		it('returns Gateway 3 under review when actualDate is set but the decision is not complete', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
@@ -184,7 +214,7 @@ describe('PortalService', () => {
 			);
 		});
 
-		it('returns Gateway 3 ready to start when a resubmission has been requested but not sent', () => {
+		it('returns Gateway 3 resubmission required when a resubmission has been requested but not sent', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(
 					buildCase({
@@ -203,7 +233,7 @@ describe('PortalService', () => {
 				),
 				{
 					stage: STAGE.Gateway3,
-					status: STATUS.ReadyToStart
+					status: STATUS.ResubmissionRequired
 				}
 			);
 		});
@@ -253,6 +283,73 @@ describe('PortalService', () => {
 				}
 			);
 		});
+
+		it('returns Gateway 3 under review when resubmission has been submitted but not yet assessed', () => {
+			// After the LPA resubmits, actualDate is updated (to after the rejected
+			// submission's completionDate) but the pending submission's completionDate
+			// stays null — the BO sets completionDate when issuing a decision.
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: new Date('2026-07-21T12:00:00.000Z'),
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							actualDate: new Date('2026-10-05T12:00:00.000Z'),
+							submissions: [
+								{
+									completionDate: new Date('2026-10-01T12:00:00.000Z'),
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+								},
+								{
+									completionDate: null,
+									decision: null
+								}
+							]
+						},
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
+		it('returns Gateway 3 resubmission required when awaiting LPA resubmission', () => {
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: new Date('2026-07-21T12:00:00.000Z'),
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							actualDate: null,
+							submissions: [
+								{
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+									completionDate: new Date('2026-10-01T12:00:00.000Z')
+								},
+								{
+									decision: null,
+									completionDate: null
+								}
+							]
+						},
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.ResubmissionRequired
+				}
+			);
+		});
 	});
 
 	describe('getPlans', () => {
@@ -284,6 +381,7 @@ describe('PortalService', () => {
 						select: {
 							expectedDate: true,
 							actualDate: true,
+							frontOfficeStatus: true,
 							submissions: true
 						}
 					},
@@ -301,7 +399,7 @@ describe('PortalService', () => {
 					documents: {
 						where: {
 							documentSetId: {
-								in: gateway2SetIds
+								in: [...gateway2SetIds, ...gateway3SetIds]
 							}
 						},
 						orderBy: {
@@ -418,7 +516,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
 		});
 
-		it('maps an open Gateway 3 resubmission to Ready to start using the expected date', async () => {
+		it('maps an open Gateway 3 resubmission to Resubmission required using the actual submission date', async () => {
 			const service = buildService([
 				buildCase({
 					gateway3Info: {
@@ -438,8 +536,8 @@ describe('PortalService', () => {
 			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
-			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
-			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
+			assert.strictEqual(plans[0].status, STATUS.ResubmissionRequired);
+			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
 		});
 
 		it('maps missing info table dates to Not set', async () => {

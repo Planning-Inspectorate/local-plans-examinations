@@ -848,6 +848,12 @@ export function preprocessQuestionProperties(
 ) {
 	return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
+		if (journeyId == COMMON_CONSTS.OVERVIEW_JOURNEY_ID) {
+			if (req.method == 'POST' && String(req.url).includes('case-details/case-notes')) {
+				req.params.question = 'case-notes';
+				req.params.section = 'case-details';
+			}
+		}
 		if (journeyId == COMMON_CONSTS.GATEWAY_2_JOURNEY_ID) {
 			// Format the Start date answer into a human-readable date
 			const workshopAnswers = _res.locals.journeyResponse.answers.workshops ?? [];

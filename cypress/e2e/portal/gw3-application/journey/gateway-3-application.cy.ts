@@ -1,4 +1,5 @@
 import { portalLogin, THIRD_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
+import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
@@ -70,6 +71,7 @@ const loadReportIssuedPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('port
 
 describe('Gateway 3 application page journeys once Gateway 2 is submitted and its report issued', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin(THIRD_TEST_EMAIL);
 	});
 
@@ -80,4 +82,28 @@ describe('Gateway 3 application page journeys once Gateway 2 is submitted and it
 			openGateway3ApplicationPage(plan);
 		});
 	});
+
+	it(
+		'Navigates to Plan details page and My plans and verifies the status is In progress after a document is uploaded',
+		{ tags: ['smoke'] },
+		() => {
+			loadReportIssuedPlan().then((plan) => {
+				gateway3ApplicationPage.visit(plan.urlReference);
+				gateway3ApplicationPage.verifyLoaded();
+				gateway3ApplicationPage.clickAddLink(mapOfProposedLocalPlanPoliciesPage.addCy);
+				mapOfProposedLocalPlanPoliciesPage.uploadAndVerifyFile('test-document.pdf');
+				mapOfProposedLocalPlanPoliciesPage.saveAndReturn();
+				gateway3ApplicationPage.saveAndComeBackLink.click();
+				planDetailsPage.verifyProgressRow(
+					'Gateway 3 - readiness check',
+					`Target date: ${plan.dates.gateway3}`,
+					plan.status2
+				);
+				planDetailsPage.backLink.click();
+				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
+					[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status2]
+				]);
+			});
+		}
+	);
 });
