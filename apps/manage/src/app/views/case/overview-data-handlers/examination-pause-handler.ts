@@ -8,6 +8,8 @@ export class ExaminationPauseHandler extends ExaminationTabHandler {
 		if (!req.params.question) {
 			// Redirect back to the exam page if not answering a question
 			const caseReference = String(req.params.reference);
+			req.session.alertMessage = 'Changes saved';
+			req.session.alertMessageStatus = 'success';
 			res.redirect(`/case/${encodeURIComponent(caseReference)}/${COMMON_CONSTS.EXAMINATION_JOURNEY_ID}`);
 			return;
 		}

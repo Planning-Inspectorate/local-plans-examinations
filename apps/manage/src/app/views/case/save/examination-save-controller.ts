@@ -90,8 +90,6 @@ export class ExaminationSaveController extends SaveController {
 				};
 			}
 			const currentQuestionField = questionFieldMap[questionWithoutPauseId];
-			console.log('currentQuestionField');
-			console.log(currentQuestionField);
 			const answersForCurrentQuestion = Object.fromEntries(
 				Object.entries(answers)
 					.filter(([key]) => key == `${currentQuestionField}-${pauseId}`)
@@ -101,8 +99,6 @@ export class ExaminationSaveController extends SaveController {
 				...pauseDetails[pauseId - 1],
 				...answersForCurrentQuestion
 			};
-			console.log('pauseDetails');
-			console.log(pauseDetails);
 			return {
 				pauses: pauseDetails
 			};
