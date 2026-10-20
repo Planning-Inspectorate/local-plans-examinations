@@ -36,7 +36,10 @@ export function configureNunjucks(): nunjucks.Environment {
 	);
 
 	// Add date filter
-	env.addFilter('date', (date: Date | string, format: string) => {
+	env.addFilter('date', (date: Date | string | undefined | null, format: string) => {
+		if (!date) {
+			return '';
+		}
 		const d = new Date(date);
 		if (format === 'd MMMM yyyy, HH:mm') {
 			return d.toLocaleDateString('en-GB', {
