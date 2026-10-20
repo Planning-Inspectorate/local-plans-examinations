@@ -21,6 +21,8 @@ export type FileUploaderSession = {
 	fileUploader?: Record<string, UploadedFileGroup>;
 	errors?: Record<string, { msg: string }>;
 	errorSummary?: Array<{ text: string; href: string }>;
+	forms?: Record<string, Record<string, UploadedFile[]>>;
+	hasTempDocuments?: Record<string, { question?: string | null; hasUploadedFiles: boolean; caseId?: string | null }>;
 };
 
 export type FileUploaderText = {
@@ -64,6 +66,7 @@ export type FileUploaderQuestionConfig = {
 	actionButtonVisibleInSummary?: boolean;
 	editable?: boolean;
 	notStartedText?: string;
+	url?: string;
 };
 
 export type FileUploaderQuestionProps = FileUploaderQuestionConfig & {
