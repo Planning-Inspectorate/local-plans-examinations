@@ -66,6 +66,9 @@ function createService(): any {
 							gateway3InfoId: undefined
 						}
 					]
+				},
+				examinationInfo: {
+					pauses: []
 				}
 			}))
 		},
@@ -1224,6 +1227,9 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
 			where: {
 				caseId: CASE_ID
+			},
+			include: {
+				pauses: true
 			}
 		});
 

@@ -358,8 +358,15 @@ function registerCaseJourney(
 	config: CaseJourneyConfig,
 	updateCase: ReturnType<typeof updateCaseField>
 ): void {
-	const { path, journeyId, createJourney, pageLoadHandler, supportsManageList, supportsFileUpload, redirectToTaskListOnSuccess } =
-		config;
+	const {
+		path,
+		journeyId,
+		createJourney,
+		pageLoadHandler,
+		supportsManageList,
+		supportsFileUpload,
+		redirectToTaskListOnSuccess
+	} = config;
 
 	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		await getQuestions(service, req);

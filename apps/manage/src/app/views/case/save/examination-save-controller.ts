@@ -47,7 +47,7 @@ export class ExaminationSaveController extends SaveController {
 		const question = String(this.req.params.question);
 		const pauseId = parseInt(String(question.split('-').at(-1)));
 		if (isNaN(pauseId)) {
-			throw Error('Could not determine the pause id from the question when saving');
+			return false;
 		}
 		const pauses = sortByCreatedDate(caseDetails?.examinationInfo?.pauses);
 		const currentPause = pauses.at(pauseId - 1);

@@ -1,6 +1,4 @@
-import { getPageLoadHandlerForPage } from './overview-page-load-handler-factory.ts';
 import { ExaminationTabHandler } from './examination-tab-handler.ts';
-import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 

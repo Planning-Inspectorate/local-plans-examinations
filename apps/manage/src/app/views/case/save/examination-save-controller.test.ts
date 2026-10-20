@@ -52,6 +52,9 @@ function createMockService(): MockServiceType {
 								gateway3InfoId: undefined
 							}
 						]
+					},
+					examinationInfo: {
+						pauses: []
 					}
 				})),
 				upsert: mock.fn(async () => ({}))

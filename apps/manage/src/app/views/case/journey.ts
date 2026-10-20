@@ -284,10 +284,7 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const examinationUrl = req.baseUrl + '/examination';
 	const pauseSection = new Section('Pause examination', 'pause-examination');
-	const pauseData = Array.isArray(response.answers.pauses) ? response.answers.pauses : null;
-	if (!pauseData) {
-		throw Error('pauseData is null');
-	}
+	const pauseData = Array.isArray(response.answers.pauses) ? response.answers.pauses : [];
 	for (let i = 1; i <= pauseData.length; i++) {
 		pauseSection.addQuestion(questions[`examinationPauseStartDate-${i}`]);
 		pauseSection.addQuestion(questions[`examinationPauseDetail-${i}`]);
@@ -345,7 +342,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
-	const sortedPauses = sortByCreatedDate(response.answers.pauses as { createdDate: Date; [key: string]: any }[]);
+	const sortedPauses = sortByCreatedDate(pauseData as { createdDate: Date; [key: string]: any }[]);
 
 	response.answers.pauses = sortedPauses;
 	if (req.session) {
