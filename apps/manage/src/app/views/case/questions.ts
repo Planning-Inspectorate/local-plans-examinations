@@ -18,7 +18,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
+
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -122,34 +122,6 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
 		title: 'Documents',
 		question: 'Upload Gateway 3 report',
-		fieldName: 'gateway3Documents',
-		url: 'gateway-3-document',
-		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
-		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
-			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
-			.map((key) => MIME_TYPE_MAP[key])
-			.flat(),
-		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
-		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
-		maxFilesPerUpload: 999,
-		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
-		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
-		multiple: true,
-		text: {
-			caption: 'Gateway 3 documents',
-			introduction: 'Upload a file',
-			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
-			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
-			chooseFilesButtonText: 'Choose files',
-			dropInstructionText: 'or drop files'
-		},
-		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
-		formatSummaryValue: fileUploadCountFormat
-	},
-	gateway3DocumentsViewer: {
-		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
-		title: 'Documentss',
-		question: 'Review Gateway 3 documents',
 		fieldName: 'gateway3Documents',
 		url: 'gateway-3-document'
 	},

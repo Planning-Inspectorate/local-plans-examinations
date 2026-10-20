@@ -177,13 +177,13 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	const submissionSections = submissionData.length
 		? [
 				new Section('Gateway 3 submission', 'gateway-3-submission-1')
-					.addQuestion(questions['gateway3DocumentsViewer-1'])
+					.addQuestion(questions['gateway3Documents-1'])
 					.addQuestion(questions['gateway3Decision-1'])
 			]
 		: sortGateway3Submissions(submissionData).map((_, index) => {
 				const rowId = index + 1;
 				return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
-					.addQuestion(questions[`gateway3DocumentsViewer-${rowId}`])
+					.addQuestion(questions[`gateway3Documents-${rowId}`])
 					.addQuestion(questions[`gateway3Decision-${rowId}`]);
 			});
 
@@ -226,7 +226,7 @@ export function createGateway3ReportJourney(req: Request, response: JourneyRespo
 		sections: [
 			new Section('Gateway 3 report', `gateway-3-submission-${submissionId}`)
 				.addQuestion(questions[`gateway3Decision-${submissionId}`])
-				.addQuestion(questions[`gateway3DocumentsView-${submissionId}`])
+				.addQuestion(questions[`gateway3Documents-${submissionId}`])
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
@@ -630,7 +630,7 @@ const gateway3QuestionNames = new Set<string>([
 	...Array.from(
 		// Gateway 3 submission questions
 		{ length: 50 },
-		() => ['gateway3DocumentsViewer', 'gateway3Decision', 'gateway3CompletionDate']
+		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()
 		.map((item, index) => `${item}-${Math.trunc(index / 3) + 1}`)
