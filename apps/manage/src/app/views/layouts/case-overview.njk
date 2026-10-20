@@ -79,26 +79,35 @@
           <div class="govuk-grid-column-full">
               {% for section in summaryListData.sections %}
                   {% set formattedRows = [] %}
+                  {% set caseNote = null %}
                   {% for row in section.list.rows %}
                     {% if row %}
-                      {% if row.actions.items[0].text == "Answer" %}
-                        {% set formattedRow = {
-                          key: row.key, 
-                          value: row.value, 
-                          actions: {items: [{href: row.actions.items[0].href, text: "Add"}]} 
-                        } %}
+                      {% if "Case notes" in row.key.text %} {# Dynamic forms does not allow html in the key, so handle the case notes separately#}
+                        {% set caseNote = row.value.html %}
+                        {% set formattedRow = null %}
                       {% else %}
-                        {% set formattedRow = {
-                          key: row.key, 
-                          value: row.value, 
-                          actions: row.actions
-                        } %}
+                        {% if row.actions.items[0].text == "Answer" %}
+                          {% set formattedRow = {
+                            key: row.key, 
+                            value: row.value, 
+                            actions: {items: [{href: row.actions.items[0].href, text: "Add"}]} 
+                          } %}
+                        {% else %}
+                          {% set formattedRow = {
+                            key: row.key, 
+                            value: row.value, 
+                            actions: row.actions
+                          } %}
+                        {% endif %}
                       {% endif %}
-                    {% set _ = formattedRows.push(formattedRow) %}
+                      {% if formattedRow %}
+                        {% set _ = formattedRows.push(formattedRow) %}
+                      {% endif %}
                     {% endif %}
                   {% endfor %}
                   {% if section.list.rows.length %}
                     <h2 class="govuk-heading-l">{{ section.heading }}</h2>
+                    {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
                     {{ govukSummaryList({
                           rows: formattedRows
                       }) }}

@@ -34,16 +34,16 @@ describe('Gateway 2 covering letter upload page', () => {
 			}
 		});
 
-		const bodyParagraphs = [...html.matchAll(/<p class="govuk-body"[^>]*>([^<]+)<\/p>/g)].map((match) =>
+		const hintParagraphs = [...html.matchAll(/<p class="govuk-hint"[^>]*>([^<]+)<\/p>/g)].map((match) =>
 			match[1].trim()
 		);
 
 		assert.ok(
-			bodyParagraphs.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE),
-			'expected the combined upload guidance to render as one paragraph'
+			hintParagraphs.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE),
+			'expected the combined upload guidance to render as one hint paragraph'
 		);
 		assert.ok(
-			!bodyParagraphs.includes('The total size of your uploaded files must be smaller than 1GB.'),
+			!hintParagraphs.includes('The total size of your uploaded files must be smaller than 1GB.'),
 			'expected the total upload size guidance not to render as a separate paragraph'
 		);
 	});

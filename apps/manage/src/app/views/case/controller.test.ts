@@ -877,6 +877,7 @@ describe('buildGetJourneyMiddleware', () => {
 		const ctx = createMiddlewareContext({
 			url: '/overview'
 		});
+		const noteCreatedDate = new Date();
 
 		const overviewData = {
 			reference: REFERENCE,
@@ -912,6 +913,13 @@ describe('buildGetJourneyMiddleware', () => {
 					qaInspector1: 'Inspector Goole',
 					qaInspector2: 'Inspector Goolish',
 					qaInspector3: 'Inspector Goolishish'
+				}
+			],
+			notes: [
+				{
+					text: 'some note',
+					createdTime: noteCreatedDate,
+					createdBy: 'Some person'
 				}
 			]
 		};
@@ -966,7 +974,8 @@ describe('buildGetJourneyMiddleware', () => {
 						qaInspector2: true,
 						qaInspector3: true
 					}
-				}
+				},
+				notes: true
 			}
 		});
 
@@ -1007,6 +1016,13 @@ describe('buildGetJourneyMiddleware', () => {
 				qaInspector1: 'Inspector Goole',
 				qaInspector2: 'Inspector Goolish',
 				qaInspector3: 'Inspector Goolishish'
+			}
+		]);
+		assert.deepEqual(ctx.res.locals.journeyResponse.answers.notes, [
+			{
+				text: 'some note',
+				createdTime: noteCreatedDate,
+				createdBy: 'Some person'
 			}
 		]);
 
@@ -1808,7 +1824,8 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-
+		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
+		assert.equal(req.session.alertMessageStatus, 'success');
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
 		assert.ok(
 			service.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshopDocumentUploadedDate instanceof Date
@@ -1836,7 +1853,7 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-
+		assert.equal(req.session.alertMessageStatus, 'important');
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});
