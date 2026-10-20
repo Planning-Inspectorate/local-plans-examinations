@@ -23,6 +23,7 @@ type DocumentVersionRow = {
 	blobStoragePath: string | null;
 	dateCreated: Date | null;
 	documentURI: string | null;
+	virusCheckStatus: string | null;
 	isDeleted: boolean;
 };
 
@@ -355,6 +356,7 @@ export class DocumentUtil {
 			path: version.blobStoragePath ?? undefined,
 			url: version.documentURI ?? undefined,
 			dateCreated: version.dateCreated ?? undefined,
+			virusCheckStatus: version.virusCheckStatus ?? undefined,
 			metadata: {
 				documentGuid: document.guid,
 				documentSetId: document.documentSetId,

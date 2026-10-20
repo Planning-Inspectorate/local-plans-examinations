@@ -115,6 +115,45 @@ describe('Gateway 3 check answers page', () => {
 		assert.ok(html.includes('data-cy="submit-gateway-3"'), 'expected submit button data-cy');
 	});
 
+	it('renders the virus scan in progress banner when a scan is in progress', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			virusScanInProgress: true,
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="virus-scan-in-progress-banner"'));
+		assert.ok(html.includes('Virus scan in progress'));
+	});
+
+	it('renders the virus detected banner when a file is affected', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			virusErrorSummary: [
+				{
+					text: 'bad.pdf contains a virus. Remove the file and upload a different version.',
+					href: '#uploaded-file-file-1'
+				}
+			],
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="virus-detected-banner"'));
+		assert.ok(html.includes('bad.pdf contains a virus'));
+	});
+
 	it('renders the Under review status tag', () => {
 		const html = renderCheckAnswers([], {
 			label: 'Under review',
