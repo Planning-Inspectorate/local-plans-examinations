@@ -169,7 +169,7 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 									{
 										createdDate: new Date('2026-12-04T12:00:00.000Z'),
 										startDate: new Date('2026-12-04T12:00:00.000Z'),
-										detail: 'Case paused for some reason',
+										details: 'Case paused for some reason',
 										endDate: new Date('2026-12-05T12:00:00.000Z')
 									}
 								]
