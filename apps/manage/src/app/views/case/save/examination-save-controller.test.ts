@@ -3,6 +3,7 @@ import { ManageService } from '#service';
 import type { Request } from 'express';
 import { describe, it, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import type { ExaminationPause } from '@pins/local-plans-database/src/client/client.ts';
 
 type MockServiceType = {
 	db: {
@@ -62,7 +63,8 @@ function createMockService(): MockServiceType {
 							},
 							{
 								createdDate: new Date(2026, 5, 1),
-								startDate: new Date(2026, 5, 2)
+								startDate: new Date(2026, 5, 2),
+								endDate: new Date(2026, 5, 3)
 							}
 						]
 					}
@@ -113,6 +115,9 @@ class ExamSaveControllerWrapper extends ExaminationSaveController {
 	}
 	public async wrapSaveToDatabase(answers: any) {
 		return await this.saveToDatabase(answers);
+	}
+	public wrapValidatePauses(pauses: ExaminationPause[]) {
+		return this.validatePauses(pauses);
 	}
 }
 
@@ -349,7 +354,8 @@ describe('test Gateway1SaveController', () => {
 					},
 					{
 						createdDate: new Date(2026, 5, 1),
-						startDate: new Date(2026, 5, 2)
+						startDate: new Date(2026, 5, 2),
+						endDate: new Date(2026, 5, 3)
 					}
 				]
 			};
@@ -383,7 +389,8 @@ describe('test Gateway1SaveController', () => {
 					},
 					{
 						createdDate: new Date(2026, 5, 1),
-						startDate: new Date(2026, 5, 2)
+						startDate: new Date(2026, 5, 2),
+						endDate: new Date(2026, 5, 3)
 					}
 				]
 			};
@@ -417,7 +424,8 @@ describe('test Gateway1SaveController', () => {
 					},
 					{
 						createdDate: new Date(2026, 5, 1),
-						startDate: new Date(2026, 5, 2)
+						startDate: new Date(2026, 5, 2),
+						endDate: new Date(2026, 5, 3)
 					}
 				]
 			};
@@ -445,6 +453,25 @@ describe('test Gateway1SaveController', () => {
 			const pause = actualOutput.pauses.at(2);
 			assert.notEqual(pause, undefined);
 			assert.deepEqual((pause as any).startDate, new Date(2026, 2, 1));
+		});
+		it('rejects when the pause data is invalid', async () => {
+			const question = 'examination-pause-end-date-1';
+			const mockService = createMockService();
+			const req = {
+				params: {},
+				url: `some/url/${question}`
+			} as Request;
+			req.params.question = question;
+			const examinationController = new ExamSaveControllerWrapper(
+				mockService as unknown as ManageService,
+				req,
+				'caseRef'
+			);
+			const answers = {
+				'endDate-1': null // Set clear the endDate for the first pause, when there are two pauses already
+			};
+			// All pauses MUST have an endDate set except for the last pause
+			await assert.rejects(examinationController.wrapPrepareData(answers));
 		});
 	});
 	describe('saveToSession', async () => {
@@ -645,6 +672,85 @@ describe('test Gateway1SaveController', () => {
 			where: {
 				caseId: 'someCaseId'
 			}
+		});
+	});
+	describe('validatePauses', async () => {
+		const question = 'examination-pause-end-date-1';
+		const mockService = createMockService();
+		const req = {
+			params: {},
+			url: `some/url/${question}`
+		} as Request;
+		req.params.question = question;
+		const examinationController = new ExamSaveControllerWrapper(
+			mockService as unknown as ManageService,
+			req,
+			'caseRef'
+		);
+		it('returns true for an empty pause list', () => {
+			const pauses: ExaminationPause[] = [];
+			const validationResult = examinationController.wrapValidatePauses(pauses);
+			assert.equal(validationResult, true);
+		});
+		it('returns true when all pauses have endDate specified', () => {
+			const pauses: ExaminationPause[] = [
+				{
+					createdDate: new Date(2026, 0, 1),
+					details: 'new details 1',
+					endDate: new Date(2026, 5, 2),
+					startDate: new Date(2026, 0, 2),
+					examinationInfoId: ''
+				},
+				{
+					createdDate: new Date(2026, 5, 1),
+					details: 'new details 2',
+					startDate: new Date(2026, 5, 2),
+					endDate: new Date(2026, 5, 3),
+					examinationInfoId: ''
+				}
+			];
+			const validationResult = examinationController.wrapValidatePauses(pauses);
+			assert.equal(validationResult, true);
+		});
+		it('returns true when all pauses have endDate specified except for the last element', () => {
+			const pauses: ExaminationPause[] = [
+				{
+					createdDate: new Date(2026, 0, 1),
+					details: 'new details 1',
+					endDate: new Date(2026, 5, 2),
+					startDate: new Date(2026, 0, 2),
+					examinationInfoId: ''
+				},
+				{
+					createdDate: new Date(2026, 5, 1),
+					details: 'new details 2',
+					startDate: new Date(2026, 5, 2),
+					endDate: null,
+					examinationInfoId: ''
+				}
+			];
+			const validationResult = examinationController.wrapValidatePauses(pauses);
+			assert.equal(validationResult, true);
+		});
+		it('returns false when one element in the middle of the pause list has endDate not specified', () => {
+			const pauses: ExaminationPause[] = [
+				{
+					createdDate: new Date(2026, 0, 1),
+					details: 'new details 1',
+					endDate: null,
+					startDate: new Date(2026, 0, 2),
+					examinationInfoId: ''
+				},
+				{
+					createdDate: new Date(2026, 5, 1),
+					details: 'new details 2',
+					startDate: new Date(2026, 5, 2),
+					endDate: new Date(2026, 5, 3),
+					examinationInfoId: ''
+				}
+			];
+			const validationResult = examinationController.wrapValidatePauses(pauses);
+			assert.equal(validationResult, false);
 		});
 	});
 });

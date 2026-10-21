@@ -55,5 +55,9 @@
       }) }}
     {% endif %}
   {% endfor %}
+  {% if ((answers.pauses | length) > 0 and (answers.pauses | last).endDate) or (answers.pauses | length) == 0 %}
+    <a href="/case/{{ reference }}/examination-pause/pause-examination/examination-pause-start-date-{{ (answers.pauses | length) + 1 }}" class="govuk-link" data-cy="pause-examination">{% if (answers.pauses | length) == 0 %}Pause examination{% else %}Pause again{% endif %}</a>
+  {% endif %}
+  <p></p>
 
 {% endmacro %}

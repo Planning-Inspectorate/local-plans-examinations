@@ -119,8 +119,6 @@
                     <p></p>
                   {% elif section.heading == 'Pause examination' %}
                       {{ pauseDetails(journeyResponse.answers, reference) }}
-                      <a href="/case/{{ reference }}/examination-pause/pause-examination/examination-pause-start-date-{{ (journeyResponse.answers.pauses | length) + 1 }}" class="govuk-link" data-cy="pause-examination">Pause examination</a>
-                      <p></p>
                   {% else %}
                     {% if section.list.rows.length %}
                       {{ govukSummaryList({

@@ -4,6 +4,7 @@ import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { examinationPauseBaseUrls } from '../questions.ts';
 import { sortByCreatedDate } from '#util/util.ts';
 import { parseDate } from '../../../util/date.ts';
+import type { ExaminationPause } from '@pins/local-plans-database/src/client/client.ts';
 
 export class ExaminationSaveController extends SaveController {
 	private cachedCaseDetails: {
@@ -57,6 +58,23 @@ export class ExaminationSaveController extends SaveController {
 		}
 		return false;
 	}
+	/**
+	 * Return true if all pauses except for the last pause have an endDate supplied
+	 * @param sortedPauses The pauses to check for. The pauses MUST have been sorted beforehand
+	 * @returns True if the pause list is valid, false otherwise
+	 */
+	protected validatePauses(sortedPauses: ExaminationPause[]) {
+		let previousPause: ExaminationPause | undefined;
+		for (const pause of sortedPauses) {
+			if (previousPause) {
+				if (!previousPause.endDate) {
+					return false;
+				}
+			}
+			previousPause = pause;
+		}
+		return true;
+	}
 
 	protected async prepareData(answers: Record<string, any>) {
 		const question = String(this.req.params.question);
@@ -99,6 +117,10 @@ export class ExaminationSaveController extends SaveController {
 				...pauseDetails[pauseId - 1],
 				...answersForCurrentQuestion
 			};
+			const pausesValid = this.validatePauses(pauseDetails as ExaminationPause[]);
+			if (!pausesValid) {
+				throw Error('Preprocessing check detected that not all contiguious pauses had an endDate specified');
+			}
 			return {
 				pauses: pauseDetails
 			};
