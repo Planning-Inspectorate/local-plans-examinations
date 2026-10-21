@@ -98,11 +98,15 @@ async function addUploadedDocumentDetailsToAnswers(
 	const isIssuedGateway3Document =
 		gateway3SubmissionNumber &&
 		sortGateway3Submissions(answers.submissions ?? [])[Number(gateway3SubmissionNumber) - 1]?.completionDate;
+	const isManageDocumentRemoval =
+		req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION &&
+		(req.url.includes('/remove/') || req.body?.returnToManage === 'true');
 	const isUploadPages =
 		!!req.params.question &&
 		uploadPageUrls.has(req.params.question as string) &&
 		!req.url.includes('/check') &&
-		!isIssuedGateway3Document;
+		!isIssuedGateway3Document &&
+		!isManageDocumentRemoval;
 
 	for (const questionConfig of relevantFileUploadQuestionConfigs) {
 		const documentSetId = documentSetIdsByFolderName.get(questionConfig.url);
@@ -113,6 +117,9 @@ async function addUploadedDocumentDetailsToAnswers(
 		const uploadedFiles = isUploadPages
 			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+		if (isUploadPages && questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+			uploadedFiles.unshift(...(await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId)));
+		}
 
 		req.session.fileUploader = {
 			...request.session.fileUploader,

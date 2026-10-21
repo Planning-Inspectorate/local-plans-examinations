@@ -1,7 +1,8 @@
-import { openExaminationPage } from '../../../../flows/manage/examination-flow.ts';
+import { openExaminationPage, openSeededExaminationReport } from '../../../../flows/manage/examination-flow.ts';
 import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import {
 	actualSubmissionDate,
+	examinationReport as report,
 	examinationWebsite,
 	examiningInspector1,
 	examiningInspectors,
@@ -11,11 +12,13 @@ import {
 	examinationSubmissionDates,
 	factCheckDateReceivedFromInspector,
 	letterSentToMHCLGDate,
-	QAExpectedAnswers
+	QAExpectedAnswers,
+	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
 	examinationPage,
+	examinationReportManagePage as managePage,
 	examinationWebsitePage,
 	examiningInspector1Page,
 	factCheckDateReceivedFromInspectorPage,
@@ -39,11 +42,7 @@ describe('Examination page content', () => {
 	after(() => cy.task('clearDb'));
 
 	it('displays the Examination content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('Examination');
-		examinationPage.verifyExpectedRows(examinationSubmissionDates);
-		examinationPage.verifyExpectedAnswers(examinationSubmissionDates);
-		examinationPage.verifyExpectedActionLinkHrefs('examination', examinationSubmissionDates);
+		examinationPage.verifySectionContent('Examination', 'examination', examinationSubmissionDates);
 	});
 
 	it('loads an Examination date page with the saved answer', { tags: ['regression'] }, () => {
@@ -53,11 +52,7 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the Inspectors content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('Inspectors');
-		examinationPage.verifyExpectedRows(examiningInspectors);
-		examinationPage.verifyExpectedAnswers(examiningInspectors);
-		examinationPage.verifyExpectedActionLinkHrefs('inspectors', examiningInspectors);
+		examinationPage.verifySectionContent('Inspectors', 'inspectors', examiningInspectors);
 	});
 
 	it('loads an Examining Inspector page with the saved answer', { tags: ['regression'] }, () => {
@@ -68,11 +63,7 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the Examination website content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('Examination website');
-		examinationPage.verifyExpectedRows([examinationWebsite]);
-		examinationPage.verifyExpectedAnswers([examinationWebsite]);
-		examinationPage.verifyExpectedActionLinkHrefs('examination-website', [examinationWebsite]);
+		examinationPage.verifySectionContent('Examination website', 'examination-website', [examinationWebsite]);
 	});
 
 	it('loads the Examination website page with no answer', { tags: ['regression'] }, () => {
@@ -82,11 +73,7 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the Examination Letters content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('Letters');
-		examinationPage.verifyExpectedRows(examinationLetterDates);
-		examinationPage.verifyExpectedAnswers(examinationLetterDates);
-		examinationPage.verifyExpectedActionLinkHrefs('letters', examinationLetterDates);
+		examinationPage.verifySectionContent('Letters', 'letters', examinationLetterDates);
 	});
 
 	it('loads a Letter date page with the saved answer', { tags: ['regression'] }, () => {
@@ -96,11 +83,7 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the Examination Fact Check content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('Fact Check');
-		examinationPage.verifyExpectedRows(examinationFactCheckDates);
-		examinationPage.verifyExpectedAnswers(examinationFactCheckDates);
-		examinationPage.verifyExpectedActionLinkHrefs('fact-check', examinationFactCheckDates);
+		examinationPage.verifySectionContent('Fact Check', 'fact-check', examinationFactCheckDates);
 	});
 
 	it('loads a Fact Check date page with the saved answer', { tags: ['regression'] }, () => {
@@ -110,18 +93,37 @@ describe('Examination page content', () => {
 	});
 
 	it('displays the QA content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('QA');
-		examinationPage.verifyExpectedRows(QAExpectedAnswers);
-		examinationPage.verifyExpectedAnswers(QAExpectedAnswers);
-		examinationPage.verifyExpectedActionLinkHrefs('QA', QAExpectedAnswers);
+		examinationPage.verifySectionContent('QA', 'QA', QAExpectedAnswers);
 	});
 
 	it('displays the Examination Important Dates content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifyBackLink('/');
-		examinationPage.verifySectionHeading('Important dates for this plan');
-		examinationPage.verifyExpectedRows(examinationImportantDates);
-		examinationPage.verifyExpectedAnswers(examinationImportantDates);
-		examinationPage.verifyExpectedActionLinkHrefs('important-dates', examinationImportantDates);
+		examinationPage.verifySectionContent('Important dates for this plan', 'important-dates', examinationImportantDates);
+	});
+});
+
+describe('Examination report content', () => {
+	let seededCase: SeededManageCase;
+
+	before(() => cy.task('clearDb'));
+	after(() => {
+		if (seededCase) cy.task('clearExaminationReportFiles', seededCase.reference);
+		cy.task('clearDb');
+	});
+
+	it('displays the issued Outcome rows and Manage documents table', { tags: ['regression'] }, () => {
+		openSeededExaminationReport({ state: 'issued', fileNames: [report.fileName, report.supportingFileName] }).then(
+			(result) => {
+				seededCase = result;
+			}
+		);
+		examinationPage.verifySectionHeading('Outcome');
+		examinationPage.verifyReportDetails(2, soundUnsound.display, report.issuedDisplay);
+		examinationPage.verifyExpectedActionLinkHrefs('outcome', [
+			{ row: report.row, path: 'examination-report-manage' },
+			soundUnsound,
+			{ row: 'Report issued', path: 'sound-unsound-date' }
+		]);
+		examinationPage.openActionLinkFor(report.row);
+		managePage.verifyDocumentsContent(report.receivedDisplay, report.fileName, report.supportingFileName);
 	});
 });

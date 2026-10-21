@@ -44,7 +44,7 @@
 			{% set uploadError = errors["upload-form"] or errors[question.fieldName] %}
 
 			{% if question.editable %}
-				<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents" data-cy="upload-form">
+				<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents{{ queryString }}" data-cy="upload-form">
 					<input type="hidden" name="_csrf" value="{{ _csrf }}">
 					{{ govukFileUpload({
 						id: question.fieldName,
@@ -90,7 +90,7 @@
 							</dt>
 							<dd class="govuk-summary-list__actions">
 								{% if question.editable %}
-									<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
+								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}{{ queryString }}" method="post">
 										<input type="hidden" name="_csrf" value="{{ _csrf }}">
 										<button class="pins-app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
 											{{ question.text.removeLinkText or "Remove" }}

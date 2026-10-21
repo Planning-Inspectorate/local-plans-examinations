@@ -13,7 +13,11 @@ import {
 	preprocessQuestionProperties,
 	issueGateway3Document,
 	issueGateway2WorkshopDocuments,
-	fileUploaderCaseSessionKeyForField
+	issueExaminationReport,
+	fileUploaderCaseSessionKeyForField,
+	redirectToFileUploaderQuestion,
+	redirectToChecks,
+	buildRemoveDocumentConfirmMiddleware
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
@@ -45,7 +49,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
 	{ id: '16', folderName: 'gateway-3-document-1' },
-	{ id: '17', folderName: 'gateway-2-workshop-documents' }
+	{ id: '17', folderName: 'gateway-2-workshop-documents' },
+	{ id: '18', folderName: 'examination-report' }
 ];
 
 function createService(): any {
@@ -68,6 +73,9 @@ function createService(): any {
 					]
 				}
 			}))
+		},
+		caseHistory: {
+			findFirst: mock.fn(async () => null)
 		},
 		contact: {
 			update: mock.fn(async () => ({})),
@@ -743,7 +751,7 @@ describe('updateCaseHistory', () => {
 				planPauseStartDate: new Date('2026-01-06T12:00:00.000Z'),
 				planPauseEndDate: new Date('2026-01-07T12:00:00.000Z'),
 				withdrawnDate: new Date('2026-01-08T12:00:00.000Z'),
-				isSound: false,
+				isSound: 'unsound',
 				soundUnsoundDate: new Date('2026-01-09T12:00:00.000Z'),
 				adoptionDate: new Date('2026-01-10T12:00:00.000Z'),
 				approvedForCILDate: new Date('2026-01-11T12:00:00.000Z')
@@ -757,8 +765,8 @@ describe('updateCaseHistory', () => {
 		assert.equal(entries[0].event, 'Plan pause date updated to 6 January 2026');
 		assert.equal(entries[1].event, 'Plan pause end date updated to 7 January 2026');
 		assert.equal(entries[2].event, 'Withdrawn date updated to 8 January 2026');
-		assert.equal(entries[3].event, 'Sound / unsound updated to Unsound');
-		assert.equal(entries[4].event, 'Sound / unsound date updated to 9 January 2026');
+		assert.equal(entries[3].event, 'Outcome updated to Unsound');
+		assert.equal(entries[4].event, 'Report issued updated to 9 January 2026');
 		assert.equal(entries[5].event, 'Adoption date updated to 10 January 2026');
 		assert.equal(entries[6].event, 'Approved for CIL date updated to 11 January 2026');
 	});
@@ -1234,6 +1242,161 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.journeyResponse.answers.factCheckDueDate, factCheckDueDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
+
+	it('marks Manage-page uploads as returning to Manage after confirmation', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/examination/outcome/examination-report-manage',
+			pageLoadHandler: ExaminationTabHandler
+		});
+		Object.assign(ctx.req, {
+			method: 'GET',
+			params: {
+				reference: REFERENCE,
+				section: 'outcome',
+				question: 'examination-report-manage'
+			}
+		});
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			caseId: CASE_ID,
+			soundUnsoundDate: new Date('2026-01-01T12:00:00.000Z')
+		}));
+		ctx.service.db.document.findMany.mock.mockImplementation(async () => [
+			{
+				guid: 'report-guid',
+				name: 'report.pdf',
+				documentSetId: '18',
+				isDeleted: false,
+				latestDocumentVersion: {
+					originalFilename: 'report.pdf',
+					fileName: 'report.pdf',
+					isDeleted: false,
+					mime: 'application/pdf',
+					size: 100,
+					version: 1,
+					dateCreated: new Date('2026-01-01T12:00:00.000Z')
+				}
+			}
+		]);
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.equal((ctx.req.session as any).examinationReportReturnToManage, true);
+	});
+
+	it('retains saved reports when reopening the uploader from Examination CYA or Manage', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/examination/outcome/examination-report?returnTo=check',
+			pageLoadHandler: ExaminationTabHandler
+		});
+		Object.assign(ctx.req, {
+			method: 'GET',
+			query: { returnTo: 'check' },
+			params: { reference: REFERENCE, section: 'outcome', question: 'examination-report' }
+		});
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ isSound: 'sound' }));
+		ctx.service.db.document.findMany.mock.mockImplementation(async ({ where }: any) => {
+			if (where.documentSetId !== '18') return [];
+			const name = where.isTemp === false ? 'saved-report.pdf' : 'temporary-report.pdf';
+			return [{ guid: name, name, documentSetId: '18', latestDocumentVersion: { fileName: name, version: 1 } }];
+		});
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		const files = ctx.req.session.fileUploader?.[`${REFERENCE}:examinationReport`]?.uploadedFiles;
+		assert.deepEqual(
+			files?.map((file) => file.fileName),
+			['saved-report.pdf', 'temporary-report.pdf']
+		);
+		assert.deepEqual(ctx.res.locals.journeyResponse.answers.examinationReport, files);
+
+		ctx.req.query = {};
+		ctx.req.url = '/examination/outcome/examination-report';
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+		assert.deepEqual(
+			ctx.res.locals.journeyResponse.answers.examinationReport.map((file: any) => file.fileName),
+			['saved-report.pdf', 'temporary-report.pdf']
+		);
+	});
+
+	it('clears the Manage return marker when there are no uploaded report files', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/examination/outcome/examination-report-manage',
+			pageLoadHandler: ExaminationTabHandler
+		});
+		Object.assign(ctx.req, {
+			method: 'GET',
+			params: {
+				reference: REFERENCE,
+				section: 'outcome',
+				question: 'examination-report-manage'
+			}
+		});
+		(ctx.req.session as any).examinationReportReturnToManage = true;
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			caseId: CASE_ID,
+			soundUnsoundDate: null
+		}));
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.equal((ctx.req.session as any).examinationReportReturnToManage, undefined);
+	});
+});
+
+describe('Examination report removal', () => {
+	for (const { method, action, body } of [
+		{ method: 'GET', action: 'remove', body: {} },
+		{ method: 'POST', action: 'delete-document', body: { returnToManage: 'true' } }
+	]) {
+		it(`loads saved reports for ${method} ${action}`, async (t) => {
+			const service = createService();
+			service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
+			const file = {
+				id: 'examination/case-id/examination-report/report.pdf',
+				fileName: 'report.pdf',
+				mimeType: 'application/pdf',
+				size: 100,
+				storageProvider: 'blob' as const
+			};
+			t.mock.method(DocumentUtil, 'loadUploadedDocuments', async () => [file]);
+			const loadTemporary = t.mock.method(DocumentUtil, 'loadTempUploadedDocuments', async () => []);
+			const req = {
+				method,
+				url: `/examination/outcome/examination-report/${action}/${encodeURIComponent(file.id)}`,
+				params: { reference: REFERENCE, section: 'outcome', question: 'examination-report', fileId: file.id },
+				body,
+				query: {},
+				session: {}
+			} as unknown as Request;
+			const answers: Record<string, unknown> = {};
+
+			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'examination');
+
+			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:examinationReport`]?.uploadedFiles, [file]);
+			assert.equal(loadTemporary.mock.callCount(), 0);
+			if (method === 'GET') {
+				const res = { render: mock.fn(), status: mock.fn() } as unknown as Response;
+				await buildRemoveDocumentConfirmMiddleware('examination')(req, res, mock.fn());
+				assert.deepEqual((res.render as any).mock.calls[0].arguments, [
+					'views/layouts/remove-uploaded-document',
+					{
+						caseReference: REFERENCE,
+						fileName: file.fileName,
+						formAction: `/case/${REFERENCE}/examination/outcome/examination-report/delete-document/${encodeURIComponent(file.id)}`,
+						backLink: `/case/${REFERENCE}/examination/outcome/examination-report-manage`
+					}
+				]);
+			}
+		});
+	}
 });
 
 describe('Gateway 3 document loading', () => {
@@ -1402,6 +1565,135 @@ describe('fileUploaderCaseSessionKeyForField', () => {
 
 		assert.equal(fileUploaderCaseSessionKeyForField(firstCase, 'gateway2Report'), 'PLAN-111111:gateway2Report');
 		assert.equal(fileUploaderCaseSessionKeyForField(secondCase, 'gateway2Report'), 'PLAN-222222:gateway2Report');
+	});
+});
+
+describe('redirectToFileUploaderQuestion', () => {
+	const request = (body: Record<string, unknown> = {}) =>
+		({
+			baseUrl: `/case/${REFERENCE}`,
+			url: '/examination/outcome/examination-report/delete-document/file-1',
+			params: {
+				section: 'outcome',
+				question: 'examination-report',
+				fileId: 'file-1'
+			},
+			body
+		}) as unknown as Request;
+
+	it('stays on the uploader when removing a file from the upload question', () => {
+		assert.equal(
+			redirectToFileUploaderQuestion(request()),
+			`/case/${REFERENCE}/examination/outcome/examination-report`
+		);
+	});
+
+	it('returns to Manage after confirming removal from the Manage page', () => {
+		assert.equal(
+			redirectToFileUploaderQuestion(request({ returnToManage: 'true' })),
+			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
+		);
+	});
+
+	it('preserves the check-page return after uploading or removing a report', () => {
+		for (const fileId of [undefined, 'file-1']) {
+			const req = request();
+			req.params.fileId = fileId;
+			req.query = { returnTo: 'check' };
+
+			assert.equal(
+				redirectToFileUploaderQuestion(req),
+				`/case/${REFERENCE}/examination/outcome/examination-report?returnTo=check`
+			);
+		}
+	});
+});
+
+describe('redirectToChecks', () => {
+	for (const uploadedFiles of [[], [{ id: 'report-1' }]]) {
+		it(`preserves the check-page return when continuing with ${uploadedFiles.length} reports`, () => {
+			const req = {
+				params: { reference: REFERENCE, section: 'outcome', question: 'examination-report' },
+				url: '/examination/outcome/examination-report/upload-documents/submit?returnTo=check',
+				query: { returnTo: 'check' },
+				session: { fileUploader: { examinationReport: { uploadedFiles } } }
+			} as unknown as Request;
+
+			assert.equal(
+				redirectToChecks(req, 'examination', { fieldName: 'examinationReport' } as any),
+				`/case/${REFERENCE}/examination/outcome/examination-report${uploadedFiles.length ? '/check' : ''}?returnTo=check`
+			);
+		});
+	}
+});
+
+describe('issueExaminationReport', () => {
+	it('finishes the initial report journey after its date is changed', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date('2026-10-19')
+		}));
+		const req = {
+			params: { reference: REFERENCE },
+			query: { returnTo: 'check' },
+			session: { authEnabled: false }
+		} as unknown as Request;
+		const redirect = mock.fn();
+
+		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
+
+		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(req.session.alertMessage, 'Final report and supporting documents saved and notification sent');
+	});
+
+	it('refreshes the report date on resubmission when no manual date edit exists', async () => {
+		const service = createService();
+		const beforeConfirm = new Date();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date('2026-01-01T12:00:00.000Z')
+		}));
+		const req = {
+			params: { reference: REFERENCE },
+			query: { returnTo: 'check' },
+			session: { authEnabled: false, examinationReportReturnToManage: true }
+		} as unknown as Request;
+		const redirect = mock.fn();
+		const res = { redirect } as unknown as Response;
+
+		await issueExaminationReport(service, 'examination')(req, res, mock.fn());
+
+		assert.equal(
+			redirect.mock.calls[0].arguments[0],
+			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
+		);
+		const savedDate = service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate;
+		assert.ok(savedDate instanceof Date);
+		assert.ok(savedDate.getTime() >= beforeConfirm.getTime());
+		assert.equal((req.session as any).examinationReportReturnToManage, undefined);
+	});
+
+	it('preserves a manually entered date on resubmission', async () => {
+		const service = createService();
+		const manuallyEnteredDate = new Date('2026-01-01T12:00:00.000Z');
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: manuallyEnteredDate
+		}));
+		service.db.caseHistory.findFirst.mock.mockImplementation(async () => ({ id: 'manual-date-history' }));
+		const req = {
+			params: { reference: REFERENCE },
+			query: { returnTo: 'check' },
+			session: { authEnabled: false, examinationReportReturnToManage: true }
+		} as unknown as Request;
+		const redirect = mock.fn();
+		const res = { redirect } as unknown as Response;
+
+		await issueExaminationReport(service, 'examination')(req, res, mock.fn());
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(
+			redirect.mock.calls[0].arguments[0],
+			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
+		);
 	});
 });
 

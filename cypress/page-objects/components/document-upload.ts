@@ -40,7 +40,7 @@ export class DocumentUpload {
 	}
 
 	removeFile(fileName: string) {
-		cy.contains('.govuk-summary-list', fileName).find("[data-cy='remove-file-button']").should('be.visible').click();
+		cy.contains('[data-cy="remove-file-button"]', fileName).should('be.visible').click();
 	}
 
 	verifyFileUploaded(...fileNames: string[]) {
