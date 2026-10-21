@@ -10,7 +10,22 @@ export class ExaminationSaveController extends SaveController {
 		return this.trimStringValues(answers as ExaminationInput);
 	}
 
+	private async pauseHistoryFor(planPauseStartDate: Date | null | undefined, caseId: string) {
+		if (!planPauseStartDate) return {};
+
+		const current = await this.service.db.examinationInfo.findUnique({
+			where: { caseId },
+			select: { planPauseStartDate: true }
+		});
+
+		if (current?.planPauseStartDate?.getTime() === planPauseStartDate.getTime()) return {};
+
+		return { planPauseHistory: { create: { planPauseDate: planPauseStartDate } } };
+	}
+
 	protected async saveToDatabase(answers: ExaminationInput) {
+		if (!answers) return false;
+
 		const question = String(this.req.params.question);
 		const caseId = await this.resolveCaseId();
 		const inspectorQuestions = [
@@ -21,14 +36,14 @@ export class ExaminationSaveController extends SaveController {
 		if (question && inspectorQuestions.includes(question)) {
 			answers.examiningInspectorAppointmentDate = new Date();
 		}
-		if (answers) {
-			await this.service.db.examinationInfo.upsert({
-				where: { caseId },
-				update: { ...answers },
-				create: { caseId, ...answers }
-			});
-			return true;
-		}
-		return false;
+
+		const pauseHistory = await this.pauseHistoryFor(answers.planPauseStartDate, caseId);
+
+		await this.service.db.examinationInfo.upsert({
+			where: { caseId },
+			update: { ...answers, ...pauseHistory },
+			create: { caseId, ...answers, ...pauseHistory }
+		});
+		return true;
 	}
 }
