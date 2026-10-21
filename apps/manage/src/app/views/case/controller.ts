@@ -1,6 +1,6 @@
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
-import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
+import type { SaveDataFn, Question, OptionsQuestion } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
@@ -10,7 +10,6 @@ import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-com
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { type FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { fileUploadQuestionProperties } from './questions.ts';
-import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 import { getSubmissionCheckForQuestion } from './submission-check/submission-check-factory.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
@@ -28,6 +27,7 @@ import { ExaminationSaveController } from './save/examination-save-controller.ts
 import { formatDateToString } from '../../../app/util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+import CustomMultiFieldInputQuestion from '../layouts/custom-multi-field-input/question.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -44,7 +44,7 @@ const caseHistoryLabels = {
 	// Expand inputFields from CUSTOM_MULTI_FIELD_INPUT questions
 	...(Object.fromEntries(
 		Object.values(questions)
-			.filter((value) => value instanceof CUSTOM_COMPONENT_CLASSES[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT])
+			.filter((value) => value instanceof CustomMultiFieldInputQuestion)
 			.flatMap((entry) => entry.inputFields)
 			.map((inputField) => [inputField.fieldName, inputField.title])
 	) as Record<string, string>)
@@ -515,9 +515,7 @@ async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: strin
 }
 
 function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: string | null) {
-	const option = questions[question].options?.find(
-		({ value: optionValue }: { value: string }) => optionValue === value
-	);
+	const option = (questions[question] as OptionsQuestion)?.optionByValue(value || '');
 
 	return option?.text ?? `${value ?? ''}`;
 }

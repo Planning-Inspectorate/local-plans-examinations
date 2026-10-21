@@ -32,6 +32,7 @@ import { ExaminationSaveController } from './save/examination-save-controller.ts
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import * as authSession from '@planning-inspectorate/core/auth';
+import type { JourneyLocals } from '@planning-inspectorate/dynamic-forms';
 import {
 	buildGetJourney,
 	buildList,
@@ -40,7 +41,8 @@ import {
 	validate,
 	validationErrorHandler,
 	type Journey,
-	JourneyResponse
+	JourneyResponse,
+	type OptionsQuestion
 } from '@planning-inspectorate/dynamic-forms';
 import { questions, getQuestions } from './questions.ts';
 import {
@@ -106,7 +108,7 @@ function registerGateway2WorkshopJourney(
 		const loaded = await loadLpaOptions(service);
 
 		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+			(questions.lpa as OptionsQuestion).options = [{ value: '', text: '' }, ...loaded];
 		}
 
 		next();
@@ -228,8 +230,8 @@ function registerGateway2WorkshopJourney(
 }
 
 function redirectAfterCyaEdit(updateCase: any) {
-	return (req: any, res: Response, next: NextFunction) => {
-		buildSave(updateCase, req.session.editingFromCheckAnswers === true)(req, res, next);
+	return (req: any, res: Response<any, JourneyLocals>) => {
+		buildSave(updateCase, req.session.editingFromCheckAnswers === true)(req, res);
 	};
 }
 
