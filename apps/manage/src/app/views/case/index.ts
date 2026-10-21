@@ -86,6 +86,8 @@ import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-su
 import { ExaminationPauseHandler } from './overview-data-handlers/examination-pause-handler.ts';
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
+import { loadConfig } from '../../../app/config.ts';
+import type { AuthSession } from '#util/cached-entra-client.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -162,12 +164,14 @@ function registerGateway2WorkshopJourney(
 		next();
 	});
 
-	const completeWorkshop = asyncHandler(async (req: Request, res: Response) => {
+	const completeWorkshopAndSendEmail = asyncHandler(async (req: Request, res: Response) => {
 		const reference = getParam(req.params.reference);
+		const answers = res.locals.journeyResponse?.answers ?? {};
+		console.log(answers);
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
-		//const workshopId = String(req.url).split('-')[-1];
+		// const workshopId = String(req.url).split('-')[-1];
 		//reqCopy.params.question = `check-your-answers-${workshopId}`;
 		await new Gateway2SaveController(service, req, reference).prepareAndSave({});
 		await updateCaseField(service);
@@ -184,6 +188,98 @@ function registerGateway2WorkshopJourney(
 			}
 		});
 		pushAlertToSession(req, 'success', 'Workshop set up');
+
+		// Send notification to LPA (from the contact details) and Inspector (GW2 assessor)
+		if (!service.notifyClient) {
+			service.logger.warn('Notify client not configured');
+		} else {
+			const config = loadConfig();
+
+			const portalUrl = process.env.PORTAL_URL;
+			const workshopInspectorTemplateId = config.govNotify.templateIds.gw2WorkshopInspector;
+			const workshopLpaTemplateId = config.govNotify.templateIds.gw2WorkshopLpa;
+
+			if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
+			if (!workshopInspectorTemplateId)
+				throw new Error('GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID environment variable is not set');
+			if (!workshopLpaTemplateId)
+				throw new Error('GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID environment variable is not set');
+
+			const caseRecord = await service.db.case.findUnique({
+				where: { reference },
+				select: {
+					id: true,
+					lpas: true,
+					planType: true,
+					contacts: true
+				}
+			});
+			const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
+			const gw2Info = await service.db.gateway2Info.findUnique({
+				where: { caseId: caseRecord?.id }
+			});
+
+			const workshopCount = (answers.workshops as []).length;
+
+			const workshopStartDate = answers[`workshopDate-${workshopCount}`];
+			const workshopEndDate = answers[`workshopEndDate-${workshopCount}`];
+			const workshopType = answers[`workshopLocationType-${workshopCount}`];
+
+			const portalLoginURL = `${portalUrl}/login`;
+			const caseReference = reference;
+			const notifyReference = `create-case:${caseReference}`;
+			const personalisationDetails = {
+				portalLoginURL,
+				['plan_ref']: caseReference,
+				['authority_name']: caseLpas?.join(', '),
+				['plan_type']: caseRecord!.planType
+					.split('-')
+					.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+					.join(' '),
+				['contact_info']: service.localPlansTeamEmail,
+				['team_email_address']: service.localPlansTeamEmail,
+				['workshop_start_date']: workshopStartDate,
+				['workshop_end_date']: workshopEndDate ? workshopEndDate : '',
+				['workshop_type']: workshopType
+			};
+
+			const entraClient = service.getEntraClient(req.session as AuthSession)!;
+			const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
+			const inspectorId = allInspectors.find((inspector) => inspector.displayName === gw2Info?.assessorName)?.id;
+			// TODO 'mail' is undefined on users, need to re-think email retrieval
+			const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
+			const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
+
+			console.log('All inspectors: ', allInspectors);
+			console.log('Assessor email: ', assessorEmail);
+
+			// Notify the GW2 assessor (aka inspector)
+			try {
+				await service.notifyClient?.sendEmail(workshopInspectorTemplateId, assessorEmail.trim(), {
+					personalisation: personalisationDetails,
+					reference: notifyReference
+				});
+				service.logger.info({ email: assessorEmail }, 'Email sent to GW2 assessor for workshop set up');
+			} catch (error) {
+				service.logger.error({ error, email: assessorEmail }, 'Failed to send workshop set up email');
+			}
+
+			// All LPAs notified
+			await Promise.allSettled(
+				lpasToSendTo.map(async (email) => {
+					try {
+						await service.notifyClient?.sendEmail(workshopLpaTemplateId, email.trim(), {
+							personalisation: personalisationDetails,
+							reference: notifyReference
+						});
+						service.logger.info({ email: email }, 'Email sent to LPA for workshop set up');
+					} catch (error) {
+						service.logger.error({ error, email: email }, 'Failed to send workshop set up email');
+					}
+				})
+			);
+		}
+
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
@@ -212,7 +308,7 @@ function registerGateway2WorkshopJourney(
 		getWorkshopJourneyResponse,
 		getJourney,
 		saveLastQuestionUrl,
-		completeWorkshop
+		completeWorkshopAndSendEmail
 	);
 	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
 	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
