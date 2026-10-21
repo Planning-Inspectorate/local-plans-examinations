@@ -110,3 +110,116 @@ describe('examination submission page', () => {
 		assert.ok(html.includes('Add all required documents before you submit'));
 	});
 });
+
+describe('examination declaration page', () => {
+	function renderDeclaration() {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/examination-submission/declaration/declaration.njk', {
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			backLinkUrl: '/manage-local-plans/PLAN-61797/examination-submission',
+			goBackUrl: '/manage-local-plans/PLAN-61797/examination-submission',
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+	}
+
+	it('renders the declaration heading, warning and confirmation controls', () => {
+		const html = renderDeclaration();
+
+		assert.ok(html.includes('Are you sure you&#39;re ready to submit?'));
+		assert.ok(html.includes("This can't be undone."));
+		assert.ok(html.includes('Yes, confirm submission'));
+		assert.ok(html.includes('data-cy="confirm-submission"'));
+		assert.ok(html.includes('No, go back'));
+		assert.match(
+			html,
+			/href="\/manage-local-plans\/PLAN-61797\/examination-submission" class="govuk-link" data-cy="no-go-back"/
+		);
+	});
+
+	it('renders the Back link to the examination submission page', () => {
+		const html = renderDeclaration();
+		assert.ok(html.includes('data-cy="back-link"'));
+		assert.match(html, /href="\/manage-local-plans\/PLAN-61797\/examination-submission"/);
+	});
+});
+
+describe('examination submission complete page', () => {
+	function renderSubmissionComplete() {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/examination-submission/declaration/submission-complete.njk', {
+			pageTitle: 'Submission complete',
+			pageHeading: 'Submission complete',
+			planOverviewUrl: '/manage-local-plans/PLAN-61797',
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+	}
+
+	it('renders the successful submission panel and confirmation copy', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('Submission complete'));
+		assert.ok(html.includes('We have sent you a confirmation email.'));
+	});
+
+	it('renders the examination next steps', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('What happens next'));
+		assert.ok(html.includes('appoint one or more inspectors to your case'));
+		assert.ok(html.includes('review your submission documents'));
+		assert.ok(html.includes('let you know if they need any additional information'));
+	});
+
+	it('links check your submission status to plan details', () => {
+		const html = renderSubmissionComplete();
+		assert.ok(html.includes('check your submission status'));
+		assert.match(html, /href="\/manage-local-plans\/PLAN-61797" class="govuk-link" data-cy="check-submission-status"/);
+	});
+});
+
+describe('submitted examination page', () => {
+	it('renders submitted documents without edit or submit actions', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/examination-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Examination submission',
+			pageHeading: 'Examination submission',
+			submissionDate: '21 October 2026',
+			submissionTime: '11:30',
+			submitter: 'planner@example.com',
+			summaryListData: {
+				sections: [
+					{
+						list: {
+							rows: [
+								{
+									key: { text: 'Local plan submission for examination' },
+									value: { text: 'local-plan.pdf' },
+									actions: { items: [{ text: 'Change', href: '#' }] }
+								}
+							]
+						}
+					}
+				]
+			},
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('Your submission was sent on 21 October 2026 at 11:30 by planner@example.com'));
+		assert.ok(html.includes('local-plan.pdf'));
+		assert.doesNotMatch(html, />\s*(Add|Change|Submit)\s*</);
+	});
+});

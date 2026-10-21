@@ -106,6 +106,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed: ';
+					if (plan.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED) {
+						dateTextE = 'Submitted: ';
+					}
 					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
 					tagG2 = tagG3 = 'Completed';
 				}

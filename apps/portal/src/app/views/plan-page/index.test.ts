@@ -581,6 +581,24 @@ describe('plan page', () => {
 		}
 	});
 
+	it('shows a yellow Submitted examination tag and the examination submission date', async () => {
+		const plan = {
+			refNum: 'PLAN-003',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'submitted',
+			examinationStatusLabel: 'Submitted',
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
+		};
+
+		const { data, html } = await renderPlan({ refNum: 'PLAN-003' }, plan);
+
+		assert.equal(data.dateTextE, 'Submitted: ');
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>');
+		assert.ok(html.includes('Submitted: 21 October 2026'));
+		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>'));
+	});
+
 	it('should render task table links correctly for case 3 p2 (G1, G2, G3, E complete)', async () => {
 		const plan = {
 			refNum: 'PLAN-001',

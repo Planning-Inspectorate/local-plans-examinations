@@ -23,21 +23,31 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 		question,
 		lusca,
 		redirectAfterQuestionEdit,
-		validateExaminationSubmission
+		validateExaminationSubmission,
+		guardExaminationAvailable,
+		guardExaminationEdit,
+		guardDeclarationPage,
+		getDeclarationPage,
+		postDeclarationPage,
+		getSubmissionCompletePage,
+		submittedExaminationView
 	} = buildExaminationMiddleware(service);
 
 	router.get(
 		'/:planReference/examination-submission',
 		getJourneyResponseFromCase,
+		guardExaminationAvailable,
 		getJourney,
 		setAsEditingFromCheckAnswers,
 		setExaminationViewData,
+		submittedExaminationView,
 		buildExaminationCheckAnswersList()
 	);
 
 	router.post(
 		'/:planReference/examination-submission',
 		getJourneyResponseFromCase,
+		guardExaminationEdit,
 		getJourney,
 		validateExaminationSubmission,
 		(req, res) => {
@@ -46,9 +56,28 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 		}
 	);
 
+	router.get(
+		'/:planReference/examination-submission/declaration',
+		getJourneyResponseFromCase,
+		guardExaminationEdit,
+		guardDeclarationPage,
+		getDeclarationPage
+	);
+
+	router.post(
+		'/:planReference/examination-submission/declaration',
+		getJourneyResponseFromCase,
+		guardExaminationEdit,
+		guardDeclarationPage,
+		postDeclarationPage
+	);
+
+	router.get('/:planReference/examination-submission/submission-complete', getSubmissionCompletePage);
+
 	router.post(
 		'/:planReference/examination-submission/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
+		guardExaminationEdit,
 		getJourney,
 		upload.array('files[]'),
 		lusca.csrf(),
@@ -59,6 +88,7 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	router.post(
 		'/:planReference/examination-submission/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
+		guardExaminationEdit,
 		getJourney,
 		deleteDocumentForCase
 	);
@@ -66,12 +96,14 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	router.get(
 		'/:planReference/examination-submission/download-document/:documentId',
 		getJourneyResponseFromCase,
+		guardExaminationAvailable,
 		downloadDocument
 	);
 
 	router.get(
 		'/:planReference/examination-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
+		guardExaminationEdit,
 		getJourney,
 		fileUploaderMiddlewareForCase,
 		question
@@ -80,6 +112,7 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	router.post(
 		'/:planReference/examination-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
+		guardExaminationEdit,
 		getJourney,
 		validate,
 		validationErrorHandler,

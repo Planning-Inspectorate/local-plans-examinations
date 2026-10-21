@@ -38,6 +38,7 @@ type ExaminationInfoRecord = {
 	status: string;
 	examinationWebsite: string | null;
 	examinationWebsiteUrl: string | null;
+	submissionForExaminationDate: Date | null;
 	statusLookup: { displayName: string } | null;
 };
 
@@ -90,6 +91,15 @@ const STATUS_TAG_CLASSES: Record<string, string> = {
 };
 
 const EXAMINATION_SUBMIT_ERROR = 'Add all required documents before you submit';
+const DECLARATION_VIEW_PATH = 'views/manage-local-plans/examination-submission/declaration/declaration.njk';
+const SUBMISSION_COMPLETE_VIEW_PATH =
+	'views/manage-local-plans/examination-submission/declaration/submission-complete.njk';
+const SUBMITTED_TEMPLATE = 'views/manage-local-plans/examination-submission/check-your-answers-submitted.njk';
+
+const EDITABLE_EXAMINATION_STATUSES = new Set<string>([
+	EXAMINATION_STATUS_ID.READY_TO_START,
+	EXAMINATION_STATUS_ID.IN_PROGRESS
+]);
 
 function getRoutePlanReference(req: Request): string | undefined {
 	const planReference = Array.isArray(req.params.planReference)
@@ -101,6 +111,31 @@ function getRoutePlanReference(req: Request): string | undefined {
 function getRouteQuestionUrl(req: Request): string | undefined {
 	const questionUrl = Array.isArray(req.params.question) ? req.params.question[0] : req.params.question;
 	return questionUrl || undefined;
+}
+
+function getPlanDetailsUrl(req: Request) {
+	const planReference = getRoutePlanReference(req);
+	return planReference ? `/manage-local-plans/${encodeURIComponent(planReference)}` : '/manage-local-plans';
+}
+
+function getExaminationSubmissionUrl(req: Request) {
+	return `${getPlanDetailsUrl(req)}/examination-submission`;
+}
+
+function formatDisplayDate(date: Date) {
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
+}
+
+function formatDisplayTime(date: Date) {
+	return date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
 }
 
 function getRouteFileUploadQuestion(req: Request): ExaminationFileUploadQuestion {
@@ -264,6 +299,54 @@ export function setExaminationViewData(req: Request, res: Response, next: NextFu
 	next();
 }
 
+export function buildGuardExaminationAvailable(): RequestHandler {
+	return (req, res, next) => {
+		const status = (req as ExaminationRequest).currentCase?.examinationInfo?.status;
+		if (status && status !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
+			return next();
+		}
+		return res.redirect(getPlanDetailsUrl(req));
+	};
+}
+
+export function buildGuardExaminationEdit(): RequestHandler {
+	return (req, res, next) => {
+		const status = (req as ExaminationRequest).currentCase?.examinationInfo?.status;
+		if (status && EDITABLE_EXAMINATION_STATUSES.has(status)) {
+			return next();
+		}
+		if (!status || status === EXAMINATION_STATUS_ID.CANNOT_START_YET) {
+			return res.redirect(getPlanDetailsUrl(req));
+		}
+		return res.redirect(getExaminationSubmissionUrl(req));
+	};
+}
+
+export function buildSubmittedExaminationView(): RequestHandler {
+	return (req, res, next) => {
+		const request = req as ExaminationRequest;
+		const examinationInfo = request.currentCase?.examinationInfo;
+		const submissionDate = examinationInfo?.submissionForExaminationDate;
+
+		if (!examinationInfo || EDITABLE_EXAMINATION_STATUSES.has(examinationInfo.status)) {
+			return next();
+		}
+
+		const journey = res.locals.journey;
+		if (journey) {
+			journey.taskListTemplate = SUBMITTED_TEMPLATE;
+		}
+		if (submissionDate) {
+			res.locals.submissionDate = formatDisplayDate(submissionDate);
+			res.locals.submissionTime = formatDisplayTime(submissionDate);
+		}
+		res.locals.submitter = request.currentCase?.email;
+		delete res.locals.saveAndComeBackUrl;
+
+		return next();
+	};
+}
+
 export function buildExaminationCheckAnswersList(): RequestHandler {
 	return (req, res, next) => {
 		const request = req as ExaminationRequest;
@@ -372,6 +455,65 @@ export function buildValidateExaminationSubmission(): RequestHandler {
 	};
 }
 
+export function buildGuardDeclarationPage(): RequestHandler {
+	return (req, res, next) => {
+		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		if (hasAllRequiredAnswers(journeyResponse?.answers ?? {})) {
+			return next();
+		}
+		return res.redirect(getExaminationSubmissionUrl(req));
+	};
+}
+
+export function buildGetDeclarationPage(): RequestHandler {
+	return (req, res) => {
+		const examinationSubmissionUrl = getExaminationSubmissionUrl(req);
+		return res.render(DECLARATION_VIEW_PATH, {
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			backLinkUrl: examinationSubmissionUrl,
+			goBackUrl: examinationSubmissionUrl
+		});
+	};
+}
+
+export function buildPostDeclarationPage(service: PortalService): RequestHandler {
+	return async (req, res) => {
+		const request = req as ExaminationRequest;
+		const planReference = getRoutePlanReference(req);
+		const caseId = request.currentCase?.id;
+		if (!caseId) {
+			service.logger.error(`No case loaded for examination declaration submission ${planReference ?? ''}`);
+			return res.status(500).send('No case found');
+		}
+
+		const submissionDate = new Date();
+		try {
+			await service.db.examinationInfo.update({
+				where: { caseId },
+				data: {
+					status: EXAMINATION_STATUS_ID.SUBMITTED,
+					submissionForExaminationDate: submissionDate
+				}
+			});
+		} catch (error) {
+			service.logger.error({ error }, `Failed to record examination submission for case ${planReference ?? ''}`);
+			return res.status(500).send('Failed to record submission');
+		}
+
+		return res.redirect(`${getExaminationSubmissionUrl(req)}/submission-complete`);
+	};
+}
+
+export function buildGetSubmissionCompletePage(): RequestHandler {
+	return (req, res) =>
+		res.render(SUBMISSION_COMPLETE_VIEW_PATH, {
+			pageTitle: 'Submission complete',
+			pageHeading: 'Submission complete',
+			planOverviewUrl: getPlanDetailsUrl(req)
+		});
+}
+
 export function handleMulterFileSizeError(err: Error, req: Request, res: Response, next: NextFunction) {
 	if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
 		const questionConfig = fileUploadQuestionsByUrl.get(getRouteQuestionUrl(req) ?? '');
@@ -477,6 +619,13 @@ export function buildExaminationMiddleware(service: PortalService) {
 		lusca,
 		redirectAfterQuestionEdit: (req: Request, res: Response, next: NextFunction) =>
 			buildSave(saveDataToCase, true)(req, res, next),
-		validateExaminationSubmission: buildValidateExaminationSubmission()
+		validateExaminationSubmission: buildValidateExaminationSubmission(),
+		guardExaminationAvailable: buildGuardExaminationAvailable(),
+		guardExaminationEdit: buildGuardExaminationEdit(),
+		guardDeclarationPage: buildGuardDeclarationPage(),
+		getDeclarationPage: buildGetDeclarationPage(),
+		postDeclarationPage: buildPostDeclarationPage(service),
+		getSubmissionCompletePage: buildGetSubmissionCompletePage(),
+		submittedExaminationView: buildSubmittedExaminationView()
 	};
 }
