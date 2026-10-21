@@ -37,12 +37,12 @@ describe('test CustomNoteQuestion', () => {
 							},
 							{
 								text: 'some note text 1',
-								createdTime: new Date(2026, 9, 7), // '7/10/2026'
+								createdTime: new Date(2026, 9, 7), // '7/9/2026'
 								createdBy: 'person a'
 							},
 							{
 								text: 'some note text 3',
-								createdTime: new Date(2026, 11, 7), // '7/10/2026'
+								createdTime: new Date(2026, 11, 7), // '7/11/2026'
 								createdBy: 'person c'
 							}
 						]
