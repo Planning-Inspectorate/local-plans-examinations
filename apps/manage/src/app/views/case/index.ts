@@ -284,6 +284,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway3Journey,
 		pageLoadHandler: Gateway3TabHandler,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway3SaveController
 	},
 	{
