@@ -88,7 +88,8 @@ function createService(): any {
 		},
 		examinationInfo: {
 			upsert: mock.fn(async () => ({})),
-			findUnique: mock.fn(async () => null)
+			findUnique: mock.fn(async () => null),
+			findFirst: mock.fn(async () => null)
 		},
 		documentSet: {
 			upsert: mock.fn(async () => ({})),

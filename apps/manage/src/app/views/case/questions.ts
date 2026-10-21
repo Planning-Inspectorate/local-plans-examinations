@@ -1054,10 +1054,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaDate: {
 		type: COMPONENT_TYPES.DATE,
-		question: 'What is the date of QA?',
+		question: 'When was the report sent to the QA inspector?',
 		fieldName: 'QADate',
 		url: 'qa-date',
-		title: 'QA date',
+		title: 'Report sent to QA inspector',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'qa-date' }
 	},

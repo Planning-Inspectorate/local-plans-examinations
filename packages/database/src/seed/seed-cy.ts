@@ -9,6 +9,8 @@ import type { Prisma } from '../client/client.ts';
 
 export type SeedCyOptions = {
 	workshops?: Prisma.Gateway2WorkshopCreateWithoutGateway2InfoInput[];
+	gateway3Submission?: Prisma.Gateway3SubmissionCreateManyGateway3InfoInput;
+	examination?: Prisma.ExaminationInfoCreateWithoutCaseInput;
 };
 
 // prettier-ignore
@@ -128,7 +130,7 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 						submissions: {
 							createMany: {
 								data: [
-									{
+									options?.gateway3Submission ?? {
 										decision: undefined,
 										completionDate: undefined
 									}
@@ -138,7 +140,7 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 					}
 				},
 				examinationInfo: {
-					create: {
+					create: options?.examination ?? {
 						expectedSubmissionForExaminationDate: now,
 						submissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 						examiningInspector1: 'inspector-1',
