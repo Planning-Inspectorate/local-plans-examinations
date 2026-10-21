@@ -8,6 +8,7 @@ import {
 	type UploadDocumentRequest
 } from '../controller.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
@@ -104,3 +105,84 @@ async function addUploadedDocumentDetailsToAnswers(
 		}
 	}
 }
+
+// G3_PROPOSED_LOCAL_PLAN: 'g3-proposed-plan',
+// 	G3_MAP_OF_POLICIES: 'g3-map-of-policies',
+// 	G3_STATEMENT_OF_COMPLIANCE: 'g3-stat-compliance',
+// 	G3_STATEMENT_OF_SOUNDNESS: 'g3-stat-soundness',
+// 	G3_CONSULTATION_ENGAGEMENT_SUMMARY: 'g3-cons-engage-summ',
+// 	G3_SCOPING_CONSULTATION_SUMMARY: 'g3-scoping-cons-sum',
+// 	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'g3-cons-content-sum',
+// 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'g3-cons-plan-summ',
+// 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'g3-practical-arrng',
+//
+// 	// Gateway 3 portal optional documents
+// 	G3_COPIES_OF_REPRESENTATIONS: 'g3-copies-of-reps',
+// 	G3_SUPPLEMENTARY_PLANS_STATEMENT: 'g3-supp-plans-stmt',
+// 	G3_ENVIRONMENTAL_REPORT: 'g3-env-report',
+// 	G3_STATEMENT_OF_REASONS_DETERMINATION: 'g3-stmt-reasons',
+// 	G3_REPRESENTATIONS_PROGRESS_SUMMARY: 'g3-reps-progress',
+// 	G3_GATEWAY_2_ISSUES_SUMMARY: 'g3-g2-issues-summ',
+// 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'g3-changes-stmt',
+// 	G3_OTHER_DOCUMENTS: 'g3-other-documents',
+
+export const compileGateway3Data = async (db: PrismaClient, currentData: any) => {
+	const REQUIRED_DOCUMENT_SETS = {
+		proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+		mapOfPolicies: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
+		statementOfCompliance: DOCUMENT_SET_ID.G3_STATEMENT_OF_COMPLIANCE,
+		statementOfSoundness: DOCUMENT_SET_ID.G3_STATEMENT_OF_SOUNDNESS,
+		consultationEngagementSummary: DOCUMENT_SET_ID.G3_CONSULTATION_ENGAGEMENT_SUMMARY,
+		scopingConsultationSummary: DOCUMENT_SET_ID.G3_SCOPING_CONSULTATION_SUMMARY,
+		consultationContentEvidenceSummary: DOCUMENT_SET_ID.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY,
+		consultationProposedPlanSummary: DOCUMENT_SET_ID.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY,
+		practicalArrangementsStatement: DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT
+	};
+
+	const OPTIONAL_DOCUMENT_SETS = {
+		copiesOfRepresentations: DOCUMENT_SET_ID.G3_COPIES_OF_REPRESENTATIONS,
+		supplementaryPlansStatement: DOCUMENT_SET_ID.G3_SUPPLEMENTARY_PLANS_STATEMENT,
+		environmentalReport: DOCUMENT_SET_ID.G3_ENVIRONMENTAL_REPORT,
+		statementOfReasonsDetermination: DOCUMENT_SET_ID.G3_STATEMENT_OF_REASONS_DETERMINATION,
+		representationsProgressSummary: DOCUMENT_SET_ID.G3_REPRESENTATIONS_PROGRESS_SUMMARY,
+		gateway2IssuesSummary: DOCUMENT_SET_ID.G3_GATEWAY_2_ISSUES_SUMMARY,
+		changesSinceConsultationStatement: DOCUMENT_SET_ID.G3_CHANGES_SINCE_CONSULTATION_STATEMENT,
+		otherDocuments: DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS
+	};
+
+	const documents = await db.document.findMany({
+		where: {
+			caseId: currentData.caseId,
+			isDeleted: false,
+			documentSetId: {
+				in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
+			}
+		},
+		include: { latestDocumentVersion: true }
+	});
+
+	const documentsBySetId = new Map<string, typeof documents>();
+	for (const document of documents) {
+		const group = documentsBySetId.get(document.documentSetId) ?? [];
+		group.push(document);
+		documentsBySetId.set(document.documentSetId, group);
+	}
+
+	const documentsForFields = (sets: Record<string, string>) =>
+		Object.fromEntries(
+			Object.entries(sets).map(([field, setId]) => [
+				field,
+				(documentsBySetId.get(setId) ?? [])
+					.map((document) => document.latestDocumentVersion?.originalFilename ?? document.name)
+					.join(', ')
+			])
+		);
+
+	const data = {
+		...documentsForFields(REQUIRED_DOCUMENT_SETS),
+		optionalData: documentsForFields(OPTIONAL_DOCUMENT_SETS)
+	};
+	console.log('compileGateway3Data', data);
+
+	return { ...data, ...currentData };
+};
