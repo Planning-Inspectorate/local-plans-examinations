@@ -2,14 +2,7 @@ import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { formatValue } from '../../../util/util.ts';
 import { sortByCreatedDate } from '#util/util.ts';
-
-type PauseData = {
-	createdDate: Date;
-	startDate: Date;
-	details: string | null;
-	endDate: Date | null;
-	examinationInfoId: string;
-};
+import type { ExaminationPause } from '@pins/local-plans-database/src/client/client.ts';
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -30,7 +23,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			journeyResponse.answers[`details-${i + 1}`] = sortedPauseData[i].details;
 			journeyResponse.answers[`endDate-${i + 1}`] = sortedPauseData[i].endDate;
 		}
-		if (ExaminationTabHandler.isCurrentlyPaused(sortedPauseData as PauseData[])) {
+		if (ExaminationTabHandler.isCurrentlyPaused(sortedPauseData as ExaminationPause[])) {
 			res.locals.alertMessage = 'This examination is paused';
 			res.locals.alertMessageStatus = 'important';
 		}
@@ -42,7 +35,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	 * @param pauses The list of pauses from the database
 	 * @returns True if there is an overlap, false otherwise
 	 */
-	public static isCurrentlyPaused(pauses: PauseData[]) {
+	public static isCurrentlyPaused(pauses: ExaminationPause[]) {
 		const currentTime = new Date();
 		for (const pause of pauses) {
 			const indefinitelyPaused = !pause.endDate;
