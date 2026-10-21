@@ -22,6 +22,11 @@ import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handl
 import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
+import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -87,6 +92,7 @@ function createService(): any {
 		},
 		examinationInfo: {
 			upsert: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({ count: 1 })),
 			findUnique: mock.fn(async () => null)
 		},
 		documentSet: {
@@ -1234,6 +1240,73 @@ describe('buildGetJourneyMiddleware', () => {
 	});
 });
 
+describe('Gateway 3 document loading', () => {
+	for (const { name, question, completionDate, check, temporary } of [
+		{
+			name: 'loads drafts in an editable uploader',
+			question: 'gateway-3-document-1',
+			completionDate: null,
+			check: false,
+			temporary: true
+		},
+		{
+			name: 'loads saved files in an issued report View',
+			question: 'gateway-3-document-1',
+			completionDate: new Date('2026-10-01'),
+			check: false,
+			temporary: false
+		},
+		{
+			name: 'keeps the next submission editable after an earlier report is issued',
+			question: 'gateway-3-document-2',
+			completionDate: new Date('2026-10-01'),
+			check: false,
+			temporary: true
+		},
+		{
+			name: 'loads saved files on check answers before the report is issued',
+			question: 'gateway-3-document-1',
+			completionDate: null,
+			check: true,
+			temporary: false
+		}
+	]) {
+		it(name, async (t) => {
+			const service = createService();
+			service.db.documentSet.findMany.mock.mockImplementation(async () => [
+				...MOCK_DOCUMENT_SETS,
+				{ id: '18', folderName: 'gateway-3-document-2' }
+			]);
+			const savedFile = {
+				id: 'saved-file',
+				fileName: 'issued.pdf',
+				mimeType: 'application/pdf',
+				size: 100,
+				storageProvider: 'blob' as const
+			};
+			const draftFile = { ...savedFile, id: 'draft-file', fileName: 'draft.pdf' };
+			t.mock.method(DocumentUtil, 'loadUploadedDocuments', async () => [savedFile]);
+			t.mock.method(DocumentUtil, 'loadTempUploadedDocuments', async () => [draftFile]);
+			const req = {
+				params: { reference: REFERENCE, question },
+				url: `/gateway-3-report/gateway-3-submission-1/${question}${check ? '/check' : ''}`,
+				session: {}
+			} as unknown as Request;
+			const submissions = [{ id: 'submission-1', decision: '1', completionDate, gateway3InfoId: CASE_ID }];
+			if (question.endsWith('-2')) {
+				submissions.unshift({ id: 'submission-2', decision: '2', completionDate: null, gateway3InfoId: CASE_ID });
+			}
+			const answers: Record<string, any> = { submissions };
+
+			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'gateway-3-report');
+
+			const fieldName = question.replace('gateway-3-document-', 'gateway3Documents-');
+			assert.deepEqual(answers[fieldName], [temporary ? draftFile : savedFile]);
+			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
+		});
+	}
+});
+
 describe('DeleteCase', () => {
 	(it('renders delete-case.njk when getDeleteCase is called', async () => {
 		const service = createService();
@@ -1741,14 +1814,14 @@ describe('preprocessQuestionProperties', () => {
 });
 describe('issueGateway3Document', () => {
 	const caseReference = 'some-case-reference';
-	it('issue document when created date is not already set', async () => {
+	it('sets the examination status to ready to start when issuing a proceed to examination decision', async () => {
 		const service = createService();
 		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			completionDate: undefined,
 			submissions: [
 				{
 					id: 'someId',
-					decision: undefined,
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
 					completionDate: undefined,
 					gateway3InfoId: undefined
 				}
@@ -1769,7 +1842,208 @@ describe('issueGateway3Document', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: CASE_ID,
+				status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+			},
+			data: {
+				status: EXAMINATION_STATUS_ID.READY_TO_START
+			}
+		});
+	});
+	it('does not change the examination status when issuing a resubmission required decision', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+	});
+	it('fails the issue transaction when no examination record can be made ready', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => null);
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Could not find examination information/
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+		assert.equal(req.session.alertMessage, undefined);
+	});
+	it('fails the issue transaction when more than one examination record is updated', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 2 }));
+		const handler = issueGateway3Document(service);
+		const req = {
+			session: {},
+			params: { reference: caseReference, question: 'gateway-3-document-1' }
+		};
+		const res = { redirect: mock.fn() };
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Expected to update one examination record.*updated 2/
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+	it('fails the issue transaction when the existing examination status is not available', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+		}));
+		const handler = issueGateway3Document(service);
+		const req = {
+			session: {},
+			params: { reference: caseReference, question: 'gateway-3-document-1' }
+		};
+		const res = { redirect: mock.fn() };
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Could not make examination available/
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+	it('continues issuing when the examination is already ready to start', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			status: EXAMINATION_STATUS_ID.READY_TO_START
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.examinationInfo.findUnique.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.equal(req.session.alertMessage, 'Gateway 3 decision issued');
+		assert.equal(req.session.alertMessageStatus, 'success');
+	});
+	it('repairs the examination status when a proceed decision was previously issued', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: new Date(2026, 1, 1),
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.equal(req.session.alertMessage, 'Gateway 3 decision already issued. Examination is ready to start');
+		assert.equal(req.session.alertMessageStatus, 'success');
 	});
 	it('issue document when created date is already set', async () => {
 		const service = createService();
@@ -1799,6 +2073,7 @@ describe('issueGateway3Document', () => {
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
 	});
 });
 
