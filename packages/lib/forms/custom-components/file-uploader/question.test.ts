@@ -19,6 +19,41 @@ describe('FileUploaderQuestion', () => {
 		assert.equal(question.viewFolder, 'forms/custom-components/file-uploader');
 	});
 
+	for (const { currentUrl, submitAction, expectedSubmitAction, expectedQuery } of [
+		{
+			currentUrl: '/case/PLAN-123456/examination/outcome/examination-report',
+			submitAction: '/case/PLAN-123456/examination/outcome/examination-report/upload-documents/submit',
+			expectedSubmitAction: '/case/PLAN-123456/examination/outcome/examination-report/upload-documents/submit',
+			expectedQuery: ''
+		},
+		{
+			currentUrl: '/case/PLAN-123456/examination/outcome/examination-report?returnTo=check',
+			submitAction: '/case/PLAN-123456/examination/outcome/examination-report?returnTo=check/upload-documents/submit',
+			expectedSubmitAction:
+				'/case/PLAN-123456/examination/outcome/examination-report/upload-documents/submit?returnTo=check',
+			expectedQuery: '?returnTo=check'
+		},
+		{
+			currentUrl: '/case/PLAN-123456/examination/outcome/examination-report?returnTo=check',
+			submitAction: '',
+			expectedSubmitAction: '',
+			expectedQuery: '?returnTo=check'
+		}
+	]) {
+		it(`keeps upload paths separate from query parameters with submit action '${submitAction}'`, () => {
+			const viewModel = buildQuestion().toViewModel({
+				params: {},
+				section: { name: 'Documents' },
+				journey: { ...buildJourney(), response: { answers: {} }, getBackLink: () => '/back' },
+				customViewData: { currentUrl, submitAction }
+			});
+
+			assert.equal(viewModel.currentUrl, '/case/PLAN-123456/examination/outcome/examination-report');
+			assert.equal(viewModel.queryString, expectedQuery);
+			assert.equal(viewModel.submitAction, expectedSubmitAction);
+		});
+	}
+
 	it('is not answered when the uploaded files answer is empty', () => {
 		const question = buildQuestion();
 

@@ -13,9 +13,11 @@ import {
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
 	buildCheckReportMiddleware,
+	buildRemoveDocumentConfirmMiddleware,
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
+	issueExaminationReport,
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
@@ -293,7 +295,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createExaminationJourney,
 		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
-		supportsFileUpload: false,
+		supportsFileUpload: true,
 		saveController: ExaminationSaveController
 	}
 ];
@@ -390,6 +392,7 @@ function registerCaseJourney(
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
@@ -401,7 +404,23 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true)
+		(req, res, next) => {
+			// Until a report is issued, saving the plan outcome continues to the file uploader.
+			const answers = res.locals.journeyResponse?.answers;
+			const isPlanOutcome =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				req.params.question === questions.isSound.url;
+			const isCheckPageEdit =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				[questions.isSound.url, questions.soundUnsoundDate.url].includes(String(req.params.question));
+			if (isCheckPageEdit && req.query.returnTo === 'check') {
+				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
+			}
+			const continueToReportUpload = isPlanOutcome && req.query.returnTo !== 'check' && !answers?.soundUnsoundDate;
+			buildSave(updateCase, !continueToReportUpload)(req, res, next);
+		}
 	);
 	if (supportsFileUpload) {
 		const fileUploaderStorage = () => service.createFileStorage(journeyId);
@@ -482,6 +501,29 @@ function registerCaseJourney(
 							});
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
+							if (questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+								req.session.alertMessage = 'Document removed';
+								req.session.alertMessageStatus = 'success';
+							}
+							const caseId = (req as UploadDocumentRequest).currentCase?.id;
+							if (
+								caseId &&
+								uploadedFiles.length === 0 &&
+								questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION
+							) {
+								if (req.body?.returnToManage === 'true') {
+									delete req.session.examinationReportReturnToManage;
+								}
+								await service.db.examinationInfo.updateMany({
+									where: { caseId },
+									data: {
+										isSound: null,
+										soundUnsoundDate: null,
+										adoptionDate: null,
+										approvedForCILDate: null
+									}
+								});
+							}
 						},
 						onDeleteError: ({ req, fileId, error }) =>
 							logDocumentDeleteFailed(service, req, questionConfig, fileId, error),
@@ -524,6 +566,11 @@ function registerCaseJourney(
 			)
 		);
 
+		router.get(
+			`/${path}/:section/:question/remove/:fileId`,
+			getJourneyResponse,
+			buildRemoveDocumentConfirmMiddleware(journeyId)
+		);
 		router.post(
 			`${questionPath}/upload-documents`,
 			getJourneyResponse,
@@ -549,7 +596,7 @@ function registerCaseJourney(
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,
-			getJourney,
+			deleteDocumentRoute,
 			deleteDocumentRoute,
 			handleMulterFileSizeError
 		);

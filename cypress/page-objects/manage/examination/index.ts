@@ -4,3 +4,6 @@ export * from './examination-inspector-page.ts';
 export * from './examination-website-page.ts';
 export * from './examination-qa-inspector-page.ts';
 export * from './sound-unsound-page.ts';
+export * from './report-page.ts';
+export * from './report-manage-page.ts';
+export * from './report-remove-page.ts';

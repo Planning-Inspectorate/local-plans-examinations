@@ -61,10 +61,10 @@ function createGateway3JourneyForTest() {
 	);
 }
 
-function createExaminationJourneyForTest() {
+function createExaminationJourneyForTest(answers = {}, query = {}, session = {}) {
 	return createExaminationJourney(
-		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
-		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', {}),
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, query, session } as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', answers),
 		questions
 	);
 }
@@ -224,6 +224,38 @@ describe('gateway3Journey', () => {
 });
 
 describe('createExaminationJourney', () => {
+	it('returns to Plan outcome after uploading an unissued report', () => {
+		const journey = createExaminationJourneyForTest({ examinationReport: [{ id: 'report-1' }] });
+
+		assert.equal(
+			journey.getBackLink({ params: { section: 'outcome', question: 'examination-report' } }),
+			'/case/LP-TEST-001/examination/outcome/plan-outcome'
+		);
+	});
+
+	for (const { query, session, expectedPage } of [
+		{ query: {}, session: {}, expectedPage: 'examination-report-manage' },
+		{ query: { returnTo: 'check' }, session: {}, expectedPage: 'plan-outcome?returnTo=check' },
+		{
+			query: { returnTo: 'check' },
+			session: { examinationReportReturnToManage: true },
+			expectedPage: 'examination-report-manage'
+		}
+	]) {
+		it(`returns from the report uploader to ${expectedPage}`, () => {
+			const journey = createExaminationJourneyForTest(
+				{ examinationReport: [{ id: 'report-1' }], soundUnsoundDate: new Date('2026-10-19') },
+				query,
+				session
+			);
+
+			assert.equal(
+				journey.getBackLink({ params: { section: 'outcome', question: 'examination-report' } }),
+				`/case/LP-TEST-001/examination/outcome/${expectedPage}`
+			);
+		});
+	}
+
 	it('links Examination question pages back to the Gateway 3 page', () => {
 		const journey = createExaminationJourneyForTest();
 		const gateway2Questions = [
@@ -249,7 +281,7 @@ describe('createExaminationJourney', () => {
 			'plan-pause-start-date',
 			'plan-pause-end-date',
 			'withdrawn-date',
-			'is-sound',
+			'plan-outcome',
 			'sound-unsound-date',
 			'adoption-date',
 			'approved-for-cil-date'

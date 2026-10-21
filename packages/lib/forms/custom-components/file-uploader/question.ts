@@ -76,6 +76,14 @@ export default class FileUploaderQuestion extends Question {
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
 		viewModel.currentUrl = options.customViewData?.currentUrl;
+		if (viewModel.currentUrl) {
+			const url = new URL(viewModel.currentUrl, 'http://localhost');
+			viewModel.currentUrl = url.pathname;
+			viewModel.queryString = url.search;
+			if (viewModel.submitAction) {
+				viewModel.submitAction = `${url.pathname}/upload-documents/submit${url.search}`;
+			}
+		}
 		viewModel.errors = options.customViewData?.errors;
 		viewModel.errorSummary = options.customViewData?.errorSummary;
 

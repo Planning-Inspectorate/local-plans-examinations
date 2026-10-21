@@ -4,6 +4,7 @@ export * from './date-question-page.ts';
 export * from './local-planning-authorities-page.ts';
 export * from './plan-title-page.ts';
 export * from './plan-type-page.ts';
+export * from './programme-officer-page.ts';
 export * from './radio-question-page.ts';
 export * from './select-local-planning-authority-page.ts';
 export * from './single-line-input-page.ts';

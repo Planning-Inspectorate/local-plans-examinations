@@ -97,3 +97,61 @@ export const gateway3UploadAnswers = {
 		addCy: 'add-documents'
 	}
 } as const satisfies Record<string, Gateway3UploadAnswer>;
+
+export const gateway3ApplicationDocuments = {
+	required: [
+		{ document: 'Examination website', addCy: 'add-examination-website' },
+		{
+			document: 'Proposed local plan intended for submission for examination',
+			addCy: gateway3UploadAnswers.proposedLocalPlan.addCy
+		},
+		{
+			document: 'Map of proposed local plan policies',
+			addCy: gateway3UploadAnswers.mapOfProposedLocalPlanPolicies.addCy
+		},
+		{ document: 'Statement of Compliance', addCy: gateway3UploadAnswers.statementOfCompliance.addCy },
+		{ document: 'Statement of Soundness', addCy: gateway3UploadAnswers.statementOfSoundness.addCy },
+		{
+			document: 'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+			addCy: gateway3UploadAnswers.consultationEngagementSummary.addCy
+		},
+		{ document: 'Summary of scoping consultation', addCy: gateway3UploadAnswers.scopingConsultationSummary.addCy },
+		{
+			document: 'Summary of consultation on proposed local plan content and evidence',
+			addCy: gateway3UploadAnswers.consultationContentEvidenceSummary.addCy
+		},
+		{
+			document: 'Summary of consultation on proposed local plan',
+			addCy: gateway3UploadAnswers.consultationProposedPlanSummary.addCy
+		},
+		{
+			document: 'Statement setting out practical arrangements demonstrating readiness for examination',
+			addCy: gateway3UploadAnswers.practicalArrangementsStatement.addCy
+		}
+	],
+	optional: [
+		{ document: 'Copies of representations', addCy: 'add-copies-of-representations' },
+		{ document: 'Supplementary plans statement', addCy: 'add-supplementary-plans-statement' },
+		{ document: 'Environmental report', addCy: gateway3UploadAnswers.environmentalReport.addCy },
+		{
+			document:
+				'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+			addCy: 'add-statement-of-reasons-determination'
+		},
+		{
+			document:
+				'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+			addCy: 'add-representations-progress-summary'
+		},
+		{
+			document: 'Summary of how Gateway 2 assessor issues have been addressed',
+			addCy: 'add-summary-of-how-gateway-2-assessor-issues-have-been-addressed'
+		},
+		{
+			document:
+				'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+			addCy: 'add-changes-since-consultation-statement'
+		},
+		{ document: 'Other documents', addCy: 'add-other-documents' }
+	]
+};

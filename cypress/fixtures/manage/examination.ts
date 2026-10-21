@@ -44,6 +44,21 @@ export const actualSubmissionDate = {
 
 export const examinationSubmissionDates = [expectedSubmissionDate, actualSubmissionDate];
 
+export const examinationReport = {
+	row: 'Examination report',
+	path: 'examination-report',
+	fileName: 'test-document.pdf',
+	supportingFileName: 'test-document.docx',
+	receivedDate: '2026-10-01T12:00:00.000Z',
+	receivedDisplay: '1 Oct 2026',
+	issuedDate: '2026-10-02T12:00:00.000Z',
+	issuedDisplay: '2 October 2026',
+	updatedDate: { day: '3', month: '10', year: '2026' },
+	updatedDateDisplay: '3 October 2026',
+	issuedMessage: 'Final report and supporting documents saved and notification sent',
+	addedMessage: 'Document added and notification sent'
+};
+
 export const examiningInspector1 = {
 	row: 'Examining Inspector 1',
 	heading: 'Which Inspector is assigned for Examination?',
@@ -270,18 +285,18 @@ export const withdrawnDate = {
 };
 
 export const soundUnsound = {
-	row: 'Sound / unsound',
-	heading: 'Was the plan found to be sound or unsound?',
+	row: 'Outcome',
+	heading: 'Plan outcome',
 	fieldName: 'isSound',
-	path: 'is-sound',
-	value: 'yes',
+	path: 'plan-outcome',
+	value: 'sound',
 	display: 'Sound',
-	updatedValue: 'no',
+	updatedValue: 'unsound',
 	updatedDisplay: 'Unsound'
 };
 
 export const soundUnsoundDate = {
-	row: 'Sound / unsound date',
+	row: 'Report issued',
 	path: 'sound-unsound-date',
 	display: '7 December 2026'
 };
