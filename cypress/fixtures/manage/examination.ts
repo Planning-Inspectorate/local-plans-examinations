@@ -242,17 +242,6 @@ export const QAExpectedAnswers = [
 	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];
 
-export const planPauseStartDate = {
-	row: 'Plan pause date',
-	heading: 'When did the plan pause start?',
-	fieldName: 'planPauseStartDate',
-	path: 'plan-pause-start-date',
-	input: { day: '4', month: '12', year: '2026' },
-	display: '4 December 2026',
-	updatedInput: { day: '20', month: '12', year: '2026' },
-	updatedDisplay: '20 December 2026'
-};
-
 export const planPauseEndDate = {
 	row: 'Plan pause end date',
 	path: 'plan-pause-end-date',
@@ -279,7 +268,12 @@ export const soundUnsound = {
 export const soundUnsoundDate = {
 	row: 'Sound / unsound date',
 	path: 'sound-unsound-date',
-	display: '7 December 2026'
+	display: '7 December 2026',
+	heading: 'When was the plan confirmed as sound or unsound?',
+	fieldName: 'soundUnsoundDate',
+	input: { day: '7', month: '12', year: '2026' },
+	updatedInput: { day: '20', month: '12', year: '2026' },
+	updatedDisplay: '20 December 2026'
 };
 
 export const adoptionDate = {
@@ -295,7 +289,6 @@ export const approvedForCILDate = {
 };
 
 export const examinationImportantDates = [
-	planPauseStartDate,
 	planPauseEndDate,
 	withdrawnDate,
 	soundUnsound,

@@ -13,7 +13,7 @@ import {
 	letterSentToMHCLGDate,
 	QADateAnswers,
 	QAInspectorsAnswers,
-	planPauseStartDate,
+	soundUnsoundDate,
 	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
@@ -29,7 +29,7 @@ import {
 	letterSentToMHCLGDatePage,
 	examinationQAInspector1Page,
 	QAPanelResponseDatePage,
-	planPauseStartDatePage,
+	soundUnsoundDatePage,
 	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
 
@@ -188,7 +188,7 @@ describe('Examination updates', () => {
 	);
 
 	it('updates Important Dates and records case history', { tags: ['regression'] }, () => {
-		updateDateAnswer(planPauseStartDate, planPauseStartDatePage);
+		updateDateAnswer(soundUnsoundDate, soundUnsoundDatePage);
 
 		examinationPage.openActionLinkFor(soundUnsound.row);
 		soundUnsoundPage.verifyLoaded(soundUnsound.value);
@@ -199,13 +199,13 @@ describe('Examination updates', () => {
 
 		openCaseHistory();
 
-		caseHistoryPage.verifyHistoryEvent(historyEventFor(planPauseStartDate));
+		caseHistoryPage.verifyHistoryEvent(historyEventFor(soundUnsoundDate));
 		caseHistoryPage.verifyHistoryEvent(
 			`${soundUnsound.row} updated from ${soundUnsound.display} to ${soundUnsound.updatedDisplay}`
 		);
 	});
 
 	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
-		returnFromDatePage(planPauseStartDate, planPauseStartDatePage);
+		returnFromDatePage(soundUnsoundDate, soundUnsoundDatePage);
 	});
 });
