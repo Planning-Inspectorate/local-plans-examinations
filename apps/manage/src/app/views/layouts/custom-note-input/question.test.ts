@@ -32,17 +32,17 @@ describe('test CustomNoteQuestion', () => {
 						notes: [
 							{
 								text: 'some note text 2',
-								createdTime: new Date(2026, 10, 7), // '7/11/2026'
+								createdTime: new Date(Date.UTC(2026, 10, 7)), // '7/11/2026'
 								createdBy: 'person b'
 							},
 							{
 								text: 'some note text 1',
-								createdTime: new Date(2026, 9, 7), // '7/9/2026'
+								createdTime: new Date(Date.UTC(2026, 10, 6)), // '6/11/2026'
 								createdBy: 'person a'
 							},
 							{
 								text: 'some note text 3',
-								createdTime: new Date(2026, 11, 7), // '7/11/2026'
+								createdTime: new Date(Date.UTC(2026, 11, 7)), // '7/12/2026'
 								createdBy: 'person c'
 							}
 						]
@@ -65,7 +65,7 @@ describe('test CustomNoteQuestion', () => {
 					},
 					{
 						createdBy: 'person a',
-						createdTime: '7 October 2026 at 00:00',
+						createdTime: '6 November 2026 at 00:00',
 						text: 'some note text 1'
 					}
 				],
