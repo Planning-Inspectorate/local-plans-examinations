@@ -1169,24 +1169,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'final-report-issue-date' }
 	},
-	planPauseStartDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When did the plan pause start?',
-		fieldName: 'planPauseStartDate',
-		url: 'plan-pause-start-date',
-		title: 'Plan pause date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-start-date' }
-	},
-	planPauseEndDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When did the plan pause end?',
-		fieldName: 'planPauseEndDate',
-		url: 'plan-pause-end-date',
-		title: 'Plan pause end date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-end-date' }
-	},
 	withdrawnDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the plan withdrawn?',

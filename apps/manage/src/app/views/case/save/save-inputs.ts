@@ -100,8 +100,6 @@ export interface ExaminationInput extends SaveInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
-	planPauseStartDate?: Date;
-	planPauseEndDate?: Date;
 	withdrawnDate?: Date;
 	isSound?: boolean;
 	soundUnsoundDate?: Date;

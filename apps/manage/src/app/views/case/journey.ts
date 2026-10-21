@@ -326,8 +326,6 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.finalReportIssueDate),
 			pauseSection,
 			new Section('Important dates for this plan', 'important-dates')
-				.addQuestion(questions.planPauseStartDate)
-				.addQuestion(questions.planPauseEndDate)
 				.addQuestion(questions.withdrawnDate)
 				.addQuestion(questions.isSound)
 				.addQuestion(questions.soundUnsoundDate)
@@ -501,8 +499,6 @@ const examinationQuestionNames = new Set<string>([
 	'factCheckActualDate',
 	'factCheckReceivedBackFromLPADate',
 	'finalReportIssueDate',
-	'planPauseStartDate',
-	'planPauseEndDate',
 	'withdrawnDate',
 	'isSound',
 	'soundUnsoundDate',

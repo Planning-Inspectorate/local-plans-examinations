@@ -242,12 +242,6 @@ export const QAExpectedAnswers = [
 	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];
 
-export const planPauseEndDate = {
-	row: 'Plan pause end date',
-	path: 'plan-pause-end-date',
-	display: '5 December 2026'
-};
-
 export const withdrawnDate = {
 	row: 'Withdrawn date',
 	path: 'withdrawn-date',
@@ -289,7 +283,6 @@ export const approvedForCILDate = {
 };
 
 export const examinationImportantDates = [
-	planPauseEndDate,
 	withdrawnDate,
 	soundUnsound,
 	soundUnsoundDate,
