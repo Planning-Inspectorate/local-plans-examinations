@@ -1,5 +1,7 @@
 {% extends layoutTemplate %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block before_content %}
 	{% if backLink %}
@@ -14,5 +16,44 @@
 {% endblock before_content %}
 
 {% block content %}
- <p> dasdassadadadadda<p>
+	<div class="govuk-grid-row">
+		<div class="govuk-grid-column-full">
+			<span class="govuk-caption-l">{{ reference }}</span>
+
+			{% set documentGroups = [
+				{
+					heading: "Required information",
+					description: "You must add each of these documents as a link or an attachment before submitting.",
+					data: rowsMapRequiredData
+				},
+				{
+					heading: "Optional documents",
+					description: "You can add these additional documents if they are relevant to your plan.",
+					data: optionDataMap
+				}
+			] %}
+
+			{% for group in documentGroups %}
+				<h2 class="govuk-heading-l">{{ group.heading }}</h2>
+				<p class="govuk-body">{{ group.description }}</p>
+
+				{% set rows = [] %}
+				{% for label, value in group.data %}
+					{% set _ = rows.push({
+						key: { text: label | trim },
+						value: { text: value | default("not added", true) | capitalize }
+					}) %}
+				{% endfor %}
+
+				{{ govukSummaryList({ rows: rows }) }}
+			{% endfor %}
+		</div>
+       <form action="" method="post" novalidate>
+    	{{ govukButton({
+            text: "Issue decision",
+            type: "submit",
+            attributes: { "data-cy": "save-and-return-button" }
+    	}) }}
+    	</form>
+	</div>
 {% endblock content %}

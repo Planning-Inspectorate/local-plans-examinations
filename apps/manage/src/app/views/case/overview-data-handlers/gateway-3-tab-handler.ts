@@ -1,7 +1,7 @@
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
-import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
+import { addUploadedDocumentDetailsToAnswers, compileGateway3Data } from './overview-page-helper.ts';
 import { getParam } from '../controller.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
@@ -43,10 +43,14 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 			journey3Data,
 			COMMON_CONSTS.GATEWAY_3_JOURNEY_ID
 		);
+
 		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
-		res.locals.journeyResponse = journeyResponse;
+
+		const data = await compileGateway3Data(db, { ...journeyResponse.answers, ...journey3Data, ...journey4Data });
+		res.locals.journeyResponse = { ...journeyResponse, answers: { ...data } };
+
 		if (next) next();
 	}
 }
