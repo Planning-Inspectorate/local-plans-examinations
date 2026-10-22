@@ -48,6 +48,7 @@ import {
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -119,11 +120,39 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
-		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
-		title: 'Documents',
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Gateway 3 documents',
 		question: 'Upload Gateway 3 report',
 		fieldName: 'gateway3Documents',
-		url: 'gateway-3-document'
+		url: 'gateway-3-document',
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: 999,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Gateway 3 documents',
+			introduction: 'Upload a file',
+			fileRequirementsText: `The file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and be smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}`,
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files'
+		},
+		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
+		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3DocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Gateway 3 Documents',
+		fieldName: 'gateway3DocumentSubmission',
+		url: 'gateway-3-review-documents'
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
