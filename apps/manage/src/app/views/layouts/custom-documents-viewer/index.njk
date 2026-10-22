@@ -47,13 +47,12 @@
 
 				{{ govukSummaryList({ rows: rows }) }}
 			{% endfor %}
-		</div>
 
-    	{{ govukButton({
-            text: "Issue decision",
-            href: issueDecisionUrl,
-            type: "submit",
-            attributes: { "data-cy": "save-and-return-button" }
-    	}) }}
+			{{ govukButton({
+				text: "Issue decision",
+				href: issueDecisionUrl,
+				attributes: { "data-cy": "issue-decision-button" }
+			}) }}
+		</div>
 	</div>
 {% endblock content %}

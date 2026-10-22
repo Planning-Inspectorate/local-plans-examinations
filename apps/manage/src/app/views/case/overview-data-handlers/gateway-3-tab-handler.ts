@@ -48,8 +48,11 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 
-		const data = await compileGateway3Data(db, { ...journeyResponse.answers, ...journey3Data, ...journey4Data });
-		res.locals.journeyResponse = { ...journeyResponse, answers: { ...data } };
+		journeyResponse.answers = await compileGateway3Data(db, {
+			...journey3Data,
+			examinationWebsite: journey4Data?.examinationWebsite
+		});
+		res.locals.journeyResponse = journeyResponse;
 
 		if (next) next();
 	}

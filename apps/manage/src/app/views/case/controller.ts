@@ -1117,6 +1117,8 @@ export function preprocessQuestionProperties(
 				questions[gateway3DocumentsCheck].changeActionText = 'Review';
 				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary = true;
 
+				questions[gateway3Documents].changeActionText = 'View';
+				(questions[gateway3Documents] as any).config.actionButtonVisibleInSummary = gateway3Complete;
 				questions[gateway3Documents].editable = !gateway3Complete;
 
 				if (gateway3Complete) {

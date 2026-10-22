@@ -10,7 +10,6 @@ export type {
 } from '../../../storage/index.ts';
 import type { QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
 export const FILE_UPLOADER_COMPONENT_TYPE = 'file-uploader' as const;
-export const DOCUMENTS_VIEWER = 'documents-viewer';
 
 export type FileUploaderStorageProvider = FileStorageProvider;
 

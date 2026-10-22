@@ -10,7 +10,7 @@ import {
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { fileUploadQuestionProperties } from '../questions.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+
 
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
@@ -157,29 +157,6 @@ export const compileGateway3Data = async (
 	db: PrismaClient,
 	currentData: Gateway3Answers
 ): Promise<CompiledGateway3Answers> => {
-	const REQUIRED_DOCUMENT_SETS = {
-		proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
-		mapOfPolicies: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
-		statementOfCompliance: DOCUMENT_SET_ID.G3_STATEMENT_OF_COMPLIANCE,
-		statementOfSoundness: DOCUMENT_SET_ID.G3_STATEMENT_OF_SOUNDNESS,
-		consultationEngagementSummary: DOCUMENT_SET_ID.G3_CONSULTATION_ENGAGEMENT_SUMMARY,
-		scopingConsultationSummary: DOCUMENT_SET_ID.G3_SCOPING_CONSULTATION_SUMMARY,
-		consultationContentEvidenceSummary: DOCUMENT_SET_ID.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY,
-		consultationProposedPlanSummary: DOCUMENT_SET_ID.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY,
-		practicalArrangementsStatement: DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT
-	};
-
-	const OPTIONAL_DOCUMENT_SETS = {
-		copiesOfRepresentations: DOCUMENT_SET_ID.G3_COPIES_OF_REPRESENTATIONS,
-		supplementaryPlansStatement: DOCUMENT_SET_ID.G3_SUPPLEMENTARY_PLANS_STATEMENT,
-		environmentalReport: DOCUMENT_SET_ID.G3_ENVIRONMENTAL_REPORT,
-		statementOfReasonsDetermination: DOCUMENT_SET_ID.G3_STATEMENT_OF_REASONS_DETERMINATION,
-		representationsProgressSummary: DOCUMENT_SET_ID.G3_REPRESENTATIONS_PROGRESS_SUMMARY,
-		gateway2IssuesSummary: DOCUMENT_SET_ID.G3_GATEWAY_2_ISSUES_SUMMARY,
-		changesSinceConsultationStatement: DOCUMENT_SET_ID.G3_CHANGES_SINCE_CONSULTATION_STATEMENT,
-		otherDocuments: DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS
-	};
-
 	const documents = await db.document.findMany({
 		where: {
 			caseId: currentData.caseId,
