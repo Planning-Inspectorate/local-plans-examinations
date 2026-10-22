@@ -33,6 +33,7 @@ type ResubmissionRequest = Request & {
 // ---------------------------------------------------------------------------
 
 const RESUBMISSION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/resubmission.njk';
+const PREVIOUS_SUBMISSION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/previous-submission.njk';
 const UPLOAD_VIEW_PATH = 'forms/custom-components/file-uploader/index.njk';
 
 const RESUBMISSION_DOCUMENTS_QUESTION: FileUploaderQuestionProps = {
@@ -89,6 +90,62 @@ const RESUBMISSION_DOCUMENTS_QUESTION: FileUploaderQuestionProps = {
 
 const SUBMIT_ERROR = 'Add any new or updated documents before submitting';
 
+/** Required GW3 documents shown on the initial submission detail page.
+ *  `documentSetId` values match DOCUMENT_SET_ID from static-data. */
+const REQUIRED_DOCUMENT_DEFS = [
+	{
+		title: 'Proposed local plan intended for submission for examination',
+		documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN
+	},
+	{ title: 'Map of proposed local plan policies', documentSetId: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES },
+	{ title: 'Statement of Compliance', documentSetId: DOCUMENT_SET_ID.G3_STATEMENT_OF_COMPLIANCE },
+	{ title: 'Statement of Soundness', documentSetId: DOCUMENT_SET_ID.G3_STATEMENT_OF_SOUNDNESS },
+	{
+		title: 'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+		documentSetId: DOCUMENT_SET_ID.G3_CONSULTATION_ENGAGEMENT_SUMMARY
+	},
+	{ title: 'Summary of scoping consultation', documentSetId: DOCUMENT_SET_ID.G3_SCOPING_CONSULTATION_SUMMARY },
+	{
+		title: 'Summary of consultation on proposed local plan content and evidence',
+		documentSetId: DOCUMENT_SET_ID.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY
+	},
+	{
+		title: 'Summary of consultation on proposed local plan',
+		documentSetId: DOCUMENT_SET_ID.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY
+	},
+	{
+		title: 'Statement setting out practical arrangements demonstrating readiness for examination',
+		documentSetId: DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT
+	}
+];
+
+/** Optional GW3 documents shown on the initial submission detail page. */
+const OPTIONAL_DOCUMENT_DEFS = [
+	{ title: 'Copies of representations', documentSetId: DOCUMENT_SET_ID.G3_COPIES_OF_REPRESENTATIONS },
+	{ title: 'Supplementary plans statement', documentSetId: DOCUMENT_SET_ID.G3_SUPPLEMENTARY_PLANS_STATEMENT },
+	{ title: 'Environmental report', documentSetId: DOCUMENT_SET_ID.G3_ENVIRONMENTAL_REPORT },
+	{
+		title:
+			'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+		documentSetId: DOCUMENT_SET_ID.G3_STATEMENT_OF_REASONS_DETERMINATION
+	},
+	{
+		title:
+			'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+		documentSetId: DOCUMENT_SET_ID.G3_REPRESENTATIONS_PROGRESS_SUMMARY
+	},
+	{
+		title: 'Summary of how Gateway 2 assessor issues have been addressed',
+		documentSetId: DOCUMENT_SET_ID.G3_GATEWAY_2_ISSUES_SUMMARY
+	},
+	{
+		title:
+			'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+		documentSetId: DOCUMENT_SET_ID.G3_CHANGES_SINCE_CONSULTATION_STATEMENT
+	},
+	{ title: 'Other documents', documentSetId: DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS }
+];
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -108,6 +165,16 @@ function formatDisplayDate(date: Date | null | undefined) {
 		day: 'numeric',
 		month: 'long',
 		year: 'numeric'
+	});
+}
+
+function formatDisplayTime(date: Date | null | undefined) {
+	if (!date) {
+		return undefined;
+	}
+	return date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit'
 	});
 }
 
@@ -294,7 +361,8 @@ export function buildGetResubmissionPage(): RequestHandler {
 		}));
 		const previousSubmissions = completedSubmissions.map((sub, index) => ({
 			number: index + 1,
-			submittedDate: formatDisplayDate(sub.completionDate)
+			submittedDate: formatDisplayDate(sub.completionDate),
+			url: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission/${index + 1}`
 		}));
 
 		// Get uploaded resubmission documents from session
@@ -307,12 +375,19 @@ export function buildGetResubmissionPage(): RequestHandler {
 			};
 		});
 
+		// Last completed submission metadata for display
+		const lastCompleted = completedSubmissions.at(-1);
+		const previousSubmissionDate = formatDisplayDate(lastCompleted?.completionDate);
+		const previousSubmitter = currentCase?.email;
+
 		return res.render(RESUBMISSION_VIEW_PATH, {
 			pageCaption: currentCase?.planTitle,
 			submissionNumber,
 			reportDocuments,
 			previousSubmissions,
 			uploadedDocuments,
+			previousSubmissionDate,
+			previousSubmitter,
 			addDocumentsUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/additional-documents`,
 			saveAndComeBackUrl: `/manage-local-plans/${encodedPlanReference}`,
 			backLinkUrl: `/manage-local-plans/${encodedPlanReference}`,
@@ -342,7 +417,222 @@ export function buildPostResubmission(): RequestHandler {
 			return buildGetResubmissionPage()(req, res, () => {});
 		}
 
-		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/declaration`);
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/declaration`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET declaration page
+// ---------------------------------------------------------------------------
+
+const DECLARATION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/declaration.njk';
+
+export function buildGetDeclarationPage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		const resubmissionUrl = `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission`;
+
+		return res.render(DECLARATION_VIEW_PATH, {
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			backLinkUrl: resubmissionUrl,
+			goBackUrl: resubmissionUrl
+		});
+	};
+}
+
+// ---------------------------------------------------------------------------
+// POST declaration — completes the current submission
+// ---------------------------------------------------------------------------
+
+const SUBMISSION_COMPLETE_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/submission-complete.njk';
+
+export function buildPostDeclarationPage(service: PortalService): RequestHandler {
+	return async (req, res) => {
+		const request = req as ResubmissionRequest;
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		const currentCase = request.currentCase as Record<string, unknown>;
+		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
+		const submissions = (gateway3Info?.submissions ?? []) as {
+			id: string;
+			completionDate: Date | null;
+			decision: string | null;
+		}[];
+
+		// Find the current placeholder submission (last, with no completionDate)
+		const currentSubmission = submissions.at(-1);
+		if (!currentSubmission || currentSubmission.completionDate) {
+			service.logger.error(`No pending submission found for resubmission declaration ${planReference ?? ''}`);
+			return res.status(500).send('No pending submission found');
+		}
+
+		const completionDate = new Date();
+
+		try {
+			await service.db.gateway3Submission.update({
+				where: { id: currentSubmission.id },
+				data: { completionDate }
+			});
+		} catch (error) {
+			service.logger.error({ error }, `Failed to complete resubmission for case ${planReference ?? ''}`);
+			return res.status(500).send('Failed to record submission');
+		}
+
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission-complete`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET submission complete page
+// ---------------------------------------------------------------------------
+
+export function buildGetSubmissionCompletePage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+
+		return res.render(SUBMISSION_COMPLETE_VIEW_PATH, {
+			pageTitle: 'Gateway 3 submission complete',
+			planOverviewUrl: `/manage-local-plans/${encodedPlanReference}`
+		});
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET previous submission detail page
+// ---------------------------------------------------------------------------
+
+type CaseDocument = {
+	guid: string;
+	name: string;
+	documentSetId: string;
+	latestDocumentVersion: {
+		originalFilename: string | null;
+		fileName: string | null;
+		dateCreated: Date | null;
+	} | null;
+};
+
+function buildDocumentFileView(doc: CaseDocument, encodedPlanReference: string) {
+	return {
+		fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
+		downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`
+	};
+}
+
+export function buildGetPreviousSubmissionPage(): RequestHandler {
+	return (req, res) => {
+		const request = req as ResubmissionRequest;
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		const currentCase = request.currentCase as Record<string, unknown>;
+		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
+		const submissions = (gateway3Info?.submissions ?? []) as {
+			completionDate: Date | null;
+			decision: string | null;
+		}[];
+		const documents = (currentCase?.documents ?? []) as CaseDocument[];
+
+		const submissionNumberParam = req.params.submissionNumber;
+		const submissionNumber = Number(submissionNumberParam);
+
+		if (isNaN(submissionNumber) || submissionNumber < 1 || submissionNumber > submissions.length) {
+			return renderNotFound(res);
+		}
+
+		// The submission at this index (0-based)
+		const submission = submissions[submissionNumber - 1];
+		// Only allow viewing completed submissions (not the current placeholder)
+		if (!submission.completionDate && !submission.decision) {
+			return renderNotFound(res);
+		}
+
+		const isInitialSubmission = submissionNumber === 1;
+		const submissionDate = formatDisplayDate(submission.completionDate);
+		const submissionTime = formatDisplayTime(submission.completionDate);
+
+		// Find the latest report — scan completed submissions for the highest
+		// numbered g3-document-N that has a document in the DB.
+		const completedSubmissions = submissions.filter((s) => s.completionDate || s.decision);
+		let reportSubmissionNumber = completedSubmissions.length;
+		let reportDoc: CaseDocument | null = null;
+		for (let i = completedSubmissions.length; i >= 1; i--) {
+			const setId = DOCUMENT_SET_ID[`G3_DOCUMENT_${i}`];
+			const doc = setId ? documents.find((d) => d.documentSetId === setId) : null;
+			if (doc) {
+				reportSubmissionNumber = i;
+				reportDoc = doc;
+				break;
+			}
+		}
+		const reportDocument = reportDoc
+			? {
+					fileName:
+						reportDoc.latestDocumentVersion?.originalFilename ??
+						reportDoc.latestDocumentVersion?.fileName ??
+						reportDoc.name,
+					downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${reportDoc.guid}`,
+					dateIssued: formatDisplayDate(reportDoc.latestDocumentVersion?.dateCreated)
+				}
+			: null;
+
+		// Other completed submissions (excluding the one being viewed and the placeholder)
+		const previousSubmissions = submissions
+			.map((sub, index) => ({ sub, index }))
+			.filter(({ sub, index }) => index !== submissionNumber - 1 && (sub.completionDate || sub.decision))
+			.map(({ sub, index }) => ({
+				number: index + 1,
+				submittedDate: formatDisplayDate(sub.completionDate),
+				url: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission/${index + 1}`
+			}));
+
+		// For submission 1: build required and optional document sections from document sets
+		let documentSections: {
+			heading: string;
+			documents: { title: string; files: { fileName: string; downloadUrl: string }[] }[];
+		}[] = [];
+
+		if (isInitialSubmission) {
+			const buildDocSection = (defs: { title: string; documentSetId: string }[]) =>
+				defs.map((def) => {
+					const matchingDocs = documents.filter((d) => d.documentSetId === def.documentSetId);
+					return {
+						title: def.title,
+						files: matchingDocs.map((d) => buildDocumentFileView(d, encodedPlanReference))
+					};
+				});
+
+			documentSections = [
+				{ heading: 'Required information', documents: buildDocSection(REQUIRED_DOCUMENT_DEFS) },
+				{ heading: 'Optional documents', documents: buildDocSection(OPTIONAL_DOCUMENT_DEFS) }
+			];
+		}
+
+		// For submission 2+: show resubmission documents uploaded during this submission
+		// These are stored in the document set for this submission number
+		const resubmissionDocumentSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
+		const resubmissionDocs = !isInitialSubmission
+			? documents
+					.filter((d) => d.documentSetId === resubmissionDocumentSetId && (!reportDoc || d.guid !== reportDoc.guid))
+					.map((d) => buildDocumentFileView(d, encodedPlanReference))
+			: [];
+
+		return res.render(PREVIOUS_SUBMISSION_VIEW_PATH, {
+			pageCaption: currentCase?.planTitle,
+			submissionNumber,
+			reportSubmissionNumber,
+			isInitialSubmission,
+			reportDocument,
+			previousSubmissions,
+			submissionDate,
+			submissionTime,
+			submitter: currentCase?.email,
+			documentSections,
+			resubmissionDocuments: resubmissionDocs,
+			backLinkUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission`
+		});
 	};
 }
 
@@ -427,6 +717,9 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 	const postResubmission = buildPostResubmission();
 	const getUploadPage = buildGetUploadDocumentsPage();
 	const postUploadPage = buildPostUploadDocumentsPage();
+	const getDeclarationPage = buildGetDeclarationPage();
+	const postDeclarationPage = asyncHandler(buildPostDeclarationPage(service));
+	const getSubmissionCompletePage = buildGetSubmissionCompletePage();
 
 	const fileUploaderStorage = () => service.createFileStorage('gateway3-resubmission');
 
@@ -475,6 +768,16 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 		}
 	});
 
+	const getPreviousSubmissionPage = buildGetPreviousSubmissionPage();
+
+	const downloadDocument = asyncHandler(async (req: Request, res: Response) => {
+		const { documentId } = req.params;
+		if (!documentId || typeof documentId !== 'string') {
+			throw new Error('Missing documentId for download');
+		}
+		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
+	});
+
 	return {
 		loadCase,
 		guardResubmission,
@@ -482,6 +785,11 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 		postResubmission,
 		getUploadPage,
 		postUploadPage,
+		getDeclarationPage,
+		postDeclarationPage,
+		getSubmissionCompletePage,
+		getPreviousSubmissionPage,
+		downloadDocument,
 		upload,
 		uploadDocuments,
 		deleteDocument

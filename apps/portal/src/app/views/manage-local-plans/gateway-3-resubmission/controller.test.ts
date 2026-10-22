@@ -7,11 +7,16 @@ import {
 	buildGetResubmissionPage,
 	buildPostResubmission,
 	buildGetUploadDocumentsPage,
+	buildGetPreviousSubmissionPage,
+	buildGetDeclarationPage,
+	buildPostDeclarationPage,
+	buildGetSubmissionCompletePage,
 	buildLoadResubmissionCase,
 	buildGateway3ResubmissionMiddleware,
 	handleMulterFileSizeError
 } from './controller.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 function buildMockResponse() {
 	const calls: { method: string; args: unknown[] }[] = [];
@@ -330,6 +335,260 @@ describe('buildLoadResubmissionCase', () => {
 	});
 });
 
+describe('buildGetPreviousSubmissionPage', () => {
+	const makeReq = (submissionNumber: string, submissions: unknown[], documents: unknown[] = []) =>
+		({
+			params: { planReference: 'PLAN-001', submissionNumber },
+			currentCase: {
+				planTitle: 'East Borough Local Plan',
+				email: 'lpa@example.com',
+				gateway3Info: { submissions },
+				documents
+			}
+		}) as unknown as Request;
+
+	it('renders 404 for invalid submission number', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const req = makeReq('abc', [
+			{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED }
+		]);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 404);
+	});
+
+	it('renders 404 for submission number 0', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const req = makeReq('0', [
+			{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED }
+		]);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 404);
+	});
+
+	it('renders 404 for submission number exceeding total submissions', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const req = makeReq('5', [
+			{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED }
+		]);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 404);
+	});
+
+	it('renders 404 for current placeholder submission', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const req = makeReq('2', [
+			{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: null, decision: null }
+		]);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 404);
+	});
+
+	it('renders submission 1 detail page with required and optional document sections', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const submissions = [
+			{ completionDate: new Date('2026-10-01T12:00:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: null, decision: null }
+		];
+		const documents = [
+			{
+				guid: 'report-guid',
+				name: 'GW3Report.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_1,
+				latestDocumentVersion: {
+					originalFilename: 'GW3Report.pdf',
+					fileName: 'GW3Report.pdf',
+					dateCreated: new Date('2026-10-15')
+				}
+			},
+			{
+				guid: 'plan-guid',
+				name: 'proposed-local-plan.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+				latestDocumentVersion: {
+					originalFilename: 'proposed-local-plan.pdf',
+					fileName: 'proposed-local-plan.pdf',
+					dateCreated: new Date('2026-10-01')
+				}
+			}
+		];
+		const req = makeReq('1', submissions, documents);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('previous-submission.njk'));
+		assert.strictEqual(data.submissionNumber, 1);
+		assert.strictEqual(data.isInitialSubmission, true);
+		assert.strictEqual(data.pageCaption, 'East Borough Local Plan');
+		assert.strictEqual(data.submitter, 'lpa@example.com');
+		assert.strictEqual(data.reportSubmissionNumber, 1);
+
+		// Should have report document
+		const reportDoc = data.reportDocument as Record<string, unknown>;
+		assert.ok(reportDoc);
+		assert.strictEqual(reportDoc.fileName, 'GW3Report.pdf');
+
+		// Should have required and optional document sections
+		const sections = data.documentSections as { heading: string; documents: unknown[] }[];
+		assert.strictEqual(sections.length, 2);
+		assert.strictEqual(sections[0].heading, 'Required information');
+		assert.strictEqual(sections[1].heading, 'Optional documents');
+
+		// Required section should have 9 document rows
+		assert.strictEqual(sections[0].documents.length, 9);
+
+		// No previous submissions for submission 1
+		const prevSubs = data.previousSubmissions as unknown[];
+		assert.strictEqual(prevSubs.length, 0);
+
+		// Should have a back link
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+	});
+
+	it('renders submission 2 detail page with resubmission documents and previous submissions', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const submissions = [
+			{ completionDate: new Date('2026-10-01T12:00:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: new Date('2026-10-20T14:30:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: null, decision: null }
+		];
+		const documents = [
+			{
+				guid: 'report-1-guid',
+				name: 'GW3Report-Sub1.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_1,
+				latestDocumentVersion: {
+					originalFilename: 'GW3Report-Sub1.pdf',
+					fileName: 'GW3Report-Sub1.pdf',
+					dateCreated: new Date('2026-10-15')
+				}
+			},
+			{
+				guid: 'resub-doc-guid',
+				name: 'updated-plan.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_2,
+				latestDocumentVersion: {
+					originalFilename: 'updated-plan.pdf',
+					fileName: 'updated-plan.pdf',
+					dateCreated: new Date('2026-10-20')
+				}
+			},
+			{
+				guid: 'report-2-guid',
+				name: 'GW3Report-Sub2.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_2,
+				latestDocumentVersion: {
+					originalFilename: 'GW3Report-Sub2.pdf',
+					fileName: 'GW3Report-Sub2.pdf',
+					dateCreated: new Date('2026-11-01')
+				}
+			}
+		];
+		const req = makeReq('2', submissions, documents);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('previous-submission.njk'));
+		assert.strictEqual(data.submissionNumber, 2);
+		assert.strictEqual(data.isInitialSubmission, false);
+		// Latest report is from g3-document-2 (first doc found scanning from top)
+		assert.strictEqual(data.reportSubmissionNumber, 2);
+
+		// Report is the first document found in g3-document-2
+		const reportDoc = data.reportDocument as Record<string, unknown>;
+		assert.ok(reportDoc);
+		assert.strictEqual(reportDoc.fileName, 'updated-plan.pdf');
+
+		// Previous submissions should link to submission 1
+		const prevSubs = data.previousSubmissions as { number: number; url: string }[];
+		assert.strictEqual(prevSubs.length, 1);
+		assert.strictEqual(prevSubs[0].number, 1);
+		assert.ok(prevSubs[0].url.includes('/submission/1'));
+
+		// Resubmission documents (excludes the doc used as report)
+		const resubDocs = data.resubmissionDocuments as { fileName: string }[];
+		assert.strictEqual(resubDocs.length, 1);
+		assert.strictEqual(resubDocs[0].fileName, 'GW3Report-Sub2.pdf');
+
+		// No document sections for non-initial submission
+		const sections = data.documentSections as unknown[];
+		assert.strictEqual(sections.length, 0);
+	});
+
+	it('includes submission URLs in previous submissions list', () => {
+		const handler = buildGetPreviousSubmissionPage();
+		const submissions = [
+			{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: new Date('2026-10-20'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: new Date('2026-11-05'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: null, decision: null }
+		];
+		const req = makeReq('3', submissions, []);
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const data = calls[0].args[1] as Record<string, unknown>;
+		const prevSubs = data.previousSubmissions as { number: number; url: string }[];
+		assert.strictEqual(prevSubs.length, 2);
+		assert.strictEqual(prevSubs[0].number, 1);
+		assert.ok(prevSubs[0].url.includes('/submission/1'));
+		assert.strictEqual(prevSubs[1].number, 2);
+		assert.ok(prevSubs[1].url.includes('/submission/2'));
+	});
+});
+
+describe('buildGetResubmissionPage - previous submission URLs', () => {
+	it('includes URLs in previous submissions for linking to detail pages', () => {
+		const handler = buildGetResubmissionPage();
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				planTitle: 'Test Plan',
+				gateway3Info: {
+					submissions: [
+						{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+						{ completionDate: null, decision: null }
+					]
+				},
+				documents: []
+			},
+			session: { fileUploader: {} }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const data = calls[0].args[1] as Record<string, unknown>;
+		const prevSubs = data.previousSubmissions as { number: number; url: string }[];
+		assert.strictEqual(prevSubs.length, 1);
+		assert.strictEqual(prevSubs[0].number, 1);
+		assert.ok(prevSubs[0].url.includes('/submission/1'));
+	});
+});
+
 describe('buildGateway3ResubmissionMiddleware', () => {
 	it('returns all expected middleware handlers', () => {
 		const mockService = {
@@ -350,6 +609,11 @@ describe('buildGateway3ResubmissionMiddleware', () => {
 		assert.ok(middleware.postResubmission, 'postResubmission');
 		assert.ok(middleware.getUploadPage, 'getUploadPage');
 		assert.ok(middleware.postUploadPage, 'postUploadPage');
+		assert.ok(middleware.getDeclarationPage, 'getDeclarationPage');
+		assert.ok(middleware.postDeclarationPage, 'postDeclarationPage');
+		assert.ok(middleware.getSubmissionCompletePage, 'getSubmissionCompletePage');
+		assert.ok(middleware.getPreviousSubmissionPage, 'getPreviousSubmissionPage');
+		assert.ok(middleware.downloadDocument, 'downloadDocument');
 		assert.ok(middleware.upload, 'upload');
 		assert.ok(middleware.uploadDocuments, 'uploadDocuments');
 		assert.ok(middleware.deleteDocument, 'deleteDocument');
@@ -395,5 +659,116 @@ describe('handleMulterFileSizeError', () => {
 			(next as unknown as { mock: { calls: Array<{ arguments: unknown[] }> } }).mock.calls[0].arguments[0],
 			err
 		);
+	});
+});
+
+describe('buildGetDeclarationPage', () => {
+	it('renders the declaration page with correct heading and back link', () => {
+		const handler = buildGetDeclarationPage();
+		const req = {
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('declaration.njk'));
+		assert.strictEqual(data.pageHeading, "Are you sure you're ready to submit?");
+		assert.strictEqual(data.goBackUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+	});
+});
+
+describe('buildPostDeclarationPage', () => {
+	it('updates the current submission with a completion date and redirects', async () => {
+		const updateMock = mock.fn(async () => ({}));
+		const mockService = {
+			db: {
+				gateway3Submission: { update: updateMock }
+			},
+			logger: { error: mock.fn() }
+		};
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'sub-1',
+							completionDate: new Date('2026-10-01'),
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+						},
+						{ id: 'sub-2', completionDate: null, decision: null }
+					]
+				}
+			}
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		await handler(req, res, () => {});
+
+		// Should have called update on the placeholder submission
+		assert.strictEqual(updateMock.mock.callCount(), 1);
+		const updateCall = (
+			updateMock.mock.calls as unknown as { arguments: [{ where: { id: string }; data: { completionDate: Date } }] }[]
+		)[0].arguments[0];
+		assert.strictEqual(updateCall.where.id, 'sub-2');
+		assert.ok(updateCall.data.completionDate instanceof Date);
+
+		// Should redirect to submission complete
+		const redirectCall = calls.find((c) => c.method === 'redirect');
+		assert.ok(redirectCall);
+		assert.ok((redirectCall.args[0] as string).includes('submission-complete'));
+	});
+
+	it('returns 500 when no pending submission exists', async () => {
+		const mockService = {
+			db: { gateway3Submission: { update: mock.fn() } },
+			logger: { error: mock.fn() }
+		};
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'sub-1',
+							completionDate: new Date('2026-10-01'),
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+						}
+					]
+				}
+			}
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+		(res as unknown as Record<string, unknown>).send = (body: string) => {
+			calls.push({ method: 'send', args: [body] });
+		};
+
+		await handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 500);
+	});
+});
+
+describe('buildGetSubmissionCompletePage', () => {
+	it('renders the submission complete page with plan overview link', () => {
+		const handler = buildGetSubmissionCompletePage();
+		const req = {
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('submission-complete.njk'));
+		assert.strictEqual(data.planOverviewUrl, '/manage-local-plans/PLAN-001');
 	});
 });
