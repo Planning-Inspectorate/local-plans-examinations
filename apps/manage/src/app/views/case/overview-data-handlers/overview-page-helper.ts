@@ -136,8 +136,27 @@ async function addUploadedDocumentDetailsToAnswers(
 	}
 }
 
+type Gateway3Answers = {
+	id: string;
+	caseId: string;
+	expectedSubmissionForExaminationDate?: Date | null;
+	submissionForExaminationDate?: Date | null;
+	examiningInspector1?: string | null;
+	examiningInspector2?: string | null;
+	examiningInspector3?: string | null;
+	examiningInspectorAppointmentDate?: Date | null;
+	examinationWebsite?: string | null;
+};
+type CompiledGateway3Answers = Gateway3Answers & {
+	optionalData: {
+		[k: string]: string;
+	};
+};
 
-export const compileGateway3Data = async (db: PrismaClient, currentData: any) => {
+export const compileGateway3Data = async (
+	db: PrismaClient,
+	currentData: Gateway3Answers
+): Promise<CompiledGateway3Answers> => {
 	const REQUIRED_DOCUMENT_SETS = {
 		proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
 		mapOfPolicies: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
@@ -193,7 +212,6 @@ export const compileGateway3Data = async (db: PrismaClient, currentData: any) =>
 		...documentsForFields(REQUIRED_DOCUMENT_SETS),
 		optionalData: documentsForFields(OPTIONAL_DOCUMENT_SETS)
 	};
-	console.log('compileGateway3Data', data);
 
 	return { ...data, ...currentData };
 };

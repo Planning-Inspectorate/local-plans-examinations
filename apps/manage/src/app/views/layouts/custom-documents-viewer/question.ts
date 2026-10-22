@@ -67,12 +67,6 @@ export default class CustomDocumentsQuestion extends Question {
 			['Other Documents']: viewAnswers.optionalData.otherDocuments
 		};
 
-		console.log({
-			...viewModel,
-			rowsMapRequiredData,
-			optionDataMap
-		});
-
 		return {
 			...viewModel,
 			rowsMapRequiredData,
