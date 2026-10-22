@@ -106,27 +106,27 @@ async function addUploadedDocumentDetailsToAnswers(
 	}
 }
 
-// G3_PROPOSED_LOCAL_PLAN: 'g3-proposed-plan',
-// 	G3_MAP_OF_POLICIES: 'g3-map-of-policies',
-// 	G3_STATEMENT_OF_COMPLIANCE: 'g3-stat-compliance',
-// 	G3_STATEMENT_OF_SOUNDNESS: 'g3-stat-soundness',
-// 	G3_CONSULTATION_ENGAGEMENT_SUMMARY: 'g3-cons-engage-summ',
-// 	G3_SCOPING_CONSULTATION_SUMMARY: 'g3-scoping-cons-sum',
-// 	G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY: 'g3-cons-content-sum',
-// 	G3_CONSULTATION_PROPOSED_PLAN_SUMMARY: 'g3-cons-plan-summ',
-// 	G3_PRACTICAL_ARRANGEMENTS_STATEMENT: 'g3-practical-arrng',
-//
-// 	// Gateway 3 portal optional documents
-// 	G3_COPIES_OF_REPRESENTATIONS: 'g3-copies-of-reps',
-// 	G3_SUPPLEMENTARY_PLANS_STATEMENT: 'g3-supp-plans-stmt',
-// 	G3_ENVIRONMENTAL_REPORT: 'g3-env-report',
-// 	G3_STATEMENT_OF_REASONS_DETERMINATION: 'g3-stmt-reasons',
-// 	G3_REPRESENTATIONS_PROGRESS_SUMMARY: 'g3-reps-progress',
-// 	G3_GATEWAY_2_ISSUES_SUMMARY: 'g3-g2-issues-summ',
-// 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'g3-changes-stmt',
-// 	G3_OTHER_DOCUMENTS: 'g3-other-documents',
+type Gateway3Answers = {
+	id: string;
+	caseId: string;
+	expectedSubmissionForExaminationDate?: Date | null;
+	submissionForExaminationDate?: Date | null;
+	examiningInspector1?: string | null;
+	examiningInspector2?: string | null;
+	examiningInspector3?: string | null;
+	examiningInspectorAppointmentDate?: Date | null;
+	examinationWebsite?: string | null;
+};
+type CompiledGateway3Answers = Gateway3Answers & {
+	optionalData: {
+		[k: string]: string;
+	};
+};
 
-export const compileGateway3Data = async (db: PrismaClient, currentData: any) => {
+export const compileGateway3Data = async (
+	db: PrismaClient,
+	currentData: Gateway3Answers
+): Promise<CompiledGateway3Answers> => {
 	const REQUIRED_DOCUMENT_SETS = {
 		proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
 		mapOfPolicies: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
@@ -182,7 +182,6 @@ export const compileGateway3Data = async (db: PrismaClient, currentData: any) =>
 		...documentsForFields(REQUIRED_DOCUMENT_SETS),
 		optionalData: documentsForFields(OPTIONAL_DOCUMENT_SETS)
 	};
-	console.log('compileGateway3Data', data);
 
 	return { ...data, ...currentData };
 };
