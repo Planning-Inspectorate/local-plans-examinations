@@ -8,6 +8,7 @@ import { consumeAlertsFromSession } from '../../../util/alert.ts';
 export class Gateway3TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
+		this.tryAddPauseStatusBanner(context);
 		if (!req.params.question) {
 			consumeAlertsFromSession(req, res);
 		}

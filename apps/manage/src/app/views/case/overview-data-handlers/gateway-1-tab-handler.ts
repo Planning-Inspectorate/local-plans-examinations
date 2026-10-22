@@ -9,6 +9,7 @@ export class Gateway1TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		this.tryAddPauseStatusBanner(context);
 		if (!req.params.question) {
 			consumeAlertsFromSession(req, res);
 		}

@@ -5,8 +5,7 @@ import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { formatValue } from '../../../util/util.ts';
 import { sortByDateColumn } from '#util/util.ts';
-import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
-import { pushAlertToSession, consumeAlertsFromSession } from '../../../util/alert.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -17,6 +16,9 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			where: { caseId: caseRecord.id },
 			include: { planPauseHistory: true, hearings: true }
 		});
+		if (!journey4Data) {
+			throw Error(`Could not fetch exam data for case '${caseRecord.id}'`);
+		}
 		const isSound = formatValue(journey4Data?.isSound);
 
 		await addUploadedDocumentDetailsToAnswers(
@@ -38,9 +40,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			journeyResponse.answers[`planPauseEndDate-${i + 1}`] = sortedPauseData[i].planPauseEndDate;
 			journeyResponse.answers[`planPauseEndDetails-${i + 1}`] = sortedPauseData[i].planPauseEndDetails;
 		}
-		if (ExaminationTabHandler.isCurrentlyPaused(sortedPauseData as PlanPauseHistory[])) {
-			pushAlertToSession(req, 'important', 'This examination is paused');
-		}
+		this.tryAddPauseStatusBanner(context, journey4Data);
 		if (!req.params.question) {
 			consumeAlertsFromSession(req, res);
 		}
@@ -68,23 +68,5 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			}
 		}
 		if (next) next();
-	}
-	/**
-	 * Return true if there are any pauses that overlap with the current datetime
-	 * @param pauses The list of pauses from the database
-	 * @returns True if there is an overlap, false otherwise
-	 */
-	public static isCurrentlyPaused(pauses: PlanPauseHistory[]) {
-		const currentTime = new Date();
-		for (const pause of pauses) {
-			const indefinitelyPaused = !pause.planPauseEndDate;
-			if (
-				currentTime >= pause.planPauseDate &&
-				(indefinitelyPaused || (pause.planPauseEndDate && currentTime <= pause.planPauseEndDate))
-			) {
-				return true;
-			}
-		}
-		return false;
 	}
 }

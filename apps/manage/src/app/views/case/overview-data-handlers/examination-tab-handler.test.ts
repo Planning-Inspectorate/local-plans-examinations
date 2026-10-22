@@ -32,7 +32,7 @@ describe('Test ExaminationTabHandler', () => {
 					examinationInfoId: 'someId2'
 				}
 			];
-			const isPaused = ExaminationTabHandler.isCurrentlyPaused(pauses);
+			const isPaused = ExaminationTabHandler.isCaseCurrentlyPaused(pauses);
 			assert.equal(isPaused, false);
 		});
 		it('should return false when a pause starts and ends before the current date', () => {
@@ -56,7 +56,7 @@ describe('Test ExaminationTabHandler', () => {
 					examinationInfoId: 'someId2'
 				}
 			];
-			const isPaused = ExaminationTabHandler.isCurrentlyPaused(pauses);
+			const isPaused = ExaminationTabHandler.isCaseCurrentlyPaused(pauses);
 			assert.equal(isPaused, false);
 		});
 		it('should return true when an indefinite pause overlaps with the current date', () => {
@@ -80,7 +80,7 @@ describe('Test ExaminationTabHandler', () => {
 					examinationInfoId: 'someId2'
 				}
 			];
-			const isPaused = ExaminationTabHandler.isCurrentlyPaused(pauses);
+			const isPaused = ExaminationTabHandler.isCaseCurrentlyPaused(pauses);
 			assert.equal(isPaused, true);
 		});
 		it('should return true when a pause start and end date overlaps with the current date', () => {
@@ -104,7 +104,7 @@ describe('Test ExaminationTabHandler', () => {
 					examinationInfoId: 'someId2'
 				}
 			];
-			const isPaused = ExaminationTabHandler.isCurrentlyPaused(pauses);
+			const isPaused = ExaminationTabHandler.isCaseCurrentlyPaused(pauses);
 			assert.equal(isPaused, true);
 		});
 	});
