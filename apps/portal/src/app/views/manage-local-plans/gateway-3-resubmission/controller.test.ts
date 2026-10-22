@@ -163,6 +163,55 @@ describe('buildGetResubmissionPage', () => {
 		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001');
 		assert.strictEqual(data.saveAndComeBackUrl, '/manage-local-plans/PLAN-001');
 	});
+
+	it('resolves uploaded document download URLs from DB documents when session metadata lacks documentGuid', () => {
+		const handler = buildGetResubmissionPage();
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				planTitle: 'Test Plan',
+				gateway3Info: {
+					submissions: [
+						{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+						{ completionDate: null, decision: null }
+					]
+				},
+				documents: [
+					{
+						guid: 'db-doc-guid-1',
+						name: 'case-id/gateway-3-document-2/uuid-file1.pdf',
+						documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_2,
+						latestDocumentVersion: { originalFilename: 'file1.pdf', fileName: 'file1.pdf', dateCreated: null }
+					}
+				]
+			},
+			session: {
+				fileUploader: {
+					'PLAN-001:resubmissionDocuments:2': {
+						uploadedFiles: [
+							{
+								id: 'case-id/gateway-3-document-2/uuid-file1.pdf',
+								fileName: 'file1.pdf',
+								metadata: { journeyId: 'gateway3-resubmission' }
+							}
+						]
+					}
+				}
+			}
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const data = calls[0].args[1] as Record<string, unknown>;
+		const uploadedDocs = data.uploadedDocuments as { fileName: string; downloadUrl: string }[];
+		assert.strictEqual(uploadedDocs.length, 1);
+		assert.strictEqual(uploadedDocs[0].fileName, 'file1.pdf');
+		assert.strictEqual(
+			uploadedDocs[0].downloadUrl,
+			'/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/db-doc-guid-1'
+		);
+	});
 });
 
 describe('buildPostResubmission', () => {
@@ -213,6 +262,7 @@ describe('buildPostResubmission', () => {
 
 		assert.strictEqual(calls[0].method, 'redirect');
 		assert.ok((calls[0].args[0] as string).includes('declaration'));
+		assert.ok((calls[0].args[0] as string).includes('from=resubmission'), 'expected from=resubmission query param');
 	});
 });
 
@@ -439,10 +489,10 @@ describe('buildGetPreviousSubmissionPage', () => {
 		assert.strictEqual(data.submitter, 'lpa@example.com');
 		assert.strictEqual(data.reportSubmissionNumber, 1);
 
-		// Should have report document
-		const reportDoc = data.reportDocument as Record<string, unknown>;
-		assert.ok(reportDoc);
-		assert.strictEqual(reportDoc.fileName, 'GW3Report.pdf');
+		// Should have report documents
+		const reportDocs = data.reportDocuments as Record<string, unknown>[];
+		assert.strictEqual(reportDocs.length, 1);
+		assert.strictEqual(reportDocs[0].fileName, 'GW3Report.pdf');
 
 		// Should have required and optional document sections
 		const sections = data.documentSections as { heading: string; documents: unknown[] }[];
@@ -461,7 +511,7 @@ describe('buildGetPreviousSubmissionPage', () => {
 		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
 	});
 
-	it('renders submission 2 detail page with resubmission documents and previous submissions', () => {
+	it('renders submission 2 detail page with report from g3-document-2 and previous submissions before it', () => {
 		const handler = buildGetPreviousSubmissionPage();
 		const submissions = [
 			{ completionDate: new Date('2026-10-01T12:00:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
@@ -490,13 +540,13 @@ describe('buildGetPreviousSubmissionPage', () => {
 				}
 			},
 			{
-				guid: 'report-2-guid',
-				name: 'GW3Report-Sub2.pdf',
+				guid: 'resub-doc-2-guid',
+				name: 'extra-evidence.pdf',
 				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_2,
 				latestDocumentVersion: {
-					originalFilename: 'GW3Report-Sub2.pdf',
-					fileName: 'GW3Report-Sub2.pdf',
-					dateCreated: new Date('2026-11-01')
+					originalFilename: 'extra-evidence.pdf',
+					fileName: 'extra-evidence.pdf',
+					dateCreated: new Date('2026-10-20')
 				}
 			}
 		];
@@ -510,50 +560,96 @@ describe('buildGetPreviousSubmissionPage', () => {
 		assert.ok(view.includes('previous-submission.njk'));
 		assert.strictEqual(data.submissionNumber, 2);
 		assert.strictEqual(data.isInitialSubmission, false);
-		// Latest report is from g3-document-2 (first doc found scanning from top)
+		// Report is from g3-document-2 (the current submission's set)
 		assert.strictEqual(data.reportSubmissionNumber, 2);
 
-		// Report is the first document found in g3-document-2
-		const reportDoc = data.reportDocument as Record<string, unknown>;
-		assert.ok(reportDoc);
-		assert.strictEqual(reportDoc.fileName, 'updated-plan.pdf');
+		// Report documents from g3-document-2 (all docs in that set)
+		const reportDocs = data.reportDocuments as Record<string, unknown>[];
+		assert.strictEqual(reportDocs.length, 2);
+		assert.strictEqual(reportDocs[0].fileName, 'updated-plan.pdf');
+		assert.strictEqual(reportDocs[1].fileName, 'extra-evidence.pdf');
 
-		// Previous submissions should link to submission 1
+		// Previous submissions only includes submissions BEFORE sub2
 		const prevSubs = data.previousSubmissions as { number: number; url: string }[];
 		assert.strictEqual(prevSubs.length, 1);
 		assert.strictEqual(prevSubs[0].number, 1);
 		assert.ok(prevSubs[0].url.includes('/submission/1'));
 
-		// Resubmission documents (excludes the doc used as report)
+		// Resubmission documents section is empty (all docs shown in report section)
 		const resubDocs = data.resubmissionDocuments as { fileName: string }[];
-		assert.strictEqual(resubDocs.length, 1);
-		assert.strictEqual(resubDocs[0].fileName, 'GW3Report-Sub2.pdf');
+		assert.strictEqual(resubDocs.length, 0);
 
 		// No document sections for non-initial submission
 		const sections = data.documentSections as unknown[];
 		assert.strictEqual(sections.length, 0);
 	});
 
-	it('includes submission URLs in previous submissions list', () => {
+	it('renders submission 3 with correct report, resubmission docs and previous submissions', () => {
 		const handler = buildGetPreviousSubmissionPage();
 		const submissions = [
-			{ completionDate: new Date('2026-10-01'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
-			{ completionDate: new Date('2026-10-20'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
-			{ completionDate: new Date('2026-11-05'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: new Date('2026-10-01T12:00:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: new Date('2026-10-20T14:30:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
+			{ completionDate: new Date('2026-11-05T09:00:00Z'), decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED },
 			{ completionDate: null, decision: null }
 		];
-		const req = makeReq('3', submissions, []);
+		const documents = [
+			{
+				guid: 'report-1-guid',
+				name: 'GW3Report-Sub1.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_1,
+				latestDocumentVersion: {
+					originalFilename: 'GW3Report-Sub1.pdf',
+					fileName: 'GW3Report-Sub1.pdf',
+					dateCreated: new Date('2026-10-15')
+				}
+			},
+			{
+				guid: 'report-2-guid',
+				name: 'GW3Report-Sub2.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_2,
+				latestDocumentVersion: {
+					originalFilename: 'GW3Report-Sub2.pdf',
+					fileName: 'GW3Report-Sub2.pdf',
+					dateCreated: new Date('2026-10-25')
+				}
+			},
+			{
+				guid: 'resub3-doc-guid',
+				name: 'sub3-updated-plan.pdf',
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_3,
+				latestDocumentVersion: {
+					originalFilename: 'sub3-updated-plan.pdf',
+					fileName: 'sub3-updated-plan.pdf',
+					dateCreated: new Date('2026-11-05')
+				}
+			}
+		];
+		const req = makeReq('3', submissions, documents);
 		const { res, calls } = buildMockResponse();
 
 		handler(req, res, () => {});
 
 		const data = calls[0].args[1] as Record<string, unknown>;
+		assert.strictEqual(data.submissionNumber, 3);
+		assert.strictEqual(data.isInitialSubmission, false);
+
+		// Report is from g3-document-3 (the current submission's set)
+		assert.strictEqual(data.reportSubmissionNumber, 3);
+		const reportDocs = data.reportDocuments as Record<string, unknown>[];
+		assert.strictEqual(reportDocs.length, 1);
+		assert.strictEqual(reportDocs[0].fileName, 'sub3-updated-plan.pdf');
+
+		// Previous submissions only includes sub1 and sub2 (before sub3)
 		const prevSubs = data.previousSubmissions as { number: number; url: string }[];
 		assert.strictEqual(prevSubs.length, 2);
 		assert.strictEqual(prevSubs[0].number, 1);
 		assert.ok(prevSubs[0].url.includes('/submission/1'));
 		assert.strictEqual(prevSubs[1].number, 2);
 		assert.ok(prevSubs[1].url.includes('/submission/2'));
+
+		// Resubmission documents section is empty (all docs shown in report)
+		const resubDocs = data.resubmissionDocuments as { fileName: string }[];
+		assert.strictEqual(resubDocs.length, 0);
 	});
 });
 

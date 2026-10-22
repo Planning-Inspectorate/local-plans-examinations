@@ -28,13 +28,26 @@
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
 
         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-cy="submission-info-table">
-            {% if reportDocument %}
+            {% if reportDocuments and reportDocuments.length > 0 %}
             <div class="govuk-summary-list__row" data-cy="submission-report-row">
                 <dt class="govuk-summary-list__key govuk-!-width-one-third"><strong>Submission {{ reportSubmissionNumber }} report</strong></dt>
                 <dd class="govuk-summary-list__value">
-                    <a href="{{ reportDocument.downloadUrl }}" class="govuk-link" data-cy="download-report">{{ reportDocument.fileName }}</a>
-                    {% if reportDocument.dateIssued %}
-                        ({% if isInitialSubmission %}issued{% else %}shared on{% endif %} {{ reportDocument.dateIssued }})
+                    {% if reportDocuments.length === 1 %}
+                        <a href="{{ reportDocuments[0].downloadUrl }}" class="govuk-link" data-cy="download-report">{{ reportDocuments[0].fileName }}</a>
+                        {% if reportDocuments[0].dateIssued %}
+                            ({% if isInitialSubmission %}issued{% else %}shared on{% endif %} {{ reportDocuments[0].dateIssued }})
+                        {% endif %}
+                    {% else %}
+                        <ul class="govuk-list govuk-list--bullet">
+                            {% for doc in reportDocuments %}
+                                <li>
+                                    <a href="{{ doc.downloadUrl }}" class="govuk-link" data-cy="download-report">{{ doc.fileName }}</a>
+                                    {% if doc.dateIssued %}
+                                        ({% if isInitialSubmission %}issued{% else %}shared on{% endif %} {{ doc.dateIssued }})
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
                     {% endif %}
                 </dd>
             </div>
@@ -98,26 +111,22 @@
                 </div>
                 {% endif %}
             {% endfor %}
-        {% else %}
-            {# Submission 2+: show new or updated documents only #}
+        {% elif resubmissionDocuments and resubmissionDocuments.length > 0 %}
+            {# Submission 2+: show new or updated documents when available #}
             <h2 class="govuk-heading-m" data-cy="new-documents-heading">New or updated documents</h2>
 
             <dl class="govuk-summary-list" data-cy="new-documents-table">
                 <div class="govuk-summary-list__row" data-cy="documents-row">
                     <dt class="govuk-summary-list__key"><strong>Documents</strong></dt>
                     <dd class="govuk-summary-list__value" style="overflow-wrap: break-word; word-break: break-word">
-                        {% if resubmissionDocuments and resubmissionDocuments.length > 0 %}
-                            {% if resubmissionDocuments.length === 1 %}
-                                <a href="{{ resubmissionDocuments[0].downloadUrl }}" class="govuk-link">{{ resubmissionDocuments[0].fileName }}</a>
-                            {% else %}
-                                <ul class="govuk-list govuk-list--bullet">
-                                    {% for doc in resubmissionDocuments %}
-                                        <li><a href="{{ doc.downloadUrl }}" class="govuk-link">{{ doc.fileName }}</a></li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
+                        {% if resubmissionDocuments.length === 1 %}
+                            <a href="{{ resubmissionDocuments[0].downloadUrl }}" class="govuk-link">{{ resubmissionDocuments[0].fileName }}</a>
                         {% else %}
-                            No documents uploaded
+                            <ul class="govuk-list govuk-list--bullet">
+                                {% for doc in resubmissionDocuments %}
+                                    <li><a href="{{ doc.downloadUrl }}" class="govuk-link">{{ doc.fileName }}</a></li>
+                                {% endfor %}
+                            </ul>
                         {% endif %}
                     </dd>
                 </div>

@@ -161,11 +161,13 @@ describe('Gateway 3 previous submission page template', () => {
 			submissionNumber: 1,
 			reportSubmissionNumber: 1,
 			isInitialSubmission: true,
-			reportDocument: {
-				fileName: 'GW3Report.pdf',
-				downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/report-guid',
-				dateIssued: '15 October 2026'
-			},
+			reportDocuments: [
+				{
+					fileName: 'GW3Report.pdf',
+					downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/report-guid',
+					dateIssued: '15 October 2026'
+				}
+			],
 			previousSubmissions: [],
 			submissionDate: '1 October 2026',
 			submissionTime: '12:00',
@@ -251,10 +253,10 @@ describe('Gateway 3 previous submission page template', () => {
 		assert.ok(!html.includes('>Add<'), 'should not have Add action');
 	});
 
-	it('renders submission 2 with previous submissions and resubmission documents', () => {
+	it('renders submission 2 with previous submissions and report docs', () => {
 		const html = renderPreviousSubmission({
 			submissionNumber: 2,
-			reportSubmissionNumber: 1,
+			reportSubmissionNumber: 2,
 			isInitialSubmission: false,
 			previousSubmissions: [
 				{
@@ -264,16 +266,16 @@ describe('Gateway 3 previous submission page template', () => {
 				}
 			],
 			documentSections: [],
-			resubmissionDocuments: [{ fileName: 'updated-plan.pdf', downloadUrl: '/download/updated-plan' }]
+			resubmissionDocuments: []
 		});
 		assert.ok(html.includes('Gateway 3; submission 2'), 'expected heading with submission 2');
 		assert.ok(html.includes('Previous submissions'), 'expected previous submissions');
 		assert.ok(html.includes('Submission 1'), 'expected submission 1 link');
 		assert.ok(html.includes('submitted on 1 October 2026'), 'expected submitted date');
+		assert.ok(html.includes('Submission 2 report'), 'expected submission 2 report label');
 		assert.ok(html.includes('shared on 15 October 2026'), 'expected shared on wording for resubmission');
 		assert.ok(!html.includes('issued 15 October 2026'), 'should not use issued wording for resubmission');
-		assert.ok(html.includes('New or updated documents'), 'expected new documents heading');
-		assert.ok(html.includes('updated-plan.pdf'), 'expected resubmission document');
+		assert.ok(!html.includes('New or updated documents'), 'should not show new documents section when empty');
 	});
 
 	it('renders multiple documents as bullet points', () => {

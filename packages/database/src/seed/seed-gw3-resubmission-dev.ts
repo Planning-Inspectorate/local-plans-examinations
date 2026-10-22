@@ -33,6 +33,8 @@ const REPORT_1_DATE = new Date('2026-10-15T12:00:00.000Z');
 const REPORT_2_DATE = new Date('2026-10-18T12:00:00.000Z');
 const REPORT_DOCUMENT_GUID = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
 const REPORT_DOCUMENT_NAME = 'GW3Report-PLAN-001.pdf';
+const REPORT_1B_DOCUMENT_GUID = 'b2c3d4e5-f6a7-8901-bcde-f12345678902';
+const REPORT_1B_DOCUMENT_NAME = 'GW3Report-Addendum-PLAN-001.pdf';
 const REPORT_2_DOCUMENT_GUID = 'c3d4e5f6-a7b8-9012-cdef-234567890123';
 const REPORT_2_DOCUMENT_NAME = 'GW3Report2-PLAN-001.pdf';
 const RESUB_DOC_1_GUID = 'd4e5f6a7-b8c9-0123-defa-345678901234';
@@ -155,6 +157,32 @@ export async function run() {
 			data: { latestVersionId: 1 }
 		});
 
+		// Create a second report document in g3-document-1 (for testing Bug 1: multiple report docs)
+		await dbClient.document.upsert({
+			where: { guid: REPORT_1B_DOCUMENT_GUID },
+			update: {},
+			create: {
+				guid: REPORT_1B_DOCUMENT_GUID,
+				name: REPORT_1B_DOCUMENT_NAME,
+				caseId: caseRecord.id,
+				documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_1,
+				versions: {
+					create: {
+						version: 1,
+						originalFilename: REPORT_1B_DOCUMENT_NAME,
+						fileName: REPORT_1B_DOCUMENT_NAME,
+						sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.BACK_OFFICE,
+						virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED,
+						dateCreated: REPORT_1_DATE
+					}
+				}
+			}
+		});
+		await dbClient.document.update({
+			where: { guid: REPORT_1B_DOCUMENT_GUID },
+			data: { latestVersionId: 1 }
+		});
+
 		if (SEED_SUBMISSION_3) {
 			// Submission 2: completed with resubmission required decision
 			await dbClient.gateway3Submission.create({
@@ -165,19 +193,22 @@ export async function run() {
 				}
 			});
 
-			// Documents uploaded by LPA during submission 2 (in g3-document-2)
+			// Documents uploaded by LPA during submission 2 (in g3-document-2).
+			// In production these are soft-deleted when the BO uploads their report
+			// to the same set via syncDocuments, so mark them as deleted here.
 			for (const [guid, name] of [
 				[RESUB_DOC_1_GUID, 'Test File.docx'],
 				[RESUB_DOC_2_GUID, 'Test File.jpg']
 			] as const) {
 				await dbClient.document.upsert({
 					where: { guid },
-					update: {},
+					update: { isDeleted: true },
 					create: {
 						guid,
 						name,
 						caseId: caseRecord.id,
 						documentSetId: DOCUMENT_SET_ID.G3_DOCUMENT_2,
+						isDeleted: true,
 						versions: {
 							create: {
 								version: 1,
@@ -185,7 +216,8 @@ export async function run() {
 								fileName: name,
 								sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.PORTAL,
 								virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED,
-								dateCreated: SUBMISSION_2_DATE
+								dateCreated: SUBMISSION_2_DATE,
+								isDeleted: true
 							}
 						}
 					}
