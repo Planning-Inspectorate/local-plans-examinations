@@ -48,12 +48,12 @@
 				{{ govukSummaryList({ rows: rows }) }}
 			{% endfor %}
 		</div>
-       <form action="" method="post" novalidate>
+
     	{{ govukButton({
             text: "Issue decision",
+            href: issueDecisionUrl,
             type: "submit",
             attributes: { "data-cy": "save-and-return-button" }
     	}) }}
-    	</form>
 	</div>
 {% endblock content %}
