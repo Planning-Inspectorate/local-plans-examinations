@@ -16,7 +16,7 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -40,7 +40,6 @@ import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { sortGateway2Workshops } from '#util/util.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
-import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 

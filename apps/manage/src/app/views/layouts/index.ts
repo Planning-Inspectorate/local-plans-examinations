@@ -21,7 +21,7 @@ export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_MULTI_FIELD_INPUT: 'custom-multi-field-input',
 	CUSTOM_MANAGE_LIST: 'custom-manage-list',
 	CUSTOM_FILE_REVIEWER: 'custom-file-reviewer',
-	CUSTOM_DOCUMENTS_VIEW: 'CUSTOM_DOCUMENTS_VIEW',
+	CUSTOM_DOCUMENTS_VIEW: 'custom-documents-viewer',
 	CUSTOM_NOTE_INPUT: 'custom-note-input',
 	CUSTOM_FILE_MANAGER: 'custom-file-manager',
 	...CUSTOM_DYNAMIC_FORM_COMPONENTS
