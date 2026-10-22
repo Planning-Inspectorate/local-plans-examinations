@@ -240,9 +240,6 @@ export function buildLoadResubmissionCase(service: PortalService): RequestHandle
 					}
 				},
 				documents: {
-					where: {
-						isDeleted: false
-					},
 					select: {
 						guid: true,
 						name: true,
@@ -330,6 +327,7 @@ export function buildGetResubmissionPage(): RequestHandler {
 			guid: string;
 			name: string;
 			documentSetId: string;
+			isDeleted: boolean;
 			latestDocumentVersion: {
 				originalFilename: string | null;
 				fileName: string | null;
@@ -352,7 +350,9 @@ export function buildGetResubmissionPage(): RequestHandler {
 		const previousSubmissionNumber = completedSubmissions.length;
 		const reportDocumentSetId =
 			previousSubmissionNumber > 0 ? DOCUMENT_SET_ID[`G3_DOCUMENT_${previousSubmissionNumber}`] : undefined;
-		const g3ReportDocs = reportDocumentSetId ? documents.filter((d) => d.documentSetId === reportDocumentSetId) : [];
+		const g3ReportDocs = reportDocumentSetId
+			? documents.filter((d) => d.documentSetId === reportDocumentSetId && !d.isDeleted)
+			: [];
 
 		// Build report document view data (multiple documents possible)
 		const reportDocuments = g3ReportDocs.map((doc) => ({
@@ -440,6 +440,7 @@ type CaseDocument = {
 	guid: string;
 	name: string;
 	documentSetId: string;
+	isDeleted: boolean;
 	latestDocumentVersion: {
 		originalFilename: string | null;
 		fileName: string | null;
@@ -487,9 +488,11 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 
 		// Find the report for this submission.
 		// The report and uploaded documents for submission N are in G3_DOCUMENT_N.
+		// Non-deleted docs = BO report; soft-deleted docs = LPA's original uploads.
 		const reportSubmissionNumber = submissionNumber;
 		const reportSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${reportSubmissionNumber}`];
-		const reportDocs = reportSetId ? documents.filter((d) => d.documentSetId === reportSetId) : [];
+		const setDocs = reportSetId ? documents.filter((d) => d.documentSetId === reportSetId) : [];
+		const reportDocs = setDocs.filter((d) => !d.isDeleted);
 		const reportDocuments = reportDocs.map((doc) => ({
 			fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
 			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`,
@@ -515,7 +518,7 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 		if (isInitialSubmission) {
 			const buildDocSection = (defs: { title: string; documentSetId: string }[]) =>
 				defs.map((def) => {
-					const matchingDocs = documents.filter((d) => d.documentSetId === def.documentSetId);
+					const matchingDocs = documents.filter((d) => d.documentSetId === def.documentSetId && !d.isDeleted);
 					return {
 						title: def.title,
 						files: matchingDocs.map((d) => buildDocumentFileView(d, encodedPlanReference))
@@ -528,11 +531,14 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 			];
 		}
 
-		// For submission 2+: the report section already shows all docs from
-		// G3_DOCUMENT_N (which includes both the BO report and LPA uploads).
-		// The resubmission documents list is left empty on the detail page
-		// to avoid duplicating what is already shown in the report section.
-		const resubmissionDocs: { fileName: string; downloadUrl: string }[] = [];
+		// For submission 2+: the LPA's original uploads are soft-deleted when the
+		// BO syncs its report into the same document set. Show them under
+		// "New or updated documents" so the submission history is complete.
+		const deletedLpaDocs = isInitialSubmission ? [] : setDocs.filter((d) => d.isDeleted);
+		const resubmissionDocs = deletedLpaDocs.map((doc) => ({
+			fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
+			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`
+		}));
 
 		return res.render(PREVIOUS_SUBMISSION_VIEW_PATH, {
 			pageCaption: currentCase?.planTitle,
@@ -682,12 +688,41 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 
 	const getPreviousSubmissionPage = buildGetPreviousSubmissionPage();
 
+	// Custom download handler that works for both active and soft-deleted
+	// documents. The "New or updated documents" section shows LPA uploads
+	// that were soft-deleted when the BO synced its report, so the standard
+	// DocumentUtil.downloadDocumentToResponse (which filters isDeleted:false)
+	// would reject them.
 	const downloadDocument = asyncHandler(async (req: Request, res: Response) => {
 		const { documentId } = req.params;
 		if (!documentId || typeof documentId !== 'string') {
 			throw new Error('Missing documentId for download');
 		}
-		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
+
+		const document = await service.db.document.findFirst({
+			select: {
+				latestDocumentVersion: {
+					select: {
+						blobStorageContainer: true,
+						blobStoragePath: true,
+						fileName: true
+					}
+				}
+			},
+			where: { guid: documentId }
+		});
+
+		if (!document?.latestDocumentVersion) {
+			throw new Error(`Could not find document version for '${documentId}'`);
+		}
+
+		const { blobStorageContainer, blobStoragePath, fileName } = document.latestDocumentVersion;
+		if (!blobStorageContainer || !blobStoragePath || !fileName) {
+			throw new Error(`Incomplete blob metadata for document '${documentId}'`);
+		}
+
+		const blobStorage = service.createFileStorage(undefined, blobStorageContainer);
+		await blobStorage.downloadToExpressResponse(blobStoragePath, fileName, res);
 	});
 
 	return {
