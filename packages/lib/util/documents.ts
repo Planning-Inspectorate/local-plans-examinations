@@ -363,7 +363,7 @@ export class DocumentUtil {
 		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId);
 		const blobPath = blobDetails.blobPath;
 		const fileName = blobDetails.fileName;
-		const blobStorageUtil = service.createFileStorage(blobPath);
+		const blobStorageUtil = service.createFileStorage(undefined, blobDetails.containerName);
 		await blobStorageUtil.downloadToExpressResponse(blobPath, fileName, res);
 	}
 }
