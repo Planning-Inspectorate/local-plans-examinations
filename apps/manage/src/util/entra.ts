@@ -21,7 +21,7 @@ export interface GroupMember {
 export interface User {
 	id: string;
 	displayName: string;
-	mail: string;
+	userPrincipalName: string;
 }
 export class EntraClient {
 	#client: Client;
@@ -37,7 +37,7 @@ export class EntraClient {
 	async listAllGroupMembers(groupId: string): Promise<GroupMember[]> {
 		const listMembers = this.#client
 			.api(`groups/${groupId}/transitiveMembers`)
-			.select(['id', 'displayName', 'mail'])
+			.select(['id', 'displayName', 'userPrincipalName'])
 			.top(PER_PAGE);
 
 		const members: GroupMember[] = [];
@@ -81,7 +81,11 @@ export class EntraClient {
 	}
 
 	async getUserEmailFromId(userId: string): Promise<string> {
-		const user: User = await this.#client.api(`/users/${userId}`).select(['id', 'mail']).top(1).get();
-		return String(user.mail);
+		const user: User = await this.#client
+			.api(`/users/${userId}`)
+			.select(['id', 'mail', 'userPrincipalName'])
+			.top(1)
+			.get();
+		return String(user.userPrincipalName);
 	}
 }
