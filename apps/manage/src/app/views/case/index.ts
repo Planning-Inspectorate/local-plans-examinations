@@ -85,6 +85,7 @@ import { sortByDateColumn } from '#util/util.ts';
 import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
 import { ExaminationPauseHandler } from './overview-data-handlers/examination-pause-handler.ts';
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+import { pushAlertToSession } from '../../util/alert.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -182,9 +183,7 @@ function registerGateway2WorkshopJourney(
 				}
 			}
 		});
-
-		req.session.alertMessage = 'Workshop set up';
-		req.session.alertMessageStatus = 'success';
+		pushAlertToSession(req, 'success', 'Workshop set up');
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
@@ -710,8 +709,7 @@ function registerCaseJourney(
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
 							if (questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
-								req.session.alertMessage = 'Document removed';
-								req.session.alertMessageStatus = 'success';
+								pushAlertToSession(req, 'success', 'Document removed');
 							}
 							const caseId = (req as UploadDocumentRequest).currentCase?.id;
 							if (

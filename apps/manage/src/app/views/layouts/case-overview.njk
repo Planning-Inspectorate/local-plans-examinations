@@ -21,11 +21,12 @@
 {% endblock %}
 
 {% block pageContent %}
-  {% if alertMessage and alertMessage != 'Hearing created' %}
-    {{ govukNotificationBanner({
-      type: alertMessageStatus,
-      text: alertMessage
-    }) }}
+  {% if alerts %}
+    {% for alert in alerts %}
+      {% if alert.text != 'Hearing created' %}
+        {{ govukNotificationBanner(alert) }}
+      {% endif %}
+    {% endfor %}
   {% endif %}
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>

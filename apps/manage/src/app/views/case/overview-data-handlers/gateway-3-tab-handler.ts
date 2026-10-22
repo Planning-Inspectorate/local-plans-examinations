@@ -3,12 +3,13 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { getParam } from '../controller.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class Gateway3TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		if (!req.params.question) {
-			this.consumeAlertsFromSession(req, res);
+			consumeAlertsFromSession(req, res);
 		}
 		if (
 			req.method === 'GET' &&

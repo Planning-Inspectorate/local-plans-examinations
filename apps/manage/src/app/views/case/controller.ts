@@ -29,6 +29,7 @@ import { formatDateToString } from '../../util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
+import { pushAlertToSession } from '../../util/alert.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -140,8 +141,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						question.startsWith(prefix)
 					);
 					if (matchedExaminationPauseQuestion) {
-						req.session.alertMessage = 'Changes saved';
-						req.session.alertMessageStatus = 'success';
+						pushAlertToSession(req, 'success', 'Changes saved');
 						const isExaminationRestartQuestion =
 							question.startsWith('examination-pause-end-date') ||
 							question.startsWith('examination-pause-restart-details');
@@ -662,12 +662,10 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 2 report issued';
-			req.session.alertMessageStatus = 'success';
+			pushAlertToSession(req, 'success', 'Gateway 2 report issued');
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 2 report already issued';
-			req.session.alertMessageStatus = 'important';
+			pushAlertToSession(req, 'important', 'Gateway 2 report already issued');
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
@@ -698,8 +696,7 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: `Examination report document added; report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			});
-			req.session.alertMessage = 'Document added and notification sent';
-			req.session.alertMessageStatus = 'success';
+			pushAlertToSession(req, 'success', 'Document added and notification sent');
 
 			// Go back to Manage docs page after document addition
 			res.redirect(
@@ -728,8 +725,7 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 				examinationReport: `Examination report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			}
 		);
-		req.session.alertMessage = 'Final report and supporting documents saved and notification sent';
-		req.session.alertMessageStatus = 'success';
+		pushAlertToSession(req, 'success', 'Final report and supporting documents saved and notification sent');
 
 		// After first time exam doc upload, go back to examination tab
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
@@ -773,12 +769,10 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Workshop document(s) uploaded';
-			req.session.alertMessageStatus = 'success';
+			pushAlertToSession(req, 'success', 'Workshop document(s) uploaded');
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 2 workshopDocuments already issued';
-			req.session.alertMessageStatus = 'important';
+			pushAlertToSession(req, 'important', 'Gateway 2 workshopDocuments already issued');
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
 		return;
@@ -821,12 +815,10 @@ export function issueGateway1SLA(service: ManageService, journeyId: string): Asy
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Signed SLA uploaded. LPA can proceed to Gateway 2 submission';
-			req.session.alertMessageStatus = 'success';
+			pushAlertToSession(req, 'success', 'Signed SLA uploaded. LPA can proceed to Gateway 2 submission');
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'SLA already issued';
-			req.session.alertMessageStatus = 'important';
+			pushAlertToSession(req, 'important', 'SLA already issued');
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
@@ -889,12 +881,10 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 				}
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 3 decision issued';
-			req.session.alertMessageStatus = 'success';
+			pushAlertToSession(req, 'success', 'Gateway 3 decision issued');
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			req.session.alertMessage = 'Gateway 3 decision already issued';
-			req.session.alertMessageStatus = 'important';
+			pushAlertToSession(req, 'important', 'Gateway 3 decision already issued');
 		}
 		res.redirect(
 			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`

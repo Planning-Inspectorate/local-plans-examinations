@@ -1645,7 +1645,12 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
-		assert.equal(req.session.alertMessage, 'Final report and supporting documents saved and notification sent');
+		const expectedMessage = {
+			type: 'success',
+			text: 'Final report and supporting documents saved and notification sent',
+			html: undefined
+		};
+		assert.deepEqual(req.session.alerts[0], expectedMessage);
 	});
 
 	it('refreshes the report date on resubmission when no manual date edit exists', async () => {
@@ -2181,8 +2186,12 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
-		assert.equal(req.session.alertMessageStatus, 'success');
+		const expectedMessage = {
+			type: 'success',
+			text: 'Workshop document(s) uploaded',
+			html: undefined
+		};
+		assert.deepEqual(req.session.alerts[0], expectedMessage);
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
 		assert.ok(
 			service.db.gateway2Info.upsert.mock.calls[0].arguments[0].update.workshopDocumentUploadedDate instanceof Date
@@ -2210,7 +2219,16 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
+<<<<<<< HEAD
 		assert.equal(req.session.alertMessageStatus, 'important');
+=======
+		const expectedMessage = {
+			type: 'important',
+			text: 'Gateway 2 workshopDocuments already issued',
+			html: undefined
+		};
+		assert.deepEqual(req.session.alerts[0], expectedMessage);
+>>>>>>> b7af4766 (feat: improve mechanism for handling alerts to support multuple messages with different formats)
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});

@@ -6,6 +6,7 @@ import { loadCaseOfficerOptions, loadInspectorOptions, loadLpaOptions } from '..
 import { getOverviewData } from './overview-page-helper.ts';
 import { OverviewSaveController } from '../save/overview-save-controller.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 type OverviewData = NonNullable<Awaited<ReturnType<typeof getOverviewData>>>;
 
@@ -40,7 +41,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, reference } = context;
 		if (!req.params.question) {
-			this.consumeAlertsFromSession(req, res);
+			consumeAlertsFromSession(req, res);
 		}
 
 		const overviewData = await getOverviewData(service.db, reference);

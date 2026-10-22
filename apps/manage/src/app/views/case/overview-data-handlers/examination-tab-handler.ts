@@ -6,14 +6,12 @@ import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { formatValue } from '../../../util/util.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
+import { pushAlertToSession, consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
-		if (!req.params.question) {
-			this.consumeAlertsFromSession(req, res);
-		}
 
 		const journey4Data = await db.examinationInfo.findUnique({
 			where: { caseId: caseRecord.id },
@@ -41,8 +39,10 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			journeyResponse.answers[`planPauseEndDetails-${i + 1}`] = sortedPauseData[i].planPauseEndDetails;
 		}
 		if (ExaminationTabHandler.isCurrentlyPaused(sortedPauseData as PlanPauseHistory[])) {
-			res.locals.alertMessage = 'This examination is paused';
-			res.locals.alertMessageStatus = 'important';
+			pushAlertToSession(req, 'important', 'This examination is paused');
+		}
+		if (!req.params.question) {
+			consumeAlertsFromSession(req, res);
 		}
 		res.locals.journeyResponse = journeyResponse;
 		if (req.method === 'GET' && req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_MANAGE_QUESTION) {
