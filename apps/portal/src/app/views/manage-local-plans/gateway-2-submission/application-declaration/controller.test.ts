@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildGetDeclarationPage, buildPostDeclarationPage } from './controller.ts';
 import type { PortalService } from '#service';
+import { SUBMISSION_FAILURE_VIEW_PATH } from '../../../static/error/submission-failure.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
 process.env.SESSION_SECRET = 'not-a-real-secret';
@@ -21,6 +22,7 @@ function createReq(overrides: { params?: Record<string, string>; body?: Record<s
 	const redirectCalls: string[] = [];
 
 	const res = {
+		locals: {},
 		render(view: string, model?: unknown) {
 			renderCalls.push([view, model]);
 			return this;
@@ -116,6 +118,7 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(redirectCalls.length, 1);
 		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2-submission/application-complete');
 		assert.equal(renderCalls.length, 0);
+		assert.equal(res.locals.submissionCompleted, true);
 
 		assert.equal(service.sendCalls.length, 1);
 		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
@@ -224,5 +227,85 @@ describe('buildPostDeclarationPage', () => {
 		const model = renderCalls[0][1] as Record<string, unknown>;
 		const errorSummary = model.errorSummary as Array<{ text: string }>;
 		assert.equal(errorSummary[0].text, 'You must confirm both declarations before you can submit your application.');
+	});
+});
+
+describe('buildPostDeclarationPage - submission failures', () => {
+	function createFailureReq() {
+		const req = {
+			params: { planReference: 'PLAN-123456' },
+			body: { declaration: ['informationTrue', 'privacyNotice'] }
+		} as unknown as Request;
+
+		const renderCalls: Array<[string, Record<string, unknown>]> = [];
+		const redirectCalls: string[] = [];
+		const statusCalls: number[] = [];
+
+		const res = {
+			locals: {},
+			render(view: string, model?: Record<string, unknown>) {
+				renderCalls.push([view, model ?? {}]);
+				return this;
+			},
+			redirect(url: string) {
+				redirectCalls.push(url);
+				return this;
+			},
+			status(code: number) {
+				statusCalls.push(code);
+				return this;
+			},
+			send() {
+				return this;
+			}
+		} as unknown as Response;
+
+		return { req, res, renderCalls, redirectCalls, statusCalls };
+	}
+
+	function assertSubmissionFailurePage(renderCalls: Array<[string, Record<string, unknown>]>, statusCalls: number[]) {
+		assert.deepEqual(statusCalls, [500]);
+		assert.equal(renderCalls.length, 1);
+		assert.equal(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.equal(renderCalls[0][1].pageHeading, 'Sorry, there is a problem with the service');
+		assert.equal(renderCalls[0][1].planOverviewUrl, '/manage-local-plans/PLAN-123456');
+	}
+
+	it('renders the failed submission page when the case lookup fails', async () => {
+		const service = createMockService();
+		service.db.case.findUnique = async () => {
+			throw new Error('database unavailable');
+		};
+		const { req, res, renderCalls, redirectCalls, statusCalls } = createFailureReq();
+
+		await buildPostDeclarationPage(service)(req, res, () => {});
+
+		assert.equal(redirectCalls.length, 0);
+		assertSubmissionFailurePage(renderCalls, statusCalls);
+	});
+
+	it('renders the failed submission page when no case is found', async () => {
+		const service = createMockService();
+		service.db.case.findUnique = async () => null;
+		const { req, res, renderCalls, redirectCalls, statusCalls } = createFailureReq();
+
+		await buildPostDeclarationPage(service)(req, res, () => {});
+
+		assert.equal(redirectCalls.length, 0);
+		assertSubmissionFailurePage(renderCalls, statusCalls);
+	});
+
+	it('renders the failed submission page when recording the submission fails', async () => {
+		const service = createMockService();
+		service.db.$transaction = async () => {
+			throw new Error('database unavailable');
+		};
+		const { req, res, renderCalls, redirectCalls, statusCalls } = createFailureReq();
+
+		await buildPostDeclarationPage(service)(req, res, () => {});
+
+		assert.equal(redirectCalls.length, 0);
+		assertSubmissionFailurePage(renderCalls, statusCalls);
+		assert.equal(res.locals.submissionCompleted, undefined);
 	});
 });
