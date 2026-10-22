@@ -70,18 +70,19 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 		throw Error('submissionData is null');
 	}
 
-	const submissionSections = submissionData.length
-		? [
-				new Section('Gateway 3 submission', 'gateway-3-submission-1')
-					.addQuestion(questions['gateway3DocumentsCheck-1'])
-					.addQuestion(questions['gateway3Decision-1'])
-			]
-		: sortGateway3Submissions(submissionData).map((_, index) => {
-				const rowId = index + 1;
-				return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
-					.addQuestion(questions[`gateway3DocumentsCheck-${rowId}`])
-					.addQuestion(questions[`gateway3Decision-${rowId}`]);
-			});
+	const submissionSections =
+		submissionData.length === 1
+			? [
+					new Section('Gateway 3 submission', 'gateway-3-submission-1')
+						.addQuestion(questions['gateway3DocumentsCheck-1'])
+						.addQuestion(questions['gateway3Decision-1'])
+				]
+			: sortGateway3Submissions(submissionData).map((_, index) => {
+					const rowId = index + 1;
+					return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
+						.addQuestion(questions[`gateway3DocumentsCheck-${rowId}`])
+						.addQuestion(questions[`gateway3Decision-${rowId}`]);
+				});
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
