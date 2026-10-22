@@ -3,6 +3,7 @@ import type { ManageService } from '#service';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import { pushAlertToSession } from '../../../util/alert.ts';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 
 export interface PageLoadContext {
 	req: Request;
@@ -42,7 +43,14 @@ export abstract class OverviewPageLoadHandler {
 		}
 		const sortedPauseData = sortByDateColumn(examData?.planPauseHistory ? examData?.planPauseHistory : [], 'createdAt');
 		if (OverviewPageLoadHandler.isCaseCurrentlyPaused(sortedPauseData as PlanPauseHistory[])) {
-			pushAlertToSession(req, 'important', 'This examination is paused');
+			const caseReference = String(req.params.reference);
+			const examJourneyUrl = `/case/${encodeURIComponent(caseReference)}/${COMMON_CONSTS.EXAMINATION_JOURNEY_ID}`;
+			pushAlertToSession(
+				req,
+				'important',
+				'This examination is paused',
+				`<a href="${examJourneyUrl}">View details</a>`
+			);
 		}
 	}
 	/**
