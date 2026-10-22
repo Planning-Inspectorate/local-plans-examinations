@@ -245,18 +245,16 @@ function registerGateway2WorkshopJourney(
 				['team_email_address']: service.localPlansTeamEmail,
 				['workshop_start_date']: workshopStartDate,
 				['workshop_end_date']: workshopEndDate ? workshopEndDate : '',
-				['workshop_type']: workshopType
+				['workshop_type']: workshopType,
+				['if_workshop_online']: workshopType === 'remote' ? 'yes' : 'no',
+				['if_workshop_in-person']: workshopType === 'in-person' ? 'yes' : 'no'
 			};
 
 			const entraClient = service.getEntraClient(req.session as AuthSession)!;
 			const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
-			const inspectorId = allInspectors.find((inspector) => inspector.displayName === gw2Info?.assessorName)?.id;
-			// TODO 'mail' is undefined on users, need to re-think email retrieval
+			const inspectorId = allInspectors.find((inspector) => inspector.id === gw2Info?.assessorName)?.id;
 			const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
 			const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-			console.log('All inspectors: ', allInspectors);
-			console.log('Assessor email: ', assessorEmail);
 
 			// Notify the GW2 assessor (aka inspector)
 			try {

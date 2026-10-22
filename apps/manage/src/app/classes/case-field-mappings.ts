@@ -7,7 +7,8 @@ export type CaseRelation =
 export const EXAMINING_INSPECTOR_FIELDS = [
 	'examiningInspector1',
 	'examiningInspector2',
-	'examiningInspector3'
+	'examiningInspector3',
+	'assessorGateway3'
 ] as const satisfies readonly (keyof CaseOverviewInput)[];
 
 /** Fields that live in a related one-to-one table rather than the Case row itself.
