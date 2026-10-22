@@ -36,6 +36,11 @@ import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import {
+	sendAssessorAppointedNotifyEmail,
+	sendWorkshopDocsUploadedNotifyEmail,
+	sendWorkshopReportUploadedNotifyEmail
+} from '../../../app/notify/notify-helper.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -179,6 +184,10 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const currentUser = account?.name ?? 'Unknown';
 
 			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+
+			if (data.answers.assessorName !== null) {
+				await sendAssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
+			}
 		}
 	};
 }
@@ -755,6 +764,8 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Gateway 2 report issued');
+
+			await sendWorkshopReportUploadedNotifyEmail(service, req, caseReference);
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'important', 'Gateway 2 report already issued');
@@ -862,6 +873,8 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Workshop document(s) uploaded');
+
+			await sendWorkshopDocsUploadedNotifyEmail(service, req, caseReference);
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'important', 'Gateway 2 workshopDocuments already issued');
