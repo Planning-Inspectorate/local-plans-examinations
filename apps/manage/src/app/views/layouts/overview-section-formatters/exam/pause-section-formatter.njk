@@ -39,7 +39,7 @@
           items: [
             {
               href: "/case/" + reference + "/examination-pause/pause-examination/examination-pause-end-date-" + (loop.index),
-              text: "Change"
+              text: "Change" if pause.planPauseEndDate else "Add"
             }
           ]
         }

@@ -3,9 +3,6 @@ import type { JourneyResponse, Question } from '@planning-inspectorate/dynamic-f
 export function questionHasNonEmptyAnswer(response: JourneyResponse, question: Question) {
 	if (!response.answers) return false;
 	const answerField = response.answers[question.fieldName];
-	console.log('nonempty check');
-	console.log(answerField);
-	console.log(!!answerField);
 	return !!answerField;
 }
 
