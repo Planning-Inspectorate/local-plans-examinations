@@ -237,21 +237,19 @@ model ExaminationInfo {
   qaInspector1                         String?
   qaInspector2                         String?
   qaInspector3                         String?
-  reportSentToPanelDate                DateTime?            @db.DateTime2
-  panelResponseToInspectorDate         DateTime?            @db.DateTime2
-  factCheckDateReceivedFromInspector   DateTime?            @db.DateTime2
-  factCheckDueDate                     DateTime?            @db.DateTime2
-  factCheckActualDate                  DateTime?            @db.DateTime2
-  factCheckReceivedBackFromLPADate     DateTime?            @db.DateTime2
-  finalReportIssueDate                 DateTime?            @db.DateTime2
-  planPauseStartDate                   DateTime?            @db.DateTime2
-  planPauseEndDate                     DateTime?            @db.DateTime2
+  reportSentToPanelDate                DateTime?          @db.DateTime2
+  panelResponseToInspectorDate         DateTime?          @db.DateTime2
+  factCheckDateReceivedFromInspector   DateTime?          @db.DateTime2
+  factCheckDueDate                     DateTime?          @db.DateTime2
+  factCheckActualDate                  DateTime?          @db.DateTime2
+  factCheckReceivedBackFromLPADate     DateTime?          @db.DateTime2
+  finalReportIssueDate                 DateTime?          @db.DateTime2
   planPauseHistory                     PlanPauseHistory[]
-  withdrawnDate                        DateTime?            @db.DateTime2
-  isSound                              String?              @db.NVarChar(50)
-  soundUnsoundDate                     DateTime?            @db.DateTime2
-  adoptionDate                         DateTime?            @db.DateTime2
-  approvedForCILDate                   DateTime?            @db.DateTime2
+  withdrawnDate                        DateTime?          @db.DateTime2
+  isSound                              Boolean?           @db.Bit
+  soundUnsoundDate                     DateTime?          @db.DateTime2
+  adoptionDate                         DateTime?          @db.DateTime2
+  approvedForCILDate                   DateTime?          @db.DateTime2
   hearings                             ExaminationHearing[]
 }
 
@@ -277,11 +275,14 @@ model ExaminationHearing {
 }
 
 model PlanPauseHistory {
-  id                String          @id @default(uuid()) @db.UniqueIdentifier
-  examinationInfo   ExaminationInfo @relation(fields: [examinationInfoId], references: [id])
-  examinationInfoId String          @db.UniqueIdentifier
-  planPauseDate     DateTime        @db.DateTime2
-  createdAt         DateTime        @default(now()) @db.DateTime2
+  id                    String          @id @default(uuid()) @db.UniqueIdentifier
+  examinationInfo       ExaminationInfo @relation(fields: [examinationInfoId], references: [id])
+  examinationInfoId     String          @db.UniqueIdentifier
+  createdAt             DateTime        @default(now()) @db.DateTime2
+  planPauseDate         DateTime        @db.DateTime2
+  planPauseStartDetails String?
+  planPauseEndDate      DateTime?       @db.DateTime2
+  planPauseEndDetails   String?
 
   @@index([examinationInfoId])
 }

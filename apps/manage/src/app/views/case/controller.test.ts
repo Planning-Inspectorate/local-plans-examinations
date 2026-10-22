@@ -73,7 +73,8 @@ function createService(): any {
 					]
 				},
 				examinationInfo: {
-					hearings: []
+					hearings: [],
+					planPauseHistory: []
 				}
 			}))
 		},
@@ -742,8 +743,6 @@ describe('updateCaseHistory', () => {
 			context.req,
 			service.db,
 			{
-				planPauseStartDate: null,
-				planPauseEndDate: null,
 				withdrawnDate: null,
 				isSound: null,
 				soundUnsoundDate: null,
@@ -751,8 +750,6 @@ describe('updateCaseHistory', () => {
 				approvedForCILDate: null
 			},
 			{
-				planPauseStartDate: new Date('2026-01-06T12:00:00.000Z'),
-				planPauseEndDate: new Date('2026-01-07T12:00:00.000Z'),
 				withdrawnDate: new Date('2026-01-08T12:00:00.000Z'),
 				isSound: 'unsound',
 				soundUnsoundDate: new Date('2026-01-09T12:00:00.000Z'),
@@ -765,13 +762,11 @@ describe('updateCaseHistory', () => {
 
 		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
 
-		assert.equal(entries[0].event, 'Plan pause date updated to 6 January 2026');
-		assert.equal(entries[1].event, 'Plan pause end date updated to 7 January 2026');
-		assert.equal(entries[2].event, 'Withdrawn date updated to 8 January 2026');
-		assert.equal(entries[3].event, 'Outcome updated to Unsound');
-		assert.equal(entries[4].event, 'Report issued updated to 9 January 2026');
-		assert.equal(entries[5].event, 'Adoption date updated to 10 January 2026');
-		assert.equal(entries[6].event, 'Approved for CIL date updated to 11 January 2026');
+		assert.equal(entries[0].event, 'Withdrawn date updated to 8 January 2026');
+		assert.equal(entries[1].event, 'Outcome updated to Unsound');
+		assert.equal(entries[2].event, 'Report issued updated to 9 January 2026');
+		assert.equal(entries[3].event, 'Adoption date updated to 10 January 2026');
+		assert.equal(entries[4].event, 'Approved for CIL date updated to 11 January 2026');
 	});
 });
 
@@ -1234,11 +1229,12 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
-			include: {
-				hearings: true
-			},
 			where: {
 				caseId: CASE_ID
+			},
+			include: {
+				planPauseHistory: true,
+				hearings: true
 			}
 		});
 

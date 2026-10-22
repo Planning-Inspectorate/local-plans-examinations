@@ -7,6 +7,7 @@
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "views/layouts/workshop-details.njk" import workshopDetails %}
 {% from "views/layouts/hearing-details.njk" import hearingDetails %}
+{% from "views/layouts/overview-section-formatters/exam/pause-section-formatter.njk" import pauseDetails %}
 
 {% block backLink %}
   <nav aria-label="Back">
@@ -113,26 +114,33 @@
                       {% endif %}
                     {% endif %}
                   {% endfor %}
-                  {% if section.list.rows.length %}
-                    <h2 class="govuk-heading-l">{{ section.heading }}</h2>
-                    {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
-                    {{ govukSummaryList({
-                          rows: formattedRows
-                      }) }}
+                  <h2 class="govuk-heading-l">{{ section.heading }}</h2>
+                  {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
+                  {% if section.heading == 'Workshop'%}
+                    {% if section.list.rows.length %}
+                      {{ govukSummaryList({
+                            rows: formattedRows
+                        })
+                      }}
+                    {% endif %}
+                    {{ workshopDetails(journeyResponse.answers, reference) }}
+                    <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
+                    <p></p>
+                  {% elif section.heading == 'Pause examination' %}
+                      {{ pauseDetails(journeyResponse.answers, reference) }}
+                  {% elif section.heading == 'Hearings'%} 
+                    <h2 class="govuk-heading-l">Hearings</h2>
+                    {{ hearingDetails(journeyResponse.answers, reference) }}
+                    <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link" data-cy="add-hearing">Add hearing</a>
+                    <p></p>
+                  {% else %}
+                    {% if section.list.rows.length %}
+                      {{ govukSummaryList({
+                            rows: formattedRows
+                        })
+                      }}
+                    {% endif %}
                   {% endif %}
-              {% if section.heading == 'Workshop'%}
-
-                {{ workshopDetails(journeyResponse.answers, reference) }}
-                <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
-                <p></p>
-              {% endif %}
-              
-              {% if section.heading == 'Hearings'%} 
-                <h2 class="govuk-heading-l">Hearings</h2>
-                {{ hearingDetails(journeyResponse.answers, reference) }}
-                <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link" data-cy="add-hearing">Add hearing</a>
-                <p></p>
-              {% endif %}
               {% endfor %}
           </div>
       </div>

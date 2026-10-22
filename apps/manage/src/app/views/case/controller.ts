@@ -4,7 +4,7 @@ import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-f
 import type { Request, Response, NextFunction } from 'express';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
-import { questions } from './questions.ts';
+import { examinationPauseBaseUrls, questions } from './questions.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import { type FileUploaderSession } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
@@ -128,6 +128,30 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			}
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				break;
+			}
+			case COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID: {
+				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				// Tech debt: Would be good to simplify how case history is written - embedding within the save controller
+				// is ideal but will be tricky without tight coupling. For now this quick and dirty if-statement will do
+				if (writeResponse.writtenToDB) {
+					const question = String(req.params.question);
+					const matchedExaminationPauseQuestion = examinationPauseBaseUrls.find((prefix) =>
+						question.startsWith(prefix)
+					);
+					if (matchedExaminationPauseQuestion) {
+						const isExaminationRestartQuestion =
+							question.startsWith('examination-pause-end-date') ||
+							question.startsWith('examination-pause-restart-details');
+						const caseHistoryMessage = isExaminationRestartQuestion ? 'Examination restarted' : 'Plan paused';
+						const account = authSession.getAccount(req.session);
+						const currentUser = account?.name ?? 'Unknown';
+						await updateCaseHistory(service, req, db, { examinationPause: null }, {}, reference, currentUser, {
+							examinationPause: caseHistoryMessage
+						});
+						return;
+					}
+				}
 				break;
 			}
 			default: {
@@ -1081,6 +1105,46 @@ export function preprocessQuestionProperties(
 					hearingAnswers[i].hearingDate && typeof hearingAnswers[i].hearingDate != 'string'
 						? formatDateToString(hearingAnswers[i].hearingDate)
 						: null;
+				}
+		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: {
+						include: {
+							planPauseHistory: true
+						}
+					}
+				},
+				where: {
+					reference
+				}
+			});
+			const pauseDetails = caseDetails?.examinationInfo?.planPauseHistory;
+			if (!pauseDetails) {
+				throw new Error(`No pause details found for case reference '${reference}'`);
+			}
+			const pauseQuestionPrefixes = [
+				'examinationPauseStartDate',
+				'examinationPauseDetail',
+				'examinationPauseEndDate',
+				'examinationRestartDetail'
+			];
+			pauseQuestionPrefixes.forEach((prefix) => {
+				const questionName = `${prefix}-1`;
+				questions[questionName].actionLink = {
+					href: `/case/${reference}/examination-pause/pause-examination/${questions[questionName].url}`,
+					text: 'View'
+				};
+			});
+			for (let i = 2; i <= pauseDetails.length; i++) {
+				pauseQuestionPrefixes.forEach((prefix) => {
+					const questionName = `${prefix}-${i}`;
+					questions[questionName].actionLink = {
+						href: `/case/${reference}/examination-pause/pause-examination/${questions[questionName].url}`,
+						text: 'View'
+					};
+				});
 			}
 		}
 		next();

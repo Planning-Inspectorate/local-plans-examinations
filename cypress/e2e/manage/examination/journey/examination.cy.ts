@@ -14,7 +14,7 @@ import {
 	letterSentToMHCLGDate,
 	QADateAnswers,
 	QAInspectorsAnswers,
-	planPauseStartDate,
+	soundUnsoundDate,
 	seededExaminationInProgress,
 	seededPausedExamination,
 	seededExaminationHearing,
@@ -34,7 +34,7 @@ import {
 	examinationQAInspector1Page,
 	QADatePage,
 	QAPanelResponseDatePage,
-	planPauseStartDatePage,
+	soundUnsoundDatePage,
 	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
 import { hearingDateAndTimePage, hearingCheckPage } from '../../../../page-objects/manage/examination/hearing-page.ts';
@@ -194,7 +194,7 @@ describe('Examination updates', () => {
 	);
 
 	it('updates Important Dates and records case history', { tags: ['regression'] }, () => {
-		updateDateAnswer(planPauseStartDate, planPauseStartDatePage);
+		updateDateAnswer(soundUnsoundDate, soundUnsoundDatePage);
 
 		examinationPage.openActionLinkFor(soundUnsound.row);
 		soundUnsoundPage.verifyLoaded(soundUnsound.value);
@@ -205,14 +205,14 @@ describe('Examination updates', () => {
 
 		openCaseHistory();
 
-		caseHistoryPage.verifyHistoryEvent(historyEventFor(planPauseStartDate));
+		caseHistoryPage.verifyHistoryEvent(historyEventFor(soundUnsoundDate));
 		caseHistoryPage.verifyHistoryEvent(
 			`${soundUnsound.row} updated from ${soundUnsound.display} to ${soundUnsound.updatedDisplay}`
 		);
 	});
 
 	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
-		returnFromDatePage(planPauseStartDate, planPauseStartDatePage);
+		returnFromDatePage(soundUnsoundDate, soundUnsoundDatePage);
 	});
 });
 
@@ -247,14 +247,14 @@ describe('Examination statuses', () => {
 	it('keeps an existing pause without history after saving and refreshing', { tags: ['regression'] }, () => {
 		openSeededExaminationPage(seededPausedExamination);
 		examinationPage.verifyHeaderStatus('Paused');
-		examinationPage.openActionLinkFor(planPauseStartDate.row);
-		planPauseStartDatePage.verifyLoaded(planPauseStartDate.input);
-		planPauseStartDatePage.enterDate(planPauseStartDate.input);
+		examinationPage.openActionLinkFor(soundUnsoundDate.row);
+		soundUnsoundDatePage.verifyLoaded(soundUnsoundDate.input);
+		soundUnsoundDatePage.enterDate(soundUnsoundDate.input);
 
 		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifyHeaderStatus('Paused');
 		cy.reload();
-		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.display);
+		examinationPage.verifySummaryRowContains(soundUnsoundDate.row, soundUnsoundDate.display);
 		examinationPage.verifyHeaderStatus('Paused');
 	});
 });

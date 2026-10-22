@@ -823,7 +823,6 @@ describe('resolveCaseHeaderStatus', () => {
 
 		const examinationStatus: ExaminationStage = {
 			adoptionDate: DATE,
-			planPauseStartDate: DATE,
 			shouldPause: true
 		};
 
@@ -1020,7 +1019,7 @@ describe('resolveExaminationStage', () => {
 		});
 
 		it('returns null when only unlabelled pause fields are set', () => {
-			const status: ExaminationStage = { planPauseStartDate: DATE, planPauseEndDate: DATE };
+			const status: ExaminationStage = {};
 
 			assert.strictEqual(resolveExaminationStage(status, true), null);
 		});
@@ -1081,8 +1080,6 @@ describe('resolveExaminationStage', () => {
 				qaInspector2: 'qa-2',
 				qaInspector3: 'qa-3',
 				panelResponseToInspectorDate: DATE,
-				planPauseStartDate: DATE,
-				planPauseEndDate: DATE,
 				finalReportIssueDate: DATE,
 				adoptionDate: DATE
 			};
@@ -1092,9 +1089,7 @@ describe('resolveExaminationStage', () => {
 
 		it('skips past unlabelled pause fields to the previous labelled stage', () => {
 			const status: ExaminationStage = {
-				panelResponseToInspectorDate: DATE,
-				planPauseStartDate: DATE,
-				planPauseEndDate: DATE
+				panelResponseToInspectorDate: DATE
 			};
 
 			assert.strictEqual(resolveExaminationStage(status, true), 'Fact check');
