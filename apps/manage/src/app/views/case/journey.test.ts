@@ -8,6 +8,7 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createExaminationJourney,
+	createExaminationHearingJourney,
 	createGateway3Journey
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
@@ -295,4 +296,52 @@ describe('createExaminationJourney', () => {
 			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
 	});
+});
+
+describe('createExaminationHearingJourney', () => {
+	it('keeps an in-progress conditional edit in its question flow', () => {
+		const session = {
+			answers: { hearings: [{ id: 'hearing-1', createdDate: new Date('2026-01-01') }] },
+			editingFromCheckAnswers: false
+		};
+		createExaminationHearingJourney(
+			{
+				baseUrl: '/case/PLAN-123456',
+				url: '/examination/set-up-hearing/hearing/examination-hearing-location-known-1',
+				session
+			} as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', { hearings: [] }),
+			questions
+		);
+		assert.equal(session.editingFromCheckAnswers, false);
+	});
+
+	for (const saved of [true, false]) {
+		it(`${saved ? 'returns a saved hearing edit to CYA' : 'keeps a new hearing in its question flow'}`, () => {
+			const session: Record<string, unknown> = { editingFromCheckAnswers: true };
+			const hearing = {
+				id: 'hearing-1',
+				createdDate: new Date('2026-01-01'),
+				hearingDate: new Date('2026-11-07'),
+				hearingTime: '10:30'
+			};
+			const response = new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', {
+				hearings: saved ? [hearing] : []
+			});
+			createExaminationHearingJourney(
+				{
+					baseUrl: '/case/PLAN-123456',
+					url: '/examination/set-up-hearing/hearing/examination-hearing-date-and-time-1',
+					session
+				} as unknown as Request,
+				response,
+				questions
+			);
+			assert.equal(session.editingFromCheckAnswers, saved);
+			if (saved) {
+				assert.equal(response.answers['hearingDate-1'], hearing.hearingDate);
+				assert.equal(response.answers['hearingTime-1'], hearing.hearingTime);
+			}
+		});
+	}
 });

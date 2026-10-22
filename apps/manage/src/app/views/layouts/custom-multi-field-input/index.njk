@@ -136,7 +136,7 @@
                                     {% if timeError %}
                                         <p class="govuk-error-message">
                                             <span class="govuk-visually-hidden">Error:</span>
-                                            Time is not valid
+                                            {{ timeError.msg }}
                                         </p>
                                     {% endif %}
 

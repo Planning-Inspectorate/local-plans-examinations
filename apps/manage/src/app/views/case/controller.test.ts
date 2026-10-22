@@ -71,6 +71,9 @@ function createService(): any {
 							gateway3InfoId: undefined
 						}
 					]
+				},
+				examinationInfo: {
+					hearings: []
 				}
 			}))
 		},
@@ -1231,6 +1234,9 @@ describe('buildGetJourneyMiddleware', () => {
 		await ctx.handler(ctx.req, ctx.res, ctx.next);
 
 		assert.deepEqual(ctx.service.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
+			include: {
+				hearings: true
+			},
 			where: {
 				caseId: CASE_ID
 			}
@@ -2179,7 +2185,6 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-
 		assert.equal(req.session.alertMessage, 'Workshop document(s) uploaded');
 		assert.equal(req.session.alertMessageStatus, 'success');
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 1);
@@ -2209,7 +2214,6 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-
 		assert.equal(req.session.alertMessageStatus, 'important');
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
