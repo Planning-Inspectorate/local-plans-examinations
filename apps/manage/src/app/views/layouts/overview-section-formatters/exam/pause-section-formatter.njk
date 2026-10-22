@@ -7,7 +7,7 @@
     {% set pauseRows = [] %}
 
     {% set _ = pauseRows.push({
-        key: { text: "Pause start date" },
+        key: { text: "Examination pause date" },
         value: { text: pause.planPauseDate | date("d MMM yyyy") },
         actions: {
           items: [

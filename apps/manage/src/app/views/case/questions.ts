@@ -413,9 +413,21 @@ const examinationPauseBaseQuestions: Record<string, ManageQuestionConfig> = {
 		type: COMPONENT_TYPES.TEXT_ENTRY,
 		question: 'Pause details',
 		fieldName: 'planPauseStartDetails', // In the ExaminationPause model
+		label: 'Add any details about the pause',
 		url: 'examination-pause-details',
 		title: 'Pause details',
-		validators: [],
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 1,
+					minLengthMessage: 'Please the pause details contains text'
+				},
+				maxLength: {
+					maxLength: 1000,
+					maxLengthMessage: 'Please ensure the pause details contains up to 500 characters'
+				}
+			})
+		],
 		inputAttributes: { 'data-cy': 'examination-pause-details' }
 	},
 	examinationPauseEndDate: {
@@ -431,9 +443,21 @@ const examinationPauseBaseQuestions: Record<string, ManageQuestionConfig> = {
 		type: COMPONENT_TYPES.TEXT_ENTRY,
 		question: 'Pause restart details',
 		fieldName: 'planPauseEndDetails', // In the ExaminationPause model
+		label: 'Add any details about the restart',
 		url: 'examination-pause-restart-details',
 		title: 'Pause restart details',
-		validators: [],
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 1,
+					minLengthMessage: 'Please ensure the pause restart details contains text'
+				},
+				maxLength: {
+					maxLength: 1000,
+					maxLengthMessage: 'Please ensure the pause restart details contains up to 500 characters'
+				}
+			})
+		],
 		inputAttributes: { 'data-cy': 'examination-pause-restart-details' }
 	}
 };
@@ -1524,6 +1548,20 @@ export const questions = createQuestions(
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
+// Some questions require different submit button text
+for (const prefix of [
+	'examinationPauseStartDate',
+	'examinationPauseDetail',
+	'examinationPauseEndDate',
+	'examinationRestartDetail'
+]) {
+	const questionsStartingWithPrefix = Object.fromEntries(
+		Object.entries(questions).filter(([k]) => k.startsWith(prefix))
+	);
+	for (const question of Object.values(questionsStartingWithPrefix)) {
+		question.continueButtonText = 'Submit';
+	}
+}
 
 Object.keys(examinationHearingQuestions).forEach((key) => {
 	questions[key].continueButtonText = 'Continue';
