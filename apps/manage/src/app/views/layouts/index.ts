@@ -6,6 +6,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import CustomFileReviewerQuestion from './custom-file-reviewer/question.ts';
 import CustomNoteQuestion from './custom-note-input/question.ts';
+import CustomFileManagerQuestion from './custom-file-manager/question.ts';
 import CustomDocumentsQuestion from './custom-documents-viewer/question.ts';
 
 /**
@@ -22,6 +23,7 @@ export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_FILE_REVIEWER: 'custom-file-reviewer',
 	CUSTOM_DOCUMENTS_VIEW: 'CUSTOM_DOCUMENTS_VIEW',
 	CUSTOM_NOTE_INPUT: 'custom-note-input',
+	CUSTOM_FILE_MANAGER: 'custom-file-manager',
 	...CUSTOM_DYNAMIC_FORM_COMPONENTS
 });
 
@@ -30,6 +32,7 @@ export const CUSTOM_COMPONENT_CLASSES = freeze({
 	[CUSTOM_COMPONENTS.CUSTOM_MANAGE_LIST]: CustomManageListQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER]: CustomFileReviewerQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT]: CustomNoteQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER]: CustomFileManagerQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW]: CustomDocumentsQuestion,
 	...CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES
 });

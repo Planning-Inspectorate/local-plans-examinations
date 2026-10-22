@@ -3,11 +3,12 @@ import { SubmissionCheck } from './submission-check.ts';
 export abstract class SubmissionCheckWithDate extends SubmissionCheck {
 	protected generateAdditionalDateField(
 		documentUploadDate: Date | undefined | null,
-		dateUploadedQuestionUrl: string | undefined
+		dateUploadedQuestionUrl: string | undefined,
+		rowText?: string
 	) {
 		return [
 			{
-				name: 'Date uploaded',
+				name: rowText ? rowText : 'Date uploaded',
 				value: documentUploadDate
 					? new Intl.DateTimeFormat('en-GB', {
 							day: 'numeric',

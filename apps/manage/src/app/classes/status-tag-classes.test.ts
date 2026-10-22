@@ -4,7 +4,12 @@ import assert from 'node:assert/strict';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 import type { DocumentModel, Gateway3SubmissionModel } from '@pins/local-plans-database/src/client/models.ts';
-import { getPlanStatusClasses, resolveCaseHeaderStatus } from './status-tag-classes.ts';
+import {
+	type ExaminationStage,
+	getPlanStatusClasses,
+	resolveCaseHeaderStatus,
+	resolveExaminationStage
+} from './status-tag-classes.ts';
 
 const makeDocument = (overrides: Partial<DocumentModel> = {}): DocumentModel => ({
 	createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -536,6 +541,581 @@ describe('resolveCaseHeaderStatus', () => {
 		assert.deepEqual(result, {
 			headerStatusText: 'GW2 pending',
 			headerStatusClasses: 'govuk-tag--yellow'
+		});
+	});
+
+	it('should update status for examination (Exam in progress)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+		const examinationStatus: ExaminationStage = {
+			examiningInspector1: 'Alice'
+		};
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'Exam in progress',
+			headerStatusClasses: 'govuk-tag--blue'
+		});
+	});
+
+	it('should update status for examination (Exam in progress check if Inspector 2 is assigned.)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+		const examinationStatus: ExaminationStage = {
+			examiningInspector2: 'Alice'
+		};
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'Exam in progress',
+			headerStatusClasses: 'govuk-tag--blue'
+		});
+	});
+
+	it('should update status for examination (QA)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const examinationStatus: ExaminationStage = {
+			QADate: new Date(DATE)
+		};
+
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'QA',
+			headerStatusClasses: 'govuk-tag--blue'
+		});
+	});
+
+	it('should update status for examination (Fact check)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const examinationStatus: ExaminationStage = {
+			qaInspector1: 'Alice',
+			panelResponseToInspectorDate: DATE
+		};
+
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'Fact check',
+			headerStatusClasses: 'govuk-tag--turquoise'
+		});
+	});
+
+	it('should update status for examination (Report issued)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const examinationStatus: ExaminationStage = {
+			finalReportIssueDate: DATE
+		};
+
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'Report issued',
+			headerStatusClasses: 'govuk-tag--turquoise'
+		});
+	});
+
+	it('should update status for examination (Plan adopted)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const examinationStatus: ExaminationStage = {
+			adoptionDate: DATE
+		};
+
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'Plan adopted',
+			headerStatusClasses: 'govuk-tag--green'
+		});
+	});
+
+	it('should update status for examination (Paused)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const examinationStatus: ExaminationStage = {
+			adoptionDate: DATE,
+			planPauseStartDate: DATE,
+			shouldPause: true
+		};
+
+		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatus
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatus, {
+			headerStatusText: 'Paused',
+			headerStatusClasses: 'govuk-tag--grey'
+		});
+	});
+
+	it('should update status for examination, return the last state when a has pause ended (Paused ended)', () => {
+		const DATE = '2026-01-01';
+		const pastDate = new Date(Date.now() - 60_000);
+
+		const examinationStatusPaused: ExaminationStage = {
+			finalReportIssueDate: DATE,
+			shouldPause: true
+		};
+
+		const examinationStatusPausedEnded: ExaminationStage = {
+			finalReportIssueDate: DATE,
+			shouldPause: false
+		};
+
+		const resolvedCaseHeaderStatusPaused = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatusPaused
+		);
+
+		const resolvedCaseHeaderStatusPausedEnded = resolveCaseHeaderStatus(
+			[],
+			[
+				{
+					isDeleted: false
+				} as DocumentModel
+			],
+			null,
+			{
+				id: 'g2',
+				caseId: 'case-1',
+				actualDate: new Date(),
+				workshopVenue: 'Somewhere',
+				workshopDate: pastDate,
+				assessorName: 'Assessor',
+				expectedDate: null,
+				validDate: null,
+				assessorAppointmentDate: null,
+				reportIssuedDate: null,
+				reportPublishedByLPA: null,
+				workshops: [],
+				workshopDocumentUploadedDate: null
+			},
+			[
+				{
+					decision: '1',
+					completionDate: DATE
+				} as unknown as Gateway3SubmissionModel
+			],
+			examinationStatusPausedEnded
+		);
+
+		assert.deepEqual(resolvedCaseHeaderStatusPaused, {
+			headerStatusText: 'Paused',
+			headerStatusClasses: 'govuk-tag--grey'
+		});
+
+		assert.deepEqual(resolvedCaseHeaderStatusPausedEnded, {
+			headerStatusText: 'Report issued',
+			headerStatusClasses: 'govuk-tag--turquoise'
+		});
+	});
+});
+
+describe('resolveExaminationStage', () => {
+	const DATE = new Date('2026-04-01');
+	describe('guards', () => {
+		it('returns null when passDecisionGiven is false', () => {
+			assert.strictEqual(resolveExaminationStage({ adoptionDate: DATE }, false), null);
+		});
+
+		it('returns null when passDecisionGiven is undefined', () => {
+			assert.strictEqual(resolveExaminationStage({ adoptionDate: DATE }), null);
+		});
+
+		it('returns null when status is null', () => {
+			assert.strictEqual(resolveExaminationStage(null, true), null);
+		});
+
+		it('returns null when status is undefined', () => {
+			assert.strictEqual(resolveExaminationStage(undefined, true), null);
+		});
+
+		it('returns null when passDecisionGiven is false even if paused', () => {
+			const status = { shouldPause: true } as unknown as ExaminationStage;
+
+			assert.strictEqual(resolveExaminationStage(status, false), null);
+		});
+	});
+
+	describe('paused', () => {
+		it('returns "Paused" when shouldPause is true', () => {
+			const status = { shouldPause: true } as unknown as ExaminationStage;
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Paused');
+		});
+
+		it('returns "Paused" ahead of any later stage', () => {
+			const status = { shouldPause: true, adoptionDate: DATE } as unknown as ExaminationStage;
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Paused');
+		});
+
+		it('ignores shouldPause when it is false', () => {
+			const status = { shouldPause: false, QADate: DATE } as unknown as ExaminationStage;
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'QA');
+		});
+	});
+
+	describe('no stage reached', () => {
+		it('returns null for an empty status', () => {
+			assert.strictEqual(resolveExaminationStage({}, true), null);
+		});
+
+		it('returns null when every field is null', () => {
+			const status: ExaminationStage = {
+				examiningInspector1: null,
+				QADate: null,
+				qaInspector1: null,
+				panelResponseToInspectorDate: null,
+				finalReportIssueDate: null,
+				adoptionDate: null
+			};
+
+			assert.strictEqual(resolveExaminationStage(status, true), null);
+		});
+
+		it('returns null when only unlabelled pause fields are set', () => {
+			const status: ExaminationStage = { planPauseStartDate: DATE, planPauseEndDate: DATE };
+
+			assert.strictEqual(resolveExaminationStage(status, true), null);
+		});
+	});
+
+	describe('single field set', () => {
+		const cases: [keyof ExaminationStage, string | Date, string | null][] = [
+			['examiningInspector1', 'inspector-1', 'Exam in progress'],
+			['examiningInspector2', 'inspector-2', 'Exam in progress'],
+			['examiningInspector3', 'inspector-3', 'Exam in progress'],
+			['qaInspector1', 'qa-1', null],
+			['qaInspector2', 'qa-2', null],
+			['qaInspector3', 'qa-3', null],
+			['QADate', DATE, 'QA'],
+			['panelResponseToInspectorDate', DATE, 'Fact check'],
+			['finalReportIssueDate', DATE, 'Report issued'],
+			['adoptionDate', DATE, 'Plan adopted']
+		];
+
+		for (const [field, value, expected] of cases) {
+			it(`returns "${expected}" when only ${field} is set`, () => {
+				assert.strictEqual(resolveExaminationStage({ [field]: value }, true), expected);
+			});
+		}
+	});
+
+	describe('multiple fields set', () => {
+		it('does not advance beyond Exam in progress when QA Inspectors are assigned without a report-sent date', () => {
+			const status: ExaminationStage = {
+				examiningInspector1: 'inspector-1',
+				qaInspector1: 'qa-1',
+				qaInspector2: 'qa-2',
+				qaInspector3: 'qa-3',
+				QADate: null
+			};
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Exam in progress');
+		});
+
+		it('returns the label of the furthest stage reached', () => {
+			const status: ExaminationStage = {
+				examiningInspector1: 'inspector-1',
+				qaInspector1: 'qa-1',
+				panelResponseToInspectorDate: DATE,
+				finalReportIssueDate: DATE
+			};
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Report issued');
+		});
+
+		it('returns "Plan adopted" when every stage is complete', () => {
+			const status: ExaminationStage = {
+				examiningInspector1: 'inspector-1',
+				examiningInspector2: 'inspector-2',
+				examiningInspector3: 'inspector-3',
+				QADate: DATE,
+				qaInspector1: 'qa-1',
+				qaInspector2: 'qa-2',
+				qaInspector3: 'qa-3',
+				panelResponseToInspectorDate: DATE,
+				planPauseStartDate: DATE,
+				planPauseEndDate: DATE,
+				finalReportIssueDate: DATE,
+				adoptionDate: DATE
+			};
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Plan adopted');
+		});
+
+		it('skips past unlabelled pause fields to the previous labelled stage', () => {
+			const status: ExaminationStage = {
+				panelResponseToInspectorDate: DATE,
+				planPauseStartDate: DATE,
+				planPauseEndDate: DATE
+			};
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Fact check');
+		});
+
+		it('uses field order, not which fields are filled in sequence', () => {
+			const status: ExaminationStage = { examiningInspector1: 'inspector-1', adoptionDate: DATE };
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'Plan adopted');
+		});
+	});
+
+	describe('value handling', () => {
+		it('does not advance for an empty QA Inspector name', () => {
+			assert.strictEqual(resolveExaminationStage({ qaInspector1: '' }, true), null);
+		});
+
+		it('treats undefined as not set', () => {
+			const status: ExaminationStage = { QADate: DATE, finalReportIssueDate: undefined };
+
+			assert.strictEqual(resolveExaminationStage(status, true), 'QA');
 		});
 	});
 });

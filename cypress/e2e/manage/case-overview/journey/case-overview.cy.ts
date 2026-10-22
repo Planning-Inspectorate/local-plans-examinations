@@ -96,11 +96,7 @@ describe('Case overview updates', () => {
 		caseOverviewPage.openCaseNotes();
 		caseOverviewPage.addCaseNote(note);
 		caseOverviewPage.verifyCaseNotes(...expectedNotes);
-		caseOverviewPage.caseNoteEntries
-			.first()
-			.find('.govuk-hint')
-			.invoke('text')
-			.should('match', /\d{1,2} [A-Za-z]+ \d{4} at \d{2}:\d{2} by Unknown/);
+		caseOverviewPage.verifyLatestCaseNoteMetadata('Unknown');
 
 		cy.reload();
 		caseOverviewPage.openCaseNotes();

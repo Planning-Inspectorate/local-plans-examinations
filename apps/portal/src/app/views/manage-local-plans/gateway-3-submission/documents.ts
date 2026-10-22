@@ -17,7 +17,7 @@ export async function saveGateway3Documents(
 	documentSetFolderName: string,
 	uploadedFiles: UploadedFile[]
 ): Promise<void> {
-	return DocumentUtil.saveDocuments(service, req, documentSetFolderName, uploadedFiles);
+	return DocumentUtil.saveDocuments(service, req, documentSetFolderName, uploadedFiles, false);
 }
 
 export async function getDocumentSetIdsByFolderName(

@@ -3,8 +3,10 @@ import { SignedSLASubmissionCheck } from './signed-sla-submission-check.ts';
 import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-check.ts';
 import { Gateway2WorkshopDocumentsSubmissionCheck } from './gateway-2-workshop-documents-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
+import { ExaminationReportSubmissionCheck } from './examination-report-submission-check.ts';
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { configureNunjucks } from '../../../nunjucks.ts';
 
 const MockService = {
 	db: {
@@ -16,6 +18,12 @@ const MockService = {
 		},
 		gateway3Info: {
 			findUnique: mock.fn<() => {}>()
+		},
+		examinationInfo: {
+			findUnique: mock.fn<() => {}>()
+		},
+		caseHistory: {
+			findFirst: mock.fn(async () => null)
 		}
 	}
 };
@@ -150,6 +158,129 @@ describe('Test SignedSLASubmissionCheck', () => {
 					}
 				]
 			}
+		);
+	});
+});
+
+describe('Test ExaminationReportSubmissionCheck', () => {
+	const args = (uploadedFiles: unknown[]) => [
+		'123456',
+		'PLAN-12345',
+		'examination',
+		'outcome',
+		'examination-report',
+		'/PLAN-12345/examination/outcome/examination-report/check',
+		MockService,
+		uploadedFiles
+	];
+
+	it('shows the plan outcome and date for the first report', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: null,
+			isSound: 'sound-with-modifications'
+		}));
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			...(args([{ dateCreated: new Date(2026, 0, 1) }]) as [string, string, string, string, string, string, any, any])
+		);
+
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound with modifications'],
+				['Date', '1 January 2026']
+			]
+		);
+		assert.deepEqual(data.additionalFields[1], {
+			name: 'Date',
+			value: '1 January 2026',
+			url: 'sound-unsound-date',
+			query: 'returnTo=check'
+		});
+		assert.equal(data.documentChangeUrl, '/PLAN-12345/examination/outcome/examination-report?returnTo=check');
+		assert.equal(data.backLink, data.documentChangeUrl);
+		const html = configureNunjucks().render('views/layouts/submit-documents-check-your-answers.njk', {
+			...data,
+			config: { headerTitle: 'Manage', footerLinks: [] }
+		});
+		assert.ok(html.includes(`href="${data.documentChangeUrl}">Change`));
+	});
+
+	it('keeps the initial check page after its date is changed', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date(2026, 0, 3),
+			isSound: 'sound'
+		}));
+		MockService.db.caseHistory.findFirst.mock.mockImplementation(async () => ({ id: 'manual-date-history' }));
+		const checkPageUrl = '/PLAN-12345/examination/outcome/examination-report/check?returnTo=check';
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			'123456',
+			'PLAN-12345',
+			'examination',
+			'outcome',
+			'examination-report',
+			checkPageUrl,
+			MockService as any,
+			[{ dateCreated: new Date(2026, 0, 1) }]
+		);
+
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound'],
+				['Date', '3 January 2026']
+			]
+		);
+		assert.equal(data.documentChangeUrl, '/PLAN-12345/examination/outcome/examination-report?returnTo=check');
+	});
+
+	it('shows today as the date for an additional report when it was not manually set', async () => {
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date(2026, 0, 1),
+			isSound: 'sound'
+		}));
+		MockService.db.caseHistory.findFirst.mock.mockImplementation(async () => null);
+		const today = new Intl.DateTimeFormat('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			timeZone: 'Europe/London',
+			year: 'numeric'
+		}).format(new Date());
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			...(args([{ dateCreated: new Date(2026, 0, 2) }]) as [string, string, string, string, string, string, any, any])
+		);
+
+		assert.equal(data.titleHeading, 'Check documents and send notification');
+		assert.equal(data.documentChangeUrl, '/PLAN-12345/examination/outcome/examination-report?returnTo=check');
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound'],
+				['Date', today]
+			]
+		);
+	});
+
+	it('preserves a manually entered date on an additional report Check page', async () => {
+		const manuallyEnteredDate = new Date(2026, 0, 1);
+		MockService.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: manuallyEnteredDate,
+			isSound: 'sound'
+		}));
+		MockService.db.caseHistory.findFirst.mock.mockImplementation(async () => ({ id: 'manual-date-history' }));
+
+		const data = await new ExaminationReportSubmissionCheck().generateDataForPage(
+			...(args([{ dateCreated: new Date(2026, 0, 2) }]) as [string, string, string, string, string, string, any, any])
+		);
+
+		assert.deepEqual(
+			data.additionalFields.map((field) => [field.name, field.value]),
+			[
+				['Outcome', 'Sound'],
+				['Date', '1 January 2026']
+			]
 		);
 	});
 });

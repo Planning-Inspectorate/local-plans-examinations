@@ -1,82 +1,18 @@
 import { ExaminationSaveController } from './examination-save-controller.ts';
-import { ManageService } from '#service';
+import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
-type MockServiceType = {
-	db: {
-		case: {
-			findUnique: any;
-			upsert: any;
-		};
-		gateway1Info: {
-			findUnique: any;
-			upsert: any;
-		};
-		gateway2Info: {
-			findUnique: any;
-			upsert: any;
-		};
-		gateway3Info: {
-			findUnique: any;
-			upsert: any;
-		};
-		examinationInfo: {
-			findUnique: any;
-			upsert: any;
-		};
-		contacts: {
-			upsert: any;
-		};
-		lpas: {
-			upsert: any;
-		};
-	};
-};
-function createMockService(): MockServiceType {
+function createMockService(current: { planPauseStartDate: Date | null } | null = null) {
 	return {
 		db: {
 			case: {
-				findUnique: mock.fn(async () => ({
-					id: 'someCaseId',
-					gateway2Info: {
-						workshops: []
-					},
-					gateway3Info: {
-						submissions: [
-							{
-								id: 'someId',
-								decision: undefined,
-								completionDate: undefined,
-								gateway3InfoId: undefined
-							}
-						]
-					}
-				})),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway1Info: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway2Info: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway3Info: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
+				findUnique: mock.fn(async (_args: unknown) => ({ id: 'someCaseId' }))
 			},
 			examinationInfo: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			contacts: {
-				upsert: mock.fn(async () => ({}))
-			},
-			lpas: {
-				upsert: mock.fn(async () => ({}))
+				findUnique: mock.fn(async (_args: unknown) => current),
+				upsert: mock.fn(async (_args: unknown) => ({}))
 			}
 		}
 	};
@@ -88,14 +24,10 @@ mock.timers.enable({
 	now: mockDate
 });
 
-describe('test Gateway1SaveController', () => {
+describe('ExaminationSaveController', () => {
 	it('can save an examination', async () => {
 		const mockService = createMockService();
-		const question = 'examining-inspector-1';
-		const req = {
-			params: {}
-		} as Request;
-		req.params.question = question;
+		const req = { params: { question: 'examining-inspector-1' } } as unknown as Request;
 		const answers = {};
 		const expectedAnswers = {
 			examiningInspectorAppointmentDate: mockDate
@@ -116,4 +48,41 @@ describe('test Gateway1SaveController', () => {
 		await examinationController.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
+
+	const pauseDate = new Date('2026-02-01T00:00:00.000Z');
+	for (const { name, current, recordHistory } of [
+		{ name: 'creates history for the first pause', current: null, recordHistory: true },
+		{
+			name: 'does not duplicate history when the same pause date is saved',
+			current: { planPauseStartDate: new Date(pauseDate) },
+			recordHistory: false
+		},
+		{
+			name: 'adds history when the pause date changes',
+			current: { planPauseStartDate: mockDate },
+			recordHistory: true
+		}
+	]) {
+		it(name, async () => {
+			const mockService = createMockService(current);
+			const req = { params: { question: 'plan-pause-start-date' } } as unknown as Request;
+			const controller = new ExaminationSaveController(mockService as unknown as ManageService, req, 'caseRef');
+			const answers = { planPauseStartDate: pauseDate };
+			const history = recordHistory ? { planPauseHistory: { create: { planPauseDate: pauseDate } } } : {};
+
+			await controller.prepareAndSave(answers);
+
+			assert.equal(mockService.db.examinationInfo.findUnique.mock.callCount(), 1);
+			assert.deepEqual(mockService.db.examinationInfo.findUnique.mock.calls[0].arguments[0], {
+				where: { caseId: 'someCaseId' },
+				select: { planPauseStartDate: true }
+			});
+			assert.equal(mockService.db.examinationInfo.upsert.mock.callCount(), 1);
+			assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
+				where: { caseId: 'someCaseId' },
+				update: { ...answers, ...history },
+				create: { caseId: 'someCaseId', ...answers, ...history }
+			});
+		});
+	}
 });

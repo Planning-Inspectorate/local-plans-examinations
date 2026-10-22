@@ -1,3 +1,6 @@
+import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
+import { GATEWAY_3_DECISION_ID } from '../../../packages/database/src/seed/static-data/ids/case.ts';
+
 // seed-cy.ts sets expectedSubmissionDate to `now` at seed time
 // unlike a real case, where it comes from a fixed value answered during case creation. If seed-cy.ts is
 // ever changed to a fixed date instead, this dynamic today/todayInput/todayDisplay block can be removed
@@ -40,6 +43,21 @@ export const actualSubmissionDate = {
 };
 
 export const examinationSubmissionDates = [expectedSubmissionDate, actualSubmissionDate];
+
+export const examinationReport = {
+	row: 'Examination report',
+	path: 'examination-report',
+	fileName: 'test-document.pdf',
+	supportingFileName: 'test-document.docx',
+	receivedDate: '2026-10-01T12:00:00.000Z',
+	receivedDisplay: '1 Oct 2026',
+	issuedDate: '2026-10-02T12:00:00.000Z',
+	issuedDisplay: '2 October 2026',
+	updatedDate: { day: '3', month: '10', year: '2026' },
+	updatedDateDisplay: '3 October 2026',
+	issuedMessage: 'Final report and supporting documents saved and notification sent',
+	addedMessage: 'Document added and notification sent'
+};
 
 export const examiningInspector1 = {
 	row: 'Examining Inspector 1',
@@ -173,10 +191,11 @@ export const finalReportIssueDate = {
 };
 export const QADateAnswers = {
 	QADate: {
-		row: 'QA date',
-		heading: 'What is the date of QA?',
+		row: 'Report sent to QA inspector',
+		heading: 'When was the report sent to the QA inspector?',
 		fieldName: 'QADate',
 		path: 'qa-date',
+		input: { day: '4', month: '12', year: '2026' },
 		display: '4 December 2026'
 	},
 
@@ -266,18 +285,18 @@ export const withdrawnDate = {
 };
 
 export const soundUnsound = {
-	row: 'Sound / unsound',
-	heading: 'Was the plan found to be sound or unsound?',
+	row: 'Outcome',
+	heading: 'Plan outcome',
 	fieldName: 'isSound',
-	path: 'is-sound',
-	value: 'yes',
+	path: 'plan-outcome',
+	value: 'sound',
 	display: 'Sound',
-	updatedValue: 'no',
+	updatedValue: 'unsound',
 	updatedDisplay: 'Unsound'
 };
 
 export const soundUnsoundDate = {
-	row: 'Sound / unsound date',
+	row: 'Report issued',
 	path: 'sound-unsound-date',
 	display: '7 December 2026'
 };
@@ -303,3 +322,19 @@ export const examinationImportantDates = [
 	adoptionDate,
 	approvedForCILDate
 ];
+
+export const seededExaminationInProgress = {
+	gateway3Submission: {
+		decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+		completionDate: '2026-09-01T12:00:00.000Z'
+	},
+	examination: { examiningInspector1: 'inspector-1' }
+} satisfies SeedCyOptions;
+
+export const seededPausedExamination = {
+	...seededExaminationInProgress,
+	examination: {
+		...seededExaminationInProgress.examination,
+		planPauseStartDate: '2026-12-04T00:00:00.000Z'
+	}
+} satisfies SeedCyOptions;

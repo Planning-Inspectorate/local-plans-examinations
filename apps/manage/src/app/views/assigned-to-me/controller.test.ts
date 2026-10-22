@@ -26,7 +26,8 @@ function createService(cases: unknown[] = []): any {
 			},
 			document: {
 				findMany: mock.fn(async () => [])
-			}
+			},
+			examinationInfo: { findFirst: async () => null }
 		},
 		logger: {
 			error: mock.fn()

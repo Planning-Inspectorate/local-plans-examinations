@@ -282,6 +282,16 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 
 export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const examinationUrl = req.baseUrl + '/examination';
+	const reportUploaded =
+		Array.isArray(response.answers.examinationReport) && response.answers.examinationReport.length > 0;
+	const returnToCheck = req.query?.returnTo === 'check';
+	const reportIssued =
+		Boolean(response.answers.soundUnsoundDate) &&
+		(!returnToCheck || req.session?.examinationReportReturnToManage === true);
+
+	questions.examinationReport.actionLink = reportUploaded
+		? { href: `${examinationUrl}/outcome/${questions.examinationReportManage.url}`, text: 'Manage' }
+		: { href: `${examinationUrl}/outcome/${questions.isSound.url}`, text: 'Add' };
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
@@ -311,6 +321,16 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.factCheckActualDate)
 				.addQuestion(questions.factCheckReceivedBackFromLPADate)
 				.addQuestion(questions.finalReportIssueDate),
+			new Section('Outcome', 'outcome')
+				.addQuestion(questions.isSoundNavigation)
+				.addQuestion(questions.examinationReport)
+				.addQuestion(questions.examinationReportManage)
+				.startMultiQuestionCondition('report-uploaded', () => reportUploaded)
+				.addQuestion(questions.soundUnsoundDateOutcome)
+				.addQuestion(questions.isSoundOutcome)
+				.addQuestion(questions.adoptionDateOutcome)
+				.addQuestion(questions.approvedForCILDateOutcome)
+				.endMultiQuestionCondition('report-uploaded'),
 			new Section('Important dates for this plan', 'important-dates')
 				.addQuestion(questions.planPauseStartDate)
 				.addQuestion(questions.planPauseEndDate)
@@ -331,10 +351,19 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
 	}
-	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference, (params) =>
+		params.section === 'outcome' && params.question === questions.examinationReport.url
+			? `${examinationUrl}/outcome/${reportIssued ? questions.examinationReportManage.url : questions.isSound.url}${returnToCheck && !reportIssued ? '?returnTo=check' : ''}`
+			: undefined
+	);
 }
 
-function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, caseReference: string | string[]): Journey {
+function getBackLinksAndSetReference(
+	journey: Journey,
+	overviewUrl: string,
+	caseReference: string | string[],
+	backLinkOverride: (params: Record<string, string | string[] | undefined>) => string | undefined = () => undefined
+): Journey {
 	const getBackLink = journey.getBackLink.bind(journey);
 	const caseJourney = journey as JourneyWithReference;
 	caseJourney.caseReference = Array.isArray(caseReference) ? caseReference[0] : caseReference;
@@ -342,6 +371,11 @@ function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, case
 	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
 		const { params, manageListQuestion } = options;
 		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
+
+		const override = backLinkOverride(params);
+		if (override) {
+			return override;
+		}
 
 		if (!manageListQuestion && !isManageListStep) {
 			return overviewUrl;
@@ -434,7 +468,8 @@ const examinationQuestionNames = new Set<string>([
 	'isSound',
 	'soundUnsoundDate',
 	'adoptionDate',
-	'approvedForCILDate'
+	'approvedForCILDate',
+	'examinationReport'
 ]);
 
 export const journeyQuestions = {

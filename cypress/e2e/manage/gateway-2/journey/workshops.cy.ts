@@ -24,20 +24,18 @@ describe('Gateway 2 workshops', () => {
 	after(() => cy.task('clearDb'));
 
 	it('cancels a workshop and records it in case history', { tags: ['regression'] }, () => {
-		gateway2Page.cancelWorkshopLink(1).should('be.visible').and('have.text', 'Cancel workshop 1').click();
-		cancelWorkshopPage.verifyLoaded();
+		gateway2Page.openCancelWorkshop(1);
 		cancelWorkshopPage.verifyContent();
-		cancelWorkshopPage.doNotCancelLink.click();
+		cancelWorkshopPage.keepWorkshop();
 		gateway2Page.verifyLoaded(seededCase.planTitle);
-		gateway2Page.workshopDetails(1).should('contain.text', seededGateway2Workshop.remoteMeetingLink);
+		gateway2Page.verifyWorkshopMeetingLink(1, seededGateway2Workshop.remoteMeetingLink);
 
-		gateway2Page.cancelWorkshopLink(1).click();
-		cancelWorkshopPage.cancelButton.click();
+		gateway2Page.openCancelWorkshop(1);
+		cancelWorkshopPage.confirmCancellation();
 		gateway2Page.verifyLoaded(seededCase.planTitle);
 		cy.reload();
 		gateway2Page.verifyWorkshopOrder();
-		gateway2Page.cancelWorkshopLink(1).should('not.exist');
-		gateway2Page.mainContent.should('not.contain.text', seededGateway2Workshop.remoteMeetingLink);
+		gateway2Page.verifyWorkshopCancelled(1, seededGateway2Workshop.remoteMeetingLink);
 
 		gateway2Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
@@ -49,7 +47,7 @@ describe('Gateway 2 workshops', () => {
 
 		cy.reload();
 		gateway2Page.verifyWorkshopOrder(1, 2);
-		gateway2Page.workshopDetails(1).should('contain.text', seededGateway2Workshop.remoteMeetingLink);
+		gateway2Page.verifyWorkshopMeetingLink(1, seededGateway2Workshop.remoteMeetingLink);
 		gateway2Page.verifyWorkshopSetUp(2, workshopSetUp.expectedNumberOfDays.updatedDisplayNumberOfDays);
 		gateway2Page.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();

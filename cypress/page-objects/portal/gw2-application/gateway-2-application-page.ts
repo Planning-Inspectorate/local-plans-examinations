@@ -1,4 +1,5 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
+import { gateway2ApplicationDocuments, gateway2SubmittedPlan } from '../../../fixtures/portal/gateway-2-uploads.ts';
 
 const gateway2SubmissionRows = ['Gateway 2 covering letter', 'Local plan timetable', 'Project initiation document'];
 const gateway2SubmissionHeading = 'Gateway 2 submission';
@@ -41,6 +42,30 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(gateway2SubmissionHeading);
+	}
+
+	verifyProceduralDocuments() {
+		this.verifyDocumentSection(
+			this.proceduralDocumentsTable,
+			'Procedural Documents',
+			gateway2ApplicationDocuments.procedural
+		);
+	}
+
+	verifyConsultationDocuments() {
+		this.verifyDocumentSection(
+			this.consultationDocumentsTable,
+			'Consultation Documents',
+			gateway2ApplicationDocuments.consultation
+		);
+	}
+
+	verifyAdditionalDocuments() {
+		this.verifyDocumentSection(
+			this.additionalDocumentsTable,
+			'Additional documents',
+			gateway2ApplicationDocuments.additional
+		);
 	}
 
 	// Cross-service tests start in Manage, so these Portal assertions need to run inside cy.origin().
@@ -87,6 +112,23 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			.should('match', /^Your application was submitted on .+ at \d{2}:\d{2} by .+$/)
 			.and('include', todayDisplay)
 			.and('include', submitterEmail);
+	}
+
+	verifySubmittedApplication(submittedDate: string, submitterEmail: string) {
+		this.verifyLoaded();
+		this.verifySubmissionData(submittedDate, submitterEmail);
+		this.verifyDocumentRowContains(
+			this.proceduralDocumentsTable,
+			'Gateway 2 covering letter',
+			gateway2SubmittedPlan.coveringLetter
+		);
+		this.verifyDocumentRowContains(
+			this.proceduralDocumentsTable,
+			'Local plan timetable',
+			...gateway2SubmittedPlan.timetableFiles
+		);
+		this.verifyNoAddOrChangeLinks();
+		this.verifySubmitGateway2ButtonNotShown();
 	}
 
 	verifyNoAddOrChangeLinks() {

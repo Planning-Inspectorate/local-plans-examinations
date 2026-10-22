@@ -69,7 +69,7 @@ front_door_config = {
 gov_notify = {
   templates = {
     auth_id           = "e57674eb-7830-4b71-9300-76fdac5ad13b"
-    case_created      = "09f1b5f7-4c2c-40c3-abee-505ffd86e629"
+    case_created      = "9f258ed8-295d-421f-af9c-34d3e7f9cb1e"
     gw2_submission_id = "aebb9331-0e0e-442c-ba51-f8adfd6cb90a"
   }
 }

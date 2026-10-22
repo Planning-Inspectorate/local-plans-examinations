@@ -50,6 +50,10 @@ export class BasePage {
 		return cy.get('main');
 	}
 
+	get notificationBanner() {
+		return cy.get('.govuk-notification-banner');
+	}
+
 	get saveAndContinueButton() {
 		return cy.getByData('button-save-and-continue');
 	}
@@ -148,6 +152,10 @@ export class BasePage {
 
 	verifyHeading(text: string) {
 		this.pageHeading.should('be.visible').and('contain.text', text);
+	}
+
+	verifyNotificationBanner(message: string) {
+		this.notificationBanner.should('be.visible').and('contain.text', message);
 	}
 
 	verifyBackLink(href?: string | RegExp) {

@@ -9,6 +9,7 @@ import type {
 	UploadedFile
 } from './types.ts';
 import { MAX_NO_OF_FILES_TO_UPLOAD, TOTAL_FILE_UPLOAD_LIMIT, TOTAL_FILE_UPLOAD_LIMIT_LABEL } from './constants.ts';
+import { VIRUS_CHECK_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type CheckForValidationErrorsParams = Parameters<Question['checkForValidationErrors']>;
 type RequestWithFileUploaderCustomViewData = CheckForValidationErrorsParams[0] & {
@@ -75,6 +76,14 @@ export default class FileUploaderQuestion extends Question {
 		viewModel.uploadedFiles = uploadedFiles;
 		viewModel.uploadedFilesEncoded = Buffer.from(JSON.stringify(uploadedFiles), 'utf-8').toString('base64');
 		viewModel.currentUrl = options.customViewData?.currentUrl;
+		if (viewModel.currentUrl) {
+			const url = new URL(viewModel.currentUrl, 'http://localhost');
+			viewModel.currentUrl = url.pathname;
+			viewModel.queryString = url.search;
+			if (viewModel.submitAction) {
+				viewModel.submitAction = `${url.pathname}/upload-documents/submit${url.search}`;
+			}
+		}
 		viewModel.errors = options.customViewData?.errors;
 		viewModel.errorSummary = options.customViewData?.errorSummary;
 
@@ -104,6 +113,7 @@ export default class FileUploaderQuestion extends Question {
 			manageListQuestion,
 			customViewData: {
 				currentUrl: request.originalUrl,
+				submitAction: request.app.locals.appName === 'manage' ? `${req.originalUrl}/upload-documents/submit` : '',
 				sessionKey: request.fileUploaderSessionKey ?? this.fieldName,
 				fileUploader: request.session?.fileUploader,
 				errors: hasBodyErrors
@@ -191,6 +201,33 @@ export function fileUploadCountFormat(context: any): string {
 	const files = Array.isArray(answer) ? (answer as UploadedFile[]) : [];
 	const pluralCharacter = files.length != 1 ? 's' : '';
 	return `<ul class="govuk-list">${files.length} document${pluralCharacter}</ul>`;
+}
+
+/**
+ * Builds a view model for the virus scan status of uploaded files, including any errors to display in the summary.
+ * - `virusScanInProgress` is true when any file is still awaiting a scan result.
+ * - `errorSummary` merges any existing errors with a "contains a virus" message for
+ *   every affected file, so multiple infected files appear as a list in the summary.
+ */
+export function buildVirusScanViewData(
+	uploadedFiles: UploadedFile[],
+	existingErrorSummary?: Array<{ text: string; href: string }>
+): { virusScanInProgress: boolean; errorSummary?: Array<{ text: string; href: string }> } {
+	const virusScanInProgress = uploadedFiles.some((file) => file.virusCheckStatus === VIRUS_CHECK_STATUS_ID.NOT_SCANNED);
+
+	const virusErrorSummary = uploadedFiles
+		.filter((file) => file.virusCheckStatus === VIRUS_CHECK_STATUS_ID.AFFECTED)
+		.map((file) => ({
+			text: `${file.fileName} contains a virus. Remove the file and upload a different version.`,
+			href: `#uploaded-file-${file.id}`
+		}));
+
+	const combinedErrorSummary = [...(existingErrorSummary ?? []), ...virusErrorSummary];
+
+	return {
+		virusScanInProgress,
+		errorSummary: combinedErrorSummary.length > 0 ? combinedErrorSummary : undefined
+	};
 }
 
 function readUploadedFiles(value: unknown): UploadedFile[] {
