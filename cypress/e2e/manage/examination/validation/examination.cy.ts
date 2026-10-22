@@ -6,6 +6,7 @@ import {
 	examinationWebsite,
 	examiningInspector2,
 	factCheckDateReceivedFromInspector,
+	hearingDateAndTime,
 	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
@@ -17,6 +18,10 @@ import {
 	examinationReportUploadPage as uploadPage,
 	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
+import {
+	hearingDateAndTimePage,
+	hearingExpectedDaysPage
+} from '../../../../page-objects/manage/examination/hearing-page.ts';
 
 describe('Examination validation', () => {
 	beforeEach(() => {
@@ -25,6 +30,21 @@ describe('Examination validation', () => {
 	});
 
 	after(() => cy.task('clearDb'));
+
+	it('rejects an invalid hearing time', { tags: ['regression'] }, () => {
+		examinationPage.addHearing();
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, { hour: '25', minute: '70' });
+		hearingDateAndTimePage.verifyLoaded();
+		hearingDateAndTimePage.verifyTimeValidationError();
+	});
+
+	it('requires the expected number of hearing days when Yes is selected', { tags: ['regression'] }, () => {
+		examinationPage.addHearing();
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
+		hearingExpectedDaysPage.selectAnswer('yes');
+		hearingExpectedDaysPage.verifyLoaded('yes');
+		hearingExpectedDaysPage.verifyValidationError('Enter the expected number of days');
+	});
 
 	it('shows an error when an Examination date is blank', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(actualSubmissionDate.row);

@@ -6,6 +6,15 @@ export class ExaminationPage extends GatewayBasePage {
 		super(/^\/case\/.+\/examination$/);
 	}
 
+	get addHearingLink() {
+		return cy.getByData('add-hearing');
+	}
+
+	addHearing() {
+		this.verifyLoaded();
+		this.addHearingLink.should('be.visible').and('have.text', 'Add hearing').click();
+	}
+
 	verifyReportIssued(outcome: string) {
 		this.verifyLoaded();
 		this.verifyNotificationBanner(examinationReport.issuedMessage);

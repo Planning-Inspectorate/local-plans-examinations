@@ -10,7 +10,14 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
 
-		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
+		const journey4Data = await db.examinationInfo.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				hearings: true
+			}
+		});
 		const isSound = formatValue(journey4Data?.isSound);
 
 		await addUploadedDocumentDetailsToAnswers(

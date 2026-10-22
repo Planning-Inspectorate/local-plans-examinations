@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import {
 	getExaminationStages,
-	sortGateway2Workshops,
+	sortByCreatedDate,
 	sortGateway3Submissions,
 	type examinationStatusWithPause
 } from './util.ts';
@@ -41,14 +41,14 @@ describe('test manage utilities', () => {
 		assert.deepEqual(actualSortedSubmissions, expectedSortedSubmissions);
 	});
 
-	it('sortGateway2Workshops sorts dates without changing the input', () => {
+	it('sortByCreatedDate sorts dates without changing the input', () => {
 		const workshops = [
 			{ id: 'later', createdDate: '2026-02-01T00:00:00.000Z' },
 			{ id: 'missing', createdDate: null },
 			{ id: 'earlier', createdDate: new Date('2026-01-01T00:00:00.000Z') }
 		];
 
-		const sorted = sortGateway2Workshops(workshops as any);
+		const sorted = sortByCreatedDate(workshops as any);
 
 		assert.deepEqual(
 			sorted.map(({ id }) => id),
