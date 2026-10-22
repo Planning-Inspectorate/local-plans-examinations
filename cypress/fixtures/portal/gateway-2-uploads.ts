@@ -49,3 +49,47 @@ export const gateway2UploadAnswers = {
 		addCy: 'add-subsequent-work-towards-a-draft-plan'
 	}
 } as const satisfies Record<string, Gateway2UploadAnswer>;
+
+export const gateway2ApplicationDocuments = {
+	procedural: [
+		{ document: 'Gateway 2 covering letter', addCy: gateway2UploadAnswers.coveringLetter.addCy },
+		{ document: 'Local plan timetable', addCy: gateway2UploadAnswers.localPlanTimetable.addCy },
+		{ document: 'Project initiation document', addCy: 'add-project-initiation-document' },
+		{ document: 'Draft statement of compliance', addCy: 'add-draft-statement-of-compliance' },
+		{ document: 'Draft statement of soundness', addCy: gateway2UploadAnswers.draftStatementOfSoundness.addCy }
+	],
+	consultation: [
+		{
+			document: 'Notice of intention to commence local plan preparation',
+			addCy: gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.addCy
+		},
+		{ document: 'Scoping consultation documents', addCy: 'add-scoping-consultation-documents' },
+		{
+			document: 'Consultation summary of feedback to scoping consultation',
+			addCy: 'add-consultation-summary-of-feedback-to-scoping-consultation'
+		},
+		{
+			document: 'Summary of consultation for proposed local plan content and evidence',
+			addCy: 'add-summary-of-consultation-for-proposed-local-plan-content-and-evidence'
+		},
+		{ document: 'Gateway 1 - Self Assessment of Readiness', addCy: 'add-gateway-1-self-assessment' },
+		{
+			document: 'Consultation on proposed local plan content and evidence documents',
+			addCy: 'add-consultation-proposed-content'
+		}
+	],
+	additional: [
+		{
+			document: 'Subsequent work towards a draft Plan',
+			addCy: gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.addCy
+		}
+	]
+};
+
+export const gateway2SubmittedPlan = {
+	reference: 'PLAN-C02',
+	title: 'GW2SubmittedNotIssued',
+	submittedDate: '12 September 2026',
+	coveringLetter: 'test-document.pdf',
+	timetableFiles: ['test-document.docx', 'test-document.xlsx']
+};

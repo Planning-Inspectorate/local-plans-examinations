@@ -9,6 +9,8 @@ import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway
 import { seedUpdateGateway2Workshop } from './packages/database/src/seed/seed-update-gateway-2-workshop.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
+import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
+import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -94,7 +96,10 @@ export default defineConfig({
 					return null;
 				},
 				seedDb: seedCy,
+				seedExaminationReport,
+				clearExaminationReportFiles,
 				setDocumentVirusCheckStatus,
+				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
 				seedGateway3Submitted,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {

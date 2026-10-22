@@ -1,16 +1,21 @@
-import { openSeededExaminationPage } from '../../../../flows/manage/examination-flow.ts';
+import { openSeededExaminationPage, openSeededExaminationReport } from '../../../../flows/manage/examination-flow.ts';
+import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import {
 	actualSubmissionDate,
+	examinationReport as report,
 	examinationWebsite,
 	examiningInspector2,
-	factCheckDateReceivedFromInspector
+	factCheckDateReceivedFromInspector,
+	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
 	examinationWebsitePage,
 	examiningInspector2Page,
 	examinationPage,
-	factCheckDateReceivedFromInspectorPage
+	factCheckDateReceivedFromInspectorPage,
+	examinationReportUploadPage as uploadPage,
+	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
 
 describe('Examination validation', () => {
@@ -61,5 +66,38 @@ describe('Examination validation', () => {
 		factCheckDateReceivedFromInspectorPage.verifyLoaded();
 		//valid date error message assertions need 2 spaces due to how the message is processed
 		factCheckDateReceivedFromInspectorPage.verifyValidationError('Enter  a valid date');
+	});
+});
+
+describe('Examination report validation', () => {
+	let seededCase: SeededManageCase | undefined;
+
+	beforeEach(() => {
+		seededCase = undefined;
+		cy.task('clearDb');
+		openSeededExaminationReport().then((result) => {
+			seededCase = result;
+		});
+	});
+	afterEach(() => {
+		if (seededCase) cy.task('clearExaminationReportFiles', seededCase.reference);
+	});
+	after(() => cy.task('clearDb'));
+
+	it('requires a plan outcome before continuing to the report', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(report.row);
+		soundUnsoundPage.verifyLoaded();
+		soundUnsoundPage.saveAndContinue();
+		soundUnsoundPage.verifyLoaded();
+		soundUnsoundPage.verifyValidationError('Select a plan outcome');
+	});
+
+	it('requires a report before continuing to confirmation', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(report.row);
+		soundUnsoundPage.selectAnswer(soundUnsound.value);
+		uploadPage.verifyLoaded();
+		uploadPage.saveAndReturn();
+		uploadPage.verifyLoaded();
+		uploadPage.verifyValidationError('Please upload the examination report');
 	});
 });

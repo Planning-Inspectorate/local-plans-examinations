@@ -62,6 +62,24 @@ export class Gateway2Page extends GatewayBasePage {
 		return cy.getByData(`cancel-workshop-${workshopNumber}`);
 	}
 
+	openCancelWorkshop(workshopNumber: number) {
+		this.verifyLoaded();
+		this.cancelWorkshopLink(workshopNumber)
+			.should('be.visible')
+			.and('have.text', `Cancel workshop ${workshopNumber}`)
+			.click();
+	}
+
+	verifyWorkshopMeetingLink(workshopNumber: number, meetingLink: string) {
+		this.workshopDetails(workshopNumber).should('contain.text', meetingLink);
+	}
+
+	verifyWorkshopCancelled(workshopNumber: number, meetingLink: string) {
+		this.verifyLoaded();
+		this.cancelWorkshopLink(workshopNumber).should('not.exist');
+		this.mainContent.should('not.contain.text', meetingLink);
+	}
+
 	openWorkshop(workshopNumber: number) {
 		this.workshopDetails(workshopNumber).within(() => {
 			this.openActionLinkFor(workshopSetUp.workshopDateAndTime.row);

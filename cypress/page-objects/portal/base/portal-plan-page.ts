@@ -36,6 +36,18 @@ export class PortalPlanBasePage extends BasePage {
 		});
 	}
 
+	verifyDocumentSection(table: Cypress.Chainable, heading: string, documents: { document: string; addCy: string }[]) {
+		this.verifySubHeading(heading);
+		this.verifyDocTableRows(
+			table,
+			documents.map((document) => ({ ...document, status: 'Not added' }))
+		);
+		this.verifyTableRowsInOrder(
+			table,
+			documents.map(({ document }) => document)
+		);
+	}
+
 	verifyDocumentDownloadLink(table: Cypress.Chainable, document: string, fileName: string) {
 		table.within(() => {
 			const row = cy.contains('tr', document);

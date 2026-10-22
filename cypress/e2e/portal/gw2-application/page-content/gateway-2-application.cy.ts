@@ -29,76 +29,15 @@ describe('Gateway 2 application page content', () => {
 	});
 
 	it('Shows Procedural Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifySubHeading('Procedural Documents');
-		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.proceduralDocumentsTable, [
-			{ document: 'Gateway 2 covering letter', status: 'Not added', addCy: 'add-gateway-2-covering-letter' },
-			{ document: 'Local plan timetable', status: 'Not added', addCy: 'add-local-plan-timetable' },
-			{ document: 'Project initiation document', status: 'Not added', addCy: 'add-project-initiation-document' },
-			{ document: 'Draft statement of compliance', status: 'Not added', addCy: 'add-draft-statement-of-compliance' },
-			{ document: 'Draft statement of soundness', status: 'Not added', addCy: 'add-draft-statement-of-soundness' }
-		]);
-		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.proceduralDocumentsTable, [
-			'Gateway 2 covering letter',
-			'Local plan timetable',
-			'Project initiation document',
-			'Draft statement of compliance',
-			'Draft statement of soundness'
-		]);
+		gateway2ApplicationPage.verifyProceduralDocuments();
 	});
 
 	it('Shows Consultation Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifySubHeading('Consultation Documents');
-		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.consultationDocumentsTable, [
-			{
-				document: 'Notice of intention to commence local plan preparation',
-				status: 'Not added',
-				addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
-			},
-			{
-				document: 'Summary of consultation for proposed local plan content and evidence',
-				status: 'Not added',
-				addCy: 'add-summary-of-consultation-for-proposed-local-plan-content-and-evidence'
-			},
-			{
-				document: 'Scoping consultation documents',
-				status: 'Not added',
-				addCy: 'add-scoping-consultation-documents'
-			},
-			{
-				document: 'Consultation summary of feedback to scoping consultation',
-				status: 'Not added',
-				addCy: 'add-consultation-summary-of-feedback-to-scoping-consultation'
-			},
-			{
-				document: 'Gateway 1 - Self Assessment of Readiness',
-				status: 'Not added',
-				addCy: 'add-gateway-1-self-assessment'
-			},
-			{
-				document: 'Consultation on proposed local plan content and evidence documents',
-				status: 'Not added',
-				addCy: 'add-consultation-proposed-content'
-			}
-		]);
-		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
-			'Notice of intention to commence local plan preparation',
-			'Scoping consultation documents',
-			'Consultation summary of feedback to scoping consultation',
-			'Summary of consultation for proposed local plan content and evidence',
-			'Gateway 1 - Self Assessment of Readiness',
-			'Consultation on proposed local plan content and evidence documents'
-		]);
+		gateway2ApplicationPage.verifyConsultationDocuments();
 	});
 
 	it('Shows Additional Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifySubHeading('Additional documents');
-		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.additionalDocumentsTable, [
-			{
-				document: 'Subsequent work towards a draft Plan',
-				status: 'Not added',
-				addCy: 'add-subsequent-work-towards-a-draft-plan'
-			}
-		]);
+		gateway2ApplicationPage.verifyAdditionalDocuments();
 	});
 
 	it('Shows Submit for Gateway 2 assessment', { tags: ['regression'] }, () => {
