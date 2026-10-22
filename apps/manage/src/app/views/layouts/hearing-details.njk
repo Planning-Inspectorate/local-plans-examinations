@@ -1,0 +1,61 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro hearingDetails(answers, reference) %}
+
+  {% for hearing in answers.hearings %}
+
+    {% set hearingRows = [] %}
+    {% set hearingNumber = loop.index %}
+    {% set questionBaseUrl = "/case/" + reference + "/examination/set-up-hearing/hearing/" %}
+    {% for row in [
+      { key: "Start date", value: hearing.hearingDate, question: "examination-hearing-date-and-time" },
+      { key: "Time", value: hearing.hearingTime, question: "examination-hearing-date-and-time" },
+      { key: "Number of days", value: hearing.hearingExpectedDays, question: "examination-hearing-expected-days" },
+      { key: "Format", value: hearing.hearingLocationType, question: "examination-hearing-location-type" },
+      { key: "Do you have a remote meeting link?", value: hearing.hearingRemoteMeetingLinkKnown, question: "examination-hearing-remote-meeting-link-known" },
+      { key: "Remote meeting link", value: hearing.hearingRemoteMeetingLink, question: "examination-hearing-remote-meeting-link" }
+    ] %}
+      {% if row.value %}
+        {% set _ = hearingRows.push({
+          key: { text: row.key },
+          value: { text: row.value },
+          actions: {
+            items: [{ href: questionBaseUrl + row.question + "-" + hearingNumber, text: "Change" }]
+          }
+        }) %}
+      {% endif %}
+    {% endfor %}
+
+    {% if hearing.hearingVenueName %}
+      {% set address = hearing.hearingVenueName %}
+      {% set address = address + "<br>" + hearing.hearingAddressLine %}
+
+      {% if hearing.hearingAddressLine2 %}
+          {% set address = address + "<br>" + hearing.hearingAddressLine2 %}
+      {% endif %}
+
+      {% set address = address + "<br>" + hearing.hearingTownOrCity %}
+      {% set address = address + "<br>" + hearing.hearingPostcode %}
+
+      {% set _ = hearingRows.push({
+          key: { text: "Venue address" },
+          value: { html: address },
+          actions: {
+            items: [{ href: questionBaseUrl + "examination-hearing-venue-address-" + hearingNumber, text: "Change" }]
+          }
+      }) %}
+    {% endif %}
+
+    {% if hearingRows.length %}
+      <h2 class="govuk-heading-m" data-cy="hearing-heading">Hearing {{ hearingNumber }} details</h2>
+      <a href="/" class="govuk-link">Cancel hearing {{ loop.index }}</a>
+      <p></p>
+      {{ govukSummaryList({
+        rows: hearingRows,
+        attributes: { "data-cy": "hearing-details-" + hearingNumber }
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+
+{% endmacro %}

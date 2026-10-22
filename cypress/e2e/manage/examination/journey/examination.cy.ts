@@ -10,12 +10,14 @@ import {
 	factCheckDueDate,
 	factCheckReceivedBackFromLpaDate,
 	finalReportIssueDate,
+	hearingDateAndTime,
 	letterSentToMHCLGDate,
 	QADateAnswers,
 	QAInspectorsAnswers,
 	planPauseStartDate,
 	seededExaminationInProgress,
 	seededPausedExamination,
+	seededExaminationHearing,
 	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
@@ -35,6 +37,7 @@ import {
 	planPauseStartDatePage,
 	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
+import { hearingDateAndTimePage, hearingCheckPage } from '../../../../page-objects/manage/examination/hearing-page.ts';
 
 const factCheckUpdates = [
 	{ answer: factCheckDateReceivedFromInspector, page: factCheckDateReceivedFromInspectorPage },
@@ -253,5 +256,29 @@ describe('Examination statuses', () => {
 		cy.reload();
 		examinationPage.verifySummaryRowContains(planPauseStartDate.row, planPauseStartDate.display);
 		examinationPage.verifyHeaderStatus('Paused');
+	});
+});
+
+describe('Hearing updates', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+		openSeededExaminationPage({ examination: { hearings: { create: [seededExaminationHearing] } } });
+	});
+	after(() => cy.task('clearDb'));
+
+	it('changes a saved hearing directly and records the hearing type in history', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor('Start date');
+		hearingDateAndTimePage.verifyAnswers(hearingDateAndTime.date, hearingDateAndTime.time);
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.updatedDate, hearingDateAndTime.updatedTime);
+		hearingCheckPage.verifySummaryRowContains('Hearing date', hearingDateAndTime.updatedDisplay);
+		hearingCheckPage.confirmHearing();
+
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.verifyNotificationBanner('Hearing created');
+		cy.reload();
+		examinationPage.verifySummaryRowContains('Start date', hearingDateAndTime.updatedDisplay);
+		examinationPage.verifySummaryRowContains('Time', '11:45');
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent('remote hearing set up');
 	});
 });
