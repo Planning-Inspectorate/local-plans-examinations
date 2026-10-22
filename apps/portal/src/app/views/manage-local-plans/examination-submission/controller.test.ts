@@ -75,8 +75,9 @@ describe('examination view data', () => {
 				currentCase: {
 					planTitle: 'Test plan',
 					examinationInfo: {
-						status: 'in-progress',
-						statusLookup: { displayName: 'In progress' }
+						status: 'ready-to-start',
+						expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
+						statusLookup: { displayName: 'Ready to start' }
 					}
 				}
 			} as unknown as Request,
@@ -84,9 +85,10 @@ describe('examination view data', () => {
 		);
 
 		assert.deepEqual(locals.statusTag, {
-			label: 'In progress',
-			class: 'govuk-tag govuk-tag--blue'
+			label: 'Ready to start',
+			class: 'govuk-tag govuk-tag--green'
 		});
+		assert.equal(locals.targetDate, '1 September 2026');
 
 		const hiddenStatusLocals: Record<string, unknown> = {};
 		setExaminationViewLocals(
@@ -136,7 +138,8 @@ describe('examination view data', () => {
 		setExaminationViewData(req, res, next as unknown as NextFunction);
 
 		assert.equal((req.session as any).editingFromCheckAnswers, true);
-		assert.equal(res.locals.pageTitle, 'Examination submission');
+		assert.equal(res.locals.pageTitle, 'Examination');
+		assert.equal(res.locals.pageHeading, 'Examination');
 		assert.equal(res.locals.pageCaption, 'Test plan');
 		assert.equal(res.locals.backLinkUrl, '/manage-local-plans/PLAN-61797');
 		assert.equal(next.mock.callCount(), 2);
@@ -409,7 +412,7 @@ describe('examination route guards', () => {
 			params: { planReference: 'PLAN-61797' }
 		} as unknown as Request;
 		guard(submittedRequest, { redirect } as unknown as Response, mock.fn() as unknown as NextFunction);
-		assert.deepEqual(redirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797/examination-submission']);
+		assert.deepEqual(redirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797/examination']);
 	});
 
 	it('only allows the declaration page when all required answers are present', () => {
@@ -433,7 +436,7 @@ describe('examination route guards', () => {
 			{ locals: { journeyResponse: { answers: {} } }, redirect } as unknown as Response,
 			mock.fn() as unknown as NextFunction
 		);
-		assert.deepEqual(redirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797/examination-submission']);
+		assert.deepEqual(redirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797/examination']);
 	});
 });
 
@@ -451,8 +454,8 @@ describe('examination declaration and completion', () => {
 			{
 				pageTitle: "Are you sure you're ready to submit?",
 				pageHeading: "Are you sure you're ready to submit?",
-				backLinkUrl: '/manage-local-plans/PLAN%2061797/examination-submission',
-				goBackUrl: '/manage-local-plans/PLAN%2061797/examination-submission'
+				backLinkUrl: '/manage-local-plans/PLAN%2061797/examination',
+				goBackUrl: '/manage-local-plans/PLAN%2061797/examination'
 			}
 		]);
 	});
@@ -476,7 +479,7 @@ describe('examination declaration and completion', () => {
 		assert.equal(update.data.status, 'submitted');
 		assert.ok(update.data.submissionForExaminationDate instanceof Date);
 		assert.deepEqual(redirect.mock.calls[0].arguments, [
-			'/manage-local-plans/PLAN-61797/examination-submission/submission-complete'
+			'/manage-local-plans/PLAN-61797/examination/submission-complete'
 		]);
 	});
 
@@ -597,7 +600,7 @@ describe('examination document handlers', () => {
 
 		assert.equal(next.mock.callCount(), 0);
 		assert.deepEqual(redirect.mock.calls[0].arguments, [
-			'/manage-local-plans/PLAN-61797/examination-submission/examination-details/local-plan-submission'
+			'/manage-local-plans/PLAN-61797/examination/examination-details/local-plan-submission'
 		]);
 		assert.equal((req.session as any).errors['upload-form'].msg, 'Errors encountered during file upload');
 		assert.equal((req.session as any).errorSummary[0].text, 'The selected file must be smaller than 250MB');

@@ -15,8 +15,8 @@ describe('createJourney (examination submission)', () => {
 
 		const journey = createJourney(req, response, createExaminationQuestions('PLAN-61797'));
 
-		assert.equal(journey.baseUrl, '/manage-local-plans/PLAN-61797/examination-submission');
-		assert.equal(journey.taskListUrl, '/manage-local-plans/PLAN-61797/examination-submission');
+		assert.equal(journey.baseUrl, '/manage-local-plans/PLAN-61797/examination');
+		assert.equal(journey.taskListUrl, '/manage-local-plans/PLAN-61797/examination');
 		assert.equal(journey.sections.length, 1);
 		assert.equal(journey.sections[0].name, 'Examination details');
 		assert.deepEqual(
@@ -48,7 +48,22 @@ describe('createJourney (examination submission)', () => {
 		} as unknown as Request;
 		const journey = createJourney(req, response, createExaminationQuestions('PLAN-61797'));
 
-		assert.equal(journey.getBackLink({ params: {} as never }), '/manage-local-plans/PLAN-61797/examination-submission');
+		assert.equal(journey.getBackLink({ params: {} as never }), '/manage-local-plans/PLAN-61797/examination');
+	});
+
+	it('does not show a caption or hint on the examination website question', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-61797' }
+		} as unknown as Request;
+		const questions = createExaminationQuestions('PLAN-61797');
+		const journey = createJourney(req, response, questions);
+		const section = journey.sections[0];
+		const viewModel = questions.examinationWebsite.prepQuestionForRendering(section, journey);
+
+		assert.equal(viewModel.pageCaption, undefined);
+		assert.equal(viewModel.question.hint, undefined);
 	});
 
 	it('uses the standard journey backlink for manage-list steps', () => {
@@ -61,7 +76,7 @@ describe('createJourney (examination submission)', () => {
 
 		assert.equal(
 			journey.getBackLink({ params: { manageListAction: 'add' } as never }),
-			'/manage-local-plans/PLAN-61797/examination-submission'
+			'/manage-local-plans/PLAN-61797/examination'
 		);
 	});
 });

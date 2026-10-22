@@ -58,8 +58,7 @@ const baseFileUploadConfig = {
 };
 
 const fileUploadText = {
-	caption: 'Examination submission',
-	introduction: 'Drag and drop or choose files',
+	introduction: 'Upload a file',
 	fileRequirementsText:
 		'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 	uploadLabel: 'Upload a file',
@@ -74,12 +73,10 @@ const examinationWebsite = {
 	fieldName: 'examinationWebsiteUrl',
 	url: 'examination-website',
 	type: 'single-line-input' as const,
-	hint: 'Enter the web address (URL) where your examination library is published',
 	capitaliseAnswer: false,
 	validators: [new WebsiteUrlValidator()],
-	text: {
-		caption: 'Examination submission',
-		continueButtonText: 'Save and return'
+	viewData: {
+		pageCaption: undefined
 	}
 };
 
@@ -265,7 +262,7 @@ export function createDownloadDocumentSummaryFormatter(planReference: string | u
 				return undefined;
 			}
 			const fileName = typeof file.fileName === 'string' ? decodeFileName(file.fileName) : formattedAnswer;
-			return `<a href="/manage-local-plans/${encodedPlanReference}/examination-submission/download-document/${encodeURIComponent(
+			return `<a href="/manage-local-plans/${encodedPlanReference}/examination/download-document/${encodeURIComponent(
 				documentGuid
 			)}">${fileName}</a>`;
 		});

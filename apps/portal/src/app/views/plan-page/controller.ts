@@ -44,7 +44,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
 		const gateway3Base = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
 		const gateway3ResubBase = `/manage-local-plans/${encodedPlanRef}/gateway-3-resubmission`;
-		const examinationBase = `/manage-local-plans/${encodedPlanRef}/examination-submission`;
+		const examinationBase = `/manage-local-plans/${encodedPlanRef}/examination`;
 		const isResubmissionRequired = plan.status === STATUS.ResubmissionRequired;
 		const currentApplicationLink =
 			plan.stage === STAGE.Examination

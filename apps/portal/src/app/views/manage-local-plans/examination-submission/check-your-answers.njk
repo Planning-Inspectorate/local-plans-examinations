@@ -1,9 +1,10 @@
 {% extends "views/layouts/main.njk" %}
 
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
-{% block pageTitle %}Examination submission{% endblock %}
+{% block pageTitle %}Examination{% endblock %}
 
 {% block pageHeading %}
     <div class="govuk-grid-row">
@@ -27,6 +28,12 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% set examinationGuidanceHtml %}
+            <p class="govuk-body">This examination is the final step to get approval to adopt your local plan. Most of these documents are required, but some are only needed in certain circumstances. For more information on the examination documents, <a href="/guidance" class="govuk-link">check the guidance</a>.</p>
+            <p class="govuk-body">You've provided the expected submission date of {{ targetDate or "" }}. The examination can take up to 6 months. The process can also be paused for up to 6 months if required.</p>
+        {% endset %}
+        {{ govukInsetText({ html: examinationGuidanceHtml }) }}
+
         {% if saveAndComeBackUrl %}
             <p class="govuk-body">
                 <a href="{{ saveAndComeBackUrl }}" class="govuk-link" data-cy="save-and-come-back">Save and come back later</a>
@@ -70,7 +77,8 @@
                                     <td class="govuk-table__cell" style="text-align: right">
                                         {% if row.actions and row.actions.items %}
                                             {% for action in row.actions.items %}
-                                                <a href="{{ action.href }}" class="govuk-link" data-cy="{{ action.text | lower }}-{{ row.key.text | lower | replace(' ', '-') }}">
+                                                {% set actionDataCy = "add-" + (row.key.text | lower | replace(' ', '-')) %}
+                                                <a href="{{ action.href }}" class="govuk-link" data-cy="{{ actionDataCy }}">
                                                     {{ action.text }}
                                                     {% if action.visuallyHiddenText %}
                                                         <span class="govuk-visually-hidden"> {{ action.visuallyHiddenText }}</span>

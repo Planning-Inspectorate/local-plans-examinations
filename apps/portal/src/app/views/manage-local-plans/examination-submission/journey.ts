@@ -9,9 +9,7 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 		? req.params.planReference[0]
 		: req.params.planReference;
 	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-	const baseUrl = planReference
-		? `${req.baseUrl}/${encodedPlanReference}/examination-submission`
-		: `${req.baseUrl}/examination-submission`;
+	const baseUrl = planReference ? `${req.baseUrl}/${encodedPlanReference}/examination` : `${req.baseUrl}/examination`;
 
 	const journey = new Journey({
 		journeyId: JOURNEY_ID,

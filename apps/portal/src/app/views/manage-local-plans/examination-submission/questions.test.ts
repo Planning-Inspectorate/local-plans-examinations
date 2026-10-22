@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createDownloadDocumentSummaryFormatter } from './questions.ts';
+import { createDownloadDocumentSummaryFormatter, EXAMINATION_FILE_UPLOAD_QUESTIONS } from './questions.ts';
+
+describe('examination file upload questions', () => {
+	it('has no caption and uses Upload a file as the introduction', () => {
+		for (const question of Object.values(EXAMINATION_FILE_UPLOAD_QUESTIONS)) {
+			assert.equal(question.text.caption, undefined);
+			assert.equal(question.text.introduction, 'Upload a file');
+		}
+	});
+});
 
 describe('createDownloadDocumentSummaryFormatter', () => {
 	const fallback = 'Uploaded documents';
@@ -33,7 +42,7 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 
 		assert.equal(
 			result,
-			'<a href="/manage-local-plans/PLAN%2061797%2F1/examination-submission/download-document/document%20guid">local plan.pdf</a>'
+			'<a href="/manage-local-plans/PLAN%2061797%2F1/examination/download-document/document%20guid">local plan.pdf</a>'
 		);
 	});
 
@@ -47,7 +56,7 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 
 		assert.equal(
 			result,
-			'<a href="/manage-local-plans/PLAN-61797/examination-submission/download-document/document-guid">Uploaded documents</a>'
+			'<a href="/manage-local-plans/PLAN-61797/examination/download-document/document-guid">Uploaded documents</a>'
 		);
 	});
 
@@ -64,7 +73,7 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 
 		assert.equal(
 			result,
-			'<ul class="govuk-list govuk-list--bullet"><li><a href="/manage-local-plans/PLAN-61797/examination-submission/download-document/document-1">plan.pdf</a></li><li><a href="/manage-local-plans/PLAN-61797/examination-submission/download-document/document-2">map of policies.pdf</a></li></ul>'
+			'<ul class="govuk-list govuk-list--bullet"><li><a href="/manage-local-plans/PLAN-61797/examination/download-document/document-1">plan.pdf</a></li><li><a href="/manage-local-plans/PLAN-61797/examination/download-document/document-2">map of policies.pdf</a></li></ul>'
 		);
 	});
 
@@ -79,7 +88,7 @@ describe('createDownloadDocumentSummaryFormatter', () => {
 
 		assert.equal(
 			result,
-			`<a href="/manage-local-plans/PLAN-61797/examination-submission/download-document/document-guid">${malformedFileName}</a>`
+			`<a href="/manage-local-plans/PLAN-61797/examination/download-document/document-guid">${malformedFileName}</a>`
 		);
 	});
 });

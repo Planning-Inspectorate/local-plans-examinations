@@ -24,9 +24,12 @@ const itemTitles = [
 function renderPage(statusTag?: { label: string; class: string }, error?: string) {
 	const nunjucks = configureNunjucks();
 	return nunjucks.render('views/manage-local-plans/examination-submission/check-your-answers.njk', {
-		pageTitle: 'Examination submission',
-		pageHeading: 'Examination submission',
+		pageTitle: 'Examination',
+		pageHeading: 'Examination',
 		pageCaption: 'Test local plan',
+		targetDate: '1 September 2026',
+		backLinkUrl: '/manage-local-plans/PLAN-61797',
+		saveAndComeBackUrl: '/manage-local-plans/PLAN-61797',
 		statusTag,
 		requiredItemTitles: REQUIRED_EXAMINATION_ITEM_TITLES,
 		errors: error ? { submit: { text: error } } : undefined,
@@ -65,8 +68,7 @@ describe('examinationSubmissionRoutes', () => {
 	it('redirects a valid submission to the declaration page', () => {
 		const router = examinationSubmissionRoutes({ createFileStorage: () => ({}) } as never);
 		const submitRoute = (router as any).stack.find(
-			(layer: any) =>
-				layer.route?.path === '/:planReference/examination-submission' && layer.route.methods.post === true
+			(layer: any) => layer.route?.path === '/:planReference/examination' && layer.route.methods.post === true
 		);
 		const submitHandler = submitRoute.route.stack.at(-1).handle;
 		const redirectCalls: string[] = [];
@@ -76,11 +78,36 @@ describe('examinationSubmissionRoutes', () => {
 			{ redirect: (url: string) => redirectCalls.push(url) }
 		);
 
-		assert.deepEqual(redirectCalls, ['/manage-local-plans/PLAN%2061797%2F1/examination-submission/declaration']);
+		assert.deepEqual(redirectCalls, ['/manage-local-plans/PLAN%2061797%2F1/examination/declaration']);
 	});
 });
 
 describe('examination submission page', () => {
+	it('renders the examination heading, status, guidance and expected submission date', () => {
+		const html = renderPage({ label: 'Ready to start', class: 'govuk-tag govuk-tag--green' });
+		const normalizedHtml = html.replace(/\s+/g, ' ');
+
+		assert.match(
+			normalizedHtml,
+			/<h1 class="govuk-heading-xl govuk-!-margin-bottom-2"> <span class="govuk-caption-xl">Test local plan<\/span> Examination <\/h1>/
+		);
+		assert.ok(html.includes('govuk-tag govuk-tag--green'));
+		assert.ok(html.includes('Ready to start'));
+		assert.ok(html.includes('data-cy="back-link"'));
+		assert.ok(
+			html.includes(
+				'This examination is the final step to get approval to adopt your local plan. Most of these documents are required, but some are only needed in certain circumstances. For more information on the examination documents,'
+			)
+		);
+		assert.match(html, /<a href="\/guidance" class="govuk-link">check the guidance<\/a>/);
+		assert.ok(
+			html.includes(
+				"You've provided the expected submission date of 1 September 2026. The examination can take up to 6 months. The process can also be paused for up to 6 months if required."
+			)
+		);
+		assert.ok(html.indexOf('check the guidance') < html.indexOf('Save and come back later'));
+	});
+
 	it('renders every item, status, action and exactly eight Required hints', () => {
 		const html = renderPage();
 		for (const title of itemTitles) {
@@ -94,6 +121,8 @@ describe('examination submission page', () => {
 		assert.ok(html.includes('Change'));
 		assert.ok(html.includes('Not added'));
 		assert.ok(html.includes('Add'));
+		assert.ok(html.includes('data-cy="add-examination-website"'));
+		assert.ok(!html.includes('data-cy="change-examination-website"'));
 	});
 
 	it('renders the examination status when provided', () => {
@@ -117,8 +146,8 @@ describe('examination declaration page', () => {
 		return nunjucks.render('views/manage-local-plans/examination-submission/declaration/declaration.njk', {
 			pageTitle: "Are you sure you're ready to submit?",
 			pageHeading: "Are you sure you're ready to submit?",
-			backLinkUrl: '/manage-local-plans/PLAN-61797/examination-submission',
-			goBackUrl: '/manage-local-plans/PLAN-61797/examination-submission',
+			backLinkUrl: '/manage-local-plans/PLAN-61797/examination',
+			goBackUrl: '/manage-local-plans/PLAN-61797/examination',
 			config: {
 				styleFile: 'style.css',
 				headerTitle: 'Submit your plan for examination',
@@ -136,16 +165,13 @@ describe('examination declaration page', () => {
 		assert.ok(html.includes('Yes, confirm submission'));
 		assert.ok(html.includes('data-cy="confirm-submission"'));
 		assert.ok(html.includes('No, go back'));
-		assert.match(
-			html,
-			/href="\/manage-local-plans\/PLAN-61797\/examination-submission" class="govuk-link" data-cy="no-go-back"/
-		);
+		assert.match(html, /href="\/manage-local-plans\/PLAN-61797\/examination" class="govuk-link" data-cy="no-go-back"/);
 	});
 
 	it('renders the Back link to the examination submission page', () => {
 		const html = renderDeclaration();
 		assert.ok(html.includes('data-cy="back-link"'));
-		assert.match(html, /href="\/manage-local-plans\/PLAN-61797\/examination-submission"/);
+		assert.match(html, /href="\/manage-local-plans\/PLAN-61797\/examination"/);
 	});
 });
 

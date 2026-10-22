@@ -34,7 +34,7 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	} = buildExaminationMiddleware(service);
 
 	router.get(
-		'/:planReference/examination-submission',
+		'/:planReference/examination',
 		getJourneyResponseFromCase,
 		guardExaminationAvailable,
 		getJourney,
@@ -45,19 +45,19 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/examination-submission',
+		'/:planReference/examination',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		getJourney,
 		validateExaminationSubmission,
 		(req, res) => {
 			const planReference = encodeURIComponent(req.params.planReference as string);
-			res.redirect(`/manage-local-plans/${planReference}/examination-submission/declaration`);
+			res.redirect(`/manage-local-plans/${planReference}/examination/declaration`);
 		}
 	);
 
 	router.get(
-		'/:planReference/examination-submission/declaration',
+		'/:planReference/examination/declaration',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		guardDeclarationPage,
@@ -65,17 +65,17 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/examination-submission/declaration',
+		'/:planReference/examination/declaration',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		guardDeclarationPage,
 		postDeclarationPage
 	);
 
-	router.get('/:planReference/examination-submission/submission-complete', getSubmissionCompletePage);
+	router.get('/:planReference/examination/submission-complete', getSubmissionCompletePage);
 
 	router.post(
-		'/:planReference/examination-submission/:section/:question/upload-documents',
+		'/:planReference/examination/:section/:question/upload-documents',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		getJourney,
@@ -86,7 +86,7 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/examination-submission/:section/:question/delete-document/:fileId',
+		'/:planReference/examination/:section/:question/delete-document/:fileId',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		getJourney,
@@ -94,14 +94,14 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.get(
-		'/:planReference/examination-submission/download-document/:documentId',
+		'/:planReference/examination/download-document/:documentId',
 		getJourneyResponseFromCase,
 		guardExaminationAvailable,
 		downloadDocument
 	);
 
 	router.get(
-		'/:planReference/examination-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:planReference/examination/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		getJourney,
@@ -110,7 +110,7 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/examination-submission/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
+		'/:planReference/examination/:section/:question{/:manageListAction/:manageListItemId/:manageListQuestion}',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		getJourney,

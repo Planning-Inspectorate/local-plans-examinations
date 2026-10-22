@@ -38,6 +38,7 @@ type ExaminationInfoRecord = {
 	status: string;
 	examinationWebsite: string | null;
 	examinationWebsiteUrl: string | null;
+	expectedSubmissionForExaminationDate: Date | null;
 	submissionForExaminationDate: Date | null;
 	statusLookup: { displayName: string } | null;
 };
@@ -119,7 +120,7 @@ function getPlanDetailsUrl(req: Request) {
 }
 
 function getExaminationSubmissionUrl(req: Request) {
-	return `${getPlanDetailsUrl(req)}/examination-submission`;
+	return `${getPlanDetailsUrl(req)}/examination`;
 }
 
 function formatDisplayDate(date: Date) {
@@ -160,7 +161,7 @@ function renderNotFound(res: Response) {
 function redirectToFileUploaderQuestion(req: Request) {
 	const planReference = getRoutePlanReference(req);
 	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
-	return `${req.baseUrl}${planPath}/examination-submission/${req.params.section}/${req.params.question}`;
+	return `${req.baseUrl}${planPath}/examination/${req.params.section}/${req.params.question}`;
 }
 
 function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestHandler>): RequestHandler {
@@ -272,12 +273,15 @@ export function setExaminationViewLocals(req: Request, res: Response) {
 	const planReference = getRoutePlanReference(req);
 	const currentCase = request.currentCase;
 
-	res.locals.pageTitle = 'Examination submission';
-	res.locals.pageHeading = 'Examination submission';
+	res.locals.pageTitle = 'Examination';
+	res.locals.pageHeading = 'Examination';
 	res.locals.pageCaption = currentCase?.planTitle;
 	res.locals.requiredItemTitles = REQUIRED_EXAMINATION_ITEM_TITLES;
 
 	const examinationInfo = currentCase?.examinationInfo;
+	if (examinationInfo?.expectedSubmissionForExaminationDate) {
+		res.locals.targetDate = formatDisplayDate(examinationInfo.expectedSubmissionForExaminationDate);
+	}
 	if (examinationInfo && examinationInfo.status !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
 		res.locals.statusTag = {
 			label: examinationInfo.statusLookup?.displayName ?? examinationInfo.status,
