@@ -39,7 +39,7 @@
                         classes: "govuk-visually-hidden"
                     },
                     hint: {
-                        text: "We sent a code to " + userEmail + ". It may take a few minutes to arrive.",
+                        text: ("Request a new code to sign in to " + userEmail + ".") if otpDeliveryFailed else ("We sent a code to " + userEmail + ". It may take a few minutes to arrive."),
                         attributes: {
                             "data-cy": "otp-hint"
                         }
