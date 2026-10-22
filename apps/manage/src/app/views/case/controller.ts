@@ -1109,11 +1109,11 @@ export function preprocessQuestionProperties(
 				const gateway3Complete = !!completionDate;
 				const submissionUrl = `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}/gateway-3-submission-${submissionId}`;
 
-				// Documents viewer: always shows "Review"
 				questions[gateway3DocumentsCheck].actionLink = {
 					href: `${submissionUrl}/gateway-3-review-documents-${submissionId}`,
 					text: 'Review'
 				};
+
 				questions[gateway3DocumentsCheck].changeActionText = 'Review';
 				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary = true;
 

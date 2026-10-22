@@ -2036,8 +2036,12 @@ describe('preprocessQuestionProperties', () => {
 			},
 			'gateway3Documents-1': {
 				config: {}
+			},
+			'gateway3DocumentsCheck-1': {
+				config: {}
 			}
 		};
+
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
@@ -2045,8 +2049,19 @@ describe('preprocessQuestionProperties', () => {
 				config: {
 					actionButtonVisibleInSummary: false
 				}
+			},
+			'gateway3DocumentsCheck-1': {
+				actionLink: {
+					href: '/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-review-documents-1',
+					text: 'Review'
+				},
+				changeActionText: 'Review',
+				config: {
+					actionButtonVisibleInSummary: true
+				}
 			}
 		};
+
 		const myNextFunction = mock.fn(() => {});
 		const handler = preprocessQuestionProperties(service, journeyId, questions);
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
@@ -2056,6 +2071,7 @@ describe('preprocessQuestionProperties', () => {
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
 	});
+
 	it('can preprocess gateway3 when the documents have submitted', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -2084,8 +2100,13 @@ describe('preprocessQuestionProperties', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		const questions: Record<string, any> = {
-			'gateway3Decision-1': {},
+			'gateway3Decision-1': {
+				formatSummaryValue: 'aValueThatShouldBeOverridden'
+			},
 			'gateway3Documents-1': {
+				config: {}
+			},
+			'gateway3DocumentsCheck-1': {
 				config: {}
 			}
 		};
@@ -2096,8 +2117,19 @@ describe('preprocessQuestionProperties', () => {
 				config: {
 					actionButtonVisibleInSummary: true
 				}
+			},
+			'gateway3DocumentsCheck-1': {
+				actionLink: {
+					href: '/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-review-documents-1',
+					text: 'Review'
+				},
+				changeActionText: 'Review',
+				config: {
+					actionButtonVisibleInSummary: true
+				}
 			}
 		};
+
 		const myNextFunction = mock.fn(() => {});
 		const handler = preprocessQuestionProperties(service, journeyId, questions);
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
