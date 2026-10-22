@@ -11,6 +11,9 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		if (!req.params.question) {
+			this.consumeAlertsFromSession(req, res);
+		}
 
 		const journey4Data = await db.examinationInfo.findUnique({
 			where: { caseId: caseRecord.id },

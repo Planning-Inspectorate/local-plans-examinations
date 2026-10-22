@@ -39,6 +39,9 @@ export function mapOverviewDataToAnswers(overviewData: OverviewData): Record<str
 export class OverviewTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, reference } = context;
+		if (!req.params.question) {
+			this.consumeAlertsFromSession(req, res);
+		}
 
 		const overviewData = await getOverviewData(service.db, reference);
 		if (!overviewData) {

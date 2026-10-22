@@ -9,6 +9,9 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		if (!req.params.question) {
+			this.consumeAlertsFromSession(req, res);
+		}
 
 		const gateway2DocumentSets = {
 			procedural: [

@@ -11,6 +11,9 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		if (!req.params.question) {
+			this.consumeAlertsFromSession(req, res);
+		}
 		const caseReference = getParam(req.params.reference);
 		if (req.params.question == undefined) {
 			res.redirect(

@@ -7,6 +7,9 @@ import { getParam } from '../controller.ts';
 export class Gateway3TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
+		if (!req.params.question) {
+			this.consumeAlertsFromSession(req, res);
+		}
 		if (
 			req.method === 'GET' &&
 			String(req.params.question).startsWith('gateway-3-decision') &&

@@ -140,6 +140,8 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						question.startsWith(prefix)
 					);
 					if (matchedExaminationPauseQuestion) {
+						req.session.alertMessage = 'Changes saved';
+						req.session.alertMessageStatus = 'success';
 						const isExaminationRestartQuestion =
 							question.startsWith('examination-pause-end-date') ||
 							question.startsWith('examination-pause-restart-details');
@@ -240,15 +242,6 @@ export function buildGetJourneyMiddleware(
 
 		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;
-
-		if (req.session.alertMessage) {
-			res.locals.alertMessage = req.session.alertMessage;
-			delete req.session.alertMessage;
-		}
-		if (req.session.alertMessageStatus) {
-			res.locals.alertMessageStatus = req.session.alertMessageStatus;
-			delete req.session.alertMessageStatus;
-		}
 
 		const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 		const journey2Data = await db.gateway2Info.findUnique({
