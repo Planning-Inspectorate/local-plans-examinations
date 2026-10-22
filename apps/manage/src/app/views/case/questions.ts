@@ -441,11 +441,11 @@ const examinationPauseBaseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	examinationRestartDetail: {
 		type: COMPONENT_TYPES.TEXT_ENTRY,
-		question: 'Pause restart details',
+		question: 'Restart details',
 		fieldName: 'planPauseEndDetails', // In the ExaminationPause model
 		label: 'Add any details about the restart',
 		url: 'examination-pause-restart-details',
-		title: 'Pause restart details',
+		title: 'Restart details',
 		validators: [
 			new StringValidator({
 				minLength: {

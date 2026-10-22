@@ -543,7 +543,7 @@ export function createExaminationPauseJourney(req: Request, response: JourneyRes
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID;
 	}
-	return getBackLinksAndSetReference(journey, examinationPauseUrl, req.params.reference);
+	return journey;
 }
 
 function getBackLinksAndSetReference(

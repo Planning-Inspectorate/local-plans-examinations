@@ -145,7 +145,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						const isExaminationRestartQuestion =
 							question.startsWith('examination-pause-end-date') ||
 							question.startsWith('examination-pause-restart-details');
-						const caseHistoryMessage = isExaminationRestartQuestion ? 'Examination restarted' : 'Plan paused';
+						const caseHistoryMessage = isExaminationRestartQuestion ? 'Plan restarted' : 'Plan paused';
 						const account = authSession.getAccount(req.session);
 						const currentUser = account?.name ?? 'Unknown';
 						await updateCaseHistory(service, req, db, { examinationPause: null }, {}, reference, currentUser, {
