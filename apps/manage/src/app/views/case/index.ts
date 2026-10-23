@@ -250,7 +250,7 @@ function registerExaminationHearingJourney(
 		const loaded = await loadLpaOptions(service);
 
 		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+			(questions.lpa as OptionsQuestion).options = [{ value: '', text: '' }, ...loaded];
 		}
 
 		next();
@@ -586,7 +586,7 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		(req, res, next) => {
+		(req: Request, res: Response<any, JourneyLocals>) => {
 			// Until a report is issued, saving the plan outcome continues to the file uploader.
 			const answers = res.locals.journeyResponse?.answers;
 			const isPlanOutcome =
@@ -601,7 +601,7 @@ function registerCaseJourney(
 				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
 			}
 			const continueToReportUpload = isPlanOutcome && req.query.returnTo !== 'check' && !answers?.soundUnsoundDate;
-			buildSave(updateCase, !continueToReportUpload)(req, res, next);
+			return buildSave(updateCase, !continueToReportUpload)(req, res);
 		}
 	);
 	if (supportsFileUpload) {

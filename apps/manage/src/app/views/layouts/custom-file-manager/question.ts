@@ -1,4 +1,4 @@
-import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { Question } from '@planning-inspectorate/dynamic-forms';
 
 /** Lists uploaded files with links to add or remove documents on the upload question named by `uploadQuestionUrl`. */
 export default class CustomFileManagerQuestion extends Question {

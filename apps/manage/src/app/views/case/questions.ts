@@ -1472,25 +1472,31 @@ const caseQuestions = {
 
 // Some questions require copies in order to be used in different conditions.
 // e.g. isSoundNavigation and isSoundOutcome are used in different areas but are the same field/question.
-for (const key of ['isSound', 'soundUnsoundDate', 'adoptionDate', 'approvedForCILDate']) {
-	caseQuestions[`${key}Outcome`] = { ...caseQuestions[key] };
-}
-caseQuestions.isSoundNavigation = { ...caseQuestions.isSound };
+const allCaseQuestions = {
+	...caseQuestions,
+	isSoundOutcome: { ...caseQuestions.isSound },
+	soundUnsoundDateOutcome: { ...caseQuestions.soundUnsoundDate },
+	adoptionDateOutcome: { ...caseQuestions.adoptionDate },
+	approvedForCILDateOutcome: { ...caseQuestions.approvedForCILDate },
+	isSoundNavigation: { ...caseQuestions.isSound }
+} satisfies Record<string, ManageQuestionConfig>;
 
 export const fileUploadQuestionProperties = Object.fromEntries(
-	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
+	Object.entries(allCaseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
 ) as Record<string, FileUploaderQuestionProps>;
 
 export const questions = createQuestions(
-	caseQuestions,
+	allCaseQuestions,
 	allQuestionClasses,
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
 
-Object.keys(examinationHearingQuestions).forEach((key) => {
-	questions[key].continueButtonText = 'Continue';
-});
+for (const [key, question] of Object.entries(questions)) {
+	if (Object.hasOwn(examinationHearingQuestions, key)) {
+		question.continueButtonText = 'Continue';
+	}
+}
 
 // The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
