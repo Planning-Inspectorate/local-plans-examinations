@@ -17,7 +17,6 @@ export type SubmissionCheckData = {
 	notificationPreviewTemplate?: string;
 	submitButtonText: string;
 	notificationTextLPA?: string;
-	hideNotificationPreview?: boolean;
 };
 
 /**
