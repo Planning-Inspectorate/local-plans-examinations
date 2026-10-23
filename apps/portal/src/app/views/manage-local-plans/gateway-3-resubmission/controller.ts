@@ -486,13 +486,13 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 		const submissionDate = formatDisplayDate(submission.completionDate);
 		const submissionTime = formatDisplayTime(submission.completionDate);
 
-		// Find the report for this submission.
-		// The report and uploaded documents for submission N are in G3_DOCUMENT_N.
-		// Non-deleted docs = BO report; soft-deleted docs = LPA's original uploads.
+		// The report that triggered this resubmission lives in G3_DOCUMENT_{N-1}
+		// (the BO uploads it when reviewing the previous submission).
+		// For the initial submission (N=1) the only report is in G3_DOCUMENT_1.
 		const reportSubmissionNumber = submissionNumber;
-		const reportSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${reportSubmissionNumber}`];
-		const setDocs = reportSetId ? documents.filter((d) => d.documentSetId === reportSetId) : [];
-		const reportDocs = setDocs.filter((d) => !d.isDeleted);
+		const reportDocSetIndex = submissionNumber > 1 ? submissionNumber - 1 : 1;
+		const reportSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${reportDocSetIndex}`];
+		const reportDocs = reportSetId ? documents.filter((d) => d.documentSetId === reportSetId && !d.isDeleted) : [];
 		const reportDocuments = reportDocs.map((doc) => ({
 			fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
 			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`,
@@ -531,14 +531,21 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 			];
 		}
 
-		// For submission 2+: the LPA's original uploads are soft-deleted when the
-		// BO syncs its report into the same document set. Show them under
-		// "New or updated documents" so the submission history is complete.
-		const deletedLpaDocs = isInitialSubmission ? [] : setDocs.filter((d) => d.isDeleted);
-		const resubmissionDocs = deletedLpaDocs.map((doc) => ({
-			fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
-			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`
-		}));
+		// For submission 2+: the LPA's uploads live in G3_DOCUMENT_N (separate
+		// from the report set). When the BO syncs its own report into this set
+		// the LPA docs get soft-deleted; if the BO hasn't synced we fall back
+		// to showing all (non-deleted) docs which are the LPA uploads.
+		let resubmissionDocs: { fileName: string; downloadUrl: string }[] = [];
+		if (!isInitialSubmission) {
+			const resubSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
+			const allResubDocs = resubSetId ? documents.filter((d) => d.documentSetId === resubSetId) : [];
+			const softDeletedDocs = allResubDocs.filter((d) => d.isDeleted);
+			const lpaDocs = softDeletedDocs.length > 0 ? softDeletedDocs : allResubDocs;
+			resubmissionDocs = lpaDocs.map((doc) => ({
+				fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
+				downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`
+			}));
+		}
 
 		return res.render(PREVIOUS_SUBMISSION_VIEW_PATH, {
 			pageCaption: currentCase?.planTitle,
