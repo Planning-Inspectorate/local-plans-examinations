@@ -11,7 +11,7 @@ const SUBMISSION_ID = '2';
 const SUBMISSION_SECTION = `gateway-3-submission-${SUBMISSION_ID}`;
 const SUBMISSION_URL = `/case/${REFERENCE}/gateway-3/${SUBMISSION_SECTION}`;
 const EXAMINATION_WEBSITE = 'https://example.com/examination';
-const NOT_ADDED = 'not added';
+const NOT_PROVIDED = 'Not provided';
 
 const requiredDocumentFields = Object.keys(REQUIRED_DOCUMENT_SETS);
 const optionalDocumentFields = Object.keys(OPTIONAL_DOCUMENT_SETS);
@@ -119,7 +119,7 @@ describe('CustomDocumentsQuestion', () => {
 			);
 			assert.equal(viewModel.rowsMapRequiredData[DOCUMENT_LABELS.examinationWebsite], EXAMINATION_WEBSITE);
 			assert.equal(viewModel.rowsMapRequiredData[DOCUMENT_LABELS.proposedLocalPlan], 'plan.pdf');
-			assert.equal(viewModel.rowsMapRequiredData[DOCUMENT_LABELS.mapOfPolicies], NOT_ADDED);
+			assert.equal(viewModel.rowsMapRequiredData[DOCUMENT_LABELS.mapOfPolicies], NOT_PROVIDED);
 		});
 
 		it('should list each optional document by label and mark blank ones as not added', () => {
@@ -133,7 +133,7 @@ describe('CustomDocumentsQuestion', () => {
 				optionalDocumentFields.map((field) => DOCUMENT_LABELS[field])
 			);
 			assert.equal(viewModel.optionDataMap[DOCUMENT_LABELS.environmentalReport], 'environmental-report.pdf');
-			assert.equal(viewModel.optionDataMap[DOCUMENT_LABELS.otherDocuments], NOT_ADDED);
+			assert.equal(viewModel.optionDataMap[DOCUMENT_LABELS.otherDocuments], NOT_PROVIDED);
 		});
 
 		it('should point Issue decision at the decision for the submission being reviewed', () => {

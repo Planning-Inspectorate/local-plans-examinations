@@ -119,13 +119,13 @@ export default class CustomDocumentsQuestion extends Question {
 			}
 		} = options;
 
-		const NOT_ADDED = 'not added';
+		const NOT_PROVIDED = 'Not provided';
 
 		const isBlank = (value: unknown) =>
 			value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 
 		const withNotAdded = (data: Record<string, unknown>) =>
-			Object.fromEntries(Object.entries(data).map(([key, value]) => [key, isBlank(value) ? NOT_ADDED : value]));
+			Object.fromEntries(Object.entries(data).map(([key, value]) => [key, isBlank(value) ? NOT_PROVIDED : value]));
 
 		const viewAnswers = {
 			...withNotAdded(answers),
