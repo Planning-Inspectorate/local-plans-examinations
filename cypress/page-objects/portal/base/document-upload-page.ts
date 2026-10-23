@@ -73,7 +73,9 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(this.heading);
-		this.verifyCaptionL(this.caption);
+		if (this.caption) {
+			this.verifyCaptionL(this.caption);
+		}
 		this.documentUpload.chooseFilesButton.should('be.visible');
 	}
 

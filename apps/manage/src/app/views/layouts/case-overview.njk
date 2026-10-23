@@ -126,8 +126,8 @@
                 <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
                 <p></p>
               {% endif %}
-              
-              {% if section.heading == 'Hearings'%} 
+
+              {% if section.heading == 'Hearings'%}
                 <h2 class="govuk-heading-l">Hearings</h2>
                 {{ hearingDetails(journeyResponse.answers, reference) }}
                 <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link" data-cy="add-hearing">Add hearing</a>

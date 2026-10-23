@@ -42,7 +42,9 @@ function buildCase(overrides = {}) {
 		},
 		examinationInfo: {
 			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
-			submissionForExaminationDate: null
+			submissionForExaminationDate: null,
+			status: 'cannot-start-yet',
+			statusLookup: { displayName: 'Cannot start yet' }
 		},
 		documents: [],
 		...overrides
@@ -388,7 +390,11 @@ describe('PortalService', () => {
 					examinationInfo: {
 						select: {
 							expectedSubmissionForExaminationDate: true,
-							submissionForExaminationDate: true
+							submissionForExaminationDate: true,
+							status: true,
+							statusLookup: {
+								select: { displayName: true }
+							}
 						}
 					},
 					lpas: {

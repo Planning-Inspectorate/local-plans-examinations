@@ -1,8 +1,9 @@
-import { Gateway3SaveController } from './gateway-3-save-controller.ts';
+import { Gateway3SaveController, saveGateway3Submissions } from './gateway-3-save-controller.ts';
 import { ManageService } from '#service';
 import type { Request } from 'express';
 import { describe, it, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type MockServiceType = {
 	db: {
@@ -167,5 +168,21 @@ describe('test Gateway2SaveController', () => {
 		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await gateway3Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway3Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+	});
+});
+
+describe('saveGateway3Submissions', () => {
+	it('rejects submissions above the configured maximum without writing to the database', async () => {
+		const upsert = mock.fn(async () => ({}));
+		const submissions = Array.from({ length: NUM_GW3_SUBMISSIONS_QUESTIONS + 1 }, () => ({
+			decision: undefined,
+			completionDate: undefined
+		}));
+
+		await assert.rejects(
+			saveGateway3Submissions({ gateway3Info: { upsert } } as never, 'case-id', submissions as never),
+			/Max number of submissions has been exceeded/
+		);
+		assert.equal(upsert.mock.callCount(), 0);
 	});
 });
