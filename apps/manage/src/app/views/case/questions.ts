@@ -145,6 +145,13 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
 	},
+	gateway3DocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Gateway 3 Documents',
+		fieldName: 'gateway3DocumentSubmission',
+		url: 'gateway-3-review-documents'
+	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
 		options: [

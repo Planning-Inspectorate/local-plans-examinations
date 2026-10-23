@@ -7,18 +7,26 @@ import {
 	gateway3ExaminationWebsitePage,
 	gateway3DecisionPage,
 	gateway3DocumentsPage,
-	gateway3DocumentsCheckPage
+	gateway3DocumentsCheckPage,
+	gateway3ReviewDocumentsPage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { examinationPage } from '../../../../page-objects/manage/examination/index.ts';
-import { openSeededGateway3Page } from '../../../../flows/manage/gateway-3-flow.ts';
+import {
+	openGateway3ReviewDocumentsPage,
+	openSeededGateway3Page,
+	openSeededGateway3PageWithSubmissionDocuments
+} from '../../../../flows/manage/gateway-3-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway3AssessorAnswer,
 	gateway3DateAnswers,
 	gateway3DecisionAnswer,
 	gateway3ExaminationWebsite,
+	gateway3ExaminationWebsiteDocumentLabel,
+	gateway3OptionalSubmissionDocumentLabels,
 	gateway3ProgrammeOfficerAnswer,
+	gateway3RequiredSubmissionDocuments,
 	updatedGateway3ExpectedDateAnswer,
 	gateway3DocumentsAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
@@ -170,8 +178,48 @@ describe('Gateway 3 updates', () => {
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 	});
+});
+
+describe('Gateway 3 submission documents', () => {
+	const requiredDocumentCount = gateway3RequiredSubmissionDocuments.length;
+
+	beforeEach(() => {
+		cy.task('clearDb');
+	});
+
+	after(() => cy.task('clearDb'));
+
+	it(
+		'opens the review documents page from the Gateway 3 tab and lists the submitted documents',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments().then(({ reference }) => {
+				openGateway3ReviewDocumentsPage();
+
+				gateway3ReviewDocumentsPage.verifyLoaded(reference);
+				gateway3ReviewDocumentsPage.verifyNoMissingDocumentErrors();
+				gateway3RequiredSubmissionDocuments.forEach(({ label, fileName }) => {
+					gateway3ReviewDocumentsPage.verifyDocumentAdded(label, fileName);
+				});
+				gateway3ReviewDocumentsPage.verifyDocumentNotAdded(gateway3ExaminationWebsiteDocumentLabel);
+				gateway3OptionalSubmissionDocumentLabels.forEach((documentLabel) => {
+					gateway3ReviewDocumentsPage.verifyDocumentNotAdded(documentLabel);
+				});
+			});
+		}
+	);
+
+	it('opens the Gateway 3 decision when every required document has been added', { tags: ['regression'] }, () => {
+		openSeededGateway3PageWithSubmissionDocuments();
+		openGateway3ReviewDocumentsPage();
+
+		gateway3ReviewDocumentsPage.issueDecision();
+
+		gateway3DecisionPage.verifyLoaded();
+	});
 
 	it('selects a gateway 3 resubmission decision and verifies new submission row', { tags: ['regression'] }, () => {
+		openSeededGateway3PageWithSubmissionDocuments();
 		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
 
 		gateway3DecisionPage.verifyLoaded();
@@ -186,7 +234,8 @@ describe('Gateway 3 updates', () => {
 		gateway3DocumentsCheckPage.issueDecision();
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
-		gateway3Page.verifyGateway3SubmissionIssued();
+		gateway3Page.verifyGateway3SubmissionIssued('Resubmission required');
+		gateway3Page.verifySubmissionDocumentsReviewLink(requiredDocumentCount);
 		gateway3Page.verifySubHeading('Gateway 3 submission 2');
 		gateway3Page.verifyHeaderStatus('GW3 pending');
 

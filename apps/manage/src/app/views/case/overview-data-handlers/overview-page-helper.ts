@@ -8,6 +8,7 @@ import {
 	type UploadDocumentRequest
 } from '../controller.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { OPTIONAL_DOCUMENT_SETS, REQUIRED_DOCUMENT_SETS } from '../../layouts/custom-documents-viewer/question.ts';
 import { fileUploadQuestionProperties } from '../questions.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 
@@ -134,3 +135,74 @@ async function addUploadedDocumentDetailsToAnswers(
 		}
 	}
 }
+
+type Gateway3Answers = {
+	id: string;
+	caseId: string;
+	expectedSubmissionForExaminationDate?: Date | null;
+	submissionForExaminationDate?: Date | null;
+	examiningInspector1?: string | null;
+	examiningInspector2?: string | null;
+	examiningInspector3?: string | null;
+	examiningInspectorAppointmentDate?: Date | null;
+	examinationWebsite?: string | null;
+};
+
+export type CompiledGateway3Answers = Gateway3Answers & {
+	optionalData: {
+		[k: string]: string;
+	};
+};
+
+/**
+ * Compiles data for Gateway3 by retrieving and organizing relevant document information
+ * for a specified case. It fetches documents from the database, groups them by their
+ * document set IDs, and maps them to their corresponding fields based on predefined
+ * required and optional document sets.
+ *
+ * @param {PrismaClient} db - The database client used to fetch document data.
+ * @param {Gateway3Answers} currentData - The existing Gateway3 data that will be supplemented
+ * with compiled document information.
+ * @returns {Promise<CompiledGateway3Answers>} A promise that resolves to the compiled
+ * Gateway3 data including document information grouped and formatted by required
+ * and optional sets.
+ */
+export const compileGateway3Data = async (
+	db: PrismaClient,
+	currentData: Gateway3Answers
+): Promise<CompiledGateway3Answers> => {
+	const documents = await db.document.findMany({
+		where: {
+			caseId: currentData.caseId,
+			isDeleted: false,
+			documentSetId: {
+				in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
+			}
+		},
+		include: { latestDocumentVersion: true }
+	});
+
+	const documentsBySetId = new Map<string, typeof documents>();
+	for (const document of documents) {
+		const group = documentsBySetId.get(document.documentSetId) ?? [];
+		group.push(document);
+		documentsBySetId.set(document.documentSetId, group);
+	}
+
+	const documentsForFields = (sets: Record<string, string>) =>
+		Object.fromEntries(
+			Object.entries(sets).map(([field, setId]) => [
+				field,
+				(documentsBySetId.get(setId) ?? [])
+					.map((document) => document.latestDocumentVersion?.originalFilename ?? document.name)
+					.join(', ')
+			])
+		);
+
+	const data = {
+		...documentsForFields(REQUIRED_DOCUMENT_SETS),
+		optionalData: documentsForFields(OPTIONAL_DOCUMENT_SETS)
+	};
+
+	return { ...data, ...currentData };
+};
