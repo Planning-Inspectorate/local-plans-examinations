@@ -3,18 +3,19 @@
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
-{% block before_content %}
-	{% if backLink %}
-		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
-	{% endif %}
+{% block error_summary %}
 	{% if errorSummary %}
-		{{ govukErrorSummary({
-			titleText: "There is a problem",
-			errorList: errorSummary,
-			attributes: { "data-cy": "error-summary" }
-		}) }}
+		<div class="govuk-grid-row">
+			<div class="govuk-grid-column-two-thirds">
+				{{ govukErrorSummary({
+					titleText: "There is a problem",
+					errorList: errorSummary,
+					attributes: { "data-cy": "error-summary" }
+				}) }}
+			</div>
+		</div>
 	{% endif %}
-{% endblock before_content %}
+{% endblock %}
 
 {% block content %}
 	<div class="govuk-grid-row">
