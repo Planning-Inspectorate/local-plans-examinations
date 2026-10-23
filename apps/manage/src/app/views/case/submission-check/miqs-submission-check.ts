@@ -20,10 +20,8 @@ export class MiqsSubmissionCheck extends SubmissionCheckWithDate {
 			section: section,
 			question: questionUrl,
 			backLink: this.generateBackUrl(originalUrl),
-			notificationPreviewTemplate: questionUrl,
 			submitButtonText: 'Confirm and notify',
 			additionalFields: [],
-			hideNotificationPreview: true,
 			notificationTextLPA:
 				"We'll send a notification to the planning authority to tell them that the MIQ documents are available."
 		};
