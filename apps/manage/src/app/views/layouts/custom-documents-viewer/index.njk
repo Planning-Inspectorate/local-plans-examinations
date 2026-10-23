@@ -3,6 +3,14 @@
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
+{% block backLink %}
+	{% if backLink %}
+		<nav aria-label="Back">
+			<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
+		</nav>
+	{% endif %}
+{% endblock backLink %}
+
 {% block error_summary %}
 	{% if errorSummary %}
 		<div class="govuk-grid-row">
