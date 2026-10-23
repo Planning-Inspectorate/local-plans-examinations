@@ -33,5 +33,6 @@ export function consumeAlertsFromSession(req: Request, res: Response) {
 		return;
 	}
 	res.locals.alerts = req.session.alerts;
+	console.log(`res.locals.alerts: ${res.locals.alerts[0].text}`);
 	clearAlertsFromSession(req);
 }

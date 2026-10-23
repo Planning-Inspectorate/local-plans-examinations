@@ -12,7 +12,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-      {% if alert %}
+      {% if alerts %}
         {% for alert in alerts %}
           {{ govukNotificationBanner(alert) }}
         {% endfor %}

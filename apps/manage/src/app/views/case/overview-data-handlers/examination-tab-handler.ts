@@ -41,7 +41,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			journeyResponse.answers[`planPauseEndDetails-${i + 1}`] = sortedPauseData[i].planPauseEndDetails;
 		}
 		this.tryAddPauseStatusBanner(context, journey4Data);
-		if (!req.params.question && req.method == 'GET') {
+		if ((!req.params.question || String(req.params.question) == 'examination-report-manage') && req.method === 'GET') {
 			consumeAlertsFromSession(req, res);
 		}
 		res.locals.journeyResponse = journeyResponse;
