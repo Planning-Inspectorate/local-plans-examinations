@@ -7,7 +7,6 @@ import { examinationPauseBaseUrls } from '../questions.ts';
 import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../classes/common-consts.ts';
 import { formatDateToString } from '../../../util/date.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
-import type { ExaminationHearing } from '@pins/local-plans-database/src/client/client.ts';
 
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
@@ -47,7 +46,7 @@ export class ExaminationSaveController extends SaveController {
 		const matchedQuestion = examinationHearingBaseUrls.find((prefix) => question.startsWith(prefix));
 		return !!matchedQuestion;
 	}
-	
+
 	protected async shouldSaveToSession() {
 		const shouldSaveToSession = this.isExaminationHearingQuestion();
 		if (shouldSaveToSession) {
@@ -241,73 +240,76 @@ export class ExaminationSaveController extends SaveController {
 		return this.trimStringValues(answers as ExaminationInput);
 	}
 	protected saveToSession(answers: ExaminationInput) {
-		const hearingIdString = String(this.req.params.question).split('-').at(-1);
-		if (!hearingIdString) {
-			throw Error('Could not extract the hearing id from the question');
-		}
-		const hearingId = parseInt(hearingIdString);
-		if (!this.req.session) {
-			throw Error('request has no session data');
-		}
-		if (this.req.session.answers) {
-			const sessionAnswers = this.req.session.answers as ExaminationInput;
-			const hearingAnswers = sessionAnswers.hearings;
-			if (hearingAnswers && answers.hearings) {
-				const sessionAnswers = hearingAnswers[hearingId - 1];
-				const newAnswers = answers.hearings[hearingId - 1];
-				answers.hearings[hearingId - 1] = { ...sessionAnswers, ...newAnswers };
+		const question = String(this.req.params.question);
+		if (examinationHearingBaseUrls.find((prefix) => question.startsWith(prefix))) {
+			const hearingIdString = String(this.req.params.question).split('-').at(-1);
+			if (!hearingIdString) {
+				throw Error('Could not extract the hearing id from the question');
 			}
-		}
-		const currentHearing = answers.hearings?.[hearingId - 1];
-		if (currentHearing?.hearingExpectedDaysKnown == 'no') {
-			delete (currentHearing as any).hearingExpectedDays;
-		}
-		if (currentHearing?.hearingLocationType == 'remote') {
-			currentHearing.hearingLocationKnown = null;
-			currentHearing.hearingVenueName = null;
-			currentHearing.hearingAddressLine = null;
-			currentHearing.hearingAddressLine2 = null;
-			currentHearing.hearingTownOrCity = null;
-			currentHearing.hearingPostcode = null;
-		}
-		if (currentHearing?.hearingLocationKnown == 'no') {
-			delete (currentHearing as any).hearingVenueName;
-			delete (currentHearing as any).hearingAddressLine;
-			delete (currentHearing as any).hearingAddressLine2;
-			delete (currentHearing as any).hearingTownOrCity;
-			delete (currentHearing as any).hearingPostcode;
-		}
-		if (currentHearing?.hearingLocationType == 'in-person') {
-			delete (currentHearing as any).hearingRemoteMeetingLinkKnown;
-			delete (currentHearing as any).hearingRemoteMeetingLink;
-		}
-		if (currentHearing?.hearingRemoteMeetingLinkKnown == 'no') {
-			delete (currentHearing as any).hearingRemoteMeetingLink;
-		}
-		this.req.session.answers = answers;
-		return true;
-	}
-	protected saveToSession(answers: ExaminationInput) {
-		const pauseIdString = String(String(this.req.params.question).split('-').at(-1));
-		const pauseId = parseInt(pauseIdString);
-		if (isNaN(pauseId)) {
-			throw Error('Could not extract the pause id from the question');
-		}
-		if (!this.req.session) {
-			throw Error('request has no session data');
-		}
-		if (this.req.session.answers) {
-			const sessionAnswers = this.req.session.answers as ExaminationInput;
-			const pauseAnswers = sessionAnswers.planPauseHistory;
-			if (pauseAnswers && answers.planPauseHistory) {
-				const sessionAnswers = pauseAnswers[pauseId - 1];
-				const newAnswers = answers.planPauseHistory[pauseId - 1];
-				this.req.session.answers.planPauseHistory[pauseId - 1] = { ...sessionAnswers, ...newAnswers };
+			const hearingId = parseInt(hearingIdString);
+			if (!this.req.session) {
+				throw Error('request has no session data');
 			}
-		} else {
+			if (this.req.session.answers) {
+				const sessionAnswers = this.req.session.answers as ExaminationInput;
+				const hearingAnswers = sessionAnswers.hearings;
+				if (hearingAnswers && answers.hearings) {
+					const sessionAnswers = hearingAnswers[hearingId - 1];
+					const newAnswers = answers.hearings[hearingId - 1];
+					answers.hearings[hearingId - 1] = { ...sessionAnswers, ...newAnswers };
+				}
+			}
+			const currentHearing = answers.hearings?.[hearingId - 1];
+			if (currentHearing?.hearingExpectedDaysKnown == 'no') {
+				delete (currentHearing as any).hearingExpectedDays;
+			}
+			if (currentHearing?.hearingLocationType == 'remote') {
+				currentHearing.hearingLocationKnown = null;
+				currentHearing.hearingVenueName = null;
+				currentHearing.hearingAddressLine = null;
+				currentHearing.hearingAddressLine2 = null;
+				currentHearing.hearingTownOrCity = null;
+				currentHearing.hearingPostcode = null;
+			}
+			if (currentHearing?.hearingLocationKnown == 'no') {
+				delete (currentHearing as any).hearingVenueName;
+				delete (currentHearing as any).hearingAddressLine;
+				delete (currentHearing as any).hearingAddressLine2;
+				delete (currentHearing as any).hearingTownOrCity;
+				delete (currentHearing as any).hearingPostcode;
+			}
+			if (currentHearing?.hearingLocationType == 'in-person') {
+				delete (currentHearing as any).hearingRemoteMeetingLinkKnown;
+				delete (currentHearing as any).hearingRemoteMeetingLink;
+			}
+			if (currentHearing?.hearingRemoteMeetingLinkKnown == 'no') {
+				delete (currentHearing as any).hearingRemoteMeetingLink;
+			}
 			this.req.session.answers = answers;
+			return true;
+		} else if (examinationPauseBaseUrls.find((prefix) => question.startsWith(prefix))) {
+			const pauseIdString = String(String(this.req.params.question).split('-').at(-1));
+			const pauseId = parseInt(pauseIdString);
+			if (isNaN(pauseId)) {
+				throw Error('Could not extract the pause id from the question');
+			}
+			if (!this.req.session) {
+				throw Error('request has no session data');
+			}
+			if (this.req.session.answers) {
+				const sessionAnswers = this.req.session.answers as ExaminationInput;
+				const pauseAnswers = sessionAnswers.planPauseHistory;
+				if (pauseAnswers && answers.planPauseHistory) {
+					const sessionAnswers = pauseAnswers[pauseId - 1];
+					const newAnswers = answers.planPauseHistory[pauseId - 1];
+					this.req.session.answers.planPauseHistory[pauseId - 1] = { ...sessionAnswers, ...newAnswers };
+				}
+			} else {
+				this.req.session.answers = answers;
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	protected async saveToDatabase(answers: ExaminationInput) {
@@ -363,7 +365,7 @@ export class ExaminationSaveController extends SaveController {
 			};
 		}
 		if ('hearings' in answers) {
-			const hearings: ExaminationHearing[] = sortByDateColumn(answers.hearings, 'createdDate');
+			const hearings = sortByDateColumn(answers.hearings as { [key: string]: any }[], 'createdDate');
 			if (!hearings) {
 				throw Error('No hearing entries found');
 			}

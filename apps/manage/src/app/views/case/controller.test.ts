@@ -2219,16 +2219,12 @@ describe('issueGateway2WorkshopDocuments', () => {
 		};
 
 		await handler(req as unknown as Request, res as unknown as Response);
-<<<<<<< HEAD
-		assert.equal(req.session.alertMessageStatus, 'important');
-=======
 		const expectedMessage = {
 			type: 'important',
 			text: 'Gateway 2 workshopDocuments already issued',
 			html: undefined
 		};
 		assert.deepEqual(req.session.alerts[0], expectedMessage);
->>>>>>> b7af4766 (feat: improve mechanism for handling alerts to support multuple messages with different formats)
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});

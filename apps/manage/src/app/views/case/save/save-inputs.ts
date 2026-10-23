@@ -126,7 +126,7 @@ export interface ExaminationInput extends SaveInput {
 		hearingAddressLine2: string | null;
 		hearingTownOrCity: string | null;
 		hearingPostcode: string | null;
-	}[],
+	}[];
 	planPauseHistory: {
 		createdAt: Date;
 		planPauseDate: Date;

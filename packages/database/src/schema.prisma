@@ -237,19 +237,19 @@ model ExaminationInfo {
   qaInspector1                         String?
   qaInspector2                         String?
   qaInspector3                         String?
-  reportSentToPanelDate                DateTime?          @db.DateTime2
-  panelResponseToInspectorDate         DateTime?          @db.DateTime2
-  factCheckDateReceivedFromInspector   DateTime?          @db.DateTime2
-  factCheckDueDate                     DateTime?          @db.DateTime2
-  factCheckActualDate                  DateTime?          @db.DateTime2
-  factCheckReceivedBackFromLPADate     DateTime?          @db.DateTime2
-  finalReportIssueDate                 DateTime?          @db.DateTime2
+  reportSentToPanelDate                DateTime?            @db.DateTime2
+  panelResponseToInspectorDate         DateTime?            @db.DateTime2
+  factCheckDateReceivedFromInspector   DateTime?            @db.DateTime2
+  factCheckDueDate                     DateTime?            @db.DateTime2
+  factCheckActualDate                  DateTime?            @db.DateTime2
+  factCheckReceivedBackFromLPADate     DateTime?            @db.DateTime2
+  finalReportIssueDate                 DateTime?            @db.DateTime2
   planPauseHistory                     PlanPauseHistory[]
-  withdrawnDate                        DateTime?          @db.DateTime2
-  isSound                              String?            @db.NVarChar(50)
-  soundUnsoundDate                     DateTime?          @db.DateTime2
-  adoptionDate                         DateTime?          @db.DateTime2
-  approvedForCILDate                   DateTime?          @db.DateTime2
+  withdrawnDate                        DateTime?            @db.DateTime2
+  isSound                              String?              @db.NVarChar(50)
+  soundUnsoundDate                     DateTime?            @db.DateTime2
+  adoptionDate                         DateTime?            @db.DateTime2
+  approvedForCILDate                   DateTime?            @db.DateTime2
   hearings                             ExaminationHearing[]
 }
 
