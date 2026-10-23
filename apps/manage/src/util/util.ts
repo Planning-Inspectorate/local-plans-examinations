@@ -67,11 +67,12 @@ export const getExaminationStages = async (service: ManageService, caseId: strin
 	}
 };
 /**
- * Immutably sort the given list workshops details, with null createdDate values at the end
+ * Immutably sort the given list workshops or hearings. details, with null createdDate values at the end
  * @param workshops The workshops to filter and sort
- * @returns The sorted workshops
+ * @param hearings The workshops to filter and sort
+ * @returns The sorted workshops or hearings
  */
-export function sortGateway2Workshops(workshops: { createdDate: Date; [key: string]: any }[]) {
+export function sortByCreatedDate(workshops: { createdDate: Date; [key: string]: any }[]) {
 	return workshops.toSorted((a, b) => {
 		if (!(a.createdDate || b.createdDate)) return 0;
 		if (!a.createdDate) return 1;

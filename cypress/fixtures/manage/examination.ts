@@ -1,6 +1,24 @@
 import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
 import { GATEWAY_3_DECISION_ID } from '../../../packages/database/src/seed/static-data/ids/case.ts';
 
+export const hearingDateAndTime = {
+	date: { day: '7', month: '11', year: '2026' },
+	time: { hour: '10', minute: '30' },
+	display: '7 November 2026',
+	updatedDate: { day: '8', month: '11', year: '2026' },
+	updatedTime: { hour: '11', minute: '45' },
+	updatedDisplay: '8 November 2026'
+};
+
+export const seededExaminationHearing = {
+	createdDate: '2026-10-01T12:00:00.000Z',
+	hearingDate: '2026-11-07T00:00:00.000Z',
+	hearingTime: '10:30',
+	hearingExpectedDaysKnown: 'no',
+	hearingLocationType: 'remote',
+	hearingRemoteMeetingLinkKnown: 'no'
+};
+
 // seed-cy.ts sets expectedSubmissionDate to `now` at seed time
 // unlike a real case, where it comes from a fixed value answered during case creation. If seed-cy.ts is
 // ever changed to a fixed date instead, this dynamic today/todayInput/todayDisplay block can be removed
