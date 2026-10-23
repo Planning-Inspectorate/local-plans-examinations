@@ -5,7 +5,7 @@
 {% block content %}
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
-            <h1 class="govuk-heading-l" data-cy="check-your-answers-heading">Check hearing details and issue notification</h1>
+            <h1 class="govuk-heading-l" data-cy="check-your-answers-heading">Check your answers</h1>
         </div>
     </div>
 
@@ -44,7 +44,7 @@
             {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
             <div class="govuk-button-group">
                 {{ govukButton({
-                    text: "Submit case",
+                    text: "Confirm and save",
                     attributes: { "data-cy": "submit-case" }
                 }) }}
                 <a href="{{ '/case/' + reference + '/examination' }}" class='govuk-link'>Cancel</a>

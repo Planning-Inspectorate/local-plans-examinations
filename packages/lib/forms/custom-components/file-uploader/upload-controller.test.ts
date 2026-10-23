@@ -3,11 +3,42 @@ import { describe, it, mock } from 'node:test';
 import {
 	createFileUploaderDeleteController,
 	createFileUploaderUploadController,
+	createFileSubmitUploadController,
 	isSafeLocalRedirect
 } from './upload-controller.ts';
+import FileUploadRequiredValidator from './required-validator.ts';
 import type { FileUploadDestination, FileUploadStorageAdapter, UploadedFile, UploadedRequestFile } from './types.ts';
 
 describe('file uploader upload controller', () => {
+	it('keeps the case ID for cleanup when adding another upload batch after reloading', async () => {
+		const existingFile = buildUploadedFile({
+			id: 'existing-file',
+			fileName: 'existing.pdf',
+			metadata: { documentGuid: 'document-1' }
+		});
+		const newFile = buildUploadedFile({ id: 'new-file', metadata: { caseId: 'case-1' } });
+		const controller = createFileUploaderUploadController({
+			fieldName: 'documents',
+			storage: async () => buildStorage({ upload: async () => newFile }),
+			question: { ...buildQuestionConfig(), url: 'signed-sla' }
+		});
+		const req = buildRequest({
+			session: {
+				id: 'session-1',
+				fileUploader: { documents: { uploadedFiles: [existingFile] } }
+			}
+		});
+
+		await controller(req, buildResponse(), mock.fn());
+
+		assert.deepEqual(req.session.hasTempDocuments['session-1'], {
+			question: 'signed-sla',
+			caseId: 'case-1',
+			hasUploadedFiles: true
+		});
+		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [existingFile, newFile]);
+	});
+
 	it('validates, stores uploaded files and appends them to the session', async () => {
 		const file = buildRequestFile();
 		const uploadedFile = buildUploadedFile({ id: 'stored-file-1', fileName: 'stored-cover-letter.pdf' });
@@ -255,6 +286,7 @@ describe('file uploader delete controller', () => {
 				req,
 				sessionKey: 'documents',
 				fieldName: 'documents',
+				fileId: 'file-to-delete',
 				uploadedFiles: [fileToKeep]
 			}
 		]);
@@ -343,6 +375,83 @@ describe('file uploader delete controller', () => {
 		]);
 		assert.deepEqual(req.session.fileUploader.documents.uploadedFiles, [fileToDelete, fileToKeep]);
 		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+});
+
+describe('file uploader submit controller', () => {
+	for (const [fieldName, url, message] of [
+		['signedSla', 'signed-sla', 'Upload at least one signed SLA document before continuing'],
+		['gateway2Report', 'gateway-2-report', 'Please upload your Gateway 2 report'],
+		[
+			'gateway2WorkshopDocuments',
+			'gateway-2-workshop-documents',
+			'Upload at least one tbd workshop document before continuing'
+		],
+		['gateway3Documents-1', 'gateway-3-document-1', 'Please upload your Gateway 3 report']
+	]) {
+		it(`uses the configured required-file message for ${url}`, async () => {
+			const onSubmit = mock.fn();
+			const controller = createFileSubmitUploadController({
+				fieldName,
+				storage: async () => buildStorage(),
+				redirect: '/upload',
+				question: {
+					...buildQuestionConfig(),
+					url,
+					validators: [new FileUploadRequiredValidator(fieldName, message)]
+				},
+				onSubmit
+			});
+			const req = buildRequest({ url: '/gateway-2/workshop/upload-documents/submit' });
+			const res = buildResponse();
+
+			await controller(req, res, mock.fn());
+
+			assert.deepEqual(req.session.errors, { 'upload-form': { msg: message } });
+			assert.deepEqual(req.session.errorSummary, [{ href: '#upload-form', text: message }]);
+			assert.equal(onSubmit.mock.callCount(), 0);
+			assert.deepEqual(res.redirect.mock.calls[0].arguments, ['/upload']);
+		});
+	}
+
+	it('prefers the upload-specific no-file message when configured', async () => {
+		const controller = createFileSubmitUploadController({
+			fieldName: 'documents',
+			storage: async () => buildStorage(),
+			question: {
+				...buildQuestionConfig(),
+				validationMessages: { noFile: 'Choose a workshop document' }
+			}
+		});
+		const req = buildRequest({ url: '/gateway-2/workshop/upload-documents/submit' });
+
+		await controller(req, buildResponse(), mock.fn());
+
+		assert.equal(req.session.errors['upload-form'].msg, 'Choose a workshop document');
+	});
+
+	it('submits the uploaded files without setting validation errors', async () => {
+		const onSubmit = mock.fn();
+		const file = buildUploadedFile();
+		const controller = createFileSubmitUploadController({
+			fieldName: 'documents',
+			storage: async () => buildStorage(),
+			question: buildQuestionConfig(),
+			onSubmit,
+			redirect: '/check'
+		});
+		const req = buildRequest({
+			url: '/gateway-2/report/upload-documents/submit',
+			session: { id: 'session-1', fileUploader: { documents: { uploadedFiles: [file] } } }
+		});
+		const res = buildResponse();
+
+		await controller(req, res, mock.fn());
+
+		assert.deepEqual(onSubmit.mock.calls[0].arguments, [{ req, fieldName: 'documents', uploadedFiles: [file] }]);
+		assert.equal(req.session.errors, undefined);
+		assert.equal(req.session.hasTempDocuments['session-1'].hasUploadedFiles, false);
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, ['/check']);
 	});
 });
 

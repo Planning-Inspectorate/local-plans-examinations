@@ -123,3 +123,6 @@ __azurite_db_queue_extent__.json
 __azurite_db_table__.json
 AzuriteConfig
 __blobstorage__/
+
+# SQL query for virus scanning test
+virus-scan-test.sql

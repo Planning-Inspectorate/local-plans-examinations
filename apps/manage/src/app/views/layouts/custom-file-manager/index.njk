@@ -1,0 +1,52 @@
+{% extends layoutTemplate %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block before_content %}
+	{% if backLink %}
+		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
+	{% endif %}
+{% endblock before_content %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {% if alertMessage %}
+        {{ govukNotificationBanner({
+          type: alertMessageStatus,
+          text: alertMessage
+        }) }}
+      {% endif %}
+      <span class="govuk-caption-l">{{ reference }}</span>
+      <h1 class="govuk-heading-l">{{ question.title }}</h1>
+
+      {{ govukButton({
+        text: "Add document",
+        href: uploadQuestionUrl,
+        attributes: { "data-cy": "add-document" },
+        classes: "govuk-button--secondary"
+      }) }}
+
+      {% set rows = [] %}
+      {% for file in documents %}
+        {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (file.id | urlencode) %}
+        {% set _ = rows.push([
+          { html: '<a class="govuk-link" href="' + downloadUrl + '">' + (file.fileName | escape) + '</a>' },
+          { text: (file.dateCreated | date("d MMM yyyy")) if file.dateCreated else "" },
+          { html: '<a class="govuk-link" href="' + uploadQuestionUrl + '/remove/' + (file.id | urlencode) + '">Remove<span class="govuk-visually-hidden"> ' + (file.fileName | escape) + '</span></a>' }
+        ]) %}
+      {% endfor %}
+
+      {{ govukTable({
+        attributes: { "data-cy": "examination-report-documents" },
+        head: [
+          { text: "Document" },
+          { text: "Received" },
+          { text: "Actions" }
+        ],
+        rows: rows
+      }) }}
+    </div>
+  </div>
+{% endblock content %}

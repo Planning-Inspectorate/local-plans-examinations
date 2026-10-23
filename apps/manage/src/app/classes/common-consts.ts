@@ -7,6 +7,8 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_REPORT_JOURNEY_ID: 'gateway-3-report',
 	EXAMINATION_JOURNEY_ID: 'examination',
 	EXAMINATION_HEARING_JOURNEY_ID: 'examination-hearing',
+	EXAMINATION_REPORT_QUESTION: 'examination-report',
+	EXAMINATION_REPORT_MANAGE_QUESTION: 'examination-report-manage',
 	OVERVIEW: 'overview',
 	GATEWAY_2_INFO: 'gateway2Info',
 	GATEWAY_3_INFO: 'gateway3Info',

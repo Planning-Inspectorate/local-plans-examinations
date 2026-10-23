@@ -15,15 +15,18 @@ import {
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
 	buildCheckReportMiddleware,
+	buildRemoveDocumentConfirmMiddleware,
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
+	issueExaminationReport,
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	handleMulterFileSizeError,
+	issueGateway2WorkshopDocuments,
+	redirectToChecks,
 	preprocessQuestionProperties,
-	issueGateway2WorkshopDocuments
+	handleMulterFileSizeError
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -79,7 +82,9 @@ import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handl
 import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
+import { sortByCreatedDate } from '#util/util.ts';
 import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
+import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -287,6 +292,8 @@ function registerExaminationHearingJourney(
 
 	const completeHearing = asyncHandler(async (req: Request, res: Response) => {
 		const reference = getParam(req.params.reference);
+		const hearingNumber = Number(getParam(req.params.hearingId));
+		const hearing = sortByCreatedDate(res.locals.journeyResponse.answers.hearings)[hearingNumber - 1];
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
@@ -298,14 +305,14 @@ function registerExaminationHearingJourney(
 			data: {
 				caseHistories: {
 					create: {
-						event: 'Hearing set up',
+						event: `${hearing.hearingLocationType} hearing set up`,
 						username: currentUser
 					}
 				}
 			}
 		});
 
-		req.session.alertMessage = 'Hearing set up';
+		req.session.alertMessage = 'Hearing created';
 		req.session.alertMessageStatus = 'success';
 
 		if (req.session.lastQuestionUrl) {
@@ -466,6 +473,15 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createExaminationJourney,
 		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
+		supportsFileUpload: true,
+		saveController: ExaminationSaveController
+	},
+	{
+		path: 'examination/set-up-hearing',
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		createJourney: createExaminationHearingJourney,
+		pageLoadHandler: ExaminationTabHandler,
+		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
 	},
@@ -582,6 +598,7 @@ function registerCaseJourney(
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
@@ -593,7 +610,23 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true)
+		(req, res, next) => {
+			// Until a report is issued, saving the plan outcome continues to the file uploader.
+			const answers = res.locals.journeyResponse?.answers;
+			const isPlanOutcome =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				req.params.question === questions.isSound.url;
+			const isCheckPageEdit =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				[questions.isSound.url, questions.soundUnsoundDate.url].includes(String(req.params.question));
+			if (isCheckPageEdit && req.query.returnTo === 'check') {
+				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
+			}
+			const continueToReportUpload = isPlanOutcome && req.query.returnTo !== 'check' && !answers?.soundUnsoundDate;
+			buildSave(updateCase, !continueToReportUpload)(req, res, next);
+		}
 	);
 	if (supportsFileUpload) {
 		const fileUploaderStorage = () => service.createFileStorage(journeyId);
@@ -621,7 +654,19 @@ function registerCaseJourney(
 							};
 						},
 						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								documentSetFolderName: questionConfig.url,
+								request: req
+							});
+							await DocumentUtil.saveDocumentsOverride({
+								service,
+								request: req,
+								documentSetFolderName: questionConfig.url,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments,
+								isTemp: true
+							});
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logFileUploaded(service, req, questionConfig, uploadedFiles);
 							// Call update functions directly because updateCaseField causes the dynamic forms to consume the request
@@ -648,10 +693,43 @@ function registerCaseJourney(
 						question: questionConfig,
 						storage: fileUploaderStorage,
 						sessionKey: fileUploaderCaseSessionKey,
-						onFilesChange: async ({ req, uploadedFiles }) => {
-							await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+						onFilesChange: async ({ req, uploadedFiles, fileId }) => {
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								request: req,
+								documentSetFolderName: questionConfig.url
+							});
+							await DocumentUtil.deleteDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								fileId,
+								existingDocuments
+							});
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
+							if (questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+								req.session.alertMessage = 'Document removed';
+								req.session.alertMessageStatus = 'success';
+							}
+							const caseId = (req as UploadDocumentRequest).currentCase?.id;
+							if (
+								caseId &&
+								uploadedFiles.length === 0 &&
+								questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION
+							) {
+								if (req.body?.returnToManage === 'true') {
+									delete req.session.examinationReportReturnToManage;
+								}
+								await service.db.examinationInfo.updateMany({
+									where: { caseId },
+									data: {
+										isSound: null,
+										soundUnsoundDate: null,
+										adoptionDate: null,
+										approvedForCILDate: null
+									}
+								});
+							}
 						},
 						onDeleteError: ({ req, fileId, error }) =>
 							logDocumentDeleteFailed(service, req, questionConfig, fileId, error),
@@ -659,6 +737,45 @@ function registerCaseJourney(
 					})
 				])
 			)
+		);
+
+		const onSubmitDocumentRoute = buildFileUploadRouteHandler(
+			new Map(
+				fileUploadQuestionConfigs.map((questionConfig) => [
+					questionConfig.url,
+					createFileSubmitUploadController({
+						fieldName: questionConfig.fieldName,
+						question: questionConfig,
+						storage: fileUploaderStorage,
+						sessionKey: fileUploaderCaseSessionKey,
+						onSubmit: async ({ req, uploadedFiles }) => {
+							await DocumentUtil.updateTemporaryDocumentToPermanent(service, uploadedFiles);
+							const existingDocuments = await DocumentUtil.findExistingDocuments({
+								service,
+								documentSetFolderName: questionConfig.url,
+								request: req
+							});
+							await DocumentUtil.restoreDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments
+							});
+							await DocumentUtil.deleteDocuments({
+								service,
+								temporaryUploadedFiles: uploadedFiles,
+								existingDocuments
+							});
+						},
+						redirect: (req, options) => redirectToChecks(req, path, options)
+					})
+				])
+			)
+		);
+
+		router.get(
+			`/${path}/:section/:question/remove/:fileId`,
+			getJourneyResponse,
+			buildRemoveDocumentConfirmMiddleware(journeyId)
 		);
 		router.post(
 			`${questionPath}/upload-documents`,
@@ -670,10 +787,22 @@ function registerCaseJourney(
 			uploadDocumentRoute,
 			handleMulterFileSizeError
 		);
+
+		router.post(
+			`${questionPath}/upload-documents/submit`,
+			getJourneyResponse,
+			getJourney,
+			upload.array('files[]'),
+			// Lusca CSRF check performed after Multer handles the multipart/form-data
+			lusca.csrf(),
+			onSubmitDocumentRoute,
+			handleMulterFileSizeError
+		);
+
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,
-			getJourney,
+			deleteDocumentRoute,
 			deleteDocumentRoute,
 			handleMulterFileSizeError
 		);

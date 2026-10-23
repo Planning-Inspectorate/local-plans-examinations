@@ -4,58 +4,27 @@
 
   {% for hearing in answers.hearings %}
 
-  
     {% set hearingRows = [] %}
-
-    {% if hearing.hearingDate %}
-      {% set _ = hearingRows.push({
-        key: { text: "Start date" },
-        value: { text: hearing.hearingDate },
-        actions: {
-          items: [
-            {
-              href: "/case/" + reference + "/examination/set-up-hearing/check-your-answers-" + (loop.index),
-              text: "Change"
-            }
-          ]
-        }
-      }) %}
-    {% endif %}
-
-    {% if hearing.hearingTime %}
-      {% set _ = hearingRows.push({
-        key: { text: "Start time" },
-        value: { text: hearing.hearingTime }
-      }) %}
-    {% endif %}
-
-    {% if hearing.hearingExpectedDays %}
-      {% set _ = hearingRows.push({
-        key: { text: "Estimated number of days" },
-        value: { text: hearing.hearingExpectedDays }
-      }) %}
-    {% endif %}
-
-    {% if hearing.hearingLocationType %}
-      {% set _ = hearingRows.push({
-        key: { text: "Format" },
-        value: { text: hearing.hearingLocationType }
-      }) %}
-    {% endif %}
-
-    {% if hearing.hearingRemoteMeetingLinkKnown %}
-      {% set _ = hearingRows.push({
-        key: { text: "Do you have a virtual meeting link?" },
-        value: { text: hearing.hearingRemoteMeetingLinkKnown }
-      }) %}
-    {% endif %}
-
-    {% if hearing.hearingRemoteMeetingLink %}
-      {% set _ = hearingRows.push({
-        key: { text: "Virtual meeting link" },
-        value: { text: hearing.hearingRemoteMeetingLink }
-      }) %}
-    {% endif %}
+    {% set hearingNumber = loop.index %}
+    {% set questionBaseUrl = "/case/" + reference + "/examination/set-up-hearing/hearing/" %}
+    {% for row in [
+      { key: "Start date", value: hearing.hearingDate, question: "examination-hearing-date-and-time" },
+      { key: "Time", value: hearing.hearingTime, question: "examination-hearing-date-and-time" },
+      { key: "Number of days", value: hearing.hearingExpectedDays, question: "examination-hearing-expected-days" },
+      { key: "Format", value: hearing.hearingLocationType, question: "examination-hearing-location-type" },
+      { key: "Do you have a remote meeting link?", value: hearing.hearingRemoteMeetingLinkKnown, question: "examination-hearing-remote-meeting-link-known" },
+      { key: "Remote meeting link", value: hearing.hearingRemoteMeetingLink, question: "examination-hearing-remote-meeting-link" }
+    ] %}
+      {% if row.value %}
+        {% set _ = hearingRows.push({
+          key: { text: row.key },
+          value: { text: row.value },
+          actions: {
+            items: [{ href: questionBaseUrl + row.question + "-" + hearingNumber, text: "Change" }]
+          }
+        }) %}
+      {% endif %}
+    {% endfor %}
 
     {% if hearing.hearingVenueName %}
       {% set address = hearing.hearingVenueName %}
@@ -69,12 +38,14 @@
       {% set address = address + "<br>" + hearing.hearingPostcode %}
 
       {% set _ = hearingRows.push({
-          key: { text: "Location" },
-          value: { html: address }
+          key: { text: "Venue address" },
+          value: { html: address },
+          actions: {
+            items: [{ href: questionBaseUrl + "examination-hearing-venue-address-" + hearingNumber, text: "Change" }]
+          }
       }) %}
     {% endif %}
-
-    {% if hearing.hearingDuration %}
+  {% if hearing.hearingDuration %}
       {% set durationValueText = hearing.hearingDuration %}
       {% set durationActionsText = "Change" %}
     {% else %}
@@ -121,11 +92,12 @@
       }) %}
     {% endif %}
     {% if hearingRows.length %}
-      <h2 class="govuk-heading-m">Hearing {{ loop.index }} details</h2>
-      <a href="/case/{{ reference }}/examination/set-up-hearing/delete-{{ loop.index }}" class="govuk-link">Cancel hearing {{ loop.index }}</a>
+      <h2 class="govuk-heading-m" data-cy="hearing-heading">Hearing {{ hearingNumber }} details</h2>
+      <a href="/" class="govuk-link">Cancel hearing {{ loop.index }}</a>
       <p></p>
       {{ govukSummaryList({
-        rows: hearingRows
+        rows: hearingRows,
+        attributes: { "data-cy": "hearing-details-" + hearingNumber }
       }) }}
     {% endif %}
   {% endfor %}

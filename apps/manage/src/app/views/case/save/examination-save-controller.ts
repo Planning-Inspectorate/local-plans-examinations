@@ -6,32 +6,6 @@ import type { ExaminationInput } from './save-inputs.ts';
 import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../classes/common-consts.ts';
 import { formatDateToString } from '../../../util/date.ts';
 
-type Hearing = NonNullable<ExaminationInput['hearings']>[number];
-
-const NO_VENUE = {
-	hearingVenueName: null,
-	hearingAddressLine: null,
-	hearingAddressLine2: null,
-	hearingTownOrCity: null,
-	hearingPostcode: null
-} satisfies Partial<Hearing>;
-
-const NO_REMOTE_LINK = {
-	hearingRemoteMeetingLinkKnown: null,
-	hearingRemoteMeetingLink: null
-} satisfies Partial<Hearing>;
-
-function clearOutdatedAnswers(hearing: Hearing): Hearing {
-	return {
-		...hearing,
-		...(hearing.hearingExpectedDaysKnown === 'no' && { hearingExpectedDays: null }),
-		...(hearing.hearingLocationType === 'remote' && { hearingLocationKnown: null, ...NO_VENUE }),
-		...(hearing.hearingLocationKnown === 'no' && NO_VENUE),
-		...(hearing.hearingLocationType === 'in-person' && NO_REMOTE_LINK),
-		...(hearing.hearingRemoteMeetingLinkKnown === 'no' && { hearingRemoteMeetingLink: null })
-	};
-}
-
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
 	private isExaminationHearingQuestion() {
@@ -46,51 +20,6 @@ export class ExaminationSaveController extends SaveController {
 		}
 		return this.isExaminationHearingQuestion();
 	}
-	/**
-	 * Delete the hearing at the given index
-	 * @param hearingId The hearing id to delete (from the URL, not the index in the hearing list)
-	 * @returns The result of the save operation
-	 */
-	public async deleteHearing(hearingId: number) {
-		const hearingIndex = hearingId - 1;
-		const caseDetails = await this.service.db.case.findUnique({
-			select: {
-				id: true,
-				examinationInfo: {
-					select: {
-						hearings: true
-					}
-				}
-			},
-			where: { reference: this.caseReference }
-		});
-		if (!caseDetails) {
-			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
-		}
-		if (!this.caseId) {
-			this.caseId = caseDetails.id;
-		}
-		if (caseDetails.examinationInfo?.hearings == undefined) {
-			throw Error(`Could not find hearing data for case with reference '${this.caseReference}'`);
-		}
-		const hearingDetails = sortByCreatedDate(caseDetails.examinationInfo?.hearings);
-		if (hearingDetails.length == 0) {
-			throw Error(`There are no hearings to delete for the case with reference '${this.caseReference}'`);
-		}
-		if (hearingIndex < 0) {
-			throw Error(`Given hearing id '${hearingIndex}' must be greater than '0'`);
-		}
-		if (hearingIndex >= hearingDetails.length) {
-			throw Error(
-				`Given hearing id '${hearingIndex}' is greater than the number of hearings '${hearingDetails.length}'`
-			);
-		}
-		hearingDetails.splice(hearingIndex, 1);
-		return this.save({
-			hearings: hearingDetails
-		});
-	}
-
 	protected async prepareData(answers: Record<string, any>) {
 		const caseDetails = await this.service.db.case.findUnique({
 			select: {
@@ -181,7 +110,6 @@ export class ExaminationSaveController extends SaveController {
 					currentHearing[hearingField] = questionAnswer;
 				}
 			});
-
 			if (currentHearing.hearingDetails) {
 				if (typeof currentHearing.hearingDetails == 'object') {
 					currentHearing.hearingDetails = formatDateToString(currentHearing.hearingDetails);
@@ -194,40 +122,115 @@ export class ExaminationSaveController extends SaveController {
 		}
 		return this.trimStringValues(answers as ExaminationInput);
 	}
-	private getHearingIndex(): number {
+	protected saveToSession(answers: ExaminationInput) {
 		const hearingIdString = String(this.req.params.question).split('-').at(-1);
 		if (!hearingIdString) {
 			throw Error('Could not extract the hearing id from the question');
 		}
-
-		const hearingId = Number.parseInt(hearingIdString, 10);
-		if (Number.isNaN(hearingId) || hearingId < 1) {
-			throw Error('Invalid hearing id');
-		}
-		return hearingId - 1;
-	}
-	protected saveToSession(answers: ExaminationInput) {
+		const hearingId = parseInt(hearingIdString);
 		if (!this.req.session) {
 			throw Error('request has no session data');
 		}
-
-		const index = this.getHearingIndex();
-
-		if (!answers.hearings) {
-			this.req.session.answers = answers;
-			return true;
+		if (this.req.session.answers) {
+			const sessionAnswers = this.req.session.answers as ExaminationInput;
+			const hearingAnswers = sessionAnswers.hearings;
+			if (hearingAnswers && answers.hearings) {
+				const sessionAnswers = hearingAnswers[hearingId - 1];
+				const newAnswers = answers.hearings[hearingId - 1];
+				answers.hearings[hearingId - 1] = { ...sessionAnswers, ...newAnswers };
+			}
 		}
-
-		const savedHearing = (this.req.session.answers as ExaminationInput | undefined)?.hearings?.[index];
-		const mergedHearing: Hearing = { ...savedHearing, ...answers.hearings[index] };
-
-		const hearings = [...answers.hearings];
-		hearings[index] = clearOutdatedAnswers(mergedHearing);
-
-		this.req.session.answers = { ...answers, hearings };
+		const currentHearing = answers.hearings?.[hearingId - 1];
+		if (currentHearing?.hearingExpectedDaysKnown == 'no') {
+			delete (currentHearing as any).hearingExpectedDays;
+		}
+		if (currentHearing?.hearingLocationType == 'remote') {
+			currentHearing.hearingLocationKnown = null;
+			currentHearing.hearingVenueName = null;
+			currentHearing.hearingAddressLine = null;
+			currentHearing.hearingAddressLine2 = null;
+			currentHearing.hearingTownOrCity = null;
+			currentHearing.hearingPostcode = null;
+		}
+		if (currentHearing?.hearingLocationKnown == 'no') {
+			delete (currentHearing as any).hearingVenueName;
+			delete (currentHearing as any).hearingAddressLine;
+			delete (currentHearing as any).hearingAddressLine2;
+			delete (currentHearing as any).hearingTownOrCity;
+			delete (currentHearing as any).hearingPostcode;
+		}
+		if (currentHearing?.hearingLocationType == 'in-person') {
+			delete (currentHearing as any).hearingRemoteMeetingLinkKnown;
+			delete (currentHearing as any).hearingRemoteMeetingLink;
+		}
+		if (currentHearing?.hearingRemoteMeetingLinkKnown == 'no') {
+			delete (currentHearing as any).hearingRemoteMeetingLink;
+		}
+		this.req.session.answers = answers;
 		return true;
 	}
+
+	private async pauseHistoryFor(planPauseStartDate: Date | null | undefined, caseId: string) {
+		if (!planPauseStartDate) return {};
+
+		const current = await this.service.db.examinationInfo.findUnique({
+			where: { caseId },
+			select: { planPauseStartDate: true }
+		});
+
+		if (current?.planPauseStartDate?.getTime() === planPauseStartDate.getTime()) return {};
+
+		return { planPauseHistory: { create: { planPauseDate: planPauseStartDate } } };
+	}
+
+	/**
+	 * Delete the hearing at the given index
+	 * @param hearingId The hearing id to delete (from the URL, not the index in the hearing list)
+	 * @returns The result of the save operation
+	 */
+	public async deleteHearing(hearingId: number) {
+		const hearingIndex = hearingId - 1;
+		const caseDetails = await this.service.db.case.findUnique({
+			select: {
+				id: true,
+				examinationInfo: {
+					select: {
+						hearings: true
+					}
+				}
+			},
+			where: { reference: this.caseReference }
+		});
+		if (!caseDetails) {
+			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
+		}
+		if (!this.caseId) {
+			this.caseId = caseDetails.id;
+		}
+		if (caseDetails.examinationInfo?.hearings == undefined) {
+			throw Error(`Could not find hearing data for case with reference '${this.caseReference}'`);
+		}
+		const hearingDetails = sortByCreatedDate(caseDetails.examinationInfo?.hearings);
+		if (hearingDetails.length == 0) {
+			throw Error(`There are no hearings to delete for the case with reference '${this.caseReference}'`);
+		}
+		if (hearingIndex < 0) {
+			throw Error(`Given hearing id '${hearingIndex}' must be greater than '0'`);
+		}
+		if (hearingIndex >= hearingDetails.length) {
+			throw Error(
+				`Given hearing id '${hearingIndex}' is greater than the number of hearings '${hearingDetails.length}'`
+			);
+		}
+		hearingDetails.splice(hearingIndex, 1);
+		return this.save({
+			hearings: hearingDetails
+		});
+	}
+
 	protected async saveToDatabase(answers: ExaminationInput) {
+		if (!answers) return false;
+
 		const question = String(this.req.params.question);
 		if (!this.caseId) {
 			throw Error(`save called but caseId was not already fetched - please check that prepareData was called first`);
@@ -241,8 +244,11 @@ export class ExaminationSaveController extends SaveController {
 		if (question && inspectorQuestions.includes(question)) {
 			answers.examiningInspectorAppointmentDate = new Date();
 		}
+		const pauseHistory = await this.pauseHistoryFor(answers.planPauseStartDate, this.caseId);
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
+		Object.assign(updateData, pauseHistory);
+		Object.assign(createData, pauseHistory);
 		if ('hearings' in answers) {
 			const hearings = sortByCreatedDate(answers.hearings as { createdDate: Date; [key: string]: any }[]);
 			if (!hearings) {

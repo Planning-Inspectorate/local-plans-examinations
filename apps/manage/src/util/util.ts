@@ -1,7 +1,9 @@
+import type { ManageService } from '#service';
+
 /**
  * Immutably sort the given list submission details, with null completionDate values at the end
- * @param dates The submissions to sort
  * @returns The sorted dates, with undefined/null completionDate values at the end
+ * @param submissions
  */
 export function sortGateway3Submissions(
 	submissions: { id: string; decision: string | null; completionDate: Date | null; gateway3InfoId: string | null }[]
@@ -14,6 +16,56 @@ export function sortGateway3Submissions(
 	});
 }
 
+export type examinationStatusWithPause = {
+	id: string | null;
+	examiningInspector1: string | null;
+	examiningInspector2: string | null;
+	examiningInspector3: string | null;
+	QADate: Date | null;
+	qaInspector1: string | null;
+	qaInspector2: string | null;
+	qaInspector3: string | null;
+	panelResponseToInspectorDate: Date | null;
+	planPauseStartDate: Date | null;
+	planPauseEndDate: Date | null;
+	finalReportIssueDate: Date | null;
+	adoptionDate: Date | null;
+	planPauseHistory: { planPauseDate: Date | null }[];
+	shouldPause?: boolean;
+};
+export const getExaminationStages = async (service: ManageService, caseId: string) => {
+	const examinationStatus: examinationStatusWithPause | null = await service.db.examinationInfo.findFirst({
+		where: { caseId },
+		select: {
+			id: true,
+			examiningInspector1: true,
+			examiningInspector2: true,
+			examiningInspector3: true,
+			QADate: true,
+			qaInspector1: true,
+			qaInspector2: true,
+			qaInspector3: true,
+			panelResponseToInspectorDate: true,
+			planPauseStartDate: true,
+			planPauseEndDate: true,
+			finalReportIssueDate: true,
+			adoptionDate: true,
+			planPauseHistory: {
+				orderBy: { createdAt: 'desc' },
+				take: 1,
+				select: { planPauseDate: true }
+			}
+		}
+	});
+
+	if (examinationStatus !== null) {
+		const latestStart = examinationStatus.planPauseHistory[0]?.planPauseDate ?? examinationStatus.planPauseStartDate;
+		const end = examinationStatus.planPauseEndDate;
+		examinationStatus.shouldPause = !!latestStart && (!end || latestStart > end);
+
+		return examinationStatus;
+	}
+};
 /**
  * Immutably sort the given list workshops or hearings. details, with null createdDate values at the end
  * @param workshops The workshops to filter and sort
