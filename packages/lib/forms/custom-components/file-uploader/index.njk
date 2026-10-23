@@ -3,20 +3,17 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block before_content %}
+
 	{% if backLink %}
 		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
-	{% endif %}
-	{% if errorSummary %}
-		{{ govukErrorSummary({
-			titleText: "There is a problem",
-			errorList: errorSummary
-		}) }}
 	{% endif %}
 {% endblock before_content %}
 
 {% block content %}
+
 	<div class="govuk-grid-row">
 		<div class="govuk-grid-column-two-thirds">
 			{% if question.text.caption %}
@@ -47,7 +44,7 @@
 			{% set uploadError = errors["upload-form"] or errors[question.fieldName] %}
 
 			{% if question.editable %}
-				<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents" data-cy="upload-form">
+				<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents{{ queryString }}" data-cy="upload-form">
 					<input type="hidden" name="_csrf" value="{{ _csrf }}">
 					{{ govukFileUpload({
 						id: question.fieldName,
@@ -74,11 +71,26 @@
 			{% if uploadedFiles and uploadedFiles.length %}
 				<dl class="govuk-summary-list">
 					{% for file in uploadedFiles %}
-						<div class="govuk-summary-list__row">
-							<dt class="govuk-summary-list__value">{{ file.fileName }}</dt>
+						<div class="govuk-summary-list__row" id="uploaded-file-{{ file.id }}">
+							<dt class="govuk-summary-list__value">
+								{{ file.fileName }}
+								{% if file.virusCheckStatus === "not_scanned" %}
+									{{ govukTag({
+										text: "Virus scanning",
+										classes: "govuk-tag--yellow",
+										attributes: { "data-cy": "virus-scanning-tag" }
+									}) }}
+								{% elif file.virusCheckStatus === "affected" %}
+									{{ govukTag({
+										text: "Virus detected",
+										classes: "govuk-tag--red",
+										attributes: { "data-cy": "virus-detected-tag" }
+									}) }}
+								{% endif %}
+							</dt>
 							<dd class="govuk-summary-list__actions">
 								{% if question.editable %}
-									<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}" method="post">
+								<form id="deleteForm{{ loop.index }}" action="{{ currentUrl }}/delete-document/{{ file.id | urlencode }}{{ queryString }}" method="post">
 										<input type="hidden" name="_csrf" value="{{ _csrf }}">
 										<button class="pins-app-link-button govuk-!-font-size-19" type="submit" data-cy="remove-file-button">
 											{{ question.text.removeLinkText or "Remove" }}
@@ -93,7 +105,7 @@
 			{% endif %}
 
 			{% if question.editable %}
-				<form action="" method="post" novalidate>
+				<form action="{{ submitAction }}" method="post" novalidate>
 					<input type="hidden" name="_csrf" value="{{ _csrf }}">
 					<input type="hidden" name="{{ question.fieldName }}" value='{{ uploadedFilesEncoded | safe }}'>
 					{{ govukButton({

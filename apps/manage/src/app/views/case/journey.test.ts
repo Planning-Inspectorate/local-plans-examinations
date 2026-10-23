@@ -8,6 +8,7 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createExaminationJourney,
+	createExaminationHearingJourney,
 	createGateway3Journey
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
@@ -61,10 +62,10 @@ function createGateway3JourneyForTest() {
 	);
 }
 
-function createExaminationJourneyForTest() {
+function createExaminationJourneyForTest(answers = {}, query = {}, session = {}) {
 	return createExaminationJourney(
-		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
-		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', {}),
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, query, session } as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', answers),
 		questions
 	);
 }
@@ -224,6 +225,38 @@ describe('gateway3Journey', () => {
 });
 
 describe('createExaminationJourney', () => {
+	it('returns to Plan outcome after uploading an unissued report', () => {
+		const journey = createExaminationJourneyForTest({ examinationReport: [{ id: 'report-1' }] });
+
+		assert.equal(
+			journey.getBackLink({ params: { section: 'outcome', question: 'examination-report' } }),
+			'/case/LP-TEST-001/examination/outcome/plan-outcome'
+		);
+	});
+
+	for (const { query, session, expectedPage } of [
+		{ query: {}, session: {}, expectedPage: 'examination-report-manage' },
+		{ query: { returnTo: 'check' }, session: {}, expectedPage: 'plan-outcome?returnTo=check' },
+		{
+			query: { returnTo: 'check' },
+			session: { examinationReportReturnToManage: true },
+			expectedPage: 'examination-report-manage'
+		}
+	]) {
+		it(`returns from the report uploader to ${expectedPage}`, () => {
+			const journey = createExaminationJourneyForTest(
+				{ examinationReport: [{ id: 'report-1' }], soundUnsoundDate: new Date('2026-10-19') },
+				query,
+				session
+			);
+
+			assert.equal(
+				journey.getBackLink({ params: { section: 'outcome', question: 'examination-report' } }),
+				`/case/LP-TEST-001/examination/outcome/${expectedPage}`
+			);
+		});
+	}
+
 	it('links Examination question pages back to the Gateway 3 page', () => {
 		const journey = createExaminationJourneyForTest();
 		const gateway2Questions = [
@@ -249,7 +282,7 @@ describe('createExaminationJourney', () => {
 			'plan-pause-start-date',
 			'plan-pause-end-date',
 			'withdrawn-date',
-			'is-sound',
+			'plan-outcome',
 			'sound-unsound-date',
 			'adoption-date',
 			'approved-for-cil-date'
@@ -263,4 +296,52 @@ describe('createExaminationJourney', () => {
 			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
 	});
+});
+
+describe('createExaminationHearingJourney', () => {
+	it('keeps an in-progress conditional edit in its question flow', () => {
+		const session = {
+			answers: { hearings: [{ id: 'hearing-1', createdDate: new Date('2026-01-01') }] },
+			editingFromCheckAnswers: false
+		};
+		createExaminationHearingJourney(
+			{
+				baseUrl: '/case/PLAN-123456',
+				url: '/examination/set-up-hearing/hearing/examination-hearing-location-known-1',
+				session
+			} as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', { hearings: [] }),
+			questions
+		);
+		assert.equal(session.editingFromCheckAnswers, false);
+	});
+
+	for (const saved of [true, false]) {
+		it(`${saved ? 'returns a saved hearing edit to CYA' : 'keeps a new hearing in its question flow'}`, () => {
+			const session: Record<string, unknown> = { editingFromCheckAnswers: true };
+			const hearing = {
+				id: 'hearing-1',
+				createdDate: new Date('2026-01-01'),
+				hearingDate: new Date('2026-11-07'),
+				hearingTime: '10:30'
+			};
+			const response = new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', {
+				hearings: saved ? [hearing] : []
+			});
+			createExaminationHearingJourney(
+				{
+					baseUrl: '/case/PLAN-123456',
+					url: '/examination/set-up-hearing/hearing/examination-hearing-date-and-time-1',
+					session
+				} as unknown as Request,
+				response,
+				questions
+			);
+			assert.equal(session.editingFromCheckAnswers, saved);
+			if (saved) {
+				assert.equal(response.answers['hearingDate-1'], hearing.hearingDate);
+				assert.equal(response.answers['hearingTime-1'], hearing.hearingTime);
+			}
+		});
+	}
 });

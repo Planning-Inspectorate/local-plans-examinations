@@ -1,6 +1,14 @@
 import { BasePage } from '../../../page-objects/base-page.ts';
 
 export class PortalPlanBasePage extends BasePage {
+	get virusScanInProgressBanner() {
+		return cy.getByData('virus-scan-in-progress-banner');
+	}
+
+	get virusDetectedBanner() {
+		return cy.getByData('virus-detected-banner');
+	}
+
 	pathFor(planReference: string): string {
 		throw new Error(`${this.constructor.name} does not define pathFor for ${planReference}`);
 	}
@@ -26,6 +34,18 @@ export class PortalPlanBasePage extends BasePage {
 				cy.getByData(addCy).should('be.visible');
 			});
 		});
+	}
+
+	verifyDocumentSection(table: Cypress.Chainable, heading: string, documents: { document: string; addCy: string }[]) {
+		this.verifySubHeading(heading);
+		this.verifyDocTableRows(
+			table,
+			documents.map((document) => ({ ...document, status: 'Not added' }))
+		);
+		this.verifyTableRowsInOrder(
+			table,
+			documents.map(({ document }) => document)
+		);
 	}
 
 	verifyDocumentDownloadLink(table: Cypress.Chainable, document: string, fileName: string) {
@@ -64,5 +84,18 @@ export class PortalPlanBasePage extends BasePage {
 				cy.get('tbody tr').eq(index).should('contain.text', document);
 			});
 		});
+	}
+
+	verifyVirusScanInProgressBanner() {
+		this.virusScanInProgressBanner
+			.should('be.visible')
+			.and('contain.text', 'Virus scan in progress')
+			.and('contain.text', 'Refresh the page to see if the scan has finished');
+	}
+
+	verifyVirusDetectedBanner(fileName: string) {
+		this.virusDetectedBanner
+			.should('be.visible')
+			.and('contain.text', `${fileName} contains a virus. Remove the file and upload a different version.`);
 	}
 }

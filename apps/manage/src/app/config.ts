@@ -37,9 +37,12 @@ export interface Config extends ConfigWithBlob {
 		webHookToken: string;
 		templateIds: {
 			authCode?: string;
+			gw2Submission?: string;
+			createCase?: string;
 		};
 		localPlansTeamEmail: string;
 	};
+	appName: 'manage';
 	notifyCallbackEnabled: boolean;
 }
 
@@ -91,6 +94,9 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_DISABLED,
 		GOV_NOTIFY_API_KEY,
 		GOV_NOTIFY_WEBHOOK_TOKEN,
+		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID,
+		GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID,
 		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
@@ -205,9 +211,14 @@ export function loadConfig(): Config {
 			disabled: notifyDisabled,
 			apiKey: GOV_NOTIFY_API_KEY || '',
 			webHookToken: GOV_NOTIFY_WEBHOOK_TOKEN || '',
-			templateIds: {},
+			templateIds: {
+				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || '',
+				gw2Submission: GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID || '',
+				createCase: GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID || ''
+			},
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
+		appName: 'manage',
 		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
 	};
 

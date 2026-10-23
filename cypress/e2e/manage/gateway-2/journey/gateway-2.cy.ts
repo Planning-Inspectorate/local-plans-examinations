@@ -3,14 +3,18 @@ import {
 	gateway2AssessorPage,
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
-	gateway2ReportCheckPage,
 	gateway2ReportPage,
 	gateway2WorkshopDocumentsCheckPage,
 	gateway2WorkshopDocumentsPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
-import { openGateway2Page, openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
+import {
+	issueGateway2Report,
+	openGateway2Page,
+	openSeededGateway2Page
+} from '../../../../flows/manage/gateway-2-flow.ts';
 import { cleanupSeededManageCase, type SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
+import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 import {
 	gateway2AssessorAnswer,
 	gateway2DateAnswers,
@@ -51,18 +55,49 @@ describe('Gateway 2 updates', () => {
 		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
 	});
 
-	it('uploads the Gateway 2 report', { tags: ['regression', 'environment-smoke'] }, () => {
+	it(
+		'keeps the issued Gateway 2 report when a replacement is removed',
+		{ tags: ['regression', 'environment-smoke'] },
+		() => {
+			issueGateway2Report(seededCase.planTitle);
+
+			gateway2Page.openActionLinkFor(gateway2Report.row);
+			gateway2ReportPage.verifyLoaded();
+			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.updatedFileName);
+			gateway2ReportPage.removeFile(gateway2Report.updatedFileName);
+			gateway2ReportPage.verifyFileNotUploaded(gateway2Report.updatedFileName);
+			gateway2ReportPage.goBack();
+
+			gateway2Page.verifyLoaded(seededCase.planTitle);
+			gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
+		}
+	);
+
+	it('discards an unconfirmed Gateway 2 report after using the Back link', { tags: ['regression'] }, () => {
+		gateway2Page.openActionLinkFor(gateway2Report.row);
+		gateway2ReportPage.verifyLoaded();
+		gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName);
+		gateway2ReportPage.goBack();
+
+		gateway2Page.verifyLoaded(seededCase.planTitle);
+		gateway2Page.openActionLinkFor(gateway2Report.row);
+		gateway2ReportPage.verifyLoaded();
+		gateway2ReportPage.verifyFileNotUploaded(gateway2Report.fileName);
+	});
+
+	it('discards an unconfirmed Gateway 2 report after leaving for Home', { tags: ['regression'] }, () => {
 		gateway2Page.openActionLinkFor(gateway2Report.row);
 		gateway2ReportPage.verifyLoaded();
 
-		gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName);
-		gateway2ReportPage.saveAndReturn();
+		cy.location('pathname').then((uploadPath) => {
+			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName);
+			gateway2ReportPage.openServiceNavigationItem('Plans Examination back office');
+			manageHomePage.verifyLoaded();
 
-		gateway2ReportCheckPage.verifyLoaded(gateway2Report.fileName);
-		gateway2ReportCheckPage.issueReport();
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-		gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
+			gateway2ReportPage.visit(uploadPath);
+			gateway2ReportPage.verifyLoaded();
+			gateway2ReportPage.verifyFileNotUploaded(gateway2Report.fileName);
+		});
 	});
 
 	it('does not show issued workshop documents against another case', { tags: ['regression'] }, () => {

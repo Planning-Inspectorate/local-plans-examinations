@@ -7,7 +7,7 @@ import {
 	VIRUS_CHECK_STATUS_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
-type RequestWithCurrentCase = Request & {
+export type RequestWithCurrentCase = Request & {
 	currentCase?: {
 		id?: string;
 	};
@@ -23,6 +23,7 @@ type DocumentVersionRow = {
 	blobStoragePath: string | null;
 	dateCreated: Date | null;
 	documentURI: string | null;
+	virusCheckStatus: string | null;
 	isDeleted: boolean;
 };
 
@@ -32,6 +33,7 @@ type DocumentRow = {
 	documentSetId: string;
 	isDeleted: boolean;
 	latestDocumentVersion: DocumentVersionRow | null;
+	isTemp: boolean;
 };
 
 type SyncDocumentsParams = {
@@ -53,7 +55,8 @@ export class DocumentUtil {
 		service: Service,
 		req: Request,
 		documentSetFolderName: string,
-		uploadedFiles: UploadedFile[]
+		uploadedFiles: UploadedFile[],
+		isTemp?: boolean
 	): Promise<void> {
 		const caseId = (req as RequestWithCurrentCase).currentCase?.id;
 		if (!caseId) {
@@ -62,13 +65,169 @@ export class DocumentUtil {
 
 		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
 
-		await this.syncDocuments(service, {
-			caseId,
-			documentSetId,
-			uploadedFiles
+		await this.syncDocuments(
+			service,
+			{
+				caseId,
+				documentSetId,
+				uploadedFiles
+			},
+			isTemp
+		);
+	}
+
+	public static async findExistingDocuments({
+		service,
+		request,
+		documentSetFolderName
+	}: {
+		service: Service;
+		request: Request;
+		documentSetFolderName: string;
+	}): Promise<DocumentRow[]> {
+		const caseId = (request as RequestWithCurrentCase).currentCase?.id;
+		if (!caseId) {
+			throw new Error('Cannot find documents without a loaded case');
+		}
+
+		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
+
+		const existingDocuments = await service.db.document.findMany({
+			where: {
+				caseId,
+				documentSetId
+			},
+			include: {
+				latestDocumentVersion: true
+			}
+		});
+		if (!existingDocuments?.length) {
+			return [];
+		}
+
+		return existingDocuments;
+	}
+
+	public static async saveDocumentsOverride({
+		service,
+		request,
+		documentSetFolderName,
+		temporaryUploadedFiles,
+		existingDocuments,
+		isTemp
+	}: {
+		service: Service;
+		request: Request;
+		documentSetFolderName: string;
+		temporaryUploadedFiles: UploadedFile[];
+		existingDocuments: DocumentRow[];
+		isTemp: boolean;
+	}) {
+		const caseId = (request as RequestWithCurrentCase).currentCase?.id;
+		if (!caseId) {
+			throw new Error('Cannot save documents without a loaded case');
+		}
+
+		const existingDocsNames = new Set(
+			existingDocuments.filter((existingDocument) => !existingDocument.isDeleted).map((file) => file.name)
+		);
+		const docsToUpload = temporaryUploadedFiles.filter((file) => !existingDocsNames.has(file.path ?? ''));
+
+		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
+		const tempDocs = docsToUpload.map((file) => ({ caseId, documentSetId, isTemp, file }));
+
+		await service.db.$transaction(async (tx) => {
+			for (const file of tempDocs) {
+				await this.createDocument(tx, file);
+			}
 		});
 	}
 
+	public static async restoreDocuments({
+		service,
+		temporaryUploadedFiles,
+		existingDocuments
+	}: {
+		service: Service;
+		temporaryUploadedFiles: UploadedFile[];
+		existingDocuments: DocumentRow[];
+	}) {
+		const uploadedFileIds = new Set(temporaryUploadedFiles.map((file) => file.id));
+		const documentsToRestore = existingDocuments.filter((document) => {
+			const fileId = this.getDocumentUploadedFileId(document);
+			return fileId && uploadedFileIds.has(fileId) && (document.isDeleted || document.latestDocumentVersion?.isDeleted);
+		});
+
+		for (const document of documentsToRestore) {
+			await service.db.$transaction(async (tx) => {
+				await this.restoreDocument(tx, document);
+			});
+		}
+	}
+
+	public static async deleteDocuments({
+		service,
+		temporaryUploadedFiles,
+		existingDocuments,
+		fileId
+	}: {
+		service: Service;
+		temporaryUploadedFiles: UploadedFile[];
+		existingDocuments: DocumentRow[];
+		fileId?: string;
+	}) {
+		const docsToDelete = fileId
+			? existingDocuments
+					.filter((document) => this.getDocumentUploadedFileId(document) === fileId)
+					.map((document) => document.guid)
+			: existingDocuments
+					.filter((document) => {
+						const fileId = this.getDocumentUploadedFileId(document);
+						if (fileId && temporaryUploadedFiles.some((file) => file.id === fileId)) {
+							return false;
+						}
+						return !document.isDeleted || !document.latestDocumentVersion?.isDeleted;
+					})
+					.map((document) => document.guid);
+
+		await service.db.$transaction(async (tx) => {
+			for (const document of docsToDelete) {
+				await this.softDeleteDocument(tx, document);
+			}
+		});
+	}
+
+	public static async loadTempUploadedDocuments(
+		service: Service,
+		caseId: string,
+		documentSetId: string
+	): Promise<UploadedFile[]> {
+		const documents = (await service.db.document.findMany({
+			where: {
+				caseId,
+				documentSetId,
+				AND: [{ isDeleted: false }, { isTemp: true }]
+			},
+			include: {
+				latestDocumentVersion: true
+			},
+			orderBy: {
+				createdAt: 'asc'
+			}
+		})) as DocumentRow[];
+
+		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
+	}
+
+	public static async cleanUpTempDocuments(service: Service, caseId: string, documentSetFolderName: string) {
+		const documentSetId = await this.getDocumentSetIdByFolderName(service, documentSetFolderName);
+		const documents = await this.loadTempUploadedDocuments(service, caseId, documentSetId);
+		for (const document of documents) {
+			await service.db.$transaction(async (tx) => {
+				await this.softDeleteDocument(tx, document.metadata?.documentGuid as string);
+			});
+		}
+	}
 	// Reads active documents from the database.
 	public static async loadUploadedDocuments(
 		service: Service,
@@ -79,7 +238,8 @@ export class DocumentUtil {
 			where: {
 				caseId,
 				documentSetId,
-				isDeleted: false
+				isDeleted: false,
+				isTemp: false
 			},
 			include: {
 				latestDocumentVersion: true
@@ -88,7 +248,6 @@ export class DocumentUtil {
 				createdAt: 'asc'
 			}
 		})) as DocumentRow[];
-
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
@@ -133,7 +292,8 @@ export class DocumentUtil {
 	// Makes the database match the uploaded file list.
 	protected static async syncDocuments(
 		service: Service,
-		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams
+		{ caseId, documentSetId, uploadedFiles }: SyncDocumentsParams,
+		isTemp?: boolean
 	): Promise<void> {
 		const existingDocuments = (await service.db.document.findMany({
 			where: {
@@ -174,8 +334,7 @@ export class DocumentUtil {
 				if (existingDocument) {
 					continue;
 				}
-
-				await this.createDocument(tx, { caseId, documentSetId, file });
+				await this.createDocument(tx, { caseId, documentSetId, file, isTemp: isTemp });
 			}
 		});
 	}
@@ -197,11 +356,13 @@ export class DocumentUtil {
 			path: version.blobStoragePath ?? undefined,
 			url: version.documentURI ?? undefined,
 			dateCreated: version.dateCreated ?? undefined,
+			virusCheckStatus: version.virusCheckStatus ?? undefined,
 			metadata: {
 				documentGuid: document.guid,
 				documentSetId: document.documentSetId,
 				version: version.version
-			}
+			},
+			isTemp: document.isTemp
 		};
 	}
 
@@ -269,7 +430,12 @@ export class DocumentUtil {
 	// Creates the document and its first version.
 	protected static async createDocument(
 		tx: TransactionClient,
-		{ caseId, documentSetId, file }: { caseId: string; documentSetId: string; file: UploadedFile }
+		{
+			caseId,
+			documentSetId,
+			file,
+			isTemp
+		}: { caseId: string; documentSetId: string; file: UploadedFile; isTemp?: boolean }
 	) {
 		const guid = randomUUID();
 		const version = 1;
@@ -279,7 +445,8 @@ export class DocumentUtil {
 				guid,
 				name: file.id,
 				caseId,
-				documentSetId
+				documentSetId,
+				isTemp: isTemp
 			}
 		});
 
@@ -357,6 +524,31 @@ export class DocumentUtil {
 				isDeleted: false
 			}
 		});
+	}
+	public static async updateTemporaryDocumentToPermanent(service: Service, uploadedFiles: UploadedFile[]) {
+		try {
+			if (uploadedFiles.length === 0) {
+				return;
+			}
+
+			const results = await Promise.all(
+				uploadedFiles.map(async (file) => (await service.db.document.findFirst({ where: { name: file.path } })) ?? null)
+			);
+
+			const foundFiles = results.filter((file) => file !== null);
+
+			if (foundFiles.length !== uploadedFiles.length) {
+				throw new Error('not all files found');
+			}
+
+			await service.db.document.updateMany({
+				where: { guid: { in: foundFiles.map((file) => file.guid) } },
+				data: { isTemp: false }
+			});
+		} catch (err) {
+			service.logger.error(err);
+			throw err;
+		}
 	}
 
 	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {

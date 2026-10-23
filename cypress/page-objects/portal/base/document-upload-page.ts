@@ -163,4 +163,19 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.verifyLoaded();
 		this.verifyValidationError(ERROR_MESSAGES.NO_FILE_UPLOADED);
 	}
+
+	uploadAndSetVirusCheckStatus(
+		applicationPage: PortalPlanBasePage,
+		planReference: string,
+		fileName: string,
+		status: 'not_scanned' | 'scanned' | 'affected'
+	) {
+		this.uploadAndVerifyFiles([fileName]);
+		this.saveAndReturn();
+		applicationPage.verifyLoaded();
+
+		cy.task('setDocumentVirusCheckStatus', { reference: planReference, fileName, status });
+		cy.reload();
+		applicationPage.verifyLoaded();
+	}
 }

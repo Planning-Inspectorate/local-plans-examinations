@@ -70,6 +70,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		if (!service.notifyClient) {
 			service.logger.warn('Notify client not configured');
 		} else {
+			// We can use process.env or loadConfig() here
 			const portalUrl = process.env.PORTAL_URL;
 			const templateID = process.env.GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID;
 			if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');

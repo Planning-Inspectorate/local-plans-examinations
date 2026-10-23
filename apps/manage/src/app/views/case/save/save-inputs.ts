@@ -103,10 +103,32 @@ export interface ExaminationInput extends SaveInput {
 	planPauseStartDate?: Date;
 	planPauseEndDate?: Date;
 	withdrawnDate?: Date;
-	isSound?: boolean;
+	isSound?: string;
 	soundUnsoundDate?: Date;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
+	hearingExpectedDays?: string;
+	hearingDate?: Date;
+	hearingExpectedDaysKnown_hearingExpectedDays?: string;
+	hearings?: {
+		id: string;
+		createdDate: Date;
+		hearingComplete: boolean;
+		hearingDate: Date | null;
+		hearingTime: string | null;
+		hearingEndTime: string | null;
+		hearingExpectedDaysKnown: string | null;
+		hearingExpectedDays: string | null;
+		hearingLocationType: string | null;
+		hearingRemoteMeetingLinkKnown: string | null;
+		hearingRemoteMeetingLink: string | null;
+		hearingLocationKnown: string | null;
+		hearingVenueName: string | null;
+		hearingAddressLine: string | null;
+		hearingAddressLine2: string | null;
+		hearingTownOrCity: string | null;
+		hearingPostcode: string | null;
+	}[];
 }
 
 export interface Gateway3Input extends SaveInput {
