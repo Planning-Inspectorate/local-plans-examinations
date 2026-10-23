@@ -311,9 +311,7 @@ function registerExaminationHearingJourney(
 				}
 			}
 		});
-
-		req.session.alertMessage = 'Hearing created';
-		req.session.alertMessageStatus = 'success';
+		pushAlertToSession(req, 'success', 'Hearing created');
 
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;

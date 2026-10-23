@@ -42,12 +42,12 @@
   },
   classes: "govuk-!-margin-top-6"
 }) }}
-
-{% if alertMessage == 'Hearing created' %}
-  {{ govukNotificationBanner({
-    type: alertMessageStatus,
-    text: alertMessage
-  }) }}
+{% if alerts %}
+  {% for alert in alerts %}
+    {% if alert.text == 'Hearing created' %}
+      {{ govukNotificationBanner(alert) }}
+    {% endif %}
+  {% endfor %}
 {% endif %}
 
 {% if currentSection == "case-history" %}
