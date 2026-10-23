@@ -489,7 +489,7 @@ export function createTimetableJourney(req: Request, response: JourneyResponse, 
 			new Section('Examination', 'examination')
 				.addQuestion(questions.expectedSubmissionForExaminationDate)
 				.addQuestion(questions.submissionForExaminationDate)
-				// TODO Add hearing dates in here once developed
+				.addQuestion(questions.hearingDates)
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
 			new Section('QA', 'QA')

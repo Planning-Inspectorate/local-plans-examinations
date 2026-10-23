@@ -1,5 +1,6 @@
 import CustomMultiFieldInputQuestion from './custom-multi-field-input/question.ts';
 import CustomManageListQuestion from './custom-manage-list/question.ts';
+import CustomHearingDatesQuestion from './custom-hearing-dates/question.ts';
 import {
 	CUSTOM_COMPONENT_CLASSES as CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES,
 	CUSTOM_COMPONENTS as CUSTOM_DYNAMIC_FORM_COMPONENTS
@@ -24,6 +25,7 @@ export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_NOTE_INPUT: 'custom-note-input',
 	CUSTOM_FILE_MANAGER: 'custom-file-manager',
 	CUSTOM_WORKSHOP_DATES: 'custom-workshop-dates',
+	CUSTOM_HEARING_DATES: 'custom-hearing-dates',
 	...CUSTOM_DYNAMIC_FORM_COMPONENTS
 });
 
@@ -34,5 +36,6 @@ export const CUSTOM_COMPONENT_CLASSES = freeze({
 	[CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT]: CustomNoteQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER]: CustomFileManagerQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES]: CustomWorkshopDatesQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES]: CustomHearingDatesQuestion,
 	...CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES
 });
