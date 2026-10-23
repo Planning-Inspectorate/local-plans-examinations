@@ -338,7 +338,6 @@ export const seededExaminationInProgress = {
 export const seededPausedExamination = {
 	...seededExaminationInProgress,
 	examination: {
-		...seededExaminationInProgress.examination,
-		planPauseStartDate: '2026-12-04T00:00:00.000Z'
+		...seededExaminationInProgress.examination
 	}
 } satisfies SeedCyOptions;

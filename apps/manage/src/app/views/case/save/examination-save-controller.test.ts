@@ -5,7 +5,7 @@ import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 
-function createMockService(current: { planPauseStartDate: Date | null } | null = null) {
+function createMockService() {
 	return {
 		db: {
 			case: {
@@ -55,7 +55,7 @@ function createMockService(current: { planPauseStartDate: Date | null } | null =
 				upsert: mock.fn(async () => ({}))
 			},
 			examinationInfo: {
-				findUnique: mock.fn(async (_args: unknown) => current),
+				findUnique: mock.fn(async (_args: unknown) => ({})),
 				upsert: mock.fn(async (_args: unknown) => ({}))
 			}
 		}
