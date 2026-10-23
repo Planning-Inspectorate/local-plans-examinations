@@ -2,6 +2,7 @@ import type { PortalService } from '#service';
 import { formatDisplayDate } from '#util/date.ts';
 import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import multer from 'multer';
+import type { JourneyLocals } from '@planning-inspectorate/dynamic-forms';
 import {
 	buildGetJourney,
 	buildGetJourneyResponseFromSession,
@@ -143,17 +144,17 @@ export function setAsEditingFromCya(req: Request, _: Response, next: NextFunctio
 }
 
 // Saves the answer and sends the user back to check answers when needed.
-function redirectAfterCyaEdit(req: Request, res: Response, next: NextFunction) {
+function redirectAfterCyaEdit(req: Request, res: Response<any, JourneyLocals>) {
 	const request = req as Gateway2Request;
 	const returnToCya = getCheckAnswersRedirect(req) ?? request.session.editingFromCheckAnswers === true;
-	buildSave(saveDataToSession, returnToCya)(req, res, next);
+	buildSave(saveDataToSession, returnToCya)(req, res);
 }
 
 // Saves the case answer and returns to check answers by default.
 function redirectAfterCaseQuestionEdit(saveDataToCase: ReturnType<typeof buildSaveDataToCase>) {
-	return (req: Request, res: Response, next: NextFunction) => {
+	return (req: Request, res: Response<any, JourneyLocals>) => {
 		const returnToCya = getCheckAnswersRedirect(req) ?? true;
-		buildSave(saveDataToCase, returnToCya)(req, res, next);
+		buildSave(saveDataToCase, returnToCya)(req, res);
 	};
 }
 

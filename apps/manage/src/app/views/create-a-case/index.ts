@@ -26,9 +26,9 @@ export function shouldReturnToCya(req: { params?: Record<string, string | undefi
 	return editingFromCya && !hasManageListItemParams;
 }
 
-export function redirectAfterCyaEdit(req: any, res: any, next: any) {
+export function redirectAfterCyaEdit(req: any, res: any) {
 	const returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
-	buildSave(saveDataToSession, returnToCya)(req, res, next);
+	buildSave(saveDataToSession, returnToCya)(req, res);
 }
 
 export function saveLastQuestionUrl(req: any, _: any, next: any) {

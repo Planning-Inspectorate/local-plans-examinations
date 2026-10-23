@@ -3,7 +3,7 @@ import { type PageLoadContext } from './overview-page-load-handler.ts';
 import { Gateway3TabHandler } from './gateway-3-tab-handler.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
-import { fileUploadQuestionConfigs, fileUploaderCaseSessionKeyForField, getParam } from '../controller.ts';
+import { fileUploaderCaseSessionKeyForField, fileUploadQuestionConfigs, getParam } from '../controller.ts';
 import { Gateway3SaveController } from '../save/gateway-3-save-controller.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 
@@ -30,14 +30,18 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 		const submissionData = sortGateway3Submissions(journey3Data.submissions);
 		await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+		// TODO: separate mapper to answers view model
+		const answers: Record<string, unknown> = {
+			...journey3Data,
+			examinationWebsite: journey4Data?.examinationWebsite
+		};
 		for (let i = 0; i < submissionData.length; i++) {
 			const submissionId = i + 1;
-			journeyResponse.answers[`decision-${submissionId}`] = submissionData[i].decision;
-			journeyResponse.answers[`completionDate-${submissionId}`] = submissionData[i].completionDate;
+			answers[`decision-${submissionId}`] = submissionData[i].decision;
+			answers[`completionDate-${submissionId}`] = submissionData[i].completionDate;
 		}
-		res.locals.journeyResponse = journeyResponse;
+
+		res.locals.journeyResponse = new JourneyResponse(journeyId, '', answers);
 		const body = req.body as { decision?: string };
 		// Flow for uploading a gateway 3 document
 		if (

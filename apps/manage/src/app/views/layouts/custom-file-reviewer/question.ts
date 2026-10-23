@@ -1,4 +1,4 @@
-import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { Question } from '@planning-inspectorate/dynamic-forms';
 
 export default class CustomFileReviewerQuestion extends Question {
 	constructor({ ...params }) {

@@ -34,6 +34,7 @@ import { ExaminationSaveController } from './save/examination-save-controller.ts
 import { type IRouter, type Request, Router as createRouter, type RequestHandler } from 'express';
 import type { ManageService } from '#service';
 import * as authSession from '@planning-inspectorate/core/auth';
+import type { JourneyLocals } from '@planning-inspectorate/dynamic-forms';
 import {
 	buildGetJourney,
 	buildList,
@@ -42,7 +43,8 @@ import {
 	validate,
 	validationErrorHandler,
 	type Journey,
-	JourneyResponse
+	JourneyResponse,
+	type OptionsQuestion
 } from '@planning-inspectorate/dynamic-forms';
 import { questions, getQuestions } from './questions.ts';
 import {
@@ -115,7 +117,7 @@ function registerGateway2WorkshopJourney(
 		const loaded = await loadLpaOptions(service);
 
 		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+			(questions.lpa as OptionsQuestion).options = [{ value: '', text: '' }, ...loaded];
 		}
 
 		next();
@@ -248,7 +250,7 @@ function registerExaminationHearingJourney(
 		const loaded = await loadLpaOptions(service);
 
 		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+			(questions.lpa as OptionsQuestion).options = [{ value: '', text: '' }, ...loaded];
 		}
 
 		next();
@@ -366,7 +368,7 @@ function registerExaminationHearingJourney(
 }
 
 function redirectAfterCyaEdit(updateCase: any) {
-	return (req: any, res: Response, next: NextFunction) => {
+	return (req: any, res: Response<any, JourneyLocals>) => {
 		let returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
 		const answer = Object.values(req.body).find((value) => value === 'yes' || value === 'no');
 		if (req.session.returnToCyaAfterAnswer == true) {
@@ -392,7 +394,7 @@ function redirectAfterCyaEdit(updateCase: any) {
 				}
 			}
 		}
-		buildSave(updateCase, returnToCya)(req, res, next);
+		buildSave(updateCase, returnToCya)(req, res);
 	};
 }
 
@@ -584,7 +586,7 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		(req, res, next) => {
+		(req: Request, res: Response<any, JourneyLocals>) => {
 			// Until a report is issued, saving the plan outcome continues to the file uploader.
 			const answers = res.locals.journeyResponse?.answers;
 			const isPlanOutcome =
@@ -599,7 +601,7 @@ function registerCaseJourney(
 				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
 			}
 			const continueToReportUpload = isPlanOutcome && req.query.returnTo !== 'check' && !answers?.soundUnsoundDate;
-			buildSave(updateCase, !continueToReportUpload)(req, res, next);
+			return buildSave(updateCase, !continueToReportUpload)(req, res);
 		}
 	);
 	if (supportsFileUpload) {

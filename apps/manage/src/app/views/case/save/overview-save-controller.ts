@@ -8,6 +8,7 @@ import {
 	CONTACT_LPA_FIELDS,
 	RELATION_APPOINTMENT_DATE_TRIGGERS
 } from '../../../classes/case-field-mappings.ts';
+import type { OptionsQuestion } from '@planning-inspectorate/dynamic-forms';
 
 export class OverviewSaveController extends SaveController {
 	protected async prepareData(answers: Record<string, any>) {
@@ -18,7 +19,7 @@ export class OverviewSaveController extends SaveController {
 	}
 
 	protected async saveToDatabase(answers: CaseOverviewInput) {
-		const lpaName = (questions.lpa.options || []).find((opt: any) => opt.value === answers.lpa)?.text || '';
+		const lpaName = (questions.lpa as OptionsQuestion | undefined)?.optionByValue(answers.lpa as string)?.text || '';
 		const { caseFields, nestedData } = this.splitOverviewAnswers(answers);
 
 		const hasContactFields =

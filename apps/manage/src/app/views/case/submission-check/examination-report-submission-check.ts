@@ -3,6 +3,7 @@ import { type SubmissionCheckData } from './submission-check.ts';
 import { type ManageService } from '#service';
 import { questions } from '../questions.ts';
 import { checkSoundUnsoundManuallySet } from '../../../util/util.ts';
+import type { OptionsQuestion } from '@planning-inspectorate/dynamic-forms';
 
 export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 	public async generateDataForPage(
@@ -33,8 +34,8 @@ export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 			: uploadedFiles.length > 0
 				? uploadedFiles[0].dateCreated
 				: undefined;
-		const planOutcomeText = questions.isSound.options?.find(
-			(option: { value: string }) => option.value === existingExaminationDetails?.isSound
+		const planOutcomeText = (questions.isSound as OptionsQuestion).optionByValue(
+			existingExaminationDetails?.isSound ?? ''
 		)?.text;
 		const documentChangeUrl = `${this.generateBackUrl(originalUrl)}?returnTo=check`;
 		return {

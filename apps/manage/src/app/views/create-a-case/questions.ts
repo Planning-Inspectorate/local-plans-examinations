@@ -241,10 +241,7 @@ export const questions = createQuestions(
 	{ continueButtonText: 'Save and continue' }
 );
 
-export async function getQuestions(
-	service: ManageService,
-	req: Request
-): Promise<Record<string, ManageQuestionConfig>> {
+export async function getQuestions(service: ManageService, req: Request) {
 	await updateQuestionsWithOptions(service, req, questions);
 	return questions;
 }
