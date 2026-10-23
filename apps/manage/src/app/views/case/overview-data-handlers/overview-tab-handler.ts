@@ -41,7 +41,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, reference } = context;
 		this.tryAddPauseStatusBanner(context);
-		if (!req.params.question) {
+		if (!req.params.question && req.method == 'GET') {
 			consumeAlertsFromSession(req, res);
 		}
 

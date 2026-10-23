@@ -13,7 +13,7 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
 		this.tryAddPauseStatusBanner(context);
-		if (!req.params.question) {
+		if (!req.params.question && req.method == 'GET') {
 			consumeAlertsFromSession(req, res);
 		}
 		const caseReference = getParam(req.params.reference);
