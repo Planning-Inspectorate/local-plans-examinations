@@ -23,7 +23,7 @@ import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
 import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
-import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
+import { Gateway3TabHandler, getMissingRequiredDocuments } from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
@@ -31,6 +31,14 @@ import {
 	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	addUploadedDocumentDetailsToAnswers,
+	compileGateway3Data
+} from './overview-data-handlers/overview-page-helper.ts';
+import CustomDocumentsQuestion, {
+	OPTIONAL_DOCUMENT_SETS,
+	REQUIRED_DOCUMENT_SETS
+} from '../layouts/custom-documents-viewer/question.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -1212,6 +1220,152 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
+	describe('Gateway 3 submission documents', () => {
+		const SUBMISSION_SECTION = 'gateway-3-submission-1';
+		const reviewDocumentsUrl = `/case/${REFERENCE}/gateway-3/${SUBMISSION_SECTION}/gateway-3-review-documents-1`;
+		const allRequiredDocumentSetIds = Object.values(REQUIRED_DOCUMENT_SETS);
+		const missingDocumentErrors = [
+			{
+				text: 'Proposed local plan intended for submission for examination document is required.',
+				href: '#document-proposed-local-plan-intended-for-submission-for-examination'
+			},
+			{
+				text: 'Map of proposed local plan policies document is required.',
+				href: '#document-map-of-proposed-local-plan-policies'
+			}
+		];
+
+		function createGateway3PageContext({
+			question,
+			addedDocumentSetIds = [],
+			session = {}
+		}: {
+			question: string;
+			addedDocumentSetIds?: string[];
+			session?: Record<string, unknown>;
+		}) {
+			const ctx = createMiddlewareContext({
+				url: `/gateway-3/${SUBMISSION_SECTION}/${question}`,
+				pageLoadHandler: Gateway3TabHandler
+			});
+			Object.assign(ctx.req, {
+				method: 'GET',
+				params: { reference: REFERENCE, section: SUBMISSION_SECTION, question },
+				originalUrl: `/case/${REFERENCE}/gateway-3/${SUBMISSION_SECTION}/${question}`,
+				session: { fileUploader: null, ...session }
+			});
+			ctx.res.redirect = mock.fn();
+
+			ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+				id: CASE_ID,
+				planTitle: 'Southshire Local Plan'
+			}));
+			ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+				caseId: CASE_ID,
+				submissions: [{ id: 'someId', decision: undefined, completionDate: undefined, gateway3InfoId: undefined }]
+			}));
+			const addedDocuments = addedDocumentSetIds.map((documentSetId) => ({
+				documentSetId,
+				name: `${documentSetId}-guid`,
+				latestDocumentVersion: { originalFilename: `${documentSetId}.pdf` }
+			}));
+			// Only compileGateway3Data asks for the latest version of a set of documents
+			ctx.service.db.document.findMany.mock.mockImplementation(async (args: any) =>
+				args?.where?.documentSetId?.in && args?.include?.latestDocumentVersion ? addedDocuments : []
+			);
+
+			return ctx;
+		}
+
+		it('redirects a decision request to review documents with an error for each missing document', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-decision-1',
+				addedDocumentSetIds: allRequiredDocumentSetIds.filter(
+					(documentSetId) =>
+						documentSetId !== REQUIRED_DOCUMENT_SETS.proposedLocalPlan &&
+						documentSetId !== REQUIRED_DOCUMENT_SETS.mapOfPolicies
+				)
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.deepEqual(ctx.req.session.gateway3DocumentErrors, missingDocumentErrors);
+			assert.equal(ctx.res.redirect.mock.callCount(), 1);
+			assert.equal(ctx.res.redirect.mock.calls[0].arguments[0], reviewDocumentsUrl);
+			assert.equal(ctx.next.mock.callCount(), 0);
+		});
+
+		it('lists every required document as missing when none have been added', async () => {
+			const ctx = createGateway3PageContext({ question: 'gateway-3-decision-1' });
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.equal(ctx.req.session.gateway3DocumentErrors.length, allRequiredDocumentSetIds.length);
+			assert.deepEqual(ctx.req.session.gateway3DocumentErrors.at(-1), {
+				text: 'Statement setting out practical arrangements document is required.',
+				href: '#document-statement-setting-out-practical-arrangements'
+			});
+			assert.equal(ctx.res.redirect.mock.calls[0].arguments[0], reviewDocumentsUrl);
+		});
+
+		it('redirects a decision request to the Gateway 3 decision when every required document is added', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-decision-1',
+				addedDocumentSetIds: allRequiredDocumentSetIds
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.equal(ctx.req.session.gateway3DocumentErrors, undefined);
+			assert.equal(ctx.res.redirect.mock.callCount(), 1);
+			assert.equal(
+				ctx.res.redirect.mock.calls[0].arguments[0],
+				`/case/${REFERENCE}/gateway-3-report/${SUBMISSION_SECTION}/gateway-3-decision-1`
+			);
+			assert.equal(ctx.next.mock.callCount(), 0);
+		});
+
+		it('shows the missing document errors once on the review documents page', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-review-documents-1',
+				session: { gateway3DocumentErrors: missingDocumentErrors }
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.deepEqual(ctx.res.locals.errorSummary, missingDocumentErrors);
+			assert.equal(ctx.req.session.gateway3DocumentErrors, undefined);
+			assert.equal(ctx.next.mock.callCount(), 1);
+		});
+
+		it('keeps the missing document errors when a different Gateway 3 page loads', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-assessor-name',
+				session: { gateway3DocumentErrors: missingDocumentErrors }
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.equal(ctx.res.locals.errorSummary, undefined);
+			assert.deepEqual(ctx.req.session.gateway3DocumentErrors, missingDocumentErrors);
+			assert.equal(ctx.next.mock.callCount(), 1);
+		});
+
+		it('adds the submission document names to the Gateway 3 answers', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-review-documents-1',
+				addedDocumentSetIds: [REQUIRED_DOCUMENT_SETS.proposedLocalPlan, OPTIONAL_DOCUMENT_SETS.otherDocuments]
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			const { answers } = ctx.res.locals.journeyResponse;
+			assert.equal(answers.proposedLocalPlan, `${REQUIRED_DOCUMENT_SETS.proposedLocalPlan}.pdf`);
+			assert.equal(answers.mapOfPolicies, '');
+			assert.equal(answers.optionalData.otherDocuments, `${OPTIONAL_DOCUMENT_SETS.otherDocuments}.pdf`);
+		});
+	});
+
 	it('loads examination journey data', async () => {
 		const ctx = createMiddlewareContext({
 			url: '/examination',
@@ -1471,6 +1625,101 @@ describe('Gateway 3 document loading', () => {
 			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
 		});
 	}
+});
+
+describe('compileGateway3Data', () => {
+	const gateway3Answers = { id: 'gateway-3-info-id', caseId: CASE_ID, examinationWebsite: 'https://example.com' };
+
+	function createServiceWithDocuments(documents: unknown[]) {
+		const service = createService();
+		service.db.document.findMany.mock.mockImplementation(async () => documents);
+		return service;
+	}
+
+	it('looks up the current required and optional Gateway 3 documents for the case', async () => {
+		const service = createServiceWithDocuments([]);
+
+		await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: CASE_ID,
+				isDeleted: false,
+				documentSetId: {
+					in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
+				}
+			},
+			include: { latestDocumentVersion: true }
+		});
+	});
+
+	it('joins the file names for each document set into its answer field', async () => {
+		const service = createServiceWithDocuments([
+			{
+				documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+				name: 'plan-guid',
+				latestDocumentVersion: { originalFilename: 'plan.pdf' }
+			},
+			{
+				documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+				name: 'appendix-guid',
+				latestDocumentVersion: { originalFilename: 'plan-appendix.pdf' }
+			},
+			{
+				documentSetId: OPTIONAL_DOCUMENT_SETS.environmentalReport,
+				name: 'environmental-guid',
+				latestDocumentVersion: { originalFilename: 'environmental-report.pdf' }
+			}
+		]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.equal(compiledAnswers.proposedLocalPlan, 'plan.pdf, plan-appendix.pdf');
+		assert.equal(compiledAnswers.mapOfPolicies, '');
+		assert.equal(compiledAnswers.optionalData.environmentalReport, 'environmental-report.pdf');
+		assert.equal(compiledAnswers.optionalData.otherDocuments, '');
+	});
+
+	it('uses the document name when there is no latest version', async () => {
+		const service = createServiceWithDocuments([
+			{ documentSetId: REQUIRED_DOCUMENT_SETS.statementOfSoundness, name: 'soundness.pdf', latestDocumentVersion: null }
+		]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.equal(compiledAnswers.statementOfSoundness, 'soundness.pdf');
+	});
+
+	it('keeps the existing Gateway 3 answers', async () => {
+		const service = createServiceWithDocuments([]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.equal(compiledAnswers.id, gateway3Answers.id);
+		assert.equal(compiledAnswers.caseId, CASE_ID);
+		assert.equal(compiledAnswers.examinationWebsite, gateway3Answers.examinationWebsite);
+	});
+});
+
+describe('getMissingRequiredDocuments', () => {
+	const requiredDocumentFields = Object.keys(REQUIRED_DOCUMENT_SETS);
+	const allRequiredDocumentsAdded = Object.fromEntries(requiredDocumentFields.map((field) => [field, `${field}.pdf`]));
+
+	it('returns nothing when every required document has been added', () => {
+		assert.deepEqual(getMissingRequiredDocuments(allRequiredDocumentsAdded as any), []);
+	});
+
+	it('returns each required document that has not been added, in display order', () => {
+		const answers = { ...allRequiredDocumentsAdded, mapOfPolicies: '', practicalArrangementsStatement: '' };
+
+		assert.deepEqual(getMissingRequiredDocuments(answers as any), ['mapOfPolicies', 'practicalArrangementsStatement']);
+	});
+
+	it('ignores optional documents', () => {
+		const answers = { ...allRequiredDocumentsAdded, optionalData: { otherDocuments: '' } };
+
+		assert.deepEqual(getMissingRequiredDocuments(answers as any), []);
+	});
 });
 
 describe('DeleteCase', () => {
@@ -1967,6 +2216,22 @@ describe('buildCheckReportMiddleware', () => {
 describe('preprocessQuestionProperties', () => {
 	const caseReference = 'some-case-reference';
 	const journeyId = 'gateway-3';
+	const reviewDocumentsHref = `/case/${caseReference}/gateway-3/gateway-3-submission-1/gateway-3-review-documents-1`;
+
+	const createDocumentsCheckQuestion = () =>
+		new CustomDocumentsQuestion({
+			title: 'Documents',
+			question: 'Gateway 3 Documents',
+			fieldName: 'gateway3DocumentSubmission-1',
+			url: 'gateway-3-review-documents-1'
+		});
+
+	const assertDocumentsCheckQuestionPrepared = (documentsCheckQuestion: any, expectedActionText: string) => {
+		assert.deepEqual(documentsCheckQuestion.actionLink, { href: reviewDocumentsHref, text: expectedActionText });
+		assert.equal(documentsCheckQuestion.changeActionText, 'Review');
+		assert.equal(documentsCheckQuestion.config.actionButtonVisibleInSummary, true);
+	};
+
 	it('removes the completed workshop document link for an incomplete Gateway 2 case', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -2018,7 +2283,10 @@ describe('preprocessQuestionProperties', () => {
 			}
 		}));
 		const res = {
-			render: mock.fn(() => {})
+			render: mock.fn(() => {}),
+			locals: {
+				journeyResponse: { answers: {} }
+			}
 		};
 		const req = {
 			session: {},
@@ -2037,9 +2305,7 @@ describe('preprocessQuestionProperties', () => {
 			'gateway3Documents-1': {
 				config: {}
 			},
-			'gateway3DocumentsCheck-1': {
-				config: {}
-			}
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
 		};
 
 		const expectedModifiedQuestions: Record<string, any> = {
@@ -2049,16 +2315,6 @@ describe('preprocessQuestionProperties', () => {
 				config: {
 					actionButtonVisibleInSummary: false
 				}
-			},
-			'gateway3DocumentsCheck-1': {
-				actionLink: {
-					href: '/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-review-documents-1',
-					text: 'Review'
-				},
-				changeActionText: 'Review',
-				config: {
-					actionButtonVisibleInSummary: true
-				}
 			}
 		};
 
@@ -2067,9 +2323,13 @@ describe('preprocessQuestionProperties', () => {
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
 		assert.equal(myNextFunction.mock.callCount(), 1);
 		const actualDecisionQuestion = questions['gateway3Decision-1'];
+		const actualDocumentsCheckQuestion = questions['gateway3DocumentsCheck-1'];
 		delete questions['gateway3Decision-1'];
+		delete questions['gateway3DocumentsCheck-1'];
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
+		// No documents have been added yet, so there is nothing to review
+		assertDocumentsCheckQuestionPrepared(actualDocumentsCheckQuestion, '');
 	});
 
 	it('can preprocess gateway3 when the documents have submitted', async () => {
@@ -2087,7 +2347,10 @@ describe('preprocessQuestionProperties', () => {
 			}
 		}));
 		const res = {
-			render: mock.fn(() => {})
+			render: mock.fn(() => {}),
+			locals: {
+				journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } }
+			}
 		};
 		const req = {
 			session: {},
@@ -2106,24 +2369,12 @@ describe('preprocessQuestionProperties', () => {
 			'gateway3Documents-1': {
 				config: {}
 			},
-			'gateway3DocumentsCheck-1': {
-				config: {}
-			}
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
 		};
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
 				editable: false,
-				config: {
-					actionButtonVisibleInSummary: true
-				}
-			},
-			'gateway3DocumentsCheck-1': {
-				actionLink: {
-					href: '/case/some-case-reference/gateway-3/gateway-3-submission-1/gateway-3-review-documents-1',
-					text: 'Review'
-				},
-				changeActionText: 'Review',
 				config: {
 					actionButtonVisibleInSummary: true
 				}
@@ -2135,9 +2386,12 @@ describe('preprocessQuestionProperties', () => {
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
 		assert.equal(myNextFunction.mock.callCount(), 1);
 		const actualDecisionQuestion = questions['gateway3Decision-1'];
+		const actualDocumentsCheckQuestion = questions['gateway3DocumentsCheck-1'];
 		delete questions['gateway3Decision-1'];
+		delete questions['gateway3DocumentsCheck-1'];
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
+		assertDocumentsCheckQuestionPrepared(actualDocumentsCheckQuestion, 'Review');
 		assert.deepEqual(actualDecisionQuestion.actionLink, {
 			href: `/case/some-case-reference/gateway-3-report/gateway-3-submission-1/gateway-3-document-1/check`,
 			text: 'View'
