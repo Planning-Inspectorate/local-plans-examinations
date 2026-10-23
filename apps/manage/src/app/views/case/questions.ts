@@ -1559,6 +1559,9 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
 		maxFilesPerUpload: 10,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
 		text: {
 			caption: 'Examination outcome',
 			introduction: 'You should add the final report and main modifications as separate documents.',
