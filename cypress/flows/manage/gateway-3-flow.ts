@@ -29,7 +29,6 @@ export const openGateway3ReviewDocumentsPage = () => {
 	gateway3ReviewDocumentsPage.verifyLoaded();
 };
 
-// The decision link is checked against the submission documents before the decision page opens
 export const requestGateway3DecisionWithMissingDocuments = () => {
 	gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
 	gateway3ReviewDocumentsPage.verifyLoaded();
