@@ -29,6 +29,7 @@ import { formatDateToString } from '../../util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -128,6 +129,10 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			}
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				break;
+			}
+			case COMMON_CONSTS.TIMETABLE_JOURNEY_ID: {
+				writeResponse = await new TimetableSaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			default: {
@@ -332,7 +337,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/${COMMON_CONSTS.OVERVIEW}` },
-		{ text: 'Timetable', href: '#' },
+		{ text: 'Timetable', href: `${baseUrl}/${COMMON_CONSTS.TIMETABLE_JOURNEY_ID}` },
 		{ text: 'Gateway 1', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}` },
 		{ text: 'Gateway 2', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}` },
 		{ text: 'Gateway 3', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}` },

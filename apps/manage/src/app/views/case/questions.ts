@@ -1116,6 +1116,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		]
 	},
 	...gateway2WorkshopQuestions,
+	gateway2WorkshopDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES,
+		title: 'Workshop dates',
+		question: 'Workshop dates',
+		fieldName: 'workshops',
+		url: 'gateway-2-workshop-dates'
+	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',
@@ -1466,6 +1473,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'examinationReport',
 		url: 'examination-report-manage',
 		viewData: { uploadQuestionUrl: 'examination-report' }
+	},
+	hearingDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES,
+		title: 'Hearing dates',
+		question: 'Hearing dates',
+		fieldName: 'hearings',
+		url: 'examination-hearing-dates'
 	},
 	...gateway3Questions
 };
