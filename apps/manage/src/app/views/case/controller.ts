@@ -34,6 +34,7 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
+import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -1107,12 +1108,12 @@ export function preprocessQuestionProperties(
 				const completionDate = submission.completionDate;
 				const gateway3Documents = `gateway3Documents-${submissionId}`;
 				const gateway3Complete = !!completionDate;
-				const submissionUrl = `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}/gateway-3-submission-${submissionId}`;
 
-				questions[gateway3DocumentsCheck].actionLink = {
-					href: `${submissionUrl}/gateway-3-review-documents-${submissionId}`,
-					text: 'Review'
-				};
+				(questions[gateway3DocumentsCheck] as CustomDocumentsQuestion).setActionLink(
+					String(submissionId),
+					reference,
+					_res.locals.journeyResponse.answers
+				);
 
 				questions[gateway3DocumentsCheck].changeActionText = 'Review';
 				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary = true;
