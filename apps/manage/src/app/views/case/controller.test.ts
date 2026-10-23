@@ -50,7 +50,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '15', folderName: 'gateway-3-document' },
 	{ id: '16', folderName: 'gateway-3-document-1' },
 	{ id: '17', folderName: 'gateway-2-workshop-documents' },
-	{ id: '18', folderName: 'examination-report' }
+	{ id: '18', folderName: 'examination-report' },
+	{ id: '19', folderName: 'miqs' }
 ];
 
 function createService(): any {
