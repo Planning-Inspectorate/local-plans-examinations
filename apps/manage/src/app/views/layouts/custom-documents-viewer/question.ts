@@ -1,5 +1,7 @@
 import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import type { Journey } from '@planning-inspectorate/dynamic-forms';
 
 export const REQUIRED_DOCUMENT_SETS = {
 	proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
@@ -48,6 +50,13 @@ export const DOCUMENT_LABELS: Record<string, string> = {
 	otherDocuments: 'Other documents'
 };
 
+type JourneyAnswers = Journey['response']['answers'];
+
+type ExtendedAnswers = JourneyAnswers & {
+	optionalData?: Record<string, unknown>;
+	[key: string]: unknown;
+};
+
 function countDocuments(value: unknown): number {
 	if (Array.isArray(value)) return value.length;
 	if (typeof value === 'string' && value.trim() !== '') return value.split(', ').length;
@@ -71,24 +80,37 @@ export default class CustomDocumentsQuestion extends Question {
 		};
 	}
 
-	formatAnswerForSummary(sectionSegment: string, journey: any, answer: unknown) {
-		const answers = journey.response.answers ?? {};
-		const values = [
-			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers[key]),
-			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers.optionalData?.[key])
-		];
-		const documentCount = values.reduce((total: number, value) => total + countDocuments(value), 0);
-
+	formatAnswerForSummary(sectionSegment: string, journey: Journey, answers: ExtendedAnswers) {
+		const documentCount = this.getDocumentsCount(answers);
 		return [
 			{
 				key: this.title,
 				value: `${documentCount} document(s)`,
-				action: this.getAction(sectionSegment, journey, answer)
+				action: this.getAction(sectionSegment, journey, answers)
 			}
 		];
 	}
 
+	private getDocumentsCount(answers: ExtendedAnswers) {
+		const values = [
+			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers[key]),
+			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers.optionalData?.[key])
+		];
+		return values.reduce((total: number, value) => total + countDocuments(value), 0);
+	}
+
+	public setActionLink(submissionId: string, reference: string, answers: ExtendedAnswers) {
+		const submissionUrl = `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}/gateway-3-submission-${submissionId}`;
+		const documentCount = this.getDocumentsCount(answers);
+		this.actionLink = {
+			href: `${submissionUrl}/gateway-3-review-documents-${submissionId}`,
+			text: documentCount > 0 ? 'Review' : ''
+		};
+	}
+
 	toViewModel(options: any) {
+		const submissionId = options.section.segment.split('-').at(-1);
+		this.setActionLink(submissionId, options.params.reference!, options.journey.response.answers);
 		const viewModel = super.toViewModel(options);
 		const {
 			journey: {
@@ -115,7 +137,6 @@ export default class CustomDocumentsQuestion extends Question {
 		const rowsMapRequiredData = toRows(['examinationWebsite', ...Object.keys(REQUIRED_DOCUMENT_SETS)], viewAnswers);
 		const optionDataMap = toRows(Object.keys(OPTIONAL_DOCUMENT_SETS), viewAnswers.optionalData);
 
-		const submissionId = options.section.segment.split('-').at(-1);
 		const issueDecisionUrl = `/case/${options.params.reference}/gateway-3/${options.params.section}/gateway-3-decision-${submissionId}`;
 
 		return {
