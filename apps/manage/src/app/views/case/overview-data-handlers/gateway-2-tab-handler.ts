@@ -4,11 +4,16 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class Gateway2TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		this.tryAddPauseStatusBanner(context);
+		if (!req.params.question && req.method == 'GET') {
+			consumeAlertsFromSession(req, res);
+		}
 
 		const gateway2DocumentSets = {
 			procedural: [
