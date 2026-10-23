@@ -276,7 +276,7 @@ model ExaminationHearing {
 
 model PlanPauseHistory {
   id                    String          @id @default(uuid()) @db.UniqueIdentifier
-  examinationInfo       ExaminationInfo @relation(fields: [examinationInfoId], references: [id])
+  examinationInfo       ExaminationInfo @relation(fields: [examinationInfoId], references: [id], onDelete: Cascade)
   examinationInfoId     String          @db.UniqueIdentifier
   createdAt             DateTime        @default(now()) @db.DateTime2
   planPauseDate         DateTime        @db.DateTime2
