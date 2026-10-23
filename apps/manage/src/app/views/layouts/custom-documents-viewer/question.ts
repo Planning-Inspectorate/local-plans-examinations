@@ -51,7 +51,6 @@ export const DOCUMENT_LABELS: Record<string, string> = {
 };
 
 type JourneyAnswers = Journey['response']['answers'];
-
 type ExtendedAnswers = JourneyAnswers & {
 	optionalData?: Record<string, unknown>;
 	[key: string]: unknown;
@@ -80,8 +79,9 @@ export default class CustomDocumentsQuestion extends Question {
 		};
 	}
 
-	formatAnswerForSummary(sectionSegment: string, journey: Journey, answers: ExtendedAnswers) {
-		const documentCount = this.getDocumentsCount(answers);
+	formatAnswerForSummary(sectionSegment: string, journey: Journey) {
+		const answers = journey.response.answers ?? {};
+		const documentCount = this.getDocumentsCount(journey.response.answers);
 		return [
 			{
 				key: this.title,
@@ -93,8 +93,9 @@ export default class CustomDocumentsQuestion extends Question {
 
 	private getDocumentsCount(answers: ExtendedAnswers) {
 		const values = [
-			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers[key]),
-			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers.optionalData?.[key])
+			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers?.[key]),
+			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers?.optionalData?.[key]),
+			answers.examinationWebsite
 		];
 		return values.reduce((total: number, value) => total + countDocuments(value), 0);
 	}

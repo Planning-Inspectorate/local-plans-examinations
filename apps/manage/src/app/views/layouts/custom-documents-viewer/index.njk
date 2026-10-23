@@ -10,7 +10,8 @@
 	{% if errorSummary %}
 		{{ govukErrorSummary({
 			titleText: "There is a problem",
-			errorList: errorSummary
+			errorList: errorSummary,
+			attributes: { "data-cy": "error-summary" }
 		}) }}
 	{% endif %}
 {% endblock before_content %}
@@ -22,11 +23,13 @@
 
 			{% set documentGroups = [
 				{
+					id: "required-documents",
 					heading: "Required information",
 					description: "You must add each of these documents as a link or an attachment before submitting.",
 					data: rowsMapRequiredData
 				},
 				{
+					id: "optional-documents",
 					heading: "Optional documents",
 					description: "You can add these additional documents if they are relevant to your plan.",
 					data: optionDataMap
@@ -34,18 +37,21 @@
 			] %}
 
 			{% for group in documentGroups %}
-				<h2 class="govuk-heading-l">{{ group.heading }}</h2>
-				<p class="govuk-body">{{ group.description }}</p>
+				<div id="{{ group.id }}">
+					<h2 class="govuk-heading-l">{{ group.heading }}</h2>
+					<p class="govuk-body">{{ group.description }}</p>
 
-				{% set rows = [] %}
-				{% for label, value in group.data %}
-					{% set _ = rows.push({
-						key: { text: label | trim },
-						value: { text: value | default("not added", true) | capitalize }
-					}) %}
-				{% endfor %}
+					{% set rows = [] %}
+					{% for label, value in group.data %}
+						{% set documentId = "document-" + (label | trim | lower | replace(r/[^a-z0-9]+/g, "-")) %}
+						{% set _ = rows.push({
+							key: { html: '<span id="' + documentId + '" tabindex="-1">' + (label | trim | escape) + '</span>' },
+							value: { text: "Not added" if (not value or value == "not added") else value }
+						}) %}
+					{% endfor %}
 
-				{{ govukSummaryList({ rows: rows }) }}
+					{{ govukSummaryList({ rows: rows }) }}
+				</div>
 			{% endfor %}
 
 			{{ govukButton({
