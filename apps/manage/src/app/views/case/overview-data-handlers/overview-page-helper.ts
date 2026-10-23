@@ -147,7 +147,8 @@ type Gateway3Answers = {
 	examiningInspectorAppointmentDate?: Date | null;
 	examinationWebsite?: string | null;
 };
-type CompiledGateway3Answers = Gateway3Answers & {
+
+export type CompiledGateway3Answers = Gateway3Answers & {
 	optionalData: {
 		[k: string]: string;
 	};
