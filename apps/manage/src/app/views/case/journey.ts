@@ -106,6 +106,10 @@ export function createExaminationHearingJourney(
 				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
 				.endMultiQuestionCondition('hearing-remote-meeting')
+				.addQuestion(questions[`examinationHearingDuration-${hearingId}`])
+				.withCondition(() => false)
+				.addQuestion(questions[`examinationHearingEndDate-${hearingId}`])
+				.withCondition(() => false)
 		],
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -451,6 +455,13 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+
+	if (response.answers.hearings) {
+		const sortedHearings = sortByCreatedDate(response.answers.hearings as { createdDate: Date; [key: string]: any }[]);
+
+		response.answers.hearings = sortedHearings;
+	}
+
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
 		if (req.session.answers) {
