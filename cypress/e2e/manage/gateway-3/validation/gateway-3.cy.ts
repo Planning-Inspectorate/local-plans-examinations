@@ -72,8 +72,21 @@ describe('Gateway 3 validation', () => {
 		);
 	});
 
+	it('shows an error when the Gateway 3 report is not uploaded', { tags: ['regression'] }, () => {
+		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
+		gateway3DecisionPage.verifyLoaded();
+		gateway3DecisionPage.selectDecision('Proceed');
+
+		gateway3DocumentsPage.verifyLoaded();
+		gateway3DocumentsPage.saveAndReturn();
+
+		gateway3DocumentsPage.verifyLoaded();
+		gateway3DocumentsPage.verifyValidationError('Please upload your Gateway 3 report');
+		gateway3DocumentsPage.verifyErrorTitle();
+	});
+
 	it(
-		'shows an error for each missing required document when a Gateway 3 decision is requested',
+		'shows an error for each missing required document when Issue decision is selected',
 		{ tags: ['regression'] },
 		() => {
 			requestGateway3DecisionWithMissingDocuments();
@@ -132,19 +145,5 @@ describe('Gateway 3 submission documents validation', () => {
 		addedDocuments.forEach(({ label, fileName }) => {
 			gateway3ReviewDocumentsPage.verifyDocumentAdded(label, fileName);
 		});
-	});
-
-	it('shows an error when the Gateway 3 report is not uploaded', { tags: ['regression'] }, () => {
-		openSeededGateway3PageWithSubmissionDocuments();
-		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
-		gateway3DecisionPage.verifyLoaded();
-		gateway3DecisionPage.selectDecision('Proceed');
-
-		gateway3DocumentsPage.verifyLoaded();
-		gateway3DocumentsPage.saveAndReturn();
-
-		gateway3DocumentsPage.verifyLoaded();
-		gateway3DocumentsPage.verifyValidationError('Please upload your Gateway 3 report');
-		gateway3DocumentsPage.verifyErrorTitle();
 	});
 });

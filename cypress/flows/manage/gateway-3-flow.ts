@@ -1,5 +1,5 @@
 import { gateway3Page, gateway3ReviewDocumentsPage } from '../../page-objects/manage/gateway-3/index.ts';
-import { gateway3DecisionAnswer, gateway3ReviewDocumentsAnswer } from '../../fixtures/manage/gateway-3.ts';
+import { gateway3ReviewDocumentsAnswer } from '../../fixtures/manage/gateway-3.ts';
 import { openManageCase, openSeededManageCase, type SeededManageCase } from './seeded-case-flow.ts';
 import type { Gateway3SubmissionDocumentsSeedOptions } from '../../tasks/gateway-3.ts';
 
@@ -29,7 +29,18 @@ export const openGateway3ReviewDocumentsPage = () => {
 	gateway3ReviewDocumentsPage.verifyLoaded();
 };
 
+// The Review link has no text until documents are added, so open the review page from the Gateway 3 tab URL
+export const visitGateway3ReviewDocumentsPage = (submissionNumber = 1) => {
+	cy.location('pathname').then((gateway3TabPath) => {
+		const submissionSection = `gateway-3-submission-${submissionNumber}`;
+		cy.visit(`${gateway3TabPath}/${submissionSection}/${gateway3ReviewDocumentsAnswer.path}-${submissionNumber}`);
+	});
+	gateway3ReviewDocumentsPage.verifyLoaded();
+};
+
+// Issue decision checks the required submission documents before the decision page opens
 export const requestGateway3DecisionWithMissingDocuments = () => {
-	gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
+	visitGateway3ReviewDocumentsPage();
+	gateway3ReviewDocumentsPage.issueDecision();
 	gateway3ReviewDocumentsPage.verifyLoaded();
 };

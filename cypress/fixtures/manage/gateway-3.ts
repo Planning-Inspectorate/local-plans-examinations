@@ -104,7 +104,7 @@ export const gateway3ReviewDocumentsAnswer = {
 	path: 'gateway-3-review-documents',
 	reviewLinkText: 'Review',
 	noDocumentsDisplay: '0 document(s)',
-	notAddedDisplay: 'Not added',
+	notAddedDisplay: 'Not provided',
 	requiredSection: {
 		id: 'required-documents',
 		heading: 'Required information',
