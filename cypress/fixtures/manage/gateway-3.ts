@@ -120,7 +120,6 @@ export const gateway3ReviewDocumentsAnswer = {
 
 export type Gateway3SubmissionDocument = {
 	label: string;
-	// Key of DOCUMENT_SET_ID, resolved by the seed task
 	documentSetKey: string;
 	fileName: string;
 };

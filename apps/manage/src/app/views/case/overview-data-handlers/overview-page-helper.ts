@@ -154,6 +154,19 @@ export type CompiledGateway3Answers = Gateway3Answers & {
 	};
 };
 
+/**
+ * Compiles data for Gateway3 by retrieving and organizing relevant document information
+ * for a specified case. It fetches documents from the database, groups them by their
+ * document set IDs, and maps them to their corresponding fields based on predefined
+ * required and optional document sets.
+ *
+ * @param {PrismaClient} db - The database client used to fetch document data.
+ * @param {Gateway3Answers} currentData - The existing Gateway3 data that will be supplemented
+ * with compiled document information.
+ * @returns {Promise<CompiledGateway3Answers>} A promise that resolves to the compiled
+ * Gateway3 data including document information grouped and formatted by required
+ * and optional sets.
+ */
 export const compileGateway3Data = async (
 	db: PrismaClient,
 	currentData: Gateway3Answers

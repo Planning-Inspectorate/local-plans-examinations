@@ -31,7 +31,6 @@ const buildQuestion = () => {
 
 const withoutDocuments = (fields: string[]) => Object.fromEntries(fields.map((field) => [field, '']));
 
-// Mirrors the shape compileGateway3Data returns: every document field is present, blank when nothing was added
 const buildAnswers = ({
 	optionalData = {},
 	...requiredOverrides
