@@ -456,12 +456,11 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		response
 	});
 
-	if (!response.answers.hearings) {
-		throw Error('hearings property missing from answers for examination journey');
-	}
-	const sortedHearings = sortByCreatedDate(response.answers.hearings as { createdDate: Date; [key: string]: any }[]);
+	if (response.answers.hearings) {
+		const sortedHearings = sortByCreatedDate(response.answers.hearings as { createdDate: Date; [key: string]: any }[]);
 
-	response.answers.hearings = sortedHearings;
+		response.answers.hearings = sortedHearings;
+	}
 
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
