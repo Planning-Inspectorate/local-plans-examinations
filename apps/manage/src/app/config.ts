@@ -39,6 +39,12 @@ export interface Config extends ConfigWithBlob {
 			authCode?: string;
 			gw2Submission?: string;
 			createCase?: string;
+			gw2AssessorUpdatedAssessor?: string;
+			gw2AssessorUpdatedLpa?: string;
+			gw2WorkshopInspector?: string;
+			gw2WorkshopLpa?: string;
+			gw2WorkshopAgenda?: string;
+			gw2ReportUploaded?: string;
 		};
 		localPlansTeamEmail: string;
 	};
@@ -97,6 +103,12 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
 		GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID,
 		GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID,
 		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
@@ -214,7 +226,13 @@ export function loadConfig(): Config {
 			templateIds: {
 				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || '',
 				gw2Submission: GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID || '',
-				createCase: GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID || ''
+				createCase: GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID || '',
+				gw2AssessorUpdatedAssessor: GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
+				gw2AssessorUpdatedLpa: GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
+				gw2WorkshopInspector: GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID || '',
+				gw2WorkshopLpa: GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID || '',
+				gw2WorkshopAgenda: GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID || '',
+				gw2ReportUploaded: GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID || ''
 			},
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},

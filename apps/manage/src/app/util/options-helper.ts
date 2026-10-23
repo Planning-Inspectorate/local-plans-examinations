@@ -26,6 +26,18 @@ export async function loadInspectorOptions(service: ManageService, req: Request,
 	questions.examiningInspector1.options = optionsMap;
 	questions.examiningInspector2.options = optionsMap;
 	questions.examiningInspector3.options = optionsMap;
+
+	questions.gateway2AssessorsName.options = optionsMap;
+}
+
+export async function retrieveDefaultInspectors() {
+	return [
+		{ value: '', text: '' },
+		{ value: 'inspector-1', text: 'Inspector 1' },
+		{ value: 'inspector-2', text: 'Inspector 2' },
+		{ value: 'inspector-3', text: 'Inspector 3' },
+		{ value: 'inspector-4', text: 'Inspector 4' }
+	];
 }
 
 export async function retrieveCaseOfficers(
