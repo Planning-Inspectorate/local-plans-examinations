@@ -194,4 +194,36 @@ describe('landing page', () => {
 			);
 		}
 	});
+
+	it('should use the examination status for plans in the Examination stage', async () => {
+		const { landingPage, mockRes, mockReq } = initialiseTest([
+			mockPlan({
+				refNum: 'PLAN-EXAMINATION',
+				stage: 3,
+				status: 0,
+				examinationStatus: 'in-examination',
+				examinationStatusLabel: 'In examination'
+			})
+		]);
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		const data = mockRes.render.mock.calls[0].arguments[1];
+		assert.strictEqual(data.plans[0][4].html, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
+	});
+
+	it('should continue to use the plan status before the Examination stage', async () => {
+		const { landingPage, mockRes, mockReq } = initialiseTest([
+			mockPlan({
+				refNum: 'PLAN-GATEWAY-3',
+				stage: 2,
+				status: 6,
+				examinationStatus: 'in-examination',
+				examinationStatusLabel: 'In examination'
+			})
+		]);
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		const data = mockRes.render.mock.calls[0].arguments[1];
+		assert.strictEqual(data.plans[0][4].html, '<strong class="govuk-tag govuk-tag--yellow">Under review</strong>');
+	});
 });
