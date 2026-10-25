@@ -3,8 +3,9 @@ import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
-function createMockService(current: { planPauseStartDate: Date | null } | null = null) {
+function createMockService(current: { planPauseStartDate: Date | null } | null = null, examinationStatus?: string) {
 	return {
 		db: {
 			case: {
@@ -24,7 +25,8 @@ function createMockService(current: { planPauseStartDate: Date | null } | null =
 						]
 					},
 					examinationInfo: {
-						hearings: [{}]
+						hearings: [{}],
+						status: examinationStatus
 					}
 				})),
 				upsert: mock.fn(async () => ({}))
@@ -436,6 +438,33 @@ describe('test ExaminationSaveController', () => {
 		);
 		await examinationController.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+	});
+
+	it('moves a submitted examination to In examination when an inspector is assigned', async () => {
+		const mockService = createMockService(null, EXAMINATION_STATUS_ID.SUBMITTED);
+		const req = { params: { question: 'examining-inspector-1' } } as unknown as Request;
+		const answers = { examiningInspector1: 'inspector-id' };
+		const expectedAnswers = {
+			...answers,
+			examiningInspectorAppointmentDate: mockDate,
+			status: EXAMINATION_STATUS_ID.IN_EXAMINATION
+		};
+		const examinationController = new ExaminationSaveController(
+			mockService as unknown as ManageService,
+			req,
+			'caseRef'
+		);
+
+		await examinationController.prepareAndSave(answers);
+
+		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0), {
+			where: { caseId: 'someCaseId' },
+			update: expectedAnswers,
+			create: {
+				caseId: 'someCaseId',
+				...expectedAnswers
+			}
+		});
 	});
 
 	const pauseDate = new Date('2026-02-01T00:00:00.000Z');

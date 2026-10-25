@@ -5,9 +5,11 @@ import { parseDate } from '../../../util/date.ts';
 import type { ExaminationInput } from './save-inputs.ts';
 import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../classes/common-consts.ts';
 import { formatDateToString } from '../../../util/date.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
+	private examinationStatus: string | undefined;
 	private isExaminationHearingQuestion() {
 		const question = String(this.req.params.question);
 		const matchedQuestion = examinationHearingBaseUrls.find((prefix) => question.startsWith(prefix));
@@ -22,7 +24,8 @@ export class ExaminationSaveController extends SaveController {
 				id: true,
 				examinationInfo: {
 					select: {
-						hearings: true
+						hearings: true,
+						status: true
 					}
 				}
 			},
@@ -34,6 +37,7 @@ export class ExaminationSaveController extends SaveController {
 		if (!this.caseId) {
 			this.caseId = caseDetails.id;
 		}
+		this.examinationStatus = caseDetails.examinationInfo?.status;
 		if (caseDetails.examinationInfo?.hearings == undefined) {
 			throw Error(`Could not find hearing data for case with reference '${this.caseReference}'`);
 		}
@@ -189,9 +193,13 @@ export class ExaminationSaveController extends SaveController {
 		if (question && inspectorQuestions.includes(question)) {
 			answers.examiningInspectorAppointmentDate = new Date();
 		}
+		const statusUpdate =
+			question && inspectorQuestions.includes(question) && this.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED
+				? { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
+				: {};
 		const pauseHistory = await this.pauseHistoryFor(answers.planPauseStartDate, this.caseId);
-		const createData: Record<string, any> = { ...answers };
-		const updateData: Record<string, any> = { ...answers };
+		const createData: Record<string, any> = { ...answers, ...statusUpdate };
+		const updateData: Record<string, any> = { ...answers, ...statusUpdate };
 		Object.assign(updateData, pauseHistory);
 		Object.assign(createData, pauseHistory);
 		if ('hearings' in answers) {

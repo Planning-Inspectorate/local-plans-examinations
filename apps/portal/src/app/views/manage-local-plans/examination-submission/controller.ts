@@ -340,6 +340,8 @@ export function buildSubmittedExaminationView(): RequestHandler {
 		if (journey) {
 			journey.taskListTemplate = SUBMITTED_TEMPLATE;
 		}
+		res.locals.pageTitle = 'Examination submission';
+		res.locals.pageHeading = 'Examination submission';
 		if (submissionDate) {
 			res.locals.submissionDate = formatDisplayDate(submissionDate);
 			res.locals.submissionTime = formatDisplayTime(submissionDate);
