@@ -49,14 +49,14 @@ export async function sendAssessorAppointedNotifyEmail(
 			.split('-')
 			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 			.join(' '),
-		['contact_info']: service.localPlansTeamEmail,
 		['team_email_address']: service.localPlansTeamEmail,
 		['gw2_assessor_initial']: assessorName[0],
 		['gw2_assessor_lastname']: assessorName.split(' ').slice(-1)[0],
 		// TODO Where are we pulling the assessor's qualifications from
 		['gw2_assessor_quals']: '',
-		// TODO An assessor can be appointed without a workshhop
-		['workshop_week_monday']: ''
+		// TODO Monday after submission + 2 weeks
+		['workshop_week_monday']: '',
+		['contact_info']: ''
 	};
 
 	try {
@@ -118,9 +118,12 @@ export async function sendWorkshopDocsUploadedNotifyEmail(service: ManageService
 			.split('-')
 			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 			.join(' '),
-		['contact_info']: service.localPlansTeamEmail,
-		['team_email_address']: service.localPlansTeamEmail
+		['team_email_address']: service.localPlansTeamEmail,
 		// TODO Confirm usage of params in template
+		['contact_info']: '', // Retrieve from doc,
+		['workshop_start_date']: '',
+		['workshop_end_date']: '',
+		['workshop_type']: ''
 	};
 
 	// All LPAs notified
@@ -172,9 +175,9 @@ export async function sendWorkshopReportUploadedNotifyEmail(service: ManageServi
 			.split('-')
 			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 			.join(' '),
-		['contact_info']: service.localPlansTeamEmail,
-		['team_email_address']: service.localPlansTeamEmail
+		['team_email_address']: service.localPlansTeamEmail,
 		// TODO Confirm usage of params in template
+		['contact_info']: '' // Retrieve from doc,
 	};
 
 	// All LPAs notified
