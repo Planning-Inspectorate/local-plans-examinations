@@ -71,12 +71,27 @@ describe('Hearing templates', () => {
 		const data = {
 			config: { headerTitle: 'Manage', footerLinks: [] },
 			navigation: [],
-			summaryListData: { sections: [] },
-			alertMessageStatus: 'success'
+			summaryListData: { sections: [] }
 		};
-		const hearingHtml = env.render('views/layouts/case-overview.njk', { ...data, alertMessage: 'Hearing created' });
+		const hearingHtml = env.render('views/layouts/case-overview.njk', {
+			...data,
+			alerts: [
+				{
+					type: 'success',
+					text: 'Hearing created'
+				}
+			]
+		});
 		assert.ok(hearingHtml.indexOf('Hearing created') > hearingHtml.indexOf('id="service-navigation"'));
-		const otherHtml = env.render('views/layouts/case-overview.njk', { ...data, alertMessage: 'Changes saved' });
+		const otherHtml = env.render('views/layouts/case-overview.njk', {
+			...data,
+			alerts: [
+				{
+					type: 'success',
+					text: 'Changes saved'
+				}
+			]
+		});
 		assert.ok(otherHtml.indexOf('Changes saved') < otherHtml.indexOf('id="service-navigation"'));
 	});
 

@@ -9,6 +9,7 @@ import {
 	createGateway2WorkshopJourney,
 	createExaminationJourney,
 	createExaminationHearingJourney,
+	createExaminationPauseJourney,
 	createGateway3Journey
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
@@ -343,5 +344,41 @@ describe('createExaminationHearingJourney', () => {
 				assert.equal(response.answers['hearingTime-1'], hearing.hearingTime);
 			}
 		});
+	}
+});
+
+describe('createExaminationPauseJourney', () => {
+	for (const pauseId of [1, 2]) {
+		for (const [question, previousQuestion] of [
+			['examination-pause-start-date', null],
+			['examination-pause-details', 'examination-pause-start-date'],
+			['examination-pause-end-date', null],
+			['examination-pause-restart-details', 'examination-pause-end-date']
+		]) {
+			it(`links ${question}-${pauseId} back to ${previousQuestion ?? 'Examination'}`, () => {
+				const baseUrl = '/case/PLAN-123456';
+				const params = {
+					reference: 'PLAN-123456',
+					section: 'pause-examination',
+					question: `${question}-${pauseId}`
+				};
+				const journey = createExaminationPauseJourney(
+					{
+						baseUrl,
+						params,
+						url: `/examination-pause/pause-examination/${params.question}`,
+						session: {}
+					} as unknown as Request,
+					new JourneyResponse(COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID, '', { planPauseHistory: [] }),
+					questions
+				);
+				assert.equal(
+					journey.getBackLink({ params }),
+					previousQuestion
+						? `${baseUrl}/examination-pause/pause-examination/${previousQuestion}-${pauseId}`
+						: `${baseUrl}/examination`
+				);
+			});
+		}
 	}
 });

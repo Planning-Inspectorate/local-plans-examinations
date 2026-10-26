@@ -29,7 +29,7 @@ export function parseDate(value: string): Date {
 }
 
 export function formatDateToString(date: Date, includeTime: boolean = false): string {
-	const options: Record<string, string> = {
+	const options: Intl.DateTimeFormatOptions = {
 		day: 'numeric',
 		month: 'long',
 		timeZone: 'Europe/London',

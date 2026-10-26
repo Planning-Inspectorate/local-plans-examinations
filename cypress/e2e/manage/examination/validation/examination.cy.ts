@@ -4,9 +4,11 @@ import {
 	actualSubmissionDate,
 	examinationReport as report,
 	examinationWebsite,
+	examinationPause,
 	examiningInspector2,
 	factCheckDateReceivedFromInspector,
 	hearingDateAndTime,
+	seededRestartedExamination,
 	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
@@ -14,6 +16,7 @@ import {
 	examinationWebsitePage,
 	examiningInspector2Page,
 	examinationPage,
+	examinationPausePages,
 	factCheckDateReceivedFromInspectorPage,
 	examinationReportUploadPage as uploadPage,
 	soundUnsoundPage
@@ -86,6 +89,24 @@ describe('Examination validation', () => {
 		factCheckDateReceivedFromInspectorPage.verifyLoaded();
 		//valid date error message assertions need 2 spaces due to how the message is processed
 		factCheckDateReceivedFromInspectorPage.verifyValidationError('Enter  a valid date');
+	});
+});
+
+describe('Examination pause validation', () => {
+	beforeEach(() => cy.task('clearDb'));
+	after(() => cy.task('clearDb'));
+
+	it('cannot clear a saved restart date', { tags: ['regression'] }, () => {
+		const { restartDate } = examinationPausePages();
+		openSeededExaminationPage(seededRestartedExamination);
+		examinationPage.openActionLinkFor('Examination restart date');
+		restartDate.verifyLoaded(examinationPause.restartInput);
+		restartDate.clearDate();
+		restartDate.saveAndContinue();
+		restartDate.verifyValidationError('Please enter an input for the restart date');
+		restartDate.goBack();
+		cy.reload();
+		examinationPage.verifyRestarted();
 	});
 });
 

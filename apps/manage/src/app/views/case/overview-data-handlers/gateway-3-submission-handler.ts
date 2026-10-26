@@ -6,11 +6,16 @@ import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { fileUploadQuestionConfigs, fileUploaderCaseSessionKeyForField, getParam } from '../controller.ts';
 import { Gateway3SaveController } from '../save/gateway-3-save-controller.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		if (!req.params.question && req.method == 'GET') {
+			await this.tryAddPauseStatusBanner(context);
+			consumeAlertsFromSession(req, res);
+		}
 		const caseReference = getParam(req.params.reference);
 		if (req.params.question == undefined) {
 			res.redirect(

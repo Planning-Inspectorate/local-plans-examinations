@@ -26,11 +26,9 @@ export type examinationStatusWithPause = {
 	qaInspector2: string | null;
 	qaInspector3: string | null;
 	panelResponseToInspectorDate: Date | null;
-	planPauseStartDate: Date | null;
-	planPauseEndDate: Date | null;
 	finalReportIssueDate: Date | null;
 	adoptionDate: Date | null;
-	planPauseHistory: { planPauseDate: Date | null }[];
+	planPauseHistory: { planPauseDate: Date | null; planPauseEndDate: Date | null }[];
 	shouldPause?: boolean;
 };
 export const getExaminationStages = async (service: ManageService, caseId: string) => {
@@ -46,39 +44,37 @@ export const getExaminationStages = async (service: ManageService, caseId: strin
 			qaInspector2: true,
 			qaInspector3: true,
 			panelResponseToInspectorDate: true,
-			planPauseStartDate: true,
-			planPauseEndDate: true,
 			finalReportIssueDate: true,
 			adoptionDate: true,
 			planPauseHistory: {
 				orderBy: { createdAt: 'desc' },
 				take: 1,
-				select: { planPauseDate: true }
+				select: { planPauseDate: true, planPauseEndDate: true }
 			}
 		}
 	});
 
 	if (examinationStatus !== null) {
-		const latestStart = examinationStatus.planPauseHistory[0]?.planPauseDate ?? examinationStatus.planPauseStartDate;
-		const end = examinationStatus.planPauseEndDate;
+		const latestStart = examinationStatus.planPauseHistory[0]?.planPauseDate;
+		const end = examinationStatus.planPauseHistory[0]?.planPauseEndDate;
 		examinationStatus.shouldPause = !!latestStart && (!end || latestStart > end);
 
 		return examinationStatus;
 	}
 };
 /**
- * Immutably sort the given list workshops or hearings. details, with null createdDate values at the end
- * @param workshops The workshops to filter and sort
- * @param hearings The workshops to filter and sort
- * @returns The sorted workshops or hearings
+ * Immutably sort the given list of objects by a date column. details, with null createdDate values at the end
+ * @param workshops The objects to filter and sort
+ * @param hearings The objects to filter and sort
+ * @returns The sorted objects
  */
-export function sortByCreatedDate(workshops: { createdDate: Date; [key: string]: any }[]) {
-	return workshops.toSorted((a, b) => {
-		if (!(a.createdDate || b.createdDate)) return 0;
-		if (!a.createdDate) return 1;
-		if (!b.createdDate) return -1;
-		const aCreatedDate = typeof a.createdDate === 'string' ? new Date(a.createdDate) : a.createdDate;
-		const bCreatedDate = typeof b.createdDate === 'string' ? new Date(b.createdDate) : b.createdDate;
-		return aCreatedDate.getTime() - bCreatedDate.getTime();
+export function sortByDateColumn(objects: { [key: string]: any }[], columnName: string) {
+	return objects.toSorted((a, b) => {
+		if (!(a[columnName] || b[columnName])) return 0;
+		if (!a[columnName]) return 1;
+		if (!b[columnName]) return -1;
+		const aDate = typeof a[columnName] === 'string' ? new Date(a[columnName]) : a[columnName];
+		const bDate = typeof b[columnName] === 'string' ? new Date(b[columnName]) : b[columnName];
+		return aDate.getTime() - bDate.getTime();
 	});
 }

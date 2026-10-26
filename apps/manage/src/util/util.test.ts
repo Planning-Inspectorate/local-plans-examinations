@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import {
 	getExaminationStages,
-	sortByCreatedDate,
+	sortByDateColumn,
 	sortGateway3Submissions,
 	type examinationStatusWithPause
 } from './util.ts';
@@ -41,14 +41,14 @@ describe('test manage utilities', () => {
 		assert.deepEqual(actualSortedSubmissions, expectedSortedSubmissions);
 	});
 
-	it('sortByCreatedDate sorts dates without changing the input', () => {
+	it('sortByDateColumn sorts dates without changing the input', () => {
 		const workshops = [
 			{ id: 'later', createdDate: '2026-02-01T00:00:00.000Z' },
 			{ id: 'missing', createdDate: null },
 			{ id: 'earlier', createdDate: new Date('2026-01-01T00:00:00.000Z') }
 		];
 
-		const sorted = sortByCreatedDate(workshops as any);
+		const sorted = sortByDateColumn(workshops as any, 'createdDate');
 
 		assert.deepEqual(
 			sorted.map(({ id }) => id),
@@ -74,8 +74,6 @@ describe('getExaminationStages', () => {
 		qaInspector2: null,
 		qaInspector3: null,
 		panelResponseToInspectorDate: null,
-		planPauseStartDate: null,
-		planPauseEndDate: null,
 		finalReportIssueDate: null,
 		adoptionDate: null,
 		planPauseHistory: [],
@@ -106,14 +104,12 @@ describe('getExaminationStages', () => {
 				qaInspector2: true,
 				qaInspector3: true,
 				panelResponseToInspectorDate: true,
-				planPauseStartDate: true,
-				planPauseEndDate: true,
 				finalReportIssueDate: true,
 				adoptionDate: true,
 				planPauseHistory: {
 					orderBy: { createdAt: 'desc' },
 					take: 1,
-					select: { planPauseDate: true }
+					select: { planPauseDate: true, planPauseEndDate: true }
 				}
 			}
 		});
@@ -142,104 +138,6 @@ describe('getExaminationStages', () => {
 	describe('shouldPause', () => {
 		it('is false when there is no pause history', async () => {
 			const { service } = mockService(buildRecord({ planPauseHistory: [] }));
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, false);
-		});
-
-		it('is false when the latest history entry has a null pause date', async () => {
-			const { service } = mockService(buildRecord({ planPauseHistory: [{ planPauseDate: null }] }));
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, false);
-		});
-
-		it('is false when there is no history even if an end date is set', async () => {
-			const { service } = mockService(buildRecord({ planPauseEndDate: new Date('2026-03-01') }));
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, false);
-		});
-
-		for (const { end, expected } of [
-			{ end: null, expected: true },
-			{ end: new Date('2026-02-01'), expected: true },
-			{ end: new Date('2026-03-01'), expected: false },
-			{ end: new Date('2026-04-01'), expected: false }
-		]) {
-			it(`recognises an existing pause without history when its end date is ${end?.toISOString() ?? 'missing'}`, async () => {
-				const { service } = mockService(
-					buildRecord({ planPauseStartDate: new Date('2026-03-01'), planPauseEndDate: end })
-				);
-
-				const result = await getExaminationStages(service, CASE_ID);
-
-				assert.strictEqual(result?.shouldPause, expected);
-			});
-		}
-
-		it('is true when a pause has started and there is no end date', async () => {
-			const { service } = mockService(
-				buildRecord({
-					planPauseHistory: [{ planPauseDate: new Date('2026-03-01') }],
-					planPauseEndDate: null
-				})
-			);
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, true);
-		});
-
-		it('is true when the latest pause started after the end date', async () => {
-			const { service } = mockService(
-				buildRecord({
-					planPauseHistory: [{ planPauseDate: new Date('2026-05-01') }],
-					planPauseEndDate: new Date('2026-04-01')
-				})
-			);
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, true);
-		});
-
-		it('is false when the latest pause started before the end date', async () => {
-			const { service } = mockService(
-				buildRecord({
-					planPauseHistory: [{ planPauseDate: new Date('2026-03-01') }],
-					planPauseEndDate: new Date('2026-04-01')
-				})
-			);
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, false);
-		});
-
-		it('is false when the latest pause started at the same time as the end date', async () => {
-			const { service } = mockService(
-				buildRecord({
-					planPauseHistory: [{ planPauseDate: new Date('2026-04-01T10:00:00Z') }],
-					planPauseEndDate: new Date('2026-04-01T10:00:00Z')
-				})
-			);
-
-			const result = await getExaminationStages(service, CASE_ID);
-
-			assert.strictEqual(result?.shouldPause, false);
-		});
-
-		it('only uses the first (latest) history entry', async () => {
-			const { service } = mockService(
-				buildRecord({
-					planPauseHistory: [{ planPauseDate: new Date('2026-03-01') }, { planPauseDate: new Date('2026-06-01') }],
-					planPauseEndDate: new Date('2026-04-01')
-				})
-			);
 
 			const result = await getExaminationStages(service, CASE_ID);
 

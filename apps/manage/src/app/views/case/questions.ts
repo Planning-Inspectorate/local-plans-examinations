@@ -40,13 +40,14 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortByCreatedDate } from '#util/util.ts';
+import { sortByDateColumn } from '#util/util.ts';
 import {
 	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
 	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -395,6 +396,91 @@ for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) 
 				];
 			}
 		}
+	}
+}
+// Examination pause
+const examinationPauseBaseQuestions: Record<string, ManageQuestionConfig> = {
+	examinationPauseStartDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the examination paused from?',
+		fieldName: 'planPauseDate', // In the ExaminationPause model
+		url: 'examination-pause-start-date',
+		title: 'Examination pause date',
+		validators: [
+			new DateValidator('Input an exam pause start date', undefined, {
+				emptyErrorMessage: 'Please enter an input for the pause start date'
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-start-date' }
+	},
+	examinationPauseDetail: {
+		type: COMPONENT_TYPES.TEXT_ENTRY,
+		question: 'Pause details',
+		fieldName: 'planPauseStartDetails', // In the ExaminationPause model
+		label: 'Add any details about the pause',
+		url: 'examination-pause-details',
+		title: 'Pause details',
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 1,
+					minLengthMessage: 'Please add any details about the pause'
+				},
+				maxLength: {
+					maxLength: 1000,
+					maxLengthMessage: 'Please ensure the pause details contains up to 1000 characters'
+				}
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-details' }
+	},
+	examinationPauseEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the examination restart date?',
+		fieldName: 'planPauseEndDate', // In the ExaminationPause model
+		url: 'examination-pause-end-date',
+		title: 'Examination restart date',
+		validators: [
+			new DateValidator('Input an exam pause restart date', undefined, {
+				emptyErrorMessage: 'Please enter an input for the restart date'
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-end-date' }
+	},
+	examinationRestartDetail: {
+		type: COMPONENT_TYPES.TEXT_ENTRY,
+		question: 'Restart details',
+		fieldName: 'planPauseEndDetails', // In the ExaminationPause model
+		label: 'Add any details about the restart',
+		url: 'examination-pause-restart-details',
+		title: 'Restart details',
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 1,
+					minLengthMessage: 'Please add any details about the restart'
+				},
+				maxLength: {
+					maxLength: 1000,
+					maxLengthMessage: 'Please ensure the pause restart details contains up to 1000 characters'
+				}
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-restart-details' }
+	}
+};
+export const examinationPauseBaseUrls = Object.values(examinationPauseBaseQuestions)
+	.map((value) => value.url)
+	.filter((value) => value != undefined);
+
+// Repeat the base exam pause questions multiple times, to allow multiple pauses to be created
+const examinationPauseQuestions: Record<string, ManageQuestionConfig> = {};
+for (let pauseId = 1; pauseId < COMMON_CONSTS.NUM_EXAM_PAUSE_QUESTIONS; pauseId++) {
+	for (const key in examinationPauseBaseQuestions) {
+		const questionConfigCopy = { ...examinationPauseBaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${pauseId}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${pauseId}`;
+		examinationPauseQuestions[`${key}-${pauseId}`] = questionConfigCopy;
 	}
 }
 
@@ -1331,24 +1417,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'final-report-issue-date' }
 	},
-	planPauseStartDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When did the plan pause start?',
-		fieldName: 'planPauseStartDate',
-		url: 'plan-pause-start-date',
-		title: 'Plan pause date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-start-date' }
-	},
-	planPauseEndDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When did the plan pause end?',
-		fieldName: 'planPauseEndDate',
-		url: 'plan-pause-end-date',
-		title: 'Plan pause end date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-end-date' }
-	},
 	withdrawnDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the plan withdrawn?',
@@ -1467,6 +1535,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-report-manage',
 		viewData: { uploadQuestionUrl: 'examination-report' }
 	},
+	...examinationPauseQuestions,
 	...gateway3Questions
 };
 
@@ -1487,6 +1556,15 @@ export const questions = createQuestions(
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
+// Some questions require different submit button text
+for (const prefix of ['examinationPauseDetail', 'examinationRestartDetail']) {
+	const questionsStartingWithPrefix = Object.fromEntries(
+		Object.entries(questions).filter(([k]) => k.startsWith(prefix))
+	);
+	for (const question of Object.values(questionsStartingWithPrefix)) {
+		question.continueButtonText = 'Submit';
+	}
+}
 
 Object.keys(examinationHearingQuestions).forEach((key) => {
 	questions[key].continueButtonText = 'Continue';
@@ -1531,7 +1609,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByDateColumn(answersFull.workshops, 'createdDate')[workshopId - 1];
 			let workshopDateValue = workshopDetails.workshopDate;
 			if (typeof workshopDetails.workshopDate == 'string') {
 				workshopDateValue = parseDate(workshopDateValue);
@@ -1571,7 +1649,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByDateColumn(answersFull.workshops, 'createdDate')[workshopId - 1];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: workshopDetails.workshopExpectedDaysKnown,
@@ -1599,7 +1677,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortByCreatedDate(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByDateColumn(answersFull.workshops, 'createdDate')[workshopId - 1];
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,
@@ -1617,7 +1695,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const hearingId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const hearingDetails = sortByCreatedDate(answersFull.hearings)[hearingId - 1];
+			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 
 			let hearingDateValue = hearingDetails.hearingDate;
 			if (typeof hearingDetails.hearingDate == 'string') {
@@ -1649,7 +1727,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const hearingId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const hearingDetails = sortByCreatedDate(answersFull.hearings)[hearingId - 1];
+			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const expectedDaysKnown = {
 				key: this.title,
 				value: hearingDetails.hearingExpectedDaysKnown,
@@ -1677,7 +1755,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const hearingId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const hearingDetails = sortByCreatedDate(answersFull.hearings)[hearingId - 1];
+			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const locationType = {
 				key: this.title,
 				value: hearingDetails.hearingLocationType,

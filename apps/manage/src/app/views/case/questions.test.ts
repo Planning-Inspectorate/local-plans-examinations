@@ -3,6 +3,16 @@ import { describe, it } from 'node:test';
 import { questions } from './questions.ts';
 import { validationResult } from 'express-validator';
 
+async function validate(key: string, body: Record<string, unknown>) {
+	const question = questions[key];
+	const req = { body };
+	for (const validator of question.validators) {
+		const chains = [validator.validate(question)].flat();
+		for (const chain of chains) await chain.run(req);
+	}
+	return validationResult(req).mapped();
+}
+
 describe('Gateway 2 workshop question summaries', () => {
 	function formatWorkshopDate(workshopDate: string, workshopEndTime: string | null = null) {
 		const question = questions['gateway2WorkshopDateAndTime-1'];
@@ -52,16 +62,6 @@ describe('Gateway 2 workshop question summaries', () => {
 });
 
 describe('Examination hearing questions', () => {
-	async function validate(key: string, body: Record<string, unknown>) {
-		const question = questions[key];
-		const req = { body };
-		for (const validator of question.validators) {
-			const chains = [validator.validate(question)].flat();
-			for (const chain of chains) await chain.run(req);
-		}
-		return validationResult(req).mapped();
-	}
-
 	it('uses hearing-specific labels and buttons without changing other questions', () => {
 		assert.equal(questions['examinationHearingLocationType-1'].title, 'Is the hearing in-person, hybrid or remote?');
 		assert.equal(questions['examinationHearingLocationKnown-1'].title, 'Do you know the venue address?');
@@ -149,4 +149,62 @@ describe('Examination hearing questions', () => {
 		const daysRows = questions['examinationHearingExpectedDays-1'].formatAnswerForSummary('hearing', journey);
 		assert.equal(daysRows[0].key, 'Do you know the expected number of days?');
 	});
+});
+
+describe('Examination pause questions', () => {
+	it('asks for a pause start date when empty for a later pause', async () => {
+		const errors = await validate('examinationPauseStartDate-3', {
+			'planPauseDate-3_day': '',
+			'planPauseDate-3_month': '',
+			'planPauseDate-3_year': ''
+		});
+		assert.equal(errors['planPauseDate-3_day'].msg, 'Please enter an input for the pause start date');
+	});
+
+	it('asks for a restart date when empty', async () => {
+		const errors = await validate('examinationPauseEndDate-1', {
+			'planPauseEndDate-1_day': '',
+			'planPauseEndDate-1_month': '',
+			'planPauseEndDate-1_year': ''
+		});
+		assert.equal(errors['planPauseEndDate-1_day'].msg, 'Please enter an input for the restart date');
+	});
+
+	it('asks for pause details when empty', async () => {
+		const errors = await validate('examinationPauseDetail-1', { 'planPauseStartDetails-1': '' });
+		assert.equal(errors['planPauseStartDetails-1'].msg, 'Please add any details about the pause');
+	});
+
+	it('asks for restart details when empty', async () => {
+		const errors = await validate('examinationRestartDetail-1', { 'planPauseEndDetails-1': '' });
+		assert.equal(errors['planPauseEndDetails-1'].msg, 'Please add any details about the restart');
+	});
+
+	for (const pauseId of [1, 2]) {
+		it(`uses Save and continue for dates and Submit for details for pause ${pauseId}`, () => {
+			assert.equal(questions[`examinationPauseStartDate-${pauseId}`].continueButtonText, 'Save and continue');
+			assert.equal(questions[`examinationPauseEndDate-${pauseId}`].continueButtonText, 'Save and continue');
+			assert.equal(questions[`examinationPauseDetail-${pauseId}`].continueButtonText, 'Submit');
+			assert.equal(questions[`examinationRestartDetail-${pauseId}`].continueButtonText, 'Submit');
+		});
+	}
+
+	for (const [key, field, message] of [
+		[
+			'examinationPauseDetail-1',
+			'planPauseStartDetails-1',
+			'Please ensure the pause details contains up to 1000 characters'
+		],
+		[
+			'examinationRestartDetail-2',
+			'planPauseEndDetails-2',
+			'Please ensure the pause restart details contains up to 1000 characters'
+		]
+	]) {
+		it(`accepts 1000 characters and reports the correct limit for ${key}`, async () => {
+			assert.deepEqual(await validate(key, { [field]: 'x'.repeat(1000) }), {});
+			const errors = await validate(key, { [field]: 'x'.repeat(1001) });
+			assert.equal(errors[field].msg, message);
+		});
+	}
 });
