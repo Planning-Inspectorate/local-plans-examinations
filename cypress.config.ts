@@ -7,6 +7,7 @@ import { seedCy } from './packages/database/src/seed/seed-cy.ts';
 import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
 import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway-3-submitted.ts';
 import { seedUpdateGateway2Workshop } from './packages/database/src/seed/seed-update-gateway-2-workshop.ts';
+import { seedGateway3TriggerResubmission } from './packages/database/src/seed/seed-gateway-3-trigger-resubmission.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
 import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
@@ -102,6 +103,7 @@ export default defineConfig({
 				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
 				seedGateway3Submitted,
+				seedGateway3TriggerResubmission,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
 					return seedUpdateGateway2Workshop({ reference, workshopData });
 				},

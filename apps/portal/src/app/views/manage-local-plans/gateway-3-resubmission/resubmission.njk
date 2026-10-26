@@ -65,7 +65,7 @@
                 <dt class="govuk-summary-list__key"><strong>Previous submissions</strong></dt>
                 <dd class="govuk-summary-list__value">
                     {% for submission in previousSubmissions %}
-                        Submission {{ submission.number }}
+                        <a href="{{ submission.url }}" class="govuk-link">Submission {{ submission.number }}</a>
                         {% if submission.submittedDate %}
                             (submitted on {{ submission.submittedDate }})
                         {% endif %}
@@ -82,6 +82,10 @@
         {% endif %}
 
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+        {% if previousSubmissionDate %}
+            <p class="govuk-body" data-cy="previous-submission-copy">Gateway 3 submission {{ submissionNumber }}: {{ previousSubmissionDate }} by {{ previousSubmitter }}</p>
+        {% endif %}
 
         <h2 class="govuk-heading-m" data-cy="new-documents-heading">New or updated documents</h2>
         <p class="govuk-body">Add any new documents or updated documents that are relevant to your resubmission as outlined in the report.</p>
