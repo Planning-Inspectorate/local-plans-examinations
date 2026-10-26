@@ -10,7 +10,7 @@ import {
 	actualSubmissionDate,
 	examiningInspectorAppointmentDate,
 	QADateAnswers,
-	planPauseStartDate
+	soundUnsoundDate
 } from '../../../fixtures/manage/examination.ts';
 import { DateQuestionPage } from '../base/index.ts';
 
@@ -99,8 +99,8 @@ export const QAPanelResponseDatePage = new DateQuestionPage(
 	QADateAnswers.QAPanelResponseDate.heading
 );
 
-export const planPauseStartDatePage = new DateQuestionPage(
-	importantDatesQuestionPath(planPauseStartDate.path),
-	planPauseStartDate.fieldName,
-	planPauseStartDate.heading
+export const soundUnsoundDatePage = new DateQuestionPage(
+	importantDatesQuestionPath(soundUnsoundDate.path),
+	soundUnsoundDate.fieldName,
+	soundUnsoundDate.heading
 );

@@ -62,6 +62,10 @@ export class BasePage {
 		return cy.getByData('back-link');
 	}
 
+	get cancelButton() {
+		return cy.getByData('button-back');
+	}
+
 	get addListItemButton() {
 		return cy.getByData('add-list-item');
 	}
@@ -158,6 +162,14 @@ export class BasePage {
 		this.notificationBanner.should('be.visible').and('contain.text', message);
 	}
 
+	verifyNotificationBannerAbsent(message: string) {
+		this.mainContent.should('not.contain.text', message);
+	}
+
+	verifyNotificationBannerLink(text: string, href: string) {
+		this.notificationBanner.contains('a', text).should('be.visible').and('have.attr', 'href', href);
+	}
+
 	verifyBackLink(href?: string | RegExp) {
 		const backLink = this.backLink.should('be.visible');
 
@@ -182,6 +194,10 @@ export class BasePage {
 
 	goBack() {
 		this.backLink.should('be.visible').click();
+	}
+
+	cancelChanges() {
+		this.cancelButton.should('be.visible').click();
 	}
 
 	addListItem() {

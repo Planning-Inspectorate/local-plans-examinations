@@ -100,8 +100,6 @@ export interface ExaminationInput extends SaveInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
-	planPauseStartDate?: Date;
-	planPauseEndDate?: Date;
 	withdrawnDate?: Date;
 	isSound?: string;
 	soundUnsoundDate?: Date;
@@ -128,6 +126,13 @@ export interface ExaminationInput extends SaveInput {
 		hearingAddressLine2: string | null;
 		hearingTownOrCity: string | null;
 		hearingPostcode: string | null;
+	}[];
+	planPauseHistory: {
+		createdAt: Date;
+		planPauseDate: Date;
+		planPauseStartDetails: string;
+		planPauseEndDate: Date;
+		planPauseEndDetails: string;
 	}[];
 }
 

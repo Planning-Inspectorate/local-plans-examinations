@@ -1,5 +1,10 @@
 import { GatewayBasePage } from '../base/gateway-page.ts';
-import { examinationReport, soundUnsound, soundUnsoundDate } from '../../../fixtures/manage/examination.ts';
+import {
+	examinationPause,
+	examinationReport,
+	soundUnsound,
+	soundUnsoundDate
+} from '../../../fixtures/manage/examination.ts';
 
 export class ExaminationPage extends GatewayBasePage {
 	constructor() {
@@ -8,6 +13,62 @@ export class ExaminationPage extends GatewayBasePage {
 
 	get addHearingLink() {
 		return cy.getByData('add-hearing');
+	}
+
+	get pauseLink() {
+		return cy.getByData('pause-examination');
+	}
+
+	pauseSummary(number = 1) {
+		return cy.getByData(`pause-details-${number}`);
+	}
+
+	startPause() {
+		this.verifyLoaded();
+		this.pauseLink.should('be.visible').click();
+	}
+
+	verifyPauseDetails(number = 1, date = examinationPause.display, details = examinationPause.details) {
+		this.verifyLoaded();
+		this.verifySubHeading(`Pause ${number} details`);
+		this.pauseSummary(number).within(() => {
+			this.verifySummaryRowContains('Examination pause date', date);
+			this.verifySummaryRowContains('Pause details', details);
+		});
+	}
+
+	verifyPaused(number = 1, date = examinationPause.display, details = examinationPause.details) {
+		this.verifyPauseDetails(number, date, details);
+		this.verifyHeaderStatus('Paused');
+		this.verifyNotificationBanner(examinationPause.banner);
+		this.pauseSummary(number).within(() => {
+			this.summaryRowActionLink('Examination restart date').should('contain.text', 'Add');
+		});
+		this.pauseLink.should('not.exist');
+	}
+
+	verifyRestartDetails() {
+		this.verifyPauseDetails();
+		this.pauseSummary().within(() => {
+			this.verifySummaryRowContains('Examination restart date', examinationPause.restartDisplay);
+			this.verifySummaryRowContains('Pause restart details', examinationPause.restartDetails);
+		});
+	}
+
+	verifyRestarted() {
+		this.verifyRestartDetails();
+		this.verifyHeaderStatus('Exam in progress');
+		this.verifyNotificationBannerAbsent(examinationPause.banner);
+		this.pauseLink.should('be.visible').and('have.text', 'Pause again');
+	}
+
+	verifyNoPause() {
+		this.verifyLoaded();
+		this.verifyHeaderStatus('Exam in progress');
+		this.pauseSummary().should('not.exist');
+		this.pauseLink.should('be.visible').and('have.text', 'Pause examination');
+		this.verifyNotificationBannerAbsent(examinationPause.banner);
+		this.verifyNotificationBannerAbsent('Changes saved');
 	}
 
 	addHearing() {

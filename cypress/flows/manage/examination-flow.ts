@@ -1,5 +1,6 @@
 import {
 	examinationPage,
+	examinationPausePages,
 	examinationReportCheckPage,
 	examinationReportManagePage,
 	examinationReportRemovePage,
@@ -10,7 +11,23 @@ import { openManageCase, openSeededManageCase, type SeededManageCase } from './s
 import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
 import type { ExaminationReportSeedOptions } from '../../tasks/examination.ts';
 import type { DateAnswer } from '../../types/date.ts';
-import { soundUnsound } from '../../fixtures/manage/examination.ts';
+import { examinationPause, soundUnsound } from '../../fixtures/manage/examination.ts';
+
+export const pauseExamination = (pause: { input: DateAnswer; details: string } = examinationPause, pauseNumber = 1) => {
+	const pages = examinationPausePages(pauseNumber);
+	examinationPage.startPause();
+	pages.startDate.enterDate(pause.input);
+	pages.details.verifyLoaded();
+	pages.details.enterAnswer(pause.details);
+};
+
+export const restartExamination = () => {
+	const pages = examinationPausePages();
+	examinationPage.openActionLinkFor('Examination restart date');
+	pages.restartDate.enterDate(examinationPause.restartInput);
+	pages.restartDetails.verifyLoaded();
+	pages.restartDetails.enterAnswer(examinationPause.restartDetails);
+};
 
 export const changeExaminationReportDetails = (previousOutcome: string, outcome: string, issuedDate: DateAnswer) => {
 	examinationReportCheckPage.openChangeLinkFor(soundUnsound.row);
@@ -41,8 +58,9 @@ export const openExaminationPage = (seededManageCase: SeededManageCase) => {
 };
 
 export const openSeededExaminationPage = (options?: SeedCyOptions) => {
-	return openSeededManageCase(options).then(({ planTitle }) => {
+	return openSeededManageCase(options).then((seededCase) => {
 		examinationPage.openServiceNavigationItem('Examination');
-		examinationPage.verifyLoaded(planTitle);
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		return cy.wrap(seededCase, { log: false });
 	});
 };

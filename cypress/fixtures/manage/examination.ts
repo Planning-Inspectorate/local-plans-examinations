@@ -279,23 +279,6 @@ export const QAExpectedAnswers = [
 	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];
 
-export const planPauseStartDate = {
-	row: 'Plan pause date',
-	heading: 'When did the plan pause start?',
-	fieldName: 'planPauseStartDate',
-	path: 'plan-pause-start-date',
-	input: { day: '4', month: '12', year: '2026' },
-	display: '4 December 2026',
-	updatedInput: { day: '20', month: '12', year: '2026' },
-	updatedDisplay: '20 December 2026'
-};
-
-export const planPauseEndDate = {
-	row: 'Plan pause end date',
-	path: 'plan-pause-end-date',
-	display: '5 December 2026'
-};
-
 export const withdrawnDate = {
 	row: 'Withdrawn date',
 	path: 'withdrawn-date',
@@ -316,7 +299,12 @@ export const soundUnsound = {
 export const soundUnsoundDate = {
 	row: 'Report issued',
 	path: 'sound-unsound-date',
-	display: '7 December 2026'
+	display: '7 December 2026',
+	heading: 'When was the plan confirmed as sound or unsound?',
+	fieldName: 'soundUnsoundDate',
+	input: { day: '7', month: '12', year: '2026' },
+	updatedInput: { day: '20', month: '12', year: '2026' },
+	updatedDisplay: '20 December 2026'
 };
 
 export const adoptionDate = {
@@ -332,8 +320,6 @@ export const approvedForCILDate = {
 };
 
 export const examinationImportantDates = [
-	planPauseStartDate,
-	planPauseEndDate,
 	withdrawnDate,
 	soundUnsound,
 	soundUnsoundDate,
@@ -349,10 +335,45 @@ export const seededExaminationInProgress = {
 	examination: { examiningInspector1: 'inspector-1' }
 } satisfies SeedCyOptions;
 
+export const examinationPause = {
+	input: { day: '1', month: '9', year: '2026' },
+	display: '1 Sept 2026',
+	details: 'Awaiting additional evidence from the LPA',
+	banner: 'This examination is paused',
+	restartInput: { day: '2', month: '9', year: '2026' },
+	restartDisplay: '2 Sept 2026',
+	restartDetails: 'Additional evidence received',
+	second: {
+		input: { day: '3', month: '9', year: '2026' },
+		display: '3 Sept 2026',
+		details: 'Awaiting clarification from the LPA'
+	}
+};
+
+const seededPause = {
+	createdAt: '2026-09-01T12:00:00.000Z',
+	planPauseDate: '2026-09-01T12:00:00.000Z',
+	planPauseStartDetails: examinationPause.details
+};
+
 export const seededPausedExamination = {
 	...seededExaminationInProgress,
 	examination: {
 		...seededExaminationInProgress.examination,
-		planPauseStartDate: '2026-12-04T00:00:00.000Z'
+		planPauseHistory: { create: seededPause }
+	}
+} satisfies SeedCyOptions;
+
+export const seededRestartedExamination = {
+	...seededExaminationInProgress,
+	examination: {
+		...seededExaminationInProgress.examination,
+		planPauseHistory: {
+			create: {
+				...seededPause,
+				planPauseEndDate: '2026-09-02T12:00:00.000Z',
+				planPauseEndDetails: examinationPause.restartDetails
+			}
+		}
 	}
 } satisfies SeedCyOptions;

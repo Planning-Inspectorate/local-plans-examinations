@@ -4,6 +4,8 @@ import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { formatValue } from '../../../util/util.ts';
+import { sortByDateColumn } from '#util/util.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -11,13 +13,12 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 		const { db } = service;
 
 		const journey4Data = await db.examinationInfo.findUnique({
-			where: {
-				caseId: caseRecord.id
-			},
-			include: {
-				hearings: true
-			}
+			where: { caseId: caseRecord.id },
+			include: { planPauseHistory: true, hearings: true }
 		});
+		if (!journey4Data) {
+			throw Error(`Could not fetch exam data for case '${caseRecord.id}'`);
+		}
 		const isSound = formatValue(journey4Data?.isSound);
 
 		await addUploadedDocumentDetailsToAnswers(
@@ -29,6 +30,20 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 		);
 		const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
 		journeyResponse.answers.isSound = isSound;
+		const sortedPauseData = sortByDateColumn(
+			journey4Data?.planPauseHistory ? journey4Data?.planPauseHistory : [],
+			'createdAt'
+		);
+		for (let i = 0; i < sortedPauseData.length; i++) {
+			journeyResponse.answers[`planPauseDate-${i + 1}`] = sortedPauseData[i].planPauseDate;
+			journeyResponse.answers[`planPauseStartDetails-${i + 1}`] = sortedPauseData[i].planPauseStartDetails;
+			journeyResponse.answers[`planPauseEndDate-${i + 1}`] = sortedPauseData[i].planPauseEndDate;
+			journeyResponse.answers[`planPauseEndDetails-${i + 1}`] = sortedPauseData[i].planPauseEndDetails;
+		}
+		if ((!req.params.question || String(req.params.question) == 'examination-report-manage') && req.method === 'GET') {
+			await this.tryAddPauseStatusBanner(context, journey4Data);
+			consumeAlertsFromSession(req, res);
+		}
 		res.locals.journeyResponse = journeyResponse;
 		if (req.method === 'GET' && req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_MANAGE_QUESTION) {
 			const uploadedReports =

@@ -10,7 +10,8 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { sortByCreatedDate } from '#util/util.ts';
+import { sortByDateColumn } from '#util/util.ts';
+import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -119,12 +120,13 @@ export function createExaminationHearingJourney(
 	let currentHearingAnswers: any | undefined;
 	if (req.session.answers) {
 		response.answers = req.session.answers;
-		const hearingAnswers: object[] = sortByCreatedDate(req.session.answers.hearings);
+		const hearingAnswers: object[] = sortByDateColumn(req.session.answers.hearings, 'createdDate');
 		currentHearingAnswers = hearingAnswers[hearingId - 1];
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-		const hearingAnswers: Record<string, any>[] = sortByCreatedDate(
-			response.answers.hearings as { createdDate: Date; [key: string]: any }[]
+		const hearingAnswers: Record<string, any>[] = sortByDateColumn(
+			response.answers.hearings as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
 		) as object[];
 		currentHearingAnswers = hearingAnswers[hearingId - 1];
 	}
@@ -292,12 +294,13 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	let currentWorkshopAnswers: any | undefined;
 	if (req.session.answers) {
 		response.answers = req.session.answers;
-		const workshopAnswers: object[] = sortByCreatedDate(req.session.answers.workshops);
+		const workshopAnswers: object[] = sortByDateColumn(req.session.answers.workshops, 'createdDate');
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-		const workshopAnswers: Record<string, any>[] = sortByCreatedDate(
-			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+		const workshopAnswers: Record<string, any>[] = sortByDateColumn(
+			response.answers.workshops as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
 		) as object[];
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	}
@@ -341,7 +344,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	if (!response.answers.workshops) {
 		throw Error('workshops property missing from answers for gateway2 journey');
 	}
-	const sortedWorkshops = sortByCreatedDate(response.answers.workshops as { createdDate: Date; [key: string]: any }[]);
+	const sortedWorkshops = sortByDateColumn(response.answers.workshops as { [key: string]: any }[], 'createdDate');
 
 	response.answers.workshops = sortedWorkshops;
 	if (req.session) {
@@ -395,6 +398,23 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		? { href: `${examinationUrl}/outcome/${questions.examinationReportManage.url}`, text: 'Manage' }
 		: { href: `${examinationUrl}/outcome/${questions.isSound.url}`, text: 'Add' };
 
+	const pauseSection = new Section('Pause examination', 'pause-examination');
+	const pauseData = Array.isArray(response.answers.planPauseHistory) ? response.answers.planPauseHistory : [];
+	for (let i = 1; i <= pauseData.length; i++) {
+		pauseSection.addQuestion(questions[`examinationPauseStartDate-${i}`]);
+		pauseSection.addQuestion(questions[`examinationPauseDetail-${i}`]);
+		pauseSection.addQuestion(questions[`examinationPauseEndDate-${i}`]);
+		pauseSection
+			.addQuestion(questions[`examinationRestartDetail-${i}`])
+			.withCondition((response) => questionHasNonEmptyAnswer(response, questions[`examinationPauseEndDate-${i}`]));
+	}
+	if (pauseData.length == 0) {
+		pauseSection.addQuestion(questions['examinationPauseStartDate-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationPauseDetail-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationPauseEndDate-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationRestartDetail-1']).withCondition(() => false);
+	}
+
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
 		sections: [
@@ -434,9 +454,8 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.adoptionDateOutcome)
 				.addQuestion(questions.approvedForCILDateOutcome)
 				.endMultiQuestionCondition('report-uploaded'),
+			pauseSection,
 			new Section('Important dates for this plan', 'important-dates')
-				.addQuestion(questions.planPauseStartDate)
-				.addQuestion(questions.planPauseEndDate)
 				.addQuestion(questions.withdrawnDate)
 				.addQuestion(questions.isSound)
 				.addQuestion(questions.soundUnsoundDate)
@@ -451,6 +470,9 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
+
+	response.answers.planPauseHistory = sortedPauses;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
 		if (req.session.answers) {
@@ -462,6 +484,74 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			? `${examinationUrl}/outcome/${reportIssued ? questions.examinationReportManage.url : questions.isSound.url}${returnToCheck && !reportIssued ? '?returnTo=check' : ''}`
 			: undefined
 	);
+}
+
+export function createExaminationPauseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const examinationUrl = req.baseUrl + '/examination';
+	const examinationPauseUrl = req.baseUrl + '/examination-pause';
+	const pauseId = Number(String(req.url).split('-').at(-1));
+	const currentQuestion = String(req.params.question);
+	const shouldShowPauseDetailsQuestion = !currentQuestion || currentQuestion.startsWith('examination-pause-details');
+	const shouldShowPauseEndQuestion = !currentQuestion || currentQuestion.startsWith('examination-pause-end-date');
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		sections: [
+			new Section('Pause examination', 'pause-examination')
+				.addQuestion(questions[`examinationPauseStartDate-${pauseId}`])
+				.addQuestion(questions[`examinationPauseDetail-${pauseId}`])
+				.withCondition(
+					(response) =>
+						shouldShowPauseDetailsQuestion ||
+						questionHasEmptyAnswer(response, questions[`examinationPauseDetail-${pauseId}`])
+				)
+				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`])
+				.withCondition(() => shouldShowPauseEndQuestion)
+				.addQuestion(questions[`examinationRestartDetail-${pauseId}`])
+				.withCondition(
+					(response) =>
+						shouldShowPauseEndQuestion &&
+						questionHasEmptyAnswer(response, questions[`examinationRestartDetail-${pauseId}`])
+				)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Pause examination',
+		returnToListing: false,
+		makeBaseUrl: () => examinationPauseUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+	let currentPauseAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const pauseAnswers: object[] = sortByDateColumn(req.session.answers.planPauseHistory, 'createdAt');
+		currentPauseAnswers = pauseAnswers[pauseId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current examination pause answers
+		const pauseAnswers: Record<string, any>[] = sortByDateColumn(
+			response.answers.planPauseHistory as { createdDate: Date; [key: string]: any }[],
+			'createdAt'
+		) as object[];
+		currentPauseAnswers = pauseAnswers[pauseId - 1];
+	}
+	if (currentPauseAnswers) {
+		Object.entries(currentPauseAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${pauseId}`] = value;
+		});
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID;
+	}
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference, ({ question }) => {
+		if (String(question).startsWith('examination-pause-details-')) {
+			return `${examinationPauseUrl}/pause-examination/examination-pause-start-date-${pauseId}`;
+		}
+		if (String(question).startsWith('examination-pause-restart-details-')) {
+			return `${examinationPauseUrl}/pause-examination/examination-pause-end-date-${pauseId}`;
+		}
+		return undefined;
+	});
 }
 
 function getBackLinksAndSetReference(
@@ -568,8 +658,6 @@ const examinationQuestionNames = new Set<string>([
 	'factCheckActualDate',
 	'factCheckReceivedBackFromLPADate',
 	'finalReportIssueDate',
-	'planPauseStartDate',
-	'planPauseEndDate',
 	'withdrawnDate',
 	'isSound',
 	'soundUnsoundDate',
