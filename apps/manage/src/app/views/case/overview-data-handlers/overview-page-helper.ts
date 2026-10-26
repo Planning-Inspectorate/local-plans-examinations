@@ -117,7 +117,11 @@ async function addUploadedDocumentDetailsToAnswers(
 		const uploadedFiles = isUploadPages
 			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
-		if (isUploadPages && questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+		if (
+			isUploadPages &&
+			(questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION ||
+				questionConfig.url === COMMON_CONSTS.MIQS_QUESTION)
+		) {
 			uploadedFiles.unshift(...(await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId)));
 		}
 
