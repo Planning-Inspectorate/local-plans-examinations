@@ -224,7 +224,7 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 	});
 
-	it('should still redirect when notify fails (fire-and-forget)', async () => {
+	it('should redirect to the OTP page and flag the delivery failure when notify fails', async () => {
 		const service = createMockService();
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
@@ -240,6 +240,8 @@ describe('buildSubmitEmailPage', () => {
 		await handler(req, res);
 
 		assertRedirect(res, '/login/enter-code');
+		assert.strictEqual(req.session.email, 'test@example.com');
+		assert.strictEqual(req.session.otpDeliveryFailed, true);
 	});
 });
 
@@ -431,6 +433,39 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 	});
 
+	it('should send a new code and show the new code message when resend succeeds', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
+		const handler = buildRequestNewCode(service);
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/login/enter-code');
+		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 1);
+		assert.strictEqual(req.session.showNewCodeMessage, true);
+	});
+
+	it('should render the delivery error and no new code message when resend fails', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
+		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
+			throw new Error('Notify unavailable');
+		});
+		const handler = buildRequestNewCode(service);
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRender(res, 'views/login/enter-otp.njk', (data) => {
+			assert.strictEqual(data.errorSummaryTitle, 'We could not send a new code');
+			assert.strictEqual(data.otpDeliveryFailed, true);
+		});
+		assert.strictEqual(req.session.showNewCodeMessage, undefined);
+	});
+
 	it('should render lockout error when user is locked out', async () => {
 		const service = createMockService({ nodeEnv: 'production' });
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
@@ -617,6 +652,23 @@ describe('buildEnterOtpPage', () => {
 		assertRender(res, 'views/login/enter-otp.njk', (data) => {
 			assert.strictEqual(data.pageHeading, 'Enter your one-time password');
 			assert.strictEqual(data.userEmail, 'test@example.com');
+			assert.strictEqual(data.errors, undefined);
+			assert.strictEqual(data.otpDeliveryFailed, false);
 		});
+	});
+
+	it('should show a delivery error once when the code email could not be sent', async () => {
+		const handler = buildEnterOtpPage();
+		const req = createMockReq({}, { email: 'test@example.com', otpDeliveryFailed: true });
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(data.otpDeliveryFailed, true);
+		assert.match(data.errors.otp.msg, /could not send a code/i);
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
+		assert.deepStrictEqual(data.errorSummary, [{ text: data.errors.otp.msg, href: '#otp' }]);
+		assert.strictEqual(req.session.otpDeliveryFailed, undefined);
 	});
 });

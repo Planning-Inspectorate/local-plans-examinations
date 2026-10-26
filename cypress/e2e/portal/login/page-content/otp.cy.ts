@@ -16,6 +16,7 @@ describe('Portal login OTP page', () => {
 			'Check your spam or junk folder.',
 			'If everything looks correct but you still have not received the email, you can request a new code.'
 		);
+		portalLoginOtpPage.requestNewCodeLink.should('be.visible').and('have.attr', 'href', '/login/request-new-code');
 	});
 
 	it('displays the support details', { tags: ['regression'] }, () => {

@@ -91,12 +91,14 @@ describe('Portal login journey', () => {
 		});
 	});
 
-	it.skip('requests a new code from the OTP page', { tags: ['notify'] }, () => {
+	it('shows the new code banner when a new code is requested from the OTP page', { tags: ['regression'] }, () => {
 		startPortalOtpLogin();
-		portalLoginOtpPage.verifyPath();
 
 		portalLoginOtpPage.clickRequestNewCode();
 
+		portalLoginOtpPage.verifyPath();
 		portalLoginOtpPage.verifyNewCodeBanner();
+		portalLoginOtpPage.verifyHintText('We sent a code to');
+		portalLoginOtpPage.requestNewCodeLink.should('be.visible');
 	});
 });
