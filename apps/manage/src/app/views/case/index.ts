@@ -241,7 +241,7 @@ function registerGateway2WorkshopJourney(
 					.split('-')
 					.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 					.join(' '),
-				['contact_info']: service.localPlansTeamEmail,
+				['contact_info']: 'If you need to contact us, call 0303 444 5000',
 				['team_email_address']: service.localPlansTeamEmail,
 				['workshop_start_date']: workshopStartDate,
 				['workshop_end_date']: workshopEndDate ? workshopEndDate : '',
