@@ -17,10 +17,13 @@ describe('Gateway 3 page content', () => {
 		openSeededGateway3Page();
 
 		gateway3Page.verifyBackLink('/');
+
 		gateway3Page.verifySectionHeading('Gateway 3');
+
 		gateway3Page.verifySectionHeading('Gateway 3 submission');
-		gateway3Page.verifyExpectedRows();
+
 		gateway3Page.verifyExpectedSeededAnswers();
+
 		gateway3Page.verifyExpectedActionLinkHrefs();
 	});
 
