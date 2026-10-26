@@ -686,15 +686,16 @@ export function buildGetDeclarationPage(): RequestHandler {
 	return (req, res) => {
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-		const gateway3SubmissionUrl = encodedPlanReference
-			? `/manage-local-plans/${encodedPlanReference}/gateway-3-submission`
+		const isResubmission = req.query.from === 'resubmission';
+		const gateway3Url = encodedPlanReference
+			? `/manage-local-plans/${encodedPlanReference}/${isResubmission ? 'gateway-3-resubmission' : 'gateway-3-submission'}`
 			: undefined;
 
 		return res.render(DECLARATION_VIEW_PATH, {
 			pageTitle: "Are you sure you're ready to submit?",
 			pageHeading: "Are you sure you're ready to submit?",
-			backLinkUrl: gateway3SubmissionUrl,
-			goBackUrl: gateway3SubmissionUrl
+			backLinkUrl: gateway3Url,
+			goBackUrl: gateway3Url
 		});
 	};
 }

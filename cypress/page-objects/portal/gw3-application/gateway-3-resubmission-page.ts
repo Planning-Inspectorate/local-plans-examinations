@@ -1,8 +1,8 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 
 export class Gateway3ResubmissionPage extends PortalPlanBasePage {
-	constructor() {
-		super(/^\/manage-local-plans\/[^/]+\/gateway-3-resubmission$/);
+	constructor(path: RegExp = /^\/manage-local-plans\/[^/]+\/gateway-3-resubmission$/) {
+		super(path);
 	}
 
 	get previousSubmissionTable() {
@@ -23,6 +23,14 @@ export class Gateway3ResubmissionPage extends PortalPlanBasePage {
 
 	get resubmissionTag() {
 		return cy.get('.govuk-tag.govuk-tag--red');
+	}
+
+	get reportRow() {
+		return cy.getByData('submission-report-row');
+	}
+
+	get previousSubmissionsRow() {
+		return cy.getByData('previous-submissions-row');
 	}
 
 	pathFor(planReference: string) {
@@ -79,6 +87,46 @@ export class Gateway3ResubmissionPage extends PortalPlanBasePage {
 				cy.getByData('add-documents').should('contain.text', 'Change');
 			});
 		});
+	}
+
+	clickPreviousSubmission(submissionNumber: number) {
+		this.previousSubmissionsRow.contains('a', `Submission ${submissionNumber}`).click();
+	}
+
+	verifyReport(submissionNumber: number, fileNames: string[], dateText: string) {
+		this.reportRow.should('be.visible').within(() => {
+			cy.get('.govuk-summary-list__key').should('contain.text', `Submission ${submissionNumber} report`);
+			cy.getByData('download-report').should('have.length', fileNames.length);
+			fileNames.forEach((fileName) => cy.contains('a', fileName).should('be.visible'));
+		});
+		this.reportRow.should('contain.text', dateText);
+	}
+
+	verifyPreviousSubmissions(planReference: string, submittedDates: string[]) {
+		this.previousSubmissionsRow.should('be.visible').within(() => {
+			cy.get('a').should('have.length', submittedDates.length);
+			submittedDates.forEach((_, index) => {
+				const number = index + 1;
+				cy.get('a')
+					.eq(index)
+					.should('have.text', `Submission ${number}`)
+					.and('have.attr', 'href', `/manage-local-plans/${planReference}/gateway-3-resubmission/submission/${number}`);
+			});
+		});
+		submittedDates.forEach((date) => this.previousSubmissionsRow.should('contain.text', `(submitted on ${date})`));
+	}
+
+	verifyFileDownloads(container: Cypress.Chainable, fileName: string) {
+		container
+			.contains('a', fileName)
+			.should('be.visible')
+			.invoke('attr', 'href')
+			.then((href) => {
+				cy.request(href as string).then((response) => {
+					expect(response.status).to.equal(200);
+					expect(response.headers['content-disposition']).to.include(`attachment; filename="${fileName}"`);
+				});
+			});
 	}
 }
 

@@ -423,6 +423,7 @@ describe('getLatestDocumentBlobDetails', () => {
 describe('downloadDocumentToResponse', () => {
 	const service = createMockService();
 	const blobDetails = {
+		containerName: 'document-container',
 		blobPath: 'some/blob/path',
 		fileName: 'somefilename'
 	};
@@ -430,6 +431,7 @@ describe('downloadDocumentToResponse', () => {
 	it('can download blob data to a response object', async () => {
 		mock.method(DocumentUtil, 'getLatestDocumentBlobDetails', async () => blobDetails);
 		await DocumentUtil.downloadDocumentToResponse(service as unknown as Service, '1', res as unknown as Response);
+		assert.deepStrictEqual(service.createFileStorage.mock.calls[0].arguments, [undefined, blobDetails.containerName]);
 		assert.deepStrictEqual(MOCK_BLOB_STORAGE_UTIL.downloadToExpressResponse.mock.calls[0].arguments, [
 			blobDetails.blobPath,
 			blobDetails.fileName,

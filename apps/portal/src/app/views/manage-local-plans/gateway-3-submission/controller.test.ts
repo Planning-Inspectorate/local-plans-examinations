@@ -791,7 +791,7 @@ describe('buildGuardDeclarationPage', () => {
 describe('buildGetDeclarationPage', () => {
 	it('renders the declaration page with correct title and back link', () => {
 		const handler = buildGetDeclarationPage();
-		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+		const req = { params: { planReference: 'PLAN-001' }, query: {} } as unknown as Request;
 		const { res, calls } = buildMockResponse();
 
 		handler(req, res, () => {});
@@ -805,9 +805,21 @@ describe('buildGetDeclarationPage', () => {
 		assert.strictEqual(data.goBackUrl, '/manage-local-plans/PLAN-001/gateway-3-submission');
 	});
 
+	it('sets back links to gateway-3-resubmission when from=resubmission query param is present', () => {
+		const handler = buildGetDeclarationPage();
+		const req = { params: { planReference: 'PLAN-001' }, query: { from: 'resubmission' } } as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		const [, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+		assert.strictEqual(data.goBackUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+	});
+
 	it('sets backLinkUrl and goBackUrl to undefined when no plan reference', () => {
 		const handler = buildGetDeclarationPage();
-		const req = { params: {} } as unknown as Request;
+		const req = { params: {}, query: {} } as unknown as Request;
 		const { res, calls } = buildMockResponse();
 
 		handler(req, res, () => {});
