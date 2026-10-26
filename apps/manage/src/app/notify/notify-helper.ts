@@ -30,6 +30,10 @@ export async function sendAssessorAppointedNotifyEmail(
 			contacts: true
 		}
 	});
+	const gw2Info = await service.db.gateway2Info.findUnique({
+		where: { caseId: caseRecord?.id }
+	});
+
 	const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
 
 	const entraClient = service.getEntraClient(req.session as AuthSession)!;
@@ -37,6 +41,12 @@ export async function sendAssessorAppointedNotifyEmail(
 	const inspectorId = allInspectors.find((inspector) => inspector.id === assessorName)?.id;
 	const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
 	const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
+
+	const mondayAfterSubmissionPlusTwoWeeks = new Date(gw2Info?.actualDate?.getDate() ?? Date.now());
+	mondayAfterSubmissionPlusTwoWeeks.setDate(mondayAfterSubmissionPlusTwoWeeks.getDate() + 14);
+	mondayAfterSubmissionPlusTwoWeeks.setDate(
+		mondayAfterSubmissionPlusTwoWeeks.getDate() + ((1 + 7 - mondayAfterSubmissionPlusTwoWeeks.getDay()) % 7)
+	);
 
 	const portalLoginURL = `${portalUrl}/login`;
 	const caseReference = reference;
@@ -52,11 +62,8 @@ export async function sendAssessorAppointedNotifyEmail(
 		['team_email_address']: service.localPlansTeamEmail,
 		['gw2_assessor_initial']: assessorName[0],
 		['gw2_assessor_lastname']: assessorName.split(' ').slice(-1)[0],
-		// TODO Where are we pulling the assessor's qualifications from
-		['gw2_assessor_quals']: '',
-		// TODO Monday after submission + 2 weeks
-		['workshop_week_monday']: '',
-		['contact_info']: ''
+		['workshop_week_monday']: mondayAfterSubmissionPlusTwoWeeks.toISOString().split('T')[0],
+		['contact_info']: 'If you need to contact us, call 0303 444 5000'
 	};
 
 	try {
@@ -119,11 +126,7 @@ export async function sendWorkshopDocsUploadedNotifyEmail(service: ManageService
 			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 			.join(' '),
 		['team_email_address']: service.localPlansTeamEmail,
-		// TODO Confirm usage of params in template
-		['contact_info']: '', // Retrieve from doc,
-		['workshop_start_date']: '',
-		['workshop_end_date']: '',
-		['workshop_type']: ''
+		['contact_info']: 'If you need to contact us, call 0303 444 5000'
 	};
 
 	// All LPAs notified
@@ -176,8 +179,7 @@ export async function sendWorkshopReportUploadedNotifyEmail(service: ManageServi
 			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 			.join(' '),
 		['team_email_address']: service.localPlansTeamEmail,
-		// TODO Confirm usage of params in template
-		['contact_info']: '' // Retrieve from doc,
+		['contact_info']: 'If you need to contact us, call 0303 444 5000'
 	};
 
 	// All LPAs notified
