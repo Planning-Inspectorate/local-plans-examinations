@@ -62,7 +62,8 @@ export function configureNunjucks(): nunjucks.Environment {
 			return d.toLocaleDateString('en-GB', {
 				day: 'numeric',
 				month: 'short',
-				year: 'numeric'
+				year: 'numeric',
+				timeZone: 'Europe/London'
 			});
 		}
 		if (format === 'd MMM yyyy, HH:mm') {
