@@ -20,7 +20,7 @@ function createMockService(overrides = {}) {
 		},
 		logger: mockLogger(),
 		db: {
-			case: { findFirst: mock.fn() },
+			case: { findFirst: mock.fn(async () => ({ id: 1, reference: 'PLAN-123456' })) },
 			oneTimePassword: {
 				delete: mock.fn(),
 				findUnique: mock.fn(),
@@ -118,18 +118,22 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(service.db.case.findFirst.mock.callCount(), 0);
 	});
 
-	it('should redirect without creating an OTP or sending email when email is not associated with a case', async () => {
+	it('should render an error without creating an OTP or sending email when email is not associated with a case', async () => {
 		const service = createMockService();
 		service.db.case.findFirst.mock.mockImplementation(async () => null);
 
 		const handler = buildSubmitEmailPage(service);
-		const req = createMockReq({ email: 'unknown@example.com' });
+		const req = createMockReq({ email: 'unknown@example.com' }, { email: 'previous@example.com' });
 		const res = createMockRes();
 
 		await handler(req, res);
 
-		assertRedirect(res, '/login/enter-code');
-		assert.strictEqual(req.session.email, 'unknown@example.com');
+		const data = assertRender(res, 'views/login/enter-email-page.njk');
+		assert.strictEqual(data.pageHeading, 'Sign-in');
+		assert.strictEqual(data.errors.email.msg, 'Enter an email address linked to a case on this service');
+		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
+		assert.deepStrictEqual(data.errorSummary, [{ text: 'We did not recognise that email address', href: '#email' }]);
+		assert.strictEqual(req.session.email, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 0);
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 0);
@@ -290,6 +294,59 @@ describe('buildSubmitOtpPage', () => {
 		assertRedirect(res, '/manage-local-plans/your-plans');
 		assert.strictEqual(req.session.isAuthenticated, true);
 		assert.strictEqual(req.session.authenticatedEmail, 'test@example.com');
+		assert.strictEqual(req.session.email, undefined);
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
+	});
+
+	it('should reject the OTP bypass when the email is not associated with an active case', async () => {
+		const service = createMockService({
+			environment: 'test',
+			auth: { otpBypassCode: '12345' }
+		});
+		service.db.case.findFirst.mock.mockImplementation(async () => null);
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq(
+			{ otp: '12345' },
+			{ email: 'unknown@example.com' },
+			'local-plans-portal-test.example.com'
+		);
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/login/no-access');
+		assert.strictEqual(req.session.isAuthenticated, undefined);
+		assert.strictEqual(req.session.authenticatedEmail, undefined);
+		assert.strictEqual(req.session.email, undefined);
+		assert.deepStrictEqual(service.db.case.findFirst.mock.calls[0].arguments[0], {
+			where: { email: 'unknown@example.com', deletedDate: null }
+		});
+		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
+	});
+
+	it('should reject OTP verification when the email is no longer associated with an active case', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => null);
+		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => ({
+			email: 'unknown@example.com',
+			hashedOtp: 'unused',
+			expiresAt: new Date(Date.now() + 60000),
+			attempts: 0,
+			lockedOutUntil: null
+		}));
+		const handler = buildSubmitOtpPage(service);
+		const req = createMockReq(
+			{ otp: 'ABCDEFGH' },
+			{ email: 'unknown@example.com' },
+			'local-plans-portal-prod.example.com'
+		);
+		const res = createMockRes();
+
+		await handler(req, res);
+
+		assertRedirect(res, '/login/no-access');
+		assert.strictEqual(req.session.isAuthenticated, undefined);
+		assert.strictEqual(req.session.authenticatedEmail, undefined);
 		assert.strictEqual(req.session.email, undefined);
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 	});
