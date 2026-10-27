@@ -27,27 +27,6 @@ CREATE TABLE [dbo].[Gateway2Workshop] (
 -- AddForeignKey
 ALTER TABLE [dbo].[Gateway2Workshop] ADD CONSTRAINT [Gateway2Workshop_gateway2InfoId_fkey] FOREIGN KEY ([gateway2InfoId]) REFERENCES [dbo].[Gateway2Info]([id]) ON DELETE SET NULL ON UPDATE CASCADE;
 
--- MigrateData
-INSERT INTO [dbo].[Gateway2Workshop] (
-    [id],
-    [gateway2InfoId],
-    [createdDate],
-    [workshopDate],
-    [workshopVenueName]
-)
-SELECT
-    NEWID(),
-    [id],
-    SYSUTCDATETIME(),
-    [workshopDate],
-    [workshopVenue]
-FROM [dbo].[Gateway2Info]
-WHERE [workshopDate] IS NOT NULL OR [workshopVenue] IS NOT NULL;
-
--- AlterTable
-ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN IF EXISTS [workshopDate];
-ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN IF EXISTS [workshopVenue];
-
 COMMIT TRAN;
 
 END TRY
