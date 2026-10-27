@@ -1,6 +1,7 @@
-import { createQuestions, questionClasses, type Question, StringValidator } from '@planning-inspectorate/dynamic-forms';
+import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import { FileUploadRequiredValidator } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
+import { WebsiteUrlValidator } from '@pins/local-plans-lib/forms/validators/website-url-validator.ts';
 import {
 	SINGLE_FILE_UPLOAD_LIMIT,
 	SINGLE_FILE_UPLOAD_LIMIT_LABEL,
@@ -86,14 +87,7 @@ const gateway3TextInputQuestions = {
 		type: 'single-line-input' as const,
 		hint: 'Enter the web address (URL) where your examination library is published',
 		capitaliseAnswer: false,
-		validators: [
-			new StringValidator({
-				regex: {
-					regex: '^https?://.+',
-					regexMessage: 'Enter a valid link to your examination website'
-				}
-			})
-		],
+		validators: [new WebsiteUrlValidator()],
 		text: {
 			caption: REQUIRED_INFO_CAPTION,
 			continueButtonText: 'Save and return'

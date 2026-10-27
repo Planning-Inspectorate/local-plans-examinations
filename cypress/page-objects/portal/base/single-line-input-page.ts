@@ -4,12 +4,14 @@ export class SingleLineInputPage extends PortalPlanBasePage {
 	private readonly fieldName: string;
 	private readonly heading: string;
 	readonly addCy: string;
+	readonly value: string;
 
-	constructor(path: string | RegExp, fieldName: string, heading: string, addCy: string) {
+	constructor(path: string | RegExp, fieldName: string, heading: string, addCy: string, value: string) {
 		super(path);
 		this.fieldName = fieldName;
 		this.heading = heading;
 		this.addCy = addCy;
+		this.value = value;
 	}
 
 	get hintText() {
@@ -18,6 +20,13 @@ export class SingleLineInputPage extends PortalPlanBasePage {
 
 	get answerInput() {
 		return cy.get(`#${this.fieldName}`);
+	}
+
+	verifySaveAndReturnButton() {
+		this.saveAndContinueButton
+			.should('be.visible')
+			.and('have.attr', 'type', 'submit')
+			.and('contain.text', 'Save and return');
 	}
 
 	verifyHintText(text: string) {

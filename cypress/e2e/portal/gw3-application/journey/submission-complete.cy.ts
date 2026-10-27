@@ -18,6 +18,10 @@ describe('Gateway 3 application complete page journeys', () => {
 		});
 	});
 
+	afterEach(() => {
+		cy.task('clearDb');
+	});
+
 	it('Navigates to the plan details page', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3DeclarationPage.confirmSubmissionButton.click();

@@ -129,7 +129,7 @@
                     <p></p>
                   {% elif section.heading == 'Pause examination' %}
                       {{ pauseDetails(journeyResponse.answers, reference) }}
-                  {% elif section.heading == 'Hearings'%} 
+                  {% elif section.heading == 'Hearings'%}
                     <h2 class="govuk-heading-l">Hearings</h2>
                     {{ hearingDetails(journeyResponse.answers, reference) }}
                     <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link" data-cy="add-hearing">Add hearing</a>
