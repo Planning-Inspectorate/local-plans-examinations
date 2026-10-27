@@ -16,21 +16,13 @@ describe('Gatway 3 submission complete page content', () => {
 		});
 	});
 
+	afterEach(() => {
+		cy.task('clearDb');
+	});
+
 	it('Verifying page content for the Gateway 3 submission complete page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			gateway3SubmissionCompletePage.verifyLoaded();
-			gateway3SubmissionCompletePage.verifyServiceNavigation('Guidance', 'Sign out');
-			gateway3SubmissionCompletePage.verifyMainContains(
-				'Gateway 3 submission complete',
-				'We have sent you a confirmation email',
-				'What happens next',
-				'The Planning Inspectorate will check that your submission is complete and your plan is ready for the next round of assessment',
-				'They will contact you if any further information is required',
-				'At any point you can',
-				'If you need to adjust your submission,'
-			);
-			gateway3SubmissionCompletePage.checkSubmissionStatusLink(plan.urlReference).should('be.visible');
-			gateway3SubmissionCompletePage.verifyGetInTouchLink();
+			gateway3SubmissionCompletePage.verifyPageContent(plan.urlReference);
 		});
 	});
 });

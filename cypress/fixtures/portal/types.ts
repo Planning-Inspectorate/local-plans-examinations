@@ -11,6 +11,7 @@ export interface PlanDetailsFixture {
 	title: string;
 	currentStage: string;
 	currentStage2: string;
+	currentStage3: string;
 	status: string;
 	status2: string;
 	status3: string;

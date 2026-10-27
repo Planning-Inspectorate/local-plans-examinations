@@ -3,7 +3,7 @@ import { gateway3ApplicationPage } from '../../page-objects/portal/gw3-applicati
 import { examinationWebsitePage } from '../../page-objects/portal/gw3-application/examination-website-page.ts';
 import type { DocumentUploadPage } from '../../page-objects/portal/base/document-upload-page.ts';
 import { gateway3DeclarationPage } from '../../page-objects/portal/gw3-application/declaration-page.ts';
-import { examinationWebsite } from '../../fixtures/portal/examination.ts';
+import { examinationWebsite } from '../../fixtures/portal/examination-website.ts';
 import { gateway3SubmissionCompletePage } from '../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
 import { planDetailsPage } from '../../page-objects/portal/plan-details/plan-details-page.ts';
 

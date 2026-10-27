@@ -11,7 +11,7 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { EXAMINATION_STATUS_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
@@ -39,6 +39,8 @@ type PortalCase = {
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		status: string;
+		statusLookup: { displayName: string } | null;
 	} | null;
 	documents: {
 		guid: string;
@@ -189,6 +191,8 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		title: caseRecord.planTitle,
 		stage: progress.stage,
 		status: progress.status,
+		examinationStatus: caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET,
+		examinationStatusLabel: caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet',
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
@@ -226,7 +230,11 @@ const planCaseInclude = {
 	examinationInfo: {
 		select: {
 			expectedSubmissionForExaminationDate: true,
-			submissionForExaminationDate: true
+			submissionForExaminationDate: true,
+			status: true,
+			statusLookup: {
+				select: { displayName: true }
+			}
 		}
 	},
 	lpas: {

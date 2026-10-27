@@ -25,6 +25,10 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 		return this.planProgress.contains('a', 'Gateway 3 - readiness check');
 	}
 
+	get examinationLink() {
+		return this.planProgress.contains('a', 'Examination');
+	}
+
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 		this.verifyPlanProgressHeading();
