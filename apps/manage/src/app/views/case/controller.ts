@@ -929,8 +929,11 @@ export function issueMiqs(service: ManageService, journeyId: string): AsyncReque
 			}
 		);
 		// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-		req.session.alertMessage = `${uploadedFiles.length} MIQ document${uploadedFiles.length === 1 ? '' : 's'} uploaded`;
-		req.session.alertMessageStatus = 'success';
+		pushAlertToSession(
+			req,
+			'success',
+			`${uploadedFiles.length} MIQ document${uploadedFiles.length === 1 ? '' : 's'} uploaded`
+		);
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
 	};
