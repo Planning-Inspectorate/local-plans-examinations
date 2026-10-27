@@ -10,6 +10,7 @@ export async function sendAssessorAppointedNotifyEmail(
 	assessorName: string
 ) {
 	const config = loadConfig();
+	if (config.govNotify.disabled) return;
 
 	const portalUrl = process.env.PORTAL_URL;
 	const gw2AssessorTemplateId = config.govNotify.templateIds.gw2AssessorUpdatedAssessor;
@@ -94,6 +95,7 @@ export async function sendAssessorAppointedNotifyEmail(
 
 export async function sendWorkshopDocsUploadedNotifyEmail(service: ManageService, req: Request, reference: string) {
 	const config = loadConfig();
+	if (config.govNotify.disabled) return;
 
 	const portalUrl = process.env.PORTAL_URL;
 	const gw2WorkshopAgendaTemplateId = config.govNotify.templateIds.gw2WorkshopAgenda;
@@ -147,6 +149,7 @@ export async function sendWorkshopDocsUploadedNotifyEmail(service: ManageService
 
 export async function sendWorkshopReportUploadedNotifyEmail(service: ManageService, req: Request, reference: string) {
 	const config = loadConfig();
+	if (config.govNotify.disabled) return;
 
 	const portalUrl = process.env.PORTAL_URL;
 	const gw2ReportUploadedTemplateId = config.govNotify.templateIds.gw2ReportUploaded;
