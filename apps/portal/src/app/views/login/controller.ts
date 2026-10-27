@@ -64,8 +64,16 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('Login attempt with unrecognised email');
-				req.session.email = sanitisedEmail;
-				return res.redirect(`${req.baseUrl}/enter-code`);
+				delete req.session.email;
+				return res.render('views/login/enter-email-page.njk', {
+					pageTitle: 'Sign-in',
+					pageHeading: 'Sign-in',
+					emailQuestionText: 'What is your email address?',
+					backLinkUrl: `/`,
+					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
+					errorSummaryTitle: 'There is a problem',
+					errorSummary: [{ text: 'We did not recognise that email address', href: '#email' }]
+				});
 			}
 
 			const otpRecord = await db.oneTimePassword.findUnique({
@@ -201,16 +209,25 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 		}
 
-		if (isOneTimePasswordBypass(service, req, otp)) {
-			req.session.isAuthenticated = true;
-			req.session.authenticatedEmail = email;
-			delete req.session.email;
-
-			logger.info('OTP bypass verification success');
-			return res.redirect('/manage-local-plans/your-plans');
-		}
-
 		try {
+			const emailIsAssociatedToACase = await db.case.findFirst({
+				where: { email, deletedDate: null }
+			});
+			if (!emailIsAssociatedToACase) {
+				logger.info('OTP verification attempted for an unrecognised email');
+				delete req.session.email;
+				return res.redirect(`${req.baseUrl}/no-access`);
+			}
+
+			if (isOneTimePasswordBypass(service, req, otp)) {
+				req.session.isAuthenticated = true;
+				req.session.authenticatedEmail = email;
+				delete req.session.email;
+
+				logger.info('OTP bypass verification success');
+				return res.redirect('/manage-local-plans/your-plans');
+			}
+
 			const otpRecord = await db.oneTimePassword.findUnique({
 				where: { email }
 			});
