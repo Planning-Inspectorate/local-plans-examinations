@@ -53,10 +53,6 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '18', folderName: 'examination-report' }
 ];
 
-process.env.SESSION_SECRET = 'test-session-secret';
-process.env.GOV_NOTIFY_DISABLED = 'true';
-process.env.AUTH_DISABLED = 'true';
-
 function createService(): any {
 	const db: any = {
 		case: {

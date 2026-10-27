@@ -167,11 +167,9 @@ function registerGateway2WorkshopJourney(
 	const completeWorkshopAndSendEmail = asyncHandler(async (req: Request, res: Response) => {
 		const reference = getParam(req.params.reference);
 		const answers = res.locals.journeyResponse?.answers ?? {};
-		console.log(answers);
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
-		// const workshopId = String(req.url).split('-')[-1];
 		//reqCopy.params.question = `check-your-answers-${workshopId}`;
 		await new Gateway2SaveController(service, req, reference).prepareAndSave({});
 		await updateCaseField(service);
