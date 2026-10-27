@@ -185,7 +185,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 
 			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
 
-			if (data.answers.assessorName !== null) {
+			if (data.answers.assessorName) {
 				await sendAssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
 			}
 		}
