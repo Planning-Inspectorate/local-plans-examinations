@@ -7,7 +7,11 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID,
+	GATEWAY_3_STATUS
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -391,6 +395,7 @@ describe('PortalService', () => {
 						select: {
 							expectedSubmissionForExaminationDate: true,
 							submissionForExaminationDate: true,
+							adoptionDate: true,
 							status: true,
 							statusLookup: {
 								select: { displayName: true }
@@ -545,6 +550,72 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].status, STATUS.ResubmissionRequired);
 			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
 		});
+
+		for (const { status, adoptionDate, submissionDate, expectedDate } of [
+			{
+				status: EXAMINATION_STATUS_ID.PLAN_ADOPTED,
+				adoptionDate: new Date('2026-10-20'),
+				submissionDate: new Date('2026-09-05'),
+				expectedDate: '20 October 2026'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.PLAN_ADOPTED,
+				adoptionDate: new Date('2026-10-27'),
+				submissionDate: new Date('2026-09-05'),
+				expectedDate: '27 October 2026'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.PLAN_ADOPTED,
+				adoptionDate: null,
+				submissionDate: new Date('2026-09-05'),
+				expectedDate: 'Not set'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				adoptionDate: null,
+				submissionDate: new Date('2026-09-05'),
+				expectedDate: '5 September 2026'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+				adoptionDate: null,
+				submissionDate: new Date('2026-09-05'),
+				expectedDate: '5 September 2026'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.READY_TO_START,
+				adoptionDate: null,
+				submissionDate: null,
+				expectedDate: '1 September 2026'
+			}
+		]) {
+			it(`maps ${status} with examination date ${expectedDate}`, async () => {
+				const displayName = status === EXAMINATION_STATUS_ID.PLAN_ADOPTED ? 'Plan adopted' : 'Other status';
+				const service = buildService([
+					buildCase({
+						gateway3Info: {
+							submissions: [
+								{ decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION, completionDate: new Date('2026-08-01') }
+							]
+						},
+						examinationInfo: {
+							status,
+							statusLookup: { displayName },
+							adoptionDate,
+							submissionForExaminationDate: submissionDate,
+							expectedSubmissionForExaminationDate: new Date('2026-09-01')
+						}
+					})
+				]);
+
+				const [plan] = await PortalService.prototype.getPlans.call(service);
+
+				assert.strictEqual(plan.stage, STAGE.Examination);
+				assert.strictEqual(plan.examinationStatus, status);
+				assert.strictEqual(plan.examinationStatusLabel, displayName);
+				assert.strictEqual(plan.dates.E, expectedDate);
+			});
+		}
 
 		it('maps missing info table dates to Not set', async () => {
 			const service = buildService([
