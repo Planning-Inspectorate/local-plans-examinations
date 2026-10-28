@@ -44,7 +44,6 @@ import {
 	sendGw3PassNotifyEmail,
 	sendGw3ResubmissionNeededNotifyEmail
 } from '../../../app/notify/notify-helper.ts';
-import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
