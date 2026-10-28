@@ -28,6 +28,20 @@
       {% endif %}
     {% endfor %}
   {% endif %}
+  {% if virusErrorSummary and virusErrorSummary.length %}
+      {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: virusErrorSummary,
+          attributes: { "data-cy": "virus-detected-banner" }
+      }) }}
+  {% endif %}
+  {% if virusScanInProgress %}
+      {{ govukNotificationBanner({
+          titleText: "Important",
+          html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+          attributes: { "data-cy": "virus-scan-in-progress-banner" }
+      }) }}
+  {% endif %}
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
 

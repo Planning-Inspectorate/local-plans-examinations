@@ -67,7 +67,7 @@ type CaseWithGateway2Info = CaseModel & {
 	documents?: Gateway2SummaryDocument[];
 };
 import { getRoutePlanReference } from './utils.ts';
-import { setVirusScanViewLocals } from '../utils.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import { downloadGateway2Document } from './download.ts';
 import lusca from 'lusca';
 

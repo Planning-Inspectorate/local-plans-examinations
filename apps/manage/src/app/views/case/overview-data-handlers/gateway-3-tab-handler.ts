@@ -47,6 +47,7 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 		res.locals.journeyResponse = journeyResponse;
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

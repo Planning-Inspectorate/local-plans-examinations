@@ -90,6 +90,7 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 				return;
 			}
 		}
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

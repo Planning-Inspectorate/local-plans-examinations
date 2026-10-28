@@ -1,6 +1,7 @@
 import { SubmissionCheckWithDate } from './submission-check-with-date.ts';
 import { type SubmissionCheckData } from './submission-check.ts';
 import { type ManageService } from '#service';
+import { questions } from '../questions.ts';
 
 export class SignedSLASubmissionCheck extends SubmissionCheckWithDate {
 	public async generateDataForPage(
@@ -23,9 +24,20 @@ export class SignedSLASubmissionCheck extends SubmissionCheckWithDate {
 			}
 		});
 		const complete = existingGatewayDetails?.slaSentDate;
+		const answersToReview = [
+			...this.generateAdditionalDateField(
+				existingGatewayDetails?.slaReceivedDate,
+				`/case/${caseReference}/${journeyId}/${section}/sla-received-date`
+			),
+			...this.formatDocuments(
+				uploadedFiles,
+				`/case/${caseReference}/download-case-document`,
+				`/case/${caseReference}/${journeyId}/${section}/${questions.signedSla.url}`
+			)
+		];
 		return {
 			titleHeading: 'Check signed SLA and issue notification',
-			uploadedFiles: uploadedFiles,
+			answersToReview: answersToReview,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,
@@ -33,7 +45,6 @@ export class SignedSLASubmissionCheck extends SubmissionCheckWithDate {
 			backLink: this.generateBackUrl(originalUrl),
 			notificationPreviewTemplate: questionUrl + (complete ? '-complete' : ''),
 			submitButtonText: 'Confirm and issue notification',
-			additionalFields: this.generateAdditionalDateField(existingGatewayDetails?.slaReceivedDate, 'sla-received-date'),
 			notificationTextLPA: undefined
 		};
 	}

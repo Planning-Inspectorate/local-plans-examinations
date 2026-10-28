@@ -1,17 +1,21 @@
 import { type ManageService } from '#service';
+import type { UploadedFile } from '@pins/local-plans-lib/storage/types.ts';
+import { fileUploadDownloadFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 export type SubmissionCheckData = {
 	titleHeading: string;
-	uploadedFiles: any[];
+	answersToReview: {
+		name: string;
+		value: string | null;
+		url: string | undefined;
+	}[];
 	caseReference: string;
 	journeyId: string;
 	section: string;
 	question: string;
 	backLink: string;
-	documentChangeUrl?: string;
 	notificationPreviewTemplate?: string;
 	submitButtonText: string;
-	additionalFields: { name: string; value: string | null; url: string | undefined | null; query?: string }[];
 	notificationTextLPA?: string;
 };
 
@@ -50,5 +54,30 @@ export abstract class SubmissionCheck {
 
 	protected generateBaseUrl(url: string): string {
 		return url.split('/').slice(0, 3).join('/');
+	}
+
+	protected formatDocuments(
+		uploadedFiles: UploadedFile[],
+		documentDownloadBaseUrl: string,
+		documentChangeBaseUrl: string,
+		query?: string
+	) {
+		const answersToReview: { name: string; value: string; url: string }[] = [];
+		let documentCounter = 1;
+		for (const file of uploadedFiles) {
+			const downloadUrl = `${documentDownloadBaseUrl}/${file.metadata?.documentGuid}`;
+			if (!file.metadata?.documentGuid) {
+				throw Error(`documentGuid is missing for document with name ${file.fileName}, path ${file.path}`);
+			}
+			const queryString = query ? `?${query}` : '';
+			const changeUrl = `${documentChangeBaseUrl}${queryString}`;
+			answersToReview.push({
+				name: `Document ${documentCounter}`,
+				value: fileUploadDownloadFormat(file, downloadUrl),
+				url: changeUrl
+			});
+			documentCounter += 1;
+		}
+		return answersToReview;
 	}
 }

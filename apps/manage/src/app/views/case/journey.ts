@@ -756,5 +756,7 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
-	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
 };
