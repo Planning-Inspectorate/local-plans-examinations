@@ -6,6 +6,7 @@ import {
 	type CaseRelation,
 	FIELD_RELATIONS,
 	CONTACT_LPA_FIELDS,
+	EXAMINING_INSPECTOR_FIELDS,
 	RELATION_APPOINTMENT_DATE_TRIGGERS
 } from '../../../classes/case-field-mappings.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
@@ -26,9 +27,10 @@ export class OverviewSaveController extends SaveController {
 			this.section === 'contacts' ||
 			['firstName', 'lastName', 'phone', 'lpaContact', 'lpaCode'].some((key) => key in answers) ||
 			(Boolean(this.currentItemId) && 'email' in answers);
-		const examiningInspectorAssigned = (
-			['examiningInspector1', 'examiningInspector2', 'examiningInspector3'] as const
-		).some((field) => typeof answers[field] === 'string' && answers[field].length > 0);
+		const examiningInspectorAssigned = EXAMINING_INSPECTOR_FIELDS.some((field) => {
+			const value = answers[field];
+			return typeof value === 'string' && value.trim().length > 0;
+		});
 		let updated = false;
 
 		await this.service.db.$transaction(async (tx) => {
