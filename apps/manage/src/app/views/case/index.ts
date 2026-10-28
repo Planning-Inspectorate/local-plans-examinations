@@ -828,7 +828,10 @@ function registerCaseJourney(
  */
 function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestHandler>): RequestHandler {
 	return (req, res, next) => {
+		console.log('file upload route hit');
 		const questionUrl = getRouteQuestionUrl(req);
+		console.log(`extracted questionUrl: '${questionUrl}'`);
+		console.log(`handlersByQuestionUrl keys: [${Array.from(handlersByQuestionUrl.keys())}]`);
 		const handler = questionUrl ? handlersByQuestionUrl.get(questionUrl) : undefined;
 		if (!handler || typeof handler !== 'function') {
 			return res.status(404).render('views/errors/404.njk');
