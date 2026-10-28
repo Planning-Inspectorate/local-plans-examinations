@@ -33,6 +33,7 @@ export const FIELD_RELATIONS: Partial<
 /** Contact/LPA answers are not nested inside of a Case, and are saved via their own DB calls. */
 export const CONTACT_LPA_FIELDS = new Set<keyof CaseOverviewInput>([
 	'lpa',
+	'checkLpas', // List items are already persisted individually.
 	'lpaCode',
 	'lpaContact',
 	'firstName',
