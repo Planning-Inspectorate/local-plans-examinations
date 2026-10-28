@@ -829,6 +829,48 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 	};
 }
 
+export function issueMiqDocuments(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingExaminationDetails = await service.db.examinationInfo.findUnique({
+			select: {
+				miqDocumentSharedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (!existingExaminationDetails?.miqDocumentSharedDate) {
+			const miqDocumentSharedDate = new Date();
+			const account = authSession.getAccount(req.session);
+			const currentUser = account?.name ?? 'Unknown';
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				miqDocumentSharedDate: miqDocumentSharedDate
+			});
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					examinationMiqDocuments: null
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					examinationMiqDocuments: `MIQ documents shared on ${await formatCaseHistoryValue(service, req, '', miqDocumentSharedDate)}`
+				}
+			);
+			pushAlertToSession(req, 'success', 'MIQ document(s) shared');
+		} else {
+			pushAlertToSession(req, 'important', 'MIQ documents already shared');
+		}
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
+		return;
+	};
+}
+
 export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
@@ -1076,6 +1118,25 @@ export function preprocessQuestionProperties(
 				};
 			} else {
 				delete questions['gateway2WorkshopDocuments'].actionLink;
+			}
+		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: true
+				},
+				where: {
+					reference
+				}
+			});
+			const miqComplete = !!caseDetails?.examinationInfo?.miqDocumentSharedDate;
+			if (miqComplete) {
+				questions['examinationMiqDocuments'].actionLink = {
+					href: `/case/${reference}/examination/miq-documents/examination-miq-documents/check`,
+					text: 'View'
+				};
+			} else {
+				delete questions['examinationMiqDocuments'].actionLink;
 			}
 		}
 		if (journeyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {

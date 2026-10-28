@@ -24,6 +24,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_FOLDER_NAME } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import lusca from 'lusca';
 import { createJourney, JOURNEY_ID } from './journey.ts';
@@ -40,6 +41,7 @@ type ExaminationInfoRecord = {
 	examinationWebsiteUrl: string | null;
 	expectedSubmissionForExaminationDate: Date | null;
 	submissionForExaminationDate: Date | null;
+	miqDocumentSharedDate: Date | null;
 	statusLookup: { displayName: string } | null;
 };
 
@@ -326,8 +328,8 @@ export function buildGuardExaminationEdit(): RequestHandler {
 	};
 }
 
-export function buildSubmittedExaminationView(): RequestHandler {
-	return (req, res, next) => {
+export function buildSubmittedExaminationView(service: PortalService): RequestHandler {
+	return async (req, res, next) => {
 		const request = req as ExaminationRequest;
 		const examinationInfo = request.currentCase?.examinationInfo;
 		const submissionDate = examinationInfo?.submissionForExaminationDate;
@@ -347,8 +349,60 @@ export function buildSubmittedExaminationView(): RequestHandler {
 		res.locals.submitter = request.currentCase?.email;
 		delete res.locals.saveAndComeBackUrl;
 
+		// Load MIQ documents when they have been shared
+		if (examinationInfo.miqDocumentSharedDate && request.currentCase) {
+			const planReference = getRoutePlanReference(req);
+			const miqDocuments = await loadMiqDocuments(service, request.currentCase.id, planReference);
+			if (miqDocuments.length > 0) {
+				res.locals.miqDocuments = miqDocuments;
+				res.locals.miqSharedDate = formatDisplayDate(examinationInfo.miqDocumentSharedDate as Date);
+			}
+		}
+
 		return next();
 	};
+}
+
+export type MiqDocumentViewModel = {
+	fileName: string;
+	href?: string;
+	sharedDate?: string;
+};
+
+async function loadMiqDocuments(
+	service: PortalService,
+	caseId: string,
+	planReference: string | undefined
+): Promise<MiqDocumentViewModel[]> {
+	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(service, [
+		DOCUMENT_SET_FOLDER_NAME.EX_MIQ
+	]);
+	const documentSetId = documentSetIdsByFolderName.get(DOCUMENT_SET_FOLDER_NAME.EX_MIQ);
+	if (!documentSetId) {
+		return [];
+	}
+	const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, caseId, documentSetId);
+	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+
+	return uploadedFiles
+		.map((file) => {
+			const documentGuid = typeof file.metadata?.documentGuid === 'string' ? file.metadata.documentGuid : undefined;
+			let fileName = typeof file.fileName === 'string' ? file.fileName : 'document';
+			try {
+				fileName = decodeURIComponent(fileName);
+			} catch {
+				// keep as-is
+			}
+			return {
+				fileName,
+				href:
+					encodedPlanReference && documentGuid
+						? `/manage-local-plans/${encodedPlanReference}/examination/download-document/${encodeURIComponent(documentGuid)}`
+						: undefined,
+				sharedDate: file.dateCreated ? formatDisplayDate(file.dateCreated) : undefined
+			};
+		})
+		.filter((doc) => Boolean(doc.fileName));
 }
 
 export function buildExaminationCheckAnswersList(): RequestHandler {
@@ -630,6 +684,6 @@ export function buildExaminationMiddleware(service: PortalService) {
 		getDeclarationPage: buildGetDeclarationPage(),
 		postDeclarationPage: buildPostDeclarationPage(service),
 		getSubmissionCompletePage: buildGetSubmissionCompletePage(),
-		submittedExaminationView: buildSubmittedExaminationView()
+		submittedExaminationView: asyncHandler(buildSubmittedExaminationView(service))
 	};
 }

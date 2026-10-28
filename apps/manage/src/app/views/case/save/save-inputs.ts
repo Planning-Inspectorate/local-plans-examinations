@@ -104,6 +104,7 @@ export interface ExaminationInput extends SaveInput {
 	withdrawnDate?: Date;
 	isSound?: string;
 	soundUnsoundDate?: Date;
+	miqDocumentSharedDate?: Date;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
 	hearingExpectedDays?: string;

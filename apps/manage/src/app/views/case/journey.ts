@@ -427,6 +427,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
 			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
+			new Section('MIQ documents', 'miq-documents').addQuestion(questions.examinationMiqDocuments),
 			new Section('Hearings', 'hearings'),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
@@ -733,7 +734,8 @@ const examinationQuestionNames = new Set<string>([
 	'soundUnsoundDate',
 	'adoptionDate',
 	'approvedForCILDate',
-	'examinationReport'
+	'examinationReport',
+	'examinationMiqDocuments'
 ]);
 
 export const journeyQuestions = {

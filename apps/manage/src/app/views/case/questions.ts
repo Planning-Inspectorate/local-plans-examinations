@@ -1542,6 +1542,36 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-report-manage',
 		viewData: { uploadQuestionUrl: 'examination-report' }
 	},
+	examinationMiqDocuments: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'MIQ documents',
+		question: 'Upload MIQ documents',
+		fieldName: 'examinationMiqDocuments',
+		url: 'examination-miq-documents',
+		notStartedText: 'Not provided',
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: undefined,
+			introduction: 'Upload a file',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES)}.<br><br>The total size of your uploaded files must be smaller than 1GB.`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
+		},
+		validators: [
+			new FileUploadRequiredValidator('examinationMiqDocuments', 'Upload at least one MIQ document before continuing')
+		]
+	},
 	hearingDates: {
 		type: CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES,
 		title: 'Hearing dates',

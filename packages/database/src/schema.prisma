@@ -259,6 +259,7 @@ model ExaminationInfo {
   withdrawnDate                        DateTime?            @db.DateTime2
   isSound                              String?              @db.NVarChar(50)
   soundUnsoundDate                     DateTime?            @db.DateTime2
+  miqDocumentSharedDate                DateTime?            @db.DateTime2
   adoptionDate                         DateTime?            @db.DateTime2
   approvedForCILDate                   DateTime?            @db.DateTime2
   hearings                             ExaminationHearing[]
