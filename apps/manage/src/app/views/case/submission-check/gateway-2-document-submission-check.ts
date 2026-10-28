@@ -14,11 +14,15 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 		questionTitle: any,
 
 	): Promise<SubmissionCheckData> {
+		if (questionTitle == 'Subsequent work towards a draft Plan') {
+			questionTitle = 'Subsequent work towards draft plan';
+		}
+
 		const allDocuments = await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSet: {
-					displayName: questionTitle
+					displayName: questionTitle.toLowerCase()
 				},
 				isDeleted: false
 			},
@@ -29,7 +33,7 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 		});
 
 		const documents = allDocuments.map((document: any) => ({
-			name: document.name,
+			name: document.name.replace(/^.*\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i, ''),
 			url: `/case/${encodeURIComponent(caseReference)}/download-case-document/${encodeURIComponent(document.guid)}`
 		}));
 
