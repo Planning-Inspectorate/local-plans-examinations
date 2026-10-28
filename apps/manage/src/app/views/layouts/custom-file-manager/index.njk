@@ -10,6 +10,20 @@
 {% endblock before_content %}
 
 {% block content %}
+{% if virusErrorSummary and virusErrorSummary.length %}
+      {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: virusErrorSummary,
+          attributes: { "data-cy": "virus-detected-banner" }
+      }) }}
+  {% endif %}
+  {% if virusScanInProgress %}
+      {{ govukNotificationBanner({
+          titleText: "Important",
+          html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+          attributes: { "data-cy": "virus-scan-in-progress-banner" }
+      }) }}
+  {% endif %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       {% if alerts %}
@@ -27,16 +41,6 @@
         classes: "govuk-button--secondary"
       }) }}
 
-      {% set rows = [] %}
-      {% for file in documents %}
-        {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (file.id | urlencode) %}
-        {% set _ = rows.push([
-          { html: '<a class="govuk-link" href="' + downloadUrl + '">' + (file.fileName | escape) + '</a>' },
-          { text: (file.dateCreated | date("d MMM yyyy")) if file.dateCreated else "" },
-          { html: '<a class="govuk-link" href="' + uploadQuestionUrl + '/remove/' + (file.id | urlencode) + '">Remove<span class="govuk-visually-hidden"> ' + (file.fileName | escape) + '</span></a>' }
-        ]) %}
-      {% endfor %}
-
       {{ govukTable({
         attributes: { "data-cy": "examination-report-documents" },
         head: [
@@ -44,7 +48,7 @@
           { text: "Received" },
           { text: "Actions" }
         ],
-        rows: rows
+        rows: dataRows
       }) }}
     </div>
   </div>

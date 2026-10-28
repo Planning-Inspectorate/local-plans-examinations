@@ -20,7 +20,6 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 
 		return {
 			titleHeading: 'Check document',
-			uploadedFiles,
 			caseReference,
 			journeyId,
 			section,
@@ -28,17 +27,17 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 			backLink: this.generateBackUrl(originalUrl),
 			notificationPreviewTemplate: '',
 			submitButtonText: 'Upload document',
-			additionalFields: [
+			answersToReview: [
 				{
 					name: 'Section',
 					value: questionTitle,
 					url: undefined
 				},
-				{
-					name: 'Documents',
-					value: null,
-					url: undefined
-				}
+				...this.formatDocuments(
+					uploadedFiles,
+					`/case/${caseReference}/download-case-document`,
+					`/case/${caseReference}/${journeyId}/${section}/${questionUrl}`
+				)
 			]
 		};
 	}

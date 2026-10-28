@@ -43,7 +43,7 @@ import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/mo
 import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
-import { setVirusScanViewLocals } from '../utils.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import {
 	isGateway3ResubmissionAwaitingSubmission,
 	type Gateway3SubmissionSummary

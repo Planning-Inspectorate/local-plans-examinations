@@ -23,6 +23,7 @@ export class Gateway1TabHandler extends OverviewPageLoadHandler {
 			COMMON_CONSTS.GATEWAY_1_JOURNEY_ID
 		);
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (
 			req.method === 'POST' &&
 			req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION &&
