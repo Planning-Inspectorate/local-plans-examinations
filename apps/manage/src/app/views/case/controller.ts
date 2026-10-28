@@ -35,10 +35,8 @@ import {
 	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
-import { pushAlertToSession } from '../../util/alert.ts';
-import { TimetableSaveController } from './save/timetable-save-controller.ts';
 
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
