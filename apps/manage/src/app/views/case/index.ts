@@ -833,6 +833,8 @@ function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestH
 		console.log(`extracted questionUrl: '${questionUrl}'`);
 		console.log(`handlersByQuestionUrl keys: [${Array.from(handlersByQuestionUrl.keys())}]`);
 		const handler = questionUrl ? handlersByQuestionUrl.get(questionUrl) : undefined;
+		console.log(`extracted handler: '${handler}'`);
+		console.log(`extracted hanlder class ${typeof handler}`);
 		if (!handler || typeof handler !== 'function') {
 			return res.status(404).render('views/errors/404.njk');
 		}
