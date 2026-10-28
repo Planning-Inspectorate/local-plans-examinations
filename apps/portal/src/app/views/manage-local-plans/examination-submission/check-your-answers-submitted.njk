@@ -32,7 +32,7 @@
         <h2 class="govuk-heading-m">Documents</h2>
 
         {% for section in summaryListData.sections %}
-            {% if section.list.rows.length %}
+            {% if section.list.rows.length or (loop.first and examinationReportFiles.length) %}
                 <div class="govuk-!-margin-bottom-8" id="examination-details" data-cy="examination-details-section">
                     <table class="govuk-table" data-cy="examination-details-table">
                         <thead class="govuk-table__head">
@@ -54,6 +54,20 @@
                                     </td>
                                 </tr>
                             {% endfor %}
+                            {% if loop.first and examinationReportFiles.length %}
+                                <tr class="govuk-table__row" data-cy="examination-report-row">
+                                    <td class="govuk-table__cell govuk-!-width-one-half">Examination report</td>
+                                    <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
+                                        <ul class="govuk-list govuk-!-margin-bottom-0">
+                                            {% for file in examinationReportFiles %}
+                                                <li>
+                                                    <a class="govuk-link" href="{{ file.href }}">{{ file.fileName }}</a>{% if file.issuedDate %} (issued {{ file.issuedDate }}){% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>

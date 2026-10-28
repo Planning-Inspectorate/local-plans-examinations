@@ -39,6 +39,7 @@ type PortalCase = {
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		soundUnsoundDate: Date | null;
 		status: string;
 		statusLookup: { displayName: string } | null;
 	} | null;
@@ -74,6 +75,19 @@ function getGateway2ReportUploadedDate(caseRecord: PortalCase): Date | null {
 
 function hasIssuedGateway2Report(caseRecord: PortalCase): boolean {
 	return Boolean(caseRecord.gateway2Info?.reportIssuedDate && getGateway2ReportUploadedDate(caseRecord));
+}
+
+function hasIssuedExaminationReport(caseRecord: PortalCase): boolean {
+	return Boolean(
+		caseRecord.examinationInfo?.soundUnsoundDate &&
+		caseRecord.documents.some(
+			(document) =>
+				document.documentSetId === DOCUMENT_SET_ID.EXAMINATION_REPORT &&
+				!document.isDeleted &&
+				document.latestDocumentVersion &&
+				!document.latestDocumentVersion.isDeleted
+		)
+	);
 }
 
 // A Gateway 2 submission document is any non-report document belonging to the Gateway 2 document sets.
@@ -181,9 +195,16 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		: (gateway3SubmissionState.latestSubmission?.completionDate ??
 			caseRecord.gateway3Info?.actualDate ??
 			caseRecord.gateway3Info?.expectedDate);
+	const examinationReportIssued = hasIssuedExaminationReport(caseRecord);
+	const examinationStatus =
+		examinationReportIssued && caseRecord.examinationInfo?.status !== EXAMINATION_STATUS_ID.PLAN_ADOPTED
+			? EXAMINATION_STATUS_ID.REPORT_ISSUED
+			: (caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET);
 	const examinationDate =
-		caseRecord.examinationInfo?.submissionForExaminationDate ??
-		caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
+		examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+			? caseRecord.examinationInfo?.soundUnsoundDate
+			: (caseRecord.examinationInfo?.submissionForExaminationDate ??
+				caseRecord.examinationInfo?.expectedSubmissionForExaminationDate);
 	const plan = buildPlan({
 		refNum: caseRecord.reference,
 		leadLPA: lpaNames[0] ?? '',
@@ -191,8 +212,11 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		title: caseRecord.planTitle,
 		stage: progress.stage,
 		status: progress.status,
-		examinationStatus: caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET,
-		examinationStatusLabel: caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet',
+		examinationStatus,
+		examinationStatusLabel:
+			examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+				? 'Report issued'
+				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
@@ -231,6 +255,7 @@ const planCaseInclude = {
 		select: {
 			expectedSubmissionForExaminationDate: true,
 			submissionForExaminationDate: true,
+			soundUnsoundDate: true,
 			status: true,
 			statusLookup: {
 				select: { displayName: true }
@@ -245,7 +270,7 @@ const planCaseInclude = {
 	documents: {
 		where: {
 			// A soft-deleted document still means the submission was started.
-			documentSetId: { in: [...gateway2SetIds, ...gateway3SetIds] }
+			documentSetId: { in: [...gateway2SetIds, ...gateway3SetIds, DOCUMENT_SET_ID.EXAMINATION_REPORT] }
 		},
 		orderBy: {
 			createdAt: 'asc' as const

@@ -88,6 +88,7 @@ import { ExaminationPauseHandler } from './overview-data-handlers/examination-pa
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
@@ -732,6 +733,7 @@ function registerCaseJourney(
 								await service.db.examinationInfo.updateMany({
 									where: { caseId },
 									data: {
+										status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 										isSound: null,
 										soundUnsoundDate: null,
 										adoptionDate: null,

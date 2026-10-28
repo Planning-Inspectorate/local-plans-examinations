@@ -6,7 +6,7 @@ const EXAMINATION_STATUS_TAG_CLASSES: Record<string, string> = {
 	[EXAMINATION_STATUS_ID.SUBMITTED]: 'govuk-tag govuk-tag--yellow',
 	[EXAMINATION_STATUS_ID.IN_EXAMINATION]: 'govuk-tag govuk-tag--blue',
 	[EXAMINATION_STATUS_ID.PAUSED]: 'govuk-tag govuk-tag--grey',
-	[EXAMINATION_STATUS_ID.REPORT_ISSUED]: 'govuk-tag govuk-tag--turquoise',
+	[EXAMINATION_STATUS_ID.REPORT_ISSUED]: 'govuk-tag govuk-tag--blue',
 	[EXAMINATION_STATUS_ID.PLAN_ADOPTED]: 'govuk-tag govuk-tag--purple'
 };
 

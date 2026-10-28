@@ -7,7 +7,11 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID,
+	GATEWAY_3_STATUS
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { PortalService, derivePlanProgress } from './service.ts';
 import { STAGE, STATUS } from './types.ts';
 
@@ -43,11 +47,28 @@ function buildCase(overrides = {}) {
 		examinationInfo: {
 			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 			submissionForExaminationDate: null,
+			soundUnsoundDate: null,
 			status: 'cannot-start-yet',
 			statusLookup: { displayName: 'Cannot start yet' }
 		},
 		documents: [],
 		...overrides
+	};
+}
+
+function buildExaminationReportDocument(fileName = 'examination-report.pdf') {
+	return {
+		guid: 'examination-report-guid',
+		name: fileName,
+		documentSetId: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+		createdAt: new Date('2026-10-20T12:00:00.000Z'),
+		isDeleted: false,
+		latestDocumentVersion: {
+			originalFilename: fileName,
+			fileName,
+			dateCreated: new Date('2026-10-20T12:00:00.000Z'),
+			isDeleted: false
+		}
 	};
 }
 
@@ -391,6 +412,7 @@ describe('PortalService', () => {
 						select: {
 							expectedSubmissionForExaminationDate: true,
 							submissionForExaminationDate: true,
+							soundUnsoundDate: true,
 							status: true,
 							statusLookup: {
 								select: { displayName: true }
@@ -405,7 +427,7 @@ describe('PortalService', () => {
 					documents: {
 						where: {
 							documentSetId: {
-								in: [...gateway2SetIds, ...gateway3SetIds]
+								in: [...gateway2SetIds, ...gateway3SetIds, DOCUMENT_SET_ID.EXAMINATION_REPORT]
 							}
 						},
 						orderBy: {
@@ -520,6 +542,39 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.UnderReview);
 			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
+		});
+
+		it('maps an uploaded examination report to Report issued using the BO issue date', async () => {
+			const reportIssuedDate = new Date('2026-10-20T12:00:00.000Z');
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-09-01T12:00:00.000Z'),
+						frontOfficeStatus: GATEWAY_3_STATUS.COMPLETED,
+						submissions: [
+							{
+								decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+								completionDate: new Date('2026-09-10T12:00:00.000Z')
+							}
+						]
+					},
+					examinationInfo: {
+						expectedSubmissionForExaminationDate: new Date('2026-09-15T12:00:00.000Z'),
+						submissionForExaminationDate: new Date('2026-09-18T12:00:00.000Z'),
+						soundUnsoundDate: reportIssuedDate,
+						status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+						statusLookup: { displayName: 'In examination' }
+					},
+					documents: [buildExaminationReportDocument()]
+				})
+			]);
+
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plans[0].examinationStatus, EXAMINATION_STATUS_ID.REPORT_ISSUED);
+			assert.strictEqual(plans[0].examinationStatusLabel, 'Report issued');
+			assert.strictEqual(plans[0].dates.E, '20 October 2026');
 		});
 
 		it('maps an open Gateway 3 resubmission to Resubmission required using the actual submission date', async () => {
