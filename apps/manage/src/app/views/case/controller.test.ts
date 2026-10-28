@@ -131,7 +131,8 @@ function createService(): any {
 		db,
 		logger: {
 			info: mock.fn(),
-			error: mock.fn()
+			error: mock.fn(),
+			warn: mock.fn()
 		},
 		getEntraClient: mock.fn(() => null)
 	};

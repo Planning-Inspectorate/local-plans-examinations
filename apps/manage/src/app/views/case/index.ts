@@ -91,7 +91,7 @@ import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/cu
 import { pushAlertToSession } from '../../util/alert.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
-import { sendGw2WorkshopSetUpNotifyEmail } from 'src/app/notify/notify-helper.ts';
+import { sendGw2WorkshopSetUpNotifyEmail } from '../../notify/notify-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
