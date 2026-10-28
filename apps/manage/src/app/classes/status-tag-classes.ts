@@ -25,7 +25,7 @@ const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Examination: 'govuk-tag--yellow',
 	'Exam pending': 'govuk-tag--yellow',
 	'Exam paused': 'govuk-tag--grey',
-	'Plan adopted': 'govuk-tag--green',
+	'Plan adopted': 'govuk-tag--purple',
 	'Hearing pending': 'govuk-tag--blue',
 	'Exam in progress': 'govuk-tag--blue',
 	'Submission pending': 'govuk-tag--yellow',

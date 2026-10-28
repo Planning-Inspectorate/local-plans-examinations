@@ -627,6 +627,7 @@ describe('plan page', () => {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		assert.strictEqual(data.planStatus, '<strong class="govuk-tag govuk-tag--purple">Plan adopted</strong>');
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',

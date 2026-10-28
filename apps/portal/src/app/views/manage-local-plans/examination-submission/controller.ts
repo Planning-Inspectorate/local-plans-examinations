@@ -1,4 +1,5 @@
 import type { PortalService } from '#service';
+import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
 import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import multer from 'multer';
 import {
@@ -80,16 +81,6 @@ const upload = multer({
 		fileSize: Math.max(...fileUploadQuestionConfigs.map((questionConfig) => questionConfig.maxFileSizeBytes))
 	}
 });
-
-const STATUS_TAG_CLASSES: Record<string, string> = {
-	[EXAMINATION_STATUS_ID.READY_TO_START]: 'govuk-tag govuk-tag--green',
-	[EXAMINATION_STATUS_ID.IN_PROGRESS]: 'govuk-tag govuk-tag--blue',
-	[EXAMINATION_STATUS_ID.SUBMITTED]: 'govuk-tag govuk-tag--yellow',
-	[EXAMINATION_STATUS_ID.IN_EXAMINATION]: 'govuk-tag govuk-tag--blue',
-	[EXAMINATION_STATUS_ID.PAUSED]: 'govuk-tag govuk-tag--grey',
-	[EXAMINATION_STATUS_ID.REPORT_ISSUED]: 'govuk-tag govuk-tag--turquoise',
-	[EXAMINATION_STATUS_ID.PLAN_ADOPTED]: 'govuk-tag govuk-tag--green'
-};
 
 const EXAMINATION_SUBMIT_ERROR = 'Add all required documents before you submit';
 const DECLARATION_VIEW_PATH = 'views/manage-local-plans/examination-submission/declaration/declaration.njk';
@@ -285,7 +276,7 @@ export function setExaminationViewLocals(req: Request, res: Response) {
 	if (examinationInfo && examinationInfo.status !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
 		res.locals.statusTag = {
 			label: examinationInfo.statusLookup?.displayName ?? examinationInfo.status,
-			class: STATUS_TAG_CLASSES[examinationInfo.status] ?? 'govuk-tag govuk-tag--blue'
+			class: getExaminationStatusTagClass(examinationInfo.status) ?? 'govuk-tag govuk-tag--blue'
 		};
 	} else {
 		delete res.locals.statusTag;

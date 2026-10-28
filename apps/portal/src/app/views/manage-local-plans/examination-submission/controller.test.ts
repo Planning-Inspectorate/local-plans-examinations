@@ -145,7 +145,7 @@ describe('examination view data', () => {
 		assert.equal(next.mock.callCount(), 2);
 	});
 
-	it('uses the submitted and in-examination status tags', () => {
+	it('uses the submitted, in-examination and plan-adopted status tags', () => {
 		for (const { status, label, className } of [
 			{
 				status: EXAMINATION_STATUS_ID.SUBMITTED,
@@ -156,6 +156,11 @@ describe('examination view data', () => {
 				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 				label: 'In examination',
 				className: 'govuk-tag govuk-tag--blue'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.PLAN_ADOPTED,
+				label: 'Plan adopted',
+				className: 'govuk-tag govuk-tag--purple'
 			}
 		]) {
 			const locals: Record<string, unknown> = {};

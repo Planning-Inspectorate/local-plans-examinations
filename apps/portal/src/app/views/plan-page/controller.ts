@@ -1,4 +1,5 @@
 import type { PortalService } from '#service';
+import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
@@ -9,18 +10,8 @@ function statusTag(status: Status) {
 	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
 }
 
-const examinationStatusClasses: Record<string, string> = {
-	[EXAMINATION_STATUS_ID.READY_TO_START]: 'govuk-tag govuk-tag--green',
-	[EXAMINATION_STATUS_ID.IN_PROGRESS]: 'govuk-tag govuk-tag--blue',
-	[EXAMINATION_STATUS_ID.SUBMITTED]: 'govuk-tag govuk-tag--yellow',
-	[EXAMINATION_STATUS_ID.IN_EXAMINATION]: 'govuk-tag govuk-tag--blue',
-	[EXAMINATION_STATUS_ID.PAUSED]: 'govuk-tag govuk-tag--grey',
-	[EXAMINATION_STATUS_ID.REPORT_ISSUED]: 'govuk-tag govuk-tag--turquoise',
-	[EXAMINATION_STATUS_ID.PLAN_ADOPTED]: 'govuk-tag govuk-tag--green'
-};
-
 function examinationStatusTag(plan: Plan) {
-	const classes = examinationStatusClasses[plan.examinationStatus];
+	const classes = getExaminationStatusTagClass(plan.examinationStatus);
 	return classes ? `<strong class="${classes}">${plan.examinationStatusLabel}</strong>` : plan.examinationStatusLabel;
 }
 
