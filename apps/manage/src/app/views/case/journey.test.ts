@@ -10,7 +10,8 @@ import {
 	createExaminationJourney,
 	createExaminationHearingJourney,
 	createExaminationPauseJourney,
-	createGateway3Journey
+	createGateway3Journey,
+	createTimetableJourney
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
@@ -67,6 +68,14 @@ function createExaminationJourneyForTest(answers = {}, query = {}, session = {})
 	return createExaminationJourney(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, query, session } as unknown as Request,
 		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', answers),
+		questions
+	);
+}
+
+function createTimetableJourneyForTest(answers = {}, query = {}, session = {}) {
+	return createTimetableJourney(
+		{ baseUrl: '/case/LP-TEST-001', params: { planReference: 'LP-TEST-001' }, query, session } as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.TIMETABLE_JOURNEY_ID, '', answers),
 		questions
 	);
 }
@@ -296,6 +305,53 @@ describe('createExaminationJourney', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
+	});
+});
+
+describe('createTimetableJourney', () => {
+	it('shows the latest pause start and restart dates below the final report issue date in Fact Check', () => {
+		const journey = createTimetableJourneyForTest({
+			planPauseHistory: [
+				{
+					createdAt: new Date('2026-02-01'),
+					planPauseDate: new Date('2026-02-05'),
+					planPauseEndDate: new Date('2026-02-10')
+				},
+				{
+					createdAt: new Date('2026-01-01'),
+					planPauseDate: new Date('2026-01-05'),
+					planPauseEndDate: new Date('2026-01-10')
+				}
+			]
+		});
+		const factCheckQuestions = journey.sections[6].questions;
+
+		assert.deepEqual(
+			factCheckQuestions.slice(5, 7).map((question) => question.fieldName),
+			['planPauseDate-2', 'planPauseEndDate-2']
+		);
+		assert.equal(journey.response.answers['planPauseDate-2'].getTime(), new Date('2026-02-05').getTime());
+	});
+
+	it('shows only the latest pause start date if the examination has not restarted', () => {
+		const journey = createTimetableJourneyForTest({
+			planPauseHistory: [
+				{
+					createdAt: new Date('2026-01-01'),
+					planPauseDate: new Date('2026-01-05'),
+					planPauseEndDate: new Date('2026-01-10')
+				},
+				{
+					createdAt: new Date('2026-02-01'),
+					planPauseDate: new Date('2026-02-05'),
+					planPauseEndDate: null
+				}
+			]
+		});
+		const factCheckQuestions = journey.sections[6].questions;
+
+		assert.equal(factCheckQuestions[5]?.fieldName, 'planPauseDate-2');
+		assert.equal(factCheckQuestions[6]?.fieldName, 'withdrawnDate');
 	});
 });
 

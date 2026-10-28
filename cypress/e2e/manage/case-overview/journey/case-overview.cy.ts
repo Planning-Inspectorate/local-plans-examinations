@@ -1,5 +1,6 @@
 import {
 	caseOverviewContactDetailsListPage,
+	caseOverviewLocalPlanningAuthoritiesPage,
 	caseOverviewExaminationWebsitePage,
 	caseOverviewPage,
 	caseOverviewPlanBandPage,
@@ -133,6 +134,21 @@ describe('Case overview updates', () => {
 			contactDetails.updatedContactDetails.firstName,
 			contactDetails.updatedContactDetails.lastName,
 			contactDetails.updatedContactDetails.phone
+		);
+	});
+
+	it('continues the unchanged LPA list and retains the authorities after refresh', { tags: ['regression'] }, () => {
+		caseOverviewPage.openActionLinkFor(localPlanningAuthority.row);
+		caseOverviewLocalPlanningAuthoritiesPage.verifyLoaded();
+		caseOverviewLocalPlanningAuthoritiesPage.saveAndContinue();
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+
+		cy.reload();
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.verifySummaryRowContains(
+			localPlanningAuthority.row,
+			localPlanningAuthority.lpa1Value,
+			localPlanningAuthority.lpa2Value
 		);
 	});
 
