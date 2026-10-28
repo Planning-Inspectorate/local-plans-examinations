@@ -54,7 +54,8 @@ import {
 	createExaminationJourney,
 	createExaminationHearingJourney,
 	createExaminationPauseJourney,
-	createGateway3ReportJourney
+	createGateway3ReportJourney,
+	createTimetableJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -86,6 +87,8 @@ import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-su
 import { ExaminationPauseHandler } from './overview-data-handlers/examination-pause-handler.ts';
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -484,6 +487,14 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
+	},
+	{
+		path: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		createJourney: createTimetableJourney,
+		pageLoadHandler: TimetableTabHandler,
+		redirectToTaskListOnSuccess: true,
+		saveController: TimetableSaveController
 	}
 ];
 

@@ -35,6 +35,9 @@ import {
 	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
+import { pushAlertToSession } from '../../util/alert.ts';
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -159,6 +162,10 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						return;
 					}
 				}
+				break;
+			}
+			case COMMON_CONSTS.TIMETABLE_JOURNEY_ID: {
+				writeResponse = await new TimetableSaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
 			default: {
@@ -354,7 +361,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/${COMMON_CONSTS.OVERVIEW}` },
-		{ text: 'Timetable', href: '#' },
+		{ text: 'Timetable', href: `${baseUrl}/${COMMON_CONSTS.TIMETABLE_JOURNEY_ID}` },
 		{ text: 'Gateway 1', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}` },
 		{ text: 'Gateway 2', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}` },
 		{ text: 'Gateway 3', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}` },

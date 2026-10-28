@@ -197,6 +197,66 @@ async function save(handler: ReturnType<typeof updateCaseField>, context: Return
 }
 
 describe('updateCaseField', () => {
+	it('does not write the form-only LPA list when continuing without changes', async () => {
+		const service = createService();
+		const context = createSaveContext({
+			params: { section: 'case-details', question: 'check-lpas' },
+			body: {
+				checkLpas: [
+					{ id: 'lpa-1', lpa: 'lpa-1' },
+					{ id: 'lpa-2', lpa: 'lpa-2' }
+				]
+			}
+		});
+
+		await save(updateCaseField(service), context);
+
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+	});
+
+	it('ignores the LPA list while saving an ordinary case field', async () => {
+		const service = createService();
+		const context = createSaveContext({
+			params: { section: 'case-details', question: 'plan-title' },
+			body: { planTitle: 'Updated plan', checkLpas: [{ id: 'lpa-1', lpa: 'lpa-1' }] }
+		});
+
+		await save(updateCaseField(service), context);
+
+		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
+			where: { reference: REFERENCE },
+			data: { planTitle: 'Updated plan' }
+		});
+	});
+
+	it('preserves the individual LPA edit while ignoring the form-only list', async () => {
+		const service = createService();
+		const context = createSaveContext({
+			params: {
+				section: 'case-details',
+				question: 'select-lpa',
+				manageListAction: 'edit',
+				manageListItemId: 'lpa-2'
+			},
+			body: { lpa: 'lpa-3', checkLpas: [{ id: 'lpa-2', lpa: 'lpa-2' }] }
+		});
+
+		await save(updateCaseField(service), context);
+
+		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
+			where: { reference: REFERENCE },
+			data: {
+				lpas: {
+					connectOrCreate: {
+						where: { lpaCode: 'lpa-3' },
+						create: { lpaCode: 'lpa-3', lpaName: 'Local Planning Authority 3' }
+					},
+					disconnect: [{ lpaCode: 'lpa-2' }]
+				}
+			}
+		});
+	});
+
 	it('removes a contact from the contacts section', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);

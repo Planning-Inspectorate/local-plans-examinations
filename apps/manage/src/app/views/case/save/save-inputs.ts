@@ -6,6 +6,7 @@ export interface CaseOverviewInput extends SaveInput {
 	planBand?: string;
 	caseOfficer?: string;
 	lpa?: string;
+	checkLpas?: { id?: string; lpa: string }[];
 	lpaCode?: string;
 	lpaContact?: string;
 	firstName?: string;
@@ -152,3 +153,5 @@ export interface Gateway3Input extends SaveInput {
 		gateway3InfoId: string | null;
 	}[];
 }
+
+export type TimetableInput = Gateway1Input | Gateway2Input | Gateway3Input | ExaminationInput;
