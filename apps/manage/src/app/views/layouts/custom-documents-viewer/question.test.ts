@@ -1,10 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import CustomDocumentsQuestion, {
+import CustomDocumentsQuestion from './question.ts';
+import {
 	DOCUMENT_LABELS,
 	OPTIONAL_DOCUMENT_SETS,
 	REQUIRED_DOCUMENT_SETS
-} from './question.ts';
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 const REFERENCE = 'PLAN-123456';
 const SUBMISSION_ID = '2';
