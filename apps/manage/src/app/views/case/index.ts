@@ -91,8 +91,7 @@ import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/cu
 import { pushAlertToSession } from '../../util/alert.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
-import { loadConfig } from '../../../app/config.ts';
-import type { AuthSession } from '#util/cached-entra-client.ts';
+import { sendGw2WorkshopSetUpNotifyEmail } from 'src/app/notify/notify-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -193,93 +192,7 @@ function registerGateway2WorkshopJourney(
 		pushAlertToSession(req, 'success', 'Workshop set up');
 
 		// Send notification to LPA (from the contact details) and Inspector (GW2 assessor)
-		if (!service.notifyClient) {
-			service.logger.warn('Notify client not configured');
-		} else {
-			const config = loadConfig();
-
-			const portalUrl = process.env.PORTAL_URL;
-			const workshopInspectorTemplateId = config.govNotify.templateIds.gw2WorkshopInspector;
-			const workshopLpaTemplateId = config.govNotify.templateIds.gw2WorkshopLpa;
-
-			if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-			if (!workshopInspectorTemplateId)
-				throw new Error('GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID environment variable is not set');
-			if (!workshopLpaTemplateId)
-				throw new Error('GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID environment variable is not set');
-
-			const caseRecord = await service.db.case.findUnique({
-				where: { reference },
-				select: {
-					id: true,
-					lpas: true,
-					planType: true,
-					contacts: true
-				}
-			});
-			const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-			const gw2Info = await service.db.gateway2Info.findUnique({
-				where: { caseId: caseRecord?.id }
-			});
-
-			const workshopCount = (answers.workshops as []).length;
-
-			const workshopStartDate = answers[`workshopDate-${workshopCount}`];
-			const workshopEndDate = answers[`workshopEndDate-${workshopCount}`];
-			const workshopType = answers[`workshopLocationType-${workshopCount}`];
-
-			const portalLoginURL = `${portalUrl}/login`;
-			const caseReference = reference;
-			const notifyReference = `create-case:${caseReference}`;
-			const personalisationDetails = {
-				portalLoginURL,
-				['plan_ref']: caseReference,
-				['authority_name']: caseLpas?.join(', '),
-				['plan_type']: caseRecord!.planType
-					.split('-')
-					.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-					.join(' '),
-				['contact_info']: 'If you need to contact us, call 0303 444 5000',
-				['team_email_address']: service.localPlansTeamEmail,
-				['workshop_start_date']: workshopStartDate,
-				['workshop_end_date']: workshopEndDate ? workshopEndDate : '',
-				['workshop_type']: workshopType,
-				['if_workshop_online']: workshopType === 'remote' ? 'yes' : 'no',
-				['if_workshop_in-person']: workshopType === 'in-person' ? 'yes' : 'no'
-			};
-
-			const entraClient = service.getEntraClient(req.session as AuthSession)!;
-			const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
-			const inspectorId = allInspectors.find((inspector) => inspector.id === gw2Info?.assessorName)?.id;
-			const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
-			const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-			// Notify the GW2 assessor (aka inspector)
-			try {
-				await service.notifyClient?.sendEmail(workshopInspectorTemplateId, assessorEmail.trim(), {
-					personalisation: personalisationDetails,
-					reference: notifyReference
-				});
-				service.logger.info({ email: assessorEmail }, 'Email sent to GW2 assessor for workshop set up');
-			} catch (error) {
-				service.logger.error({ error, email: assessorEmail }, 'Failed to send workshop set up email');
-			}
-
-			// All LPAs notified
-			await Promise.allSettled(
-				lpasToSendTo.map(async (email) => {
-					try {
-						await service.notifyClient?.sendEmail(workshopLpaTemplateId, email.trim(), {
-							personalisation: personalisationDetails,
-							reference: notifyReference
-						});
-						service.logger.info({ email: email }, 'Email sent to LPA for workshop set up');
-					} catch (error) {
-						service.logger.error({ error, email: email }, 'Failed to send workshop set up email');
-					}
-				})
-			);
-		}
+		await sendGw2WorkshopSetUpNotifyEmail(service, req, reference, answers);
 
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
