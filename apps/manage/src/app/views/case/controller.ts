@@ -239,6 +239,7 @@ export function buildGetJourneyMiddleware(
 	pageLoadHandler: new () => OverviewPageLoadHandler
 ): AsyncRequestHandler {
 	return async (req, res, next) => {
+		console.log(`buildGetJourneyMiddleware called for url ${req.url}, with params ${req.params}`);
 		const { db } = service;
 		const reference = getParam(req.params.reference);
 
