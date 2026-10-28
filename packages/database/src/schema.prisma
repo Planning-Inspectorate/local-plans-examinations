@@ -222,6 +222,10 @@ model Gateway3Submission {
   /// Gateway 3 outcome code; values are defined by GATEWAY_3_DECISION_ID.
   decision       String?           @db.NVarChar(50)
   completionDate DateTime?         @db.DateTime2
+  /// Date the LPA submitted this resubmission (set by the front office).
+  /// Distinct from completionDate which is set by the back office when
+  /// issuing a decision.
+  submittedDate  DateTime?         @db.DateTime2
   gateway3Info   Gateway3Info?     @relation(fields: [gateway3InfoId], references: [id])
   gateway3InfoId String?           @db.UniqueIdentifier
   decisionLookup Gateway3Decision? @relation(fields: [decision], references: [id], onDelete: NoAction, onUpdate: NoAction)

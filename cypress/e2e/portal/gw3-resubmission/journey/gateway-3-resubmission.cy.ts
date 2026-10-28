@@ -2,8 +2,8 @@ import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import { gateway3ResubmissionPage } from '../../../../page-objects/portal/gw3-application/gateway-3-resubmission-page.ts';
-import { gateway3SubmissionCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
-import { gateway3DeclarationPage } from '../../../../page-objects/portal/gw3-application/declaration-page.ts';
+import { gateway3ResubmissionSubmissionCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-resubmission-submission-complete-page.ts';
+import { gateway3ResubmissionDeclarationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-resubmission-declaration-page.ts';
 import { resubmissionDocumentsPage } from '../../../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
@@ -56,10 +56,10 @@ describe('Gateway 3 resubmission page journeys', () => {
 				gateway3ResubmissionPage.verifyUploadedDocument('test-document.pdf');
 				gateway3ResubmissionPage.submitButton.click();
 
-				gateway3DeclarationPage.verifyLoaded();
-				gateway3DeclarationPage.confirmSubmissionButton.click();
+				gateway3ResubmissionDeclarationPage.verifyLoaded();
+				gateway3ResubmissionDeclarationPage.confirmSubmissionButton.click();
 
-				gateway3SubmissionCompletePage.verifyLoaded();
+				gateway3ResubmissionSubmissionCompletePage.verifyLoaded();
 			});
 		}
 	);
