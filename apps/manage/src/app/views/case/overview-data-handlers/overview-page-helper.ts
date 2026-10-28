@@ -11,7 +11,6 @@ import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { fileUploadQuestionProperties } from '../questions.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 
-
 export async function getOverviewData(db: PrismaClient, reference: string) {
 	return db.case.findUnique({
 		where: { reference },
