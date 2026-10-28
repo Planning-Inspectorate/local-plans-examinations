@@ -467,6 +467,21 @@ describe('test ExaminationSaveController', () => {
 		});
 	});
 
+	it(`saves the adoption date and adopted status together`, async () => {
+		const mockService = createMockService(null, EXAMINATION_STATUS_ID.PLAN_ADOPTED);
+		const req = { params: { question: 'adoption-date' } } as unknown as Request;
+		const controller = new ExaminationSaveController(mockService as unknown as ManageService, req, 'caseRef');
+		const answers = { adoptionDate: new Date('2026-10-20T00:00:00.000Z') };
+
+		await controller.prepareAndSave(answers);
+
+		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments[0], {
+			where: { caseId: 'someCaseId' },
+			update: { ...answers, status: EXAMINATION_STATUS_ID.PLAN_ADOPTED },
+			create: { caseId: 'someCaseId', ...answers, status: EXAMINATION_STATUS_ID.PLAN_ADOPTED }
+		});
+	});
+
 	const pauseDate = new Date('2026-02-01T00:00:00.000Z');
 	for (const { name, current, recordHistory } of [
 		{ name: 'creates history for the first pause', current: null, recordHistory: true },

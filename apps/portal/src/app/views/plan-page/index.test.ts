@@ -655,7 +655,11 @@ describe('plan page', () => {
 		};
 		const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
-		const expectedTags = ['Completed', 'Completed', 'Completed'];
+		const expectedTags = [
+			'Completed',
+			'Completed',
+			'<strong class="govuk-tag govuk-tag--purple">Plan adopted</strong>'
+		];
 		const tags = [data.tagG2, data.tagG3, data.tagE];
 
 		for (let i = 0; i < expectedTags.length; i++) {

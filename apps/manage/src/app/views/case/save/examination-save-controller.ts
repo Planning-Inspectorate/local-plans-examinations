@@ -193,10 +193,13 @@ export class ExaminationSaveController extends SaveController {
 		if (question && inspectorQuestions.includes(question)) {
 			answers.examiningInspectorAppointmentDate = new Date();
 		}
-		const statusUpdate =
+		let statusUpdate: { status?: string } =
 			question && inspectorQuestions.includes(question) && this.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED
 				? { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
 				: {};
+		if (answers.adoptionDate) {
+			statusUpdate = { status: EXAMINATION_STATUS_ID.PLAN_ADOPTED };
+		}
 		const pauseHistory = await this.pauseHistoryFor(answers.planPauseStartDate, this.caseId);
 		const createData: Record<string, any> = { ...answers, ...statusUpdate };
 		const updateData: Record<string, any> = { ...answers, ...statusUpdate };

@@ -4,7 +4,8 @@ import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import { configureNunjucks } from '../../nunjucks.ts';
 import { buildLandingPage } from './controller.ts';
-import { buildTestPlans, mockPlan, mockApplicationDoc } from '../../types.ts';
+import { buildTestPlans, mockPlan, mockApplicationDoc, STAGE, STATUS } from '../../types.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 function initialiseTest(plans?: unknown[]) {
 	const nunjucks = configureNunjucks();
@@ -209,6 +210,24 @@ describe('landing page', () => {
 
 		const data = mockRes.render.mock.calls[0].arguments[1];
 		assert.strictEqual(data.plans[0][4].html, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
+	});
+
+	it('should render a purple Plan adopted tag for an adopted examination', async () => {
+		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest([
+			mockPlan({
+				refNum: 'PLAN-ADOPTED',
+				stage: STAGE.Examination,
+				status: STATUS.ReadyToStart,
+				examinationStatus: EXAMINATION_STATUS_ID.PLAN_ADOPTED,
+				examinationStatusLabel: 'Plan adopted'
+			})
+		]);
+		await landingPage(mockReq, mockRes);
+
+		const [view, data] = mockRes.render.mock.calls[0].arguments;
+		const expectedTag = '<strong class="govuk-tag govuk-tag--purple">Plan adopted</strong>';
+		assert.strictEqual(data.plans[0][4].html, expectedTag);
+		assert.ok(nunjucks.render(view, data).includes(expectedTag));
 	});
 
 	it('should continue to use the plan status before the Examination stage', async () => {
