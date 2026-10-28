@@ -38,14 +38,7 @@ export default class CustomDocumentsQuestion extends Question {
 
 	formatAnswerForSummary(sectionSegment: string, journey: Journey) {
 		const answers = journey.response.answers ?? {};
-		const submissionId = sectionSegment.split('-')[3];
 		const documentCount = this.getDocumentsCount(journey.response.answers);
-		const submissionUrl = `/case/${journey.response.answers.reference}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}/gateway-3-submission-${submissionId}`;
-		this.actionLink = {
-			href: `${submissionUrl}/gateway-3-review-documents-${submissionId}`,
-			text: documentCount > 0 ? 'Review' : ''
-		};
-
 		return [
 			{
 				key: this.title,

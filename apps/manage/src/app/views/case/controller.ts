@@ -23,16 +23,13 @@ import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { OverviewSaveController } from './save/overview-save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
 import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
-import { Gateway3SaveController, saveGateway3Submissions } from './save/gateway-3-save-controller.ts';
+import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
 import { ExaminationSaveController } from './save/examination-save-controller.ts';
 import { formatDateToString } from '../../util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
-import {
-	EXAMINATION_STATUS_ID,
-	GATEWAY_3_DECISION_ID
-} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
+import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -382,7 +379,7 @@ function getFirstSegmentOfUrl(url: string): string {
 export async function updateCaseHistory(
 	service: ManageService,
 	req: Request,
-	db: Pick<PrismaClient, 'case'>,
+	db: PrismaClient,
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
 	reference: string,
@@ -402,47 +399,6 @@ export async function updateCaseHistory(
 			}
 		}
 	});
-}
-
-type ExaminationStatusDatabase = Pick<PrismaClient, 'examinationInfo'>;
-
-const examinationAvailableStatuses = new Set<string>([
-	EXAMINATION_STATUS_ID.READY_TO_START,
-	EXAMINATION_STATUS_ID.IN_PROGRESS,
-	EXAMINATION_STATUS_ID.SUBMITTED,
-	EXAMINATION_STATUS_ID.IN_EXAMINATION,
-	EXAMINATION_STATUS_ID.PAUSED,
-	EXAMINATION_STATUS_ID.REPORT_ISSUED,
-	EXAMINATION_STATUS_ID.PLAN_ADOPTED
-]);
-
-async function ensureExaminationIsReady(db: ExaminationStatusDatabase, caseId: string) {
-	const result = await db.examinationInfo.updateMany({
-		where: {
-			caseId,
-			status: EXAMINATION_STATUS_ID.CANNOT_START_YET
-		},
-		data: {
-			status: EXAMINATION_STATUS_ID.READY_TO_START
-		}
-	});
-	if (result.count === 1) {
-		return true;
-	}
-	if (result.count !== 0) {
-		throw Error(`Expected to update one examination record for case '${caseId}', but updated ${result.count}`);
-	}
-	const examinationInfo = await db.examinationInfo.findUnique({
-		where: { caseId },
-		select: { status: true }
-	});
-	if (!examinationInfo) {
-		throw Error(`Could not find examination information for case '${caseId}'`);
-	}
-	if (!examinationAvailableStatuses.has(examinationInfo.status)) {
-		throw Error(`Could not make examination available for case '${caseId}'`);
-	}
-	return false;
 }
 
 async function formatCaseHistoryEvent(
@@ -893,9 +849,10 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			throw Error('Could not find a submission');
 		}
 		if (!submission?.completionDate) {
+			// Try to update the reportIssuedDate
 			const completionDate = new Date();
-			submission.completionDate = completionDate;
-			if (submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
+			submission.completionDate = new Date();
+			if (submission.decision == '2') {
 				// If a submission was rejected by the inspector, then add a new gw3 submission details block
 				existingSubmissions.push({
 					id: crypto.randomUUID(),
@@ -906,40 +863,29 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			}
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			const caseHistoryLabel = `Gateway 3 decision issued on ${await formatCaseHistoryValue(service, req, '', completionDate)}`;
-			await service.db.$transaction(async (transaction) => {
-				await saveGateway3Submissions(transaction, caseId, existingSubmissions);
-				if (submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION) {
-					await ensureExaminationIsReady(transaction, caseId);
-				}
-				await updateCaseHistory(
-					service,
-					req,
-					transaction,
-					{
-						gateway3Documents: null // Will be overridden by overrideLabels
-					},
-					{},
-					caseReference,
-					currentUser,
-					{
-						gateway3Documents: caseHistoryLabel
-					}
-				);
+			req.params.question = COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION;
+			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
+				submissions: existingSubmissions
 			});
+			await updateCaseHistory(
+				service,
+				req,
+				service.db,
+				{
+					gateway3Documents: null // Will be overridden by overrideLabels
+				},
+				{},
+				caseReference,
+				currentUser,
+				{
+					gateway3Documents: `Gateway 3 decision issued on ${await formatCaseHistoryValue(service, req, '', completionDate)}`
+				}
+			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Gateway 3 decision issued');
 		} else {
-			const examinationStatusUpdated =
-				submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
-					? await service.db.$transaction((transaction) => ensureExaminationIsReady(transaction, caseId))
-					: false;
-			if (examinationStatusUpdated) {
-				pushAlertToSession(req, 'success', 'Gateway 3 decision already issued. Examination is ready to start');
-			} else {
-				// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-				pushAlertToSession(req, 'important', 'Gateway 3 decision already issued');
-			}
+			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+			pushAlertToSession(req, 'important', 'Gateway 3 decision already issued');
 		}
 		res.redirect(
 			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`
@@ -1107,6 +1053,12 @@ export function preprocessQuestionProperties(
 				const completionDate = submission.completionDate;
 				const gateway3Documents = `gateway3Documents-${submissionId}`;
 				const gateway3Complete = !!completionDate;
+
+				(questions[gateway3DocumentsCheck] as CustomDocumentsQuestion).setActionLink(
+					String(submissionId),
+					reference,
+					_res.locals.journeyResponse.answers
+				);
 
 				questions[gateway3DocumentsCheck].changeActionText = 'Review';
 				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary = true;

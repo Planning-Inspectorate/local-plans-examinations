@@ -39,6 +39,8 @@ import CustomDocumentsQuestion, {
 	OPTIONAL_DOCUMENT_SETS,
 	REQUIRED_DOCUMENT_SETS
 } from '../layouts/custom-documents-viewer/question.ts';
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -2398,6 +2400,7 @@ describe('preprocessQuestionProperties', () => {
 		});
 	});
 });
+
 describe('issueGateway3Document', () => {
 	const caseReference = 'some-case-reference';
 	it('sets the examination status to ready to start when issuing a proceed to examination decision', async () => {
