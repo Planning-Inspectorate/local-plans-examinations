@@ -92,17 +92,17 @@ module "function_doc_processing" {
   }
 }
 
-# when deploying to prod for the first time this will need to be commented out
-resource "azurerm_eventgrid_event_subscription" "malware_scan_results" {
-  name  = "malware-scan-results-subscription-${local.resource_suffix}"
-  scope = azurerm_eventgrid_topic.document_scan_results.id
+# # when deploying to prod for the first time this will need to be commented out
+# resource "azurerm_eventgrid_event_subscription" "malware_scan_results" {
+#   name  = "malware-scan-results-subscription-${local.resource_suffix}"
+#   scope = azurerm_eventgrid_topic.document_scan_results.id
 
-  azure_function_endpoint {
-    function_id                       = "${module.function_doc_processing.app_id}/functions/update-malware-scan"
-    max_events_per_batch              = 1
-    preferred_batch_size_in_kilobytes = 64
-  }
-}
+#   azure_function_endpoint {
+#     function_id                       = "${module.function_doc_processing.app_id}/functions/update-malware-scan"
+#     max_events_per_batch              = 1
+#     preferred_batch_size_in_kilobytes = 64
+#   }
+# }
 
 resource "azurerm_role_assignment" "function_doc_processing_secrets_user" {
   scope                = azurerm_key_vault.main.id
