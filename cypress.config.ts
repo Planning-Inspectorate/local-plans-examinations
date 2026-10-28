@@ -105,6 +105,7 @@ export default defineConfig({
 				setDocumentVirusCheckStatus,
 				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
+				seedGateway3SubmissionDocuments,
 				seedGateway3Submitted,
 				seedExaminationReadyToStart,
 				seedExaminationDeclarationDocuments,

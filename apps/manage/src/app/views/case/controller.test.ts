@@ -23,7 +23,11 @@ import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
 import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
-import { Gateway3TabHandler, getMissingRequiredDocuments } from './overview-data-handlers/gateway-3-tab-handler.ts';
+import {
+	compileGateway3Data,
+	Gateway3TabHandler,
+	getMissingRequiredDocuments
+} from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
@@ -32,13 +36,8 @@ import {
 	GATEWAY_3_DECISION_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import {
-	addUploadedDocumentDetailsToAnswers,
-	compileGateway3Data
-} from './overview-data-handlers/overview-page-helper.ts';
-import CustomDocumentsQuestion, {
 	OPTIONAL_DOCUMENT_SETS,
 	REQUIRED_DOCUMENT_SETS
-} from '../layouts/custom-documents-viewer/question.ts';
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 

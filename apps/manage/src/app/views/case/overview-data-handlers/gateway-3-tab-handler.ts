@@ -3,6 +3,13 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { getParam } from '../controller.ts';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
+import {
+	DOCUMENT_LABELS,
+	OPTIONAL_DOCUMENT_SETS,
+	REQUIRED_DOCUMENT_SETS
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 type Gateway3Answers = {
 	id: string;
@@ -74,9 +81,6 @@ export const compileGateway3Data = async (
 
 	return { ...data, ...currentData };
 };
-import { consumeAlertsFromSession } from '../../../util/alert.ts';
-import { DOCUMENT_LABELS, REQUIRED_DOCUMENT_SETS } from '../../layouts/custom-documents-viewer/question.ts';
-
 
 export const getMissingRequiredDocuments = (answers: CompiledGateway3Answers) =>
 	(Object.keys(REQUIRED_DOCUMENT_SETS) as Array<keyof typeof REQUIRED_DOCUMENT_SETS>).filter(
@@ -93,13 +97,6 @@ const toErrorText = (field: string) => {
 	const label = DOCUMENT_LABELS[field] ?? field;
 	return `${label.charAt(0).toLocaleUpperCase()}${label.slice(1)} document is required.`;
 };
-import { consumeAlertsFromSession } from '../../../util/alert.ts';
-import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
-import {
-	DOCUMENT_LABELS,
-	OPTIONAL_DOCUMENT_SETS,
-	REQUIRED_DOCUMENT_SETS
-} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 export class Gateway3TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
