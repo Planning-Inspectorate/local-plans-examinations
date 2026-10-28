@@ -1202,6 +1202,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		]
 	},
 	...gateway2WorkshopQuestions,
+	gateway2WorkshopDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES,
+		title: 'Workshop dates',
+		question: 'Workshop dates',
+		fieldName: 'workshops',
+		url: 'gateway-2-workshop-dates'
+	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',
@@ -1535,6 +1542,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-report-manage',
 		viewData: { uploadQuestionUrl: 'examination-report' }
 	},
+	hearingDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES,
+		title: 'Hearing dates',
+		question: 'Hearing dates',
+		fieldName: 'hearings',
+		url: 'examination-hearing-dates'
+	},
 	...examinationPauseQuestions,
 	...gateway3Questions
 };
@@ -1545,6 +1559,20 @@ for (const key of ['isSound', 'soundUnsoundDate', 'adoptionDate', 'approvedForCI
 	caseQuestions[`${key}Outcome`] = { ...caseQuestions[key] };
 }
 caseQuestions.isSoundNavigation = { ...caseQuestions.isSound };
+
+caseQuestions.timetableGateway3ExpectedDate = {
+	...caseQuestions.gateway3ExpectedDate,
+	fieldName: 'gateway3ExpectedDate'
+};
+caseQuestions.timetableGateway3ActualDate = {
+	...caseQuestions.gateway3ActualDate,
+	fieldName: 'gateway3ActualDate'
+};
+caseQuestions.timetableGateway3CompletionDate = {
+	...gateway3BaseQuestions.gateway3CompletionDate,
+	fieldName: 'gateway3CompletionDate',
+	url: 'timetable-gateway-3-completion-date'
+};
 
 export const fileUploadQuestionProperties = Object.fromEntries(
 	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
@@ -1573,6 +1601,14 @@ Object.keys(examinationHearingQuestions).forEach((key) => {
 // The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
+
+// Only editable once a submission has proceeded to examination (i.e. a date is present)
+const timetableGateway3CompletionDate = questions.timetableGateway3CompletionDate;
+const defaultGetAction = timetableGateway3CompletionDate.getAction;
+timetableGateway3CompletionDate.getAction = function (sectionSegment: string, journey: any, answer: unknown) {
+	if (!answer) return undefined;
+	return defaultGetAction.call(this, sectionSegment, journey, answer);
+};
 
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 	// Prepend https:// to the answer if it doesn't already start with http:// or https://

@@ -554,6 +554,76 @@ export function createExaminationPauseJourney(req: Request, response: JourneyRes
 	});
 }
 
+export function createTimetableJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const timetableUrl = req.baseUrl + '/timetable';
+	const pauseData = Array.isArray(response.answers.planPauseHistory) ? response.answers.planPauseHistory : [];
+	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
+	const latestPause = sortedPauses.at(-1);
+
+	const factCheckSection = new Section('Fact Check', 'fact-check')
+		.addQuestion(questions.factCheckDateReceivedFromInspector)
+		.addQuestion(questions.factCheckDueDate)
+		.addQuestion(questions.factCheckActualDate)
+		.addQuestion(questions.factCheckReceivedBackFromLPADate)
+		.addQuestion(questions.finalReportIssueDate);
+
+	if (latestPause) {
+		const latestPauseId = sortedPauses.length;
+		response.answers[`planPauseDate-${latestPauseId}`] = latestPause.planPauseDate;
+		response.answers[`planPauseEndDate-${latestPauseId}`] = latestPause.planPauseEndDate;
+		factCheckSection.addQuestion(questions[`examinationPauseStartDate-${latestPauseId}`]);
+		if (latestPause.planPauseEndDate) {
+			factCheckSection.addQuestion(questions[`examinationPauseEndDate-${latestPauseId}`]);
+		}
+	}
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		sections: [
+			new Section('Timetable', 'timetable').addQuestion(questions.noticeOfIntentionPublishDate),
+			new Section('Gateway 1', 'gateway-1')
+				.addQuestion(questions.gateway1ExpectedDate)
+				.addQuestion(questions.gateway1ActualDate)
+				.addQuestion(questions.slaSentDate)
+				.addQuestion(questions.slaReceivedDate),
+			new Section('Gateway 2', 'gateway-2')
+				.addQuestion(questions.gateway2ExpectedDate)
+				.addQuestion(questions.gateway2ActualDate)
+				.addQuestion(questions.gateway2WorkshopDates)
+				.addQuestion(questions.reportIssuedDate)
+				.addQuestion(questions.reportPublishedDate),
+			new Section('Gateway 3', 'gateway-3')
+				.addQuestion(questions.timetableGateway3ExpectedDate)
+				.addQuestion(questions.timetableGateway3ActualDate)
+				.addQuestion(questions.timetableGateway3CompletionDate),
+			new Section('Examination', 'examination')
+				.addQuestion(questions.expectedSubmissionForExaminationDate)
+				.addQuestion(questions.submissionForExaminationDate)
+				.addQuestion(questions.hearingDates)
+				.addQuestion(questions.letterSentToMHCLGDate)
+				.addQuestion(questions.letterIssueDate),
+			new Section('QA', 'QA')
+				.addQuestion(questions.qaDate)
+				.addQuestion(questions.sentToPanelDate)
+				.addQuestion(questions.panelResponseSentToInspector),
+			factCheckSection
+				.addQuestion(questions.withdrawnDate)
+				.addQuestion(questions.isSound)
+				.addQuestion(questions.soundUnsoundDate)
+				.addQuestion(questions.adoptionDate)
+				.addQuestion(questions.approvedForCILDate)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Timetable',
+		returnToListing: false,
+		makeBaseUrl: () => timetableUrl,
+		initialBackLink: timetableUrl,
+		response
+	});
+	return getBackLinksAndSetReference(journey, timetableUrl, req.params.planReference);
+}
+
 function getBackLinksAndSetReference(
 	journey: Journey,
 	overviewUrl: string,
