@@ -248,7 +248,9 @@ export async function sendGw3AssessorAppointedNotifyEmail(
 			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 			.join(' '),
 		['team_email_address']: service.localPlansTeamEmail,
-		['contact_info']: 'If you need to contact us, call 0303 444 5000'
+		['contact_info']: 'If you need to contact us, call 0303 444 5000',
+		['gw3_assessor_initial']: assessorName[0],
+		['gw3_assessor_lastname']: assessorName.split(' ').slice(-1)[0]
 	};
 
 	// Send to assessor
