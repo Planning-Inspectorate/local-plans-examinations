@@ -1,6 +1,7 @@
 import type { Request } from 'express';
 import type * as authSession from '@planning-inspectorate/core/auth';
 import type { ManageService } from '#service';
+import { EXAMINING_INSPECTOR_FIELDS } from '../classes/case-field-mappings.ts';
 
 type LpaOption = { value: string; text: string };
 
@@ -23,9 +24,9 @@ export async function loadInspectorOptions(service: ManageService, req: Request,
 	const inspectors = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors) : [];
 
 	const optionsMap = [{ value: '', text: '' }, ...inspectors.map((m) => ({ value: m.id, text: m.displayName }))];
-	questions.examiningInspector1.options = optionsMap;
-	questions.examiningInspector2.options = optionsMap;
-	questions.examiningInspector3.options = optionsMap;
+	for (const field of EXAMINING_INSPECTOR_FIELDS) {
+		questions[field].options = optionsMap;
+	}
 }
 
 export async function retrieveCaseOfficers(

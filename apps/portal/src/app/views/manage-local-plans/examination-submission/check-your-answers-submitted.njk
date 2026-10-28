@@ -69,6 +69,8 @@
             <p class="govuk-body" data-cy="submission-copy">Your submission was sent on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
         {% endif %}
 
+        <h2 class="govuk-heading-m">Documents</h2>
+
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
                 <div class="govuk-!-margin-bottom-8" id="examination-details" data-cy="examination-details-section">
