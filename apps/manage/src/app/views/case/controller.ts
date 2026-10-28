@@ -1144,8 +1144,6 @@ export function preprocessQuestionProperties(
 						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-decision-${submissionId}`,
 						text: 'Add'
 					};
-					// Reset for different journey
-					delete questions[gateway3Decision].actionLink;
 					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
 				}
 			}
