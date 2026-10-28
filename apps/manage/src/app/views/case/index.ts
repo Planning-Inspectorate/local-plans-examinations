@@ -709,6 +709,8 @@ function registerCaseJourney(
 								request: req,
 								documentSetFolderName: questionConfig.url
 							});
+							console.log('attempting to delete file');
+							console.log(`reg url: '${req.originalUrl}'`);
 							await DocumentUtil.deleteDocuments({
 								service,
 								temporaryUploadedFiles: uploadedFiles,
@@ -796,7 +798,7 @@ function registerCaseJourney(
 			uploadDocumentRoute,
 			handleMulterFileSizeError
 		);
-
+		console.log(`registering upload-document route: '${questionPath}/upload-documents/submit'`);
 		router.post(
 			`${questionPath}/upload-documents/submit`,
 			getJourneyResponse,
