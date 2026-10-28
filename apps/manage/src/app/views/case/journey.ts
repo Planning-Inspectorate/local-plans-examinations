@@ -325,6 +325,10 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
+	const gateway2DocumntUrl = req.baseUrl + '/gateway-2/gateway-2/gateway2Documents';
+	const backUrl = COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))
+		? gateway2DocumntUrl
+		: gateway2Url;
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
@@ -334,7 +338,31 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2Documents)
 				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment),
+				.addQuestion(questions.assessorDateOfAppointment)
+				.addQuestion(questions.gateway2CoverLetter)
+				.withCondition(() => false)
+				.addQuestion(questions.localPlanTimetable)
+				.withCondition(() => false)
+				.addQuestion(questions.projectInitiationDocument)
+				.withCondition(() => false)
+				.addQuestion(questions.draftStatementOfCompliance)
+				.withCondition(() => false)
+				.addQuestion(questions.noticeOfIntention)
+				.withCondition(() => false)
+				.addQuestion(questions.gateway1SelfAssessment)
+				.withCondition(() => false)
+				.addQuestion(questions.consultationOnProposedContent)
+				.withCondition(() => false)
+				.addQuestion(questions.draftStatementOfSoundness)
+				.withCondition(() => false)
+				.addQuestion(questions.scopingConsultationDocuments)
+				.withCondition(() => false)
+				.addQuestion(questions.consultationSummaryFeedbackScoping)
+				.withCondition(() => false)
+				.addQuestion(questions.consultationSummaryProposedContent)
+				.withCondition(() => false)
+				.addQuestion(questions.subsequentWorkTowardsADraftPlan)
+				.withCondition(() => false),
 			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
 			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],
@@ -358,7 +386,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 			delete req.session.answers;
 		}
 	}
-	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
+	return getBackLinksAndSetReference(journey, backUrl, req.params.reference);
 }
 
 export function createGateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {

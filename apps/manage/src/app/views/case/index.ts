@@ -22,12 +22,13 @@ import {
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	issueGateway2WorkshopDocuments,
 	redirectToChecks,
 	preprocessQuestionProperties,
 	handleMulterFileSizeError,
 	journeyFileUploadQuestionConfigs,
-	issueMiqs
+	issueMiqs,
+	issueGateway2WorkshopDocuments,
+	issueGateway2Document
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -640,6 +641,7 @@ function registerCaseJourney(
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-2/gateway-2/:question/check`, issueGateway2Document(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
 	// Save answer

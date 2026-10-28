@@ -17,6 +17,8 @@ export type SubmissionCheckData = {
 	notificationPreviewTemplate?: string;
 	submitButtonText: string;
 	notificationTextLPA?: string;
+	questionTitle?: any;
+	allDocuments?: any;
 };
 
 /**
@@ -40,7 +42,9 @@ export abstract class SubmissionCheck {
 		questionUrl: string,
 		originalUrl: string,
 		service: ManageService,
-		uploadedFiles: any
+		uploadedFiles: any,
+		questionTitle?: string,
+		allDocuments?: any
 	): Promise<SubmissionCheckData>;
 
 	/**

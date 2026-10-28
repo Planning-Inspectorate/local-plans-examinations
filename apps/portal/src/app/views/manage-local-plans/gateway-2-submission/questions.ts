@@ -74,7 +74,7 @@ const fileUploadText = {
 	continueButtonText: 'Save and return'
 };
 
-const gateway2questions = {
+export const gateway2questions = {
 	gateway2CoverLetter: {
 		title: 'Gateway 2 covering letter',
 		question: 'Upload your Gateway 2 covering letter',
@@ -166,7 +166,7 @@ const gateway2questions = {
 		}
 	},
 	consultationSummaryProposedContent: {
-		title: 'Summary of consultation for proposed local plan content and evidence',
+		title: 'Summary of consultation on proposed local plan content and evidence documents',
 		question: 'Upload your summary of consultation for proposed local plan content and evidence',
 		fieldName: 'consultationSummaryProposedContent',
 		url: 'summary-of-consultation',

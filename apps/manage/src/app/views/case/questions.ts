@@ -48,6 +48,7 @@ import {
 	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
+import { GW2QUESTIONS } from '../../../../../portal/src/app/views/manage-local-plans/gateway-2-submission/questions.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -133,6 +134,20 @@ const MIQ_DOCUMENTS_ALLOWED_EXTENSIONS = [
 ];
 
 const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+
+const gw2QuestionsWithContinue = Object.fromEntries(
+	//front office has save and return not continue
+	Object.entries(GW2QUESTIONS).map(([key, question]) => [
+		key,
+		{
+			...question,
+			text: {
+				...question.text,
+				continueButtonText: 'Continue'
+			}
+		}
+	])
+);
 
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
@@ -1623,7 +1638,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new FileUploadRequiredValidator('miqs', 'Choose a file to upload')]
 	},
 	...examinationPauseQuestions,
-	...gateway3Questions
+	...gateway3Questions,
+	...gw2QuestionsWithContinue
 };
 
 // Some questions require copies in order to be used in different conditions.

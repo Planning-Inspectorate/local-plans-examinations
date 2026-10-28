@@ -82,6 +82,9 @@ const MockService = {
 		},
 		caseHistory: {
 			findFirst: mock.fn(async () => null)
+		},
+		document: {
+			findMany: mock.fn<() => {}>()
 		}
 	}
 };
@@ -914,5 +917,115 @@ describe('Test Gateway2WorkshopDocumentsSubmissionCheck', () => {
 				]
 			}
 		);
+	});
+});
+
+describe('Test Gateway2DocumentSubmissionCheck', () => {
+	it('generates submission check data when documents exist', async () => {
+		const documents = [
+			{
+				guid: 'document-123',
+				name: 'Test1.pdf'
+			},
+			{
+				guid: 'document-456',
+				name: 'Test2.pdf'
+			}
+		];
+
+		MockService.db.document.findMany.mock.mockImplementation(async () => documents);
+
+		const submissionCheck = new Gateway2DocumentSubmissionCheck();
+
+		const actualResult = await submissionCheck.generateDataForPage(
+			'123456',
+			'PLAN/12345',
+			'some-journey',
+			'some-section',
+			'my-question',
+			'/case/PLAN-12345/some-journey/some-section/my-question/check',
+			MockService as any,
+			['uploaded-file.pdf'],
+			'Gateway 2 documents',
+			[]
+		);
+
+		assert.deepEqual(actualResult, {
+			titleHeading: 'Check document',
+			uploadedFiles: ['uploaded-file.pdf'],
+			caseReference: 'PLAN/12345',
+			journeyId: 'some-journey',
+			section: 'some-section',
+			question: 'my-question',
+			backLink: '/case/PLAN-12345/gateway-2/gateway-2/gateway2Documents',
+			submitButtonText: 'Upload document',
+			notificationTextLPA: undefined,
+			additionalFields: [
+				{
+					name: 'Section',
+					value: 'Gateway 2 documents',
+					url: ''
+				},
+				{
+					name: 'Documents',
+					value: 'Test1.pdf, Test2.pdf',
+					url: 'my-question'
+				}
+			],
+			allDocuments: [
+				{
+					name: 'Test1.pdf',
+					url: '/case/PLAN%2F12345/download-case-document/document-123'
+				},
+				{
+					name: 'Test2.pdf',
+					url: '/case/PLAN%2F12345/download-case-document/document-456'
+				}
+			]
+		});
+	});
+
+	it('generates submission check data when no documents exist', async () => {
+		MockService.db.document.findMany.mock.mockImplementation(async () => []);
+
+		const submissionCheck = new Gateway2DocumentSubmissionCheck();
+
+		const actualResult = await submissionCheck.generateDataForPage(
+			'123456',
+			'PLAN-12345',
+			'some-journey',
+			'some-section',
+			'my-question',
+			'/case/PLAN-12345/some-journey/some-section/my-question/check',
+			MockService as any,
+			[],
+			'Gateway 2 documents',
+			[]
+		);
+
+		assert.deepEqual(actualResult, {
+			titleHeading: 'Check document',
+			uploadedFiles: [],
+			caseReference: 'PLAN-12345',
+			journeyId: 'some-journey',
+			section: 'some-section',
+			question: 'my-question',
+			backLink: '/case/PLAN-12345/gateway-2/gateway-2/gateway2Documents',
+			submitButtonText: 'Upload document',
+			notificationTextLPA: undefined,
+			additionalFields: [
+				{
+					name: 'Section',
+					value: 'Gateway 2 documents',
+					url: ''
+				},
+				{
+					name: 'Documents',
+					value: 'Not provided',
+					url: 'my-question'
+				}
+			],
+			allDocuments: []
+		});
 	});
 });

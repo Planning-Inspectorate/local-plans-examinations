@@ -314,7 +314,9 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			questionUrl,
 			req.originalUrl,
 			service,
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[],
+			questionConfig.title
 		);
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
@@ -939,6 +941,29 @@ export function issueMiqs(service: ManageService, journeyId: string): AsyncReque
 	};
 }
 
+export function issueGateway2Document(_service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res): Promise<void> => {
+		const caseReference = getParam(req.params.reference);
+		const questionUrl = getParam(req.params.question);
+
+		if (!COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(questionUrl)) {
+			res.sendStatus(404);
+			return;
+		}
+
+		const questionConfig = fileUploadQuestionsByUrl.get(questionUrl);
+
+		if (!questionConfig) {
+			res.sendStatus(404);
+			return;
+		}
+
+		res.redirect(
+			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/gateway-2/gateway2Documents`
+		);
+	};
+}
+
 export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
@@ -1074,6 +1099,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
+	}
+	if (COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
