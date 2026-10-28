@@ -37,10 +37,14 @@ import { pushAlertToSession } from '../../util/alert.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 import {
-	sendAssessorAppointedNotifyEmail,
+	sendGw2AssessorAppointedNotifyEmail,
 	sendWorkshopDocsUploadedNotifyEmail,
-	sendWorkshopReportUploadedNotifyEmail
+	sendWorkshopReportUploadedNotifyEmail,
+	sendGw3AssessorAppointedNotifyEmail,
+	sendGw3PassNotifyEmail,
+	sendGw3ResubmissionNeededNotifyEmail
 } from '../../../app/notify/notify-helper.ts';
+import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -186,7 +190,11 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
 
 			if (data.answers.assessorName) {
-				await sendAssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
+				if (firstSegmentUrl === COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
+					await sendGw3AssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
+				} else if (firstSegmentUrl === COMMON_CONSTS.GATEWAY_2_JOURNEY_ID) {
+					await sendGw2AssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
+				}
 			}
 		}
 	};
@@ -936,7 +944,8 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
 		const gateway3Info = await service.db.gateway3Info.findUnique({
 			select: {
-				submissions: true
+				submissions: true,
+				assessorName: true
 				//completionDate: true
 			},
 			where: {
@@ -989,6 +998,12 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			});
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Gateway 3 decision issued');
+
+			if (submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION) {
+				await sendGw3PassNotifyEmail(service, req, caseReference);
+			} else if (submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
+				await sendGw3ResubmissionNeededNotifyEmail(service, req, caseReference);
+			}
 		} else {
 			const examinationStatusUpdated =
 				submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION

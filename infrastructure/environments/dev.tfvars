@@ -80,6 +80,10 @@ gov_notify = {
     gw2_workshop_lpa              = "a2221150-ac3c-4c29-8668-5e9a5d81bcec"
     gw2_workshop_agenda           = "9d584794-dc47-454b-8b95-ff05d06dbf0e"
     gw2_report_uploaded           = "3f7ce6a1-9cfc-445b-9e1d-b5f294d87380"
+    gw3_assessor_updated_assessor = "27edd965-52be-4de6-b4b2-318d027faf4a"
+    gw3_assessor_updated_lpa      = "f3c4fbb9-1e2f-48ec-ad2f-57e2fcdc73aa"
+    gw3_passed                    = "e67dcb5a-d732-4426-b03f-a2f0de051b0f"
+    gw3_resubmission_required     = "27883cad-a44d-454d-a009-3bb17c5ced2c"
   }
 }
 
