@@ -809,6 +809,7 @@ function registerCaseJourney(
 			onSubmitDocumentRoute,
 			handleMulterFileSizeError
 		);
+		console.log(`registering delete-document route: '${questionPath}/delete-document/:fileId'`);
 
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
