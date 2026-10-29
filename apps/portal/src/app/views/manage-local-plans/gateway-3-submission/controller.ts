@@ -154,6 +154,7 @@ const DECLARATION_VIEW_PATH = 'views/manage-local-plans/gateway-3-submission/dec
 const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk';
 
 function renderNotFound(res: Response) {
+	console.log('redirect log renderNotFound');
 	return res.status(404).render('views/layouts/error', {
 		pageTitle: 'Page not found',
 		messages: [

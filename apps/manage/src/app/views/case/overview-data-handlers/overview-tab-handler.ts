@@ -47,6 +47,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 
 		const overviewData = await getOverviewData(service.db, reference);
 		if (!overviewData) {
+			console.log('redirect log 9');
 			res.status(404).render('views/errors/404.njk');
 			return;
 		}

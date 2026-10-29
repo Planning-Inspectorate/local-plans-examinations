@@ -167,6 +167,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			}
 			default: {
 				logger.info(`url - ${req.url} not found`);
+				console.log('redirect log 1');
 				return res.status(404).render('views/errors/404.njk');
 			}
 		}
@@ -250,7 +251,10 @@ export function buildGetJourneyMiddleware(
 			select: { id: true, planTitle: true }
 		});
 
-		if (!caseRecord) return res.status(404).render('views/errors/404.njk');
+		if (!caseRecord) {
+			console.log('redirect log 2');
+			return res.status(404).render('views/errors/404.njk');
+		}
 
 		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;
@@ -336,6 +340,7 @@ export function buildRemoveDocumentConfirmMiddleware(journeyId: string): AsyncRe
 				]?.uploadedFiles?.find((uploadedFile: { id: string }) => uploadedFile.id === fileId)
 			: undefined;
 		if (!questionConfig || !file) {
+			console.log('redirect log 3');
 			return res.status(404).render('views/errors/404.njk');
 		}
 		const journeyUrl = `/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`;
@@ -522,6 +527,7 @@ export function getDeleteCase(service: ManageService): AsyncRequestHandler {
 		});
 
 		if (!currentCase) {
+			console.log('redirect log 4');
 			return res.status(404).render('views/errors/404.njk');
 		}
 
@@ -595,6 +601,7 @@ export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandle
 		});
 
 		if (!currentCase) {
+			console.log('redirect log 5');
 			return res.status(404).render('views/errors/404.njk');
 		}
 

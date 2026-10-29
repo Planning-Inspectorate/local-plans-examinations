@@ -140,6 +140,7 @@ function registerGateway2WorkshopJourney(
 		});
 
 		if (!caseRecord) {
+			console.log('redirect log 6');
 			return res.status(404).render('views/errors/404.njk');
 		}
 
@@ -271,6 +272,7 @@ function registerExaminationHearingJourney(
 		});
 
 		if (!caseRecord) {
+			console.log('redirect log 7');
 			return res.status(404).render('views/errors/404.njk');
 		}
 
@@ -836,6 +838,7 @@ function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestH
 		console.log(`extracted handler: '${handler}'`);
 		console.log(`extracted hanlder class ${typeof handler}`);
 		if (!handler || typeof handler !== 'function') {
+			console.log('redirect log 8');
 			return res.status(404).render('views/errors/404.njk');
 		}
 
