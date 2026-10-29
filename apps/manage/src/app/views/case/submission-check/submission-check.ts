@@ -6,7 +6,7 @@ export type SubmissionCheckData = {
 	titleHeading: string;
 	answersToReview: {
 		name: string;
-		value: string | null;
+		value: string | null | { name: string; url: string }[];
 		url: string | undefined;
 	}[];
 	caseReference: string;
@@ -17,8 +17,6 @@ export type SubmissionCheckData = {
 	notificationPreviewTemplate?: string;
 	submitButtonText: string;
 	notificationTextLPA?: string;
-	questionTitle?: any;
-	allDocuments?: any;
 };
 
 /**
@@ -42,9 +40,7 @@ export abstract class SubmissionCheck {
 		questionUrl: string,
 		originalUrl: string,
 		service: ManageService,
-		uploadedFiles: any,
-		questionTitle?: string,
-		allDocuments?: any
+		uploadedFiles: any
 	): Promise<SubmissionCheckData>;
 
 	/**

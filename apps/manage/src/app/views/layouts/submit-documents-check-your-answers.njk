@@ -36,31 +36,11 @@
     <span class="govuk-caption-l">{{ caseReference.replace('-','/') }}</span>
     <h1 class="govuk-heading-l">{{ titleHeading }}</h1>
 
-    
-	
-  {% if uploadedFiles and uploadedFiles.length %}
-		{% for file in uploadedFiles %}
-      <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">
-            Document {{ loop.index }}
-          </dt>
-          <dd class="govuk-summary-list__value">
-            <a class="govuk-hint" href="/case/{{ caseReference | urlencode }}/download-case-document/{{ file.metadata.documentGuid }}" download>{{ file.fileName }}</a>
-          </dd>
-          <dd class="govuk-summary-list__actions">
-            <span class="app-no-wrap">
-              <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ question | urlencode }}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
-            </span>
-          </dd>
-        </div></dl>
-		{% endfor %}
-  {% endif %}
   {% if additionalFields and additionalFields.length %}
     {% for field in additionalFields %}
       <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">{{ field.name }}</dt>
         <dd class="govuk-summary-list__value">
-          {%%}
           <a class="govuk-hint">{{ field.value }}</a>
         </dd>
         {% if field.url %}
@@ -80,7 +60,17 @@
           {{ answer.name }}
         </dt>
         <dd class="govuk-summary-list__value">
-          {{ answer.value | safe }}
+          {% if answer.name == 'Documents' and answer.value is iterable and answer.value is not string %}
+            {% for document in answer.value %}
+              <div>
+                <a class="govuk-link" href="{{ document.url }}">
+                  {{ document.name }}
+                </a>
+              </div>
+            {% endfor %}
+          {% else %}
+            {{ answer.value | safe }}
+          {% endif %}
         </dd>
         {% if answer.url %}
           <dd class="govuk-summary-list__actions">
@@ -120,5 +110,6 @@
 
   </div>
 </div>
+
 </main>
 {% endblock %}

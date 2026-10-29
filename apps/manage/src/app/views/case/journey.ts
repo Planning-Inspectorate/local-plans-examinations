@@ -752,7 +752,19 @@ const gateway2QuestionNames = new Set<string>([
 	'assessorDateOfAppointment',
 	'gateway2Report',
 	'gateway2WorkshopDocuments',
-	'workshops'
+	'workshops',
+	'gateway2CoverLetter',
+	'localPlanTimetable',
+	'projectInitiationDocument',
+	'draftStatementOfCompliance',
+	'noticeOfIntention',
+	'gateway1SelfAssessment',
+	'consultationOnProposedContent',
+	'draftStatementOfSoundness',
+	'scopingConsultationDocuments',
+	'consultationSummaryFeedbackScoping',
+	'consultationSummaryProposedContent',
+	'subsequentWorkTowardsADraftPlan'
 ]);
 
 const gateway3QuestionNames = new Set<string>([

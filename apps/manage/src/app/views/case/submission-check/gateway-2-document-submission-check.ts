@@ -3,24 +3,28 @@ import { type ManageService } from '#service';
 
 export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 	public async generateDataForPage(
-		caseId: string,
+		_caseId: string,
 		caseReference: string,
 		journeyId: string,
 		section: string,
 		questionUrl: string,
 		originalUrl: string,
-		service: ManageService,
-		uploadedFiles: any,
-		questionTitle: any,
-
+		_service: ManageService,
+		uploadedFiles: any[],
+		questionTitle?: string
 	): Promise<SubmissionCheckData> {
+		if (!questionTitle) {
+			throw new Error(`Could not find a title for Gateway 2 document '${questionUrl}'`);
+		}
+
 		if (questionTitle == 'Subsequent work towards a draft Plan') {
 			questionTitle = 'Subsequent work towards draft plan';
 		}
+		console.log('qt', questionUrl);
 
-		const allDocuments = await service.db.document.findMany({
+		const allDocuments = await _service.db.document.findMany({
 			where: {
-				caseId,
+				caseId: _caseId,
 				documentSet: {
 					displayName: questionTitle.toLowerCase()
 				},
@@ -54,14 +58,9 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 				},
 				{
 					name: 'Documents',
-					value: documents.length > 0 ? documents.map((document: any) => document.name).join(', ') : 'Not provided',
-					url: questionUrl
-				},
-                ...this.formatDocuments(
-					uploadedFiles,
-					`/case/${caseReference}/download-case-document`,
-					`/case/${caseReference}/${journeyId}/${section}/${questionUrl}`
-				)
+					value: documents.length > 0 ? documents : 'Not provided',
+					url: `/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/${encodeURIComponent(section)}/${encodeURIComponent(questionUrl)}`
+				}
 			]
 		};
 	}
