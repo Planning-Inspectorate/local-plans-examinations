@@ -54,7 +54,7 @@ describe('Hearing templates', () => {
 			}
 			assert.ok(html.includes(`Hearing ${number} details`));
 		}
-		assert.equal((html.match(/govuk-summary-list__actions/g) ?? []).length, 14);
+		assert.equal((html.match(/govuk-summary-list__actions/g) ?? []).length, 18);
 		for (const label of [
 			'Time',
 			'Number of days',
