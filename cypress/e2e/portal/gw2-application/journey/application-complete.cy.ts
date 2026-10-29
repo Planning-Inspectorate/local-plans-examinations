@@ -1,5 +1,5 @@
 import { applicationCompletePage } from '../../../../page-objects/portal/gw2-application/application-complete-page.ts';
-import { portalLogin, TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
+import { startPortalOtpLogin, completePortalLogin, TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
@@ -17,7 +17,9 @@ const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 
 
 describe('Application complete page journeys', () => {
 	beforeEach(() => {
-		portalLogin();
+		cy.setCookie('cookie_consent', 'accept');
+		startPortalOtpLogin();
+		completePortalLogin();
 	});
 
 	after(() => cy.task('clearDb'));

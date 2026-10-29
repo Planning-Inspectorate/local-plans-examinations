@@ -66,9 +66,10 @@ export const portalLogin = (email?: string) => {
 		return;
 	}
 
-	cy.setCookie('cookie_consent', 'accept');
-	startPortalOtpLogin(email);
-	completePortalLogin();
+	const loginEmail = email ?? TEST_EMAIL;
+	cy.task('seedCase');
+	completePortalLoginByRequest(loginEmail, LOCAL_TEST_OTP);
+	myPlansPage.visit();
 };
 
 const getPortalLoginEmail = () => {
@@ -91,9 +92,7 @@ const validatePortalLogin = () => {
 	});
 };
 
-const completePortalLoginByRequest = () => {
-	const email = getRequiredCypressEnv('authUsername');
-	const otp = getPortalSmokeOtp();
+const completePortalLoginByRequest = (email = getRequiredCypressEnv('authUsername'), otp = getPortalSmokeOtp()) => {
 	const baseUrl = String(Cypress.config('baseUrl'));
 	const loginUrl = `${baseUrl}/login`;
 	const otpUrl = `${baseUrl}/login/enter-code`;

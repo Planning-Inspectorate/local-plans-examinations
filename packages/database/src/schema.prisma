@@ -131,6 +131,7 @@ model Case {
   submissionDate            DateTime?
   /// Soft-delete marker used instead of physically deleting case data.
   deletedDate               DateTime?
+  deleteReason              String?          @db.NVarChar(500)
   createdAt                 DateTime         @default(now())
   gateway1Info              Gateway1Info?
   gateway2Info              Gateway2Info?
