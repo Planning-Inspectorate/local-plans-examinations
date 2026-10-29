@@ -60,7 +60,7 @@ const MOCK_DOCUMENT_SETS = [
 function createService(): any {
 	const db: any = {
 		case: {
-			update: mock.fn(async () => ({})),
+			update: mock.fn(async () => ({ id: CASE_ID })),
 			findUnique: mock.fn(async () => ({
 				id: CASE_ID,
 				gateway2Info: {
@@ -415,6 +415,13 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.examinationInfo.upsert.create.examiningInspector1, 'Insp One');
 			assert.equal(args.data.examinationInfo.upsert.create.qaInspector1, 'QA One');
 			assert.ok(args.data.examinationInfo.upsert.create.examiningInspectorAppointmentDate instanceof Date);
+			assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
+				where: {
+					caseId: CASE_ID,
+					status: EXAMINATION_STATUS_ID.SUBMITTED
+				},
+				data: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
+			});
 		});
 	});
 

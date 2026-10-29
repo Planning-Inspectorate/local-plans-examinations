@@ -813,7 +813,7 @@ describe('resolveCaseHeaderStatus', () => {
 
 		assert.deepEqual(resolvedCaseHeaderStatus, {
 			headerStatusText: 'Plan adopted',
-			headerStatusClasses: 'govuk-tag--green'
+			headerStatusClasses: 'govuk-tag--purple'
 		});
 	});
 

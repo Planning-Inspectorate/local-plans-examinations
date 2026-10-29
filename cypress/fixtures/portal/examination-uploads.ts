@@ -98,3 +98,25 @@ export const examinationApplicationDocuments = {
 		}
 	]
 };
+
+export const examinationSeededSubmissionDocuments = [
+	{
+		document: 'Local plan submission for examination',
+		fileName: 'ex-local-plan.pdf'
+	},
+	{
+		document: 'Map of proposed local plan policies',
+		fileName: 'ex-map-policies.pdf'
+	},
+	{ document: 'Gateway 3 completion statement', fileName: 'ex-g3-completion.pdf' },
+	{
+		document: 'Summary of consultation and engagement activities in preparing the proposed local plan',
+		fileName: 'ex-cons-engagement.pdf'
+	},
+	{
+		document: 'Summary of consultation on proposed local plan',
+		fileName: 'ex-cons-plan.pdf'
+	},
+	{ document: 'Statement of compliance', fileName: 'ex-compliance.pdf' },
+	{ document: 'Statement of soundness', fileName: 'ex-soundness.pdf' }
+];
