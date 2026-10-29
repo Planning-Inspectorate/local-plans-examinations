@@ -207,6 +207,71 @@ describe('Gateway 3 check answers page', () => {
 		assert.ok(!html.includes('Ready to submit for Gateway 3'), 'expected no resubmission section');
 		assert.doesNotMatch(html, />\s*(Add|Change|Submit)\s*</, 'expected no add, change or submit actions');
 	});
+
+	it('renders the Gateway 3 report summary on the submitted view when report files are present', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 3 submission',
+			pageHeading: 'Gateway 3 submission',
+			pageCaption: 'Test Local Plan',
+			submissionDate: '1 October 2026',
+			submissionTime: '12:30',
+			submitter: 'user@example.com',
+			gateway3ReportFiles: [
+				{
+					fileName: 'Gateway 3 Report.pdf',
+					href: '/manage-local-plans/PLAN-001/gateway-3-submission/download-document/report-guid',
+					sharedDate: '15 October 2026'
+				}
+			],
+			summaryListData: { sections: buildSubmittedSections() },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="gateway-3-report-section"'), 'expected gateway-3-report-section data-cy');
+		assert.ok(html.includes('Gateway 3 report'), 'expected Gateway 3 report label in summary list');
+		assert.ok(html.includes('Gateway 3 Report.pdf'), 'expected report filename');
+		assert.ok(html.includes('shared on 15 October 2026'), 'expected shared date');
+		assert.ok(
+			html.includes('/manage-local-plans/PLAN-001/gateway-3-submission/download-document/report-guid'),
+			'expected download link'
+		);
+	});
+
+	it('renders multiple Gateway 3 report files as bullet points', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 3 submission',
+			pageHeading: 'Gateway 3 submission',
+			gateway3ReportFiles: [
+				{ fileName: 'report-1.pdf', href: '#1', sharedDate: '15 October 2026' },
+				{ fileName: 'report-2.pdf', href: '#2', sharedDate: '15 October 2026' }
+			],
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('govuk-list--bullet'), 'expected bullet list for multiple reports');
+		assert.ok(html.includes('report-1.pdf'), 'expected first report doc');
+		assert.ok(html.includes('report-2.pdf'), 'expected second report doc');
+	});
+
+	it('does not render Gateway 3 report section when no report files exist', () => {
+		const html = renderSubmittedCheckAnswers(buildSubmittedSections());
+
+		assert.ok(!html.includes('data-cy="gateway-3-report-section"'), 'expected no gateway-3-report-section');
+		assert.ok(!html.includes('Gateway 3 report'), 'expected no Gateway 3 report label');
+	});
 });
 
 describe('Gateway 3 declaration page', () => {
