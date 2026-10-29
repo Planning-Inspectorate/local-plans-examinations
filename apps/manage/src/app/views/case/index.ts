@@ -651,20 +651,18 @@ function registerCaseJourney(
 		validate,
 		validationErrorHandler,
 		(req, res, next) => {
-			// Until a report is issued, saving the plan outcome continues to the file uploader.
 			const answers = res.locals.journeyResponse?.answers;
-			const isPlanOutcome =
-				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
-				req.params.section === 'outcome' &&
-				req.params.question === questions.isSound.url;
-			const isCheckPageEdit =
-				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
-				req.params.section === 'outcome' &&
-				[questions.isSound.url, questions.soundUnsoundDate.url].includes(String(req.params.question));
-			if (isCheckPageEdit && req.query.returnTo === 'check') {
+			const continueToReportUpload = shouldContinueToReportUpload(
+				journeyId,
+				req.params.section,
+				req.params.question,
+				req.query.returnTo,
+				answers
+			);
+			if (isReportCheckPageEdit(journeyId, req.params.section, req.params.question, req.query.returnTo)) {
+				// If the user is editing from the examination report submission check page, override the task list URL to return to the check page.
 				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
 			}
-			const continueToReportUpload = isPlanOutcome && req.query.returnTo !== 'check' && !answers?.soundUnsoundDate;
 			buildSave(updateCase, redirectToTaskListOnSuccess && !continueToReportUpload)(req, res, next);
 		}
 	);
@@ -862,6 +860,38 @@ function buildFileUploadRouteHandler(handlersByQuestionUrl: Map<string, RequestH
 
 		return handler(req, res, next);
 	};
+}
+
+/**
+ * Decides whether saving the Plan outcome (aka isSound) question should send the user on to the examination report file uploader
+ * rather than back to the examination tab.
+ *
+ * Returns true only when ALL of the following hold:
+ * - the journey is the examination journey
+ * - the section is `outcome` and the question being saved is the plan outcome question
+ * - the user is not editing from the check answers page (`returnTo=check`), where saving should return to that page
+ * - no examination report has been uploaded yet
+ */
+export function shouldContinueToReportUpload(
+	journeyId: string,
+	section: any,
+	question: any,
+	returnTo: any,
+	answers: Record<string, any> | undefined
+): boolean {
+	const isPlanOutcome =
+		journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID && section === 'outcome' && question === questions.isSound.url;
+	const reportUploaded = Array.isArray(answers?.examinationReport) && answers.examinationReport.length > 0;
+	return isPlanOutcome && returnTo !== 'check' && !reportUploaded;
+}
+
+export function isReportCheckPageEdit(journeyId: string, section: any, question: any, returnTo: any): boolean {
+	return (
+		journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+		section === 'outcome' &&
+		[questions.isSound.url, questions.soundUnsoundDate.url].includes(String(question)) &&
+		returnTo === 'check'
+	);
 }
 
 /**
