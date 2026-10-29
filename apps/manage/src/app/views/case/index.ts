@@ -815,11 +815,28 @@ function registerCaseJourney(
 
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
-			getJourneyResponse,
-			deleteDocumentRoute,
-			deleteDocumentRoute,
-			handleMulterFileSizeError
+			async (req: any, res: any) => {
+				console.log('Delete route working');
+				res.send('Delete route working');
+				return;
+			},
+			deleteDocumentRoute
 		);
+		router.get(`${questionPath}/delete-document/:fileId`, async (req: any, res: any) => {
+			console.log('Delete route working for get request');
+			res.send('Delete route working for get request');
+			return;
+		});
+		router.put(`${questionPath}/delete-document/:fileId`, async (req: any, res: any) => {
+			console.log('Delete route working for put request');
+			res.send('Delete route working for put request');
+			return;
+		});
+		router.delete(`${questionPath}/delete-document/:fileId`, async (req: any, res: any) => {
+			console.log('Delete route working for delete request');
+			res.send('Delete route working for delete request');
+			return;
+		});
 	}
 }
 
