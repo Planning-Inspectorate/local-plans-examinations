@@ -27,9 +27,10 @@ export async function seedGateway3TriggerResubmission({
 		});
 
 		const gateway3Info = currentCase?.gateway3Info;
-		const latestSubmission = gateway3Info?.submissions.find(
-			(submission) => !submission.completionDate && !submission.decision
-		);
+		// Find the latest submission that needs a decision — either:
+		// - completed (has completionDate) but not yet assessed (no decision), or
+		// - still a placeholder (no completionDate and no decision)
+		const latestSubmission = gateway3Info?.submissions.find((submission) => !submission.decision);
 
 		if (!currentCase || !gateway3Info || !latestSubmission) {
 			throw new Error(`Case ${PLAN_REFERENCE} must have a Gateway 3 submission before triggering a resubmission`);

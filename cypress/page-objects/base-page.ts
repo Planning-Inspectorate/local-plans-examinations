@@ -54,6 +54,14 @@ export class BasePage {
 		return cy.get('.govuk-notification-banner');
 	}
 
+	get virusScanInProgressBanner() {
+		return cy.getByData('virus-scan-in-progress-banner');
+	}
+
+	get virusDetectedBanner() {
+		return cy.getByData('virus-detected-banner');
+	}
+
 	get saveAndContinueButton() {
 		return cy.getByData('button-save-and-continue');
 	}
@@ -160,6 +168,19 @@ export class BasePage {
 
 	verifyNotificationBanner(message: string) {
 		this.notificationBanner.should('be.visible').and('contain.text', message);
+	}
+
+	verifyVirusScanInProgressBanner() {
+		this.virusScanInProgressBanner
+			.should('be.visible')
+			.and('contain.text', 'Virus scan in progress')
+			.and('contain.text', 'Refresh the page to see if the scan has finished');
+	}
+
+	verifyVirusDetectedBanner(fileName: string) {
+		this.virusDetectedBanner
+			.should('be.visible')
+			.and('contain.text', `${fileName} contains a virus. Remove the file and upload a different version.`);
 	}
 
 	verifyNotificationBannerAbsent(message: string) {

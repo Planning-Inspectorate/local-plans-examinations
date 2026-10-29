@@ -108,6 +108,10 @@ export function createExaminationHearingJourney(
 				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
 				.endMultiQuestionCondition('hearing-remote-meeting')
+				.addQuestion(questions[`examinationHearingDuration-${hearingId}`])
+				.withCondition(() => false)
+				.addQuestion(questions[`examinationHearingEndDate-${hearingId}`])
+				.withCondition(() => false)
 		],
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -471,6 +475,16 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+
+	if (response.answers.hearings) {
+		const sortedHearings = sortByDateColumn(
+			response.answers.hearings as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
+		);
+
+		response.answers.hearings = sortedHearings;
+	}
+
 	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
 
 	response.answers.planPauseHistory = sortedPauses;
@@ -739,5 +753,7 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
-	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
 };

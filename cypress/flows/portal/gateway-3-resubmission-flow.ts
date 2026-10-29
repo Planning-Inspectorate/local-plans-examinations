@@ -1,7 +1,7 @@
 import { gateway3ResubmissionPage } from '../../page-objects/portal/gw3-application/gateway-3-resubmission-page.ts';
 import { resubmissionDocumentsPage } from '../../page-objects/portal/gw3-application/gateway-3-uploads-page.ts';
-import { gateway3DeclarationPage } from '../../page-objects/portal/gw3-application/declaration-page.ts';
-import { gateway3SubmissionCompletePage } from '../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
+import { gateway3ResubmissionDeclarationPage } from '../../page-objects/portal/gw3-application/gateway-3-resubmission-declaration-page.ts';
+import { gateway3ResubmissionSubmissionCompletePage } from '../../page-objects/portal/gw3-application/gateway-3-resubmission-submission-complete-page.ts';
 
 // Submission 1 data comes from both seedGateway3Submitted and seedGateway3Resubmission
 const SUBMISSION_1_COMPLETION_DATE = new Date('2026-10-01T12:00:00.000Z');
@@ -19,10 +19,7 @@ export const SUBMISSION_2 = {
 	report: 'GW3Report-Submission-2.pdf'
 };
 
-export const todayDisplayDate = () =>
-	new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-export const submitGateway3Resubmission = (planReference: string, fileName: string) => {
+export const openResubmissionDeclarationPage = (planReference: string, fileName = SUBMISSION_2.document) => {
 	gateway3ResubmissionPage.visit(planReference);
 	gateway3ResubmissionPage.verifyLoaded();
 	gateway3ResubmissionPage.clickAddLink(resubmissionDocumentsPage.addCy);
@@ -33,17 +30,30 @@ export const submitGateway3Resubmission = (planReference: string, fileName: stri
 
 	gateway3ResubmissionPage.verifyUploadedDocument(fileName);
 	gateway3ResubmissionPage.submitButton.click();
+};
 
-	gateway3DeclarationPage.verifyLoaded();
-	gateway3DeclarationPage.confirmSubmissionButton.click();
+export const todayDisplayDate = () =>
+	new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-	gateway3SubmissionCompletePage.verifyLoaded();
+export const submitGateway3Resubmission = (planReference: string, fileName = SUBMISSION_2.document) => {
+	openResubmissionDeclarationPage(planReference, fileName);
+
+	gateway3ResubmissionDeclarationPage.verifyLoaded();
+	gateway3ResubmissionDeclarationPage.confirmSubmissionButton.click();
+
+	gateway3ResubmissionSubmissionCompletePage.verifyLoaded();
 };
 
 // FO submits submission 2, then the BO (seed) triggers resubmission 3
 export const seedGateway3SubmissionThree = (planReference: string) => {
 	cy.task('seedGateway3Submitted');
 	cy.task('seedGateway3Resubmission');
-	submitGateway3Resubmission(planReference, SUBMISSION_2.document);
+	submitGateway3Resubmission(planReference);
 	cy.task('seedGateway3TriggerResubmission', { reportFileNames: [SUBMISSION_2.report] });
+};
+
+export const openSeededResubmissionDeclarationPage = (planReference: string) => {
+	cy.task('seedGateway3Submitted');
+	cy.task('seedGateway3Resubmission');
+	openResubmissionDeclarationPage(planReference);
 };

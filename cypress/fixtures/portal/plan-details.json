@@ -9,6 +9,8 @@
 	"status2": "In progress",
 	"status3": "Under review",
 	"status4": "Resubmission required",
+	"status5": "Submitted",
+	"status6": "In examination",
 	"leadLpa": "Romsey Town Council",
 	"linkedLpa": "Southampton City Council",
 	"dates": {

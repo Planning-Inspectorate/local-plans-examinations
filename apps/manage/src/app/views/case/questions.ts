@@ -621,6 +621,23 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-hearing-remote-meeting-link',
 		title: 'Remote meeting link',
 		validators: [new RequiredValidator('Input a remote meeting link')]
+	},
+	examinationHearingDuration: {
+		type: 'number',
+		question: 'How many days did the hearing actually take?',
+		fieldName: 'hearingDuration',
+		url: 'examination-hearing-duration',
+		title: 'Examination hearing duration',
+		validators: [new RequiredValidator('Input hearing duration')]
+	},
+	examinationHearingEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the hearing end date?',
+		fieldName: 'hearingEndDate',
+		url: 'examination-hearing-end-date',
+		title: 'Examination hearing end date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-hearing-end-date' }
 	}
 };
 

@@ -326,6 +326,42 @@ describe('PortalService', () => {
 			);
 		});
 
+		it('returns Gateway 3 under review when the LPA resubmission has a submittedDate but no BO decision yet', () => {
+			// After the LPA submits a resubmission, the submission record gets a
+			// submittedDate (not completionDate — that is set by the BO).
+			// The plan must remain at Gateway 3 / Under review, NOT jump to Examination.
+			assert.deepStrictEqual(
+				derivePlanProgress(
+					buildCase({
+						gateway2Info: {
+							expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+							actualDate: new Date('2026-07-21T12:00:00.000Z'),
+							reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+						},
+						gateway3Info: {
+							actualDate: new Date('2026-10-20T12:00:00.000Z'),
+							submissions: [
+								{
+									completionDate: new Date('2026-10-01T12:00:00.000Z'),
+									decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+								},
+								{
+									submittedDate: new Date('2026-10-20T12:00:00.000Z'),
+									completionDate: null,
+									decision: null
+								}
+							]
+						},
+						documents: [buildGateway2ReportDocument()]
+					})
+				),
+				{
+					stage: STAGE.Gateway3,
+					status: STATUS.UnderReview
+				}
+			);
+		});
+
 		it('returns Gateway 3 resubmission required when awaiting LPA resubmission', () => {
 			assert.deepStrictEqual(
 				derivePlanProgress(

@@ -11,7 +11,11 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { EXAMINATION_STATUS_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID,
+	GATEWAY_3_STATUS
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
@@ -112,7 +116,17 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
 
-	if (gateway3SubmissionState.latestSubmission?.completionDate) {
+	// Gateway 3 is only complete when the BO has reviewed and issued a
+	// non-resubmission decision.  A submission that has a completionDate but
+	// no decision (or a RESUBMISSION_REQUIRED decision) means the LPA has
+	// submitted / been asked to resubmit — the case stays at Gateway 3.
+	const latestDecision = gateway3SubmissionState.latestSubmission?.decision;
+	const isGateway3Decided =
+		gateway3SubmissionState.latestSubmission?.completionDate &&
+		latestDecision &&
+		latestDecision !== GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED;
+
+	if (isGateway3Decided) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart

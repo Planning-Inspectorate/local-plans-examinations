@@ -5,10 +5,11 @@ import {
 	getDeleteCase,
 	getDeleteWorkshop,
 	postDeleteWorkshop,
+	getDeleteHearing,
+	postDeleteHearing,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
 	fileUploadQuestionConfigs,
-	fileUploadQuestionUrls,
 	type FileUploadQuestion,
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
@@ -24,7 +25,8 @@ import {
 	issueGateway2WorkshopDocuments,
 	redirectToChecks,
 	preprocessQuestionProperties,
-	handleMulterFileSizeError
+	handleMulterFileSizeError,
+	journeyFileUploadQuestionConfigs
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -348,6 +350,9 @@ function registerExaminationHearingJourney(
 		completeHearing
 	);
 
+	router.get('/examination/set-up-hearing/delete-*hearingId', getDeleteHearing());
+	router.post('/examination/set-up-hearing/delete-*hearingId', postDeleteHearing(service));
+
 	router.get(
 		'/examination/set-up-hearing/:section/:question',
 		buildLpaOptions,
@@ -372,27 +377,41 @@ function registerExaminationHearingJourney(
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
 		let returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
-		const answer = Object.values(req.body).find((value) => value === 'yes' || value === 'no');
-		if (req.session.returnToCyaAfterAnswer == true) {
-			//returns to CYA after answering instead of going back though flow
-			req.session.returnToCyaAfterAnswer = false;
-			returnToCya = true;
-			req.session.editingFromCheckAnswers = true;
-		} else {
-			if (questionPrefix.some((q) => req.params.question.startsWith(q)) && returnToCya === true) {
-				if (answer == 'yes') {
-					// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that needs answering
+		if (req.params.question) {
+			if (
+				req.params.question.startsWith('examination-hearing-duration-') ||
+				req.params.question.startsWith('examination-hearing-end-date-')
+			) {
+				returnToCya = false;
+				res.locals.redirectToExamination = true;
+			} else {
+				if (req.params.question.startsWith('examination-hearing-location-type-') && returnToCya == true) {
 					returnToCya = false;
 					req.session.editingFromCheckAnswers = false;
-					req.session.returnToCyaAfterAnswer = true;
-				} else if (answer == 'no') {
-					// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that does not need answering
-					returnToCya = true;
-					req.session.editingFromCheckAnswers = true;
-				} else {
-					// type question (e.g. examinationHearingLocationType)
-					returnToCya = false;
-					req.session.editingFromCheckAnswers = false;
+				}
+			}
+			const answer = Object.values(req.body).find((value) => value === 'yes' || value === 'no');
+			if (req.session.returnToCyaAfterAnswer == true) {
+				//returns to CYA after answering instead of going back though flow
+				req.session.returnToCyaAfterAnswer = false;
+				returnToCya = true;
+				req.session.editingFromCheckAnswers = true;
+			} else {
+				if (questionPrefix.some((q) => req.params.question.startsWith(q)) && returnToCya === true) {
+					if (answer == 'yes') {
+						// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that needs answering
+						returnToCya = false;
+						req.session.editingFromCheckAnswers = false;
+						req.session.returnToCyaAfterAnswer = true;
+					} else if (answer == 'no') {
+						// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that does not need answering
+						returnToCya = true;
+						req.session.editingFromCheckAnswers = true;
+					} else {
+						// type question (e.g. examinationHearingLocationType)
+						returnToCya = false;
+						req.session.editingFromCheckAnswers = false;
+					}
 				}
 			}
 		}
@@ -490,6 +509,15 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		saveController: ExaminationSaveController
 	},
 	{
+		path: 'examination/set-up-hearing',
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		createJourney: createExaminationHearingJourney,
+		pageLoadHandler: ExaminationTabHandler,
+		supportsManageList: true,
+		supportsFileUpload: false,
+		saveController: ExaminationSaveController
+	},
+	{
 		path: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
 		createJourney: createTimetableJourney,
@@ -568,7 +596,7 @@ function registerCaseJourney(
 	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId, pageLoadHandler);
 
 	const fileUploadMiddleware = fileUploaderQuestionMiddleware({
-		questionUrls: fileUploadQuestionUrls,
+		questionUrls: (journeyFileUploadQuestionConfigs[journeyId] ?? []).map((elem) => elem.url),
 		sessionKey: fileUploaderCaseSessionKey
 	});
 

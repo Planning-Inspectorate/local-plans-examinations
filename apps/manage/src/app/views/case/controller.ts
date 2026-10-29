@@ -547,6 +547,52 @@ export function getDeleteWorkshop(): AsyncRequestHandler {
 }
 
 /**
+ * For deleting a hearing
+ * @param service
+ * @returns Redirects back to the examination tab
+ */
+export function postDeleteHearing(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the hearing number from the url');
+		}
+		const returnUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		new ExaminationSaveController(service, req, reference).deleteHearing(hearingToDelete);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				hearings: null // Will be overridden by overrideLabels
+			},
+			{},
+			reference,
+			currentUser,
+			{
+				hearings: 'Hearing cancelled'
+			}
+		);
+		return res.redirect(returnUrl);
+	};
+}
+
+export function getDeleteHearing(): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		res.render('views/layouts/delete-hearing.njk', { reference: reference, hearingIndex: hearingToDelete });
+	};
+}
+
+/**
  * For deleting a workshop
  * @param service
  * @returns Redirects back to the GW2 tab
@@ -1135,12 +1181,16 @@ export function preprocessQuestionProperties(
 			}
 		}
 		if (journeyId == 'examination') {
-			// Format the Start date answer into a human-readable date
+			// Format the date answers into a human-readable date
 			const hearingAnswers = _res.locals.journeyResponse.answers.hearings ?? [];
 			for (let i = 0; i < hearingAnswers.length; i++) {
 				hearingAnswers[i].hearingDate =
 					hearingAnswers[i].hearingDate && typeof hearingAnswers[i].hearingDate != 'string'
 						? formatDateToString(hearingAnswers[i].hearingDate)
+						: null;
+				hearingAnswers[i].hearingEndDate =
+					hearingAnswers[i].hearingEndDate && typeof hearingAnswers[i].hearingEndDate != 'string'
+						? formatDateToString(hearingAnswers[i].hearingEndDate)
 						: null;
 			}
 		}
