@@ -31,6 +31,7 @@ export async function loadInspectorOptions(service: ManageService, req: Request,
 	questions.gateway2AssessorsName.options = optionsMap;
 	questions.assessorGateway2.options = optionsMap;
 	questions.gateway3AssessorsName.options = optionsMap;
+	questions.assessorGateway3.options = optionsMap;
 }
 
 export async function retrieveCaseOfficers(
