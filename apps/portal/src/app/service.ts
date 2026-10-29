@@ -77,19 +77,6 @@ function hasIssuedGateway2Report(caseRecord: PortalCase): boolean {
 	return Boolean(caseRecord.gateway2Info?.reportIssuedDate && getGateway2ReportUploadedDate(caseRecord));
 }
 
-function hasIssuedExaminationReport(caseRecord: PortalCase): boolean {
-	return Boolean(
-		caseRecord.examinationInfo?.soundUnsoundDate &&
-		caseRecord.documents.some(
-			(document) =>
-				document.documentSetId === DOCUMENT_SET_ID.EXAMINATION_REPORT &&
-				!document.isDeleted &&
-				document.latestDocumentVersion &&
-				!document.latestDocumentVersion.isDeleted
-		)
-	);
-}
-
 // A Gateway 2 submission document is any non-report document belonging to the Gateway 2 document sets.
 function hasUploadedGateway2SubmissionDocuments(caseRecord: PortalCase): boolean {
 	return caseRecord.documents.some(
@@ -195,11 +182,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		: (gateway3SubmissionState.latestSubmission?.completionDate ??
 			caseRecord.gateway3Info?.actualDate ??
 			caseRecord.gateway3Info?.expectedDate);
-	const examinationReportIssued = hasIssuedExaminationReport(caseRecord);
-	const examinationStatus =
-		examinationReportIssued && caseRecord.examinationInfo?.status !== EXAMINATION_STATUS_ID.PLAN_ADOPTED
-			? EXAMINATION_STATUS_ID.REPORT_ISSUED
-			: (caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET);
+	const examinationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
 	const examinationDate =
 		examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
 			? caseRecord.examinationInfo?.soundUnsoundDate
@@ -270,7 +253,7 @@ const planCaseInclude = {
 	documents: {
 		where: {
 			// A soft-deleted document still means the submission was started.
-			documentSetId: { in: [...gateway2SetIds, ...gateway3SetIds, DOCUMENT_SET_ID.EXAMINATION_REPORT] }
+			documentSetId: { in: [...gateway2SetIds, ...gateway3SetIds] }
 		},
 		orderBy: {
 			createdAt: 'asc' as const

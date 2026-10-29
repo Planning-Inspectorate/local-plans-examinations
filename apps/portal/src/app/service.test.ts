@@ -56,22 +56,6 @@ function buildCase(overrides = {}) {
 	};
 }
 
-function buildExaminationReportDocument(fileName = 'examination-report.pdf') {
-	return {
-		guid: 'examination-report-guid',
-		name: fileName,
-		documentSetId: DOCUMENT_SET_ID.EXAMINATION_REPORT,
-		createdAt: new Date('2026-10-20T12:00:00.000Z'),
-		isDeleted: false,
-		latestDocumentVersion: {
-			originalFilename: fileName,
-			fileName,
-			dateCreated: new Date('2026-10-20T12:00:00.000Z'),
-			isDeleted: false
-		}
-	};
-}
-
 function buildGateway2ReportDocument(dateCreated = new Date('2026-09-02T12:00:00.000Z')) {
 	return {
 		guid: 'document-guid-1',
@@ -427,7 +411,7 @@ describe('PortalService', () => {
 					documents: {
 						where: {
 							documentSetId: {
-								in: [...gateway2SetIds, ...gateway3SetIds, DOCUMENT_SET_ID.EXAMINATION_REPORT]
+								in: [...gateway2SetIds, ...gateway3SetIds]
 							}
 						},
 						orderBy: {
@@ -544,7 +528,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
 		});
 
-		it('maps an uploaded examination report to Report issued using the BO issue date', async () => {
+		it('maps a stored Report issued examination status using the BO issue date', async () => {
 			const reportIssuedDate = new Date('2026-10-20T12:00:00.000Z');
 			const service = buildService([
 				buildCase({
@@ -563,10 +547,9 @@ describe('PortalService', () => {
 						expectedSubmissionForExaminationDate: new Date('2026-09-15T12:00:00.000Z'),
 						submissionForExaminationDate: new Date('2026-09-18T12:00:00.000Z'),
 						soundUnsoundDate: reportIssuedDate,
-						status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
-						statusLookup: { displayName: 'In examination' }
-					},
-					documents: [buildExaminationReportDocument()]
+						status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+						statusLookup: { displayName: 'Report issued' }
+					}
 				})
 			]);
 
