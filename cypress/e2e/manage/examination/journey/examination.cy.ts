@@ -252,6 +252,7 @@ describe('Examination updates', () => {
 		examinationMIQUploadPage.saveAndReturn();
 
 		examinationMIQCheckPage.verifyLoaded();
+		cy.reload();
 		examinationMIQCheckPage.verifyDocuments(MIQcheckPage.file1, MIQcheckPage.file2);
 		examinationMIQCheckPage.confirm();
 
