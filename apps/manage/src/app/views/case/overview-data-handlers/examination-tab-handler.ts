@@ -67,6 +67,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 				return;
 			}
 		}
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

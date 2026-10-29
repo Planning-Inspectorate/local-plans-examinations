@@ -1,6 +1,7 @@
 import { SubmissionCheckWithDate } from './submission-check-with-date.ts';
 import { type SubmissionCheckData } from './submission-check.ts';
 import { type ManageService } from '#service';
+import { questions } from '../questions.ts';
 
 export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 	public async generateDataForPage(
@@ -23,9 +24,17 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 		});
 		const receivedDate = existingGatewayDetails?.reportIssuedDate;
 		const fileUploadedDate = uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined;
+		const answersToReview = [
+			...this.generateAdditionalDateField(fileUploadedDate, undefined),
+			...this.formatDocuments(
+				uploadedFiles,
+				`/case/${caseReference}/download-case-document`,
+				`/case/${caseReference}/${journeyId}/${section}/${questions.gateway2Report.url}`
+			)
+		];
 		return {
 			titleHeading: 'Check Gateway 2 report details and issue notification',
-			uploadedFiles: uploadedFiles,
+			answersToReview: answersToReview,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,
@@ -33,7 +42,6 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 			backLink: this.generateBackUrl(originalUrl),
 			notificationPreviewTemplate: questionUrl + (receivedDate ? '-complete' : ''),
 			submitButtonText: 'Issue report',
-			additionalFields: this.generateAdditionalDateField(fileUploadedDate, undefined),
 			notificationTextLPA: "We'll send a notification to the LPA to tell them that the report is available"
 		};
 	}

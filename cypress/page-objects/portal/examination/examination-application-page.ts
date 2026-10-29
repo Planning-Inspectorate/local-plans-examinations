@@ -1,5 +1,9 @@
-import { examinationApplicationDocuments } from '../../../fixtures/portal/examination-uploads.ts';
+import {
+	examinationApplicationDocuments,
+	examinationSeededSubmissionDocuments
+} from '../../../fixtures/portal/examination-uploads.ts';
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
+import { examinationSubmissionWebsite } from '../../../fixtures/portal/examination-website.ts';
 
 const examinationHeading = 'Examination';
 
@@ -92,6 +96,17 @@ export class ExaminationPage extends PortalPlanBasePage {
 			.should('match', /^Your submission was sent on .+ at \d{2}:\d{2} by .+$/)
 			.and('include', todayDisplay)
 			.and('include', submitterEmail);
+	}
+
+	verifySubmittedDocuments() {
+		this.verifyDocumentRowContains(
+			this.examinationDetailsTable,
+			examinationSubmissionWebsite.row,
+			examinationSubmissionWebsite.value
+		);
+		examinationSeededSubmissionDocuments.forEach(({ document, fileName }) => {
+			this.verifyDocumentRowContains(this.examinationDetailsTable, document, fileName);
+		});
 	}
 
 	verifyNoAddOrChangeLinks() {
