@@ -167,7 +167,7 @@ export const gateway2questions = {
 	},
 	consultationSummaryProposedContent: {
 		title: 'Summary of consultation on proposed local plan content and evidence documents',
-		question: 'Upload your summary of consultation for proposed local plan content and evidence',
+		question: 'Upload your summary of consultation on proposed local plan content and evidence',
 		fieldName: 'consultationSummaryProposedContent',
 		url: 'summary-of-consultation',
 		text: {
