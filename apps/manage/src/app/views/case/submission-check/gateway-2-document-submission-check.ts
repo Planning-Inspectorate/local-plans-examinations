@@ -10,7 +10,6 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 		questionUrl: string,
 		originalUrl: string,
 		_service: ManageService,
-		uploadedFiles: any[],
 		questionTitle?: string
 	): Promise<SubmissionCheckData> {
 		if (!questionTitle) {
