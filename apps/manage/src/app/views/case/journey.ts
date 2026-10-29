@@ -12,6 +12,7 @@ import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -678,9 +679,7 @@ const overviewQuestionNames = new Set<string>([
 	'examinationWebsite',
 	'assessorGateway2',
 	'assessorGateway3',
-	'examiningInspector1',
-	'examiningInspector2',
-	'examiningInspector3',
+	...EXAMINING_INSPECTOR_FIELDS,
 	'qaInspector1',
 	'qaInspector2',
 	'qaInspector3'
@@ -725,9 +724,7 @@ const gateway3QuestionNames = new Set<string>([
 const examinationQuestionNames = new Set<string>([
 	'expectedSubmissionForExaminationDate',
 	'submissionForExaminationDate',
-	'examiningInspector1',
-	'examiningInspector2',
-	'examiningInspector3',
+	...EXAMINING_INSPECTOR_FIELDS,
 	'examiningInspectorAppointmentDate',
 	'letterSentToMHCLGDate',
 	'letterIssueDate',

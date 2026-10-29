@@ -34,6 +34,7 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 
 type ManageListAction = 'edit' | 'remove' | undefined;
@@ -491,12 +492,7 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	if (typeof value === 'boolean') {
 		return value;
 	}
-	const entraUserQuestions = new Set([
-		'caseOfficer',
-		'examiningInspector1',
-		'examiningInspector2',
-		'examiningInspector3'
-	]);
+	const entraUserQuestions = new Set(['caseOfficer', ...EXAMINING_INSPECTOR_FIELDS]);
 	if (entraUserQuestions.has(question)) {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
 		if (entraClient) {
