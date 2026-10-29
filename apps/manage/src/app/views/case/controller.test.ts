@@ -1,4 +1,4 @@
-import { describe, it, mock } from 'node:test';
+import { after, before, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import {
@@ -17,7 +17,8 @@ import {
 	fileUploaderCaseSessionKeyForField,
 	redirectToFileUploaderQuestion,
 	redirectToChecks,
-	buildRemoveDocumentConfirmMiddleware
+	buildRemoveDocumentConfirmMiddleware,
+	getDeleteReason
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
@@ -27,6 +28,8 @@ import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handl
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { questions } from './questions.ts';
 import {
 	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID
@@ -1540,72 +1543,6 @@ describe('Gateway 3 document loading', () => {
 	}
 });
 
-describe('DeleteCase', () => {
-	(it('renders delete-case.njk when getDeleteCase is called', async () => {
-		const service = createService();
-		const currentCase = {
-			reference: 'PLAN-123456',
-			planTitle: 'Southshire Local Plan',
-			planType: 'Local Plan',
-			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-			caseOfficer: 'John Doe'
-		};
-		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-		const render = mock.fn();
-		const status = mock.fn(() => ({ render }));
-		const res = {
-			locals: {},
-			render,
-			status
-		} as unknown as Response;
-		const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
-
-		await getDeleteCase(service)(req, res);
-
-		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
-	}),
-		it('sets deletedDate when delete is confirmed', async () => {
-			const service = createService();
-			const currentCase = {
-				reference: 'PLAN-123456',
-				planTitle: 'Southshire Local Plan',
-				planType: 'Local Plan',
-				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-				caseOfficer: 'John Doe'
-			};
-			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-			const redirect = mock.fn();
-			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
-
-			await postMarkAsDeleteCase(service)(req, res);
-
-			assert.equal(service.db.case.update.mock.callCount(), 1);
-
-			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
-
-			assert.ok(args.data.deletedDate instanceof Date);
-		}),
-		it('redirects to all cases when delete is confirmed', async () => {
-			const service = createService();
-			const currentCase = {
-				reference: 'PLAN-123456',
-				planTitle: 'Southshire Local Plan',
-				planType: 'Local Plan',
-				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-				caseOfficer: 'John Doe'
-			};
-			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-			const redirect = mock.fn();
-			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
-
-			await postMarkAsDeleteCase(service)(req, res);
-
-			assert.equal(redirect.mock.calls[0].arguments[0], '/');
-		}));
-});
-
 describe('downloadDocument', () => {
 	it('downloads a document to a response object', async () => {
 		const service = createService();
@@ -2527,5 +2464,217 @@ describe('issueGateway2WorkshopDocuments', () => {
 		assert.deepEqual(req.session.alerts[0], expectedMessage);
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
+	});
+});
+
+describe('DeleteCase', () => {
+	const deletableCase = {
+		id: CASE_ID,
+		reference: REFERENCE,
+		planTitle: 'Southshire Local Plan',
+		planType: 'local-plan',
+		lpas: [{ lpaCode: 'lpa-1' }, { lpaCode: 'lpa-2' }],
+		caseOfficer: 'officer-1',
+		deletedDate: null
+	};
+
+	// Other tests reload the shared question options (case officers come from Entra), so pin the ones the rows use
+	let originalOptions: { caseOfficer: unknown; lpa: unknown };
+	before(() => {
+		originalOptions = { caseOfficer: questions.caseOfficer.options, lpa: questions.lpa.options };
+		questions.caseOfficer.options = [{ value: 'officer-1', text: 'Case Officer 1' }];
+		questions.lpa.options = [
+			{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+			{ value: 'lpa-2', text: 'Local Planning Authority 2' }
+		];
+	});
+	after(() => {
+		questions.caseOfficer.options = originalOptions.caseOfficer;
+		questions.lpa.options = originalOptions.lpa;
+	});
+
+	const DELETE_REASON = 'Created in error';
+
+	function createDeleteCaseService(currentCase: Record<string, unknown> | null = deletableCase) {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+		return service;
+	}
+
+	function createDeleteCaseResponse(locals: Record<string, unknown> = {}) {
+		const render = mock.fn();
+		const status = mock.fn(() => ({ render }));
+		const redirect = mock.fn();
+		const res = { locals, render, status, redirect } as unknown as Response;
+		return { res, render, status, redirect };
+	}
+
+	function createDeleteCaseRequest() {
+		const session: Record<string, any> = {
+			currentJourney: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID,
+			forms: { [COMMON_CONSTS.DELETE_CASE_JOURNEY_ID]: { deleteCaseWhy: DELETE_REASON } }
+		};
+		const req = { params: { reference: REFERENCE }, session } as unknown as Request;
+		return { req, session };
+	}
+
+	function createJourneyLocals(deleteCaseWhy: unknown = DELETE_REASON) {
+		return { journeyResponse: { answers: { deleteCaseWhy } } };
+	}
+
+	function caseDetailsRowValue(res: Response, key: string) {
+		const row = res.locals.caseDetailsRows.find(
+			(caseDetailsRow: { key: { text: string } }) => caseDetailsRow.key.text === key
+		);
+		return row?.value.text;
+	}
+
+	describe('getDeleteCase', () => {
+		it('sets the case details rows and continues to the check page', async () => {
+			const service = createDeleteCaseService();
+			const { res, render } = createDeleteCaseResponse();
+			const { req } = createDeleteCaseRequest();
+			const next = mock.fn();
+
+			await getDeleteCase(service)(req, res, next);
+
+			assert.equal(next.mock.callCount(), 1);
+			assert.equal(render.mock.callCount(), 0);
+			assert.equal(res.locals.baseUrl, `/case/${REFERENCE}`);
+			assert.deepEqual(res.locals.caseDetailsRows, [
+				{ key: { text: 'Reference' }, value: { text: REFERENCE } },
+				{ key: { text: 'Title' }, value: { text: 'Southshire Local Plan' } },
+				{ key: { text: 'Type' }, value: { text: 'Local plan' } },
+				{
+					key: { text: 'Planning authority' },
+					value: { text: 'Local Planning Authority 1, Local Planning Authority 2' }
+				},
+				{ key: { text: 'Case officer' }, value: { text: 'Case Officer 1' } }
+			]);
+		});
+
+		it('shows Not provided for case details that are missing', async () => {
+			const service = createDeleteCaseService({
+				...deletableCase,
+				planTitle: '',
+				planType: '',
+				lpas: [],
+				caseOfficer: null
+			});
+			const { res } = createDeleteCaseResponse();
+			const { req } = createDeleteCaseRequest();
+			const next = mock.fn();
+
+			await getDeleteCase(service)(req, res, next);
+
+			for (const key of ['Title', 'Type', 'Planning authority', 'Case officer']) {
+				assert.equal(caseDetailsRowValue(res, key), 'Not provided', `${key} should be Not provided`);
+			}
+		});
+
+		for (const { name, currentCase } of [
+			{ name: 'does not exist', currentCase: null },
+			{ name: 'is already deleted', currentCase: { ...deletableCase, deletedDate: new Date('2026-10-01') } }
+		]) {
+			it(`returns 404 when the case ${name}`, async () => {
+				const service = createDeleteCaseService(currentCase);
+				const { res, render, status } = createDeleteCaseResponse();
+				const { req } = createDeleteCaseRequest();
+				const next = mock.fn();
+
+				await getDeleteCase(service)(req, res, next);
+
+				assert.equal(status.mock.calls[0].arguments[0], 404);
+				assert.equal(render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+				assert.equal(next.mock.callCount(), 0);
+			});
+		}
+	});
+
+	describe('postMarkAsDeleteCase', () => {
+		it('soft deletes the case and saves the delete reason', async () => {
+			const service = createDeleteCaseService();
+			const { res } = createDeleteCaseResponse(createJourneyLocals());
+			const { req } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(service.db.case.update.mock.callCount(), 1);
+			const updateArguments = service.db.case.update.mock.calls[0].arguments[0];
+			assert.deepEqual(updateArguments.where, { id: CASE_ID });
+			assert.ok(updateArguments.data.deletedDate instanceof Date);
+			assert.equal(updateArguments.data.deleteReason, DELETE_REASON);
+		});
+
+		it('trims the delete reason before saving it', async () => {
+			const service = createDeleteCaseService();
+			const { res } = createDeleteCaseResponse(createJourneyLocals(`  ${DELETE_REASON}  `));
+			const { req } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(service.db.case.update.mock.calls[0].arguments[0].data.deleteReason, DELETE_REASON);
+		});
+
+		it('clears the journey, sets a success message and redirects to all cases', async () => {
+			const service = createDeleteCaseService();
+			const { res, redirect } = createDeleteCaseResponse(createJourneyLocals());
+			const { req, session } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(redirect.mock.calls[0].arguments[0], '/');
+			assert.equal(session.alertMessage, `Case ${REFERENCE} deleted`);
+			assert.equal(session.alertMessageStatus, 'success');
+			assert.equal(session.currentJourney, undefined);
+		});
+
+		for (const { name, locals } of [
+			{ name: 'there is no journey response', locals: {} },
+			{ name: 'the reason is blank', locals: createJourneyLocals('   ') },
+			{ name: 'the reason is not a string', locals: createJourneyLocals(42) }
+		]) {
+			it(`sends the user back to the reason page when ${name}`, async () => {
+				const service = createDeleteCaseService();
+				const { res, redirect } = createDeleteCaseResponse(locals);
+				const { req } = createDeleteCaseRequest();
+
+				await postMarkAsDeleteCase(service)(req, res);
+
+				assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/delete-case`);
+				assert.equal(service.db.case.update.mock.callCount(), 0);
+			});
+		}
+
+		it('returns 404 and does not update when the case does not exist', async () => {
+			const service = createDeleteCaseService(null);
+			const { res, render, status } = createDeleteCaseResponse(createJourneyLocals());
+			const { req } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(status.mock.calls[0].arguments[0], 404);
+			assert.equal(render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+			assert.equal(service.db.case.update.mock.callCount(), 0);
+		});
+	});
+
+	describe('getDeleteReason', () => {
+		it('returns the trimmed reason', () => {
+			assert.equal(getDeleteReason(createJourneyLocals(`  ${DELETE_REASON}  `)), DELETE_REASON);
+		});
+
+		it('returns undefined when the journey response is missing', () => {
+			assert.equal(getDeleteReason({}), undefined);
+		});
+
+		it('returns undefined when the answers are missing', () => {
+			assert.equal(getDeleteReason({ journeyResponse: {} }), undefined);
+		});
+
+		it('returns undefined when the reason is blank or not a string', () => {
+			assert.equal(getDeleteReason(createJourneyLocals('   ')), undefined);
+			assert.equal(getDeleteReason(createJourneyLocals(42)), undefined);
+		});
 	});
 });
