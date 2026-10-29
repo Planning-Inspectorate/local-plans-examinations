@@ -814,7 +814,7 @@ function registerCaseJourney(
 		console.log(`registering delete-document route: '${questionPath}/delete-document/:fileId'`);
 
 		router.post(
-			`${questionPath}/delete-document/:fileId`,
+			`${questionPath}/delete-document/*fileId`,
 			async (req: any, res: any) => {
 				console.log('Delete route working');
 				res.send('Delete route working');
@@ -822,7 +822,7 @@ function registerCaseJourney(
 			},
 			deleteDocumentRoute
 		);
-		router.get(`${questionPath}/delete-document/:fileId`, async (req: any, res: any) => {
+		router.get(`${questionPath}/delete-document/*fileId`, async (req: any, res: any) => {
 			console.log('Delete route working for get request');
 			res.send('Delete route working for get request');
 			return;
