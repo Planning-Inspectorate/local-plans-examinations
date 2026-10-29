@@ -1,4 +1,5 @@
 {% extends "views/layouts/main.njk" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% from "govuk/components/panel/macro.njk" import govukPanel %}
 
@@ -13,6 +14,19 @@
 {% endblock %}
 
 {% block pageContent %}
+{% if virusScanInProgress %}
+    {{ govukNotificationBanner({
+        titleText: "Important",
+        html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+        attributes: { "data-cy": "virus-scan-in-progress-banner" }
+    }) }}
+{% endif %}
+{% if alertMessage and alertMessage != 'Hearing created' %}
+  {{ govukNotificationBanner({
+    type: alertMessageStatus,
+    text: alertMessage
+  }) }}
+{% endif %}
 
 <main class="govuk-main-wrapper" id="main-content">
           
@@ -39,22 +53,24 @@
       </dl>
     {% endfor %}
   {% endif %}
-	{% if uploadedFiles and uploadedFiles.length %}
-		{% for file in uploadedFiles %}
+  {% if answersToReview %}
+    {% for answer in answersToReview %}
       <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">
-            Document {{ loop.index }}
-          </dt>
-          <dd class="govuk-summary-list__value">
-            <a class="govuk-hint" href="/case/{{ caseReference | urlencode }}/download-case-document/{{ file.metadata.documentGuid }}" download>{{ file.fileName }}</a>
-          </dd>
+        <dt class="govuk-summary-list__key">
+          {{ answer.name }}
+        </dt>
+        <dd class="govuk-summary-list__value">
+          {{ answer.value | safe }}
+        </dd>
+        {% if answer.url %}
           <dd class="govuk-summary-list__actions">
             <span class="app-no-wrap">
-              <a class="govuk-link" href="{% if documentChangeUrl %}{{ documentChangeUrl }}{% else %}/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ question | urlencode }}{% endif %}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
+              <a class="govuk-link" href="{{ answer.url }}">Change<span class="govuk-visually-hidden">{{ answer.name }}</span></a>
             </span>
           </dd>
-        </div></dl>
-		{% endfor %}
+        {% endif %}
+      </dl>
+    {% endfor %}
   {% endif %}
   {% if notificationPreviewTemplate %}
     <details class="govuk-details" data-cy="preview-email-to-lpa">

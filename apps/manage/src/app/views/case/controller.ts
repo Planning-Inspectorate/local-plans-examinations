@@ -28,14 +28,13 @@ import { ExaminationSaveController } from './save/examination-save-controller.ts
 import { formatDateToString } from '../../util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
-import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
-import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
-import { pushAlertToSession } from '../../util/alert.ts';
 import {
 	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
-
+import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
+import { pushAlertToSession } from '../../util/alert.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 type ManageListAction = 'edit' | 'remove' | undefined;
 
@@ -492,12 +491,7 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	if (typeof value === 'boolean') {
 		return value;
 	}
-	const entraUserQuestions = new Set([
-		'caseOfficer',
-		'examiningInspector1',
-		'examiningInspector2',
-		'examiningInspector3'
-	]);
+	const entraUserQuestions = new Set(['caseOfficer', ...EXAMINING_INSPECTOR_FIELDS]);
 	if (entraUserQuestions.has(question)) {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
 		if (entraClient) {
@@ -548,6 +542,52 @@ export function getDeleteWorkshop(): AsyncRequestHandler {
 		}
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
 		res.render('views/layouts/delete-workshop.njk', { reference: reference, workshopIndex: workshopToDelete });
+	};
+}
+
+/**
+ * For deleting a hearing
+ * @param service
+ * @returns Redirects back to the examination tab
+ */
+export function postDeleteHearing(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the hearing number from the url');
+		}
+		const returnUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		new ExaminationSaveController(service, req, reference).deleteHearing(hearingToDelete);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				hearings: null // Will be overridden by overrideLabels
+			},
+			{},
+			reference,
+			currentUser,
+			{
+				hearings: 'Hearing cancelled'
+			}
+		);
+		return res.redirect(returnUrl);
+	};
+}
+
+export function getDeleteHearing(): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		res.render('views/layouts/delete-hearing.njk', { reference: reference, hearingIndex: hearingToDelete });
 	};
 }
 
@@ -1154,12 +1194,16 @@ export function preprocessQuestionProperties(
 			}
 		}
 		if (journeyId == 'examination') {
-			// Format the Start date answer into a human-readable date
+			// Format the date answers into a human-readable date
 			const hearingAnswers = _res.locals.journeyResponse.answers.hearings ?? [];
 			for (let i = 0; i < hearingAnswers.length; i++) {
 				hearingAnswers[i].hearingDate =
 					hearingAnswers[i].hearingDate && typeof hearingAnswers[i].hearingDate != 'string'
 						? formatDateToString(hearingAnswers[i].hearingDate)
+						: null;
+				hearingAnswers[i].hearingEndDate =
+					hearingAnswers[i].hearingEndDate && typeof hearingAnswers[i].hearingEndDate != 'string'
+						? formatDateToString(hearingAnswers[i].hearingEndDate)
 						: null;
 			}
 		}

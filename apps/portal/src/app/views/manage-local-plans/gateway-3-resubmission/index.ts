@@ -13,6 +13,9 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 		postResubmission,
 		getUploadPage,
 		postUploadPage,
+		getDeclarationPage,
+		postDeclarationPage,
+		getSubmissionCompletePage,
 		getPreviousSubmissionPage,
 		downloadDocument,
 		upload,
@@ -25,6 +28,13 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 
 	// Submit resubmission
 	router.post('/:planReference/gateway-3-resubmission', loadCase, guardResubmission, postResubmission);
+
+	// Declaration page
+	router.get('/:planReference/gateway-3-resubmission/declaration', loadCase, guardResubmission, getDeclarationPage);
+	router.post('/:planReference/gateway-3-resubmission/declaration', loadCase, guardResubmission, postDeclarationPage);
+
+	// Submission complete page
+	router.get('/:planReference/gateway-3-resubmission/submission-complete', loadCase, getSubmissionCompletePage);
 
 	// Previous submission detail page
 	router.get(

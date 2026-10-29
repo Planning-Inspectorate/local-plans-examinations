@@ -69,7 +69,7 @@ const MOCK_DOCUMENT_SETS = [
 function createService(): any {
 	const db: any = {
 		case: {
-			update: mock.fn(async () => ({})),
+			update: mock.fn(async () => ({ id: CASE_ID })),
 			findUnique: mock.fn(async () => ({
 				id: CASE_ID,
 				gateway2Info: {
@@ -424,6 +424,13 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.examinationInfo.upsert.create.examiningInspector1, 'Insp One');
 			assert.equal(args.data.examinationInfo.upsert.create.qaInspector1, 'QA One');
 			assert.ok(args.data.examinationInfo.upsert.create.examiningInspectorAppointmentDate instanceof Date);
+			assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
+				where: {
+					caseId: CASE_ID,
+					status: EXAMINATION_STATUS_ID.SUBMITTED
+				},
+				data: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
+			});
 		});
 	});
 
@@ -2038,7 +2045,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:signedSla`]: {
 						uploadedFiles: [
 							{
-								dateCreated: new Date(2025, 0, 1)
+								fileName: 'someFile.txt',
+								dateCreated: new Date(2025, 0, 1),
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -2060,11 +2071,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
-						url: 'sla-received-date',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/sla-received-date',
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/signed-sla',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -2075,12 +2092,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'signed-sla',
 				section: 'gateway-1',
 				submitButtonText: 'Confirm and issue notification',
-				titleHeading: 'Check signed SLA and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: new Date(2025, 0, 1)
-					}
-				]
+				titleHeading: 'Check signed SLA and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -2095,7 +2107,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:signedSla`]: {
 						uploadedFiles: [
 							{
-								dateCreated: new Date(2025, 0, 1)
+								fileName: 'someFile.txt',
+								dateCreated: new Date(2025, 0, 1),
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -2117,11 +2133,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
-						url: 'sla-received-date',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/sla-received-date',
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/signed-sla',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -2132,12 +2154,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'signed-sla',
 				section: 'gateway-1',
 				submitButtonText: 'Confirm and issue notification',
-				titleHeading: 'Check signed SLA and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: new Date(2025, 0, 1)
-					}
-				]
+				titleHeading: 'Check signed SLA and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -2152,7 +2169,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:gateway2Report`]: {
 						uploadedFiles: [
 							{
-								dateCreated: dateCreated
+								fileName: 'someFile.txt',
+								dateCreated: dateCreated,
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -2173,11 +2194,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
 						url: undefined,
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-2/gateway-2-report',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -2188,12 +2215,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
-				titleHeading: 'Check Gateway 2 report details and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: dateCreated
-					}
-				]
+				titleHeading: 'Check Gateway 2 report details and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -2208,7 +2230,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:gateway2Report`]: {
 						uploadedFiles: [
 							{
-								dateCreated: dateCreated
+								fileName: 'someFile.txt',
+								dateCreated: dateCreated,
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -2229,11 +2255,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
 						url: undefined,
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-2/gateway-2-report',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -2244,12 +2276,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
-				titleHeading: 'Check Gateway 2 report details and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: dateCreated
-					}
-				]
+				titleHeading: 'Check Gateway 2 report details and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);

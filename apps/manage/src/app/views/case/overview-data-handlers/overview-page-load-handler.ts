@@ -4,6 +4,8 @@ import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/cli
 import { sortByDateColumn } from '#util/util.ts';
 import { pushAlertToSession } from '../../../util/alert.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
+import { journeyFileUploadQuestionConfigs } from '../controller.ts';
 
 export interface PageLoadContext {
 	req: Request;
@@ -70,5 +72,13 @@ export abstract class OverviewPageLoadHandler {
 			}
 		}
 		return false;
+	}
+	protected addVirusScanStatusToLocals(req: Request, res: Response, journeyId: string) {
+		if (req.method === 'GET') {
+			setVirusScanViewLocals(
+				res,
+				journeyFileUploadQuestionConfigs[journeyId].map((elem) => elem.fieldName)
+			);
+		}
 	}
 }

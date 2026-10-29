@@ -37,28 +37,33 @@ export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 			(option: { value: string }) => option.value === existingExaminationDetails?.isSound
 		)?.text;
 		const documentChangeUrl = `${this.generateBackUrl(originalUrl)}?returnTo=check`;
+		const answersToReview = [
+			{
+				name: questions.isSound.title,
+				value: planOutcomeText ?? null,
+				url: `/case/${caseReference}/${journeyId}/${section}/${questions.isSound.url}?returnTo=check`
+			},
+			...this.generateAdditionalDateField(
+				fileUploadedDate,
+				`/case/${caseReference}/${journeyId}/${section}/${questions.soundUnsoundDate.url}?returnTo=check`,
+				'Date'
+			),
+			...this.formatDocuments(
+				uploadedFiles,
+				`/case/${caseReference}/download-case-document`,
+				`/case/${caseReference}/${journeyId}/${section}/${questions.examinationReport.url}`,
+				'returnTo=check'
+			)
+		];
 		return {
 			titleHeading: 'Check documents and send notification',
-			uploadedFiles: uploadedFiles,
+			answersToReview: answersToReview,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,
 			question: questionUrl,
 			backLink: documentChangeUrl,
-			documentChangeUrl,
 			submitButtonText: 'Confirm and notify',
-			additionalFields: [
-				{
-					name: questions.isSound.title,
-					value: planOutcomeText ?? null,
-					url: questions.isSound.url,
-					query: 'returnTo=check'
-				},
-				...this.generateAdditionalDateField(fileUploadedDate, questions.soundUnsoundDate.url, 'Date').map((field) => ({
-					...field,
-					query: 'returnTo=check'
-				}))
-			],
 			notificationTextLPA: "We'll notify the planning authority and MHCLG that the report is ready"
 		};
 	}

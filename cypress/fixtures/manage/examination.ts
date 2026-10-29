@@ -16,7 +16,8 @@ export const seededExaminationHearing = {
 	hearingTime: '10:30',
 	hearingExpectedDaysKnown: 'no',
 	hearingLocationType: 'remote',
-	hearingRemoteMeetingLinkKnown: 'no'
+	hearingRemoteMeetingLinkKnown: 'yes',
+	hearingRemoteMeetingLink: 'hearing 1 remote meeting link'
 };
 
 // seed-cy.ts sets expectedSubmissionDate to `now` at seed time

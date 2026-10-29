@@ -45,7 +45,17 @@ import {
 	soundUnsoundDatePage,
 	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
-import { hearingDateAndTimePage, hearingCheckPage } from '../../../../page-objects/manage/examination/hearing-page.ts';
+import {
+	HearingDateAndTimePage,
+	hearingDateAndTimePage,
+	hearingCheckPage,
+	HearingCheckPage,
+	cancelHearingPage,
+	HearingExpectedDaysPage,
+	RemoteOrInPersonPage,
+	MeetingLinkKnownPage,
+	RemoteLinkPage
+} from '../../../../page-objects/manage/examination/hearing-page.ts';
 
 const factCheckUpdates = [
 	{ answer: factCheckDateReceivedFromInspector, page: factCheckDateReceivedFromInspectorPage },
@@ -352,5 +362,50 @@ describe('Hearing updates', () => {
 		examinationPage.verifySummaryRowContains('Time', '11:45');
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent('remote hearing set up');
+	});
+
+	it('cancels a hearing and records the cancellation in case history', { tags: ['regression'] }, () => {
+		examinationPage.cancelHearing('1');
+
+		cancelHearingPage.verifyLoaded();
+		cancelHearingPage.confirmCancelHearing();
+
+		examinationPage.verifyHearingCancelled('1', 'hearing 1 remote meeting link');
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent('Hearing cancelled');
+	});
+
+	it('creates a second hearing and records it in case history', { tags: ['regression'] }, () => {
+		const dateAndTimePage2 = new HearingDateAndTimePage(2);
+		const expectedDaysPage2 = new HearingExpectedDaysPage(2);
+		const remoteOrInPersonPage2 = new RemoteOrInPersonPage(2);
+		const meetingLinkKnownPage2 = new MeetingLinkKnownPage(2);
+		const remoteLinkPage2 = new RemoteLinkPage(2);
+		const hearingCYAPage2 = new HearingCheckPage(2);
+
+		examinationPage.addHearing();
+
+		dateAndTimePage2.verifyLoaded();
+		dateAndTimePage2.enterDateAndTime(hearingDateAndTime.updatedDate, hearingDateAndTime.updatedTime);
+		expectedDaysPage2.verifyLoaded();
+		expectedDaysPage2.selectAnswer('no');
+		remoteOrInPersonPage2.verifyLoaded();
+		remoteOrInPersonPage2.selectAnswer('remote');
+		meetingLinkKnownPage2.verifyLoaded();
+		meetingLinkKnownPage2.selectAnswer('yes');
+		remoteLinkPage2.verifyLoaded();
+		remoteLinkPage2.enterAnswer('hearing 2 remote meeting link');
+
+		hearingCYAPage2.verifyLoaded();
+		hearingCYAPage2.confirmHearing();
+
+		examinationPage.verifyNotificationBanner('Hearing created');
+		examinationPage.verifyMainContains('Hearing 2 details');
+		cy.getByData('hearing-details-2').within(() => {
+			examinationPage.verifySummaryRowContains('Start date', hearingDateAndTime.updatedDisplay);
+			examinationPage.verifySummaryRowContains('Time', '11:45');
+			examinationPage.verifySummaryRowContains('Remote meeting link', 'hearing 2 remote meeting link');
+		});
+		examinationPage.verifyHearingsOrder(1, 2);
 	});
 });

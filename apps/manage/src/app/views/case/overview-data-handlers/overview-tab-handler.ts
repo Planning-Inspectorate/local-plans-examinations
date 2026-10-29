@@ -119,7 +119,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 				delete req.session.errorSummary;
 			}
 		}
-
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

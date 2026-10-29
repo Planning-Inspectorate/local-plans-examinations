@@ -8,6 +8,7 @@ import type {
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 import { type examinationStatusWithPause, sortGateway3Submissions } from '../../util/util.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from './case-field-mappings.ts';
 
 const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Submitted: 'govuk-tag--green',
@@ -25,7 +26,7 @@ const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	Examination: 'govuk-tag--yellow',
 	'Exam pending': 'govuk-tag--yellow',
 	'Exam paused': 'govuk-tag--grey',
-	'Plan adopted': 'govuk-tag--green',
+	'Plan adopted': 'govuk-tag--purple',
 	'Hearing pending': 'govuk-tag--blue',
 	'Exam in progress': 'govuk-tag--blue',
 	'Submission pending': 'govuk-tag--yellow',
@@ -57,9 +58,7 @@ export function getPlanStatusClasses(statusText: string) {
 }
 
 const EXAMINATION_FIELDS = [
-	['examiningInspector1', 'Exam in progress'],
-	['examiningInspector2', 'Exam in progress'],
-	['examiningInspector3', 'Exam in progress'],
+	...EXAMINING_INSPECTOR_FIELDS.map((field) => [field, 'Exam in progress'] as const),
 	['QADate', 'QA'],
 	['panelResponseToInspectorDate', 'Fact check'],
 	['shouldPause', null],

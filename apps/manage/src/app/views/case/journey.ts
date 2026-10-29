@@ -12,6 +12,7 @@ import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -107,6 +108,10 @@ export function createExaminationHearingJourney(
 				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
 				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
 				.endMultiQuestionCondition('hearing-remote-meeting')
+				.addQuestion(questions[`examinationHearingDuration-${hearingId}`])
+				.withCondition(() => false)
+				.addQuestion(questions[`examinationHearingEndDate-${hearingId}`])
+				.withCondition(() => false)
 		],
 		taskListUrl: `check-your-answers-${hearingId}`,
 		journeyTemplate: 'views/layouts/forms-question.njk',
@@ -469,6 +474,16 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+
+	if (response.answers.hearings) {
+		const sortedHearings = sortByDateColumn(
+			response.answers.hearings as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
+		);
+
+		response.answers.hearings = sortedHearings;
+	}
+
 	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
 
 	response.answers.planPauseHistory = sortedPauses;
@@ -663,9 +678,7 @@ const overviewQuestionNames = new Set<string>([
 	'examinationWebsite',
 	'assessorGateway2',
 	'assessorGateway3',
-	'examiningInspector1',
-	'examiningInspector2',
-	'examiningInspector3',
+	...EXAMINING_INSPECTOR_FIELDS,
 	'qaInspector1',
 	'qaInspector2',
 	'qaInspector3'
@@ -710,9 +723,7 @@ const gateway3QuestionNames = new Set<string>([
 const examinationQuestionNames = new Set<string>([
 	'expectedSubmissionForExaminationDate',
 	'submissionForExaminationDate',
-	'examiningInspector1',
-	'examiningInspector2',
-	'examiningInspector3',
+	...EXAMINING_INSPECTOR_FIELDS,
 	'examiningInspectorAppointmentDate',
 	'letterSentToMHCLGDate',
 	'letterIssueDate',
@@ -741,5 +752,7 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
-	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
 };

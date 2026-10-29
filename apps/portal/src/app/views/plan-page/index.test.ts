@@ -599,6 +599,24 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>'));
 	});
 
+	it('shows an In examination tag and keeps the examination submission date', async () => {
+		const plan = {
+			refNum: 'PLAN-004',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'in-examination',
+			examinationStatusLabel: 'In examination',
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
+		};
+
+		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
+
+		assert.equal(data.dateTextE, 'Submitted: ');
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
+		assert.ok(html.includes('Submitted: 21 October 2026'));
+		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
+	});
+
 	it('should render task table links correctly for case 3 p2 (G1, G2, G3, E complete)', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
@@ -609,6 +627,7 @@ describe('plan page', () => {
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		assert.strictEqual(data.planStatus, '<strong class="govuk-tag govuk-tag--purple">Plan adopted</strong>');
 
 		const expectedLinks = [
 			'/manage-local-plans/PLAN-001/gateway-2-submission',
