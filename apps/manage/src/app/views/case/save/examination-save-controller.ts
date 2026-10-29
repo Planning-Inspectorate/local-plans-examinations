@@ -48,6 +48,11 @@ export class ExaminationSaveController extends SaveController {
 	}
 
 	protected async shouldSaveToSession() {
+		const question = String(this.req.params.question);
+		if (question.startsWith('examination-hearing-end-date-') || question.startsWith('examination-hearing-duration-')) {
+			return false;
+		}
+
 		const shouldSaveToSession = this.isExaminationHearingQuestion();
 		if (shouldSaveToSession) {
 			return true;
@@ -59,7 +64,6 @@ export class ExaminationSaveController extends SaveController {
 		if (caseDetails.examinationInfo?.planPauseHistory == undefined) {
 			return false;
 		}
-		const question = String(this.req.params.question);
 		const pauseId = parseInt(String(question.split('-').at(-1)));
 		if (isNaN(pauseId)) {
 			return false;
@@ -166,6 +170,12 @@ export class ExaminationSaveController extends SaveController {
 				},
 				[`examination-remote-meeting-link-${hearingId}`]: {
 					hearingRemoteMeetingLink: `hearingRemoteMeetingLink-${hearingId}`
+				},
+				[`examination-hearing-duration-${hearingId}`]: {
+					hearingDuration: `hearingDuration-${hearingId}`
+				},
+				[`examination-hearing-end-date-${hearingId}`]: {
+					hearingEndDate: `hearingEndDate-${hearingId}`
 				}
 			};
 			const hearingFieldsToAnswerMap: Record<string, string> = Object.assign({}, ...Object.values(questionFieldsMap));
@@ -312,6 +322,51 @@ export class ExaminationSaveController extends SaveController {
 		return false;
 	}
 
+	/**
+	 * Delete the hearing at the given index
+	 * @param hearingId The hearing id to delete (from the URL, not the index in the hearing list)
+	 * @returns The result of the save operation
+	 */
+	public async deleteHearing(hearingId: number) {
+		const hearingIndex = hearingId - 1;
+		const caseDetails = await this.service.db.case.findUnique({
+			select: {
+				id: true,
+				examinationInfo: {
+					select: {
+						hearings: true
+					}
+				}
+			},
+			where: { reference: this.caseReference }
+		});
+		if (!caseDetails) {
+			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
+		}
+		if (!this.caseId) {
+			this.caseId = caseDetails.id;
+		}
+		if (caseDetails.examinationInfo?.hearings == undefined) {
+			throw Error(`Could not find hearing data for case with reference '${this.caseReference}'`);
+		}
+		const hearingDetails = sortByDateColumn(caseDetails.examinationInfo?.hearings, 'createdDate');
+		if (hearingDetails.length == 0) {
+			throw Error(`There are no hearings to delete for the case with reference '${this.caseReference}'`);
+		}
+		if (hearingIndex < 0) {
+			throw Error(`Given hearing id '${hearingIndex}' must be greater than '0'`);
+		}
+		if (hearingIndex >= hearingDetails.length) {
+			throw Error(
+				`Given hearing id '${hearingIndex}' is greater than the number of hearings '${hearingDetails.length}'`
+			);
+		}
+		hearingDetails.splice(hearingIndex, 1);
+		return this.save({
+			hearings: hearingDetails
+		});
+	}
+
 	protected async saveToDatabase(answers: ExaminationInput) {
 		if (!answers) return false;
 
@@ -384,7 +439,9 @@ export class ExaminationSaveController extends SaveController {
 				hearingAddressLine: e.hearingAddressLine,
 				hearingAddressLine2: e.hearingAddressLine2,
 				hearingTownOrCity: e.hearingTownOrCity,
-				hearingPostcode: e.hearingPostcode
+				hearingPostcode: e.hearingPostcode,
+				hearingDuration: e.hearingDuration,
+				hearingEndDate: e.hearingEndDate
 			}));
 			if (hearingsCleaned.length > NUM_EXAMINATION_HEARING_QUESTIONS) {
 				throw Error('Max number of hearings has been exceeded');

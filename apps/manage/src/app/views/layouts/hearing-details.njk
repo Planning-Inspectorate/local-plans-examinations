@@ -46,9 +46,55 @@
       }) %}
     {% endif %}
 
+    {% if hearing.hearingDuration %}
+      {% set durationValueText = hearing.hearingDuration %}
+      {% set durationActionsText = "Change" %}
+    {% else %}
+      {% set durationValueText = "Not started" %}
+      {% set durationActionsText = "Add" %}
+    {% endif %}
+
+    {% if hearing.hearingDate %}
+      {% set _ = hearingRows.push({
+        key: { text: "Duration" },
+        value: { text: durationValueText },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination/set-up-hearing/hearing/examination-hearing-duration-" + (hearingNumber),
+              text: durationActionsText
+            }
+          ]
+        }
+      }) %}
+    {% endif %}
+
+    {% if hearing.hearingEndDate %}
+      {% set dateValueText = hearing.hearingEndDate %}
+      {% set dateActionsText = "Change" %}
+    {% else %}
+      {% set dateValueText = "Not started" %}
+      {% set dateActionsText = "Add" %}
+    {% endif %}
+
+    {% if hearing.hearingDate %}
+      {% set _ = hearingRows.push({
+        key: { text: "End date" },
+        value: { text: dateValueText },
+        actions: {
+          items: [
+            {
+              href: "/case/" + reference + "/examination/set-up-hearing/hearing/examination-hearing-end-date-" + (hearingNumber),
+              text: dateActionsText
+            }
+          ]
+        }
+      }) %}
+    {% endif %}
+
     {% if hearingRows.length %}
       <h2 class="govuk-heading-m" data-cy="hearing-heading">Hearing {{ hearingNumber }} details</h2>
-      <a href="/" class="govuk-link">Cancel hearing {{ loop.index }}</a>
+      <a href="/case/{{ reference }}/examination/set-up-hearing/delete-{{ hearingNumber }}" data-cy="cancelHearing{{hearingNumber}}" class="govuk-link">Cancel hearing {{ hearingNumber }}</a>
       <p></p>
       {{ govukSummaryList({
         rows: hearingRows,
@@ -56,6 +102,5 @@
       }) }}
     {% endif %}
   {% endfor %}
-
 
 {% endmacro %}
