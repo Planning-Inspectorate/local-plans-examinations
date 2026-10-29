@@ -43,7 +43,7 @@ describe('Gateway 2 application page content', () => {
 			{
 				document: 'Summary of consultation on proposed local plan content and evidence documents',
 				status: 'Not added',
-				addCy: 'add-summary-of-consultation-for-proposed-local-plan-content-and-evidence'
+				addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence'
 			},
 			{
 				document: 'Scoping consultation documents',
