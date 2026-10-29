@@ -237,6 +237,13 @@ describe('Examination updates', () => {
 	});
 
 	it('uploads MIQ documents and records case history', { tags: ['regression'] }, () => {
+		const today = new Date();
+		const todayDisplay = today.toLocaleDateString('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+			timeZone: 'GMT'
+		});
 		examinationPage.openActionLinkFor(MIQcheckPage.row);
 
 		examinationMIQUploadPage.verifyLoaded();
@@ -251,7 +258,7 @@ describe('Examination updates', () => {
 		examinationPage.verifyNotificationBanner('2 MIQ documents uploaded');
 		examinationPage.verifySummaryRowContains(MIQcheckPage.row, MIQcheckPage.file1, MIQcheckPage.file2);
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent('MIQs notification sent on 26 October 2026');
+		caseHistoryPage.verifyHistoryEvent(`MIQs notification sent on ${todayDisplay}`);
 	});
 });
 
