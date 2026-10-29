@@ -40,7 +40,8 @@ export abstract class SubmissionCheck {
 		questionUrl: string,
 		originalUrl: string,
 		service: ManageService,
-		uploadedFiles: any
+		uploadedFiles: any,
+		questionTitle?: any
 	): Promise<SubmissionCheckData>;
 
 	/**

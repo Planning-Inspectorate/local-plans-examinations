@@ -314,6 +314,8 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			questionUrl,
 			req.originalUrl,
 			service,
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[],
 			questionConfig.title
 		);
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);

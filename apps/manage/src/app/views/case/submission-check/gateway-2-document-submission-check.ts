@@ -10,6 +10,7 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 		questionUrl: string,
 		originalUrl: string,
 		_service: ManageService,
+		uploadedFiles: any,
 		questionTitle?: string
 	): Promise<SubmissionCheckData> {
 		if (!questionTitle) {
@@ -19,7 +20,7 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 		if (questionTitle == 'Subsequent work towards a draft Plan') {
 			questionTitle = 'Subsequent work towards draft plan';
 		}
-		console.log('qt', questionUrl);
+		console.log('questionTitle5', questionTitle);
 
 		const allDocuments = await _service.db.document.findMany({
 			where: {
@@ -34,7 +35,6 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 				name: true
 			}
 		});
-
 		const documents = allDocuments.map((document: any) => ({
 			name: document.name.replace(/^.*\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i, ''),
 			url: `/case/${encodeURIComponent(caseReference)}/download-case-document/${encodeURIComponent(document.guid)}`
