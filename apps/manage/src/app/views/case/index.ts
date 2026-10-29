@@ -840,7 +840,6 @@ function registerCaseJourney(
 			`${questionPath}/delete-document/*fileId`,
 			getJourneyResponse,
 			deleteDocumentRoute,
-			deleteDocumentRoute,
 			handleMulterFileSizeError
 		);
 	}
