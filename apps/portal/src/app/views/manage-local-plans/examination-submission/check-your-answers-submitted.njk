@@ -4,7 +4,7 @@
 {% block pageTitle %}Examination submission{% endblock %}
 
 {% block pageHeading %}
-    <div class="govuk-grid-row">
+    <div class="govuk-grid-row govuk-!-margin-bottom-4">
         <div class="govuk-grid-column-full">
             <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
                 {% if pageCaption %}
@@ -26,43 +26,34 @@
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
         {% if miqDocuments and miqDocuments.length %}
-            <table class="govuk-table govuk-!-margin-bottom-6" data-cy="miq-documents-table">
-                <thead class="govuk-table__head">
-                    <tr class="govuk-table__row">
-                        <th scope="col" class="govuk-table__header govuk-visually-hidden govuk-!-width-one-half">Item</th>
-                        <th scope="col" class="govuk-table__header govuk-visually-hidden">Documents</th>
-                    </tr>
-                </thead>
-                <tbody class="govuk-table__body">
-                    <tr class="govuk-table__row">
-                        <td class="govuk-table__cell govuk-!-width-one-half" data-cy="miq-documents-label"><strong>Matters, issues and questions</strong></td>
-                        <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word" data-cy="miq-documents-value">
-                            {% if miqDocuments.length > 1 %}
-                                <ul class="govuk-list">
-                                    {% for document in miqDocuments %}
-                                        <li>
-                                            {% if document.href %}
-                                                <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
-                                            {% else %}
-                                                {{ document.fileName }}
-                                            {% endif %}
-                                            {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
+            {% set miqValueHtml %}
+                {% if miqDocuments.length > 1 %}
+                    {% for document in miqDocuments %}
+                        <div>
+                            {% if document.href %}
+                                <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
                             {% else %}
-                                {% set document = miqDocuments[0] %}
-                                {% if document.href %}
-                                    <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
-                                {% else %}
-                                    {{ document.fileName }}
-                                {% endif %}
-                                {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                                {{ document.fileName }}
                             {% endif %}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% set document = miqDocuments[0] %}
+                    {% if document.href %}
+                        <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                    {% else %}
+                        {{ document.fileName }}
+                    {% endif %}
+                    {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                {% endif %}
+            {% endset %}
+            <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-cy="miq-documents-table">
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key" data-cy="miq-documents-label"><strong>Matters, issues and questions</strong></dt>
+                    <dd class="govuk-summary-list__value" data-cy="miq-documents-value">{{ miqValueHtml | safe }}</dd>
+                </div>
+            </dl>
         {% endif %}
 
         {% if submissionDate %}
