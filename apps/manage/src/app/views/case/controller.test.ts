@@ -1640,6 +1640,29 @@ describe('redirectToChecks', () => {
 });
 
 describe('issueExaminationReport', () => {
+	it('issues the first report when its issue date was entered before uploading', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date('2026-10-19T12:00:00.000Z')
+		}));
+		const req = {
+			params: { reference: REFERENCE },
+			query: {},
+			session: { authEnabled: false }
+		} as unknown as Request;
+		const redirect = mock.fn();
+
+		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
+
+		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(req.session.alerts[0].text, 'Final report and supporting documents saved and notification sent');
+		assert.equal(
+			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
+			'Examination report issued on 19 October 2026'
+		);
+	});
+
 	it('finishes the initial report journey after its date is changed', async () => {
 		const service = createService();
 		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({

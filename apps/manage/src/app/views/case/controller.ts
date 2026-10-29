@@ -812,7 +812,7 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		});
 		const returnToManage = req.session.examinationReportReturnToManage === true;
 		delete req.session.examinationReportReturnToManage;
-		if (existingExaminationDetails?.soundUnsoundDate && (req.query.returnTo !== 'check' || returnToManage)) {
+		if (existingExaminationDetails?.soundUnsoundDate && returnToManage) {
 			const manuallySetInFirstSubmission = await checkSoundUnsoundManuallySet(service, caseId);
 			const reportIssuedDate = manuallySetInFirstSubmission ? existingExaminationDetails.soundUnsoundDate : new Date();
 			if (!manuallySetInFirstSubmission) {
