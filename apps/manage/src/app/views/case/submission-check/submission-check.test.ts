@@ -88,9 +88,10 @@ const MockService = {
 		}
 	}
 };
-
 describe('Gateway2DocumentSubmissionCheck', () => {
 	it('retains the section and documents using the shared scan-aware answer format', async () => {
+		MockService.db.document.findMany.mock.mockImplementation(async () => []);
+
 		const data = await new Gateway2DocumentSubmissionCheck().generateDataForPage(
 			'case-id',
 			'PLAN-123456',
@@ -112,13 +113,12 @@ describe('Gateway2DocumentSubmissionCheck', () => {
 
 		assert.equal(data.titleHeading, 'Check document');
 		assert.equal(data.submitButtonText, 'Upload document');
-		assert.equal(data.backLink, '/case/PLAN-123456/gateway-2/documents/covering-letter');
+		assert.equal(data.backLink, '/case/PLAN-123456/gateway-2/gateway-2/gateway2Documents');
 		assert.deepEqual(data.answersToReview, [
 			{ name: 'Section', value: 'Covering letter', url: undefined },
 			{
-				name: 'Document 1',
-				value:
-					'<a class="govuk-link" >letter.pdf</a> <strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong>',
+				name: 'Documents',
+				value: 'Not provided',
 				url: '/case/PLAN-123456/gateway-2/documents/covering-letter'
 			}
 		]);
@@ -741,7 +741,7 @@ describe('Test Gateway3SubmissionCheck', () => {
 					backLink: '/PLAN-12345/some-journey',
 					notificationPreviewTemplate: 'gateway-3-document',
 					submitButtonText: 'Issue decision',
-					additionalFields: [
+					answersToReview: [
 						{
 							name: 'Outcome',
 							value: null,
@@ -921,70 +921,58 @@ describe('Test Gateway2WorkshopDocumentsSubmissionCheck', () => {
 });
 
 describe('Test Gateway2DocumentSubmissionCheck', () => {
-	it('generates submission check data when documents exist', async () => {
-		const documents = [
+	it('Gateway2WorkshopDocumentsSubmissionCheck.generateDataForPage with no existing data', async () => {
+		MockService.db.gateway2Info.findUnique.mock.mockImplementation(async () => {
+			return {
+				workshopDocumentUploadedDate: null
+			};
+		});
+		await testGenerateDataForPage(
+			new Gateway2WorkshopDocumentsSubmissionCheck(),
 			{
-				guid: 'document-123',
-				name: 'Test1.pdf'
+				caseId: '123456',
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				questionUrl: 'my-question',
+				originalUrl: '/PLAN-12345/some-journey/some-section/my-question/check',
+				service: MockService,
+				uploadedFiles: [
+					{ fileName: 'fileA.txt', metadata: { documentGuid: 'fileAGuid' } },
+					{ fileName: 'fileB.txt', metadata: { documentGuid: 'fileBGuid' } }
+				]
 			},
 			{
-				guid: 'document-456',
-				name: 'Test2.pdf'
+				titleHeading: 'Check workshop documents and issue notification',
+				caseReference: 'PLAN-12345',
+				journeyId: 'some-journey',
+				section: 'some-section',
+				question: 'my-question',
+				backLink: '/PLAN-12345/some-journey/some-section/my-question',
+				notificationPreviewTemplate: 'my-question',
+				submitButtonText: 'Issue documents',
+				notificationTextLPA:
+					"We'll send a notification to the LPA to tell them that the workshop documents are available.",
+				answersToReview: [
+					{
+						name: 'Date uploaded',
+						value: null,
+						url: undefined
+					},
+					{
+						name: 'Document 1',
+						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
+						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
+					},
+					{
+						name: 'Document 2',
+						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
+						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
+					}
+				]
 			}
-		];
-
-		MockService.db.document.findMany.mock.mockImplementation(async () => documents);
-
-		const submissionCheck = new Gateway2DocumentSubmissionCheck();
-
-		const actualResult = await submissionCheck.generateDataForPage(
-			'123456',
-			'PLAN/12345',
-			'some-journey',
-			'some-section',
-			'my-question',
-			'/case/PLAN-12345/some-journey/some-section/my-question/check',
-			MockService as any,
-			['uploaded-file.pdf'],
-			'Gateway 2 documents',
-			[]
 		);
-
-		assert.deepEqual(actualResult, {
-			titleHeading: 'Check document',
-			uploadedFiles: ['uploaded-file.pdf'],
-			caseReference: 'PLAN/12345',
-			journeyId: 'some-journey',
-			section: 'some-section',
-			question: 'my-question',
-			backLink: '/case/PLAN-12345/gateway-2/gateway-2/gateway2Documents',
-			submitButtonText: 'Upload document',
-			notificationTextLPA: undefined,
-			additionalFields: [
-				{
-					name: 'Section',
-					value: 'Gateway 2 documents',
-					url: ''
-				},
-				{
-					name: 'Documents',
-					value: 'Test1.pdf, Test2.pdf',
-					url: 'my-question'
-				}
-			],
-			allDocuments: [
-				{
-					name: 'Test1.pdf',
-					url: '/case/PLAN%2F12345/download-case-document/document-123'
-				},
-				{
-					name: 'Test2.pdf',
-					url: '/case/PLAN%2F12345/download-case-document/document-456'
-				}
-			]
-		});
 	});
-
 	it('generates submission check data when no documents exist', async () => {
 		MockService.db.document.findMany.mock.mockImplementation(async () => []);
 
@@ -1005,7 +993,6 @@ describe('Test Gateway2DocumentSubmissionCheck', () => {
 
 		assert.deepEqual(actualResult, {
 			titleHeading: 'Check document',
-			uploadedFiles: [],
 			caseReference: 'PLAN-12345',
 			journeyId: 'some-journey',
 			section: 'some-section',
@@ -1013,19 +1000,18 @@ describe('Test Gateway2DocumentSubmissionCheck', () => {
 			backLink: '/case/PLAN-12345/gateway-2/gateway-2/gateway2Documents',
 			submitButtonText: 'Upload document',
 			notificationTextLPA: undefined,
-			additionalFields: [
+			answersToReview: [
 				{
 					name: 'Section',
 					value: 'Gateway 2 documents',
-					url: ''
+					url: undefined
 				},
 				{
 					name: 'Documents',
 					value: 'Not provided',
-					url: 'my-question'
+					url: '/case/PLAN-12345/some-journey/some-section/my-question'
 				}
-			],
-			allDocuments: []
+			]
 		});
 	});
 });
