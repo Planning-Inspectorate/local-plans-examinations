@@ -335,11 +335,13 @@ export function buildSubmittedExaminationView(service: PortalService): RequestHa
 		}
 		res.locals.pageTitle = 'Examination submission';
 		res.locals.pageHeading = 'Examination submission';
-		if (submissionDate) {
-			res.locals.submissionDate = formatDisplayDate(submissionDate);
-			res.locals.submissionTime = formatDisplayTime(submissionDate);
+		const displayDate = submissionDate ?? examinationInfo.miqDocumentSharedDate;
+		if (displayDate) {
+			res.locals.submissionDate = formatDisplayDate(displayDate);
+			res.locals.submissionTime = formatDisplayTime(displayDate);
 		}
-		res.locals.submitter = request.currentCase?.email;
+		res.locals.submitter =
+			request.currentCase?.caseOfficerName || request.currentCase?.caseOfficer || request.currentCase?.email;
 		delete res.locals.saveAndComeBackUrl;
 
 		// Load MIQ documents when they have been shared
