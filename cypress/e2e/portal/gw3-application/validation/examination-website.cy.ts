@@ -2,7 +2,7 @@ import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { examinationWebsitePage } from '../../../../page-objects/portal/gw3-application/examination-website-page.ts';
-import { examinationWebsite } from '../../../../fixtures/portal/examination.ts';
+import { examinationWebsite } from '../../../../fixtures/portal/examination-website.ts';
 import { ERROR_MESSAGES } from '../../../../constants/portal/error-messages.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');

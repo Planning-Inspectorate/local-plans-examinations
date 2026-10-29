@@ -20,6 +20,7 @@ class CancelWorkshopPage extends BasePage {
 	}
 
 	verifyContent() {
+		this.verifyLoaded();
 		this.verifyMainContains('This will remove all workshop details including date, time, venue, and estimates.');
 		this.cancelButton.should('have.text', 'Cancel workshop').and('have.class', 'govuk-button--warning');
 		this.doNotCancelLink
@@ -27,6 +28,16 @@ class CancelWorkshopPage extends BasePage {
 			.and('have.text', 'Do not cancel')
 			.and('have.attr', 'href')
 			.and('match', /^\/case\/.+\/gateway-2$/);
+	}
+
+	confirmCancellation() {
+		this.verifyLoaded();
+		this.cancelButton.click();
+	}
+
+	keepWorkshop() {
+		this.verifyLoaded();
+		this.doNotCancelLink.should('be.visible').click();
 	}
 }
 

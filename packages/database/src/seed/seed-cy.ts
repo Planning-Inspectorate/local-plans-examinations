@@ -9,6 +9,8 @@ import type { Prisma } from '../client/client.ts';
 
 export type SeedCyOptions = {
 	workshops?: Prisma.Gateway2WorkshopCreateWithoutGateway2InfoInput[];
+	gateway3Submission?: Prisma.Gateway3SubmissionCreateManyGateway3InfoInput;
+	examination?: Prisma.ExaminationInfoCreateWithoutCaseInput;
 };
 
 // prettier-ignore
@@ -128,7 +130,7 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 						submissions: {
 							createMany: {
 								data: [
-									{
+									options?.gateway3Submission ?? {
 										decision: undefined,
 										completionDate: undefined
 									}
@@ -138,7 +140,7 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 					}
 				},
 				examinationInfo: {
-					create: {
+					create: options?.examination ?? {
 						expectedSubmissionForExaminationDate: now,
 						submissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 						examiningInspector1: 'inspector-1',
@@ -158,13 +160,24 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 						qaInspector1: 'inspector-1',
 						qaInspector2: 'inspector-2',
 						qaInspector3: 'inspector-3',
-						planPauseStartDate: new Date('2026-12-04T12:00:00.000Z'),
-						planPauseEndDate: new Date('2026-12-05T12:00:00.000Z'),
 						withdrawnDate: new Date('2026-12-06T12:00:00.000Z'),
-						isSound: true,
+						isSound: 'sound',
 						soundUnsoundDate: new Date('2026-12-07T12:00:00.000Z'),
 						adoptionDate: new Date('2026-12-08T12:00:00.000Z'),
-						approvedForCILDate: new Date('2026-12-09T12:00:00.000Z')
+						approvedForCILDate: new Date('2026-12-09T12:00:00.000Z'),
+						planPauseHistory: {
+							createMany: {
+								data: [
+									{
+										createdAt: new Date('2026-12-04T12:00:00.000Z'),
+										planPauseDate: new Date('2026-12-04T12:00:00.000Z'),
+										planPauseStartDetails: 'Case paused for some reason',
+										planPauseEndDate: new Date('2026-12-05T12:00:00.000Z'),
+										planPauseEndDetails: 'Case unpaused for some reason'
+									}
+								]
+							}
+						}
 					}
 				},
 				caseHistories: {

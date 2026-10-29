@@ -151,6 +151,14 @@ export const DOCUMENT_SET = [
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 
+	{
+		id: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_3,
+		displayName: 'Examination Report',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_REPORT,
+		displayOrder: 19
+	},
 	// Gateway 3 portal required documents
 	{
 		id: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
@@ -292,5 +300,113 @@ export const DOCUMENT_SET = [
 		displayName: 'Other documents',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G3_OTHER_DOCUMENTS,
 		displayOrder: 217
+	},
+
+	// Examination portal documents
+	{
+		id: DOCUMENT_SET_ID.EX_LOCAL_PLAN,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Local plan submission for examination (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_LOCAL_PLAN,
+		displayOrder: 301
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_MAP_OF_POLICIES,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Map of proposed local plan policies (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_MAP_OF_POLICIES,
+		displayOrder: 302
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_G3_COMPLETION,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Gateway 3 completion statement (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_G3_COMPLETION,
+		displayOrder: 303
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_CONSULTATION_ENGAGEMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Summary of consultation and engagement activities in preparing the proposed local plan (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_CONSULTATION_ENGAGEMENT,
+		displayOrder: 304
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_CONSULTATION_PLAN,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Summary of consultation on proposed local plan (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_CONSULTATION_PLAN,
+		displayOrder: 305
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_SPATIAL_STRATEGY_REPS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Representations on conformity with an operative spatial development strategy (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_SPATIAL_STRATEGY_REPS,
+		displayOrder: 306
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_STATEMENT_COMPLIANCE,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Statement of compliance (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_STATEMENT_COMPLIANCE,
+		displayOrder: 307
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_STATEMENT_SOUNDNESS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Statement of soundness (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_STATEMENT_SOUNDNESS,
+		displayOrder: 308
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_ENVIRONMENTAL_REPORT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Environmental report (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_ENVIRONMENTAL_REPORT,
+		displayOrder: 309
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_ENVIRONMENTAL_EFFECTS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName:
+			'Statement demonstrating that the proposed local plan is unlikely to have significant environmental effects (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_ENVIRONMENTAL_EFFECTS,
+		displayOrder: 310
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_ADDITIONAL_EVIDENCE,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Additional evidence documents (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_ADDITIONAL_EVIDENCE,
+		displayOrder: 311
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_CHANGES_SINCE_G3,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName:
+			'Statement explaining changes made since Gateway 3 assessment and details of any additional consultations (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_CHANGES_SINCE_G3,
+		displayOrder: 312
+	},
+	{
+		id: DOCUMENT_SET_ID.EX_G3_REPORT_REPS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.EXAMINATION,
+		displayName: 'Representations required in the Gateway 3 report (Examination)',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EX_G3_REPORT_REPS,
+		displayOrder: 313
 	}
 ];

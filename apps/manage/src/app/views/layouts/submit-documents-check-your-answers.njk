@@ -1,4 +1,5 @@
 {% extends "views/layouts/main.njk" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% from "govuk/components/panel/macro.njk" import govukPanel %}
 
@@ -13,33 +14,28 @@
 {% endblock %}
 
 {% block pageContent %}
+{% if virusScanInProgress %}
+    {{ govukNotificationBanner({
+        titleText: "Important",
+        html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+        attributes: { "data-cy": "virus-scan-in-progress-banner" }
+    }) }}
+{% endif %}
+{% if alertMessage and alertMessage != 'Hearing created' %}
+  {{ govukNotificationBanner({
+    type: alertMessageStatus,
+    text: alertMessage
+  }) }}
+{% endif %}
 
 <main class="govuk-main-wrapper" id="main-content">
           
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
 
-    <span class="govuk-caption-l">{{ caseReference }}</span>
+    <span class="govuk-caption-l">{{ caseReference.replace('-','/') }}</span>
     <h1 class="govuk-heading-l">{{ titleHeading }}</h1>
 
-    
-	{% if uploadedFiles and uploadedFiles.length %}
-		{% for file in uploadedFiles %}
-      <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">
-            Document {{ loop.index }}
-          </dt>
-          <dd class="govuk-summary-list__value">
-            <a class="govuk-hint" href="/case/{{ caseReference | urlencode }}/download-case-document/{{ file.metadata.documentGuid }}" download>{{ file.fileName }}</a>
-          </dd>
-          <dd class="govuk-summary-list__actions">
-            <span class="app-no-wrap">
-              <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ question | urlencode }}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
-            </span>
-          </dd>
-        </div></dl>
-		{% endfor %}
-  {% endif %}
   {% if additionalFields and additionalFields.length %}
     {% for field in additionalFields %}
       <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
@@ -50,23 +46,44 @@
         {% if field.url %}
           <dd class="govuk-summary-list__actions">
             <span class="app-no-wrap">
-              <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ field.url | urlencode }}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
+              <a class="govuk-link" href="/case/{{ caseReference | urlencode }}/{{ journeyId | urlencode }}/{{ section | urlencode }}/{{ field.url | urlencode }}{% if field.query %}?{{ field.query }}{% endif %}">Change<span class="govuk-visually-hidden">{{ file.fileName }}</span></a>
             </span>
           </dd>
         {% endif %}
       </dl>
     {% endfor %}
   {% endif %}
-  <details class="govuk-details" data-cy="preview-email-to-lpa">
-  <summary class="govuk-details__summary">
-    <span class="govuk-details__summary-text">
-      Preview notification to LPA
-    </span>
-  </summary>
-  <div class="govuk-details__text">
-    {% include "views/layouts/notification-preview/" + notificationPreviewTemplate + ".njk" %}
-  </div>
-</details>
+  {% if answersToReview %}
+    {% for answer in answersToReview %}
+      <dl class="govuk-summary-list"><div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">
+          {{ answer.name }}
+        </dt>
+        <dd class="govuk-summary-list__value">
+          {{ answer.value | safe }}
+        </dd>
+        {% if answer.url %}
+          <dd class="govuk-summary-list__actions">
+            <span class="app-no-wrap">
+              <a class="govuk-link" href="{{ answer.url }}">Change<span class="govuk-visually-hidden">{{ answer.name }}</span></a>
+            </span>
+          </dd>
+        {% endif %}
+      </dl>
+    {% endfor %}
+  {% endif %}
+  {% if notificationPreviewTemplate %}
+    <details class="govuk-details" data-cy="preview-email-to-lpa">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">
+          Preview notification to LPA
+        </span>
+      </summary>
+      <div class="govuk-details__text">
+        {% include "views/layouts/notification-preview/" + notificationPreviewTemplate + ".njk" %}
+      </div>
+    </details>
+  {% endif %}
 
     <p class="govuk-body">{{ notificationTextLPA }}</p>
 

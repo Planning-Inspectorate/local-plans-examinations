@@ -5,24 +5,28 @@ import {
 	getDeleteCase,
 	getDeleteWorkshop,
 	postDeleteWorkshop,
+	getDeleteHearing,
+	postDeleteHearing,
 	postMarkAsDeleteCase,
 	type UploadDocumentRequest,
 	fileUploadQuestionConfigs,
-	fileUploadQuestionUrls,
 	type FileUploadQuestion,
 	getRouteQuestionUrl,
 	fileUploaderCaseSessionKey,
 	buildCheckReportMiddleware,
+	buildRemoveDocumentConfirmMiddleware,
 	downloadDocument,
 	getParam,
 	issueGateway2Report,
+	issueExaminationReport,
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	issueGateway2WorkshopDocuments,
 	redirectToChecks,
 	preprocessQuestionProperties,
-	handleMulterFileSizeError
+	handleMulterFileSizeError,
+	journeyFileUploadQuestionConfigs
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -49,8 +53,11 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createGateway3Journey,
+	createExaminationJourney,
+	createExaminationHearingJourney,
+	createExaminationPauseJourney,
 	createGateway3ReportJourney,
-	createExaminationJourney
+	createTimetableJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -61,19 +68,29 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import lusca from 'lusca';
-import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { COMMON_CONSTS, questionPrefix } from '../../classes/common-consts.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import type { Response, NextFunction } from 'express';
 import { loadLpaOptions } from '../../util/options-helper.ts';
-import { saveLastQuestionUrl, setBackLinkFromSession, setAsEditingFromCya } from '../create-a-case/index.ts';
+import {
+	saveLastQuestionUrl,
+	setBackLinkFromSession,
+	setAsEditingFromCya,
+	shouldReturnToCya
+} from '../create-a-case/index.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
 import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
 import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
+import { sortByDateColumn } from '#util/util.ts';
 import { Gateway3SubmissionHandler } from './overview-data-handlers/gateway-3-submission-handler.ts';
+import { ExaminationPauseHandler } from './overview-data-handlers/examination-pause-handler.ts';
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+import { pushAlertToSession } from '../../util/alert.ts';
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -91,6 +108,7 @@ interface CaseJourneyConfig {
 	pageLoadHandler: new () => OverviewPageLoadHandler;
 	supportsManageList?: boolean;
 	supportsFileUpload?: boolean;
+	redirectToTaskListOnSuccess?: boolean;
 	saveController?: new (...args: any[]) => SaveController;
 }
 
@@ -170,9 +188,7 @@ function registerGateway2WorkshopJourney(
 				}
 			}
 		});
-
-		req.session.alertMessage = 'Workshop set up';
-		req.session.alertMessageStatus = 'success';
+		pushAlertToSession(req, 'success', 'Workshop set up');
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
@@ -227,9 +243,178 @@ function registerGateway2WorkshopJourney(
 	);
 }
 
+function registerExaminationHearingJourney(
+	router: IRouter,
+	service: ManageService,
+	config: CaseJourneyConfig,
+	updateCase: ReturnType<typeof updateCaseField>
+): void {
+	const { createJourney } = config;
+
+	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
+		const loaded = await loadLpaOptions(service);
+
+		if (loaded.length > 0) {
+			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
+		}
+
+		next();
+	});
+
+	const getHearingJourneyResponse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+		const reference = getParam(req.params.reference);
+
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference },
+			select: {
+				id: true,
+				planTitle: true
+			}
+		});
+
+		if (!caseRecord) {
+			return res.status(404).render('views/errors/404.njk');
+		}
+
+		const examinationData = await service.db.examinationInfo.findUnique({
+			where: {
+				caseId: caseRecord.id
+			},
+			include: {
+				hearings: true
+			}
+		});
+
+		res.locals.planTitle = caseRecord.planTitle;
+		res.locals.reference = reference;
+
+		const journeyResponse = new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', examinationData);
+
+		res.locals.journeyResponse = journeyResponse;
+
+		next();
+	});
+
+	const completeHearing = asyncHandler(async (req: Request, res: Response) => {
+		const reference = getParam(req.params.reference);
+		const hearingNumber = Number(getParam(req.params.hearingId));
+		const hearing = sortByDateColumn(res.locals.journeyResponse.answers.hearings, 'createdDate')[hearingNumber - 1];
+
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await new ExaminationSaveController(service, req, reference).prepareAndSave({});
+		await updateCaseField(service);
+
+		await service.db.case.update({
+			where: { reference },
+			data: {
+				caseHistories: {
+					create: {
+						event: `${hearing.hearingLocationType} hearing set up`,
+						username: currentUser
+					}
+				}
+			}
+		});
+		pushAlertToSession(req, 'success', 'Hearing created');
+
+		if (req.session.lastQuestionUrl) {
+			delete req.session.lastQuestionUrl;
+		}
+		if (req.session) {
+			delete req.session.answers;
+		}
+
+		res.redirect(`/case/${encodeURIComponent(reference)}/examination`);
+	});
+
+	const getJourney = buildGetJourney((req, journeyResponse) => createJourney(req, journeyResponse, questions));
+
+	router.get(
+		'/examination/set-up-hearing/check-your-answers-*hearingId',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		setAsEditingFromCya,
+		buildList({ notificationPreviewTemplate: 'gateway-2-report' })
+	);
+
+	router.post(
+		'/examination/set-up-hearing/check-your-answers-*hearingId',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		saveLastQuestionUrl,
+		completeHearing
+	);
+
+	router.get('/examination/set-up-hearing/delete-*hearingId', getDeleteHearing());
+	router.post('/examination/set-up-hearing/delete-*hearingId', postDeleteHearing(service));
+
+	router.get(
+		'/examination/set-up-hearing/:section/:question',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		setBackLinkFromSession,
+		question
+	);
+
+	router.post(
+		'/examination/set-up-hearing/:section/:question',
+		buildLpaOptions,
+		getHearingJourneyResponse,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		saveLastQuestionUrl,
+		redirectAfterCyaEdit(updateCase)
+	);
+}
+
 function redirectAfterCyaEdit(updateCase: any) {
 	return (req: any, res: Response, next: NextFunction) => {
-		buildSave(updateCase, req.session.editingFromCheckAnswers === true)(req, res, next);
+		let returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
+		if (req.params.question) {
+			if (
+				req.params.question.startsWith('examination-hearing-duration-') ||
+				req.params.question.startsWith('examination-hearing-end-date-')
+			) {
+				returnToCya = false;
+				res.locals.redirectToExamination = true;
+			} else {
+				if (req.params.question.startsWith('examination-hearing-location-type-') && returnToCya == true) {
+					returnToCya = false;
+					req.session.editingFromCheckAnswers = false;
+				}
+			}
+			const answer = Object.values(req.body).find((value) => value === 'yes' || value === 'no');
+			if (req.session.returnToCyaAfterAnswer == true) {
+				//returns to CYA after answering instead of going back though flow
+				req.session.returnToCyaAfterAnswer = false;
+				returnToCya = true;
+				req.session.editingFromCheckAnswers = true;
+			} else {
+				if (questionPrefix.some((q) => req.params.question.startsWith(q)) && returnToCya === true) {
+					if (answer == 'yes') {
+						// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that needs answering
+						returnToCya = false;
+						req.session.editingFromCheckAnswers = false;
+						req.session.returnToCyaAfterAnswer = true;
+					} else if (answer == 'no') {
+						// known question (e.g. examinationHearingRemoteMeetingLinkKnown) that does not need answering
+						returnToCya = true;
+						req.session.editingFromCheckAnswers = true;
+					} else {
+						// type question (e.g. examinationHearingLocationType)
+						returnToCya = false;
+						req.session.editingFromCheckAnswers = false;
+					}
+				}
+			}
+		}
+		buildSave(updateCase, returnToCya)(req, res, next);
 	};
 }
 
@@ -242,6 +427,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: OverviewTabHandler,
 		supportsManageList: true,
 		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
 		saveController: undefined
 	},
 	{
@@ -251,6 +437,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: Gateway1TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway1SaveController
 	},
 	{
@@ -260,6 +447,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: true,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
 	{
@@ -269,6 +457,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		pageLoadHandler: Gateway2TabHandler,
 		supportsManageList: false,
 		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
 	{
@@ -277,6 +466,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway3Journey,
 		pageLoadHandler: Gateway3TabHandler,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway3SaveController
 	},
 	{
@@ -285,6 +475,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createGateway3ReportJourney,
 		pageLoadHandler: Gateway3SubmissionHandler,
 		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
 		saveController: Gateway3SaveController
 	},
 	{
@@ -293,8 +484,45 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		createJourney: createExaminationJourney,
 		pageLoadHandler: ExaminationTabHandler,
 		supportsManageList: true,
+		supportsFileUpload: true,
+		redirectToTaskListOnSuccess: true,
+		saveController: ExaminationSaveController
+	},
+	{
+		path: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		createJourney: createExaminationPauseJourney,
+		pageLoadHandler: ExaminationPauseHandler,
+		supportsManageList: false,
+		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: false,
+		saveController: ExaminationSaveController
+	},
+	{
+		path: 'examination/set-up-hearing',
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		createJourney: createExaminationHearingJourney,
+		pageLoadHandler: ExaminationTabHandler,
+		supportsManageList: true,
 		supportsFileUpload: false,
 		saveController: ExaminationSaveController
+	},
+	{
+		path: 'examination/set-up-hearing',
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		createJourney: createExaminationHearingJourney,
+		pageLoadHandler: ExaminationTabHandler,
+		supportsManageList: true,
+		supportsFileUpload: false,
+		saveController: ExaminationSaveController
+	},
+	{
+		path: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		createJourney: createTimetableJourney,
+		pageLoadHandler: TimetableTabHandler,
+		redirectToTaskListOnSuccess: true,
+		saveController: TimetableSaveController
 	}
 ];
 
@@ -314,8 +542,18 @@ export function caseRouter(service: ManageService): IRouter {
 		registerGateway2WorkshopJourney(router, service, workshopConfig, updateCase);
 	}
 
+	const hearingConfig = CASE_JOURNEYS.find(
+		(config) => config.journeyId === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID
+	);
+	if (hearingConfig) {
+		registerExaminationHearingJourney(router, service, hearingConfig, updateCase);
+	}
+
 	for (const config of CASE_JOURNEYS) {
-		if (config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID) {
+		if (
+			config.journeyId === COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID ||
+			config.journeyId === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID
+		) {
 			continue;
 		}
 
@@ -339,7 +577,15 @@ function registerCaseJourney(
 	config: CaseJourneyConfig,
 	updateCase: ReturnType<typeof updateCaseField>
 ): void {
-	const { path, journeyId, createJourney, pageLoadHandler, supportsManageList, supportsFileUpload } = config;
+	const {
+		path,
+		journeyId,
+		createJourney,
+		pageLoadHandler,
+		supportsManageList,
+		supportsFileUpload,
+		redirectToTaskListOnSuccess
+	} = config;
 
 	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
 		await getQuestions(service, req);
@@ -349,7 +595,7 @@ function registerCaseJourney(
 	const getJourneyResponse = buildGetJourneyMiddleware(service, journeyId, pageLoadHandler);
 
 	const fileUploadMiddleware = fileUploaderQuestionMiddleware({
-		questionUrls: fileUploadQuestionUrls,
+		questionUrls: (journeyFileUploadQuestionConfigs[journeyId] ?? []).map((elem) => elem.url),
 		sessionKey: fileUploaderCaseSessionKey
 	});
 
@@ -390,6 +636,7 @@ function registerCaseJourney(
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
@@ -401,7 +648,23 @@ function registerCaseJourney(
 		getJourney,
 		validate,
 		validationErrorHandler,
-		buildSave(updateCase, true)
+		(req, res, next) => {
+			// Until a report is issued, saving the plan outcome continues to the file uploader.
+			const answers = res.locals.journeyResponse?.answers;
+			const isPlanOutcome =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				req.params.question === questions.isSound.url;
+			const isCheckPageEdit =
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				req.params.section === 'outcome' &&
+				[questions.isSound.url, questions.soundUnsoundDate.url].includes(String(req.params.question));
+			if (isCheckPageEdit && req.query.returnTo === 'check') {
+				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
+			}
+			const continueToReportUpload = isPlanOutcome && req.query.returnTo !== 'check' && !answers?.soundUnsoundDate;
+			buildSave(updateCase, redirectToTaskListOnSuccess && !continueToReportUpload)(req, res, next);
+		}
 	);
 	if (supportsFileUpload) {
 		const fileUploaderStorage = () => service.createFileStorage(journeyId);
@@ -482,6 +745,28 @@ function registerCaseJourney(
 							});
 							syncUploadAnswer(journeyId, req, questionConfig.fieldName, uploadedFiles);
 							logDocumentDeleted(service, req, questionConfig, uploadedFiles);
+							if (questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+								pushAlertToSession(req, 'success', 'Document removed');
+							}
+							const caseId = (req as UploadDocumentRequest).currentCase?.id;
+							if (
+								caseId &&
+								uploadedFiles.length === 0 &&
+								questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION
+							) {
+								if (req.body?.returnToManage === 'true') {
+									delete req.session.examinationReportReturnToManage;
+								}
+								await service.db.examinationInfo.updateMany({
+									where: { caseId },
+									data: {
+										isSound: null,
+										soundUnsoundDate: null,
+										adoptionDate: null,
+										approvedForCILDate: null
+									}
+								});
+							}
 						},
 						onDeleteError: ({ req, fileId, error }) =>
 							logDocumentDeleteFailed(service, req, questionConfig, fileId, error),
@@ -524,6 +809,11 @@ function registerCaseJourney(
 			)
 		);
 
+		router.get(
+			`/${path}/:section/:question/remove/:fileId`,
+			getJourneyResponse,
+			buildRemoveDocumentConfirmMiddleware(journeyId)
+		);
 		router.post(
 			`${questionPath}/upload-documents`,
 			getJourneyResponse,
@@ -549,7 +839,7 @@ function registerCaseJourney(
 		router.post(
 			`${questionPath}/delete-document/:fileId`,
 			getJourneyResponse,
-			getJourney,
+			deleteDocumentRoute,
 			deleteDocumentRoute,
 			handleMulterFileSizeError
 		);

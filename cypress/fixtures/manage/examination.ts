@@ -1,3 +1,25 @@
+import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
+import { GATEWAY_3_DECISION_ID } from '../../../packages/database/src/seed/static-data/ids/case.ts';
+
+export const hearingDateAndTime = {
+	date: { day: '7', month: '11', year: '2026' },
+	time: { hour: '10', minute: '30' },
+	display: '7 November 2026',
+	updatedDate: { day: '8', month: '11', year: '2026' },
+	updatedTime: { hour: '11', minute: '45' },
+	updatedDisplay: '8 November 2026'
+};
+
+export const seededExaminationHearing = {
+	createdDate: '2026-10-01T12:00:00.000Z',
+	hearingDate: '2026-11-07T00:00:00.000Z',
+	hearingTime: '10:30',
+	hearingExpectedDaysKnown: 'no',
+	hearingLocationType: 'remote',
+	hearingRemoteMeetingLinkKnown: 'yes',
+	hearingRemoteMeetingLink: 'hearing 1 remote meeting link'
+};
+
 // seed-cy.ts sets expectedSubmissionDate to `now` at seed time
 // unlike a real case, where it comes from a fixed value answered during case creation. If seed-cy.ts is
 // ever changed to a fixed date instead, this dynamic today/todayInput/todayDisplay block can be removed
@@ -40,6 +62,21 @@ export const actualSubmissionDate = {
 };
 
 export const examinationSubmissionDates = [expectedSubmissionDate, actualSubmissionDate];
+
+export const examinationReport = {
+	row: 'Examination report',
+	path: 'examination-report',
+	fileName: 'test-document.pdf',
+	supportingFileName: 'test-document.docx',
+	receivedDate: '2026-10-01T12:00:00.000Z',
+	receivedDisplay: '1 Oct 2026',
+	issuedDate: '2026-10-02T12:00:00.000Z',
+	issuedDisplay: '2 October 2026',
+	updatedDate: { day: '3', month: '10', year: '2026' },
+	updatedDateDisplay: '3 October 2026',
+	issuedMessage: 'Final report and supporting documents saved and notification sent',
+	addedMessage: 'Document added and notification sent'
+};
 
 export const examiningInspector1 = {
 	row: 'Examining Inspector 1',
@@ -173,10 +210,11 @@ export const finalReportIssueDate = {
 };
 export const QADateAnswers = {
 	QADate: {
-		row: 'QA date',
-		heading: 'What is the date of QA?',
+		row: 'Report sent to QA inspector',
+		heading: 'When was the report sent to the QA inspector?',
 		fieldName: 'QADate',
 		path: 'qa-date',
+		input: { day: '4', month: '12', year: '2026' },
 		display: '4 December 2026'
 	},
 
@@ -242,23 +280,6 @@ export const QAExpectedAnswers = [
 	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];
 
-export const planPauseStartDate = {
-	row: 'Plan pause date',
-	heading: 'When did the plan pause start?',
-	fieldName: 'planPauseStartDate',
-	path: 'plan-pause-start-date',
-	input: { day: '4', month: '12', year: '2026' },
-	display: '4 December 2026',
-	updatedInput: { day: '20', month: '12', year: '2026' },
-	updatedDisplay: '20 December 2026'
-};
-
-export const planPauseEndDate = {
-	row: 'Plan pause end date',
-	path: 'plan-pause-end-date',
-	display: '5 December 2026'
-};
-
 export const withdrawnDate = {
 	row: 'Withdrawn date',
 	path: 'withdrawn-date',
@@ -266,20 +287,25 @@ export const withdrawnDate = {
 };
 
 export const soundUnsound = {
-	row: 'Sound / unsound',
-	heading: 'Was the plan found to be sound or unsound?',
+	row: 'Outcome',
+	heading: 'Plan outcome',
 	fieldName: 'isSound',
-	path: 'is-sound',
-	value: 'yes',
+	path: 'plan-outcome',
+	value: 'sound',
 	display: 'Sound',
-	updatedValue: 'no',
+	updatedValue: 'unsound',
 	updatedDisplay: 'Unsound'
 };
 
 export const soundUnsoundDate = {
-	row: 'Sound / unsound date',
+	row: 'Report issued',
 	path: 'sound-unsound-date',
-	display: '7 December 2026'
+	display: '7 December 2026',
+	heading: 'When was the plan confirmed as sound or unsound?',
+	fieldName: 'soundUnsoundDate',
+	input: { day: '7', month: '12', year: '2026' },
+	updatedInput: { day: '20', month: '12', year: '2026' },
+	updatedDisplay: '20 December 2026'
 };
 
 export const adoptionDate = {
@@ -295,11 +321,60 @@ export const approvedForCILDate = {
 };
 
 export const examinationImportantDates = [
-	planPauseStartDate,
-	planPauseEndDate,
 	withdrawnDate,
 	soundUnsound,
 	soundUnsoundDate,
 	adoptionDate,
 	approvedForCILDate
 ];
+
+export const seededExaminationInProgress = {
+	gateway3Submission: {
+		decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+		completionDate: '2026-09-01T12:00:00.000Z'
+	},
+	examination: { examiningInspector1: 'inspector-1' }
+} satisfies SeedCyOptions;
+
+export const examinationPause = {
+	input: { day: '1', month: '9', year: '2026' },
+	display: '1 Sept 2026',
+	details: 'Awaiting additional evidence from the LPA',
+	banner: 'This examination is paused',
+	restartInput: { day: '2', month: '9', year: '2026' },
+	restartDisplay: '2 Sept 2026',
+	restartDetails: 'Additional evidence received',
+	second: {
+		input: { day: '3', month: '9', year: '2026' },
+		display: '3 Sept 2026',
+		details: 'Awaiting clarification from the LPA'
+	}
+};
+
+const seededPause = {
+	createdAt: '2026-09-01T12:00:00.000Z',
+	planPauseDate: '2026-09-01T12:00:00.000Z',
+	planPauseStartDetails: examinationPause.details
+};
+
+export const seededPausedExamination = {
+	...seededExaminationInProgress,
+	examination: {
+		...seededExaminationInProgress.examination,
+		planPauseHistory: { create: seededPause }
+	}
+} satisfies SeedCyOptions;
+
+export const seededRestartedExamination = {
+	...seededExaminationInProgress,
+	examination: {
+		...seededExaminationInProgress.examination,
+		planPauseHistory: {
+			create: {
+				...seededPause,
+				planPauseEndDate: '2026-09-02T12:00:00.000Z',
+				planPauseEndDetails: examinationPause.restartDetails
+			}
+		}
+	}
+} satisfies SeedCyOptions;

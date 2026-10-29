@@ -137,6 +137,8 @@ export interface Plan {
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
 	status: Status; //Status
+	examinationStatus: string;
+	examinationStatusLabel: string;
 	dates: {
 		//dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: August 2026, E: September 2026"
 		G1: string;
@@ -211,6 +213,8 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		typeof plan.title === 'string' &&
 		validStage(plan.stage) &&
 		validStatus(plan.status) &&
+		typeof plan.examinationStatus === 'string' &&
+		typeof plan.examinationStatusLabel === 'string' &&
 		validDates(plan.dates) &&
 		validSections(plan.sections) &&
 		Array.isArray(plan.documents) &&
@@ -239,6 +243,8 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	title: 'East Borough Local Plan', //Plan Title
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
+	examinationStatus: 'cannot-start-yet',
+	examinationStatusLabel: 'Cannot start yet',
 	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed

@@ -3,11 +3,16 @@ import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class Gateway1TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
 		const { db } = service;
+		if (!req.params.question && req.method == 'GET') {
+			await this.tryAddPauseStatusBanner(context);
+			consumeAlertsFromSession(req, res);
+		}
 
 		const journey1Data = await db.gateway1Info.findUnique({ where: { caseId: caseRecord.id } });
 		await addUploadedDocumentDetailsToAnswers(
@@ -18,6 +23,7 @@ export class Gateway1TabHandler extends OverviewPageLoadHandler {
 			COMMON_CONSTS.GATEWAY_1_JOURNEY_ID
 		);
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey1Data);
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (
 			req.method === 'POST' &&
 			req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION &&

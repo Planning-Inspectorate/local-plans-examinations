@@ -69,6 +69,14 @@ model CaseNote {
   caseId      String   @db.UniqueIdentifier
 }
 
+/// Valid statuses for the examination stage of a case.
+model ExaminationStatus {
+  id               String            @id @db.NVarChar(50)
+  displayName      String            @db.NVarChar(100)
+  displayOrder     Int
+  examinationInfos ExaminationInfo[]
+}
+
 /// Valid statuses for imported planning authorities.
 model AuthorityStatus {
   id           String      @id @db.NVarChar(50)
@@ -214,6 +222,10 @@ model Gateway3Submission {
   /// Gateway 3 outcome code; values are defined by GATEWAY_3_DECISION_ID.
   decision       String?           @db.NVarChar(50)
   completionDate DateTime?         @db.DateTime2
+  /// Date the LPA submitted this resubmission (set by the front office).
+  /// Distinct from completionDate which is set by the back office when
+  /// issuing a decision.
+  submittedDate  DateTime?         @db.DateTime2
   gateway3Info   Gateway3Info?     @relation(fields: [gateway3InfoId], references: [id])
   gateway3InfoId String?           @db.UniqueIdentifier
   decisionLookup Gateway3Decision? @relation(fields: [decision], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -221,36 +233,77 @@ model Gateway3Submission {
 
 /// Examination stage dates, inspectors, QA, fact check and final outcome fields.
 model ExaminationInfo {
-  id                                   String    @id @default(uuid()) @db.UniqueIdentifier
-  case                                 Case      @relation(fields: [caseId], references: [id])
-  caseId                               String    @unique @db.UniqueIdentifier
-  expectedSubmissionForExaminationDate DateTime? @db.DateTime2
-  submissionForExaminationDate         DateTime? @db.DateTime2
+  id                                   String               @id @default(uuid()) @db.UniqueIdentifier
+  case                                 Case                 @relation(fields: [caseId], references: [id])
+  caseId                               String               @unique @db.UniqueIdentifier
+  status                               String               @default("cannot-start-yet") @db.NVarChar(50)
+  statusLookup                         ExaminationStatus    @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  examinationWebsiteUrl                String?
+  expectedSubmissionForExaminationDate DateTime?            @db.DateTime2
+  submissionForExaminationDate         DateTime?            @db.DateTime2
   examiningInspector1                  String?
   examiningInspector2                  String?
   examiningInspector3                  String?
-  examiningInspectorAppointmentDate    DateTime? @db.DateTime2
+  examiningInspectorAppointmentDate    DateTime?            @db.DateTime2
   examinationWebsite                   String?
-  letterSentToMHCLGDate                DateTime? @db.DateTime2
-  letterIssueDate                      DateTime? @db.DateTime2
-  QADate                               DateTime? @db.DateTime2
+  letterSentToMHCLGDate                DateTime?            @db.DateTime2
+  letterIssueDate                      DateTime?            @db.DateTime2
+  QADate                               DateTime?            @db.DateTime2
   qaInspector1                         String?
   qaInspector2                         String?
   qaInspector3                         String?
-  reportSentToPanelDate                DateTime? @db.DateTime2
-  panelResponseToInspectorDate         DateTime? @db.DateTime2
-  factCheckDateReceivedFromInspector   DateTime? @db.DateTime2
-  factCheckDueDate                     DateTime? @db.DateTime2
-  factCheckActualDate                  DateTime? @db.DateTime2
-  factCheckReceivedBackFromLPADate     DateTime? @db.DateTime2
-  finalReportIssueDate                 DateTime? @db.DateTime2
-  planPauseStartDate                   DateTime? @db.DateTime2
-  planPauseEndDate                     DateTime? @db.DateTime2
-  withdrawnDate                        DateTime? @db.DateTime2
-  isSound                              Boolean?  @db.Bit
-  soundUnsoundDate                     DateTime? @db.DateTime2
-  adoptionDate                         DateTime? @db.DateTime2
-  approvedForCILDate                   DateTime? @db.DateTime2
+  reportSentToPanelDate                DateTime?            @db.DateTime2
+  panelResponseToInspectorDate         DateTime?            @db.DateTime2
+  factCheckDateReceivedFromInspector   DateTime?            @db.DateTime2
+  factCheckDueDate                     DateTime?            @db.DateTime2
+  factCheckActualDate                  DateTime?            @db.DateTime2
+  factCheckReceivedBackFromLPADate     DateTime?            @db.DateTime2
+  finalReportIssueDate                 DateTime?            @db.DateTime2
+  planPauseHistory                     PlanPauseHistory[]
+  withdrawnDate                        DateTime?            @db.DateTime2
+  isSound                              String?              @db.NVarChar(50)
+  soundUnsoundDate                     DateTime?            @db.DateTime2
+  adoptionDate                         DateTime?            @db.DateTime2
+  approvedForCILDate                   DateTime?            @db.DateTime2
+  hearings                             ExaminationHearing[]
+
+  @@index([status])
+}
+
+model ExaminationHearing {
+  id                            String           @id @default(uuid()) @db.UniqueIdentifier
+  ExaminationInfo               ExaminationInfo? @relation(fields: [ExaminationInfoID], references: [id])
+  ExaminationInfoID             String?          @db.UniqueIdentifier
+  createdDate                   DateTime
+  hearingComplete               Boolean          @default(false) // Hearings are saved during journey progress, but should only be permanent if submitted - this is used to identify hearings that should be cleaned up if exiting the journey
+  hearingDate                   DateTime?
+  hearingTime                   String?
+  hearingExpectedDaysKnown      String?
+  hearingExpectedDays           String?
+  hearingLocationType           String?
+  hearingRemoteMeetingLinkKnown String?
+  hearingRemoteMeetingLink      String?
+  hearingLocationKnown          String?
+  hearingVenueName              String?
+  hearingAddressLine            String?
+  hearingAddressLine2           String?
+  hearingTownOrCity             String?
+  hearingPostcode               String?
+  hearingDuration               String?
+  hearingEndDate                DateTime?
+}
+
+model PlanPauseHistory {
+  id                    String          @id @default(uuid()) @db.UniqueIdentifier
+  examinationInfo       ExaminationInfo @relation(fields: [examinationInfoId], references: [id], onDelete: Cascade)
+  examinationInfoId     String          @db.UniqueIdentifier
+  createdAt             DateTime        @default(now()) @db.DateTime2
+  planPauseDate         DateTime        @db.DateTime2
+  planPauseStartDetails String?
+  planPauseEndDate      DateTime?       @db.DateTime2
+  planPauseEndDetails   String?
+
+  @@index([examinationInfoId])
 }
 
 /// Local planning authority linked to one or more cases.

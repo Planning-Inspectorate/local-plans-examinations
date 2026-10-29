@@ -4,6 +4,7 @@ import type { ManageService } from '#service';
 import * as authSession from '@planning-inspectorate/core/auth';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { getExaminationStages } from '#util/util.ts';
 
 export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
@@ -82,12 +83,16 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 							documentSetId: { in: gateway3SetIds }
 						}
 					});
+
+					const examinationStatus = await getExaminationStages(service, c.id);
+
 					const status = resolveCaseHeaderStatus(
 						gateway2Documents,
 						gateway3Documents,
 						gateway1Info,
 						gateway2Info,
-						gateway3Info?.submissions ?? []
+						gateway3Info?.submissions ?? [],
+						examinationStatus
 					);
 
 					return {

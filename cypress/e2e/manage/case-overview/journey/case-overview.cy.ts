@@ -1,5 +1,6 @@
 import {
 	caseOverviewContactDetailsListPage,
+	caseOverviewLocalPlanningAuthoritiesPage,
 	caseOverviewExaminationWebsitePage,
 	caseOverviewPage,
 	caseOverviewPlanBandPage,
@@ -96,11 +97,7 @@ describe('Case overview updates', () => {
 		caseOverviewPage.openCaseNotes();
 		caseOverviewPage.addCaseNote(note);
 		caseOverviewPage.verifyCaseNotes(...expectedNotes);
-		caseOverviewPage.caseNoteEntries
-			.first()
-			.find('.govuk-hint')
-			.invoke('text')
-			.should('match', /\d{1,2} [A-Za-z]+ \d{4} at \d{2}:\d{2} by Unknown/);
+		caseOverviewPage.verifyLatestCaseNoteMetadata('Unknown');
 
 		cy.reload();
 		caseOverviewPage.openCaseNotes();
@@ -137,6 +134,21 @@ describe('Case overview updates', () => {
 			contactDetails.updatedContactDetails.firstName,
 			contactDetails.updatedContactDetails.lastName,
 			contactDetails.updatedContactDetails.phone
+		);
+	});
+
+	it('continues the unchanged LPA list and retains the authorities after refresh', { tags: ['regression'] }, () => {
+		caseOverviewPage.openActionLinkFor(localPlanningAuthority.row);
+		caseOverviewLocalPlanningAuthoritiesPage.verifyLoaded();
+		caseOverviewLocalPlanningAuthoritiesPage.saveAndContinue();
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+
+		cy.reload();
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.verifySummaryRowContains(
+			localPlanningAuthority.row,
+			localPlanningAuthority.lpa1Value,
+			localPlanningAuthority.lpa2Value
 		);
 	});
 

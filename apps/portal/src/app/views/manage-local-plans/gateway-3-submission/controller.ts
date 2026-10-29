@@ -43,7 +43,7 @@ import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/mo
 import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
-import { setVirusScanViewLocals } from '../utils.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import {
 	isGateway3ResubmissionAwaitingSubmission,
 	type Gateway3SubmissionSummary
@@ -686,15 +686,16 @@ export function buildGetDeclarationPage(): RequestHandler {
 	return (req, res) => {
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-		const gateway3SubmissionUrl = encodedPlanReference
-			? `/manage-local-plans/${encodedPlanReference}/gateway-3-submission`
+		const isResubmission = req.query.from === 'resubmission';
+		const gateway3Url = encodedPlanReference
+			? `/manage-local-plans/${encodedPlanReference}/${isResubmission ? 'gateway-3-resubmission' : 'gateway-3-submission'}`
 			: undefined;
 
 		return res.render(DECLARATION_VIEW_PATH, {
 			pageTitle: "Are you sure you're ready to submit?",
 			pageHeading: "Are you sure you're ready to submit?",
-			backLinkUrl: gateway3SubmissionUrl,
-			goBackUrl: gateway3SubmissionUrl
+			backLinkUrl: gateway3Url,
+			goBackUrl: gateway3Url
 		});
 	};
 }

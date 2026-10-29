@@ -11,7 +11,11 @@ import {
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID,
+	GATEWAY_3_STATUS
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type PortalCase = {
@@ -39,6 +43,8 @@ type PortalCase = {
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		status: string;
+		statusLookup: { displayName: string } | null;
 	} | null;
 	documents: {
 		guid: string;
@@ -109,7 +115,17 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
 
-	if (gateway3SubmissionState.latestSubmission?.completionDate) {
+	// Gateway 3 is only complete when the BO has reviewed and issued a
+	// non-resubmission decision.  A submission that has a completionDate but
+	// no decision (or a RESUBMISSION_REQUIRED decision) means the LPA has
+	// submitted / been asked to resubmit — the case stays at Gateway 3.
+	const latestDecision = gateway3SubmissionState.latestSubmission?.decision;
+	const isGateway3Decided =
+		gateway3SubmissionState.latestSubmission?.completionDate &&
+		latestDecision &&
+		latestDecision !== GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED;
+
+	if (isGateway3Decided) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
@@ -189,6 +205,8 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		title: caseRecord.planTitle,
 		stage: progress.stage,
 		status: progress.status,
+		examinationStatus: caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET,
+		examinationStatusLabel: caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet',
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
@@ -226,7 +244,11 @@ const planCaseInclude = {
 	examinationInfo: {
 		select: {
 			expectedSubmissionForExaminationDate: true,
-			submissionForExaminationDate: true
+			submissionForExaminationDate: true,
+			status: true,
+			statusLookup: {
+				select: { displayName: true }
+			}
 		}
 	},
 	lpas: {

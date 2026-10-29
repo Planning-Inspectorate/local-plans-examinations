@@ -3,12 +3,15 @@ import {
 	gateway2AssessorPage,
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
-	gateway2ReportCheckPage,
 	gateway2ReportPage,
 	gateway2WorkshopDocumentsCheckPage,
 	gateway2WorkshopDocumentsPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
-import { openGateway2Page, openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
+import {
+	issueGateway2Report,
+	openGateway2Page,
+	openSeededGateway2Page
+} from '../../../../flows/manage/gateway-2-flow.ts';
 import { cleanupSeededManageCase, type SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
@@ -56,17 +59,7 @@ describe('Gateway 2 updates', () => {
 		'keeps the issued Gateway 2 report when a replacement is removed',
 		{ tags: ['regression', 'environment-smoke'] },
 		() => {
-			gateway2Page.openActionLinkFor(gateway2Report.row);
-			gateway2ReportPage.verifyLoaded();
-
-			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName);
-			gateway2ReportPage.saveAndReturn();
-
-			gateway2ReportCheckPage.verifyLoaded(gateway2Report.fileName);
-			gateway2ReportCheckPage.issueReport();
-
-			gateway2Page.verifyLoaded(seededCase.planTitle);
-			gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
+			issueGateway2Report(seededCase.planTitle);
 
 			gateway2Page.openActionLinkFor(gateway2Report.row);
 			gateway2ReportPage.verifyLoaded();

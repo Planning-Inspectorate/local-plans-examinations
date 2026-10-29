@@ -1,11 +1,12 @@
 import { SaveController } from './save-controller.ts';
 import { gatway2WorkshopBaseUrls } from '../questions.ts';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortByDateColumn } from '#util/util.ts';
 import { parseDate } from '../../../util/date.ts';
 import type { Gateway2Input } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { NUM_GW2_WORKSHOP_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { formatDateToString } from '../../../util/date.ts';
+import type { Gateway2Workshop } from '@pins/local-plans-database/src/client/client.ts';
 
 export class Gateway2SaveController extends SaveController {
 	private caseId: string | undefined;
@@ -44,7 +45,7 @@ export class Gateway2SaveController extends SaveController {
 		if (caseDetails.gateway2Info?.workshops == undefined) {
 			throw Error(`Could not find workshop data for case with reference '${this.caseReference}'`);
 		}
-		const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
+		const workshopDetails = sortByDateColumn(caseDetails.gateway2Info?.workshops, 'createdDate');
 		if (workshopDetails.length == 0) {
 			throw Error(`There are no workshops to delete for the case with reference '${this.caseReference}'`);
 		}
@@ -93,13 +94,13 @@ export class Gateway2SaveController extends SaveController {
 			if (!workshopId) {
 				throw Error('Could not extract the workshop id');
 			}
-			const workshopDetails = sortGateway2Workshops(caseDetails.gateway2Info?.workshops);
+			const workshopDetails = sortByDateColumn(caseDetails.gateway2Info?.workshops, 'createdDate');
 			if (workshopId > workshopDetails.length) {
 				workshopDetails.push({ workshopDate: null, createdDate: new Date() });
 			}
 			// Enrich the current workshop with the answers
 			if (this.req.session && this.req.session.answers && this.req.session.answers.workshops) {
-				const filteredSessionAnswerWorkshops = sortGateway2Workshops(this.req.session.answers.workshops);
+				const filteredSessionAnswerWorkshops = sortByDateColumn(this.req.session.answers.workshops, 'createdDate');
 				workshopDetails[workshopId - 1] = {
 					...workshopDetails[workshopId - 1],
 					...filteredSessionAnswerWorkshops[workshopId - 1]
@@ -222,11 +223,14 @@ export class Gateway2SaveController extends SaveController {
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
 		if ('workshops' in answers) {
-			const workshops = sortGateway2Workshops(answers.workshops as { createdDate: Date; [key: string]: any }[]);
+			const workshops = sortByDateColumn(
+				answers.workshops as { createdDate: Date; [key: string]: any }[],
+				'createdDate'
+			);
 			if (!workshops) {
 				throw Error('No workshop entries found');
 			}
-			const workshopsCleaned = Object.values(workshops).map((e) => ({
+			const workshopsCleaned = Object.values(workshops as Gateway2Workshop[]).map((e) => ({
 				id: e.id,
 				createdDate: e.createdDate,
 				workshopDate: e.workshopDate && typeof e.workshopDate == 'string' ? parseDate(e.workshopDate) : e.workshopDate,

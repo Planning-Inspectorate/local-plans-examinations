@@ -6,6 +6,11 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_JOURNEY_ID: 'gateway-3',
 	GATEWAY_3_REPORT_JOURNEY_ID: 'gateway-3-report',
 	EXAMINATION_JOURNEY_ID: 'examination',
+	EXAMINATION_HEARING_JOURNEY_ID: 'examination-hearing',
+	EXAMINATION_REPORT_QUESTION: 'examination-report',
+	EXAMINATION_REPORT_MANAGE_QUESTION: 'examination-report-manage',
+	EXAMINATION_PAUSE_JOURNEY_ID: 'examination-pause',
+	TIMETABLE_JOURNEY_ID: 'timetable',
 	OVERVIEW: 'overview',
 	GATEWAY_2_INFO: 'gateway2Info',
 	GATEWAY_3_INFO: 'gateway3Info',
@@ -30,5 +35,16 @@ export const COMMON_CONSTS = {
 	GATEWAY_3_ASSESSOR_NAME_QUESTION: 'gateway-3-assessor-name',
 	GATEWAY_3_DECISION_QUESTION: 'gateway-3-decision',
 	GATEWAY_3_DOCUMENT_QUESTION: 'gateway-3-document',
-	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date'
+	GATEWAY_3_REPORT_ISSUED_DATE_QUESTION: 'gateway-3-report-issued-date',
+	NUM_EXAM_PAUSE_QUESTIONS: 200
 };
+export const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+export const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+export const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+export const NUM_EXAMINATION_HEARING_QUESTIONS = 200;
+
+export const questionPrefix = [
+	'examination-hearing-location-type-',
+	'examination-hearing-remote-meeting-link-known-',
+	'examination-hearing-location-known-'
+];

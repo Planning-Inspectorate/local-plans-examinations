@@ -14,6 +14,8 @@ async function run() {
 		await dbClient.gateway1Info.deleteMany({});
 		await dbClient.gateway2Info.deleteMany({});
 		await dbClient.gateway3Info.deleteMany({});
+		await dbClient.planPauseHistory.deleteMany({});
+		await dbClient.examinationHearing.deleteMany({});
 		await dbClient.examinationInfo.deleteMany({});
 		await dbClient.documentVersionAvScan.deleteMany({}); // if it references documentVersion
 		await dbClient.document.updateMany({ data: { latestVersionId: null } });

@@ -1,17 +1,30 @@
-import { openSeededExaminationPage } from '../../../../flows/manage/examination-flow.ts';
+import { openSeededExaminationPage, openSeededExaminationReport } from '../../../../flows/manage/examination-flow.ts';
+import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import {
 	actualSubmissionDate,
+	examinationReport as report,
 	examinationWebsite,
+	examinationPause,
 	examiningInspector2,
-	factCheckDateReceivedFromInspector
+	factCheckDateReceivedFromInspector,
+	hearingDateAndTime,
+	seededRestartedExamination,
+	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
 	examinationWebsitePage,
 	examiningInspector2Page,
 	examinationPage,
-	factCheckDateReceivedFromInspectorPage
+	examinationPausePages,
+	factCheckDateReceivedFromInspectorPage,
+	examinationReportUploadPage as uploadPage,
+	soundUnsoundPage
 } from '../../../../page-objects/manage/examination/index.ts';
+import {
+	hearingDateAndTimePage,
+	hearingExpectedDaysPage
+} from '../../../../page-objects/manage/examination/hearing-page.ts';
 
 describe('Examination validation', () => {
 	beforeEach(() => {
@@ -20,6 +33,21 @@ describe('Examination validation', () => {
 	});
 
 	after(() => cy.task('clearDb'));
+
+	it('rejects an invalid hearing time', { tags: ['regression'] }, () => {
+		examinationPage.addHearing();
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, { hour: '25', minute: '70' });
+		hearingDateAndTimePage.verifyLoaded();
+		hearingDateAndTimePage.verifyTimeValidationError();
+	});
+
+	it('requires the expected number of hearing days when Yes is selected', { tags: ['regression'] }, () => {
+		examinationPage.addHearing();
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
+		hearingExpectedDaysPage.selectAnswer('yes');
+		hearingExpectedDaysPage.verifyLoaded('yes');
+		hearingExpectedDaysPage.verifyValidationError('Enter the expected number of days');
+	});
 
 	it('shows an error when an Examination date is blank', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(actualSubmissionDate.row);
@@ -61,5 +89,56 @@ describe('Examination validation', () => {
 		factCheckDateReceivedFromInspectorPage.verifyLoaded();
 		//valid date error message assertions need 2 spaces due to how the message is processed
 		factCheckDateReceivedFromInspectorPage.verifyValidationError('Enter  a valid date');
+	});
+});
+
+describe('Examination pause validation', () => {
+	beforeEach(() => cy.task('clearDb'));
+	after(() => cy.task('clearDb'));
+
+	it('cannot clear a saved restart date', { tags: ['regression'] }, () => {
+		const { restartDate } = examinationPausePages();
+		openSeededExaminationPage(seededRestartedExamination);
+		examinationPage.openActionLinkFor('Examination restart date');
+		restartDate.verifyLoaded(examinationPause.restartInput);
+		restartDate.clearDate();
+		restartDate.saveAndContinue();
+		restartDate.verifyValidationError('Please enter an input for the restart date');
+		restartDate.goBack();
+		cy.reload();
+		examinationPage.verifyRestarted();
+	});
+});
+
+describe('Examination report validation', () => {
+	let seededCase: SeededManageCase | undefined;
+
+	beforeEach(() => {
+		seededCase = undefined;
+		cy.task('clearDb');
+		openSeededExaminationReport().then((result) => {
+			seededCase = result;
+		});
+	});
+	afterEach(() => {
+		if (seededCase) cy.task('clearExaminationReportFiles', seededCase.reference);
+	});
+	after(() => cy.task('clearDb'));
+
+	it('requires a plan outcome before continuing to the report', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(report.row);
+		soundUnsoundPage.verifyLoaded();
+		soundUnsoundPage.saveAndContinue();
+		soundUnsoundPage.verifyLoaded();
+		soundUnsoundPage.verifyValidationError('Select a plan outcome');
+	});
+
+	it('requires a report before continuing to confirmation', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(report.row);
+		soundUnsoundPage.selectAnswer(soundUnsound.value);
+		uploadPage.verifyLoaded();
+		uploadPage.saveAndReturn();
+		uploadPage.verifyLoaded();
+		uploadPage.verifyValidationError('Please upload the examination report');
 	});
 });

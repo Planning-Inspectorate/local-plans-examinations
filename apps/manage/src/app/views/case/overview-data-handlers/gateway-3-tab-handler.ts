@@ -3,10 +3,15 @@ import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-l
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { getParam } from '../controller.ts';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 export class Gateway3TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, caseRecord } = context;
+		if (!req.params.question && req.method == 'GET') {
+			await this.tryAddPauseStatusBanner(context);
+			consumeAlertsFromSession(req, res);
+		}
 		if (
 			req.method === 'GET' &&
 			String(req.params.question).startsWith('gateway-3-decision') &&
@@ -42,6 +47,7 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
 		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
 		res.locals.journeyResponse = journeyResponse;
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

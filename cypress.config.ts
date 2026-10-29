@@ -5,10 +5,15 @@ import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
 import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
+import { seedExaminationDeclarationDocuments } from './packages/database/src/seed/seed-examination-declaration.ts';
 import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway-3-submitted.ts';
 import { seedUpdateGateway2Workshop } from './packages/database/src/seed/seed-update-gateway-2-workshop.ts';
+import { seedExaminationReadyToStart } from './packages/database/src/seed/seed-examination-ready-to-start.ts';
+import { seedGateway3TriggerResubmission } from './packages/database/src/seed/seed-gateway-3-trigger-resubmission.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
+import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
+import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -94,9 +99,15 @@ export default defineConfig({
 					return null;
 				},
 				seedDb: seedCy,
+				seedExaminationReport,
+				clearExaminationReportFiles,
 				setDocumentVirusCheckStatus,
+				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
 				seedGateway3Submitted,
+				seedExaminationReadyToStart,
+				seedExaminationDeclarationDocuments,
+				seedGateway3TriggerResubmission,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
 					return seedUpdateGateway2Workshop({ reference, workshopData });
 				},

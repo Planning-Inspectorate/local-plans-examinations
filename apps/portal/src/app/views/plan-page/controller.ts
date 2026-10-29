@@ -2,6 +2,7 @@ import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 function statusTag(status: Status) {
 	const s = StatusTag[status as keyof typeof StatusTag] as { label: string; class: string } | undefined;
@@ -26,7 +27,7 @@ export interface PlanPageViewModel {
 	status: Status;
 	leadLPA: string;
 	linkedLPA: string;
-	/** Label of the call-to-action button; `null` hides it (only shown when status is Ready to start) */
+	/** Label of the call-to-action button; `null` hides it when the relevant stage is not ready to start */
 	button: string | null;
 	/** Shows the "action required" banner (status is Action needed) */
 	notificationBanner: boolean;
@@ -53,6 +54,21 @@ export interface PlanPageViewModel {
 	hrefE: string | null;
 }
 
+const examinationStatusClasses: Record<string, string> = {
+	[EXAMINATION_STATUS_ID.READY_TO_START]: 'govuk-tag govuk-tag--green',
+	[EXAMINATION_STATUS_ID.IN_PROGRESS]: 'govuk-tag govuk-tag--blue',
+	[EXAMINATION_STATUS_ID.SUBMITTED]: 'govuk-tag govuk-tag--yellow',
+	[EXAMINATION_STATUS_ID.IN_EXAMINATION]: 'govuk-tag govuk-tag--blue',
+	[EXAMINATION_STATUS_ID.PAUSED]: 'govuk-tag govuk-tag--grey',
+	[EXAMINATION_STATUS_ID.REPORT_ISSUED]: 'govuk-tag govuk-tag--turquoise',
+	[EXAMINATION_STATUS_ID.PLAN_ADOPTED]: 'govuk-tag govuk-tag--green'
+};
+
+function examinationStatusTag(plan: Plan) {
+	const classes = examinationStatusClasses[plan.examinationStatus];
+	return classes ? `<strong class="${classes}">${plan.examinationStatusLabel}</strong>` : plan.examinationStatusLabel;
+}
+
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
@@ -65,22 +81,36 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 
-		const planStatus = statusTag(plan.status);
+		const examinationAvailable = plan.examinationStatus !== EXAMINATION_STATUS_ID.CANNOT_START_YET;
+		const planStatus =
+			plan.stage === STAGE.Examination && examinationAvailable ? examinationStatusTag(plan) : statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
 		const encodedPlanRef = encodeURIComponent(plan.refNum);
 		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
 		const gateway3Base = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
 		const gateway3ResubBase = `/manage-local-plans/${encodedPlanRef}/gateway-3-resubmission`;
+		const examinationBase = `/manage-local-plans/${encodedPlanRef}/examination`;
 		const isResubmissionRequired = plan.status === STATUS.ResubmissionRequired;
-		const currentApplicationLink = isResubmissionRequired
-			? gateway3ResubBase
-			: plan.stage === STAGE.Gateway3
-				? gateway3Base
-				: `${applicationBase}/application-declaration`;
+		const currentApplicationLink =
+			plan.stage === STAGE.Examination
+				? examinationBase
+				: isResubmissionRequired
+					? gateway3ResubBase
+					: plan.stage === STAGE.Gateway3
+						? gateway3Base
+						: `${applicationBase}/application-declaration`;
 		const applicationLink = () => applicationBase;
 		const gateway3Link = () => (isResubmissionRequired ? gateway3ResubBase : gateway3Base);
+		const examinationLink = () => examinationBase;
 
-		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
+		const button =
+			plan.stage === STAGE.Examination
+				? plan.examinationStatus === EXAMINATION_STATUS_ID.READY_TO_START
+					? 'Start Examination submission'
+					: null
+				: plan.status === STATUS.ReadyToStart
+					? `Start ${currentStage} submission`
+					: null;
 
 		const notificationBanner = plan.status === STATUS.ActionNeeded;
 
@@ -115,13 +145,16 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
-				hrefE = applicationLink();
+				hrefE = examinationAvailable ? examinationLink() : null;
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed: ';
-					tagE = planStatus;
+					if (plan.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED) {
+						dateTextE = 'Submitted: ';
+					}
+					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
 					tagG2 = tagG3 = 'Completed';
 				}
 				break;

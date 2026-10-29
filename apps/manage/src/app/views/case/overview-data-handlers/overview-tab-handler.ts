@@ -6,6 +6,7 @@ import { loadCaseOfficerOptions, loadInspectorOptions, loadLpaOptions } from '..
 import { getOverviewData } from './overview-page-helper.ts';
 import { OverviewSaveController } from '../save/overview-save-controller.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
+import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
 type OverviewData = NonNullable<Awaited<ReturnType<typeof getOverviewData>>>;
 
@@ -39,6 +40,10 @@ export function mapOverviewDataToAnswers(overviewData: OverviewData): Record<str
 export class OverviewTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
 		const { req, res, next, service, journeyId, reference } = context;
+		if (!req.params.question && req.method == 'GET') {
+			await this.tryAddPauseStatusBanner(context);
+			consumeAlertsFromSession(req, res);
+		}
 
 		const overviewData = await getOverviewData(service.db, reference);
 		if (!overviewData) {
@@ -114,7 +119,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 				delete req.session.errorSummary;
 			}
 		}
-
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

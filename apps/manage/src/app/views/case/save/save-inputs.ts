@@ -6,6 +6,7 @@ export interface CaseOverviewInput extends SaveInput {
 	planBand?: string;
 	caseOfficer?: string;
 	lpa?: string;
+	checkLpas?: { id?: string; lpa: string }[];
 	lpaCode?: string;
 	lpaContact?: string;
 	firstName?: string;
@@ -100,13 +101,40 @@ export interface ExaminationInput extends SaveInput {
 	qaInspector1?: string;
 	qaInspector2?: string;
 	qaInspector3?: string;
-	planPauseStartDate?: Date;
-	planPauseEndDate?: Date;
 	withdrawnDate?: Date;
-	isSound?: boolean;
+	isSound?: string;
 	soundUnsoundDate?: Date;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
+	hearingExpectedDays?: string;
+	hearingDate?: Date;
+	hearingExpectedDaysKnown_hearingExpectedDays?: string;
+	hearings?: {
+		id: string;
+		createdDate: Date;
+		hearingComplete: boolean;
+		hearingDate: Date | null;
+		hearingTime: string | null;
+		hearingEndTime: string | null;
+		hearingExpectedDaysKnown: string | null;
+		hearingExpectedDays: string | null;
+		hearingLocationType: string | null;
+		hearingRemoteMeetingLinkKnown: string | null;
+		hearingRemoteMeetingLink: string | null;
+		hearingLocationKnown: string | null;
+		hearingVenueName: string | null;
+		hearingAddressLine: string | null;
+		hearingAddressLine2: string | null;
+		hearingTownOrCity: string | null;
+		hearingPostcode: string | null;
+	}[];
+	planPauseHistory: {
+		createdAt: Date;
+		planPauseDate: Date;
+		planPauseStartDetails: string;
+		planPauseEndDate: Date;
+		planPauseEndDetails: string;
+	}[];
 }
 
 export interface Gateway3Input extends SaveInput {
@@ -125,3 +153,5 @@ export interface Gateway3Input extends SaveInput {
 		gateway3InfoId: string | null;
 	}[];
 }
+
+export type TimetableInput = Gateway1Input | Gateway2Input | Gateway3Input | ExaminationInput;

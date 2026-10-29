@@ -50,12 +50,28 @@ export class BasePage {
 		return cy.get('main');
 	}
 
+	get notificationBanner() {
+		return cy.get('.govuk-notification-banner');
+	}
+
+	get virusScanInProgressBanner() {
+		return cy.getByData('virus-scan-in-progress-banner');
+	}
+
+	get virusDetectedBanner() {
+		return cy.getByData('virus-detected-banner');
+	}
+
 	get saveAndContinueButton() {
 		return cy.getByData('button-save-and-continue');
 	}
 
 	get backLink() {
 		return cy.getByData('back-link');
+	}
+
+	get cancelButton() {
+		return cy.getByData('button-back');
 	}
 
 	get addListItemButton() {
@@ -150,6 +166,31 @@ export class BasePage {
 		this.pageHeading.should('be.visible').and('contain.text', text);
 	}
 
+	verifyNotificationBanner(message: string) {
+		this.notificationBanner.should('be.visible').and('contain.text', message);
+	}
+
+	verifyVirusScanInProgressBanner() {
+		this.virusScanInProgressBanner
+			.should('be.visible')
+			.and('contain.text', 'Virus scan in progress')
+			.and('contain.text', 'Refresh the page to see if the scan has finished');
+	}
+
+	verifyVirusDetectedBanner(fileName: string) {
+		this.virusDetectedBanner
+			.should('be.visible')
+			.and('contain.text', `${fileName} contains a virus. Remove the file and upload a different version.`);
+	}
+
+	verifyNotificationBannerAbsent(message: string) {
+		this.mainContent.should('not.contain.text', message);
+	}
+
+	verifyNotificationBannerLink(text: string, href: string) {
+		this.notificationBanner.contains('a', text).should('be.visible').and('have.attr', 'href', href);
+	}
+
 	verifyBackLink(href?: string | RegExp) {
 		const backLink = this.backLink.should('be.visible');
 
@@ -174,6 +215,10 @@ export class BasePage {
 
 	goBack() {
 		this.backLink.should('be.visible').click();
+	}
+
+	cancelChanges() {
+		this.cancelButton.should('be.visible').click();
 	}
 
 	addListItem() {
