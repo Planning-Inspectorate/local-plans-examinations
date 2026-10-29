@@ -1,4 +1,8 @@
-import { openExaminationPage, openSeededExaminationReport } from '../../../../flows/manage/examination-flow.ts';
+import {
+	openExaminationPage,
+	openSeededExaminationReport,
+	openSeededExaminationPage
+} from '../../../../flows/manage/examination-flow.ts';
 import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import {
 	actualSubmissionDate,
@@ -13,7 +17,8 @@ import {
 	factCheckDateReceivedFromInspector,
 	letterSentToMHCLGDate,
 	QAExpectedAnswers,
-	soundUnsound
+	soundUnsound,
+	seededExaminationHearing
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
@@ -125,5 +130,24 @@ describe('Examination report content', () => {
 		]);
 		examinationPage.openActionLinkFor(report.row);
 		managePage.verifyDocumentsContent(report.receivedDisplay, report.fileName, report.supportingFileName);
+	});
+});
+
+describe('Hearings content', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+	});
+	after(() => cy.task('clearDb'));
+
+	it('displays a hearing', { tags: ['regression'] }, () => {
+		openSeededExaminationPage({ examination: { hearings: { create: [seededExaminationHearing] } } });
+		examinationPage.verifyHearingsOrder(1);
+	});
+
+	it('displays multiple hearings', { tags: ['regression'] }, () => {
+		openSeededExaminationPage({
+			examination: { hearings: { create: [seededExaminationHearing, seededExaminationHearing] } }
+		});
+		examinationPage.verifyHearingsOrder(1, 2);
 	});
 });

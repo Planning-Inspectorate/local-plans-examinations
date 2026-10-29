@@ -3,7 +3,7 @@ import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { gateway3SubmissionCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-submission-complete-page.ts';
 import { gateway3DeclarationPage } from '../../../../page-objects/portal/gw3-application/declaration-page.ts';
 import { openSeededGateway3DeclarationPage } from '../../../../flows/portal/gateway-3-submission-flow.ts';
-import { planDetailsPage } from 'cypress/page-objects/portal/plan-details/plan-details-page.ts';
+import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 const today = new Date();

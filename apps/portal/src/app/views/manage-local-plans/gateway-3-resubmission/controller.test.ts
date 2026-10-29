@@ -8,6 +8,9 @@ import {
 	buildPostResubmission,
 	buildGetUploadDocumentsPage,
 	buildGetPreviousSubmissionPage,
+	buildGetDeclarationPage,
+	buildPostDeclarationPage,
+	buildGetSubmissionCompletePage,
 	buildLoadResubmissionCase,
 	buildGateway3ResubmissionMiddleware,
 	handleMulterFileSizeError
@@ -261,8 +264,10 @@ describe('buildPostResubmission', () => {
 		handler(req, res, () => {});
 
 		assert.strictEqual(calls[0].method, 'redirect');
-		assert.ok((calls[0].args[0] as string).includes('declaration'));
-		assert.ok((calls[0].args[0] as string).includes('from=resubmission'), 'expected from=resubmission query param');
+		assert.ok(
+			(calls[0].args[0] as string).includes('gateway-3-resubmission/declaration'),
+			'expected resubmission-specific declaration route'
+		);
 	});
 });
 
@@ -728,6 +733,9 @@ describe('buildGateway3ResubmissionMiddleware', () => {
 		assert.ok(middleware.postResubmission, 'postResubmission');
 		assert.ok(middleware.getUploadPage, 'getUploadPage');
 		assert.ok(middleware.postUploadPage, 'postUploadPage');
+		assert.ok(middleware.getDeclarationPage, 'getDeclarationPage');
+		assert.ok(middleware.postDeclarationPage, 'postDeclarationPage');
+		assert.ok(middleware.getSubmissionCompletePage, 'getSubmissionCompletePage');
 		assert.ok(middleware.getPreviousSubmissionPage, 'getPreviousSubmissionPage');
 		assert.ok(middleware.downloadDocument, 'downloadDocument');
 		assert.ok(middleware.upload, 'upload');
@@ -775,5 +783,171 @@ describe('handleMulterFileSizeError', () => {
 			(next as unknown as { mock: { calls: Array<{ arguments: unknown[] }> } }).mock.calls[0].arguments[0],
 			err
 		);
+	});
+});
+
+describe('buildGetDeclarationPage', () => {
+	it('renders the declaration page with correct heading and back link', () => {
+		const handler = buildGetDeclarationPage();
+		const req = {
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('declaration.njk'));
+		assert.strictEqual(data.pageHeading, "Are you sure you're ready to submit?");
+		assert.strictEqual(data.goBackUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+	});
+});
+
+describe('buildPostDeclarationPage', () => {
+	it('updates the submission and gateway3Info.actualDate in a transaction and redirects', async () => {
+		const submissionUpdateMock = mock.fn(async () => ({}));
+		const gateway3InfoUpdateMock = mock.fn(async () => ({}));
+		const transactionMock = mock.fn(async (updates: unknown[]) => Promise.all(updates));
+		const mockService = {
+			db: {
+				$transaction: transactionMock,
+				gateway3Submission: { update: submissionUpdateMock },
+				gateway3Info: { update: gateway3InfoUpdateMock }
+			},
+			logger: { error: mock.fn() }
+		};
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				id: 'case-1',
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'sub-1',
+							completionDate: new Date('2026-10-01'),
+							submittedDate: null,
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+						},
+						{ id: 'sub-2', completionDate: null, submittedDate: null, decision: null }
+					]
+				}
+			}
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		await handler(req, res, () => {});
+
+		// Should use a transaction
+		assert.strictEqual(transactionMock.mock.callCount(), 1);
+
+		// Should have updated the placeholder submission with a submittedDate (not completionDate)
+		assert.strictEqual(submissionUpdateMock.mock.callCount(), 1);
+		const submissionUpdateCall = (
+			submissionUpdateMock.mock.calls as unknown as {
+				arguments: [{ where: { id: string }; data: { submittedDate: Date } }];
+			}[]
+		)[0].arguments[0];
+		assert.strictEqual(submissionUpdateCall.where.id, 'sub-2');
+		assert.ok(submissionUpdateCall.data.submittedDate instanceof Date);
+
+		// Should have updated gateway3Info.actualDate
+		assert.strictEqual(gateway3InfoUpdateMock.mock.callCount(), 1);
+		const gateway3InfoUpdateCall = (
+			gateway3InfoUpdateMock.mock.calls as unknown as {
+				arguments: [{ where: { caseId: string }; data: { actualDate: Date } }];
+			}[]
+		)[0].arguments[0];
+		assert.strictEqual(gateway3InfoUpdateCall.where.caseId, 'case-1');
+		assert.strictEqual(gateway3InfoUpdateCall.data.actualDate, submissionUpdateCall.data.submittedDate);
+
+		// Should redirect to submission complete
+		const redirectCall = calls.find((c) => c.method === 'redirect');
+		assert.ok(redirectCall);
+		assert.ok((redirectCall.args[0] as string).includes('submission-complete'));
+	});
+
+	it('returns 500 when no pending submission exists', async () => {
+		const mockService = {
+			db: {
+				$transaction: mock.fn(),
+				gateway3Submission: { update: mock.fn() },
+				gateway3Info: { update: mock.fn() }
+			},
+			logger: { error: mock.fn() }
+		};
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				id: 'case-1',
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'sub-1',
+							completionDate: new Date('2026-10-01'),
+							decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+						}
+					]
+				}
+			}
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+		(res as unknown as Record<string, unknown>).send = (body: string) => {
+			calls.push({ method: 'send', args: [body] });
+		};
+
+		await handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 500);
+	});
+
+	it('returns 500 when no caseId is available', async () => {
+		const mockService = {
+			db: {
+				$transaction: mock.fn(),
+				gateway3Submission: { update: mock.fn() },
+				gateway3Info: { update: mock.fn() }
+			},
+			logger: { error: mock.fn() }
+		};
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: {
+				gateway3Info: {
+					submissions: [{ id: 'sub-1', completionDate: null, submittedDate: null, decision: null }]
+				}
+			}
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+		(res as unknown as Record<string, unknown>).send = (body: string) => {
+			calls.push({ method: 'send', args: [body] });
+		};
+
+		await handler(req, res, () => {});
+
+		const statusCall = calls.find((c) => c.method === 'status');
+		assert.strictEqual(statusCall?.args[0], 500);
+	});
+});
+
+describe('buildGetSubmissionCompletePage', () => {
+	it('renders the submission complete page with plan overview link', () => {
+		const handler = buildGetSubmissionCompletePage();
+		const req = {
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		handler(req, res, () => {});
+
+		assert.strictEqual(calls[0].method, 'render');
+		const [view, data] = calls[0].args as [string, Record<string, unknown>];
+		assert.ok(view.includes('submission-complete.njk'));
+		assert.strictEqual(data.planOverviewUrl, '/manage-local-plans/PLAN-001');
 	});
 });

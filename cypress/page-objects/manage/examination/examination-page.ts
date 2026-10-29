@@ -11,8 +11,16 @@ export class ExaminationPage extends GatewayBasePage {
 		super(/^\/case\/.+\/examination$/);
 	}
 
+	get hearingsHeadings() {
+		return cy.getByData('hearing-heading');
+	}
+
 	get addHearingLink() {
 		return cy.getByData('add-hearing');
+	}
+
+	cancelHearingLink(hearingNumber: string) {
+		return cy.getByData(`cancelHearing${hearingNumber}`);
 	}
 
 	get pauseLink() {
@@ -76,6 +84,20 @@ export class ExaminationPage extends GatewayBasePage {
 		this.addHearingLink.should('be.visible').and('have.text', 'Add hearing').click();
 	}
 
+	cancelHearing(hearingNumber: string) {
+		this.verifyLoaded();
+		this.cancelHearingLink(hearingNumber)
+			.should('be.visible')
+			.and('have.text', `Cancel hearing ${hearingNumber}`)
+			.click();
+	}
+
+	verifyHearingCancelled(hearingNumber: string, remoteLink: string) {
+		this.verifyLoaded();
+		this.cancelHearingLink(hearingNumber).should('not.exist');
+		this.mainContent.should('not.contain.text', remoteLink);
+	}
+
 	verifyReportIssued(outcome: string) {
 		this.verifyLoaded();
 		this.verifyNotificationBanner(examinationReport.issuedMessage);
@@ -122,6 +144,12 @@ export class ExaminationPage extends GatewayBasePage {
 	verifyExpectedActionLinkHrefs(section: string, rows: Array<{ row: string; path: string }>) {
 		rows.forEach(({ row, path }) => {
 			this.verifySummaryRowActionHref(row, new RegExp(`^/case/.+/examination/${section}/${path}$`));
+		});
+	}
+	verifyHearingsOrder(...hearingNumbers: number[]) {
+		this.hearingsHeadings.should('have.length', hearingNumbers.length);
+		hearingNumbers.forEach((hearingNumbers, index) => {
+			this.hearingsHeadings.eq(index).should('have.text', `Hearing ${hearingNumbers} details`);
 		});
 	}
 }
