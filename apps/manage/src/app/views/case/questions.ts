@@ -18,7 +18,6 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -48,6 +47,7 @@ import {
 	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -163,6 +163,13 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3DocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Gateway 3 Documents',
+		fieldName: 'gateway3DocumentSubmission',
+		url: 'gateway-3-review-documents'
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,

@@ -1,0 +1,73 @@
+{% extends layoutTemplate %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block backLink %}
+	{% if backLink %}
+		<nav aria-label="Back">
+			<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
+		</nav>
+	{% endif %}
+{% endblock backLink %}
+
+{% block error_summary %}
+	{% if errorSummary %}
+		<div class="govuk-grid-row">
+			<div class="govuk-grid-column-two-thirds">
+				{{ govukErrorSummary({
+					titleText: "There is a problem",
+					errorList: errorSummary,
+					attributes: { "data-cy": "error-summary" }
+				}) }}
+			</div>
+		</div>
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+	<div class="govuk-grid-row">
+		<div class="govuk-grid-column-full">
+			<span class="govuk-caption-l">{{ reference }}</span>
+
+			{% set documentGroups = [
+				{
+					id: "required-documents",
+					heading: "Required information",
+					description: "You must add each of these documents as a link or an attachment before submitting.",
+					data: rowsMapRequiredData
+				},
+				{
+					id: "optional-documents",
+					heading: "Optional documents",
+					description: "You can add these additional documents if they are relevant to your plan.",
+					data: optionDataMap
+				}
+			] %}
+
+			{% for group in documentGroups %}
+				<div id="{{ group.id }}">
+					<h2 class="govuk-heading-l">{{ group.heading }}</h2>
+					<p class="govuk-body">{{ group.description }}</p>
+
+					{% set rows = [] %}
+					{% for label, value in group.data %}
+						{% set documentId = "document-" + (label | trim | lower | replace(r/[^a-z0-9]+/g, "-")) %}
+						{% set _ = rows.push({
+							key: { html: '<span id="' + documentId + '" tabindex="-1">' + (label | trim | escape) + '</span>' },
+							value: { text: "Not added" if (not value or value == "not added") else value }
+						}) %}
+					{% endfor %}
+
+					{{ govukSummaryList({ rows: rows }) }}
+				</div>
+			{% endfor %}
+
+			{{ govukButton({
+				text: "Issue decision",
+				href: issueDecisionUrl,
+				attributes: { "data-cy": "issue-decision-button" }
+			}) }}
+		</div>
+	</div>
+{% endblock content %}

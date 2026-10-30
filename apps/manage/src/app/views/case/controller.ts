@@ -36,7 +36,7 @@ import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
-
+import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
@@ -1216,14 +1216,26 @@ export function preprocessQuestionProperties(
 			for (let i = 0; i < submissionDetailsSorted.length; i++) {
 				const submissionId = i + 1;
 				const submission = submissionDetailsSorted[i];
-				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3DocumentsCheck = `gateway3DocumentsCheck-${submissionId}`;
 				const gateway3Decision = `gateway3Decision-${submissionId}`;
-				const decisionValue = submissionDetailsSorted[i].decision;
-				const completionDate = submissionDetailsSorted[i].completionDate;
+				const decisionValue = submission.decision;
+				const completionDate = submission.completionDate;
+				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3Complete = !!completionDate;
+
+				(questions[gateway3DocumentsCheck] as CustomDocumentsQuestion).setActionLink(
+					String(submissionId),
+					reference,
+					_res.locals.journeyResponse.answers
+				);
+
+				questions[gateway3DocumentsCheck].changeActionText = 'Review';
+				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary = true;
+
 				questions[gateway3Documents].changeActionText = 'View';
-				const gateway3Complete = !!submission.completionDate;
 				(questions[gateway3Documents] as any).config.actionButtonVisibleInSummary = gateway3Complete;
 				questions[gateway3Documents].editable = !gateway3Complete;
+
 				if (gateway3Complete) {
 					if (!decisionValue) {
 						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
@@ -1232,20 +1244,20 @@ export function preprocessQuestionProperties(
 						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
-					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;
-					const formattedCompletionDate = completionDate
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(completionDate)
-						: null;
+					const decisionText = decisionMap[decisionValue as keyof typeof decisionMap] ?? null;
+					const formattedCompletionDate = new Intl.DateTimeFormat('en-GB', {
+						day: 'numeric',
+						month: 'long',
+						timeZone: 'Europe/London',
+						year: 'numeric'
+					}).format(completionDate);
 					questions[gateway3Decision].formatSummaryValue = () =>
 						decisionText ? `${decisionText}\nIssued on ${formattedCompletionDate}` : 'Not started';
 				} else {
-					// Reset for different journey
-					delete questions[gateway3Decision].actionLink;
+					questions[gateway3Decision].actionLink = {
+						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-decision-${submissionId}`,
+						text: 'Add'
+					};
 					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
 				}
 			}

@@ -185,3 +185,50 @@ export const examinationSetIds = [
 	DOCUMENT_SET_ID.EX_CHANGES_SINCE_G3,
 	DOCUMENT_SET_ID.EX_G3_REPORT_REPS
 ];
+
+export const REQUIRED_DOCUMENT_SETS = {
+	proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+	mapOfPolicies: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
+	statementOfCompliance: DOCUMENT_SET_ID.G3_STATEMENT_OF_COMPLIANCE,
+	statementOfSoundness: DOCUMENT_SET_ID.G3_STATEMENT_OF_SOUNDNESS,
+	consultationEngagementSummary: DOCUMENT_SET_ID.G3_CONSULTATION_ENGAGEMENT_SUMMARY,
+	scopingConsultationSummary: DOCUMENT_SET_ID.G3_SCOPING_CONSULTATION_SUMMARY,
+	consultationContentEvidenceSummary: DOCUMENT_SET_ID.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY,
+	consultationProposedPlanSummary: DOCUMENT_SET_ID.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY,
+	practicalArrangementsStatement: DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT
+};
+export const OPTIONAL_DOCUMENT_SETS = {
+	copiesOfRepresentations: DOCUMENT_SET_ID.G3_COPIES_OF_REPRESENTATIONS,
+	supplementaryPlansStatement: DOCUMENT_SET_ID.G3_SUPPLEMENTARY_PLANS_STATEMENT,
+	environmentalReport: DOCUMENT_SET_ID.G3_ENVIRONMENTAL_REPORT,
+	statementOfReasonsDetermination: DOCUMENT_SET_ID.G3_STATEMENT_OF_REASONS_DETERMINATION,
+	representationsProgressSummary: DOCUMENT_SET_ID.G3_REPRESENTATIONS_PROGRESS_SUMMARY,
+	gateway2IssuesSummary: DOCUMENT_SET_ID.G3_GATEWAY_2_ISSUES_SUMMARY,
+	changesSinceConsultationStatement: DOCUMENT_SET_ID.G3_CHANGES_SINCE_CONSULTATION_STATEMENT,
+	otherDocuments: DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS
+};
+
+export const DOCUMENT_LABELS: Record<string, string> = {
+	examinationWebsite: 'Examination website',
+	proposedLocalPlan: 'Proposed local plan intended for submission for examination',
+	mapOfPolicies: 'Map of proposed local plan policies',
+	statementOfCompliance: 'Statement of compliance',
+	statementOfSoundness: 'Statement of soundness',
+	consultationEngagementSummary:
+		'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+	scopingConsultationSummary: 'Summary of scoping consultation',
+	consultationContentEvidenceSummary: 'Summary of consultation on proposed local plan content and evidence',
+	consultationProposedPlanSummary: 'Summary of consultation on proposed local plan',
+	practicalArrangementsStatement: 'Statement setting out practical arrangements',
+	copiesOfRepresentations: 'Copies of representations',
+	supplementaryPlansStatement: 'Supplementary plans statement',
+	environmentalReport: 'Environmental report',
+	statementOfReasonsDetermination:
+		'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+	representationsProgressSummary:
+		'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+	gateway2IssuesSummary: 'Summary of how Gateway 2 assessor issues have been addressed',
+	changesSinceConsultationStatement:
+		'Statement explaining changes since proposed local plan consultation, reasons for those changes and any additional consultation',
+	otherDocuments: 'Other documents'
+};

@@ -6,7 +6,8 @@ import {
 	gateway3ExpectedAnswers,
 	gateway3ExaminationWebsite,
 	gateway3DocumentsAnswer,
-	gateway3DecisionAnswer
+	gateway3DecisionAnswer,
+	gateway3ReviewDocumentsAnswer
 } from '../../../fixtures/manage/gateway-3.ts';
 
 const gateway3Rows = [
@@ -14,9 +15,13 @@ const gateway3Rows = [
 	gateway3AssessorAnswer.row,
 	gateway3ProgrammeOfficerAnswer.row,
 	gateway3ExaminationWebsite.row,
-	gateway3DocumentsAnswer.row,
+	gateway3ReviewDocumentsAnswer.row,
 	gateway3DecisionAnswer.row
 ];
+
+const reviewDocumentsHref = new RegExp(
+	`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${gateway3ReviewDocumentsAnswer.path}-(\\d+)$`
+);
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
 	...Object.values(gateway3DateAnswers).map(({ row, path, section }): [string, RegExp] => [
@@ -30,8 +35,12 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 	],
 	[gateway3ExaminationWebsite.row, new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ExaminationWebsite.path}$`)],
 	[
+		gateway3ReviewDocumentsAnswer.row,
+		new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${gateway3ReviewDocumentsAnswer.path}-(\\d+)$`)
+	],
+	[
 		gateway3DecisionAnswer.row,
-		new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${gateway3DecisionAnswer.path}-(\\d+)$`)
+		new RegExp(`^/case/.+/gateway-3-report/gateway-3-submission-(\\d+)/${gateway3DecisionAnswer.path}-(\\d+)$`)
 	]
 ];
 
@@ -64,13 +73,17 @@ export class Gateway3Page extends GatewayBasePage {
 		});
 	}
 
-	verifyGateway3SubmissionIssued() {
-		this.verifySummaryRowContains(gateway3DocumentsAnswer.row, '2 documents');
-		this.verifySummaryRowActionHref(
-			gateway3DocumentsAnswer.row,
-			new RegExp(`^/case/.+/gateway-3/gateway-3-submission-(\\d+)/${gateway3DocumentsAnswer.path}-(\\d+)$`)
+	verifySubmissionDocumentsReviewLink(documentCount: number) {
+		this.verifySummaryRowContains(gateway3ReviewDocumentsAnswer.row, `${documentCount} document(s)`);
+		this.verifySummaryRowActionHref(gateway3ReviewDocumentsAnswer.row, reviewDocumentsHref);
+		this.summaryRowActionLink(gateway3ReviewDocumentsAnswer.row).should(
+			'contain.text',
+			gateway3ReviewDocumentsAnswer.reviewLinkText
 		);
-		this.summaryRowActionLink(gateway3DocumentsAnswer.row).should('contain.text', 'View');
+	}
+
+	verifyGateway3SubmissionIssued(decisionText: string) {
+		this.verifySummaryRowContains(gateway3DecisionAnswer.row, decisionText);
 		this.verifySummaryRowActionHref(
 			gateway3DecisionAnswer.row,
 			new RegExp(`^/case/.+/gateway-3-report/gateway-3-submission-(\\d+)/${gateway3DocumentsAnswer.path}-(\\d+)/check$`)
