@@ -837,9 +837,8 @@ function registerCaseJourney(
 		);
 
 		router.post(
-			`${questionPath}/delete-document/:fileId`,
+			`${questionPath}/delete-document/*fileId`,
 			getJourneyResponse,
-			deleteDocumentRoute,
 			deleteDocumentRoute,
 			handleMulterFileSizeError
 		);

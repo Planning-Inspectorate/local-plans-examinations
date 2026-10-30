@@ -1,7 +1,15 @@
-import { gateway3Page, gateway3ReviewDocumentsPage } from '../../page-objects/manage/gateway-3/index.ts';
 import { gateway3ReviewDocumentsAnswer } from '../../fixtures/manage/gateway-3.ts';
-import { openManageCase, openSeededManageCase, type SeededManageCase } from './seeded-case-flow.ts';
 import type { Gateway3SubmissionDocumentsSeedOptions } from '../../tasks/gateway-3.ts';
+import {
+	gateway3Page,
+	gateway3DecisionPage,
+	gateway3DocumentsPage,
+	gateway3DocumentsCheckPage,
+	gateway3ReviewDocumentsPage
+} from '../../page-objects/manage/gateway-3/index.ts';
+import { gateway3DecisionAnswer, gateway3DocumentsAnswer } from '../../fixtures/manage/gateway-3.ts';
+import type { SeededManageCase } from './seeded-case-flow.ts';
+import { openSeededManageCase } from './seeded-case-flow.ts';
 
 export const openSeededGateway3Page = () => {
 	return openSeededManageCase().then(({ planTitle }) => {
@@ -10,11 +18,24 @@ export const openSeededGateway3Page = () => {
 	});
 };
 
-export const openGateway3Page = (seededManageCase: SeededManageCase) => {
-	return openManageCase(seededManageCase).then(({ planTitle }) => {
-		gateway3Page.openServiceNavigationItem('Gateway 3');
-		gateway3Page.verifyLoaded(planTitle);
-	});
+export const openGateway3Page = (reference: string, planTitle: string) => {
+	cy.visit(`/case/${encodeURIComponent(reference)}/gateway-3`);
+	gateway3Page.verifyLoaded(planTitle);
+};
+
+export const issueGateway3ProceedDecision = (planTitle: string) => {
+	gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
+	gateway3DecisionPage.verifyLoaded();
+	gateway3DecisionPage.selectDecision('Proceed');
+
+	gateway3DocumentsPage.verifyLoaded();
+	gateway3DocumentsPage.uploadAndVerifyFile(gateway3DocumentsAnswer.fileName);
+	gateway3DocumentsPage.saveAndReturn();
+
+	gateway3DocumentsCheckPage.verifyLoaded([gateway3DocumentsAnswer.fileName], 'Proceed to examination');
+	gateway3DocumentsCheckPage.issueDecision();
+
+	gateway3Page.verifyLoaded(planTitle);
 };
 
 export const openSeededGateway3PageWithSubmissionDocuments = (options: Gateway3SubmissionDocumentsSeedOptions = {}) => {
