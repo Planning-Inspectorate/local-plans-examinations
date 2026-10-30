@@ -36,6 +36,7 @@ import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
