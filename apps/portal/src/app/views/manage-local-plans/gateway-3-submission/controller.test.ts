@@ -79,6 +79,23 @@ function buildMockResponse() {
 }
 
 describe('setGateway3ViewLocals', () => {
+	it('sets the default locals without a case or plan reference', () => {
+		const req = { params: {} } as unknown as Request;
+		const locals: Record<string, unknown> = {};
+		const res = { locals } as unknown as Response;
+
+		setGateway3ViewLocals(req, res);
+
+		assert.deepStrictEqual(locals, {
+			pageTitle: 'Gateway 3 submission',
+			pageHeading: 'Gateway 3 submission',
+			pageCaption: undefined,
+			statusTag: { label: 'Ready to start', class: 'govuk-tag govuk-tag--green' },
+			virusScanInProgress: false,
+			virusErrorSummary: undefined
+		});
+	});
+
 	it('sets page title, heading, caption, back link, save link and status tag when case and plan reference exist', () => {
 		const req = {
 			currentCase: {
