@@ -62,7 +62,7 @@ export const gateway3UploadAnswers = {
 		fieldName: 'consultationContentEvidenceSummary',
 		path: 'consultation-content-evidence-summary',
 		section: 'required-information',
-		addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence'
+		addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence-documents'
 	},
 	consultationProposedPlanSummary: {
 		heading: 'Upload summary of consultation on proposed local plan',
