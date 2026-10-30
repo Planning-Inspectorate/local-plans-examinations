@@ -144,6 +144,43 @@ describe('examination view data', () => {
 		assert.equal(res.locals.backLinkUrl, '/manage-local-plans/PLAN-61797');
 		assert.equal(next.mock.callCount(), 2);
 	});
+
+	it('uses the submitted, in-examination and plan-adopted status tags', () => {
+		for (const { status, label, className } of [
+			{
+				status: EXAMINATION_STATUS_ID.SUBMITTED,
+				label: 'Submitted',
+				className: 'govuk-tag govuk-tag--yellow'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+				label: 'In examination',
+				className: 'govuk-tag govuk-tag--blue'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.PLAN_ADOPTED,
+				label: 'Plan adopted',
+				className: 'govuk-tag govuk-tag--purple'
+			}
+		]) {
+			const locals: Record<string, unknown> = {};
+
+			setExaminationViewLocals(
+				{
+					params: { planReference: 'PLAN-61797' },
+					currentCase: {
+						examinationInfo: {
+							status,
+							statusLookup: { displayName: label }
+						}
+					}
+				} as unknown as Request,
+				{ locals } as unknown as Response
+			);
+
+			assert.deepEqual(locals.statusTag, { label, class: className });
+		}
+	});
 });
 
 describe('buildGetJourneyResponseFromCase', () => {
@@ -546,6 +583,38 @@ describe('examination declaration and completion', () => {
 		);
 		assert.equal(res.locals.submissionDate, '21 October 2026');
 		assert.equal(res.locals.submitter, 'planner@example.com');
+		assert.equal(res.locals.pageTitle, 'Examination submission');
+		assert.equal(res.locals.pageHeading, 'Examination submission');
+		assert.equal(res.locals.saveAndComeBackUrl, undefined);
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('uses the read-only view while the examination is in progress with an inspector', () => {
+		const next = mock.fn();
+		const req = {
+			currentCase: {
+				email: 'planner@example.com',
+				examinationInfo: {
+					status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+					submissionForExaminationDate: new Date('2026-10-21T10:30:00Z')
+				}
+			}
+		} as unknown as Request;
+		const res = {
+			locals: {
+				journey: { taskListTemplate: 'editable.njk' },
+				saveAndComeBackUrl: '/save'
+			}
+		} as unknown as Response;
+
+		buildSubmittedExaminationView()(req, res, next as unknown as NextFunction);
+
+		assert.equal(
+			res.locals.journey.taskListTemplate,
+			'views/manage-local-plans/examination-submission/check-your-answers-submitted.njk'
+		);
+		assert.equal(res.locals.pageHeading, 'Examination submission');
+		assert.equal(res.locals.submissionDate, '21 October 2026');
 		assert.equal(res.locals.saveAndComeBackUrl, undefined);
 		assert.equal(next.mock.callCount(), 1);
 	});

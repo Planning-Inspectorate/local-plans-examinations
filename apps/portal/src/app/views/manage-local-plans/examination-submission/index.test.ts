@@ -218,9 +218,11 @@ describe('submitted examination page', () => {
 		const html = nunjucks.render('views/manage-local-plans/examination-submission/check-your-answers-submitted.njk', {
 			pageTitle: 'Examination submission',
 			pageHeading: 'Examination submission',
+			pageCaption: 'Test local plan',
 			submissionDate: '21 October 2026',
 			submissionTime: '11:30',
 			submitter: 'planner@example.com',
+			statusTag: { label: 'Submitted', class: 'govuk-tag govuk-tag--yellow' },
 			summaryListData: {
 				sections: [
 					{
@@ -228,7 +230,9 @@ describe('submitted examination page', () => {
 							rows: [
 								{
 									key: { text: 'Local plan submission for examination' },
-									value: { text: 'local-plan.pdf' },
+									value: {
+										html: '<ul class="govuk-list govuk-list--bullet"><li><a href="/documents/local-plan">local-plan.pdf</a></li><li><a href="/documents/appendix">appendix.pdf</a></li></ul>'
+									},
 									actions: { items: [{ text: 'Change', href: '#' }] }
 								}
 							]
@@ -244,8 +248,18 @@ describe('submitted examination page', () => {
 			}
 		});
 
+		assert.match(
+			html.replace(/\s+/g, ' '),
+			/<h1 class="govuk-heading-xl govuk-!-margin-bottom-2"> <span class="govuk-caption-xl">Test local plan<\/span> Examination submission <\/h1>/
+		);
+		assert.ok(html.includes('govuk-tag govuk-tag--yellow'));
+		assert.ok(html.includes('Submitted'));
 		assert.ok(html.includes('Your submission was sent on 21 October 2026 at 11:30 by planner@example.com'));
+		assert.match(html, /<h2 class="govuk-heading-m">Documents<\/h2>/);
+		assert.ok(html.includes('Local plan submission for examination'));
+		assert.ok(html.includes('govuk-list govuk-list--bullet'));
 		assert.ok(html.includes('local-plan.pdf'));
+		assert.ok(html.includes('appendix.pdf'));
 		assert.doesNotMatch(html, />\s*(Add|Change|Submit)\s*</);
 	});
 });

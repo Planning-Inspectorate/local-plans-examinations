@@ -165,7 +165,7 @@ export function createFileUploaderDeleteController(options: FileUploaderControll
 		const request = req as RequestWithFiles;
 		const sessionKey = resolveSessionKey(request, options);
 		const session = ensureFileUploaderSession(request);
-		const fileId = Array.isArray(request.params.fileId) ? request.params.fileId[0] : request.params.fileId;
+		const fileId = Array.isArray(request.params.fileId) ? request.params.fileId.join('/') : request.params.fileId;
 		const uploadedFiles = session.fileUploader?.[sessionKey]?.uploadedFiles ?? [];
 
 		const file = uploadedFiles.find((item) => item.id === fileId);
