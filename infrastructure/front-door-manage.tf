@@ -174,12 +174,6 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
         enabled = false
         rule_id = "200003"
       }
-      # Possible multipart unmatched boundary
-      rule {
-        action  = "Log"
-        enabled = false
-        rule_id = "200004"
-      }
     }
 
     #--------------------------------------------------------------------------
