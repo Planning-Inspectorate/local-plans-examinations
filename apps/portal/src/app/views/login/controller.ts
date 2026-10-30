@@ -102,7 +102,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			const bytes = new Uint8Array(OTP_LENGTH);
 			crypto.getRandomValues(bytes);
 			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
-			console.log(otp);
+
 			const SALT_ROUNDS = 10;
 			const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
 			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
