@@ -66,7 +66,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '15', folderName: 'gateway-3-document' },
 	{ id: '16', folderName: 'gateway-3-document-1' },
 	{ id: '17', folderName: 'gateway-2-workshop-documents' },
-	{ id: '18', folderName: 'examination-report' }
+	{ id: '18', folderName: 'examination-report' },
+	{ id: '19', folderName: 'miqs' }
 ];
 
 function createService(): any {
@@ -1692,7 +1693,7 @@ describe('Gateway 3 document loading', () => {
 			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'gateway-3-report');
 
 			const fieldName = question.replace('gateway-3-document-', 'gateway3Documents-');
-			assert.deepEqual(answers[fieldName], [temporary ? draftFile : savedFile]);
+			assert.deepEqual(answers[fieldName], temporary ? [savedFile, draftFile] : [savedFile]);
 			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
 		});
 	}

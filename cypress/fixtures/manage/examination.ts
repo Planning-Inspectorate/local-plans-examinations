@@ -378,3 +378,12 @@ export const seededRestartedExamination = {
 		}
 	}
 } satisfies SeedCyOptions;
+
+export const MIQcheckPage = {
+	row: 'MIQs',
+	path: 'miqs',
+	heading: 'Check MIQ documents and send notification',
+	fieldname: 'issue-document-notification',
+	file1: 'test-document.pdf',
+	file2: 'test-document.xlsx'
+};

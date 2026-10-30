@@ -25,7 +25,8 @@ import {
 	seededExaminationInProgress,
 	seededPausedExamination,
 	seededExaminationHearing,
-	soundUnsound
+	soundUnsound,
+	MIQcheckPage
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
@@ -43,7 +44,9 @@ import {
 	QADatePage,
 	QAPanelResponseDatePage,
 	soundUnsoundDatePage,
-	soundUnsoundPage
+	soundUnsoundPage,
+	examinationMIQCheckPage,
+	examinationMIQUploadPage
 } from '../../../../page-objects/manage/examination/index.ts';
 import {
 	HearingDateAndTimePage,
@@ -231,6 +234,31 @@ describe('Examination updates', () => {
 
 	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
 		returnFromDatePage(soundUnsoundDate, soundUnsoundDatePage);
+	});
+
+	it('uploads MIQ documents and records case history', { tags: ['regression'] }, () => {
+		const today = new Date();
+		const todayDisplay = today.toLocaleDateString('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+			timeZone: 'GMT'
+		});
+		examinationPage.openActionLinkFor(MIQcheckPage.row);
+
+		examinationMIQUploadPage.verifyLoaded();
+		examinationMIQUploadPage.uploadAndVerifyFile(MIQcheckPage.file1);
+		examinationMIQUploadPage.uploadAndVerifyFile(MIQcheckPage.file2);
+		examinationMIQUploadPage.saveAndReturn();
+
+		examinationMIQCheckPage.verifyLoaded();
+		examinationMIQCheckPage.verifyDocuments(MIQcheckPage.file1, MIQcheckPage.file2);
+		examinationMIQCheckPage.confirm();
+
+		examinationPage.verifyNotificationBanner('2 MIQ documents uploaded');
+		examinationPage.verifySummaryRowContains(MIQcheckPage.row, MIQcheckPage.file1, MIQcheckPage.file2);
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(`MIQs notification sent on ${todayDisplay}`);
 	});
 });
 

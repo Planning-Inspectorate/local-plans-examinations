@@ -906,6 +906,39 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 	};
 }
 
+export function issueMiqs(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const uploadedFiles =
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'miqs')]?.uploadedFiles ?? [];
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		const sentDate = new Date();
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				miqs: null // Will be overridden by overrideLabels
+			},
+			{},
+			caseReference,
+			currentUser,
+			{
+				miqs: `MIQs notification sent on ${await formatCaseHistoryValue(service, req, '', sentDate)}`
+			}
+		);
+		// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+		pushAlertToSession(
+			req,
+			'success',
+			`${uploadedFiles.length} MIQ document${uploadedFiles.length === 1 ? '' : 's'} uploaded`
+		);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		return;
+	};
+}
+
 export function issueGateway1SLA(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
