@@ -116,7 +116,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
 
 				if (uploadedGateway2Reports.length > 0) {
-					res.redirect(303, `${question}/check`);
+					res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION}/check`);
 					return;
 				}
 			}
@@ -128,7 +128,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 						?.uploadedFiles ?? [];
 
 				if (uploadedFiles.length > 0) {
-					res.redirect(303, `${question}/check`);
+					res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION}/check`);
 					return;
 				}
 			}
@@ -143,7 +143,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 							?.uploadedFiles ?? [];
 
 					if (uploadedFiles.length > 0) {
-						res.redirect(303, `${question}/check`);
+						res.redirect(303, `${questionConfig.url}/check`);
 						return;
 					}
 				}
