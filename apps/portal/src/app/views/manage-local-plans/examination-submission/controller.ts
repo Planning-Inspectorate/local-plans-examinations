@@ -489,7 +489,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const submissionDate = new Date();
 		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
 			service,
-			fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+			fileUploadQuestionConfigs.map((questionConfig) => questionConfig.documentSetFolderName)
 		);
 
 		try {

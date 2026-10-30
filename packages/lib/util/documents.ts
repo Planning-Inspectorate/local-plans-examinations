@@ -561,10 +561,10 @@ export class DocumentUtil {
 	}
 
 	public static commitTempDocuments(service: Service, caseId: string, documentSetIds: string[]) {
-		return service.db.documentSet.updateMany({
+		return service.db.document.updateMany({
 			where: {
 				caseId,
-				id: { in: documentSetIds },
+				documentSetId: { in: documentSetIds },
 				isTemp: true,
 				isDeleted: false
 			},

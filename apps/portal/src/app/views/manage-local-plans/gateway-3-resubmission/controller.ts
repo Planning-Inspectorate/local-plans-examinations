@@ -784,7 +784,7 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 		},
 		onFilesChange: async ({ req, uploadedFiles }) => {
 			const folderName = getResubmissionDocumentSetFolderName(req);
-			await DocumentUtil.saveDocuments(service, req, folderName, uploadedFiles);
+			await DocumentUtil.saveDocuments(service, req, folderName, uploadedFiles, true);
 		}
 	});
 
