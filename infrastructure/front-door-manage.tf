@@ -207,7 +207,7 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
     }
 
     override {
-      rule_group_name = "FILE-SIZE"
+      rule_group_name = "FILESIZE"
       rule {
         action  = "Log"
         enabled = false
