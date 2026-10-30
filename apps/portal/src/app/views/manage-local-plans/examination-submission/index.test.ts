@@ -273,6 +273,10 @@ describe('submitted examination page', () => {
 		assert.ok(html.includes('local-plan.pdf'));
 		assert.ok(html.includes('appendix.pdf'));
 		assert.ok(html.includes('Examination report'));
+		assert.ok(
+			html.indexOf('data-cy="examination-report-row"') < html.indexOf('Local plan submission for examination'),
+			'Examination report row should be the first row in the documents table'
+		);
 		assert.match(
 			html,
 			/href="\/manage-local-plans\/PLAN-61797\/examination\/download-document\/report-1">examination-report\.pdf<\/a> \(issued 20 October 2026\)/

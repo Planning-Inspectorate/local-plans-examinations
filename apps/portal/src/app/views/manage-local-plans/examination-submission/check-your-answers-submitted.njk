@@ -42,18 +42,6 @@
                             </tr>
                         </thead>
                         <tbody class="govuk-table__body">
-                            {% for row in section.list.rows %}
-                                <tr class="govuk-table__row">
-                                    <td class="govuk-table__cell govuk-!-width-one-half">{{ row.key.text }}</td>
-                                    <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
-                                        {% if row.value.html %}
-                                            {{ row.value.html | safe }}
-                                        {% else %}
-                                            {{ row.value.text }}
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
                             {% if loop.first and examinationReportFiles.length %}
                                 <tr class="govuk-table__row" data-cy="examination-report-row">
                                     <td class="govuk-table__cell govuk-!-width-one-half">Examination report</td>
@@ -68,6 +56,18 @@
                                     </td>
                                 </tr>
                             {% endif %}
+                            {% for row in section.list.rows %}
+                                <tr class="govuk-table__row">
+                                    <td class="govuk-table__cell govuk-!-width-one-half">{{ row.key.text }}</td>
+                                    <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
+                                        {% if row.value.html %}
+                                            {{ row.value.html | safe }}
+                                        {% else %}
+                                            {{ row.value.text }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
