@@ -14,6 +14,7 @@ import {
 	issueGateway3Document,
 	issueGateway2WorkshopDocuments,
 	issueExaminationReport,
+	issueMiqDocuments,
 	fileUploaderCaseSessionKeyForField,
 	redirectToFileUploaderQuestion,
 	redirectToChecks,
@@ -2528,5 +2529,68 @@ describe('issueGateway2WorkshopDocuments', () => {
 		assert.deepEqual(req.session.alerts[0], expectedMessage);
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
+	});
+});
+
+describe('issueMiqDocuments', () => {
+	function createMiqRequest(session: Record<string, unknown> = {}): any {
+		return {
+			session,
+			params: { reference: REFERENCE, question: 'examination-miq-documents' }
+		};
+	}
+
+	it('records the share date and the signed-in user email', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ miqDocumentSharedDate: null }));
+		const req = createMiqRequest({
+			account: { name: 'Test Officer', username: 'test.officer@planninginspectorate.gov.uk' }
+		});
+		const res = { redirect: mock.fn() };
+
+		await issueMiqDocuments(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		const { update, create } = service.db.examinationInfo.upsert.mock.calls[0].arguments[0];
+		assert.ok(update.miqDocumentSharedDate instanceof Date);
+		assert.equal(update.miqDocumentSharedBy, 'test.officer@planninginspectorate.gov.uk');
+		assert.equal(create.miqDocumentSharedBy, 'test.officer@planninginspectorate.gov.uk');
+		assert.deepEqual(req.session.alerts[0], { type: 'success', text: 'MIQ document(s) shared', html: undefined });
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/examination`]);
+	});
+
+	it('still shares when there is no signed-in account', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ miqDocumentSharedDate: null }));
+		const req = createMiqRequest();
+		const res = { redirect: mock.fn() };
+
+		await issueMiqDocuments(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		const { update } = service.db.examinationInfo.upsert.mock.calls[0].arguments[0];
+		assert.ok(update.miqDocumentSharedDate instanceof Date);
+		assert.equal(update.miqDocumentSharedBy, undefined);
+	});
+
+	it('does not overwrite who shared the MIQ documents once shared', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			miqDocumentSharedDate: new Date('2026-01-01T00:00:00.000Z')
+		}));
+		const req = createMiqRequest({
+			account: { name: 'Other Officer', username: 'other.officer@planninginspectorate.gov.uk' }
+		});
+		const res = { redirect: mock.fn() };
+
+		await issueMiqDocuments(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.deepEqual(req.session.alerts[0], {
+			type: 'important',
+			text: 'MIQ documents already shared',
+			html: undefined
+		});
 	});
 });

@@ -43,6 +43,7 @@ type ExaminationInfoRecord = {
 	expectedSubmissionForExaminationDate: Date | null;
 	submissionForExaminationDate: Date | null;
 	miqDocumentSharedDate: Date | null;
+	miqDocumentSharedBy?: string | null;
 	statusLookup: { displayName: string } | null;
 };
 
@@ -338,8 +339,7 @@ export function buildSubmittedExaminationView(service: PortalService): RequestHa
 		if (examinationInfo.miqDocumentSharedDate) {
 			res.locals.submissionDate = formatDisplayDate(examinationInfo.miqDocumentSharedDate);
 			res.locals.submissionTime = formatDisplayTime(examinationInfo.miqDocumentSharedDate);
-			res.locals.submitter =
-				request.currentCase?.caseOfficerName || request.currentCase?.caseOfficer || request.currentCase?.email;
+			res.locals.submitter = examinationInfo.miqDocumentSharedBy || request.currentCase?.email;
 		} else if (submissionDate) {
 			res.locals.submissionDate = formatDisplayDate(submissionDate);
 			res.locals.submissionTime = formatDisplayTime(submissionDate);

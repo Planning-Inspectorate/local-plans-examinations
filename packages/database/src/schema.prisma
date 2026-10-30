@@ -264,6 +264,7 @@ model ExaminationInfo {
   isSound                              String?              @db.NVarChar(50)
   soundUnsoundDate                     DateTime?            @db.DateTime2
   miqDocumentSharedDate                DateTime?            @db.DateTime2
+  miqDocumentSharedBy                  String?              @db.NVarChar(320)
   adoptionDate                         DateTime?            @db.DateTime2
   approvedForCILDate                   DateTime?            @db.DateTime2
   hearings                             ExaminationHearing[]

@@ -889,6 +889,7 @@ export function issueMiqDocuments(service: ManageService, journeyId: string): As
 			const currentUser = account?.name ?? 'Unknown';
 			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
 				miqDocumentSharedDate: miqDocumentSharedDate,
+				miqDocumentSharedBy: account?.username,
 				status: EXAMINATION_STATUS_ID.IN_EXAMINATION
 			});
 			await updateCaseHistory(
