@@ -28,6 +28,7 @@ import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/stati
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import lusca from 'lusca';
 import { createJourney, JOURNEY_ID } from './journey.ts';
+import { markEditingFromCheckAnswers } from '../../../session/submission-session.ts';
 import {
 	createExaminationQuestions,
 	EXAMINATION_FILE_UPLOAD_QUESTIONS,
@@ -51,7 +52,6 @@ type CaseWithExaminationInfo = CaseModel & {
 
 type ExaminationSession = Request['session'] &
 	FileUploaderSession & {
-		editingFromCheckAnswers?: boolean;
 		forms?: Record<string, unknown>;
 	};
 
@@ -255,7 +255,7 @@ export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 }
 
 export function setAsEditingFromCheckAnswers(req: Request, _: Response, next: NextFunction) {
-	(req as ExaminationRequest).session.editingFromCheckAnswers = true;
+	markEditingFromCheckAnswers(req.session);
 	next();
 }
 

@@ -679,6 +679,35 @@ describe('buildEnterOtpPage', () => {
 	});
 });
 
+describe('resend session state', () => {
+	it('shows the new-code message once after a successful resend', async () => {
+		const service = createMockService();
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const resendRes = createMockRes();
+
+		await buildRequestNewCode(service)(req, resendRes);
+
+		assertRedirect(resendRes, '/login/enter-code');
+		assert.strictEqual(req.session.caseReference, 'test@example.com');
+		assert.strictEqual(req.session.showNewCodeMessage, true);
+
+		const enterRes = createMockRes();
+		await buildEnterOtpPage()(req, enterRes);
+		assert.strictEqual(assertRender(enterRes, 'views/login/enter-otp.njk').showNewCodeMessage, true);
+		assert.strictEqual(req.session.showNewCodeMessage, undefined);
+	});
+
+	it('does not consume the message if the login email is missing', async () => {
+		const req = createMockReq({}, { showNewCodeMessage: true });
+		const res = createMockRes();
+
+		await buildEnterOtpPage()(req, res);
+
+		assert.strictEqual(res.status.mock.calls[0].arguments[0], 404);
+		assert.strictEqual(req.session.showNewCodeMessage, true);
+	});
+});
+
 describe('login view models', () => {
 	const pageNotFoundModel = {
 		pageTitle: 'Page not found',

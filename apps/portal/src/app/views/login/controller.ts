@@ -3,6 +3,13 @@ import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
+import {
+	clearLoginEmail,
+	completeAuthentication,
+	consumeNewCodeMessage,
+	markNewCodeSent,
+	setLoginEmail
+} from '../../session/auth-session.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
@@ -52,7 +59,7 @@ export interface NoAccessViewModel {
 
 export function buildEnterEmailPage(viewData: Partial<LoginEmailViewModel> = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
-		delete req.session.email;
+		clearLoginEmail(req.session);
 
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
@@ -107,7 +114,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('Login attempt with unrecognised email');
-				delete req.session.email;
+				clearLoginEmail(req.session);
 				return res.render('views/login/enter-email-page.njk', {
 					pageTitle: 'Sign-in',
 					pageHeading: 'Sign-in',
@@ -130,7 +137,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info('Login attempt while locked out');
-				req.session.email = sanitisedEmail;
+				setLoginEmail(req.session, sanitisedEmail);
 				return res.redirect(`${req.baseUrl}/enter-code`);
 			} else if (otpRecord && otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now()) {
 				await db.oneTimePassword.update({
@@ -163,7 +170,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				});
 			}
 
-			req.session.email = sanitisedEmail;
+			setLoginEmail(req.session, sanitisedEmail);
 
 			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
 
@@ -208,8 +215,7 @@ export function buildEnterOtpPage(viewData: Partial<LoginOtpViewModel> = {}): As
 			} satisfies ErrorPageViewModel);
 		}
 
-		const showNewCodeMessage = req.session.showNewCodeMessage || false;
-		delete req.session.showNewCodeMessage;
+		const showNewCodeMessage = consumeNewCodeMessage(req.session);
 
 		return res.render('views/login/enter-otp.njk', {
 			pageTitle: 'Enter your one-time password',
@@ -258,14 +264,12 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('OTP verification attempted for an unrecognised email');
-				delete req.session.email;
+				clearLoginEmail(req.session);
 				return res.redirect(`${req.baseUrl}/no-access`);
 			}
 
 			if (isOneTimePasswordBypass(service, req, otp)) {
-				req.session.isAuthenticated = true;
-				req.session.authenticatedEmail = email;
-				delete req.session.email;
+				completeAuthentication(req.session, email);
 
 				logger.info('OTP bypass verification success');
 				return res.redirect('/manage-local-plans/your-plans');
@@ -371,9 +375,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				}
 			});
 
-			req.session.isAuthenticated = true;
-			req.session.authenticatedEmail = email;
-			delete req.session.email;
+			completeAuthentication(req.session, email);
 
 			logger.info('OTP verification success');
 			return res.redirect('/manage-local-plans/your-plans');
@@ -465,9 +467,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 
 			logger.info('New OTP requested and sent');
 
-			// Set session flag to show success message
-			req.session.caseReference = email;
-			req.session.showNewCodeMessage = true;
+			markNewCodeSent(req.session, email);
 
 			return res.redirect(`${req.baseUrl}/enter-code`);
 		} catch {
