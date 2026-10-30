@@ -126,12 +126,11 @@
                         {% endif %}
                       {% endif %}
                       {% if formattedRow %}
-                        {% set _ = formattedRows.push(formattedRow) %}
-                      {% endif %}
-                      {% if section.heading == 'Hearings' and row.key.text == 'MIQs' %}
-                        {% set _ = miqsRow.push(formattedRow) %}
-                      {% else %}
-                        {% set _ = formattedRows.push(formattedRow) %}
+                        {% if section.heading == 'Hearings' and row.key.text == 'MIQs' %}
+                          {% set _ = miqsRow.push(formattedRow) %}
+                        {% else %}
+                          {% set _ = formattedRows.push(formattedRow) %}
+                        {% endif %}
                       {% endif %}
                     {% endif %}
                   {% endfor %}
