@@ -3,6 +3,8 @@ import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
 import { getRoutePlanReference } from '../utils.ts';
 import { loadConfig } from '../../../../config.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
+import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
 
@@ -94,6 +96,12 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 
 		// Record the submission date on the case and gateway2Info
 		const submissionDate = new Date();
+
+		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+			service,
+			gateway2FileUploadQuestionConfigs.map((questionsConfig) => questionsConfig.url)
+		);
+
 		try {
 			await db.$transaction([
 				db.case.update({
@@ -103,7 +111,8 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				db.gateway2Info.update({
 					where: { caseId: caseRecord.id },
 					data: { actualDate: submissionDate }
-				})
+				}),
+				DocumentUtil.commitTempDocuments(service, caseRecord.id, [...documentSetIds.values()])
 			]);
 		} catch (error) {
 			logger.error({ error }, `Failed to update submission date for case ${reference}`);

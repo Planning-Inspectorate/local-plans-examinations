@@ -232,14 +232,15 @@ export class DocumentUtil {
 	public static async loadUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string
+		documentSetId: string,
+		{ includeTemp = false }: { includeTemp?: boolean } = {}
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSetId,
 				isDeleted: false,
-				isTemp: false
+				...(includeTemp ? {} : { isTemp: false })
 			},
 			include: {
 				latestDocumentVersion: true
@@ -557,5 +558,19 @@ export class DocumentUtil {
 		const fileName = blobDetails.fileName;
 		const blobStorageUtil = service.createFileStorage(undefined, blobDetails.containerName);
 		await blobStorageUtil.downloadToExpressResponse(blobPath, fileName, res);
+	}
+
+	public static commitTempDocuments(service: Service, caseId: string, documentSetIds: string[]) {
+		return service.db.documentSet.updateMany({
+			where: {
+				caseId,
+				id: { in: documentSetIds },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: {
+				isTemp: false
+			}
+		});
 	}
 }

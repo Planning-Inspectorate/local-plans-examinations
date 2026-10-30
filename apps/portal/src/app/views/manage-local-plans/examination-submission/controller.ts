@@ -408,7 +408,9 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 			if (!documentSetId) {
 				throw new Error(`Missing document set reference data for "${questionConfig.documentSetFolderName}"`);
 			}
-			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId, {
+				includeTemp: true
+			});
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),
@@ -485,14 +487,22 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		}
 
 		const submissionDate = new Date();
+		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+			service,
+			fileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+		);
+
 		try {
-			await service.db.examinationInfo.update({
-				where: { caseId },
-				data: {
-					status: EXAMINATION_STATUS_ID.SUBMITTED,
-					submissionForExaminationDate: submissionDate
-				}
-			});
+			await service.db.$transaction([
+				service.db.examinationInfo.update({
+					where: { caseId },
+					data: {
+						status: EXAMINATION_STATUS_ID.SUBMITTED,
+						submissionForExaminationDate: submissionDate
+					}
+				}),
+				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
+			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to record examination submission for case ${planReference ?? ''}`);
 			return res.status(500).send('Failed to record submission');
@@ -561,7 +571,7 @@ export function buildExaminationMiddleware(service: PortalService) {
 						};
 					},
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await DocumentUtil.saveDocuments(service, req, questionConfig.documentSetFolderName, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.documentSetFolderName, uploadedFiles, true);
 						await markExaminationInProgress(service, getCurrentCaseId(req));
 						syncUploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 					},

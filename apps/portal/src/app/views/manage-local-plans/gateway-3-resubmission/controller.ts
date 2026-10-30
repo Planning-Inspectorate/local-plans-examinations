@@ -496,6 +496,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 
 		const submittedDate = new Date();
 
+		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(service, [
+			getResubmissionDocumentSetFolderName(req)
+		]);
+
 		try {
 			await service.db.$transaction([
 				service.db.gateway3Submission.update({
@@ -505,7 +509,8 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				service.db.gateway3Info.update({
 					where: { caseId },
 					data: { actualDate: submittedDate }
-				})
+				}),
+				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to complete resubmission for case ${planReference ?? ''}`);

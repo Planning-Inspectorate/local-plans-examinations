@@ -50,6 +50,7 @@ import {
 	sortGateway3Submissions,
 	type Gateway3SubmissionSummary
 } from '#util/gateway-3-submission.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -806,6 +807,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			return res.status(500).send('No case found');
 		}
 
+		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+			service,
+			gateway3FileUploadQuestionConfigs.map((questionsConfig) => questionsConfig.url)
+		);
+
 		try {
 			await service.db.$transaction([
 				service.db.case.update({
@@ -815,7 +821,8 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				service.db.gateway3Info.update({
 					where: { caseId },
 					data: { actualDate: submissionDate }
-				})
+				}),
+				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);
