@@ -11,10 +11,12 @@ import {
 	createExaminationHearingJourney,
 	createExaminationPauseJourney,
 	createGateway3Journey,
+	createDeleteCaseJourney,
 	createTimetableJourney
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
+import { configureNunjucks } from '../../nunjucks.ts';
 
 function createOverviewJourneyForTest(overrideRequest?: Record<string, any>) {
 	const params = overrideRequest
@@ -437,4 +439,72 @@ describe('createExaminationPauseJourney', () => {
 			});
 		}
 	}
+});
+
+describe('createDeleteCaseJourney', () => {
+	function createDeleteCaseJourneyForTest(session: Record<string, unknown> = {}) {
+		return createDeleteCaseJourney(
+			{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.DELETE_CASE_JOURNEY_ID, '', {}),
+			questions
+		);
+	}
+
+	it('asks for the delete reason in the delete-case section', () => {
+		const journey = createDeleteCaseJourneyForTest();
+		const [deleteCaseSection] = journey.sections;
+
+		assert.equal(journey.journeyId, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
+		assert.equal(journey.sections.length, 1);
+		assert.equal(deleteCaseSection.segment, COMMON_CONSTS.DELETE_CASE_SECTION);
+		assert.deepEqual(
+			deleteCaseSection.questions.map((question) => question.fieldName),
+			['deleteCaseWhy']
+		);
+	});
+
+	it('builds delete case URLs without repeating the delete-case segment', () => {
+		const journey = createDeleteCaseJourneyForTest();
+
+		assert.equal(journey.baseUrl, '/case/LP-TEST-001');
+		assert.equal(journey.taskListUrl, '/case/LP-TEST-001/delete-case/check');
+		assert.equal(journey.taskListTemplate, 'views/layouts/delete-case-check.njk');
+		assert.equal(
+			journey.getCurrentQuestionUrl(COMMON_CONSTS.DELETE_CASE_SECTION, COMMON_CONSTS.DELETE_CASE_REASON),
+			'/case/LP-TEST-001/delete-case/delete-case-reason'
+		);
+	});
+
+	it('links the reason page back to the case overview', () => {
+		const journey = createDeleteCaseJourneyForTest();
+
+		assert.equal(journey.initialBackLink, '/case/LP-TEST-001/overview');
+	});
+
+	it('renders Continue and a Cancel link returning to Overview', () => {
+		const journey = createDeleteCaseJourneyForTest();
+		const viewModel = questions.deleteCaseWhy.toViewModel({
+			params: { section: COMMON_CONSTS.DELETE_CASE_SECTION, question: COMMON_CONSTS.DELETE_CASE_REASON },
+			section: journey.sections[0],
+			journey
+		});
+		const html = configureNunjucks().render('components/single-line-input/index.njk', {
+			...viewModel,
+			config: { headerTitle: 'Manage', footerLinks: [] }
+		});
+		assert.equal(viewModel.continueButtonText, 'Continue');
+		assert.ok(html.includes('Why are you deleting this case?'));
+		const cancelLink = html.match(/<a\b[^>]*data-cy="button-back"[^>]*>Cancel<\/a>/)?.[0];
+		assert.ok(cancelLink);
+		assert.match(cancelLink, /class="govuk-link"/);
+		assert.match(cancelLink, /href="\/case\/LP-TEST-001\/overview"/);
+	});
+
+	it('marks the delete case journey as the current journey', () => {
+		const session: Record<string, unknown> = {};
+
+		createDeleteCaseJourneyForTest(session);
+
+		assert.equal(session.currentJourney, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
+	});
 });

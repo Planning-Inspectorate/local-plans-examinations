@@ -23,11 +23,11 @@ import {
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	issueGateway2WorkshopDocuments,
-	issueMiqDocuments,
 	redirectToChecks,
 	preprocessQuestionProperties,
 	handleMulterFileSizeError,
-	journeyFileUploadQuestionConfigs
+	journeyFileUploadQuestionConfigs,
+	issueMiqs
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -45,7 +45,10 @@ import {
 	validate,
 	validationErrorHandler,
 	type Journey,
-	JourneyResponse
+	JourneyResponse,
+	buildGetJourneyResponseFromSession,
+	clearDataFromSession,
+	saveDataToSession
 } from '@planning-inspectorate/dynamic-forms';
 import { questions, getQuestions } from './questions.ts';
 import {
@@ -58,7 +61,8 @@ import {
 	createExaminationHearingJourney,
 	createExaminationPauseJourney,
 	createGateway3ReportJourney,
-	createTimetableJourney
+	createTimetableJourney,
+	createDeleteCaseJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -561,11 +565,7 @@ export function caseRouter(service: ManageService): IRouter {
 		registerCaseJourney(router, service, config, updateCase);
 	}
 
-	/**
-	 * Delete case
-	 */
-	router.get('/delete-case', getDeleteCase(service));
-	router.post('/delete-case', postMarkAsDeleteCase(service));
+	registerDeleteCaseJourney(router, service);
 
 	router.get('/download-case-document/:documentId', downloadDocument(service));
 
@@ -636,7 +636,7 @@ function registerCaseJourney(
 
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
-	router.post(`/${path}/miq-documents/:question/check`, issueMiqDocuments(service, journeyId));
+	router.post(`/${path}/hearings/:question/check`, issueMiqs(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
@@ -839,9 +839,8 @@ function registerCaseJourney(
 		);
 
 		router.post(
-			`${questionPath}/delete-document/:fileId`,
+			`${questionPath}/delete-document/*fileId`,
 			getJourneyResponse,
-			deleteDocumentRoute,
 			deleteDocumentRoute,
 			handleMulterFileSizeError
 		);
@@ -1004,4 +1003,57 @@ function getOrCreateRecord(container: Record<string, unknown>, key: string): Rec
 	const value: Record<string, unknown> = {};
 	container[key] = value;
 	return value;
+}
+
+function registerDeleteCaseJourney(router: IRouter, service: ManageService): void {
+	const journeyId = COMMON_CONSTS.DELETE_CASE_JOURNEY_ID;
+	const firstQuestionPath = `/delete-case/${COMMON_CONSTS.DELETE_CASE_REASON}`;
+
+	const getJourneyResponse = buildGetJourneyResponseFromSession(journeyId);
+	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		await getQuestions(service, req);
+		next();
+	});
+	const getJourney = buildGetJourney((req, journeyResponse) =>
+		createDeleteCaseJourney(req, journeyResponse, questions)
+	);
+
+	const setDeleteCaseSection = (req: Request, _res: Response, next: NextFunction) => {
+		req.params.section = COMMON_CONSTS.DELETE_CASE_SECTION;
+		next();
+	};
+
+	router.get('/delete-case', (req, res) => {
+		clearDataFromSession({ req, journeyId });
+		res.redirect(req.baseUrl + firstQuestionPath);
+	});
+
+	router.get(
+		'/delete-case/check',
+		getJourneyResponse,
+		resolveQuestions,
+		getJourney,
+		getDeleteCase(service),
+		buildList()
+	);
+	router.post('/delete-case/check', getJourneyResponse, resolveQuestions, getJourney, postMarkAsDeleteCase(service));
+
+	router.get(
+		'/delete-case/:question',
+		setDeleteCaseSection,
+		getJourneyResponse,
+		resolveQuestions,
+		getJourney,
+		question
+	);
+	router.post(
+		'/delete-case/:question',
+		setDeleteCaseSection,
+		getJourneyResponse,
+		resolveQuestions,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		buildSave(saveDataToSession, true)
+	);
 }

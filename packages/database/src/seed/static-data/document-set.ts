@@ -409,12 +409,13 @@ export const DOCUMENT_SET = [
 		folderName: DOCUMENT_SET_FOLDER_NAME.EX_G3_REPORT_REPS,
 		displayOrder: 313
 	},
+	// Others
 	{
-		id: DOCUMENT_SET_ID.EX_MIQ,
-		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		id: DOCUMENT_SET_ID.EXAMINATION_MIQS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
 		gatewayId: GATEWAY_ID.EXAMINATION,
-		displayName: 'Matters, issues and questions (Examination)',
-		folderName: DOCUMENT_SET_FOLDER_NAME.EX_MIQ,
-		displayOrder: 314
+		displayName: 'MIQs',
+		folderName: DOCUMENT_SET_FOLDER_NAME.EXAMINATION_MIQS,
+		displayOrder: 1
 	}
 ];

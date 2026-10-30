@@ -671,7 +671,7 @@ describe('examination submitted view MIQ submitter', () => {
 		const service = {
 			db: {
 				documentSet: {
-					findMany: mock.fn(async () => [{ id: 'miq-set', folderName: 'examination-miq-documents' }])
+					findMany: mock.fn(async () => [{ id: 'miq-set', folderName: 'miqs' }])
 				},
 				document: { findMany: mock.fn(async () => []) }
 			},

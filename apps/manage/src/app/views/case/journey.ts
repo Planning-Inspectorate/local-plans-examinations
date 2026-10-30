@@ -13,6 +13,7 @@ import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -432,8 +433,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
 			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
-			new Section('MIQ documents', 'miq-documents').addQuestion(questions.examinationMiqDocuments),
-			new Section('Hearings', 'hearings'),
+			new Section('Hearings', 'hearings').addQuestion(questions.miqs),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
@@ -669,6 +669,28 @@ function getBackLinksAndSetReference(
 	return journey;
 }
 
+export function createDeleteCaseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const overviewUrl = req.baseUrl + '/overview';
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID,
+		sections: [new Section('Delete case', COMMON_CONSTS.DELETE_CASE_SECTION).addQuestion(questions.deleteCaseWhy)],
+		taskListUrl: `${COMMON_CONSTS.DELETE_CASE_SECTION}/check`,
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/delete-case-check.njk',
+		journeyTitle: 'Delete case',
+		returnToListing: false,
+		makeBaseUrl: () => req.baseUrl,
+		initialBackLink: overviewUrl,
+		response
+	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.DELETE_CASE_JOURNEY_ID;
+	}
+
+	return journey;
+}
+
 const overviewQuestionNames = new Set<string>([
 	'planTitle',
 	'planType',
@@ -715,7 +737,7 @@ const gateway3QuestionNames = new Set<string>([
 	'examinationWebsite',
 	...Array.from(
 		// Gateway 3 submission questions
-		{ length: 50 },
+		{ length: NUM_GW3_SUBMISSIONS_QUESTIONS },
 		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()
@@ -746,7 +768,7 @@ const examinationQuestionNames = new Set<string>([
 	'adoptionDate',
 	'approvedForCILDate',
 	'examinationReport',
-	'examinationMiqDocuments'
+	'miqs'
 ]);
 
 export const journeyQuestions = {

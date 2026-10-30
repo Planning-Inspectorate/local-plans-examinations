@@ -1,12 +1,12 @@
+import { questions } from '../questions.ts';
 import { SubmissionCheckWithDate } from './submission-check-with-date.ts';
 import { type SubmissionCheckData } from './submission-check.ts';
 import { type ManageService } from '#service';
 import type { UploadedFile } from '@pins/local-plans-lib/storage/types.ts';
-import { questions } from '../questions.ts';
 
-export class MiqDocumentsSubmissionCheck extends SubmissionCheckWithDate {
+export class MiqsSubmissionCheck extends SubmissionCheckWithDate {
 	public async generateDataForPage(
-		_caseId: string,
+		caseId: string,
 		caseReference: string,
 		journeyId: string,
 		section: string,
@@ -15,18 +15,16 @@ export class MiqDocumentsSubmissionCheck extends SubmissionCheckWithDate {
 		_service: ManageService,
 		uploadedFiles: UploadedFile[]
 	): Promise<SubmissionCheckData> {
-		const fileUploadedDate = uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined;
-		const answersToReview = [
-			...this.generateAdditionalDateField(fileUploadedDate, undefined),
-			...this.formatDocuments(
-				uploadedFiles,
-				`/case/${caseReference}/download-case-document`,
-				`/case/${caseReference}/${journeyId}/${section}/${questions.examinationMiqDocuments.url}`
-			)
-		];
 		return {
 			titleHeading: 'Check MIQ documents and send notification',
-			answersToReview: answersToReview,
+			answersToReview: [
+				...this.formatDocuments(
+					uploadedFiles,
+					`/case/${caseReference}/download-case-document`,
+					`/case/${caseReference}/${journeyId}/${section}/${questions.miqs.url}`,
+					'returnTo=check'
+				)
+			],
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,

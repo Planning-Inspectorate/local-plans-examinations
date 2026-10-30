@@ -66,11 +66,10 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_SUMMARY_OF_CONSULTATION: 'g2-sum-of-cons',
 	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
 
-	// MIQ documents (Matters, Issues and Questions)
-	EX_MIQ: 'ex-miq',
-
 	// Other
-	EXAMINATION_REPORT: 'exam-report'
+	EXAMINATION_REPORT: 'exam-report',
+	// Others
+	EXAMINATION_MIQS: 'ex-miqs'
 };
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
@@ -129,11 +128,10 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation',
 	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
 
-	// MIQ documents (Matters, Issues and Questions)
-	EX_MIQ: 'examination-miq-documents',
-
 	// Other
-	EXAMINATION_REPORT: 'examination-report'
+	EXAMINATION_REPORT: 'examination-report',
+	// Others
+	EXAMINATION_MIQS: 'miqs'
 };
 export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_COVER_LETTER,
@@ -185,6 +183,5 @@ export const examinationSetIds = [
 	DOCUMENT_SET_ID.EX_ENVIRONMENTAL_EFFECTS,
 	DOCUMENT_SET_ID.EX_ADDITIONAL_EVIDENCE,
 	DOCUMENT_SET_ID.EX_CHANGES_SINCE_G3,
-	DOCUMENT_SET_ID.EX_G3_REPORT_REPS,
-	DOCUMENT_SET_ID.EX_MIQ
+	DOCUMENT_SET_ID.EX_G3_REPORT_REPS
 ];

@@ -10,7 +10,8 @@ import {
 	caseOverviewGateway2AssessorPage,
 	caseOverviewExaminingInspector1Page,
 	caseOverviewQAInspector1Page,
-	deleteCasePage
+	deleteCasePage,
+	deleteCaseReasonPage
 } from '../../../../page-objects/manage/case-overview/index.ts';
 import {
 	planTitle,
@@ -24,7 +25,8 @@ import {
 	examiningInspector1,
 	localPlanningAuthority,
 	programmeOfficer,
-	seededCaseNotes
+	seededCaseNotes,
+	deleteCaseReason
 } from '../../../../fixtures/manage/overview.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
@@ -210,6 +212,9 @@ describe('Case overview updates', () => {
 	it('deletes a case from the case overview', { tags: ['regression'] }, () => {
 		caseOverviewPage.navigateToDeletePage();
 
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.enterDeleteReason(deleteCaseReason.value);
+
 		deleteCasePage.verifyLoaded();
 		deleteCasePage.verifyCaseDetails(
 			seededPlanTitle,
@@ -217,7 +222,58 @@ describe('Case overview updates', () => {
 			`${localPlanningAuthority.lpa1Value}, ${localPlanningAuthority.lpa2Value}`,
 			caseOfficer.display
 		);
+		deleteCasePage.verifyDeleteReason(deleteCaseReason.value);
 		deleteCasePage.deleteCase();
+
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
+	});
+
+	it('changes the delete reason from the check page', { tags: ['regression'] }, () => {
+		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.enterDeleteReason(deleteCaseReason.value);
+
+		deleteCasePage.verifyLoaded();
+		deleteCasePage.changeDeleteReason();
+
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.verifyDeleteReason(deleteCaseReason.value);
+		deleteCaseReasonPage.enterDeleteReason(deleteCaseReason.updatedValue);
+
+		deleteCasePage.verifyLoaded();
+		deleteCasePage.verifyDeleteReason(deleteCaseReason.updatedValue);
+	});
+
+	it('keeps the case when the delete is cancelled', { tags: ['regression'] }, () => {
+		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.enterDeleteReason(deleteCaseReason.value);
+
+		deleteCasePage.verifyLoaded();
+		deleteCasePage.cancel();
+
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+	});
+
+	it('returns to the overview from the delete reason page', { tags: ['regression'] }, () => {
+		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.goBack();
+
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+	});
+
+	it('starts the delete reason empty each time the delete is started', { tags: ['regression'] }, () => {
+		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.enterDeleteReason(deleteCaseReason.value);
+		deleteCasePage.verifyLoaded();
+		deleteCasePage.cancel();
+
+		caseOverviewPage.verifyLoaded(seededPlanTitle);
+		caseOverviewPage.navigateToDeletePage();
+
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.verifyDeleteReason('');
 	});
 });

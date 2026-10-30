@@ -373,9 +373,9 @@ async function loadMiqDocuments(
 	planReference: string | undefined
 ): Promise<MiqDocumentViewModel[]> {
 	const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(service, [
-		DOCUMENT_SET_FOLDER_NAME.EX_MIQ
+		DOCUMENT_SET_FOLDER_NAME.EXAMINATION_MIQS
 	]);
-	const documentSetId = documentSetIdsByFolderName.get(DOCUMENT_SET_FOLDER_NAME.EX_MIQ);
+	const documentSetId = documentSetIdsByFolderName.get(DOCUMENT_SET_FOLDER_NAME.EXAMINATION_MIQS);
 	if (!documentSetId) {
 		return [];
 	}
