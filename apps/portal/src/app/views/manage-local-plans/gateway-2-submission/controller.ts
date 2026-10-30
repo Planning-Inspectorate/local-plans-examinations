@@ -89,7 +89,7 @@ type Gateway2FileUploadQuestion = FileUploaderQuestionProps & {
 };
 
 // Ordered list for loading each persisted upload when the case page opens.
-const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
+export const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
 const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
 // Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
@@ -273,7 +273,9 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				);
 			}
 
-			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId, {
+				includeTemp: true
+			});
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),
@@ -752,7 +754,7 @@ export function buildGateway2Middleware(service: PortalService) {
 						};
 					},
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, true);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
@@ -765,6 +767,7 @@ export function buildGateway2Middleware(service: PortalService) {
 			])
 		)
 	);
+
 	const deleteGateway2Document = buildFileUploadRouteHandler(
 		new Map(
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => [

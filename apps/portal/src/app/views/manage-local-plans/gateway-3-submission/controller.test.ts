@@ -1155,20 +1155,31 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
-		const caseUpdate = mock.fn(async () => ({}));
-		const gateway3InfoUpdate = mock.fn(async () => ({}));
-		const transaction = mock.fn(async (updates: unknown[]) => Promise.all(updates));
-		const service = {
+	function buildDeclarationService() {
+		return {
 			db: {
-				$transaction: transaction,
-				case: { update: caseUpdate },
-				gateway3Info: { update: gateway3InfoUpdate }
+				$transaction: mock.fn(async (updates: unknown[]) => Promise.all(updates)),
+				case: { update: mock.fn(async () => ({})) },
+				gateway3Info: { update: mock.fn(async () => ({})) },
+				documentSet: {
+					findMany: mock.fn(async ({ where }: { where: { folderName: { in: string[] } } }) =>
+						where.folderName.in.map((folderName) => ({ id: `ds-${folderName}`, folderName }))
+					)
+				},
+				document: { updateMany: mock.fn(async () => ({ count: 0 })) }
 			},
 			logger: {
 				error: mock.fn()
 			}
-		} as unknown as PortalService;
+		};
+	}
+
+	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
+		const declarationService = buildDeclarationService();
+		const transaction = declarationService.db.$transaction;
+		const caseUpdate = declarationService.db.case.update;
+		const gateway3InfoUpdate = declarationService.db.gateway3Info.update;
+		const service = declarationService as unknown as PortalService;
 		const handler = buildPostDeclarationPage(service);
 		const req = {
 			currentCase: { id: 'case-1' },
@@ -1192,6 +1203,52 @@ describe('buildPostDeclarationPage', () => {
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+
+	it('commits the temporary Gateway 3 documents in the same transaction as the submission', async () => {
+		const declarationService = buildDeclarationService();
+		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const res = { redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		const { db } = declarationService;
+		const folderNames = db.documentSet.findMany.mock.calls[0].arguments[0].where.folderName.in;
+		assert.ok(folderNames.length > 0);
+		assert.strictEqual(db.$transaction.mock.calls[0].arguments[0].length, 3);
+		assert.deepStrictEqual(db.document.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: { in: folderNames.map((folderName: string) => `ds-${folderName}`) },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: { isTemp: false }
+		});
+	});
+
+	it('returns 500 without submitting when the document set lookup fails', async () => {
+		const declarationService = buildDeclarationService();
+		declarationService.db.documentSet.findMany.mock.mockImplementation(async () => []);
+		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const sent: unknown[] = [];
+		const { res, calls } = buildMockResponse();
+		(res as unknown as Record<string, unknown>).send = (body: unknown) => sent.push(body);
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(calls.find((c) => c.method === 'status')?.args[0], 500);
+		assert.deepStrictEqual(sent, ['Failed to record submission']);
+		assert.strictEqual(declarationService.db.$transaction.mock.callCount(), 0);
+		assert.strictEqual(declarationService.logger.error.mock.callCount(), 1);
 	});
 });
 

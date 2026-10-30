@@ -74,13 +74,17 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 					const gateway2Documents = await db.document.findMany({
 						where: {
 							caseId: c.id,
-							documentSetId: { in: gateway2SetIds }
+							documentSetId: { in: gateway2SetIds },
+							isDeleted: false,
+							isTemp: false
 						}
 					});
 					const gateway3Documents = await db.document.findMany({
 						where: {
 							caseId: c.id,
-							documentSetId: { in: gateway3SetIds }
+							documentSetId: { in: gateway3SetIds },
+							isDeleted: false,
+							isTemp: false
 						}
 					});
 
