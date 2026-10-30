@@ -43,10 +43,10 @@ import { sortByDateColumn } from '#util/util.ts';
 import {
 	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
-	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
+	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES,
+	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
-import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
@@ -722,6 +722,16 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'plan-title',
 		title: 'Plan title',
 		validators: [new RequiredValidator('Enter a plan title')]
+	},
+	deleteCaseWhy: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Why are you deleting this case?',
+		fieldName: 'deleteCaseWhy',
+		inputAttributes: { 'data-cy': 'delete-case-reason' },
+		url: COMMON_CONSTS.DELETE_CASE_REASON,
+		title: 'Reason for deletion',
+		viewData: { continueButtonText: 'Continue', cancelLinkClasses: 'govuk-link' },
+		validators: [new RequiredValidator('Enter a reason for deleting this case')]
 	},
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,

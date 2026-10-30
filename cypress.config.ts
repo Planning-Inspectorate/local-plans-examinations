@@ -4,6 +4,7 @@ import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
+import { seedPortalCases } from './packages/database/src/seed/seed-otp.ts';
 import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
 import { seedExaminationDeclarationDocuments } from './packages/database/src/seed/seed-examination-declaration.ts';
 import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway-3-submitted.ts';
@@ -118,8 +119,7 @@ export default defineConfig({
 					return null;
 				},
 				seedCase: async () => {
-					await runCommand('npm run db-seed');
-					await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts --case-only');
+					await seedPortalCases({ caseOnly: true });
 					return null;
 				},
 				seedAssignedToMeCase: async () => {

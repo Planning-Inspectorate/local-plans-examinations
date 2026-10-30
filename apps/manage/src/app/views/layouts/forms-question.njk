@@ -19,7 +19,7 @@
     {% block dynQuestionContent %}{% endblock %}
     <a
 				href="{{ cancelLink or backLink }}"
-				class="govuk-button govuk-button--secondary"
+				class="{{ cancelLinkClasses or 'govuk-button govuk-button--secondary' }}"
 				data-cy="button-back"
 				aria-describedby="remove-description"
 		>Cancel</a>

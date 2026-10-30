@@ -1,6 +1,6 @@
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
-import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
+import { type SaveDataFn, type Question, clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
@@ -506,31 +506,35 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	return `${value ?? ''}`;
 }
 
-export function getDeleteCase(service: ManageService): AsyncRequestHandler {
-	return async (req, res) => {
+type AsyncFunction = (req: Request, res: Response, next: NextFunction) => Promise<any>;
+export function getDeleteCase(service: ManageService): AsyncFunction {
+	return async (req, res, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
 		const currentCase = await service.db.case.findUnique({
 			where: { reference },
 			include: { lpas: true }
 		});
 
-		if (!currentCase) {
+		if (!currentCase || currentCase.deletedDate) {
 			return res.status(404).render('views/errors/404.njk');
 		}
 
+		const NOT_PROVIDED = 'Not provided';
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
-
-		const rows = [
-			[{ text: 'Case reference' }, { text: currentCase.reference }],
-			[{ text: 'Plan title' }, { text: currentCase.planTitle }],
-			[{ text: 'Plan type' }, { text: getOptionText('planType', currentCase.planType) }],
-			[{ text: 'LPA' }, { text: currentCase.lpas.map((lpa) => getOptionText('lpa', lpa.lpaCode)).join(', ') }],
-			[{ text: 'Case officer' }, { text: getOptionText('caseOfficer', currentCase.caseOfficer) }]
+		res.locals.caseDetailsRows = [
+			{ key: { text: 'Reference' }, value: { text: currentCase.reference } },
+			{ key: { text: 'Title' }, value: { text: currentCase.planTitle || NOT_PROVIDED } },
+			{ key: { text: 'Type' }, value: { text: getOptionText('planType', currentCase.planType) || NOT_PROVIDED } },
+			{
+				key: { text: 'Planning authority' },
+				value: { text: currentCase.lpas.map((lpa) => getOptionText('lpa', lpa.lpaCode)).join(', ') || NOT_PROVIDED }
+			},
+			{
+				key: { text: 'Case officer' },
+				value: { text: getOptionText('caseOfficer', currentCase.caseOfficer) || NOT_PROVIDED }
+			}
 		];
-
-		res.render('views/layouts/delete-case.njk', {
-			rows
-		});
+		next();
 	};
 }
 
@@ -544,6 +548,23 @@ export function getDeleteWorkshop(): AsyncRequestHandler {
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
 		res.render('views/layouts/delete-workshop.njk', { reference: reference, workshopIndex: workshopToDelete });
 	};
+}
+
+/**
+ * Read the delete reason the delete-case journey saved to the session
+ * @returns the trimmed reason, or undefined if it is missing or blank
+ */
+export function getDeleteReason(locals: Record<string, unknown>): string | undefined {
+	const journeyResponse = locals.journeyResponse;
+	if (!journeyResponse || typeof journeyResponse !== 'object' || !('answers' in journeyResponse)) {
+		return undefined;
+	}
+	const { answers } = journeyResponse;
+	if (!answers || typeof answers !== 'object' || !('deleteCaseWhy' in answers)) {
+		return undefined;
+	}
+	const reason = answers.deleteCaseWhy;
+	return typeof reason === 'string' && reason.trim() !== '' ? reason.trim() : undefined;
 }
 
 /**
@@ -633,22 +654,36 @@ export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandle
 			where: { reference }
 		});
 
+		const deleteReason = getDeleteReason(res.locals);
+		if (!deleteReason) {
+			return res.redirect(`/case/${encodeURIComponent(reference)}/delete-case`);
+		}
+
 		if (!currentCase) {
 			return res.status(404).render('views/errors/404.njk');
 		}
 
-		await markAsDeleteCase({
-			db: service.db,
-			id: currentCase.id
-		});
+		await markAsDeleteCase({ db: service.db, id: currentCase.id, deleteReason });
+
+		clearDataFromSession({ req, journeyId: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID });
+		delete req.session.currentJourney;
+		req.session.alertMessage = `Case ${reference} deleted`;
+		req.session.alertMessageStatus = 'success';
 
 		return res.redirect('/');
 	};
 }
 
-async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: string }): Promise<void> {
-	await db.case.update({ where: { id: id }, data: { deletedDate: new Date() } });
-	return;
+async function markAsDeleteCase({
+	db,
+	id,
+	deleteReason
+}: {
+	db: ManageService['db'];
+	id: string;
+	deleteReason: string;
+}): Promise<void> {
+	await db.case.update({ where: { id }, data: { deletedDate: new Date(), deleteReason } });
 }
 
 function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: string | null) {

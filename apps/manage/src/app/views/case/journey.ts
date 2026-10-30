@@ -667,6 +667,28 @@ function getBackLinksAndSetReference(
 	return journey;
 }
 
+export function createDeleteCaseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const overviewUrl = req.baseUrl + '/overview';
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID,
+		sections: [new Section('Delete case', COMMON_CONSTS.DELETE_CASE_SECTION).addQuestion(questions.deleteCaseWhy)],
+		taskListUrl: `${COMMON_CONSTS.DELETE_CASE_SECTION}/check`,
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/delete-case-check.njk',
+		journeyTitle: 'Delete case',
+		returnToListing: false,
+		makeBaseUrl: () => req.baseUrl,
+		initialBackLink: overviewUrl,
+		response
+	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.DELETE_CASE_JOURNEY_ID;
+	}
+
+	return journey;
+}
+
 const overviewQuestionNames = new Set<string>([
 	'planTitle',
 	'planType',

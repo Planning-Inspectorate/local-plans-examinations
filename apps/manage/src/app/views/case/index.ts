@@ -44,7 +44,10 @@ import {
 	validate,
 	validationErrorHandler,
 	type Journey,
-	JourneyResponse
+	JourneyResponse,
+	buildGetJourneyResponseFromSession,
+	clearDataFromSession,
+	saveDataToSession
 } from '@planning-inspectorate/dynamic-forms';
 import { questions, getQuestions } from './questions.ts';
 import {
@@ -57,7 +60,8 @@ import {
 	createExaminationHearingJourney,
 	createExaminationPauseJourney,
 	createGateway3ReportJourney,
-	createTimetableJourney
+	createTimetableJourney,
+	createDeleteCaseJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -560,11 +564,7 @@ export function caseRouter(service: ManageService): IRouter {
 		registerCaseJourney(router, service, config, updateCase);
 	}
 
-	/**
-	 * Delete case
-	 */
-	router.get('/delete-case', getDeleteCase(service));
-	router.post('/delete-case', postMarkAsDeleteCase(service));
+	registerDeleteCaseJourney(router, service);
 
 	router.get('/download-case-document/:documentId', downloadDocument(service));
 
@@ -1001,4 +1001,57 @@ function getOrCreateRecord(container: Record<string, unknown>, key: string): Rec
 	const value: Record<string, unknown> = {};
 	container[key] = value;
 	return value;
+}
+
+function registerDeleteCaseJourney(router: IRouter, service: ManageService): void {
+	const journeyId = COMMON_CONSTS.DELETE_CASE_JOURNEY_ID;
+	const firstQuestionPath = `/delete-case/${COMMON_CONSTS.DELETE_CASE_REASON}`;
+
+	const getJourneyResponse = buildGetJourneyResponseFromSession(journeyId);
+	const resolveQuestions = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+		await getQuestions(service, req);
+		next();
+	});
+	const getJourney = buildGetJourney((req, journeyResponse) =>
+		createDeleteCaseJourney(req, journeyResponse, questions)
+	);
+
+	const setDeleteCaseSection = (req: Request, _res: Response, next: NextFunction) => {
+		req.params.section = COMMON_CONSTS.DELETE_CASE_SECTION;
+		next();
+	};
+
+	router.get('/delete-case', (req, res) => {
+		clearDataFromSession({ req, journeyId });
+		res.redirect(req.baseUrl + firstQuestionPath);
+	});
+
+	router.get(
+		'/delete-case/check',
+		getJourneyResponse,
+		resolveQuestions,
+		getJourney,
+		getDeleteCase(service),
+		buildList()
+	);
+	router.post('/delete-case/check', getJourneyResponse, resolveQuestions, getJourney, postMarkAsDeleteCase(service));
+
+	router.get(
+		'/delete-case/:question',
+		setDeleteCaseSection,
+		getJourneyResponse,
+		resolveQuestions,
+		getJourney,
+		question
+	);
+	router.post(
+		'/delete-case/:question',
+		setDeleteCaseSection,
+		getJourneyResponse,
+		resolveQuestions,
+		getJourney,
+		validate,
+		validationErrorHandler,
+		buildSave(saveDataToSession, true)
+	);
 }
