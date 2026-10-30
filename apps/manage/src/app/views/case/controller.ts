@@ -909,11 +909,30 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 export function issueMiqs(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingExaminationDetails = await service.db.examinationInfo.findUnique({
+			select: {
+				miqDocumentSharedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (existingExaminationDetails?.miqDocumentSharedDate) {
+			pushAlertToSession(req, 'important', 'MIQ documents already shared');
+			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+			return;
+		}
 		const uploadedFiles =
 			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'miqs')]?.uploadedFiles ?? [];
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
 		const sentDate = new Date();
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			miqDocumentSharedDate: sentDate,
+			miqDocumentSharedBy: account?.username,
+			status: EXAMINATION_STATUS_ID.IN_EXAMINATION
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -1186,6 +1205,25 @@ export function preprocessQuestionProperties(
 				};
 			} else {
 				delete questions['gateway2WorkshopDocuments'].actionLink;
+			}
+		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: true
+				},
+				where: {
+					reference
+				}
+			});
+			const miqComplete = !!caseDetails?.examinationInfo?.miqDocumentSharedDate;
+			if (miqComplete) {
+				questions['miqs'].actionLink = {
+					href: `/case/${reference}/examination/hearings/miqs/check`,
+					text: 'View'
+				};
+			} else {
+				delete questions['miqs'].actionLink;
 			}
 		}
 		if (journeyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {

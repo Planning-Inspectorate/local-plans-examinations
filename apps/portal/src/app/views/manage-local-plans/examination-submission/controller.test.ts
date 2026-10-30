@@ -650,6 +650,59 @@ describe('examination declaration and completion', () => {
 	});
 });
 
+describe('examination submitted view MIQ submitter', () => {
+	function buildMiqContext(examinationInfo: Record<string, unknown>) {
+		const req = {
+			params: { planReference: 'PLAN-61797' },
+			currentCase: {
+				id: 'case-id',
+				email: 'planner@example.com',
+				caseOfficer: '00000000-0000-0000-0000-000000000000',
+				caseOfficerName: 'Test Officer',
+				examinationInfo: {
+					status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+					submissionForExaminationDate: new Date('2026-10-21T10:30:00Z'),
+					miqDocumentSharedDate: new Date('2026-10-25T09:15:00Z'),
+					...examinationInfo
+				}
+			}
+		} as unknown as Request;
+		const res = { locals: { journey: { taskListTemplate: 'editable.njk' } } } as unknown as Response;
+		const service = {
+			db: {
+				documentSet: {
+					findMany: mock.fn(async () => [{ id: 'miq-set', folderName: 'miqs' }])
+				},
+				document: { findMany: mock.fn(async () => []) }
+			},
+			logger: { error: mock.fn() }
+		} as unknown as PortalService;
+		return { req, res, service };
+	}
+
+	it('shows the email of the BO user who shared the MIQ documents', async () => {
+		const next = mock.fn();
+		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: 'test.officer@planninginspectorate.gov.uk' });
+
+		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
+
+		assert.equal(res.locals.submissionDate, '25 October 2026');
+		assert.equal(res.locals.submitter, 'test.officer@planninginspectorate.gov.uk');
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('falls back to the case email, not the case officer, when the sharer was not recorded', async () => {
+		const next = mock.fn();
+		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: null });
+
+		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
+
+		assert.equal(res.locals.submitter, 'planner@example.com');
+		assert.notEqual(res.locals.submitter, 'Test Officer');
+		assert.equal(next.mock.callCount(), 1);
+	});
+});
+
 describe('examination document handlers', () => {
 	it('redirects with a session error when a file exceeds the size limit', () => {
 		const err = new multer.MulterError('LIMIT_FILE_SIZE');
