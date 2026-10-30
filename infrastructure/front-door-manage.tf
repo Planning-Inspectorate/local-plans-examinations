@@ -207,7 +207,7 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
     }
 
     override {
-      rule_group_name = "FILESIZE"
+      rule_group_name = "REQUEST-920-PROTOCOL-ENFORCEMENT"
       rule {
         action  = "Log"
         enabled = false
