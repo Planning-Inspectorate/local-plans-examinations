@@ -166,10 +166,12 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
       rule_group_name = "General"
       rule {
         action  = "Log"
+        enabled = false
         rule_id = "200002"
       }
       rule {
         action  = "Log"
+        enabled = false
         rule_id = "200003"
       }
       # Possible multipart unmatched boundary
