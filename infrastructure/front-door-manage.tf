@@ -158,11 +158,6 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
       exclusion {
         match_variable = "RequestBodyPostArgNames"
         operator       = "Equals"
-        selector       = "files[]"
-      }
-      exclusion {
-        match_variable = "RequestBodyPostArgNames"
-        operator       = "Equals"
         selector       = "_csrf"
       }
     }
@@ -208,6 +203,15 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
         action  = "Log"
         enabled = true
         rule_id = "942120"
+      }
+    }
+
+    override {
+      rule_group_name = "FILE-SIZE"
+      rule {
+        action  = "Log"
+        enabled = false
+        rule_id = "920311"
       }
     }
   }
