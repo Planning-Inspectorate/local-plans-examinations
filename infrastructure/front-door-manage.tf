@@ -172,6 +172,24 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
         action  = "Log"
         rule_id = "200003"
       }
+      # Failed to parse request body
+      rule {
+        action  = "Log"
+        enabled = false
+        rule_id = "200003"
+      }
+      # Multipart request body strict validation
+      rule {
+        action  = "Log"
+        enabled = false
+        rule_id = "200003"
+      }
+      # Possible multipart unmatched boundary
+      rule {
+        action  = "Log"
+        enabled = false
+        rule_id = "200004"
+      }
     }
 
     #--------------------------------------------------------------------------
@@ -203,15 +221,6 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
         action  = "Log"
         enabled = true
         rule_id = "942120"
-      }
-    }
-
-    override {
-      rule_group_name = "PROTOCOL-ENFORCEMENT"
-      rule {
-        action  = "Log"
-        enabled = false
-        rule_id = "920311"
       }
     }
   }
