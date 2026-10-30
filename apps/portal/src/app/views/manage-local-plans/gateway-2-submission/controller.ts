@@ -752,7 +752,7 @@ export function buildGateway2Middleware(service: PortalService) {
 						};
 					},
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, true);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
@@ -765,6 +765,7 @@ export function buildGateway2Middleware(service: PortalService) {
 			])
 		)
 	);
+
 	const deleteGateway2Document = buildFileUploadRouteHandler(
 		new Map(
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => [
