@@ -3,13 +3,63 @@ import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
+import {
+	clearLoginEmail,
+	completeAuthentication,
+	consumeNewCodeMessage,
+	markNewCodeSent,
+	setLoginEmail
+} from '../../session/auth-session.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
 
-export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
+/** Error state of a login form; the three fields are always set together. */
+interface FormErrorState {
+	/** Per-field messages, keyed by input name, shown inline on the input */
+	errors: Record<string, { msg: string }>;
+	/** Heading of the error summary box */
+	errorSummaryTitle: string;
+	/** Links in the error summary box; `href` targets the input id */
+	errorSummary: { text: string; href: string }[];
+}
+
+/** Data passed to `views/login/enter-email-page.njk`. Error fields are only set when re-rendering after a failure. */
+export interface LoginEmailViewModel extends Partial<FormErrorState> {
+	pageTitle: string;
+	pageHeading: string;
+	/** Label of the email input */
+	emailQuestionText: string;
+	backLinkUrl: string;
+}
+
+/** Data passed to `views/login/enter-otp.njk`. Error fields are only set when re-rendering after a failure. */
+export interface LoginOtpViewModel extends Partial<FormErrorState> {
+	/** Missing when re-rendering after a failed new-code request */
+	pageTitle?: string;
+	/** Missing when re-rendering after a failed new-code request */
+	pageHeading?: string;
+	backLinkUrl: string;
+	/** Email the code was sent to, shown in the hint */
+	userEmail: string;
+	/** Shows the "we've sent a code" banner; only set by the page GET, from `session.showNewCodeMessage` */
+	showNewCodeMessage?: boolean;
+}
+
+/** Data passed to `views/layouts/error` for a 404 response. */
+export interface ErrorPageViewModel {
+	pageTitle: string;
+	messages: string[];
+}
+
+/** Data passed to `views/login/no-access.njk`. */
+export interface NoAccessViewModel {
+	pageTitle: string;
+}
+
+export function buildEnterEmailPage(viewData: Partial<LoginEmailViewModel> = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
-		delete req.session.email;
+		clearLoginEmail(req.session);
 
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
@@ -17,7 +67,7 @@ export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 			emailQuestionText: 'What is your email address?',
 			backLinkUrl: `/`,
 			...viewData
-		});
+		} satisfies LoginEmailViewModel);
 	};
 }
 
@@ -36,7 +86,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
 				errorSummaryTitle: 'There is a problem',
 				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
-			});
+			} satisfies LoginEmailViewModel);
 		}
 
 		const sanitisedEmail = email.trim().toLowerCase();
@@ -54,7 +104,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
 				errorSummaryTitle: 'There is a problem',
 				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
-			});
+			} satisfies LoginEmailViewModel);
 		}
 
 		try {
@@ -64,7 +114,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('Login attempt with unrecognised email');
-				delete req.session.email;
+				clearLoginEmail(req.session);
 				return res.render('views/login/enter-email-page.njk', {
 					pageTitle: 'Sign-in',
 					pageHeading: 'Sign-in',
@@ -87,7 +137,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				otpRecord.lockedOutUntil.getTime() > Date.now()
 			) {
 				logger.info('Login attempt while locked out');
-				req.session.email = sanitisedEmail;
+				setLoginEmail(req.session, sanitisedEmail);
 				return res.redirect(`${req.baseUrl}/enter-code`);
 			} else if (otpRecord && otpRecord.lockedOutUntil && otpRecord.lockedOutUntil.getTime() < Date.now()) {
 				await db.oneTimePassword.update({
@@ -120,7 +170,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				});
 			}
 
-			req.session.email = sanitisedEmail;
+			setLoginEmail(req.session, sanitisedEmail);
 
 			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
 
@@ -148,12 +198,12 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				errors: { email: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not sign you in',
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#email' }]
-			});
+			} satisfies LoginEmailViewModel);
 		}
 	};
 }
 
-export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
+export function buildEnterOtpPage(viewData: Partial<LoginOtpViewModel> = {}): AsyncRequestHandler {
 	return async (req, res) => {
 		if (!req.session.email) {
 			return res.status(404).render('views/layouts/error', {
@@ -162,11 +212,10 @@ export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 					'If you typed the web address, check it is correct.',
 					'If you pasted the web address, check you copied the entire address.'
 				]
-			});
+			} satisfies ErrorPageViewModel);
 		}
 
-		const showNewCodeMessage = req.session.showNewCodeMessage || false;
-		delete req.session.showNewCodeMessage;
+		const showNewCodeMessage = consumeNewCodeMessage(req.session);
 
 		return res.render('views/login/enter-otp.njk', {
 			pageTitle: 'Enter your one-time password',
@@ -175,7 +224,7 @@ export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 			userEmail: req.session.email,
 			showNewCodeMessage,
 			...viewData
-		});
+		} satisfies LoginOtpViewModel);
 	};
 }
 
@@ -191,7 +240,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					'If you typed the web address, check it is correct.',
 					'If you pasted the web address, check you copied the entire address.'
 				]
-			});
+			} satisfies ErrorPageViewModel);
 		}
 		const errorTitle = 'There is a problem';
 		const enterCorrectCodeMessage = 'Enter the code we sent to you';
@@ -206,7 +255,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
-			});
+			} satisfies LoginOtpViewModel);
 		}
 
 		try {
@@ -215,14 +264,12 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('OTP verification attempted for an unrecognised email');
-				delete req.session.email;
+				clearLoginEmail(req.session);
 				return res.redirect(`${req.baseUrl}/no-access`);
 			}
 
 			if (isOneTimePasswordBypass(service, req, otp)) {
-				req.session.isAuthenticated = true;
-				req.session.authenticatedEmail = email;
-				delete req.session.email;
+				completeAuthentication(req.session, email);
 
 				logger.info('OTP bypass verification success');
 				return res.redirect('/manage-local-plans/your-plans');
@@ -241,7 +288,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
-				});
+				} satisfies LoginOtpViewModel);
 			}
 
 			// user is locked out
@@ -261,7 +308,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
-				});
+				} satisfies LoginOtpViewModel);
 			}
 
 			// reset lockout when lock out time has expired
@@ -282,7 +329,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					errorSummary: [{ text: 'Your code has expired. Go back to request a new one.', href: '#otp' }],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
-				});
+				} satisfies LoginOtpViewModel);
 			}
 
 			const otpCodesMatch = await bcrypt.compare(otp.trim().toUpperCase(), otpRecord.hashedOtp);
@@ -306,7 +353,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 						errorSummary: [{ text: 'Too many failed attempts. You are locked out for 24 hours.', href: '#otp' }],
 						backLinkUrl: `${req.baseUrl}`,
 						userEmail: email
-					});
+					} satisfies LoginOtpViewModel);
 				}
 				return res.render('views/login/enter-otp.njk', {
 					pageTitle: 'Enter your one-time password',
@@ -316,7 +363,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 					errorSummary: [{ text: enterCorrectCodeMessage, href: '#otp' }],
 					backLinkUrl: `${req.baseUrl}`,
 					userEmail: email
-				});
+				} satisfies LoginOtpViewModel);
 			}
 
 			// reset locked out timestamp and attempts counter
@@ -328,9 +375,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				}
 			});
 
-			req.session.isAuthenticated = true;
-			req.session.authenticatedEmail = email;
-			delete req.session.email;
+			completeAuthentication(req.session, email);
 
 			logger.info('OTP verification success');
 			return res.redirect('/manage-local-plans/your-plans');
@@ -344,7 +389,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
-			});
+			} satisfies LoginOtpViewModel);
 		}
 	};
 }
@@ -422,9 +467,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 
 			logger.info('New OTP requested and sent');
 
-			// Set session flag to show success message
-			req.session.caseReference = email;
-			req.session.showNewCodeMessage = true;
+			markNewCodeSent(req.session, email);
 
 			return res.redirect(`${req.baseUrl}/enter-code`);
 		} catch {
@@ -435,7 +478,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
-			});
+			} satisfies LoginOtpViewModel);
 		}
 	};
 }
@@ -444,6 +487,6 @@ export function buildNoAccessPage(): AsyncRequestHandler {
 	return async (req, res) => {
 		return res.render('views/login/no-access.njk', {
 			pageTitle: 'You do not have access to this service'
-		});
+		} satisfies NoAccessViewModel);
 	};
 }

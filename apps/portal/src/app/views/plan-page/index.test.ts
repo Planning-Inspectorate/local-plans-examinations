@@ -69,6 +69,71 @@ describe('plan page', () => {
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[0], 'views/plan-page/view.njk');
 	});
 
+	it('should pass the full view model to the template (Gateway 2, ready to start)', async () => {
+		const { data } = await renderPlan({ refNum: 'PLAN-001' });
+
+		assert.deepStrictEqual(data, {
+			pageCaption: 'PLAN-001',
+			pageTitle: 'East Borough Local Plan',
+			currentStage: 'Gateway 2',
+			planStatus: '<strong class="govuk-tag govuk-tag--green">Ready to start</strong>',
+			status: STATUS.ReadyToStart,
+			leadLPA: 'Southampton City Council',
+			linkedLPA: 'Romsey Town Council',
+			button: 'Start Gateway 2 submission',
+			notificationBanner: false,
+			backLinkUrl: '/manage-local-plans/your-plans',
+			backLinkText: 'Back to my plans',
+			currentApplicationLink: '/manage-local-plans/PLAN-001/gateway-2-submission/application-declaration',
+			dateG1: '7 May 2026',
+			dateG2: '21 July 2026',
+			dateG3: '1 August 2026',
+			dateE: '1 September 2026',
+			dateTextG2: 'Target date: ',
+			dateTextG3: 'Target date: ',
+			dateTextE: 'Target date: ',
+			tagG2: '<strong class="govuk-tag govuk-tag--green">Ready to start</strong>',
+			tagG3: 'Cannot start yet',
+			tagE: 'Cannot start yet',
+			hrefG2: '/manage-local-plans/PLAN-001/gateway-2-submission',
+			hrefG3: null,
+			hrefE: null
+		});
+	});
+
+	it('should point to the Gateway 3 resubmission journey when resubmission is required', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Gateway3,
+			status: STATUS.ResubmissionRequired,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.strictEqual(data.button, null);
+		assert.strictEqual(data.notificationBanner, false);
+		assert.strictEqual(data.currentApplicationLink, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+		assert.strictEqual(data.hrefG3, '/manage-local-plans/PLAN-001/gateway-3-resubmission');
+		assert.strictEqual(data.dateTextG3, 'Submitted: ');
+		assert.strictEqual(data.tagG2, 'Completed');
+	});
+
+	it('should mark every stage as completed when the examination is completed', async () => {
+		const plan = {
+			refNum: 'PLAN-001',
+			stage: STAGE.Examination,
+			status: STATUS.Completed,
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+		};
+		const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.deepStrictEqual([data.tagG2, data.tagG3, data.tagE], ['Completed', 'Completed', 'Completed']);
+		assert.deepStrictEqual(
+			[data.dateTextG2, data.dateTextG3, data.dateTextE],
+			['Completed: ', 'Completed: ', 'Completed: ']
+		);
+	});
+
 	it('should render notification banner if state = action needed', async () => {
 		const plan = {
 			refNum: 'PLAN-004',

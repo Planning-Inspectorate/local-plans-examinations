@@ -14,6 +14,7 @@ import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { createLoginRoutes } from './views/login/index.ts';
 import { checkCaseOwnership, checkIsAuthenticated, exposeAuthToViews } from './auth/guards.ts';
+import { logout } from './auth/logout.ts';
 
 /**
  * Main app router
@@ -36,11 +37,7 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use(cacheNoCacheMiddleware);
 	router.use(exposeAuthToViews);
 	router.use('/login', createLoginRoutes(service));
-	router.use('/logout', (req, res) => {
-		req.session.destroy(() => {
-			res.redirect('/login');
-		});
-	});
+	router.use('/logout', logout);
 	router.use('/landingPage', createLandingPageRoutes(service));
 	router.use('/manage-local-plans', checkIsAuthenticated);
 	router.use('/manage-local-plans/your-plans', createLandingPageRoutes(service));

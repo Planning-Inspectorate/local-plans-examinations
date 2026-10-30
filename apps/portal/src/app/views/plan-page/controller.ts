@@ -10,6 +10,51 @@ function statusTag(status: Status) {
 	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
 }
 
+/**
+ * Data passed to `views/plan-page/view.njk` by `GET /manage-local-plans/:refNum`.
+ * All properties are always set; nullable values are explicit.
+ * Properties are also read by `views/layouts/main.njk` (title, caption, back link).
+ */
+export interface PlanPageViewModel {
+	/** Plan reference, rendered as the page caption */
+	pageCaption: string;
+	/** Plan title, rendered as the page heading */
+	pageTitle: string;
+	/** Label of the plan's current stage, e.g. `Gateway 2` */
+	currentStage: string;
+	/** Status tag HTML for the current stage (not escaped by the template) */
+	planStatus: string;
+	/** Raw status of the current stage */
+	status: Status;
+	leadLPA: string;
+	linkedLPA: string;
+	/** Label of the call-to-action button; `null` hides it when the relevant stage is not ready to start */
+	button: string | null;
+	/** Shows the "action required" banner (status is Action needed) */
+	notificationBanner: boolean;
+	backLinkUrl: string;
+	backLinkText: string;
+	/** Target of the call-to-action button */
+	currentApplicationLink: string;
+	/** Gateway dates as supplied by the plan, displayed in the task list hints */
+	dateG1: string;
+	dateG2: string;
+	dateG3: string;
+	dateE: string;
+	/** Prefix for each task list date hint, e.g. `Target date: `, `Submitted: `, `Completed: ` */
+	dateTextG2: string;
+	dateTextG3: string;
+	dateTextE: string;
+	/** Task list status per stage: status tag HTML, `Completed` or `Cannot start yet` */
+	tagG2: string;
+	tagG3: string;
+	tagE: string;
+	/** Task list link per stage; `null` when the stage cannot be opened yet */
+	hrefG2: string | null;
+	hrefG3: string | null;
+	hrefE: string | null;
+}
+
 function examinationStatusTag(plan: Plan) {
 	const classes = getExaminationStatusTagClass(plan.examinationStatus);
 	return classes ? `<strong class="${classes}">${plan.examinationStatusLabel}</strong>` : plan.examinationStatusLabel;
@@ -61,9 +106,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const notificationBanner = plan.status === STATUS.ActionNeeded;
 
 		// Task list tags and links based on current stage
-		let tagG2, tagG3, tagE;
-		let dateTextG2, dateTextG3, dateTextE;
-		let hrefG2, hrefG3, hrefE;
+		let tagG2: string, tagG3: string, tagE: string;
+		let dateTextG2: string, dateTextG3: string, dateTextE: string;
+		let hrefG2: string | null, hrefG3: string | null, hrefE: string | null;
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
 		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
@@ -110,6 +155,18 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		}
 
 		const viewModel = {
+			pageCaption: planRef,
+			pageTitle: plan.title,
+			currentStage,
+			planStatus,
+			status: plan.status,
+			leadLPA: plan.leadLPA,
+			linkedLPA: plan.linkedLPA,
+			button,
+			notificationBanner,
+			backLinkUrl: '/manage-local-plans/your-plans',
+			backLinkText: 'Back to my plans',
+			currentApplicationLink,
 			dateG1: plan.dates.G1,
 			dateG2: plan.dates.G2,
 			dateG3: plan.dates.G3,
@@ -123,22 +180,8 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			hrefG2,
 			hrefG3,
 			hrefE
-		};
+		} satisfies PlanPageViewModel;
 
-		return res.render('views/plan-page/view.njk', {
-			pageCaption: planRef,
-			pageTitle: plan.title,
-			currentStage,
-			planStatus,
-			status: plan.status,
-			leadLPA: plan.leadLPA,
-			linkedLPA: plan.linkedLPA,
-			button,
-			notificationBanner,
-			backLinkUrl: '/manage-local-plans/your-plans',
-			backLinkText: 'Back to my plans',
-			currentApplicationLink,
-			...viewModel
-		});
+		return res.render('views/plan-page/view.njk', viewModel);
 	};
 }

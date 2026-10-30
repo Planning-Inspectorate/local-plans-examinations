@@ -6,6 +6,7 @@ import { describe, it, mock } from 'node:test';
 import {
 	buildEnterEmailPage,
 	buildEnterOtpPage,
+	buildNoAccessPage,
 	buildRequestNewCode,
 	buildSubmitEmailPage,
 	buildSubmitOtpPage
@@ -674,6 +675,162 @@ describe('buildEnterOtpPage', () => {
 		assertRender(res, 'views/login/enter-otp.njk', (data) => {
 			assert.strictEqual(data.pageHeading, 'Enter your one-time password');
 			assert.strictEqual(data.userEmail, 'test@example.com');
+		});
+	});
+});
+
+describe('resend session state', () => {
+	it('shows the new-code message once after a successful resend', async () => {
+		const service = createMockService();
+		const req = createMockReq({}, { email: 'test@example.com' });
+		const resendRes = createMockRes();
+
+		await buildRequestNewCode(service)(req, resendRes);
+
+		assertRedirect(resendRes, '/login/enter-code');
+		assert.strictEqual(req.session.caseReference, 'test@example.com');
+		assert.strictEqual(req.session.showNewCodeMessage, true);
+
+		const enterRes = createMockRes();
+		await buildEnterOtpPage()(req, enterRes);
+		assert.strictEqual(assertRender(enterRes, 'views/login/enter-otp.njk').showNewCodeMessage, true);
+		assert.strictEqual(req.session.showNewCodeMessage, undefined);
+	});
+
+	it('does not consume the message if the login email is missing', async () => {
+		const req = createMockReq({}, { showNewCodeMessage: true });
+		const res = createMockRes();
+
+		await buildEnterOtpPage()(req, res);
+
+		assert.strictEqual(res.status.mock.calls[0].arguments[0], 404);
+		assert.strictEqual(req.session.showNewCodeMessage, true);
+	});
+});
+
+describe('login view models', () => {
+	const pageNotFoundModel = {
+		pageTitle: 'Page not found',
+		messages: [
+			'If you typed the web address, check it is correct.',
+			'If you pasted the web address, check you copied the entire address.'
+		]
+	};
+
+	it('should pass the email page model', async () => {
+		const res = createMockRes();
+
+		await buildEnterEmailPage()(createMockReq(), res);
+
+		assert.deepStrictEqual(assertRender(res, 'views/login/enter-email-page.njk'), {
+			pageTitle: 'Sign-in',
+			pageHeading: 'Sign-in',
+			emailQuestionText: 'What is your email address?',
+			backLinkUrl: '/'
+		});
+	});
+
+	it('should pass the email page model with errors when the email is missing', async () => {
+		const res = createMockRes();
+
+		await buildSubmitEmailPage(createMockService())(createMockReq({ email: '' }), res);
+
+		assert.deepStrictEqual(assertRender(res, 'views/login/enter-email-page.njk'), {
+			pageTitle: 'Sign-in',
+			pageHeading: 'Sign-in',
+			emailQuestionText: 'What is your email address?',
+			backLinkUrl: '/',
+			errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
+			errorSummaryTitle: 'There is a problem',
+			errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
+		});
+	});
+
+	it('should let view data override the email page model', async () => {
+		const res = createMockRes();
+
+		await buildEnterEmailPage({ backLinkUrl: '/other' })(createMockReq(), res);
+
+		assert.strictEqual(assertRender(res, 'views/login/enter-email-page.njk').backLinkUrl, '/other');
+	});
+
+	it('should pass the OTP page model without the new-code banner', async () => {
+		const res = createMockRes();
+
+		await buildEnterOtpPage()(createMockReq({}, { email: 'test@example.com' }), res);
+
+		assert.deepStrictEqual(assertRender(res, 'views/login/enter-otp.njk'), {
+			pageTitle: 'Enter your one-time password',
+			pageHeading: 'Enter your one-time password',
+			backLinkUrl: '/login',
+			userEmail: 'test@example.com',
+			showNewCodeMessage: false
+		});
+	});
+
+	it('should pass the new-code banner flag to the OTP page and clear it from the session', async () => {
+		const req = createMockReq({}, { email: 'test@example.com', showNewCodeMessage: true });
+		const res = createMockRes();
+
+		await buildEnterOtpPage()(req, res);
+
+		assert.strictEqual(assertRender(res, 'views/login/enter-otp.njk').showNewCodeMessage, true);
+		assert.strictEqual(req.session.showNewCodeMessage, undefined);
+	});
+
+	it('should pass the OTP page model with errors when the code is missing', async () => {
+		const res = createMockRes();
+		const req = createMockReq({ otp: '' }, { email: 'test@example.com' });
+
+		await buildSubmitOtpPage(createMockService())(req, res);
+
+		assert.deepStrictEqual(assertRender(res, 'views/login/enter-otp.njk'), {
+			pageTitle: 'Enter your one-time password',
+			pageHeading: 'Enter your one-time password',
+			errors: { otp: { msg: 'Enter the code we sent to you' } },
+			errorSummaryTitle: 'There is a problem',
+			errorSummary: [{ text: 'Enter the code we sent to you', href: '#otp' }],
+			backLinkUrl: '/login',
+			userEmail: 'test@example.com'
+		});
+	});
+
+	it('should pass the OTP page model without a title when requesting a new code fails', async () => {
+		const service = createMockService();
+		service.db.case.findFirst.mock.mockImplementation(async () => {
+			throw new Error('DB error');
+		});
+		const res = createMockRes();
+
+		await buildRequestNewCode(service)(createMockReq({}, { email: 'test@example.com' }), res);
+
+		assert.deepStrictEqual(assertRender(res, 'views/login/enter-otp.njk'), {
+			errors: { otp: { msg: 'Something went wrong. Please try again later.' } },
+			errorSummaryTitle: 'We could not send a new code',
+			errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
+			backLinkUrl: '/login',
+			userEmail: 'test@example.com'
+		});
+	});
+
+	it('should pass the page not found model from the OTP pages', async () => {
+		const enterRes = createMockRes();
+		const submitRes = createMockRes();
+
+		await buildEnterOtpPage()(createMockReq({}, {}), enterRes);
+		await buildSubmitOtpPage(createMockService())(createMockReq({}, {}), submitRes);
+
+		assert.deepStrictEqual(assertRender(enterRes, 'views/layouts/error'), pageNotFoundModel);
+		assert.deepStrictEqual(assertRender(submitRes, 'views/layouts/error'), pageNotFoundModel);
+	});
+
+	it('should pass the no access page model', async () => {
+		const res = createMockRes();
+
+		await buildNoAccessPage()({}, res);
+
+		assert.deepStrictEqual(assertRender(res, 'views/login/no-access.njk'), {
+			pageTitle: 'You do not have access to this service'
 		});
 	});
 });

@@ -37,6 +37,43 @@ describe('landing page', () => {
 		assert.strictEqual(mockService.getPlans.mock.calls[0].arguments[0], 'user@example.com');
 	});
 
+	it('should pass the full view model to the template when plans exist', async () => {
+		const plans = [
+			mockPlan({ refNum: 'PLAN-001', leadLPA: 'Southampton', title: 'East plan', documents: [mockApplicationDoc()] })
+		];
+		const { landingPage, mockRes, mockReq } = initialiseTest(plans);
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		assert.deepStrictEqual(mockRes.render.mock.calls[0].arguments[1], {
+			pageCaption: 'Southampton',
+			pageTitle: 'My plans',
+			plans: [
+				[
+					{
+						html: '<a class="govuk-link" data-cy="plan-link" href="/manage-local-plans/PLAN-001">PLAN-001</a>'
+					},
+					{ text: 'Southampton' },
+					{ text: 'East plan' },
+					{ text: 'Gateway 2' },
+					{ html: '<strong class="govuk-tag govuk-tag--green">Ready to start</strong>' }
+				]
+			],
+			noPlansFlag: false
+		});
+	});
+
+	it('should pass the full view model to the template when there are no plans', async () => {
+		const { landingPage, mockRes, mockReq } = initialiseTest([]);
+		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+
+		assert.deepStrictEqual(mockRes.render.mock.calls[0].arguments[1], {
+			pageCaption: undefined,
+			pageTitle: 'My plans',
+			plans: undefined,
+			noPlansFlag: true
+		});
+	});
+
 	it('should render title and dynamic local planning authority caption', async () => {
 		const plans = [
 			mockPlan({
