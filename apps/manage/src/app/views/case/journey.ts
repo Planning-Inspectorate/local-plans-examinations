@@ -11,7 +11,11 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByDateColumn } from '#util/util.ts';
-import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
+import {
+	questionHasNonEmptyAnswer,
+	questionHasEmptyAnswer,
+	createGw2DocumentQuestions
+} from '../../util/journey-util.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 
 type JourneyWithReference = Journey & {
@@ -329,40 +333,20 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	const backUrl = COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))
 		? gateway2DocumntUrl
 		: gateway2Url;
+	const gateway2Section = new Section('Gateway 2', 'gateway-2')
+		.addQuestion(questions.gateway2ExpectedDate)
+		.addQuestion(questions.gateway2ActualDate)
+		.addQuestion(questions.gateway2Documents)
+		.addQuestion(questions.gateway2AssessorsName)
+		.addQuestion(questions.assessorDateOfAppointment);
 
+	createGw2DocumentQuestions(questions).forEach((question) => {
+		gateway2Section.addQuestion(question).withCondition(() => false);
+	});
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		sections: [
-			new Section('Gateway 2', 'gateway-2')
-				.addQuestion(questions.gateway2ExpectedDate)
-				.addQuestion(questions.gateway2ActualDate)
-				.addQuestion(questions.gateway2Documents)
-				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment)
-				.addQuestion(questions.gateway2CoverLetter)
-				.withCondition(() => false)
-				.addQuestion(questions.localPlanTimetable)
-				.withCondition(() => false)
-				.addQuestion(questions.projectInitiationDocument)
-				.withCondition(() => false)
-				.addQuestion(questions.draftStatementOfCompliance)
-				.withCondition(() => false)
-				.addQuestion(questions.noticeOfIntention)
-				.withCondition(() => false)
-				.addQuestion(questions.gateway1SelfAssessment)
-				.withCondition(() => false)
-				.addQuestion(questions.consultationOnProposedContent)
-				.withCondition(() => false)
-				.addQuestion(questions.draftStatementOfSoundness)
-				.withCondition(() => false)
-				.addQuestion(questions.scopingConsultationDocuments)
-				.withCondition(() => false)
-				.addQuestion(questions.consultationSummaryFeedbackScoping)
-				.withCondition(() => false)
-				.addQuestion(questions.consultationSummaryProposedContent)
-				.withCondition(() => false)
-				.addQuestion(questions.subsequentWorkTowardsADraftPlan)
-				.withCondition(() => false),
+			gateway2Section,
 			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
 			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],

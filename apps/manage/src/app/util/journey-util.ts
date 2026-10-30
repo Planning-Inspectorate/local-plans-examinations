@@ -15,3 +15,20 @@ export function questionHasNonEmptyDateAnswer(response: JourneyResponse, questio
 	const answerField = response.answers[question.fieldName];
 	return typeof answerField === 'number' && !isNaN(answerField);
 }
+
+export function createGw2DocumentQuestions(questions: Record<string, any>) {
+	return [
+		questions.gateway2CoverLetter,
+		questions.localPlanTimetable,
+		questions.projectInitiationDocument,
+		questions.draftStatementOfCompliance,
+		questions.noticeOfIntention,
+		questions.gateway1SelfAssessment,
+		questions.consultationOnProposedContent,
+		questions.draftStatementOfSoundness,
+		questions.scopingConsultationDocuments,
+		questions.consultationSummaryFeedbackScoping,
+		questions.consultationSummaryProposedContent,
+		questions.subsequentWorkTowardsADraftPlan
+	];
+}
