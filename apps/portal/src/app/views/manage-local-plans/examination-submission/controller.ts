@@ -25,6 +25,7 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import lusca from 'lusca';
 import { createJourney, JOURNEY_ID } from './journey.ts';
@@ -41,6 +42,7 @@ type ExaminationInfoRecord = {
 	examinationWebsiteUrl: string | null;
 	expectedSubmissionForExaminationDate: Date | null;
 	submissionForExaminationDate: Date | null;
+	soundUnsoundDate: Date | null;
 	statusLookup: { displayName: string } | null;
 };
 
@@ -128,6 +130,14 @@ function formatDisplayTime(date: Date) {
 		minute: '2-digit',
 		hour12: false
 	});
+}
+
+function decodeFileName(fileName: string) {
+	try {
+		return decodeURIComponent(fileName);
+	} catch {
+		return fileName;
+	}
 }
 
 function getRouteFileUploadQuestion(req: Request): ExaminationFileUploadQuestion {
@@ -398,6 +408,26 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		if (examinationWebsiteUrl) {
 			answers.examinationWebsiteUrl = examinationWebsiteUrl;
 		}
+
+		const examinationReportFiles = await DocumentUtil.loadUploadedDocuments(
+			service,
+			currentCase.id,
+			DOCUMENT_SET_ID.EXAMINATION_REPORT
+		);
+		const issuedDate = currentCase.examinationInfo?.soundUnsoundDate;
+		res.locals.examinationReportFiles = examinationReportFiles.flatMap((file) => {
+			const documentGuid = file.metadata?.documentGuid;
+			if (typeof documentGuid !== 'string') {
+				return [];
+			}
+			return [
+				{
+					fileName: decodeFileName(file.fileName),
+					href: `${getExaminationSubmissionUrl(req)}/download-document/${encodeURIComponent(documentGuid)}`,
+					...(issuedDate && { issuedDate: formatDisplayDate(issuedDate) })
+				}
+			];
+		});
 
 		const documentSetIdsByFolderName = await DocumentUtil.getDocumentSetIdsByFolderName(
 			service,

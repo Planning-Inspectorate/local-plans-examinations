@@ -815,11 +815,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		if (existingExaminationDetails?.soundUnsoundDate && (req.query.returnTo !== 'check' || returnToManage)) {
 			const manuallySetInFirstSubmission = await checkSoundUnsoundManuallySet(service, caseId);
 			const reportIssuedDate = manuallySetInFirstSubmission ? existingExaminationDetails.soundUnsoundDate : new Date();
-			if (!manuallySetInFirstSubmission) {
-				await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-					soundUnsoundDate: reportIssuedDate
-				});
-			}
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				...(!manuallySetInFirstSubmission && { soundUnsoundDate: reportIssuedDate })
+			});
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: `Examination report document added; report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			});
@@ -833,11 +832,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		}
 
 		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
-		if (!existingExaminationDetails?.soundUnsoundDate) {
-			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-				soundUnsoundDate: reportIssuedDate
-			});
-		}
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+			...(!existingExaminationDetails?.soundUnsoundDate && { soundUnsoundDate: reportIssuedDate })
+		});
 		await updateCaseHistory(
 			service,
 			req,

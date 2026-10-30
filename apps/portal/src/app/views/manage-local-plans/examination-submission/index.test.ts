@@ -223,6 +223,18 @@ describe('submitted examination page', () => {
 			submissionTime: '11:30',
 			submitter: 'planner@example.com',
 			statusTag: { label: 'Submitted', class: 'govuk-tag govuk-tag--yellow' },
+			examinationReportFiles: [
+				{
+					fileName: 'examination-report.pdf',
+					href: '/manage-local-plans/PLAN-61797/examination/download-document/report-1',
+					issuedDate: '20 October 2026'
+				},
+				{
+					fileName: 'main-modifications.pdf',
+					href: '/manage-local-plans/PLAN-61797/examination/download-document/report-2',
+					issuedDate: '20 October 2026'
+				}
+			],
 			summaryListData: {
 				sections: [
 					{
@@ -260,6 +272,19 @@ describe('submitted examination page', () => {
 		assert.ok(html.includes('govuk-list govuk-list--bullet'));
 		assert.ok(html.includes('local-plan.pdf'));
 		assert.ok(html.includes('appendix.pdf'));
+		assert.ok(html.includes('Examination report'));
+		assert.ok(
+			html.indexOf('data-cy="examination-report-row"') < html.indexOf('Local plan submission for examination'),
+			'Examination report row should be the first row in the documents table'
+		);
+		assert.match(
+			html,
+			/href="\/manage-local-plans\/PLAN-61797\/examination\/download-document\/report-1">examination-report\.pdf<\/a> \(issued 20 October 2026\)/
+		);
+		assert.match(
+			html,
+			/href="\/manage-local-plans\/PLAN-61797\/examination\/download-document\/report-2">main-modifications\.pdf<\/a> \(issued 20 October 2026\)/
+		);
 		assert.doesNotMatch(html, />\s*(Add|Change|Submit)\s*</);
 	});
 });

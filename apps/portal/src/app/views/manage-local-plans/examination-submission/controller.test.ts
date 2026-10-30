@@ -6,6 +6,7 @@ import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { PortalService } from '#service';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import {
 	buildExaminationCheckAnswersList,
 	buildExaminationMiddleware,
@@ -145,7 +146,7 @@ describe('examination view data', () => {
 		assert.equal(next.mock.callCount(), 2);
 	});
 
-	it('uses the submitted, in-examination and plan-adopted status tags', () => {
+	it('uses the submitted, in-examination, report-issued and plan-adopted status tags', () => {
 		for (const { status, label, className } of [
 			{
 				status: EXAMINATION_STATUS_ID.SUBMITTED,
@@ -155,6 +156,11 @@ describe('examination view data', () => {
 			{
 				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 				label: 'In examination',
+				className: 'govuk-tag govuk-tag--blue'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				label: 'Report issued',
 				className: 'govuk-tag govuk-tag--blue'
 			},
 			{
@@ -222,7 +228,73 @@ describe('buildGetJourneyResponseFromCase', () => {
 				examinationWebsiteUrl: 'https://gateway-3.example.com'
 			}
 		});
-		assert.equal(service.db.document.findMany.mock.callCount(), documentSets.length);
+		assert.equal(service.db.document.findMany.mock.callCount(), documentSets.length + 1);
+	});
+
+	it('loads all examination report files with the BO issue date and download links', async () => {
+		const issuedDate = new Date('2026-10-20T12:00:00.000Z');
+		const currentCase = {
+			id: 'case-id',
+			reference: 'PLAN-61797',
+			planTitle: 'Test plan',
+			examinationInfo: {
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				examinationWebsite: null,
+				examinationWebsiteUrl: 'https://examination.example.com',
+				soundUnsoundDate: issuedDate,
+				statusLookup: { displayName: 'Report issued' }
+			},
+			gateway3Info: { examinationWebsiteUrl: null }
+		};
+		const service = buildService(currentCase);
+		const findDocuments = service.db.document.findMany as any;
+		findDocuments.mock.mockImplementation(async ({ where }: { where: { documentSetId: string } }) => {
+			if (where.documentSetId !== DOCUMENT_SET_ID.EXAMINATION_REPORT) {
+				return [];
+			}
+			return ['examination-report.pdf', 'main%20modifications.pdf'].map((fileName, index) => ({
+				guid: `report-guid-${index + 1}`,
+				name: fileName,
+				documentSetId: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+				isDeleted: false,
+				isTemp: false,
+				latestDocumentVersion: {
+					version: 1,
+					originalFilename: fileName,
+					fileName,
+					mime: 'application/pdf',
+					size: 100,
+					blobStorageContainer: 'documents',
+					blobStoragePath: fileName,
+					dateCreated: issuedDate,
+					documentURI: null,
+					virusCheckStatus: 'scanned',
+					isDeleted: false
+				}
+			}));
+		});
+		const handler = buildGetJourneyResponseFromCase(service);
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-61797' },
+			session: {}
+		} as unknown as Request;
+		const res = { locals: {} } as unknown as Response;
+
+		await handler(req, res, (() => {}) as NextFunction);
+
+		assert.deepEqual(res.locals.examinationReportFiles, [
+			{
+				fileName: 'examination-report.pdf',
+				href: '/manage-local-plans/PLAN-61797/examination/download-document/report-guid-1',
+				issuedDate: '20 October 2026'
+			},
+			{
+				fileName: 'main modifications.pdf',
+				href: '/manage-local-plans/PLAN-61797/examination/download-document/report-guid-2',
+				issuedDate: '20 October 2026'
+			}
+		]);
 	});
 
 	it('does not overwrite an existing examination website with the Gateway 3 website', async () => {
