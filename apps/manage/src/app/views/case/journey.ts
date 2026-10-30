@@ -11,7 +11,11 @@ import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByDateColumn } from '#util/util.ts';
-import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
+import {
+	questionHasNonEmptyAnswer,
+	questionHasEmptyAnswer,
+	createGw2DocumentQuestions
+} from '../../util/journey-util.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 
 type JourneyWithReference = Journey & {
@@ -325,16 +329,24 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
+	const gateway2DocumntUrl = req.baseUrl + '/gateway-2/gateway-2/gateway2Documents';
+	const backUrl = COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))
+		? gateway2DocumntUrl
+		: gateway2Url;
+	const gateway2Section = new Section('Gateway 2', 'gateway-2')
+		.addQuestion(questions.gateway2ExpectedDate)
+		.addQuestion(questions.gateway2ActualDate)
+		.addQuestion(questions.gateway2Documents)
+		.addQuestion(questions.gateway2AssessorsName)
+		.addQuestion(questions.assessorDateOfAppointment);
 
+	createGw2DocumentQuestions(questions).forEach((question) => {
+		gateway2Section.addQuestion(question).withCondition(() => false);
+	});
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		sections: [
-			new Section('Gateway 2', 'gateway-2')
-				.addQuestion(questions.gateway2ExpectedDate)
-				.addQuestion(questions.gateway2ActualDate)
-				.addQuestion(questions.gateway2Documents)
-				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment),
+			gateway2Section,
 			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
 			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],
@@ -358,7 +370,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 			delete req.session.answers;
 		}
 	}
-	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
+	return getBackLinksAndSetReference(journey, backUrl, req.params.reference);
 }
 
 export function createGateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -724,7 +736,19 @@ const gateway2QuestionNames = new Set<string>([
 	'assessorDateOfAppointment',
 	'gateway2Report',
 	'gateway2WorkshopDocuments',
-	'workshops'
+	'workshops',
+	'gateway2CoverLetter',
+	'localPlanTimetable',
+	'projectInitiationDocument',
+	'draftStatementOfCompliance',
+	'noticeOfIntention',
+	'gateway1SelfAssessment',
+	'consultationOnProposedContent',
+	'draftStatementOfSoundness',
+	'scopingConsultationDocuments',
+	'consultationSummaryFeedbackScoping',
+	'consultationSummaryProposedContent',
+	'subsequentWorkTowardsADraftPlan'
 ]);
 
 const gateway3QuestionNames = new Set<string>([

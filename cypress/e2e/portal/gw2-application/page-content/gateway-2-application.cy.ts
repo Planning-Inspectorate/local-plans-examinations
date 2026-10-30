@@ -33,7 +33,47 @@ describe('Gateway 2 application page content', () => {
 	});
 
 	it('Shows Consultation Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifyConsultationDocuments();
+		gateway2ApplicationPage.verifySubHeading('Consultation Documents');
+		gateway2ApplicationPage.verifyDocTableRows(gateway2ApplicationPage.consultationDocumentsTable, [
+			{
+				document: 'Notice of intention to commence local plan preparation',
+				status: 'Not added',
+				addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
+			},
+			{
+				document: 'Summary of consultation on proposed local plan content and evidence documents',
+				status: 'Not added',
+				addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence-documents'
+			},
+			{
+				document: 'Scoping consultation documents',
+				status: 'Not added',
+				addCy: 'add-scoping-consultation-documents'
+			},
+			{
+				document: 'Consultation summary of feedback to scoping consultation',
+				status: 'Not added',
+				addCy: 'add-consultation-summary-of-feedback-to-scoping-consultation'
+			},
+			{
+				document: 'Gateway 1 - Self Assessment of Readiness',
+				status: 'Not added',
+				addCy: 'add-gateway-1-self-assessment'
+			},
+			{
+				document: 'Consultation on proposed local plan content and evidence documents',
+				status: 'Not added',
+				addCy: 'add-consultation-proposed-content'
+			}
+		]);
+		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
+			'Notice of intention to commence local plan preparation',
+			'Scoping consultation documents',
+			'Consultation summary of feedback to scoping consultation',
+			'Summary of consultation on proposed local plan content and evidence documents',
+			'Gateway 1 - Self Assessment of Readiness',
+			'Consultation on proposed local plan content and evidence documents'
+		]);
 	});
 
 	it('Shows Additional Documents', { tags: ['regression'] }, () => {

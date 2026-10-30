@@ -2,7 +2,7 @@ import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
-import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
+import { fileUploaderCaseSessionKeyForField, fileUploadQuestionConfigs } from '../controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
@@ -25,11 +25,20 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 				{ folderName: 'gateway-2-workshop-documents', title: 'Workshop document' }
 			],
 			consultation: [
-				{ folderName: 'notice-of-intent', title: 'Notice of intention to commence local plan preparation' },
+				{
+					folderName: 'notice-of-intent',
+					title: 'Notice of intention to commence local plan preparation'
+				},
 				{ folderName: 'scoping-cons', title: 'Scoping consultation documents' },
-				{ folderName: 'cons-summ', title: 'Consultation summary of feedback to scoping consultation' },
+				{
+					folderName: 'cons-summ',
+					title: 'Consultation summary of feedback to scoping consultation'
+				},
 				{ folderName: 'g1-self-assess', title: 'Gateway 1 - Self assessment of readiness' },
-				{ folderName: 'cons-of-proposed', title: 'Consultation on proposed local plan content and evidence documents' },
+				{
+					folderName: 'cons-of-proposed',
+					title: 'Consultation on proposed local plan content and evidence documents'
+				},
 				{
 					folderName: 'summary-of-consultation',
 					title: 'Summary of consultation on proposed local plan content and evidence documents'
@@ -78,6 +87,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 				workshops: true
 			}
 		});
+
 		await addUploadedDocumentDetailsToAnswers(
 			service,
 			caseRecord,
@@ -85,11 +95,14 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 			journey2Data,
 			COMMON_CONSTS.GATEWAY_2_JOURNEY_ID
 		);
+
 		res.locals.journeyResponse = new JourneyResponse(journeyId, '', journey2Data);
+
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 		journeyResponse.answers.gateway2Documents = documentsByCategory;
 
 		res.locals.journeyResponse = journeyResponse;
+		const question = String(req.params.question ?? '');
 		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (
 			req.method === 'POST' &&
@@ -101,18 +114,38 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 			if (req.params.question == 'gateway-2-report') {
 				uploadedGateway2Reports =
 					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2Report')]?.uploadedFiles ?? [];
+
 				if (uploadedGateway2Reports.length > 0) {
-					res.redirect(303, 'gateway-2-report/check');
+					res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION}/check`);
 					return;
 				}
 			}
-			if (req.params.question == 'gateway-2-workshop-documents') {
-				uploadedGateway2Reports =
+
+			// Preserve the existing Gateway 2 workshop documents check-page redirect.
+			if (question === COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
+				const uploadedFiles =
 					req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'gateway2WorkshopDocuments')]
 						?.uploadedFiles ?? [];
-				if (uploadedGateway2Reports.length > 0) {
-					res.redirect(303, 'gateway-2-workshop-documents/check');
+
+				if (uploadedFiles.length > 0) {
+					res.redirect(303, `${COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION}/check`);
 					return;
+				}
+			}
+
+			// Send ordinary Gateway 2 document uploads to their check page.
+			if (COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(question)) {
+				const questionConfig = fileUploadQuestionConfigs.find((config) => config.url === question);
+
+				if (questionConfig) {
+					const uploadedFiles =
+						req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
+							?.uploadedFiles ?? [];
+
+					if (uploadedFiles.length > 0) {
+						res.redirect(303, `${questionConfig.url}/check`);
+						return;
+					}
 				}
 			}
 		}

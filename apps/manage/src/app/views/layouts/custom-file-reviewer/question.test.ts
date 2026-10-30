@@ -25,13 +25,16 @@ const buildJourney = (answer: unknown) => ({
 });
 
 describe('CustomFileReviewerQuestion', () => {
-	it('should expose the uploaded document groups in the view model', () => {
+	it('should expose formatted document groups in the view model', () => {
 		const question = buildQuestion();
 		const answer = [
 			{
 				category: 'permitted',
 				documents: [
-					{ title: 'Statement of case', files: [{ fileName: 'statement.pdf', id: '1' }] },
+					{
+						title: 'Statement of case',
+						files: [{ fileName: 'statement.pdf', id: '1' }]
+					},
 					{ title: 'Plans', files: [] }
 				]
 			}
@@ -40,12 +43,56 @@ describe('CustomFileReviewerQuestion', () => {
 		const viewModel = question.toViewModel({
 			section: { name: 'Section' },
 			journey: buildJourney(answer),
-			params: {}
+			params: { reference: 'PLAN-570791' }
 		});
 
 		assert.deepEqual(viewModel.question.value, answer);
 		assert.deepEqual(viewModel.answer, answer);
-		assert.deepEqual(viewModel.documentGroups, answer);
+		assert.deepEqual(viewModel.documentGroups, [
+			{
+				category: 'permitted',
+				rows: [
+					{
+						key: { text: 'Statement of case' },
+						value: {
+							html: '<a class="govuk-link" href="/case/PLAN-570791/download-case-document/1">statement.pdf</a><br>'
+						},
+						actions: {
+							items: [
+								{
+									href: '#',
+									text: 'Manage',
+									visuallyHiddenText: 'Statement of case'
+								},
+								{
+									href: '#',
+									text: 'Add',
+									visuallyHiddenText: 'Statement of case'
+								}
+							]
+						}
+					},
+					{
+						key: { text: 'Plans' },
+						value: { html: '<p class="govuk-body">Not provided</p>' },
+						actions: {
+							items: [
+								{
+									href: '#',
+									text: 'Manage',
+									visuallyHiddenText: 'Plans'
+								},
+								{
+									href: '#',
+									text: 'Add',
+									visuallyHiddenText: 'Plans'
+								}
+							]
+						}
+					}
+				]
+			}
+		]);
 	});
 
 	it('should count all files across groups and use the Review action text', () => {

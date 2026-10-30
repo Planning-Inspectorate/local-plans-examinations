@@ -211,6 +211,9 @@ export class Gateway2SaveController extends SaveController {
 
 	protected async saveToDatabase(answers: Gateway2Input) {
 		const question = String(this.req.params.question);
+		if (COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(question)) {
+			return true;
+		}
 		if (!this.caseId) {
 			throw Error(`save called but caseId was not already fetched - please check that prepareData was called first`);
 		}
