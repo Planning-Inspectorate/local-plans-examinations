@@ -163,6 +163,22 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
     }
 
     override {
+      rule_group_name = "PROTOCOL-VIOLATION"
+      rule {
+        rule_id = "920120"
+        enabled = true
+        action  = "Log"
+
+        # Exclude rule 920120 when the request URL ends with your string
+        exclusion {
+          match_variable = "RequestUri"
+          operator       = "EndsWith"
+          selector       = "upload-documents"
+        }
+      }
+    }
+
+    override {
       rule_group_name = "General"
       rule {
         action  = "Log"
