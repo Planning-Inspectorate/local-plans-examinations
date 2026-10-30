@@ -158,6 +158,11 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
       exclusion {
         match_variable = "RequestBodyPostArgNames"
         operator       = "Equals"
+        selector       = "files[]"
+      }
+      exclusion {
+        match_variable = "RequestBodyPostArgNames"
+        operator       = "Equals"
         selector       = "_csrf"
       }
     }
