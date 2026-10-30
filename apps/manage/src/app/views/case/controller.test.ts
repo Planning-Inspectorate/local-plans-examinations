@@ -1538,7 +1538,7 @@ describe('Gateway 3 document loading', () => {
 			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'gateway-3-report');
 
 			const fieldName = question.replace('gateway-3-document-', 'gateway3Documents-');
-			assert.deepEqual(answers[fieldName], [temporary ? draftFile : savedFile]);
+			assert.deepEqual(answers[fieldName], temporary ? [savedFile, draftFile] : [savedFile]);
 			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
 		});
 	}
