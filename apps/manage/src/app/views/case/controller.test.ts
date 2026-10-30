@@ -57,6 +57,8 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '18', folderName: 'examination-report' }
 ];
 
+process.env.GOV_NOTIFY_DISABLED = 'true';
+
 function createService(): any {
 	const db: any = {
 		case: {
@@ -129,7 +131,8 @@ function createService(): any {
 		db,
 		logger: {
 			info: mock.fn(),
-			error: mock.fn()
+			error: mock.fn(),
+			warn: mock.fn()
 		},
 		getEntraClient: mock.fn(() => null)
 	};

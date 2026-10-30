@@ -15,11 +15,13 @@ export const ODATA = Object.freeze({
 export interface GroupMember {
 	id: string;
 	displayName: string;
+	mail: string;
 }
 
 export interface User {
 	id: string;
 	displayName: string;
+	userPrincipalName: string;
 }
 export class EntraClient {
 	#client: Client;
@@ -35,7 +37,7 @@ export class EntraClient {
 	async listAllGroupMembers(groupId: string): Promise<GroupMember[]> {
 		const listMembers = this.#client
 			.api(`groups/${groupId}/transitiveMembers`)
-			.select(['id', 'displayName'])
+			.select(['id', 'displayName', 'userPrincipalName'])
 			.top(PER_PAGE);
 
 		const members: GroupMember[] = [];
@@ -76,5 +78,14 @@ export class EntraClient {
 	async getUserDisplayName(userId: string): Promise<string> {
 		const user: User = await this.#client.api(`/users/${userId}`).select(['id', 'displayName']).top(1).get();
 		return String(user.displayName);
+	}
+
+	async getUserEmailFromId(userId: string): Promise<string> {
+		const user: User = await this.#client
+			.api(`/users/${userId}`)
+			.select(['id', 'mail', 'userPrincipalName'])
+			.top(1)
+			.get();
+		return String(user.userPrincipalName);
 	}
 }

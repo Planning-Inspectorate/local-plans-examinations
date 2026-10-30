@@ -68,9 +68,19 @@ front_door_config = {
 
 gov_notify = {
   templates = {
-    auth_id           = "e57674eb-7830-4b71-9300-76fdac5ad13b"
-    case_created      = "9f258ed8-295d-421f-af9c-34d3e7f9cb1e"
-    gw2_submission_id = "aebb9331-0e0e-442c-ba51-f8adfd6cb90a"
+    auth_id                       = "e57674eb-7830-4b71-9300-76fdac5ad13b"
+    case_created                  = "9f258ed8-295d-421f-af9c-34d3e7f9cb1e"
+    gw2_submission_id             = "aebb9331-0e0e-442c-ba51-f8adfd6cb90a"
+    gw2_assessor_updated_assessor = "0a1fc765-4304-4f4e-a22a-69a09ed5d92f"
+    gw2_assessor_updated_lpa      = "c4251953-e29b-4435-a177-4c7129b488a7"
+    gw2_workshop_inspector        = "a093a8f5-1871-424e-890f-71f9dada6926"
+    gw2_workshop_lpa              = "a2221150-ac3c-4c29-8668-5e9a5d81bcec"
+    gw2_workshop_agenda           = "9d584794-dc47-454b-8b95-ff05d06dbf0e"
+    gw2_report_uploaded           = "3f7ce6a1-9cfc-445b-9e1d-b5f294d87380"
+    gw3_assessor_updated_assessor = "27edd965-52be-4de6-b4b2-318d027faf4a"
+    gw3_assessor_updated_lpa      = "f3c4fbb9-1e2f-48ec-ad2f-57e2fcdc73aa"
+    gw3_passed                    = "e67dcb5a-d732-4426-b03f-a2f0de051b0f"
+    gw3_resubmission_required     = "27883cad-a44d-454d-a009-3bb17c5ced2c"
   }
 }
 

@@ -27,6 +27,11 @@ export async function loadInspectorOptions(service: ManageService, req: Request,
 	for (const field of EXAMINING_INSPECTOR_FIELDS) {
 		questions[field].options = optionsMap;
 	}
+
+	questions.gateway2AssessorsName.options = optionsMap;
+	questions.assessorGateway2.options = optionsMap;
+	questions.gateway3AssessorsName.options = optionsMap;
+	questions.assessorGateway3.options = optionsMap;
 }
 
 export async function retrieveCaseOfficers(

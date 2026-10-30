@@ -59,11 +59,23 @@ module "app_manage" {
     LOG_LEVEL = var.apps_config.logging.level
 
     # database connection
-    SQL_CONNECTION_STRING              = local.key_vault_refs["sql-app-connection-string"]
-    GOV_NOTIFY_API_KEY                 = local.key_vault_refs["localplans-gov-notify-api-key"]
-    GOV_NOTIFY_WEBHOOK_TOKEN           = local.key_vault_refs["gov-notify-webhook-token"]
-    GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = var.gov_notify.templates.case_created
-    LOCAL_PLANS_TEAM_EMAIL             = "enquiries@planninginspectorate.gov.uk"
+    SQL_CONNECTION_STRING = local.key_vault_refs["sql-app-connection-string"]
+
+    # GOV Notify
+    GOV_NOTIFY_API_KEY                                   = local.key_vault_refs["localplans-gov-notify-api-key"]
+    GOV_NOTIFY_WEBHOOK_TOKEN                             = local.key_vault_refs["gov-notify-webhook-token"]
+    GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID                   = var.gov_notify.templates.case_created
+    GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID = var.gov_notify.templates.gw2_assessor_updated_assessor
+    GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID      = var.gov_notify.templates.gw2_assessor_updated_lpa
+    GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID        = var.gov_notify.templates.gw2_workshop_inspector
+    GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID              = var.gov_notify.templates.gw2_workshop_lpa
+    GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID           = var.gov_notify.templates.gw2_workshop_agenda
+    GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID           = var.gov_notify.templates.gw2_report_uploaded
+    GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID = var.gov_notify.templates.gw3_assessor_updated_assessor
+    GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID      = var.gov_notify.templates.gw3_assessor_updated_lpa
+    GOV_NOTIFY_GW3_PASS_TEMPLATE_ID                      = var.gov_notify.templates.gw3_passed
+    GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID     = var.gov_notify.templates.gw3_resubmission_required
+    LOCAL_PLANS_TEAM_EMAIL                               = "enquiries@planninginspectorate.gov.uk"
 
     # document storage
     BLOB_STORE_ACCOUNT_URL = azurerm_storage_account.documents.primary_blob_endpoint
