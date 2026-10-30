@@ -94,15 +94,13 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			return res.status(500).send('No case found');
 		}
 
-		// Record the submission date on the case and gateway2Info
+		// Record the submission date on the case and gateway2Info, and release the LPA's documents to manage
 		const submissionDate = new Date();
-
-		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
-			service,
-			gateway2FileUploadQuestionConfigs.map((questionsConfig) => questionsConfig.url)
-		);
-
 		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+				service,
+				gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+			);
 			await db.$transaction([
 				db.case.update({
 					where: { reference },

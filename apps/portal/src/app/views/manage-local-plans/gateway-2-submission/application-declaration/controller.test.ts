@@ -1,7 +1,8 @@
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildGetDeclarationPage, buildPostDeclarationPage } from './controller.ts';
+import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
 import type { PortalService } from '#service';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
@@ -72,7 +73,15 @@ function createMockService() {
 			gateway2Info: {
 				update: async () => ({})
 			},
-			$transaction: async (queries: Promise<unknown>[]) => Promise.all(queries)
+			documentSet: {
+				findMany: mock.fn(async ({ where }: { where: { folderName: { in: string[] } } }) =>
+					where.folderName.in.map((folderName) => ({ id: `ds-${folderName}`, folderName }))
+				)
+			},
+			document: {
+				updateMany: mock.fn(async () => ({ count: 0 }))
+			},
+			$transaction: mock.fn(async (queries: Promise<unknown>[]) => Promise.all(queries))
 		},
 		notifyClient: {
 			sendEmail: async (templateId: string, to: string, options?: unknown) => {
@@ -130,6 +139,60 @@ describe('buildPostDeclarationPage', () => {
 			teamPhone: 'team phone'
 		});
 		assert.equal(service.sendCalls[0].options.reference, 'gateway-2-submission:PLAN-123456');
+	});
+
+	it('commits the temporary Gateway 2 documents in the same transaction as the submission', async () => {
+		const service = createMockService();
+		const handler = buildPostDeclarationPage(service);
+		const { req, res } = createReq({
+			body: { declaration: ['informationTrue', 'privacyNotice'] }
+		});
+
+		await handler(req, res);
+
+		const db = service.db as any;
+		const folderNames = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
+		assert.deepEqual(db.documentSet.findMany.mock.calls[0].arguments[0].where.folderName.in, [...new Set(folderNames)]);
+		assert.equal(db.$transaction.mock.callCount(), 1);
+		assert.equal(db.$transaction.mock.calls[0].arguments[0].length, 3);
+		assert.deepEqual(db.document.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: { in: [...new Set(folderNames)].map((folderName) => `ds-${folderName}`) },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: { isTemp: false }
+		});
+	});
+
+	it('returns 500 without submitting or emailing when the document set lookup fails', async () => {
+		const service = createMockService();
+		const db = service.db as any;
+		db.documentSet.findMany.mock.mockImplementation(async () => []);
+		const handler = buildPostDeclarationPage(service);
+		const { req, res, redirectCalls } = createReq({
+			body: { declaration: ['informationTrue', 'privacyNotice'] }
+		});
+		const statusCalls: number[] = [];
+		const sendCalls: unknown[] = [];
+		res.status = ((code: number) => {
+			statusCalls.push(code);
+			return res;
+		}) as Response['status'];
+		res.send = ((body: unknown) => {
+			sendCalls.push(body);
+			return res;
+		}) as Response['send'];
+
+		await handler(req, res);
+
+		assert.deepEqual(statusCalls, [500]);
+		assert.deepEqual(sendCalls, ['Failed to record submission']);
+		assert.equal(redirectCalls.length, 0);
+		assert.equal(db.$transaction.mock.callCount(), 0);
+		assert.equal(service.sendCalls.length, 0);
+		assert.equal(service.errorCalls.length, 1);
 	});
 
 	it('renders error when no checkboxes are checked', async () => {

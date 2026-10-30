@@ -807,12 +807,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			return res.status(500).send('No case found');
 		}
 
-		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
-			service,
-			gateway3FileUploadQuestionConfigs.map((questionsConfig) => questionsConfig.url)
-		);
-
 		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+				service,
+				gateway3FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+			);
 			await service.db.$transaction([
 				service.db.case.update({
 					where: { id: caseId },

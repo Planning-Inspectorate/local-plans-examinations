@@ -496,11 +496,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 
 		const submittedDate = new Date();
 
-		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(service, [
-			getResubmissionDocumentSetFolderName(req)
-		]);
-
 		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(service, [
+				getResubmissionDocumentSetFolderName(req)
+			]);
 			await service.db.$transaction([
 				service.db.gateway3Submission.update({
 					where: { id: currentSubmission.id },

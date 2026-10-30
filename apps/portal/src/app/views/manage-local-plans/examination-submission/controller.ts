@@ -487,12 +487,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		}
 
 		const submissionDate = new Date();
-		const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
-			service,
-			fileUploadQuestionConfigs.map((questionConfig) => questionConfig.documentSetFolderName)
-		);
-
 		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+				service,
+				fileUploadQuestionConfigs.map((questionConfig) => questionConfig.documentSetFolderName)
+			);
 			await service.db.$transaction([
 				service.db.examinationInfo.update({
 					where: { caseId },
