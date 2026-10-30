@@ -126,11 +126,7 @@ function registerGateway2WorkshopJourney(
 	const { createJourney } = config;
 
 	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
-
-		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
-		}
+		questions.lpa.options = await loadLpaOptions(service, true);
 
 		next();
 	});
@@ -257,7 +253,7 @@ function registerExaminationHearingJourney(
 	const { createJourney } = config;
 
 	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
+		const loaded = await loadLpaOptions(service, false);
 
 		if (loaded.length > 0) {
 			questions.lpa.options = [{ value: '', text: '' }, ...loaded];

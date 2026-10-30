@@ -5,6 +5,12 @@ import { EXAMINING_INSPECTOR_FIELDS } from '../classes/case-field-mappings.ts';
 
 type LpaOption = { value: string; text: string };
 
+/**
+ * Loads the case officer options into the provided questions object.
+ * @param service The manage service instance.
+ * @param req The express request object.
+ * @param questions The questions object to populate with case officer options.
+ */
 export async function loadCaseOfficerOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	if (service.authDisabled) return;
 
@@ -17,6 +23,12 @@ export async function loadCaseOfficerOptions(service: ManageService, req: Reques
 	];
 }
 
+/**
+ * Loads the inspector options into the provided questions object.
+ * @param service The manage service instance.
+ * @param req The express request object.
+ * @param questions The questions object to populate with inspector options.
+ */
 export async function loadInspectorOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	if (service.authDisabled) return;
 
@@ -29,6 +41,12 @@ export async function loadInspectorOptions(service: ManageService, req: Request,
 	}
 }
 
+/**
+ * Retrieves the list of case officer options to be put directly into a questions options array.
+ * @param service The manage service instance.
+ * @param session The authentication session.
+ * @returns A promise that resolves to an array of case officer options.
+ */
 export async function retrieveCaseOfficers(
 	service: ManageService,
 	session: authSession.SessionWithAuth
@@ -39,7 +57,7 @@ export async function retrieveCaseOfficers(
 
 	const entraClient = service.getEntraClient(session);
 	const caseOfficers = entraClient ? await entraClient.listAllGroupMembers(service.entraGroupIds.caseOfficers) : [];
-	return caseOfficers.map((m) => ({ value: m.id, text: m.displayName }));
+	return [{ value: '', text: '' }, ...caseOfficers.map((m) => ({ value: m.id, text: m.displayName }))];
 }
 
 export function retrieveDefaultCaseOfficers() {
@@ -51,38 +69,48 @@ export function retrieveDefaultCaseOfficers() {
 	];
 }
 
+function retrieveDefaultLpaOptions(): LpaOption[] {
+	return [
+		{ value: '', text: '' },
+		{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+		{ value: 'lpa-2', text: 'Local Planning Authority 2' },
+		{ value: 'lpa-3', text: 'Local Planning Authority 3' },
+		{ value: 'lpa-4', text: 'Local Planning Authority 4' }
+	];
+}
+
 /**
- * Loads Local Planning Authority (LPA) options either from a database or a predefined list.
- *
+ * Loads Local Planning Authority (LPA) options either from a database or a predefined list. To be put directly into a questions options array.
  * @param {ManageService} service - The service instance containing the database and other configurations.
+ * @param addEmptyValue Whether to include an empty value option.
  * @return {Promise<LpaOption[]>} A promise that resolves to an array of LPA options. Each option includes a value and text property.
  */
-export async function loadLpaOptions(service: ManageService): Promise<LpaOption[]> {
+export async function loadLpaOptions(service: ManageService, addEmptyValue: boolean): Promise<LpaOption[]> {
 	const { db } = service;
 
 	if (service.authDisabled) {
-		return [
-			{
-				value: 'lpa-1',
-				text: 'Local Planning Authority 1'
-			},
-			{
-				value: 'lpa-2',
-				text: 'Local Planning Authority 2'
-			},
-			{
-				value: 'lpa-3',
-				text: 'Local Planning Authority 3'
-			}
-		];
+		return retrieveDefaultLpaOptions();
 	}
 
 	const authorities = await db.authority.findMany({
 		orderBy: { name: 'asc' }
 	});
 
-	return authorities.map((authority) => ({
-		value: authority.pinsCode,
-		text: authority.name
-	}));
+	if (authorities.length > 0) {
+		if (addEmptyValue) {
+			return [
+				{ value: '', text: '' },
+				...authorities.map((authority) => ({
+					value: authority.pinsCode,
+					text: authority.name
+				}))
+			];
+		}
+		return authorities.map((authority) => ({
+			value: authority.pinsCode,
+			text: authority.name
+		}));
+	}
+
+	return retrieveDefaultLpaOptions();
 }
