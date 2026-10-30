@@ -38,13 +38,9 @@ export const issueGateway3ProceedDecision = (planTitle: string) => {
 	gateway3Page.verifyLoaded(planTitle);
 };
 
-export const openSeededGateway3PageWithSubmissionDocuments = (
-	reference: string,
-	options: Gateway3SubmissionDocumentsSeedOptions = {},
-	planTitle: string
-) => {
+export const openSeededGateway3PageWithSubmissionDocuments = (options: Gateway3SubmissionDocumentsSeedOptions = {}) => {
 	return cy.task<SeededManageCase>('seedGateway3SubmissionDocuments', options).then((seededCase) => {
-		openGateway3Page(reference, planTitle);
+		openGateway3Page(seededCase.reference, seededCase.planTitle);
 		return cy.wrap(seededCase, { log: false });
 	});
 };

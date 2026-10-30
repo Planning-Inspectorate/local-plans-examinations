@@ -193,7 +193,7 @@ describe('Gateway 3 submission documents', () => {
 		'opens the review documents page from the Gateway 3 tab and lists the submitted documents',
 		{ tags: ['regression'] },
 		() => {
-			openSeededGateway3PageWithSubmissionDocuments(reference, seededCase.planTitle).then(({ reference }) => {
+			openSeededGateway3PageWithSubmissionDocuments().then(({ reference }) => {
 				openGateway3ReviewDocumentsPage();
 
 				gateway3ReviewDocumentsPage.verifyLoaded(reference);
