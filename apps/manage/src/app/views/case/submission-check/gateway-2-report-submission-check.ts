@@ -22,7 +22,6 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 				caseId: caseId
 			}
 		});
-		console.log('uploadedFiles67', uploadedFiles);
 		const receivedDate = existingGatewayDetails?.reportIssuedDate;
 		const fileUploadedDate = uploadedFiles.length > 0 ? uploadedFiles[0].dateCreated : undefined;
 		const answersToReview = [
