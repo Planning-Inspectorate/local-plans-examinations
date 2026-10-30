@@ -56,20 +56,20 @@ describe('Gateway 2 updates', () => {
 	});
 
 	it(
-		'keeps the issued Gateway 2 report when a replacement is removed',
+		'shows the issued Gateway 2 report when re-entering the upload page and keeps it after leaving',
 		{ tags: ['regression', 'environment-smoke'] },
 		() => {
 			issueGateway2Report(seededCase.planTitle);
 
 			gateway2Page.openActionLinkFor(gateway2Report.row);
-			gateway2ReportPage.verifyLoaded();
-			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.updatedFileName);
-			gateway2ReportPage.removeFile(gateway2Report.updatedFileName);
-			gateway2ReportPage.verifyFileNotUploaded(gateway2Report.updatedFileName);
+			cy.reload();
+			gateway2ReportPage.verifyFileUploaded(gateway2Report.fileName);
 			gateway2ReportPage.goBack();
 
 			gateway2Page.verifyLoaded(seededCase.planTitle);
 			gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
+			gateway2Page.openActionLinkFor(gateway2Report.row);
+			gateway2ReportPage.verifyFileUploaded(gateway2Report.fileName);
 		}
 	);
 

@@ -13,6 +13,7 @@ import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import { questionHasNonEmptyAnswer, questionHasEmptyAnswer } from '../../util/journey-util.ts';
 import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -736,7 +737,7 @@ const gateway3QuestionNames = new Set<string>([
 	'examinationWebsite',
 	...Array.from(
 		// Gateway 3 submission questions
-		{ length: 50 },
+		{ length: NUM_GW3_SUBMISSIONS_QUESTIONS },
 		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()

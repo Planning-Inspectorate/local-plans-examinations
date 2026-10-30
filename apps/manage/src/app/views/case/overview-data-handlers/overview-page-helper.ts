@@ -119,8 +119,10 @@ async function addUploadedDocumentDetailsToAnswers(
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
 		if (
 			isUploadPages &&
-			(questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION ||
-				questionConfig.url === COMMON_CONSTS.MIQS_QUESTION)
+			(journeyFileUploadQuestionConfigs[overrideJourneyId].some((config: any) => config.url === questionConfig.url) ||
+				journeyFileUploadQuestionConfigs[overrideJourneyId].some((config: any) =>
+					config.url.startsWith(questionConfig.fieldName)
+				))
 		) {
 			uploadedFiles.unshift(...(await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId)));
 		}
