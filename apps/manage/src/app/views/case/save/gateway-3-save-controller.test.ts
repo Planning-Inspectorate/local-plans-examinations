@@ -103,6 +103,30 @@ describe('test Gateway2SaveController', () => {
 		await assert.rejects(gateway3Controller.prepareAndSave(answers));
 	});
 
+	for (const gateway3Info of [null, { submissions: [] }]) {
+		it(`creates a default submission when Gateway 3 info is ${gateway3Info ? 'empty' : 'missing'}`, async () => {
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => ({ id: 'someCaseId', gateway3Info }));
+			const req = { params: { question: 'gateway-3-completion-date-1' } } as unknown as Request;
+			const controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+
+			await controller.prepareAndSave({ 'completionDate-1': mockDate });
+
+			assert.equal(mockService.db.gateway3Info.upsert.mock.callCount(), 1);
+			const expectedSubmissions = [{ decision: null, completionDate: mockDate }];
+			assert.deepEqual(mockService.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
+				where: { caseId: 'someCaseId' },
+				update: {
+					submissions: { deleteMany: {}, createMany: { data: expectedSubmissions } }
+				},
+				create: {
+					caseId: 'someCaseId',
+					submissions: { createMany: { data: expectedSubmissions } }
+				}
+			});
+		});
+	}
+
 	it('saves another Gateway 3 field when there are no submissions', async () => {
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => ({
