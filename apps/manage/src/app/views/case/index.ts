@@ -96,6 +96,7 @@ import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/cu
 import { pushAlertToSession } from '../../util/alert.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
+import { sendGw2WorkshopSetUpNotifyEmail } from '../../notify/notify-helper.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -172,12 +173,12 @@ function registerGateway2WorkshopJourney(
 		next();
 	});
 
-	const completeWorkshop = asyncHandler(async (req: Request, res: Response) => {
+	const completeWorkshopAndSendEmail = asyncHandler(async (req: Request, res: Response) => {
 		const reference = getParam(req.params.reference);
+		const answers = res.locals.journeyResponse?.answers ?? {};
 
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
-		//const workshopId = String(req.url).split('-')[-1];
 		//reqCopy.params.question = `check-your-answers-${workshopId}`;
 		await new Gateway2SaveController(service, req, reference).prepareAndSave({});
 		await updateCaseField(service);
@@ -194,6 +195,10 @@ function registerGateway2WorkshopJourney(
 			}
 		});
 		pushAlertToSession(req, 'success', 'Workshop set up');
+
+		// Send notification to LPA (from the contact details) and Inspector (GW2 assessor)
+		await sendGw2WorkshopSetUpNotifyEmail(service, req, reference, answers);
+
 		if (req.session.lastQuestionUrl) {
 			delete req.session.lastQuestionUrl;
 		}
@@ -222,7 +227,7 @@ function registerGateway2WorkshopJourney(
 		getWorkshopJourneyResponse,
 		getJourney,
 		saveLastQuestionUrl,
-		completeWorkshop
+		completeWorkshopAndSendEmail
 	);
 	router.get('/gateway-2/set-up-workshop/delete-*workshopId', getDeleteWorkshop());
 	router.post('/gateway-2/set-up-workshop/delete-*workshopId', postDeleteWorkshop(service));
