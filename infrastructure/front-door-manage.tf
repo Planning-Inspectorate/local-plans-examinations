@@ -163,6 +163,22 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
     }
 
     override {
+      rule_group_name = "PROTOCOL-ENFORCEMENT"
+      rule {
+        # This rule is skipped because it blocks the file upload when no files are selected
+        rule_id = "920120"
+        enabled = true
+        action  = "Log"
+      }
+
+      exclusion {
+        match_variable = "RequestBodyPostArgNames"
+        operator       = "Equals"
+        selector       = "files"
+      }
+    }
+
+    override {
       rule_group_name = "General"
       rule {
         action  = "Log"
