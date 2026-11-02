@@ -13,6 +13,10 @@ export async function saveGateway3Submissions(
 	caseId: string,
 	submissionDetails: NonNullable<Gateway3Input['submissions']>
 ) {
+	if (!submissionDetails.length) {
+		return;
+	}
+
 	const submissionDetailsCleaned = Object.values(submissionDetails).map((entry) => ({
 		decision: entry.decision,
 		completionDate: entry.completionDate
@@ -59,16 +63,23 @@ export class Gateway3SaveController extends SaveController {
 		if (!caseDetails) {
 			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
 		}
-		if (caseDetails.gateway3Info?.submissions == undefined || caseDetails.gateway3Info?.submissions.length == 0) {
-			throw Error(`Could not find submission data for case with reference '${this.caseReference}'`);
-		}
-		const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submissions);
+
+		const submissionsData = caseDetails.gateway3Info?.submissions ?? [];
+		const submissionDetails = sortGateway3Submissions(submissionsData);
+
 		if (String(this.req.params.question).startsWith('gateway-3-completion-date')) {
 			const submissionId = Number(String(this.req.params.question).replace('gateway-3-completion-date-', ''));
-			submissionDetails[submissionId - 1].completionDate = answers[`completionDate-${submissionId}`];
-			answers = {
-				submissions: submissionDetails
-			};
+			const submission = submissionDetails[submissionId - 1];
+
+			if (submissionDetails.length > 0 && !submission) {
+				throw new Error(`Invalid Gateway 3 submission number: ${submissionId}`);
+			}
+
+			if (submission) {
+				submission.completionDate = answers[`completionDate-${submissionId}`];
+			}
+
+			answers = { submissions: submissionDetails };
 		}
 		return this.trimStringValues(answers as Gateway3Input);
 	}
