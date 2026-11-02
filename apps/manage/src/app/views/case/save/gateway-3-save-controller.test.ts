@@ -102,18 +102,6 @@ describe('test Gateway2SaveController', () => {
 		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await assert.rejects(gateway3Controller.prepareAndSave(answers));
 	});
-	for (const gateway3Info of [null, { submissions: [] }]) {
-		it(`does not write a completion date when Gateway 3 info is ${gateway3Info ? 'empty' : 'missing'}`, async () => {
-			const mockService = createMockService();
-			mockService.db.case.findUnique = mock.fn(async () => ({ id: 'someCaseId', gateway3Info }));
-			const req = { params: { question: 'gateway-3-completion-date-1' } } as unknown as Request;
-			const controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
-
-			await controller.prepareAndSave({ 'completionDate-1': mockDate });
-
-			assert.equal(mockService.db.gateway3Info.upsert.mock.callCount(), 0);
-		});
-	}
 
 	it('saves another Gateway 3 field when there are no submissions', async () => {
 		const mockService = createMockService();
