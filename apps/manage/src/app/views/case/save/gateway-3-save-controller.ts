@@ -64,7 +64,19 @@ export class Gateway3SaveController extends SaveController {
 			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
 		}
 
-		const submissionsData = caseDetails.gateway3Info?.submissions ?? [];
+		const existingSubmissions = caseDetails.gateway3Info?.submissions;
+
+		const submissionsData = existingSubmissions?.length
+			? existingSubmissions
+			: [
+					{
+						id: crypto.randomUUID(),
+						decision: null,
+						completionDate: null,
+						gateway3InfoId: null
+					}
+				];
+
 		const submissionDetails = sortGateway3Submissions(submissionsData);
 
 		if (String(this.req.params.question).startsWith('gateway-3-completion-date')) {
