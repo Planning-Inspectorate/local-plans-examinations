@@ -394,7 +394,10 @@ function redirectAfterCyaEdit(updateCase: any) {
 				returnToCya = false;
 				res.locals.redirectToExamination = true;
 			} else {
-				if (req.params.question.startsWith('examination-hearing-location-type-') && returnToCya == true) {
+				if (
+					(req.params.question.startsWith('examination-hearing-location-type-') && returnToCya == true) ||
+					(req.params.question.startsWith('gateway-2-location-type-') && returnToCya == true)
+				) {
 					returnToCya = false;
 					req.session.editingFromCheckAnswers = false;
 				}
