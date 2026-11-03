@@ -150,6 +150,7 @@ export interface Gateway3Input extends SaveInput {
 		id: string;
 		decision: string | null;
 		completionDate: Date | null;
+		submittedDate?: Date | null;
 		gateway3InfoId: string | null;
 	}[];
 }

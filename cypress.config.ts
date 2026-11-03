@@ -15,6 +15,7 @@ import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
 import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
 import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
+import { seedGateway3SubmissionDocuments } from './cypress/tasks/gateway-3.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -105,6 +106,7 @@ export default defineConfig({
 				setDocumentVirusCheckStatus,
 				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
+				seedGateway3SubmissionDocuments,
 				seedGateway3Submitted,
 				seedExaminationReadyToStart,
 				seedExaminationDeclarationDocuments,
