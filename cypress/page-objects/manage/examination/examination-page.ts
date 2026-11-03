@@ -92,6 +92,18 @@ export class ExaminationPage extends GatewayBasePage {
 			.click();
 	}
 
+	verifyNotificationBannerAbovePlanTitle(message: string) {
+		this.notificationBanner
+			.filter(`:contains("${message}")`)
+			.should('have.length', 1)
+			.then(($banner) => {
+				this.pageHeading.then(($planTitle) => {
+					const position = $banner[0].compareDocumentPosition($planTitle[0]);
+					expect(position & Node.DOCUMENT_POSITION_FOLLOWING, 'plan title follows the banner').to.be.greaterThan(0);
+				});
+			});
+	}
+
 	verifyHearingCancelled(hearingNumber: string, remoteLink: string) {
 		this.verifyLoaded();
 		this.cancelHearingLink(hearingNumber).should('not.exist');
