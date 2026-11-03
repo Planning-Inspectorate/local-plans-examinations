@@ -23,9 +23,7 @@
 {% block pageContent %}
   {% if alerts %}
     {% for alert in alerts %}
-      {% if alert.text != 'Hearing created' %}
-        {{ govukNotificationBanner(alert) }}
-      {% endif %}
+      {{ govukNotificationBanner(alert) }}
     {% endfor %}
   {% endif %}
   {% if virusErrorSummary and virusErrorSummary.length %}
@@ -56,13 +54,6 @@
   },
   classes: "govuk-!-margin-top-6"
 }) }}
-{% if alerts %}
-  {% for alert in alerts %}
-    {% if alert.text == 'Hearing created' %}
-      {{ govukNotificationBanner(alert) }}
-    {% endif %}
-  {% endfor %}
-{% endif %}
 
 {% if currentSection == "case-history" %}
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--invisible">
