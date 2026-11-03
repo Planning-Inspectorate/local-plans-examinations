@@ -561,8 +561,9 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 				value: 'yes',
 				text: 'Yes',
 				conditional: {
-					question: 'Expected number of days to carry out the hearing',
-					type: 'number',
+					label: 'Number of days',
+					type: 'unit',
+					suffix: 'Days',
 					fieldName: 'hearingExpectedDays'
 				}
 			},
@@ -1862,7 +1863,9 @@ Object.entries(questions)
 			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const expectedDaysKnown = {
 				key: this.title,
-				value: hearingDetails.hearingExpectedDaysKnown,
+				value:
+					this.options.find((option: { value: string }) => option.value === hearingDetails.hearingExpectedDaysKnown)
+						?.text ?? hearingDetails.hearingExpectedDaysKnown,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 
@@ -1890,7 +1893,9 @@ Object.entries(questions)
 			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const locationType = {
 				key: this.title,
-				value: hearingDetails.hearingLocationType,
+				value:
+					this.options.find((option: { value: string }) => option.value === hearingDetails.hearingLocationType)?.text ??
+					hearingDetails.hearingLocationType,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 
