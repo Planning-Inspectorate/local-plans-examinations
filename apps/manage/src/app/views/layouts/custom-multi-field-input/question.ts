@@ -4,6 +4,7 @@ import { nl2br } from '@planning-inspectorate/dynamic-forms';
 import { yesNoToBoolean } from '@planning-inspectorate/dynamic-forms';
 import type { Journey, QuestionViewModel } from '@planning-inspectorate/dynamic-forms';
 import { toZonedTime } from 'date-fns-tz';
+import { formatDateAnswer } from '../../../util/util.ts';
 
 interface BaseField {
 	fieldName: string;
@@ -280,6 +281,8 @@ export default class CustomMultiFieldInputQuestion extends Question {
 			let answer;
 			if (field.type === 'boolean' || field.type === 'radio') {
 				answer = field.options.find((opt: any) => opt.value === journey.response.answers[field.fieldName])?.text || '';
+			} else if (field.type === 'date') {
+				answer = formatDateAnswer(journey.response.answers[field.fieldName], 'd MMM yyyy');
 			} else {
 				answer = this.#formatValue(String(journey.response.answers[field.fieldName] || ''), field.formatTextFunction);
 			}
@@ -300,6 +303,8 @@ export default class CustomMultiFieldInputQuestion extends Question {
 				if (q.type === 'boolean' || q.type === 'radio') {
 					formattedAnswer =
 						q.options.find((opt: any) => opt.value === journey.response.answers[q.fieldName])?.text || '';
+				} else if (q.type === 'date') {
+					formattedAnswer = formatDateAnswer(journey.response.answers[q.fieldName], 'd MMM yyyy');
 				} else {
 					formattedAnswer = this.#formatValue(
 						String(journey.response.answers[q.fieldName] || 'Not provided'),
