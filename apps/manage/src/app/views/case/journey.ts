@@ -460,12 +460,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.approvedForCILDateOutcome)
 				.endMultiQuestionCondition('report-uploaded'),
 			pauseSection,
-			new Section('Important dates for this plan', 'important-dates')
-				.addQuestion(questions.withdrawnDate)
-				.addQuestion(questions.isSound)
-				.addQuestion(questions.soundUnsoundDate)
-				.addQuestion(questions.adoptionDate)
-				.addQuestion(questions.approvedForCILDate)
+			new Section('', 'withdrawn-date').addQuestion(questions.withdrawnDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
