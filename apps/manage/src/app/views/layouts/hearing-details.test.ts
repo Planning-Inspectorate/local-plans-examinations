@@ -66,12 +66,14 @@ describe('Hearing templates', () => {
 			assert.ok(html.includes(label));
 	});
 
-	it('shows the hearing banner below the tabs and retains other banner placement', () => {
+	it('shows the hearing banner above the plan title and retains other banner placement', () => {
 		const env = configureNunjucks();
 		const data = {
 			config: { headerTitle: 'Manage', footerLinks: [] },
 			navigation: [],
-			summaryListData: { sections: [] }
+			summaryListData: { sections: [] },
+			reference: 'PLAN-123456',
+			planTitle: 'Test plan'
 		};
 		const hearingHtml = env.render('views/layouts/case-overview.njk', {
 			...data,
@@ -82,7 +84,10 @@ describe('Hearing templates', () => {
 				}
 			]
 		});
-		assert.ok(hearingHtml.indexOf('Hearing created') > hearingHtml.indexOf('id="service-navigation"'));
+		assert.equal((hearingHtml.match(/Hearing created/g) ?? []).length, 1);
+		assert.ok(hearingHtml.indexOf('Hearing created') < hearingHtml.indexOf('PLAN-123456'));
+		assert.ok(hearingHtml.indexOf('Hearing created') < hearingHtml.indexOf('Test plan'));
+		assert.ok(hearingHtml.indexOf('Hearing created') < hearingHtml.indexOf('id="service-navigation"'));
 		const otherHtml = env.render('views/layouts/case-overview.njk', {
 			...data,
 			alerts: [
@@ -93,6 +98,38 @@ describe('Hearing templates', () => {
 			]
 		});
 		assert.ok(otherHtml.indexOf('Changes saved') < otherHtml.indexOf('id="service-navigation"'));
+	});
+
+	it('renders the expected days as a narrow numeric input with a Days suffix', () => {
+		configureNunjucks();
+		const viewModel = questions['examinationHearingExpectedDays-1'].prepQuestionForRendering(
+			undefined,
+			{ journeyTemplate: 'views/layouts/forms-question.njk', taskListUrl: 'check-your-answers-1' },
+			{},
+			{ 'hearingExpectedDaysKnown-1': 'yes', 'hearingExpectedDaysKnown-1_hearingExpectedDays': '3' }
+		);
+		const html = viewModel.question.options.find((option: { value: string }) => option.value === 'yes').conditional
+			.html;
+		assert.ok(html.includes('Number of days'));
+		assert.ok(html.includes('govuk-input--width-5'));
+		assert.ok(html.includes('inputmode="numeric"'));
+		assert.match(html, /class="govuk-input__suffix"[^>]*>\s*Days\s*</);
+		assert.ok(html.includes('name="hearingExpectedDaysKnown-1_hearingExpectedDays"'));
+		assert.ok(html.includes('value="3"'));
+		assert.ok(!html.includes('govuk-input--width-10'));
+	});
+
+	it('does not tell the user an LPA notification will be sent on hearing check your answers', () => {
+		const html = configureNunjucks().render('views/layouts/hearing-check-your-answers.njk', {
+			config: { headerTitle: 'Manage', footerLinks: [] },
+			reference: 'PLAN-123456',
+			summaryListData: { sections: [] },
+			journeyComplete: true
+		});
+		assert.ok(html.includes('Check your answers'));
+		assert.ok(html.includes('Confirm and save'));
+		assert.ok(!html.includes('send a notification to the LPA'));
+		assert.ok(!html.includes('Preview notification to LPA'));
 	});
 
 	it('shows hearing history time in London without changing other history dates', () => {
