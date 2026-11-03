@@ -55,6 +55,8 @@ import {
 	HearingCheckPage,
 	cancelHearingPage,
 	HearingExpectedDaysPage,
+	hearingExpectedDaysPage,
+	HearingLocationKnownPage,
 	RemoteOrInPersonPage,
 	MeetingLinkKnownPage,
 	RemoteLinkPage
@@ -436,4 +438,39 @@ describe('Hearing updates', () => {
 		});
 		examinationPage.verifyHearingsOrder(1, 2);
 	});
+});
+
+describe('Hearing set up', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+		openSeededExaminationPage();
+	});
+	after(() => cy.task('clearDb'));
+
+	it(
+		'sets up a hybrid hearing with expected days and shows the banner above the plan title',
+		{ tags: ['regression'] },
+		() => {
+			const remoteOrInPersonPage = new RemoteOrInPersonPage();
+			const locationKnownPage = new HearingLocationKnownPage();
+			const meetingLinkKnownPage = new MeetingLinkKnownPage();
+
+			examinationPage.addHearing();
+			hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
+			hearingExpectedDaysPage.verifyDaysField();
+			hearingExpectedDaysPage.enterDays('3');
+			remoteOrInPersonPage.selectAnswer('hybrid');
+			locationKnownPage.selectAnswer('no');
+			meetingLinkKnownPage.selectAnswer('no');
+
+			hearingCheckPage.verifyNoLpaNotification();
+			hearingCheckPage.verifySummaryRowContains('Do you know the expected number of days?', 'Yes');
+			hearingCheckPage.verifySummaryRowContains('Estimated number of days', '3');
+			hearingCheckPage.verifySummaryRowContains('Is the hearing in-person, hybrid or remote?', 'Hybrid');
+			hearingCheckPage.confirmHearing();
+
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifyNotificationBannerAbovePlanTitle('Hearing created');
+		}
+	);
 });

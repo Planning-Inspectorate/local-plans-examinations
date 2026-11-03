@@ -46,7 +46,18 @@ describe('Examination validation', () => {
 		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
 		hearingExpectedDaysPage.selectAnswer('yes');
 		hearingExpectedDaysPage.verifyLoaded('yes');
-		hearingExpectedDaysPage.verifyValidationError('Enter the expected number of days');
+		hearingExpectedDaysPage.verifyValidationError('Expected number of days must be a whole number');
+	});
+
+	it('only accepts a whole number of hearing days', { tags: ['regression'] }, () => {
+		examinationPage.addHearing();
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
+		hearingExpectedDaysPage.verifyDaysField();
+		for (const days of ['abc', '2.5', '-1']) {
+			hearingExpectedDaysPage.enterDays(days);
+			hearingExpectedDaysPage.verifyLoaded('yes');
+			hearingExpectedDaysPage.verifyValidationError('Expected number of days must be a whole number');
+		}
 	});
 
 	it('shows an error when an Examination date is blank', { tags: ['regression'] }, () => {
