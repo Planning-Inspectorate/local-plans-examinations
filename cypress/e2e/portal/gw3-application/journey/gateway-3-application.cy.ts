@@ -100,9 +100,7 @@ describe('Gateway 3 application page journeys once Gateway 2 is submitted and it
 					plan.status2
 				);
 				planDetailsPage.backLink.click();
-				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-					[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status2]
-				]);
+				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [[plan.reference, plan.title, plan.type]]);
 			});
 		}
 	);

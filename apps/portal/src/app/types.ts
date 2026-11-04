@@ -244,6 +244,7 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
 	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
 	title: 'East Borough Local Plan', //Plan Title
+	type: { id: 'local-plan', displayName: 'Local Plan', displayOrder: 1 },
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
 	examinationStatus: 'cannot-start-yet',

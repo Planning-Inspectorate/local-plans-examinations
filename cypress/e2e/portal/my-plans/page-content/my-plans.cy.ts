@@ -30,22 +30,16 @@ describe('My plans page content for gateway 2', () => {
 			myPlansPage.verifyServiceNavigation('Guidance', 'Sign out');
 			myPlansPage.verifyLoaded();
 			myPlansPage.verifyCaption(plan.leadLpa);
-			myPlansPage.verifyTableHeaders(myPlansPage.myPlansTable, [
-				'Reference number',
-				'Lead local planning authority',
-				'Plan title',
-				'Current stage',
-				'Status'
-			]);
-			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status]
-			]);
+			myPlansPage.verifyTableHeaders(myPlansPage.myPlansTable, ['Reference number', 'Plan title', 'Type']);
+			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [[plan.reference, plan.title, plan.type]]);
+			myPlansPage.myPlansTable.find('thead th').should('have.length', 3);
+			myPlansPage.verifyPlanDetailsRow(plan.reference, plan.title, plan.type);
 			myPlansPage.verifyYourPlanLink(plan.reference);
 		});
 	});
 
 	it(
-		'Shows Gatway 2 status as in progress on the my plans pages after document is uploaded',
+		'Keeps the plan type on the my plans page after a Gateway 2 document is uploaded',
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
@@ -55,9 +49,7 @@ describe('My plans page content for gateway 2', () => {
 				page.saveAndReturn();
 				gateway2ApplicationPage.saveAndComeBackLink.click();
 				planDetailsPage.backLink.click();
-				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-					[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status2]
-				]);
+				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [[plan.reference, plan.title, plan.type]]);
 			});
 		}
 	);
@@ -71,11 +63,11 @@ describe('My plans page content after Gateway 2 submission', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('Shows Gateway 2 status as under review after submission', { tags: ['regression'] }, () => {
+	it('Shows the plan type after Gateway 2 submission', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			myPlansPage.verifyLoaded();
 			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				[gateway2SubmittedPlan.reference, plan.leadLpa, gateway2SubmittedPlan.title, plan.currentStage, plan.status3]
+				[gateway2SubmittedPlan.reference, gateway2SubmittedPlan.title, plan.type]
 			]);
 		});
 	});
@@ -91,12 +83,10 @@ describe('My plans page content for gateway 3', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('Shows gateway 3 as Ready to start on the my plans page', { tags: ['smoke'] }, () => {
+	it('Shows the plan type for a Gateway 3 plan', { tags: ['smoke'] }, () => {
 		loadReportIssuedPlan().then((plan) => {
 			myPlansPage.verifyLoaded();
-			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status]
-			]);
+			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [[plan.reference, plan.title, plan.type]]);
 		});
 	});
 });

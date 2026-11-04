@@ -2,6 +2,7 @@
 	"reference": "PLAN-C01",
 	"urlReference": "PLAN-C01",
 	"title": "GW2ReportIssued",
+	"type": "Local Plan",
 	"currentStage": "Gateway 3",
 	"status": "Ready to start",
 	"status2": "In progress",
