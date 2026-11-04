@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildAssignedToMe } from './controller.ts';
 import type { ManageService } from '#service';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import {
+	DOCUMENT_SET_ID,
+	gateway2SetIds,
+	gateway3SetIds
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 const entraClient = { getUserDisplayName: async (id: string) => `User ${id}` };
 
@@ -65,6 +69,19 @@ function createContext(cases: unknown[] = []) {
 }
 
 describe('buildAssignedToMe', () => {
+	it('excludes draft and deleted documents from assigned case statuses', async () => {
+		const ctx = createContext([{ id: 'case-1', caseOfficer: account.localAccountId }]);
+
+		await ctx.handler(ctx.req, ctx.res);
+
+		assert.deepEqual(
+			ctx.service.db.document.findMany.mock.calls.map(({ arguments: [query] }) => query),
+			[gateway2SetIds, gateway3SetIds].map((documentSetIds) => ({
+				where: { caseId: 'case-1', documentSetId: { in: documentSetIds }, isDeleted: false, isTemp: false }
+			}))
+		);
+	});
+
 	it('renders assigned cases when fetch succeeds', async () => {
 		const cases = [
 			{
