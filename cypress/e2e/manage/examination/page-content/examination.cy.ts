@@ -116,7 +116,7 @@ describe('Examination report content', () => {
 				seededCase = result;
 			}
 		);
-		examinationPage.verifySectionHeading('Outcome');
+		examinationPage.verifyOutcomeContent();
 		examinationPage.verifyReportDetails(2, soundUnsound.display, report.issuedDisplay);
 		examinationPage.verifyExpectedActionLinkHrefs('outcome', [
 			{ row: report.row, path: 'examination-report-manage' },
