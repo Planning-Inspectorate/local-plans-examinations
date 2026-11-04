@@ -25,7 +25,7 @@ describe('Cross-service Manage and Portal', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('opens a Manage-created case in the Portal Gateway 2 submission journey', () => {
+	it('opens a Manage-created case in the Portal Gateway 2 submission journey', { tags: ['regression'] }, () => {
 		loadCreateCaseData().then((data) => {
 			completeCreateCaseFlow(data);
 			checkYourAnswersPage.verifyLoaded();
@@ -41,7 +41,7 @@ describe('Cross-service Manage and Portal', () => {
 		});
 	});
 
-	it('hides FO draft GW2 documents from BO until the application is submitted', () => {
+	it('hides FO draft GW2 documents from BO until the application is submitted', { tags: ['regression'] }, () => {
 		cy.get<{ reference: string }>('@seededCase').then(({ reference }) => {
 			const portalPlanReference = toPortalPlanReference(reference);
 			const fileName = 'test-document.pdf';

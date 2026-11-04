@@ -4,7 +4,7 @@
 {% block pageTitle %}Examination submission{% endblock %}
 
 {% block pageHeading %}
-    <div class="govuk-grid-row">
+    <div class="govuk-grid-row govuk-!-margin-bottom-4">
         <div class="govuk-grid-column-full">
             <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
                 {% if pageCaption %}
@@ -25,8 +25,39 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
-        {% if submissionDate %}
-            <p class="govuk-body" data-cy="submission-copy">Your submission was sent on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
+        {% if miqDocuments and miqDocuments.length %}
+            {% set miqValueHtml %}
+                {% if miqDocuments.length > 1 %}
+                    {% for document in miqDocuments %}
+                        <div>
+                            {% if document.href %}
+                                <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                            {% else %}
+                                {{ document.fileName }}
+                            {% endif %}
+                            {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% set document = miqDocuments[0] %}
+                    {% if document.href %}
+                        <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                    {% else %}
+                        {{ document.fileName }}
+                    {% endif %}
+                    {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                {% endif %}
+            {% endset %}
+            <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-cy="miq-documents-table">
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key" data-cy="miq-documents-label"><strong>Matters, issues and questions</strong></dt>
+                    <dd class="govuk-summary-list__value" data-cy="miq-documents-value">{{ miqValueHtml | safe }}</dd>
+                </div>
+            </dl>
+        {% endif %}
+
+        {% if submissionDate or submitter %}
+            <p class="govuk-body" data-cy="submission-copy">Your submission was sent{% if submissionDate %} on {{ submissionDate }}{% endif %}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
         {% endif %}
 
         <h2 class="govuk-heading-m">Documents</h2>
