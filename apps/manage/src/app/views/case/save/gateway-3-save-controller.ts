@@ -19,7 +19,8 @@ export async function saveGateway3Submissions(
 
 	const submissionDetailsCleaned = Object.values(submissionDetails).map((entry) => ({
 		decision: entry.decision,
-		completionDate: entry.completionDate
+		completionDate: entry.completionDate,
+		...(entry.submittedDate !== undefined && { submittedDate: entry.submittedDate })
 	}));
 	if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
 		throw Error('Max number of submissions has been exceeded');
@@ -97,6 +98,16 @@ export class Gateway3SaveController extends SaveController {
 	}
 	public async prepareAndSave(answers: Record<string, any>) {
 		if (this.req.params.question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
+			const examinationWebsite =
+				typeof answers.examinationWebsite === 'string' && answers.examinationWebsite.trim().length > 0
+					? answers.examinationWebsite.trim()
+					: null;
+			const caseId = await this.resolveCaseId();
+			await this.service.db.gateway3Info.upsert({
+				where: { caseId },
+				update: { examinationWebsiteUrl: examinationWebsite },
+				create: { caseId, examinationWebsiteUrl: examinationWebsite }
+			});
 			return await new ExaminationSaveController(this.service, this.req, this.caseReference).prepareAndSave({
 				examinationWebsite: answers.examinationWebsite
 			});

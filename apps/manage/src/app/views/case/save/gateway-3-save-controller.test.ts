@@ -206,6 +206,32 @@ describe('test Gateway2SaveController', () => {
 		await gateway3Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway3Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
 	});
+	it('saves the examination website to the Gateway 3 portal field and the examination details', async () => {
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => ({
+			id: 'someCaseId',
+			examinationInfo: { hearings: [], planPauseHistory: [], status: undefined }
+		}));
+		const req = {
+			params: {
+				question: 'examination-website'
+			}
+		} as Request<any, any, any, any, Record<string, any>>;
+		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+
+		await gateway3Controller.prepareAndSave({ examinationWebsite: '  www.example.com/examination  ' });
+
+		assert.deepEqual(mockService.db.gateway3Info.upsert.mock.calls[0].arguments.at(0), {
+			where: { caseId: 'someCaseId' },
+			update: { examinationWebsiteUrl: 'www.example.com/examination' },
+			create: { caseId: 'someCaseId', examinationWebsiteUrl: 'www.example.com/examination' }
+		});
+		assert.equal(mockService.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.equal(
+			mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0).update.examinationWebsite,
+			'www.example.com/examination'
+		);
+	});
 });
 
 describe('saveGateway3Submissions', () => {
@@ -215,6 +241,30 @@ describe('saveGateway3Submissions', () => {
 		await saveGateway3Submissions({ gateway3Info: { upsert } } as never, 'case-id', []);
 
 		assert.equal(upsert.mock.callCount(), 0);
+	});
+
+	it('preserves the received date for each submission when saving a decision', async () => {
+		const upsert = mock.fn(async (_data: any) => ({}));
+		const submissions = [
+			{
+				id: 'received',
+				gateway3InfoId: 'gateway-3',
+				decision: '2',
+				completionDate: mockDate,
+				submittedDate: new Date('2025-12-01T12:00:00.000Z')
+			},
+			{ id: 'awaiting', gateway3InfoId: 'gateway-3', decision: null, completionDate: null, submittedDate: null }
+		];
+
+		await saveGateway3Submissions({ gateway3Info: { upsert } } as never, 'case-id', submissions);
+
+		const data = upsert.mock.calls[0].arguments[0];
+		for (const operation of [data.update, data.create]) {
+			assert.deepEqual(operation.submissions.createMany.data, [
+				{ decision: '2', completionDate: mockDate, submittedDate: submissions[0].submittedDate },
+				{ decision: null, completionDate: null, submittedDate: null }
+			]);
+		}
 	});
 
 	it('rejects submissions above the configured maximum without writing to the database', async () => {
