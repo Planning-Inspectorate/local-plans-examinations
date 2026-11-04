@@ -33,6 +33,7 @@ import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { questions } from './questions.ts';
 import {
 	EXAMINATION_STATUS_ID,
@@ -938,6 +939,23 @@ describe('buildGetJourneyMiddleware', () => {
 			handler: buildGetJourneyMiddleware(service, JOURNEY_ID, pageLoadHandler)
 		};
 	}
+
+	it('excludes draft and deleted documents from the case header status', async () => {
+		const ctx = createMiddlewareContext({
+			pageLoadHandler: class {
+				handle = mock.fn(async () => {});
+			}
+		});
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(
+			ctx.service.db.document.findMany.mock.calls.map(({ arguments: [query] }) => query),
+			[gateway2SetIds, gateway3SetIds].map((documentSetIds) => ({
+				where: { caseId: CASE_ID, documentSetId: { in: documentSetIds }, isDeleted: false, isTemp: false }
+			}))
+		);
+	});
 
 	it('renders 404 when the case title cannot be found', async () => {
 		const ctx = createMiddlewareContext();

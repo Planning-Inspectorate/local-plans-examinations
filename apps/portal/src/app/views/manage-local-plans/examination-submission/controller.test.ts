@@ -46,7 +46,11 @@ function buildService(caseRecord: unknown) {
 				upsert: mock.fn(async () => ({}))
 			},
 			documentSet: { findMany: mock.fn(async () => documentSets) },
-			document: { findMany: mock.fn(async () => []) }
+			document: {
+				findMany: mock.fn(async () => []),
+				updateMany: mock.fn(async () => ({ count: 0 }))
+			},
+			$transaction: mock.fn(async (queries: Promise<unknown>[]) => Promise.all(queries))
 		},
 		logger: { error: mock.fn() }
 	} as unknown as PortalService;
@@ -518,6 +522,58 @@ describe('examination declaration and completion', () => {
 		assert.deepEqual(redirect.mock.calls[0].arguments, [
 			'/manage-local-plans/PLAN-61797/examination/submission-complete'
 		]);
+	});
+
+	it('commits the temporary examination documents in the same transaction as the submission', async () => {
+		const service = buildService(null);
+		const req = {
+			currentCase: { id: 'case-id' },
+			params: { planReference: 'PLAN-61797' }
+		} as unknown as Request;
+
+		await buildPostDeclarationPage(service)(
+			req,
+			{ redirect: mock.fn() } as unknown as Response,
+			mock.fn() as unknown as NextFunction
+		);
+
+		const documentSetQuery = service.db.documentSet.findMany.mock.calls[0].arguments[0];
+		assert.deepEqual(
+			documentSetQuery.where.folderName.in,
+			Object.values(EXAMINATION_FILE_UPLOAD_QUESTIONS).map((question) => question.documentSetFolderName)
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.$transaction.mock.calls[0].arguments[0].length, 2);
+		assert.deepEqual(service.db.document.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-id',
+				documentSetId: { in: documentSets.map((documentSet) => documentSet.id) },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: { isTemp: false }
+		});
+	});
+
+	it('returns an error without submitting when the document set lookup fails', async () => {
+		const service = buildService(null);
+		service.db.documentSet.findMany.mock.mockImplementation(async () => []);
+		const send = mock.fn();
+		const res = {
+			status: mock.fn(() => res),
+			send
+		} as unknown as Response;
+
+		await buildPostDeclarationPage(service)(
+			{ currentCase: { id: 'case-id' }, params: { planReference: 'PLAN-61797' } } as unknown as Request,
+			res,
+			mock.fn() as unknown as NextFunction
+		);
+
+		assert.deepEqual((res.status as any).mock.calls[0].arguments, [500]);
+		assert.deepEqual(send.mock.calls[0].arguments, ['Failed to record submission']);
+		assert.equal(service.db.$transaction.mock.callCount(), 0);
+		assert.equal(service.logger.error.mock.callCount(), 1);
 	});
 
 	it('returns an error without changing status when the case is unavailable', async () => {
