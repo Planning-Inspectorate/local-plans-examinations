@@ -33,31 +33,31 @@
 			"day": "31",
 			"month": "12",
 			"year": "2025",
-			"display": "31/12/2025"
+			"display": "31 Dec 2025"
 		},
 		"gateway1Date": {
 			"day": "1",
 			"month": "1",
 			"year": "2026",
-			"display": "1/1/2026"
+			"display": "1 Jan 2026"
 		},
 		"gateway2Date": {
 			"day": "4",
 			"month": "4",
 			"year": "2026",
-			"display": "4/4/2026"
+			"display": "4 Apr 2026"
 		},
 		"gateway3Date": {
 			"day": "5",
 			"month": "5",
 			"year": "2026",
-			"display": "5/5/2026"
+			"display": "5 May 2026"
 		},
 		"expectedSubmissionForExaminationDate": {
 			"day": "6",
 			"month": "12",
 			"year": "2026",
-			"display": "6/12/2026"
+			"display": "6 Dec 2026"
 		}
 	}
 }
