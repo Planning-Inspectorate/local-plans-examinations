@@ -27,9 +27,8 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			{
 				html: `<a class="govuk-link" data-cy="plan-link" href="/manage-local-plans/${encodeURIComponent(plan.refNum)}">${plan.refNum}</a>`
 			},
-			{ text: plan.leadLPA },
 			{ text: plan.title },
-			{ text: plan.type }
+			{ text: plan.type.displayName }
 		]);
 
 		const pageCaption = validPlans[0].leadLPA;
