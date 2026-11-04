@@ -31,6 +31,9 @@ describe('buildSaveController', () => {
 		assert.strictEqual(mockService.notifyClient.sendEmail.mock.callCount(), 0);
 		assert.strictEqual(mockService.logger.info.mock.callCount(), 1);
 		assert.strictEqual(mockRequest.session.forms['LPE-TEST-001'][JOURNEY_ID], undefined);
+		assert.deepStrictEqual(mockRequest.session.forms['LPE-TEST-002'][JOURNEY_ID], {
+			gateway2CoverLetter: [{ id: 'file-2', fileName: 'other-cover-letter.pdf' }]
+		});
 		assert.strictEqual(mockResponse.render.mock.callCount(), 0);
 		assert.deepStrictEqual(mockResponse.redirect.mock.calls[0].arguments, [
 			'/manage-local-plans/LPE-TEST-001/gateway-2-submission/application-declaration'
@@ -66,6 +69,11 @@ function createMockRequest() {
 				'LPE-TEST-001': {
 					[JOURNEY_ID]: {
 						gateway2CoverLetter: [{ id: 'file-1', fileName: 'cover-letter.pdf' }]
+					}
+				},
+				'LPE-TEST-002': {
+					[JOURNEY_ID]: {
+						gateway2CoverLetter: [{ id: 'file-2', fileName: 'other-cover-letter.pdf' }]
 					}
 				}
 			}

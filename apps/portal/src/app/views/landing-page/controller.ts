@@ -15,13 +15,30 @@ function planStatusTag(plan: Plan): string {
 	return `<strong class="${status.class}">${status.label}</strong>`;
 }
 
+/** A govukTable cell: plain text or HTML (not escaped by the template). */
+type TableCell = { text: string } | { html: string };
+
+/**
+ * Data passed to `views/landing-page/view.njk` by `GET /manage-local-plans/your-plans`.
+ * `pageTitle` and `pageCaption` are also read by `views/layouts/main.njk`.
+ */
+export interface LandingPageViewModel {
+	/** Lead LPA of the first valid plan, rendered as the page caption; `undefined` when there are no plans */
+	pageCaption: string | undefined;
+	pageTitle: string;
+	/** Table rows: reference link, lead LPA, title, stage, status tag; `undefined` when there are no plans */
+	plans: TableCell[][] | undefined;
+	/** Shows "No plans available" instead of the table */
+	noPlansFlag: boolean;
+}
+
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
 		const rawPlans: unknown[] = await service.getPlans(req.session.authenticatedEmail);
 
-		let mappedPlans;
-		let pageCaption;
+		let mappedPlans: TableCell[][] | undefined;
+		let pageCaption: string | undefined;
 		let noPlansFlag = false;
 
 		//check for if no plans
@@ -55,17 +72,13 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			]);
 		}
 
-		//content
 		const viewModel = {
-			plans: mappedPlans,
-			noPlansFlag
-		};
-
-		//headings
-		return res.render('views/landing-page/view.njk', {
 			pageCaption,
 			pageTitle: 'My plans',
-			...viewModel
-		});
+			plans: mappedPlans,
+			noPlansFlag
+		} satisfies LandingPageViewModel;
+
+		return res.render('views/landing-page/view.njk', viewModel);
 	};
 }

@@ -7,6 +7,12 @@ declare module 'express-session' {
 	// using [declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html)
 	interface SessionData {
 		visits?: number;
+		email?: string;
+		isAuthenticated?: boolean;
+		authenticatedEmail?: string;
+		showNewCodeMessage?: boolean;
+		caseReference?: string;
+		editingFromCheckAnswers?: boolean;
 		[key: string]: any;
 	}
 }

@@ -8,6 +8,7 @@ import {
 	buildList,
 	buildSave,
 	buildSaveDataToSession,
+	type Journey,
 	JourneyResponse,
 	question,
 	type SaveDataFn,
@@ -38,7 +39,10 @@ import type { CaseModel } from '@pins/local-plans-database/src/client/models/Cas
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
 import type { Gateway2WorkshopModel } from '@pins/local-plans-database/src/client/models/Gateway2Workshop.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
+import {
+	buildGateway2ReportFilesViewModel,
+	type Gateway2ReportFileViewModel
+} from '../../plan-page/gateway-2-report.ts';
 
 type Gateway2SummaryDocument = {
 	guid: string;
@@ -67,9 +71,13 @@ type CaseWithGateway2Info = CaseModel & {
 	documents?: Gateway2SummaryDocument[];
 };
 import { getRoutePlanReference } from './utils.ts';
-import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
+import {
+	setVirusScanViewLocals,
+	type VirusScanViewLocals
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import { downloadGateway2Document } from './download.ts';
 import lusca from 'lusca';
+import { markEditingFromCheckAnswers } from '../../../session/submission-session.ts';
 
 // This file builds the Gateway 2 submission middleware used by the router.
 //
@@ -100,7 +108,6 @@ const GATEWAY_2_SUBMIT_ERROR = 'Add at least one document before submitting';
 
 type Gateway2Session = Request['session'] &
 	FileUploaderSession & {
-		editingFromCheckAnswers?: boolean;
 		forms?: Record<string, unknown>;
 	};
 
@@ -108,6 +115,28 @@ type Gateway2Request = Request & {
 	currentCase?: CaseWithGateway2Info;
 	session: Gateway2Session;
 };
+
+/** Gateway 2 check-answers locals populated incrementally by Portal and Dynamic Forms middleware. */
+export interface Gateway2CheckAnswersLocals extends VirusScanViewLocals {
+	journey?: Journey;
+	pageTitle?: string;
+	pageHeading?: string;
+	pageCaption?: string | null;
+	backLinkUrl?: string;
+	saveAndComeBackUrl?: string;
+	targetDate?: string;
+	gateway2ReportFiles?: Gateway2ReportFileViewModel[];
+	workshopDocuments?: Gateway2ReportFileViewModel[];
+	workshopVenue?: string;
+	workshopDateAndTime?: string;
+	submissionDate?: string;
+	submissionTime?: string;
+	submitter?: string | null;
+	errors?: { submit: { text: string } };
+	errorSummary?: Array<{ text: string; href: string }>;
+}
+
+type Gateway2LocalsResponse = { locals: Gateway2CheckAnswersLocals };
 
 // TODO: This shared Multer middleware uses the largest Gateway 2 question
 // upload limit because the upload routes are shared and the current question is
@@ -137,8 +166,7 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
 
 // Marks the user as editing from the check answers page.
 export function setAsEditingFromCya(req: Request, _: Response, next: NextFunction) {
-	const request = req as Gateway2Request;
-	request.session.editingFromCheckAnswers = true;
+	markEditingFromCheckAnswers(req.session);
 	next();
 }
 
@@ -286,7 +314,8 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			}
 		}
 
-		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
+		const locals: Gateway2CheckAnswersLocals = res.locals;
+		locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...answers
 		});
 
@@ -299,7 +328,7 @@ export function setGateway2CheckAnswersViewData(req: Request, res: Response, nex
 	next();
 }
 
-export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
+export function setGateway2CheckAnswersViewLocals(req: Request, res: Gateway2LocalsResponse) {
 	const request = req as Gateway2Request;
 	const planReference = getRoutePlanReference(req);
 	const currentCase = request.currentCase;
@@ -379,7 +408,8 @@ export function buildGateway2CheckAnswersList(): RequestHandler {
 
 function validateGateway2Submission(): RequestHandler {
 	return (req, res, next) => {
-		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		const locals: Gateway2CheckAnswersLocals = res.locals;
+		const journeyResponse = locals.journeyResponse;
 		const answers = journeyResponse?.answers ?? {};
 		const hasAnsweredQuestion = gateway2FileUploadQuestionConfigs.some((questionConfig) => {
 			const answer = answers[questionConfig.fieldName];
@@ -392,12 +422,12 @@ function validateGateway2Submission(): RequestHandler {
 
 		setGateway2CheckAnswersViewLocals(req, res);
 		res.status(400);
-		res.locals.errors = {
+		locals.errors = {
 			submit: {
 				text: GATEWAY_2_SUBMIT_ERROR
 			}
 		};
-		res.locals.errorSummary = [
+		locals.errorSummary = [
 			{
 				text: GATEWAY_2_SUBMIT_ERROR,
 				href: '#procedural-documents'
@@ -459,7 +489,10 @@ function formatWorkshopVenue(workshop: Gateway2WorkshopModel): string | undefine
 	return addressParts.length ? addressParts.join(', ') : undefined;
 }
 
-function setGateway2WorkshopViewLocals(res: Response, gateway2Info: Gateway2InfoWithWorkshops | null | undefined) {
+function setGateway2WorkshopViewLocals(
+	res: Gateway2LocalsResponse,
+	gateway2Info: Gateway2InfoWithWorkshops | null | undefined
+) {
 	const latestWorkshop = getLatestWorkshop(gateway2Info?.workshops);
 	if (latestWorkshop) {
 		res.locals.workshopVenue = formatWorkshopVenue(latestWorkshop);
@@ -485,15 +518,16 @@ export function buildSubmittedGateway2View(): RequestHandler {
 			return next();
 		}
 
-		const journey = res.locals.journey;
+		const locals: Gateway2CheckAnswersLocals = res.locals;
+		const journey = locals.journey;
 		if (journey) {
 			journey.taskListTemplate = SUBMITTED_TEMPLATE;
 		}
 
-		res.locals.submissionDate = formatDisplayDate(currentCase.submissionDate);
-		res.locals.submissionTime = formatDisplayTime(currentCase.submissionDate);
-		res.locals.submitter = currentCase.email;
-		delete res.locals.saveAndComeBackUrl;
+		locals.submissionDate = formatDisplayDate(currentCase.submissionDate);
+		locals.submissionTime = formatDisplayTime(currentCase.submissionDate);
+		locals.submitter = currentCase.email;
+		delete locals.saveAndComeBackUrl;
 		setGateway2WorkshopViewLocals(res, currentCase.gateway2Info);
 
 		return next();

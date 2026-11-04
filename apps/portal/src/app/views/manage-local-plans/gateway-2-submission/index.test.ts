@@ -189,6 +189,26 @@ describe('Gateway 2 submission check answers page', () => {
 });
 
 describe('Gateway 2 summary view data', () => {
+	it('sets the default locals without a case or plan reference', () => {
+		const req = { params: {} } as any;
+		const res = { locals: {} } as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		assert.deepStrictEqual(res.locals, {
+			pageTitle: 'Gateway 2 submission',
+			pageHeading: 'Gateway 2 submission',
+			pageCaption: undefined,
+			targetDate: 'Not set',
+			gateway2ReportFiles: [],
+			workshopDocuments: [],
+			workshopVenue: undefined,
+			workshopDateAndTime: undefined,
+			virusScanInProgress: false,
+			virusErrorSummary: undefined
+		});
+	});
+
 	it('separates report and workshop documents and formats workshop details', () => {
 		const req = {
 			params: { planReference: 'PLAN-001' },

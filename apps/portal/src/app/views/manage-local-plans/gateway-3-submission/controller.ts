@@ -7,6 +7,7 @@ import {
 	buildList,
 	buildSave,
 	buildSaveDataToSession,
+	type Journey,
 	JourneyResponse,
 	question,
 	type SaveDataFn,
@@ -44,12 +45,16 @@ import { GATEWAY_3_STATUS, GATEWAY_3_DECISION_ID } from '@pins/local-plans-datab
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
-import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
+import {
+	setVirusScanViewLocals,
+	type VirusScanViewLocals
+} from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import {
 	isGateway3ResubmissionAwaitingSubmission,
 	sortGateway3Submissions,
 	type Gateway3SubmissionSummary
 } from '#util/gateway-3-submission.ts';
+import { markEditingFromCheckAnswers } from '../../../session/submission-session.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,7 +83,6 @@ type CaseWithGateway3Info = CaseModel & {
 
 type Gateway3Session = Request['session'] &
 	FileUploaderSession & {
-		editingFromCheckAnswers?: boolean;
 		forms?: Record<string, unknown>;
 	};
 
@@ -86,6 +90,25 @@ type Gateway3Request = Request & {
 	currentCase?: CaseWithGateway3Info;
 	session: Gateway3Session;
 };
+
+/** Gateway 3 check-answers locals populated incrementally by Portal and Dynamic Forms middleware. */
+export interface Gateway3CheckAnswersLocals extends VirusScanViewLocals {
+	journey?: Journey;
+	pageTitle?: string;
+	pageHeading?: string;
+	pageCaption?: string | null;
+	statusTag?: (typeof StatusTag)[keyof typeof StatusTag];
+	backLinkUrl?: string;
+	saveAndComeBackUrl?: string;
+	targetDate?: string;
+	submissionDate?: string;
+	submissionTime?: string;
+	submitter?: string | null;
+	errors?: { submit: { text: string } };
+	errorSummary?: Array<{ text: string; href: string }>;
+}
+
+type Gateway3LocalsResponse = { locals: Gateway3CheckAnswersLocals };
 
 type Gateway3FileUploadQuestion = FileUploaderQuestionProps & {
 	fieldName: string;
@@ -335,7 +358,7 @@ export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 // View helpers
 // ---------------------------------------------------------------------------
 
-export function setGateway3ViewLocals(req: Request, res: Response) {
+export function setGateway3ViewLocals(req: Request, res: Gateway3LocalsResponse) {
 	const request = req as Gateway3Request;
 	const planReference = getRoutePlanReference(req);
 	const currentCase = request.currentCase;
@@ -388,15 +411,16 @@ export function buildSubmittedGateway3View(): RequestHandler {
 			return next();
 		}
 
-		const journey = res.locals.journey;
+		const locals: Gateway3CheckAnswersLocals = res.locals;
+		const journey = locals.journey;
 		if (journey) {
 			journey.taskListTemplate = SUBMITTED_TEMPLATE;
 		}
 
-		res.locals.submissionDate = formatDisplayDate(actualDate);
-		res.locals.submissionTime = formatDisplayTime(actualDate);
-		res.locals.submitter = request.currentCase?.email;
-		delete res.locals.saveAndComeBackUrl;
+		locals.submissionDate = formatDisplayDate(actualDate);
+		locals.submissionTime = formatDisplayTime(actualDate);
+		locals.submitter = request.currentCase?.email;
+		delete locals.saveAndComeBackUrl;
 
 		// Build gateway 3 report file view data
 		const planReference = getRoutePlanReference(req);
@@ -602,8 +626,7 @@ export function handleMulterFileSizeError(err: Error, req: Request, res: Respons
 // ---------------------------------------------------------------------------
 
 export function setAsEditingFromCya(req: Request, _: Response, next: NextFunction) {
-	const request = req as Gateway3Request;
-	request.session.editingFromCheckAnswers = true;
+	markEditingFromCheckAnswers(req.session);
 	next();
 }
 
@@ -697,7 +720,8 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 			delete answers[EXAMINATION_WEBSITE_FIELD];
 		}
 
-		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
+		const locals: Gateway3CheckAnswersLocals = res.locals;
+		locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...answers
 		});
 
@@ -732,7 +756,8 @@ function hasAllRequiredAnswers(answers: Record<string, unknown>) {
 
 export function buildValidateGateway3Submission(): RequestHandler {
 	return async (req, res, next) => {
-		const journeyResponse = res.locals.journeyResponse as JourneyResponse | undefined;
+		const locals: Gateway3CheckAnswersLocals = res.locals;
+		const journeyResponse = locals.journeyResponse;
 		const answers = journeyResponse?.answers ?? {};
 
 		if (hasAllRequiredAnswers(answers)) {
@@ -740,12 +765,12 @@ export function buildValidateGateway3Submission(): RequestHandler {
 		}
 
 		res.status(400);
-		res.locals.errors = {
+		locals.errors = {
 			submit: {
 				text: GATEWAY_3_SUBMIT_ERROR
 			}
 		};
-		res.locals.errorSummary = [
+		locals.errorSummary = [
 			{
 				text: GATEWAY_3_SUBMIT_ERROR,
 				href: '#required-information'
