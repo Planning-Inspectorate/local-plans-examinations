@@ -75,6 +75,8 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				where: { reference },
 				select: {
 					id: true,
+					planType: true,
+					lpas: { select: { lpaName: true } },
 					contacts: {
 						select: {
 							email: true,
@@ -110,25 +112,32 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			return res.status(500).send('Failed to record submission');
 		}
 
-		// send email to LPA using GOV.UK Notify
+		// send email to LPA contacts using GOV.UK Notify
+		const caseLpas = caseRecord.lpas.map((lpa) => lpa.lpaName).join(', ');
+		const planType = caseRecord.planType
+			.split('-')
+			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+			.join(' ');
+		const lpaEmails = [...new Set(caseRecord.contacts.map((contact) => contact.email))];
+		const notifyReference = `gateway-2-submission:${reference}`;
+		const personalisation = {
+			['plan_ref']: reference,
+			['authority_name']: caseLpas,
+			['plan_type']: planType,
+			['team_email_address']: govNotify.localPlansTeamEmail,
+			['contact_info']: 'If you need to contact us, call 0303 444 5000'
+		};
+
 		await Promise.allSettled(
-			caseRecord.contacts.map(async (contact) => {
+			lpaEmails.map(async (email) => {
 				try {
-					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, contact.email, {
-						personalisation: {
-							planRef: reference,
-							['authority_name']: contact.lpa.lpaName || contact.lpa.lpaCode,
-							['contact_info']: govNotify.localPlansTeamEmail,
-							planType: 'plan type',
-							workshopWeekMonday: 'workshop week monday',
-							teamEmailAddress: 'team email address',
-							teamPhone: 'team phone'
-						},
-						reference: `gateway-2-submission:${reference}`
+					await notifyClient?.sendEmail(govNotify.templateIds.gw2Submission, email, {
+						personalisation,
+						reference: notifyReference
 					});
-					logger.info({ encodedReference }, 'gateway 2 submission - email sent');
+					logger.info({ email }, 'gateway 2 submission - LPA email sent');
 				} catch (error) {
-					logger.error({ error, encodedReference }, 'failed to send gateway 2 submission email');
+					logger.error({ error, email }, 'failed to send gateway 2 submission LPA email');
 				}
 			})
 		);

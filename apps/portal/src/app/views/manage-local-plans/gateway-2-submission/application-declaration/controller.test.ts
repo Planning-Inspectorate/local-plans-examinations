@@ -59,6 +59,8 @@ function createMockService() {
 				findUnique: async () => {
 					return {
 						id: 'case-1',
+						planType: 'local-plan',
+						lpas: [{ lpaName: 'Test Planning Authority' }],
 						contacts: [
 							{
 								email: 'lpa@example.com',
@@ -121,15 +123,50 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
 		assert.equal(service.sendCalls[0].to, 'lpa@example.com');
 		assert.deepEqual(service.sendCalls[0].options.personalisation, {
-			planRef: 'PLAN-123456',
+			plan_ref: 'PLAN-123456',
 			authority_name: 'Test Planning Authority',
-			contact_info: 'team@email.co.uk',
-			planType: 'plan type',
-			workshopWeekMonday: 'workshop week monday',
-			teamEmailAddress: 'team email address',
-			teamPhone: 'team phone'
+			plan_type: 'Local Plan',
+			team_email_address: 'team@email.co.uk',
+			contact_info: 'If you need to contact us, call 0303 444 5000'
 		});
 		assert.equal(service.sendCalls[0].options.reference, 'gateway-2-submission:PLAN-123456');
+	});
+
+	it('deduplicates contact emails so each address receives only one notification', async () => {
+		const sendCalls: Array<{ templateId: string; to: string; options?: unknown }> = [];
+		const service = {
+			...createMockService(),
+			db: {
+				case: {
+					findUnique: async () => ({
+						id: 'case-1',
+						planType: 'local-plan',
+						lpas: [{ lpaName: 'Test Planning Authority' }],
+						contacts: [
+							{ email: 'lpa@example.com', lpa: { lpaCode: 'TEST', lpaName: 'Test Planning Authority' } },
+							{ email: 'lpa@example.com', lpa: { lpaCode: 'TEST', lpaName: 'Test Planning Authority' } }
+						]
+					}),
+					update: async () => ({})
+				},
+				gateway2Info: { update: async () => ({}) },
+				$transaction: async (queries: Promise<unknown>[]) => Promise.all(queries)
+			},
+			notifyClient: {
+				sendEmail: async (templateId: string, to: string, options?: unknown) => {
+					sendCalls.push({ templateId, to, options });
+					return { id: 'mock-notify-id' };
+				}
+			}
+		} as unknown as PortalService;
+
+		const handler = buildPostDeclarationPage(service);
+		const { req, res } = createReq({ body: { declaration: ['informationTrue', 'privacyNotice'] } });
+
+		await handler(req, res);
+
+		assert.equal(sendCalls.length, 1, 'should send exactly one email despite duplicate contacts');
+		assert.equal(sendCalls[0].to, 'lpa@example.com');
 	});
 
 	it('renders error when no checkboxes are checked', async () => {
