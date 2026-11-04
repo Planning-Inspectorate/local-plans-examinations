@@ -1,4 +1,6 @@
 //stage constants: which stage of the plan the case is in
+import type { PlanType } from '@pins/local-plans-database/src/client/client.ts';
+
 export const STAGE = {
 	Gateway1: 0,
 	Gateway2: 1,
@@ -136,6 +138,7 @@ export interface Plan {
 	linkedLPA: string; //Linked Local Planning Authority
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
+	type: PlanType;
 	status: Status; //Status
 	examinationStatus: string;
 	examinationStatusLabel: string;
