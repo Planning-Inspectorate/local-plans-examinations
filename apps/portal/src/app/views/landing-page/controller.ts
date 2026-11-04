@@ -31,7 +31,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 			{ text: plan.type.displayName }
 		]);
 
-		const pageCaption = validPlans[0].leadLPA;
+		const pageCaption = validPlans[0]?.leadLPA;
 
 		//content
 		const viewModel = {
