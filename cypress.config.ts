@@ -16,6 +16,7 @@ import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-vi
 import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
 import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
 import { seedGateway3SubmissionDocuments } from './cypress/tasks/gateway-3.ts';
+import { seedExaminationInExamination } from './packages/database/src/seed/seed-examination-in-examination.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -110,6 +111,7 @@ export default defineConfig({
 				seedGateway3Submitted,
 				seedExaminationReadyToStart,
 				seedExaminationDeclarationDocuments,
+				seedExaminationInExamination,
 				seedGateway3TriggerResubmission,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
 					return seedUpdateGateway2Workshop({ reference, workshopData });
