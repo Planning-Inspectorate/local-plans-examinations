@@ -1,6 +1,6 @@
 import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
-import { gateway2questions } from '../../../../../../portal/src/app/views/manage-local-plans/gateway-2-submission/questions.ts';
+import { frontOfficeGateway2questions } from '@pins/local-plans-lib/app/questions.ts';
 
 export default class CustomFileReviewerQuestion extends Question {
 	constructor({ ...params }) {
@@ -41,7 +41,7 @@ export default class CustomFileReviewerQuestion extends Question {
 									.join('')
 							: '<p class="govuk-body">Not provided</p>';
 
-					const questionConfig = Object.values(gateway2questions).find(
+					const questionConfig = Object.values(frontOfficeGateway2questions).find(
 						(question: any) =>
 							question.title.trim().replace(/\s+/g, ' ').toLowerCase() ===
 							document.title.trim().replace(/\s+/g, ' ').toLowerCase()
