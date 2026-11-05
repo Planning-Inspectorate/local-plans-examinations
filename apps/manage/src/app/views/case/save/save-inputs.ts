@@ -81,6 +81,7 @@ export interface Gateway2Input extends SaveInput {
 }
 
 export interface ExaminationInput extends SaveInput {
+	status?: string;
 	expectedSubmissionForExaminationDate?: Date;
 	submissionForExaminationDate?: Date;
 	examiningInspector1?: string;

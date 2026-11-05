@@ -570,7 +570,7 @@ describe('plan page', () => {
 				const expectedTags = [
 					'Completed',
 					'Completed',
-					`<strong class="govuk-tag ${examinationStatus === 'submitted' ? 'govuk-tag--yellow' : examinationStatus === 'paused' ? 'govuk-tag--grey' : examinationStatus === 'report-issued' ? 'govuk-tag--turquoise' : 'govuk-tag--blue'}">${label}</strong>`
+					`<strong class="govuk-tag ${examinationStatus === 'submitted' ? 'govuk-tag--yellow' : examinationStatus === 'paused' ? 'govuk-tag--grey' : 'govuk-tag--blue'}">${label}</strong>`
 				];
 				const tags = [data.tagG2, data.tagG3, data.tagE];
 
@@ -615,6 +615,24 @@ describe('plan page', () => {
 		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
 		assert.ok(html.includes('Submitted: 21 October 2026'));
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
+	});
+
+	it('shows a blue Report issued tag and the BO report issue date', async () => {
+		const plan = {
+			refNum: 'PLAN-005',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'report-issued',
+			examinationStatusLabel: 'Report issued',
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '20 October 2026' }
+		};
+
+		const { data, html } = await renderPlan({ refNum: 'PLAN-005' }, plan);
+
+		assert.equal(data.dateTextE, 'Report issued: ');
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">Report issued</strong>');
+		assert.ok(html.includes('Report issued: 20 October 2026'));
+		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">Report issued</strong>'));
 	});
 
 	it('should render task table links correctly for case 3 p2 (G1, G2, G3, E complete)', async () => {

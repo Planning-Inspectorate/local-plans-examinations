@@ -38,6 +38,8 @@ export const GW2UpdateFileUploadedFromFO = (
 					.click();
 
 				cy.contains('.pins-app-link-button', 'Remove').should('be.visible').click();
+				cy.get('#gateway2CoverLetter-input').should('exist');
+				cy.contains('.govuk-summary-list__row', `${fileName}`).should('not.exist');
 
 				cy.contains('.govuk-summary-list__row', `${fileName}`).should('not.exist');
 

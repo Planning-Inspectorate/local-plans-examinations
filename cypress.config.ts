@@ -13,10 +13,15 @@ import { seedExaminationReadyToStart } from './packages/database/src/seed/seed-e
 import { seedGateway3TriggerResubmission } from './packages/database/src/seed/seed-gateway-3-trigger-resubmission.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
-import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
+import {
+	clearExaminationReportFiles,
+	seedExaminationReport,
+	seedExaminationReportIssuedDocuments
+} from './cypress/tasks/examination.ts';
 import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
 import { seedGateway3SubmissionDocuments } from './cypress/tasks/gateway-3.ts';
 import { seedExaminationInExamination } from './packages/database/src/seed/seed-examination-in-examination.ts';
+import { seedExaminationReportIssued } from './packages/database/src/seed/seed-examination-report-issued.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -103,6 +108,7 @@ export default defineConfig({
 				},
 				seedDb: seedCy,
 				seedExaminationReport,
+				seedExaminationReportIssuedDocuments,
 				clearExaminationReportFiles,
 				setDocumentVirusCheckStatus,
 				seedGateway2SubmittedDocuments,
@@ -112,6 +118,7 @@ export default defineConfig({
 				seedExaminationReadyToStart,
 				seedExaminationDeclarationDocuments,
 				seedExaminationInExamination,
+				seedExaminationReportIssued,
 				seedGateway3TriggerResubmission,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
 					return seedUpdateGateway2Workshop({ reference, workshopData });

@@ -13,8 +13,10 @@ import {
 	statementOfSoundnessPage
 } from '../../../../page-objects/portal/examination/examination-uploads-page.ts';
 import { openExaminationApplicationPage } from '../../../../flows/portal/plan-flow.ts';
+import { examinationReport } from '../../../../fixtures/manage/examination.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+const todayDisplay = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Examination application page journeys', () => {
 	beforeEach(() => {
@@ -75,6 +77,33 @@ describe('Examination application page journeys', () => {
 				localPlanSubmissionForExaminationPage.saveAndReturn();
 				examinationPage.saveAndComeBackLink.click();
 				planDetailsPage.verifyProgressRow(plan.currentStage3, `Target date: ${plan.dates.examination}`, plan.status2);
+			});
+		}
+	);
+});
+
+describe('Examination application page journeys after final report issued', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+		cy.task('seedCase');
+		portalLogin();
+		cy.task('seedExaminationReportIssuedDocuments');
+	});
+
+	after(() => {
+		cy.task('clearExaminationReportFiles', 'PLAN-001');
+		cy.task('clearDb');
+	});
+
+	it(
+		'Navigates to the Plan details page and verifies the status is report issued after report issued in Manage',
+		{ tags: ['smoke'] },
+		() => {
+			loadPlanDetails().then((plan) => {
+				examinationPage.visit(plan.urlReference);
+				examinationPage.verifyLoaded();
+				examinationPage.verifyStatusTag(plan.status7);
+				examinationPage.verifyExaminationReportDownloads(examinationReport.fileName, todayDisplay);
 			});
 		}
 	);

@@ -2015,7 +2015,12 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
+		assert.equal(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate, undefined);
 		assert.equal(req.session.alerts[0].text, 'Final report and supporting documents saved and notification sent');
 		assert.equal(
 			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
@@ -2038,6 +2043,10 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		const expectedMessage = {
 			type: 'success',
 			text: 'Final report and supporting documents saved and notification sent',
@@ -2069,6 +2078,10 @@ describe('issueExaminationReport', () => {
 		const savedDate = service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate;
 		assert.ok(savedDate instanceof Date);
 		assert.ok(savedDate.getTime() >= beforeConfirm.getTime());
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		assert.equal((req.session as any).examinationReportReturnToManage, undefined);
 	});
 
@@ -2089,7 +2102,10 @@ describe('issueExaminationReport', () => {
 
 		await issueExaminationReport(service, 'examination')(req, res, mock.fn());
 
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update, {
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED
+		});
 		assert.equal(
 			redirect.mock.calls[0].arguments[0],
 			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
