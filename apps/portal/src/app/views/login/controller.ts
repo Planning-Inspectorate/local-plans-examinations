@@ -15,7 +15,6 @@ export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 			pageTitle: 'Sign-in',
 			pageHeading: 'Sign-in',
 			emailQuestionText: 'What is your email address?',
-			backLinkUrl: `/`,
 			...viewData
 		});
 	};
@@ -32,7 +31,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageTitle: 'Sign-in',
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
-				backLinkUrl: `/`,
+
 				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
 				errorSummaryTitle: 'There is a problem',
 				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
@@ -50,7 +49,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageTitle: 'Sign-in',
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
-				backLinkUrl: `/`,
+
 				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
 				errorSummaryTitle: 'There is a problem',
 				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
@@ -69,7 +68,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 					pageTitle: 'Sign-in',
 					pageHeading: 'Sign-in',
 					emailQuestionText: 'What is your email address?',
-					backLinkUrl: `/`,
+
 					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
 					errorSummaryTitle: 'There is a problem',
 					errorSummary: [{ text: 'We did not recognise that email address', href: '#email' }]
@@ -144,7 +143,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageTitle: 'Sign-in',
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
-				backLinkUrl: `/`,
+
 				errors: { email: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not sign you in',
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#email' }]

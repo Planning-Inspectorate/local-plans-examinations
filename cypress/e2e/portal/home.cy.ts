@@ -1,9 +1,9 @@
 import { portalHomePage } from '../../page-objects/portal/home-page.ts';
 
 describe('Portal home', () => {
-	it('loads the portal service homepage', { tags: ['smoke', 'environment-smoke'] }, () => {
+	it('redirects to the login page', { tags: ['smoke', 'environment-smoke'] }, () => {
 		portalHomePage.visit();
-		portalHomePage.verifyHeading('This is the home page');
-		portalHomePage.verifyDbConnection('Successfully connected to the database.');
+		cy.location('pathname').should('eq', '/login');
+		portalHomePage.verifyHeading('Sign-in');
 	});
 });

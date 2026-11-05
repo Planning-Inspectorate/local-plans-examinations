@@ -66,10 +66,9 @@
           <hashTree/>
           <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Portal home page loads" enabled="true">
             <collectionProp name="Asserion.test_strings">
-              <stringProp name="225336557">This is the home page</stringProp>
-              <stringProp name="-387910241">Successfully connected to the database</stringProp>
+              <stringProp name="2576797">Sign-in</stringProp>
             </collectionProp>
-            <stringProp name="Assertion.custom_message">Portal home page did not load.</stringProp>
+            <stringProp name="Assertion.custom_message">Portal login page did not load.</stringProp>
             <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
             <boolProp name="Assertion.assume_success">false</boolProp>
             <intProp name="Assertion.test_type">2</intProp>
