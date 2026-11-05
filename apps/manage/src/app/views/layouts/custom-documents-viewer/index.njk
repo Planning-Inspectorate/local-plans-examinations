@@ -31,6 +31,17 @@
 			<span class="govuk-caption-l">{{ reference }}</span>
 			<h1 class="govuk-heading-l">{{ question.question }}</h1>
 
+			{% if resubmissionDocumentFiles %}
+			{% set documentGroups = [
+				{
+					id: "resubmission-documents",
+					heading: resubmissionDocumentsLabel,
+					description: "These are the documents for this resubmission.",
+					data: resubmissionDocumentData,
+					files: resubmissionDocumentFiles
+				}
+			] %}
+			{% else %}
 			{% set documentGroups = [
 				{
 					id: "required-documents",
@@ -47,6 +58,7 @@
 					files: optionalDocumentFiles
 				}
 			] %}
+			{% endif %}
 
 			{% for group in documentGroups %}
 				<div id="{{ group.id }}">

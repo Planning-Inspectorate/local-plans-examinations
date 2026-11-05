@@ -1915,7 +1915,7 @@ describe('downloadDocument', () => {
 		};
 		const res = {};
 		await downloadDocument(service)(req as unknown as Request, res as Response);
-		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res]);
+		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res, { includeDeleted: true }]);
 	});
 	it('rejects when the documentId is not found in the request', async () => {
 		const service = createService();
@@ -2584,7 +2584,16 @@ describe('preprocessQuestionProperties', () => {
 				questions[`gateway3Documents-${submissionId}`] = { config: {} };
 				questions[`gateway3Decision-${submissionId}`] = {};
 			}
-			const res = { locals: { journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } } } };
+			const res = {
+				locals: {
+					journeyResponse: {
+						answers: {
+							proposedLocalPlan: 'plan.pdf',
+							resubmissionDocumentFiles: { 2: [{ guid: 'guid', fileName: 'new.pdf' }] }
+						}
+					}
+				}
+			};
 
 			await preprocessQuestionProperties(service, journeyId, questions)(
 				{ params: { reference: caseReference } } as Request,

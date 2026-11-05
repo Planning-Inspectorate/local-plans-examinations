@@ -9,7 +9,7 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 const REFERENCE = 'PLAN-123456';
-const SUBMISSION_ID = '2';
+const SUBMISSION_ID = '1';
 const SUBMISSION_SECTION = `gateway-3-submission-${SUBMISSION_ID}`;
 const SUBMISSION_URL = `/case/${REFERENCE}/gateway-3/${SUBMISSION_SECTION}`;
 const EXAMINATION_WEBSITE = 'https://example.com/examination';

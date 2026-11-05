@@ -770,7 +770,8 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
 		// Todo add error handling for if the file is not found
-		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
+		// LPA resubmission documents are soft-deleted once the BO report is saved to the same document set
+		await DocumentUtil.downloadDocumentToResponse(service, documentId, res, { includeDeleted: true });
 	};
 }
 
@@ -1301,7 +1302,9 @@ export function preprocessQuestionProperties(
 
 				questions[gateway3DocumentsCheck].changeActionText = 'Review';
 				const submissionReceived =
-					!!submission.submittedDate || (submissionId === 1 && !!caseDetails.gateway3Info?.actualDate);
+					!!submission.submittedDate ||
+					!!submission.completionDate ||
+					(submissionId === 1 && !!caseDetails.gateway3Info?.actualDate);
 				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary =
 					submissionReceived && !!questions[gateway3DocumentsCheck].actionLink?.text;
 

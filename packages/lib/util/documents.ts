@@ -252,7 +252,11 @@ export class DocumentUtil {
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
-	public static async getLatestDocumentBlobDetails(service: Service, documentId: string) {
+	public static async getLatestDocumentBlobDetails(
+		service: Service,
+		documentId: string,
+		{ includeDeleted = false }: { includeDeleted?: boolean } = {}
+	) {
 		const latestDocument = await service.db.document.findFirst({
 			select: {
 				latestDocumentVersion: {
@@ -265,7 +269,7 @@ export class DocumentUtil {
 			},
 			where: {
 				guid: documentId,
-				isDeleted: false
+				...(includeDeleted ? {} : { isDeleted: false })
 			}
 		});
 		if (!latestDocument || !latestDocument.latestDocumentVersion) {
@@ -552,8 +556,13 @@ export class DocumentUtil {
 		}
 	}
 
-	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {
-		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId);
+	public static async downloadDocumentToResponse(
+		service: Service,
+		documentId: string,
+		res: Response,
+		options: { includeDeleted?: boolean } = {}
+	) {
+		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId, options);
 		const blobPath = blobDetails.blobPath;
 		const fileName = blobDetails.fileName;
 		const blobStorageUtil = service.createFileStorage(undefined, blobDetails.containerName);
