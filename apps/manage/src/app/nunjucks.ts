@@ -36,7 +36,10 @@ export function configureNunjucks(): nunjucks.Environment {
 	);
 
 	// Add date filter
-	env.addFilter('date', (date: Date | string, format: string) => {
+	env.addFilter('date', (date: Date | string | undefined | null, format: string) => {
+		if (!date) {
+			return '';
+		}
 		const d = new Date(date);
 		if (format === 'd MMMM yyyy, HH:mm') {
 			return d.toLocaleDateString('en-GB', {
@@ -59,7 +62,19 @@ export function configureNunjucks(): nunjucks.Environment {
 			return d.toLocaleDateString('en-GB', {
 				day: 'numeric',
 				month: 'short',
-				year: 'numeric'
+				year: 'numeric',
+				timeZone: 'Europe/London'
+			});
+		}
+		if (format === 'd MMM yyyy, HH:mm') {
+			return d.toLocaleString('en-GB', {
+				day: 'numeric',
+				month: 'short',
+				year: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit',
+				hour12: false,
+				timeZone: 'Europe/London'
 			});
 		}
 		return d.toISOString();

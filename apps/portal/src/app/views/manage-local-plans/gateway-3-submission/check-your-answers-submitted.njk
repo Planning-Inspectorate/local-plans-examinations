@@ -1,4 +1,5 @@
 {% extends "views/layouts/main.njk" %}
+{% from "views/components/gateway-3-report-summary.njk" import gateway3ReportSummary %}
 
 {% block pageTitle %}Gateway 3 submission{% endblock %}
 
@@ -18,6 +19,10 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% if gateway3ReportFiles and gateway3ReportFiles.length %}
+            {{ gateway3ReportSummary(gateway3ReportFiles) }}
+        {% endif %}
+
         <p class="govuk-body" data-cy="submission-copy">Your submission was sent on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
 
         {% for section in summaryListData.sections %}

@@ -4,6 +4,43 @@ import type { Gateway3Input } from './save-inputs.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { ExaminationSaveController } from './examination-save-controller.ts';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
+
+type Gateway3SubmissionDatabase = Pick<PrismaClient, 'gateway3Info'>;
+
+export async function saveGateway3Submissions(
+	db: Gateway3SubmissionDatabase,
+	caseId: string,
+	submissionDetails: NonNullable<Gateway3Input['submissions']>
+) {
+	const submissionDetailsCleaned = Object.values(submissionDetails).map((entry) => ({
+		decision: entry.decision,
+		completionDate: entry.completionDate,
+		...(entry.submittedDate !== undefined && { submittedDate: entry.submittedDate })
+	}));
+	if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
+		throw Error('Max number of submissions has been exceeded');
+	}
+	await db.gateway3Info.upsert({
+		where: { caseId },
+		update: {
+			submissions: {
+				deleteMany: {},
+				createMany: {
+					data: submissionDetailsCleaned
+				}
+			}
+		},
+		create: {
+			caseId,
+			submissions: {
+				createMany: {
+					data: submissionDetailsCleaned
+				}
+			}
+		}
+	});
+}
 
 export class Gateway3SaveController extends SaveController {
 	protected async shouldSaveToSession() {
@@ -38,6 +75,16 @@ export class Gateway3SaveController extends SaveController {
 	}
 	public async prepareAndSave(answers: Record<string, any>) {
 		if (this.req.params.question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
+			const examinationWebsite =
+				typeof answers.examinationWebsite === 'string' && answers.examinationWebsite.trim().length > 0
+					? answers.examinationWebsite.trim()
+					: null;
+			const caseId = await this.resolveCaseId();
+			await this.service.db.gateway3Info.upsert({
+				where: { caseId },
+				update: { examinationWebsiteUrl: examinationWebsite },
+				create: { caseId, examinationWebsiteUrl: examinationWebsite }
+			});
 			return await new ExaminationSaveController(this.service, this.req, this.caseReference).prepareAndSave({
 				examinationWebsite: answers.examinationWebsite
 			});
@@ -53,6 +100,10 @@ export class Gateway3SaveController extends SaveController {
 		) {
 			answers.assessorAppointmentDate = new Date();
 		}
+		if (String(this.req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION)) {
+			// For handling the save button
+			return true;
+		}
 		const createData: Record<string, any> = { ...answers };
 		const updateData: Record<string, any> = { ...answers };
 		if ('submissions' in answers) {
@@ -60,27 +111,7 @@ export class Gateway3SaveController extends SaveController {
 			if (!submissionDetails) {
 				throw Error('No submission entries found');
 			}
-			const submissionDetailsCleaned = Object.values(submissionDetails).map((e) => ({
-				decision: e.decision,
-				completionDate: e.completionDate
-			}));
-			if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
-				throw Error('Max number of submissions has been exceeded');
-			}
-			createData['submissions'] = {
-				createMany: {
-					data: submissionDetailsCleaned
-				}
-			};
-			updateData['submissions'] = {
-				deleteMany: {},
-				createMany: {
-					data: submissionDetailsCleaned
-				}
-			};
-		}
-		if (String(this.req.params.question).startsWith(COMMON_CONSTS.GATEWAY_3_DOCUMENT_QUESTION)) {
-			// For handling the save button
+			await saveGateway3Submissions(this.service.db, caseId, submissionDetails);
 			return true;
 		}
 		if (answers) {

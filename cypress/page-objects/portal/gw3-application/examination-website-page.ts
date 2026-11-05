@@ -1,4 +1,4 @@
-import { examinationWebsite } from '../../../fixtures/portal/examination.ts';
+import { examinationWebsite } from '../../../fixtures/portal/examination-website.ts';
 import { SingleLineInputPage } from '../base/single-line-input-page.ts';
 
 export const examinationWebsitePage = new SingleLineInputPage(
@@ -7,5 +7,6 @@ export const examinationWebsitePage = new SingleLineInputPage(
 	),
 	examinationWebsite.fieldName,
 	examinationWebsite.heading,
-	examinationWebsite.addCy
+	examinationWebsite.addCy,
+	examinationWebsite.value
 );

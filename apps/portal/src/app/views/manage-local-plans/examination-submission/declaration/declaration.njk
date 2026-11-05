@@ -1,0 +1,32 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageHeading %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">{{ pageHeading }}</h1>
+    </div>
+</div>
+{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <p class="govuk-body" data-cy="declaration-copy">This can't be undone.</p>
+
+        <form method="post" novalidate>
+            {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
+            <div class="govuk-button-group">
+                {{ govukButton({
+                    text: "Yes, confirm submission",
+                    preventDoubleClick: true,
+                    attributes: {
+                        "data-cy": "confirm-submission"
+                    }
+                }) }}
+                <a href="{{ goBackUrl }}" class="govuk-link" data-cy="no-go-back">No, go back</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

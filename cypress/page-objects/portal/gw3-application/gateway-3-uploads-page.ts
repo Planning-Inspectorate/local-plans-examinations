@@ -127,3 +127,15 @@ export const practicalArrangementsStatementPage = new DocumentUploadPage(
 	gateway3UploadAnswers.practicalArrangementsStatement.section,
 	gateway3UploadAnswers.practicalArrangementsStatement.path
 );
+
+export const resubmissionDocumentsPage = new DocumentUploadPage(
+	new RegExp(
+		`^/manage-local-plans/[^/]+/${gateway3UploadAnswers.resubmissionDocuments.section}/${gateway3UploadAnswers.resubmissionDocuments.path}$`
+	),
+	gateway3UploadAnswers.resubmissionDocuments.fieldName,
+	gateway3UploadAnswers.resubmissionDocuments.heading,
+	gateway3UploadAnswers.resubmissionDocuments.caption,
+	gateway3UploadAnswers.resubmissionDocuments.addCy,
+	gateway3UploadAnswers.resubmissionDocuments.section,
+	gateway3UploadAnswers.resubmissionDocuments.path
+);

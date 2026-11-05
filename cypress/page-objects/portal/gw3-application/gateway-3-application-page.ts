@@ -1,4 +1,5 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
+import { gateway3ApplicationDocuments } from '../../../fixtures/portal/gateway-3-uploads.ts';
 
 const gateway3SubmissionHeading = 'Gateway 3 submission';
 
@@ -34,6 +35,24 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(gateway3SubmissionHeading);
+	}
+
+	verifyRequiredInformation() {
+		this.verifyDocumentSection(
+			this.requiredInformationTable,
+			'Required Information',
+			gateway3ApplicationDocuments.required
+		);
+		this.verifyMainContains('You must add these documents before you can submit.');
+	}
+
+	verifyOptionalDocuments() {
+		this.verifyDocumentSection(
+			this.optionalDocumentsTable,
+			'Optional Documents',
+			gateway3ApplicationDocuments.optional
+		);
+		this.verifyMainContains('Add the documents that are relevant to your plan.');
 	}
 
 	verifySaveAndComeBackLink(href: string) {

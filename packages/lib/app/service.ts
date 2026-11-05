@@ -15,9 +15,10 @@ export class Service extends BaseService<PrismaClient> {
 		this.#blobStorage = config.blobStorage;
 	}
 
-	createFileStorage(basePath?: string): BlobFileStorageAdapter {
+	createFileStorage(basePath?: string, containerName?: string): BlobFileStorageAdapter {
 		return new BlobFileStorageAdapter({
 			...this.#blobStorage,
+			containerName: containerName ?? this.#blobStorage.containerName,
 			basePath
 		});
 	}

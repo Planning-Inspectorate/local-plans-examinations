@@ -34,16 +34,16 @@ describe('Gateway 2 covering letter upload page', () => {
 			}
 		});
 
-		const bodyParagraphs = [...html.matchAll(/<p class="govuk-body"[^>]*>([^<]+)<\/p>/g)].map((match) =>
+		const hintParagraphs = [...html.matchAll(/<p class="govuk-hint"[^>]*>([^<]+)<\/p>/g)].map((match) =>
 			match[1].trim()
 		);
 
 		assert.ok(
-			bodyParagraphs.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE),
-			'expected the combined upload guidance to render as one paragraph'
+			hintParagraphs.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE),
+			'expected the combined upload guidance to render as one hint paragraph'
 		);
 		assert.ok(
-			!bodyParagraphs.includes('The total size of your uploaded files must be smaller than 1GB.'),
+			!hintParagraphs.includes('The total size of your uploaded files must be smaller than 1GB.'),
 			'expected the total upload size guidance not to render as a separate paragraph'
 		);
 	});
@@ -75,6 +75,45 @@ describe('Gateway 2 submission check answers page', () => {
 		assert.ok(html.includes('Gateway 2 report'));
 		assert.ok(html.includes('gateway-2-report.pdf'));
 		assert.ok(html.includes('(shared on 24 September 2026)'));
+	});
+
+	it('renders the virus scan in progress banner at the top when a scan is in progress', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			virusScanInProgress: true,
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="virus-scan-in-progress-banner"'));
+		assert.ok(html.includes('Virus scan in progress'));
+	});
+
+	it('renders the virus detected banner at the top when a file is affected', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			virusErrorSummary: [
+				{
+					text: 'bad.pdf contains a virus. Remove the file and upload a different version.',
+					href: '#uploaded-file-file-1'
+				}
+			],
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="virus-detected-banner"'));
+		assert.ok(html.includes('bad.pdf contains a virus'));
 	});
 
 	it('renders the Gateway 2 report beneath the available workshop details', () => {
@@ -203,6 +242,49 @@ describe('Gateway 2 summary view data', () => {
 		);
 		assert.strictEqual(res.locals.workshopVenue, 'Virtual');
 		assert.strictEqual(res.locals.workshopDateAndTime, '19 May 2026 at 10:00');
+	});
+
+	it('flags a virus scan in progress when an uploaded document has not been scanned', () => {
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: { planTitle: 'East Borough Local Plan' }
+		} as any;
+		const res = {
+			locals: {
+				journeyResponse: {
+					answers: {
+						gateway2CoverLetter: [{ fileName: 'cover-letter.pdf', virusCheckStatus: 'not_scanned' }]
+					}
+				}
+			}
+		} as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		assert.strictEqual(res.locals.virusScanInProgress, true);
+		assert.strictEqual(res.locals.virusErrorSummary, undefined);
+	});
+
+	it('surfaces a virus detected error when an uploaded document is affected', () => {
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase: { planTitle: 'East Borough Local Plan' }
+		} as any;
+		const res = {
+			locals: {
+				journeyResponse: {
+					answers: {
+						gateway2CoverLetter: [{ fileName: 'bad.pdf', virusCheckStatus: 'affected' }]
+					}
+				}
+			}
+		} as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		assert.strictEqual(res.locals.virusScanInProgress, false);
+		assert.strictEqual(res.locals.virusErrorSummary.length, 1);
+		assert.match(res.locals.virusErrorSummary[0].text, /bad\.pdf contains a virus/);
 	});
 });
 

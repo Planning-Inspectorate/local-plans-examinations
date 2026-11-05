@@ -18,6 +18,7 @@ export class DocumentUploadPage extends BasePage {
 	}
 
 	removeFile(fileName: string) {
+		this.verifyLoaded();
 		this.documentUpload.removeFile(fileName);
 	}
 
@@ -25,15 +26,22 @@ export class DocumentUploadPage extends BasePage {
 		this.documentUpload.verifyFileNotUploaded(fileName);
 	}
 
+	verifyFileUploaded(...fileNames: string[]) {
+		this.verifyLoaded();
+		this.documentUpload.verifyFileUploaded(...fileNames);
+	}
+
 	clickUploadFiles() {
 		this.documentUpload.clickUploadFiles();
 	}
 
 	saveAndReturn() {
+		this.verifyLoaded();
 		this.documentUpload.saveAndReturn();
 	}
 
 	uploadAndVerifyFile(fileName: string) {
+		this.verifyLoaded();
 		this.dragAndDropFile(fileName);
 		this.clickUploadFiles();
 		this.documentUpload.verifyFileUploaded(fileName);

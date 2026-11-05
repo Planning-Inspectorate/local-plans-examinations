@@ -1,0 +1,25 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        {{ govukPanel({
+            titleText: "Submission complete"
+        }) }}
+
+        <p class="govuk-body" data-cy="confirmation-email-copy">We have sent you a confirmation email.</p>
+
+        <h2 class="govuk-heading-m" data-cy="what-happens-next-heading">What happens next</h2>
+
+        <p class="govuk-body">We'll appoint one or more inspectors to your case, who will:</p>
+        <ul class="govuk-list govuk-list--bullet" data-cy="what-happens-next-list">
+            <li>review your submission documents</li>
+            <li>let you know if they need any additional information</li>
+        </ul>
+        <p class="govuk-body">At any point you can <a href="{{ planOverviewUrl }}" class="govuk-link" data-cy="check-submission-status">check your submission status</a>.</p>
+    </div>
+</div>
+{% endblock %}

@@ -40,13 +40,17 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
-import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { GATEWAY_3_STATUS, GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import {
 	isGateway3ResubmissionAwaitingSubmission,
+	sortGateway3Submissions,
 	type Gateway3SubmissionSummary
 } from '#util/gateway-3-submission.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,7 +60,22 @@ type Gateway3InfoWithSubmissions = Gateway3InfoModel & {
 	submissions?: Gateway3SubmissionSummary[] | null;
 };
 
-type CaseWithGateway3Info = CaseModel & { gateway3Info?: Gateway3InfoWithSubmissions | null };
+type Gateway3ReportDocument = {
+	guid: string;
+	name: string;
+	documentSetId: string;
+	latestDocumentVersion: {
+		originalFilename: string | null;
+		fileName: string | null;
+		dateCreated: Date | null;
+		isDeleted: boolean;
+	} | null;
+};
+
+type CaseWithGateway3Info = CaseModel & {
+	gateway3Info?: Gateway3InfoWithSubmissions | null;
+	documents?: Gateway3ReportDocument[];
+};
 
 type Gateway3Session = Request['session'] &
 	FileUploaderSession & {
@@ -192,12 +211,12 @@ function getCaseScopedSessionAnswers(req: Request, planReference: string): Recor
 	);
 }
 
-function fileUploaderCaseSessionKey(req: Request) {
+export function fileUploaderCaseSessionKey(req: Request) {
 	const questionConfig = getRouteFileUploadQuestion(req);
 	return fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName);
 }
 
-function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
+export function fileUploaderCaseSessionKeyForField(req: Request, fieldName: string) {
 	return `${req.params.planReference}:${fieldName}`;
 }
 
@@ -348,6 +367,11 @@ export function setGateway3ViewLocals(req: Request, res: Response) {
 	if (currentCase?.gateway3Info?.expectedDate) {
 		res.locals.targetDate = formatDisplayDate(currentCase.gateway3Info.expectedDate);
 	}
+
+	setVirusScanViewLocals(
+		res,
+		gateway3FileUploadQuestionConfigs.map((questionConfig) => questionConfig.fieldName)
+	);
 }
 
 export function setGateway3ViewData(req: Request, res: Response, next: NextFunction) {
@@ -375,8 +399,60 @@ export function buildSubmittedGateway3View(): RequestHandler {
 		res.locals.submitter = request.currentCase?.email;
 		delete res.locals.saveAndComeBackUrl;
 
+		// Build gateway 3 report file view data
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+		res.locals.gateway3ReportFiles = buildGateway3ReportFilesViewData(request.currentCase, encodedPlanReference);
+
 		return next();
 	};
+}
+
+export function buildGateway3ReportFilesViewData(
+	currentCase: CaseWithGateway3Info | undefined,
+	encodedPlanReference: string | undefined
+) {
+	const submissions = sortGateway3Submissions(currentCase?.gateway3Info?.submissions ?? []);
+	const documents = currentCase?.documents ?? [];
+
+	// Find the latest completed submission that has a "proceed to examination" decision
+	const completedSubmissionIndex = submissions.findIndex(
+		(sub) => sub.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION && sub.completionDate
+	);
+
+	if (completedSubmissionIndex === -1) {
+		return [];
+	}
+
+	const submissionNumber = completedSubmissionIndex + 1;
+	const documentSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
+	if (!documentSetId) {
+		return [];
+	}
+
+	const reportDocs = documents.filter(
+		(doc) => doc.documentSetId === documentSetId && doc.latestDocumentVersion && !doc.latestDocumentVersion.isDeleted
+	);
+
+	return reportDocs.map((doc) => {
+		const version = doc.latestDocumentVersion;
+		const rawFileName = version?.originalFilename ?? version?.fileName ?? doc.name;
+		let fileName: string;
+		try {
+			fileName = decodeURIComponent(rawFileName);
+		} catch {
+			fileName = rawFileName;
+		}
+
+		return {
+			fileName,
+			href:
+				encodedPlanReference && doc.guid
+					? `/manage-local-plans/${encodedPlanReference}/gateway-3-submission/download-document/${encodeURIComponent(doc.guid)}`
+					: undefined,
+			sharedDate: formatDisplayDate(version?.dateCreated)
+		};
+	});
 }
 
 export function buildGateway3CheckAnswersList(): RequestHandler {
@@ -558,7 +634,28 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 
 		const currentCase = await service.db.case.findUnique({
 			where: { reference: routePlanReference },
-			include: { gateway3Info: { include: { submissions: true } } }
+			include: {
+				gateway3Info: { include: { submissions: true } },
+				documents: {
+					where: {
+						isDeleted: false,
+						documentSetId: { startsWith: 'g3-document-' }
+					},
+					select: {
+						guid: true,
+						name: true,
+						documentSetId: true,
+						latestDocumentVersion: {
+							select: {
+								originalFilename: true,
+								fileName: true,
+								dateCreated: true,
+								isDeleted: true
+							}
+						}
+					}
+				}
+			}
 		});
 
 		if (!currentCase) {
@@ -566,7 +663,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		}
 
 		const request = req as Gateway3Request;
-		request.currentCase = currentCase;
+		request.currentCase = currentCase as CaseWithGateway3Info;
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference);
 		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
 			service,
@@ -680,15 +777,16 @@ export function buildGetDeclarationPage(): RequestHandler {
 	return (req, res) => {
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-		const gateway3SubmissionUrl = encodedPlanReference
-			? `/manage-local-plans/${encodedPlanReference}/gateway-3-submission`
+		const isResubmission = req.query.from === 'resubmission';
+		const gateway3Url = encodedPlanReference
+			? `/manage-local-plans/${encodedPlanReference}/${isResubmission ? 'gateway-3-resubmission' : 'gateway-3-submission'}`
 			: undefined;
 
 		return res.render(DECLARATION_VIEW_PATH, {
 			pageTitle: "Are you sure you're ready to submit?",
 			pageHeading: "Are you sure you're ready to submit?",
-			backLinkUrl: gateway3SubmissionUrl,
-			goBackUrl: gateway3SubmissionUrl
+			backLinkUrl: gateway3Url,
+			goBackUrl: gateway3Url
 		});
 	};
 }
@@ -710,6 +808,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		}
 
 		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+				service,
+				gateway3FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+			);
 			await service.db.$transaction([
 				service.db.case.update({
 					where: { id: caseId },
@@ -718,7 +820,8 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				service.db.gateway3Info.update({
 					where: { caseId },
 					data: { actualDate: submissionDate }
-				})
+				}),
+				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);

@@ -1,53 +1,28 @@
-import { portalLogin, THIRD_TEST_EMAIL, FIFTH_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
-import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
-import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import {
-	localPlanTimetablePage,
-	gateway2CoverLetterPage
-} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
-import type { PlanDetailsFixture, Gateway2ReportIssuedFixture } from '../../../../fixtures/portal/types.ts';
+	portalLogin,
+	THIRD_TEST_EMAIL,
+	FOURTH_TEST_EMAIL,
+	FIFTH_TEST_EMAIL
+} from '../../../../flows/portal/login-flow.ts';
+import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
+import type { Gateway2ReportIssuedFixture } from '../../../../fixtures/portal/types.ts';
+import { gateway2SubmittedPlan } from '../../../../fixtures/portal/gateway-2-uploads.ts';
 import { openGateway2ApplicationPage } from '../../../../flows/portal/plan-flow.ts';
 
-const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 const loadReportIssuedPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('portal/gateway-2-report-issued.json');
-const today = new Date();
-const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Gateway 2 application page content after submission', () => {
 	beforeEach(() => {
-		portalLogin();
+		cy.task('clearDb');
+		portalLogin(FOURTH_TEST_EMAIL);
+		cy.task('seedGateway2SubmittedDocuments');
+		gateway2ApplicationPage.visit(gateway2SubmittedPlan.reference);
 	});
 
 	afterEach(() => cy.task('clearDb'));
 
 	it('Shows the Gateway 2 submission data has been recorded correctly', { tags: ['regression'] }, () => {
-		loadPlanDetails().then((plan) => {
-			submitGateway2Application(plan, [
-				{ page: gateway2CoverLetterPage, fileNames: ['test-document.pdf'] },
-				{ page: localPlanTimetablePage, fileNames: ['test-document.docx', 'test-document.xlsx'] }
-			]);
-
-			gateway2ApplicationPage.visit(plan.urlReference);
-			gateway2ApplicationPage.verifyLoaded();
-
-			gateway2ApplicationPage.verifySubmissionData(todayDisplay, 'test@planninginspectorate.gov.uk');
-
-			gateway2ApplicationPage.verifyDocumentRowContains(
-				gateway2ApplicationPage.proceduralDocumentsTable,
-				'Gateway 2 covering letter',
-				'test-document.pdf'
-			);
-
-			gateway2ApplicationPage.verifyDocumentRowContains(
-				gateway2ApplicationPage.proceduralDocumentsTable,
-				'Local plan timetable',
-				'test-document.docx',
-				'test-document.xlsx'
-			);
-
-			gateway2ApplicationPage.verifyNoAddOrChangeLinks();
-			gateway2ApplicationPage.verifySubmitGateway2ButtonNotShown();
-		});
+		gateway2ApplicationPage.verifySubmittedApplication(gateway2SubmittedPlan.submittedDate, FOURTH_TEST_EMAIL);
 	});
 });
 

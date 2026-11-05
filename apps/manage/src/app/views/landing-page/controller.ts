@@ -3,6 +3,7 @@ import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { getExaminationStages } from '#util/util.ts';
 
 export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
@@ -31,21 +32,29 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 					const gateway2Documents = await db.document.findMany({
 						where: {
 							caseId: caseRecord.id,
-							documentSetId: { in: gateway2SetIds }
+							documentSetId: { in: gateway2SetIds },
+							isDeleted: false,
+							isTemp: false
 						}
 					});
 					const gateway3Documents = await db.document.findMany({
 						where: {
 							caseId: caseRecord.id,
-							documentSetId: { in: gateway3SetIds }
+							documentSetId: { in: gateway3SetIds },
+							isDeleted: false,
+							isTemp: false
 						}
 					});
+
+					const examinationStatus = await getExaminationStages(service, caseRecord.id);
+
 					const status = resolveCaseHeaderStatus(
 						gateway2Documents,
 						gateway3Documents,
 						gateway1Info,
 						gateway2Info,
-						gateway3Info?.submissions ?? []
+						gateway3Info?.submissions ?? [],
+						examinationStatus
 					);
 
 					return {

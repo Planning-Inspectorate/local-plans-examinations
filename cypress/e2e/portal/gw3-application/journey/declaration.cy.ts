@@ -7,7 +7,7 @@ import { openSeededGateway3DeclarationPage } from '../../../../flows/portal/gate
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
-describe('Gateway 3 Submission page journeys', () => {
+describe('Gateway 3 Declaration page journeys', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
 		portalLogin();

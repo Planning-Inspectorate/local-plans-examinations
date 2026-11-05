@@ -137,6 +137,23 @@ export const qaInspector3 = {
 	field: 'qaInspector3'
 } as const;
 
+export const deleteCaseReason = {
+	row: 'Reason for deletion',
+	path: 'delete-case-reason',
+	heading: 'Why are you deleting this case?',
+	field: 'deleteCaseWhy',
+	value: 'Created in error',
+	updatedValue: 'Duplicate case',
+	requiredMessage: 'Enter a reason for deleting this case'
+} as const;
+
+export const deleteCaseConfirmation = {
+	heading: 'Are you sure you want to delete this case?',
+	body: 'This will mark the case as deleted. It will no longer appear in the system, but it will still be available for audit purposes.',
+	caseDetailsHeading: 'Case details',
+	successMessage: /Case PLAN-\d+ deleted/
+} as const;
+
 export const overviewExpectedAnswers = [
 	{ row: planTitle.row, display: planTitle.display },
 	{ row: planType.row, display: planType.display },

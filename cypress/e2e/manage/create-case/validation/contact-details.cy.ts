@@ -1,6 +1,7 @@
 import {
 	contactDetailsListPage,
 	contactDetailsPage,
+	localPlanningAuthoritiesPage,
 	type CreateCaseData
 } from '../../../../page-objects/manage/create-case/index.ts';
 
@@ -12,12 +13,18 @@ describe('Create a case - contact details', () => {
 	});
 
 	it('shows validation for required contact fields', { tags: ['regression'] }, () => {
-		contactDetailsPage.visitForNewItemAndSubmitForValidation(
-			'Enter a first name',
-			'Enter a last name',
-			'Enter an email address',
-			'Select a planning authority'
-		);
+		loadCreateCaseData().then((data) => {
+			localPlanningAuthoritiesPage.visit();
+			Object.values(data.lpa).forEach((lpa) => {
+				localPlanningAuthoritiesPage.addLocalPlanningAuthority(lpa);
+			});
+			contactDetailsPage.visitForNewItemAndSubmitForValidation(
+				'Enter a first name',
+				'Enter a last name',
+				'Enter an email address',
+				'Select a planning authority'
+			);
+		});
 	});
 
 	it('changes and removes contacts', { tags: ['regression'] }, () => {

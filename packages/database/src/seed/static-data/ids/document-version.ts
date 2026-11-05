@@ -1,5 +1,6 @@
 export const DOCUMENT_SOURCE_SYSTEM_ID = {
 	FRONT_OFFICE: 'front-office',
+	PORTAL: 'front-office',
 	BACK_OFFICE: 'back-office'
 } as const;
 

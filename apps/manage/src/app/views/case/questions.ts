@@ -10,13 +10,14 @@ import {
 import { CUSTOM_COMPONENT_CLASSES, CUSTOM_COMPONENTS } from '../layouts/index.ts';
 import ManageListValidator from '../validators/manage-list-validator.ts';
 import MultiFieldInputValidator from '../validators/multi-field-input-validator.ts';
+import HearingExpectedDaysValidator from '../validators/hearing-expected-days-validator.ts';
+import TimeValidator from '../validators/time-validator.ts';
 import {
 	FileUploadRequiredValidator,
 	type FileUploaderQuestionProps,
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -38,8 +39,16 @@ import {
 } from '../../util/options-helper.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortByDateColumn } from '#util/util.ts';
+import {
+	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES,
+	COMMON_CONSTS
+} from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
+import { GW2QUESTIONS } from '../../../../../portal/src/app/views/manage-local-plans/gateway-2-submission/questions.ts';
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -68,8 +77,6 @@ const GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
-
 const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'pdf',
 	'doc',
@@ -89,8 +96,6 @@ const SIGNED_SLA_ALLOWED_EXTENSIONS = [
 	'tif',
 	'tiff'
 ];
-
-const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
 
 const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'pdf',
@@ -112,7 +117,37 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
-const SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
+const MIQ_DOCUMENTS_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'png',
+	'tif',
+	'tiff'
+];
+
+const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+
+const gw2QuestionsWithContinue = Object.fromEntries(
+	//front office has save and return not continue
+	Object.entries(GW2QUESTIONS).map(([key, question]) => [
+		key,
+		{
+			...question,
+			text: {
+				...question.text,
+				continueButtonText: 'Continue'
+			}
+		}
+	])
+);
 
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
@@ -143,6 +178,13 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3DocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Gateway 3 documents',
+		fieldName: 'gateway3DocumentSubmission',
+		url: 'gateway-3-review-documents'
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
@@ -396,6 +438,313 @@ for (let workshopId = 1; workshopId < NUM_GW2_WORKSHOP_QUESTIONS; workshopId++) 
 		}
 	}
 }
+// Examination pause
+const examinationPauseBaseQuestions: Record<string, ManageQuestionConfig> = {
+	examinationPauseStartDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When is the examination paused from?',
+		fieldName: 'planPauseDate', // In the ExaminationPause model
+		url: 'examination-pause-start-date',
+		title: 'Examination pause date',
+		validators: [
+			new DateValidator('Input an exam pause start date', undefined, {
+				emptyErrorMessage: 'Please enter an input for the pause start date'
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-start-date' }
+	},
+	examinationPauseDetail: {
+		type: COMPONENT_TYPES.TEXT_ENTRY,
+		question: 'Pause details',
+		fieldName: 'planPauseStartDetails', // In the ExaminationPause model
+		label: 'Add any details about the pause',
+		url: 'examination-pause-details',
+		title: 'Pause details',
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 1,
+					minLengthMessage: 'Please add any details about the pause'
+				},
+				maxLength: {
+					maxLength: 1000,
+					maxLengthMessage: 'Please ensure the pause details contains up to 1000 characters'
+				}
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-details' }
+	},
+	examinationPauseEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the examination restart date?',
+		fieldName: 'planPauseEndDate', // In the ExaminationPause model
+		url: 'examination-pause-end-date',
+		title: 'Examination restart date',
+		validators: [
+			new DateValidator('Input an exam pause restart date', undefined, {
+				emptyErrorMessage: 'Please enter an input for the restart date'
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-end-date' }
+	},
+	examinationRestartDetail: {
+		type: COMPONENT_TYPES.TEXT_ENTRY,
+		question: 'Restart details',
+		fieldName: 'planPauseEndDetails', // In the ExaminationPause model
+		label: 'Add any details about the restart',
+		url: 'examination-pause-restart-details',
+		title: 'Restart details',
+		validators: [
+			new StringValidator({
+				minLength: {
+					minLength: 1,
+					minLengthMessage: 'Please add any details about the restart'
+				},
+				maxLength: {
+					maxLength: 1000,
+					maxLengthMessage: 'Please ensure the pause restart details contains up to 1000 characters'
+				}
+			})
+		],
+		inputAttributes: { 'data-cy': 'examination-pause-restart-details' }
+	}
+};
+export const examinationPauseBaseUrls = Object.values(examinationPauseBaseQuestions)
+	.map((value) => value.url)
+	.filter((value) => value != undefined);
+
+// Repeat the base exam pause questions multiple times, to allow multiple pauses to be created
+const examinationPauseQuestions: Record<string, ManageQuestionConfig> = {};
+for (let pauseId = 1; pauseId < COMMON_CONSTS.NUM_EXAM_PAUSE_QUESTIONS; pauseId++) {
+	for (const key in examinationPauseBaseQuestions) {
+		const questionConfigCopy = { ...examinationPauseBaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${pauseId}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${pauseId}`;
+		examinationPauseQuestions[`${key}-${pauseId}`] = questionConfigCopy;
+	}
+}
+
+const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
+	examinationHearingDateAndTime: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.DATE,
+				fieldName: 'hearingDate',
+				label: 'Date',
+				caption: 'For example, 21 7 2024',
+				title: 'Examination hearing date',
+				attributes: { 'data-cy': 'examination-hearing-date' }
+			},
+			{
+				type: 'time',
+				fieldName: 'hearingTime',
+				label: 'Time',
+				caption: 'For example, 14 30',
+				title: 'Examination hearing time',
+				attributes: { 'data-cy': 'examination-hearing-time' }
+			}
+		],
+		question: 'Hearing date and time',
+		fieldName: 'examinationHearingDateAndTime',
+		url: 'examination-hearing-date-and-time',
+		title: 'Examination hearing date and time'
+	},
+	examinationHearingExpectedDays: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you know the expected number of days to carry out the hearing?',
+		fieldName: 'hearingExpectedDaysKnown',
+		url: 'examination-hearing-expected-days',
+		title: 'Do you know the expected number of days?',
+		options: [
+			{
+				value: 'yes',
+				text: 'Yes',
+				conditional: {
+					question: 'Expected number of days to carry out the hearing',
+					type: 'number',
+					fieldName: 'hearingExpectedDays'
+				}
+			},
+			{
+				value: 'no',
+				text: 'No'
+			}
+		],
+		validators: [new HearingExpectedDaysValidator('Select an option')]
+	},
+	examinationHearingLocationType: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Is the hearing in-person, hybrid or remote?',
+		fieldName: 'hearingLocationType',
+		url: 'examination-hearing-location-type',
+		title: 'Is the hearing in-person, hybrid or remote?',
+		options: [
+			{ value: 'in-person', text: 'In-person' },
+			{ value: 'hybrid', text: 'Hybrid' },
+			{ value: 'remote', text: 'Remote' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingLocationKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Does the hearing have a venue address?',
+		fieldName: 'hearingLocationKnown',
+		url: 'examination-hearing-location-known',
+		title: 'Do you know the venue address?',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingVenueAddress: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingVenueName',
+				label: 'Venue name',
+				title: 'Examination hearing venue name',
+				attributes: { 'data-cy': 'examination-hearing-venue-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingAddressLine',
+				label: 'Address line 1',
+				title: 'Examination hearing address line 1',
+				attributes: { 'data-cy': 'examination-hearing-address-line-1' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingAddressLine2',
+				label: 'Address line 2 (optional)',
+				title: 'Examination hearing address line 2',
+				attributes: { 'data-cy': 'examination-hearing-address-line-2' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingTownOrCity',
+				label: 'Town or city',
+				title: 'Examination hearing town or city',
+				attributes: { 'data-cy': 'examination-hearing-town-or-city' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'hearingPostcode',
+				label: 'Postcode',
+				title: 'Examination hearing postcode',
+				attributes: { 'data-cy': 'examination-hearing-postcode' }
+			}
+		],
+		question: 'Hearing venue address',
+		fieldName: 'hearingVenueAddress',
+		url: 'examination-hearing-venue-address',
+		title: 'Venue address'
+	},
+	examinationHearingRemoteMeetingLinkKnown: {
+		type: COMPONENT_TYPES.RADIO,
+		question: 'Do you have a remote meeting link?',
+		fieldName: 'hearingRemoteMeetingLinkKnown',
+		url: 'examination-hearing-remote-meeting-link-known',
+		title: 'Do you have a remote meeting link?',
+		options: [
+			{ value: 'yes', text: 'Yes' },
+			{ value: 'no', text: 'No' }
+		],
+		validators: [new RequiredValidator('Select an option')]
+	},
+	examinationHearingRemoteMeetingLink: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'What is the remote meeting link?',
+		fieldName: 'hearingRemoteMeetingLink',
+		url: 'examination-hearing-remote-meeting-link',
+		title: 'Remote meeting link',
+		validators: [new RequiredValidator('Input a remote meeting link')]
+	},
+	examinationHearingDuration: {
+		type: 'number',
+		question: 'How many days did the hearing actually take?',
+		fieldName: 'hearingDuration',
+		url: 'examination-hearing-duration',
+		title: 'Examination hearing duration',
+		validators: [new RequiredValidator('Input hearing duration')]
+	},
+	examinationHearingEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the hearing end date?',
+		fieldName: 'hearingEndDate',
+		url: 'examination-hearing-end-date',
+		title: 'Examination hearing end date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-hearing-end-date' }
+	}
+};
+
+export const examinationHearingBaseUrls = Object.values(examinationHearingBaseQuestions)
+	.map((value) => value.url)
+	.filter((value) => value != undefined);
+
+// Repeat the base gw2 questions multiple times, to allow multiple gw2 workshop documents to be made
+const examinationHearingQuestions: Record<string, ManageQuestionConfig> = {};
+for (let hearingId = 1; hearingId < NUM_GW2_WORKSHOP_QUESTIONS; hearingId++) {
+	for (const key in examinationHearingBaseQuestions) {
+		const questionConfigCopy = { ...examinationHearingBaseQuestions[key] };
+		questionConfigCopy.url = `${questionConfigCopy.url}-${hearingId}`;
+		questionConfigCopy.fieldName = `${questionConfigCopy.fieldName}-${hearingId}`;
+		examinationHearingQuestions[`${key}-${hearingId}`] = questionConfigCopy;
+		if (questionConfigCopy.type == CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT) {
+			const inputFields = structuredClone(questionConfigCopy.inputFields);
+			if (inputFields) {
+				for (let inputFieldIndex = 0; inputFieldIndex < inputFields.length; inputFieldIndex++) {
+					inputFields[inputFieldIndex].url = `${inputFields[inputFieldIndex].url}-${hearingId}`;
+					inputFields[inputFieldIndex].fieldName = `${inputFields[inputFieldIndex].fieldName}-${hearingId}`;
+				}
+				questionConfigCopy.inputFields = inputFields;
+			}
+			if (questionConfigCopy.fieldName.startsWith('examinationHearingDateAndTime')) {
+				questionConfigCopy.validators = [
+					new MultiFieldInputValidator({
+						fields: [
+							{
+								fieldName: `hearingDate-${hearingId}`,
+								validators: [new DateValidator('Input a valid date')]
+							},
+							{
+								fieldName: `hearingTime-${hearingId}`,
+								validators: [new TimeValidator()]
+							}
+						]
+					})
+				];
+			}
+			if (questionConfigCopy.fieldName.startsWith('examinationHearingVenueAddress')) {
+				questionConfigCopy.validators = [
+					new MultiFieldInputValidator({
+						fields: [
+							{
+								fieldName: `hearingVenueName-${hearingId}`,
+								validators: [new RequiredValidator('Input a hearing venue name')]
+							},
+							{
+								fieldName: `hearingAddressLine-${hearingId}`,
+								validators: [new RequiredValidator('Input a hearing address')]
+							},
+							{
+								fieldName: `hearingTownOrCity-${hearingId}`,
+								validators: [new RequiredValidator('Input the town or city')]
+							},
+							{
+								fieldName: `hearingPostcode-${hearingId}`,
+								validators: [new RequiredValidator('Input the postcode')]
+							}
+						]
+					})
+				];
+			}
+		}
+	}
+}
 
 const caseQuestions: Record<string, ManageQuestionConfig> = {
 	//overview
@@ -406,6 +755,16 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'plan-title',
 		title: 'Plan title',
 		validators: [new RequiredValidator('Enter a plan title')]
+	},
+	deleteCaseWhy: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Why are you deleting this case?',
+		fieldName: 'deleteCaseWhy',
+		inputAttributes: { 'data-cy': 'delete-case-reason' },
+		url: COMMON_CONSTS.DELETE_CASE_REASON,
+		title: 'Reason for deletion',
+		viewData: { continueButtonText: 'Continue', cancelLinkClasses: 'govuk-link' },
+		validators: [new RequiredValidator('Enter a reason for deleting this case')]
 	},
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,
@@ -910,6 +1269,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		]
 	},
 	...gateway2WorkshopQuestions,
+	gateway2WorkshopDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES,
+		title: 'Workshop dates',
+		question: 'Workshop dates',
+		fieldName: 'workshops',
+		url: 'gateway-2-workshop-dates'
+	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',
@@ -1034,6 +1400,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'examination-examining-inspector-appointment-date' }
 	},
+	...examinationHearingQuestions,
 	letterSentToMHCLGDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the 48-hour protocol letter sent to MHCLG?',
@@ -1054,10 +1421,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	qaDate: {
 		type: COMPONENT_TYPES.DATE,
-		question: 'What is the date of QA?',
+		question: 'When was the report sent to the QA inspector?',
 		fieldName: 'QADate',
 		url: 'qa-date',
-		title: 'QA date',
+		title: 'Report sent to QA inspector',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'qa-date' }
 	},
@@ -1124,24 +1491,6 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'final-report-issue-date' }
 	},
-	planPauseStartDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When did the plan pause start?',
-		fieldName: 'planPauseStartDate',
-		url: 'plan-pause-start-date',
-		title: 'Plan pause date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-start-date' }
-	},
-	planPauseEndDate: {
-		type: COMPONENT_TYPES.DATE,
-		question: 'When did the plan pause end?',
-		fieldName: 'planPauseEndDate',
-		url: 'plan-pause-end-date',
-		title: 'Plan pause end date',
-		validators: [new DateValidator(' a valid date')],
-		inputAttributes: { 'data-cy': 'plan-pause-end-date' }
-	},
 	withdrawnDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the plan withdrawn?',
@@ -1152,32 +1501,25 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'withdrawn-date-date' }
 	},
 	isSound: {
-		type: COMPONENT_TYPES.BOOLEAN,
+		type: COMPONENT_TYPES.RADIO,
 		options: [
-			{
-				text: 'Sound',
-				value: 'yes',
-				attributes: { 'data-cy': 'answer-yes' }
-			},
-			{
-				text: 'Unsound',
-				value: 'no',
-				attributes: { 'data-cy': 'answer-no' }
-			}
+			{ text: 'Sound', value: 'sound' },
+			{ text: 'Sound with modifications', value: 'sound-with-modifications' },
+			{ text: 'Unsound', value: 'unsound' }
 		],
-		question: 'Was the plan found to be sound or unsound?',
+		question: 'Plan outcome',
 		fieldName: 'isSound',
-		url: 'is-sound',
-		title: 'Sound / unsound',
-		validators: [new RequiredValidator('Please select an option')],
-		inputAttributes: { 'data-cy': 'is-sound' }
+		url: 'plan-outcome',
+		title: 'Outcome',
+		validators: [new RequiredValidator('Select a plan outcome')],
+		inputAttributes: { 'data-cy': 'plan-outcome' }
 	},
 	soundUnsoundDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the plan confirmed as sound or unsound?',
 		fieldName: 'soundUnsoundDate',
 		url: 'sound-unsound-date',
-		title: 'Sound / unsound date',
+		title: 'Report issued',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'sound-unsound-date' }
 	},
@@ -1221,7 +1563,111 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			})
 		]
 	},
-	...gateway3Questions
+	examinationReport: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'Examination report',
+		question: 'Upload final report and supporting documents',
+		fieldName: 'examinationReport',
+		url: 'examination-report',
+		formatSummaryValue: ({ answer }: { answer: unknown }) => {
+			const count = Array.isArray(answer) ? answer.length : 0;
+			return count === 0 ? 'Not provided' : `${count} document${count === 1 ? '' : 's'} added`;
+		},
+		allowedFileExtensions: GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: 10,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'Examination outcome',
+			introduction: 'You should add the final report and main modifications as separate documents.',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(GATEWAY_SUBMISSION_ALLOWED_EXTENSIONS)} and smaller than 250MB.`,
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.',
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue'
+		},
+		validationMessages: {
+			noFile: 'Please upload the examination report',
+			incompatibleFileType: 'Please upload a compatible file type',
+			fileTooLarge: 'File too large',
+			totalFileSizeTooLarge: 'Total file size is too large'
+		},
+		validators: [new FileUploadRequiredValidator('examinationReport', 'Please upload the examination report')]
+	},
+	examinationReportManage: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER,
+		title: 'Manage report and main modifications',
+		question: 'Examination report',
+		fieldName: 'examinationReport',
+		url: 'examination-report-manage',
+		viewData: { uploadQuestionUrl: 'examination-report' }
+	},
+	hearingDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES,
+		title: 'Hearing dates',
+		question: 'Hearing dates',
+		fieldName: 'hearings',
+		url: 'examination-hearing-dates'
+	},
+	miqs: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'MIQs',
+		question: 'Upload MIQ documents',
+		fieldName: 'miqs',
+		url: 'miqs',
+		allowedFileExtensions: MIQ_DOCUMENTS_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => MIQ_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'MIQs',
+			introduction: 'Upload files',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(MIQ_DOCUMENTS_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES)}.`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue',
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.'
+		},
+		validators: [new FileUploadRequiredValidator('miqs', 'Choose a file to upload')]
+	},
+	...examinationPauseQuestions,
+	...gateway3Questions,
+	...gw2QuestionsWithContinue
+};
+
+// Some questions require copies in order to be used in different conditions.
+// e.g. isSoundNavigation and isSoundOutcome are used in different areas but are the same field/question.
+for (const key of ['isSound', 'soundUnsoundDate', 'adoptionDate', 'approvedForCILDate']) {
+	caseQuestions[`${key}Outcome`] = { ...caseQuestions[key] };
+}
+caseQuestions.isSoundNavigation = { ...caseQuestions.isSound };
+
+caseQuestions.timetableGateway3ExpectedDate = {
+	...caseQuestions.gateway3ExpectedDate,
+	fieldName: 'gateway3ExpectedDate'
+};
+caseQuestions.timetableGateway3ActualDate = {
+	...caseQuestions.gateway3ActualDate,
+	fieldName: 'gateway3ActualDate'
+};
+caseQuestions.timetableGateway3CompletionDate = {
+	...gateway3BaseQuestions.gateway3CompletionDate,
+	fieldName: 'gateway3CompletionDate',
+	url: 'timetable-gateway-3-completion-date'
 };
 
 export const fileUploadQuestionProperties = Object.fromEntries(
@@ -1234,6 +1680,31 @@ export const questions = createQuestions(
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
+// Some questions require different submit button text
+for (const prefix of ['examinationPauseDetail', 'examinationRestartDetail']) {
+	const questionsStartingWithPrefix = Object.fromEntries(
+		Object.entries(questions).filter(([k]) => k.startsWith(prefix))
+	);
+	for (const question of Object.values(questionsStartingWithPrefix)) {
+		question.continueButtonText = 'Submit';
+	}
+}
+
+Object.keys(examinationHearingQuestions).forEach((key) => {
+	questions[key].continueButtonText = 'Continue';
+});
+
+// The plan outcome / is sound question appears before the file upload so it's row must be hidden.
+questions.isSoundNavigation.taskList = false;
+questions.examinationReportManage.taskList = false;
+
+// Only editable once a submission has proceeded to examination (i.e. a date is present)
+const timetableGateway3CompletionDate = questions.timetableGateway3CompletionDate;
+const defaultGetAction = timetableGateway3CompletionDate.getAction;
+timetableGateway3CompletionDate.getAction = function (sectionSegment: string, journey: any, answer: unknown) {
+	if (!answer) return undefined;
+	return defaultGetAction.call(this, sectionSegment, journey, answer);
+};
 
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 	// Prepend https:// to the answer if it doesn't already start with http:// or https://
@@ -1270,7 +1741,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByDateColumn(answersFull.workshops, 'createdDate')[workshopId - 1];
 			let workshopDateValue = workshopDetails.workshopDate;
 			if (typeof workshopDetails.workshopDate == 'string') {
 				workshopDateValue = parseDate(workshopDateValue);
@@ -1310,7 +1781,7 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByDateColumn(answersFull.workshops, 'createdDate')[workshopId - 1];
 			const expectedDaysKnown = {
 				key: 'Do you know the estimated number of days?',
 				value: workshopDetails.workshopExpectedDaysKnown,
@@ -1338,10 +1809,88 @@ Object.entries(questions)
 		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 			const workshopId = Number(String(question.url).split('-').at(-1));
 			const answersFull = journey.response.answers;
-			const workshopDetails = sortGateway2Workshops(answersFull.workshops)[workshopId - 1];
+			const workshopDetails = sortByDateColumn(answersFull.workshops, 'createdDate')[workshopId - 1];
 			const locationType = {
 				key: 'Gateway 2 location type',
 				value: workshopDetails.workshopLocationType,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			return [locationType];
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingDateAndTime'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
+
+			let hearingDateValue = hearingDetails.hearingDate;
+			if (typeof hearingDetails.hearingDate == 'string') {
+				hearingDateValue = parseDate(hearingDateValue);
+			}
+			const hearingDate = {
+				key: 'Hearing date',
+				value:
+					hearingDateValue && typeof hearingDateValue != 'string'
+						? formatDateToString(hearingDateValue)
+						: hearingDetails.hearingDate,
+				action: this.getAction(sectionSegment, journey, hearingDateValue)
+			};
+
+			const hearingStartTime = {
+				key: 'Hearing time',
+				value: hearingDetails.hearingTime,
+				action: this.getAction(sectionSegment, journey, hearingDetails.hearingTime)
+			};
+
+			return [hearingDate, hearingStartTime];
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingExpectedDays'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
+			const expectedDaysKnown = {
+				key: this.title,
+				value: hearingDetails.hearingExpectedDaysKnown,
+				action: this.getAction(sectionSegment, journey, answer)
+			};
+
+			if (hearingDetails.hearingExpectedDaysKnown != 'no') {
+				const expectedDays = {
+					key: 'Estimated number of days',
+					value: hearingDetails.hearingExpectedDays,
+					action: this.getAction(sectionSegment, journey, answer)
+				};
+
+				return [expectedDaysKnown, expectedDays];
+			} else {
+				return [expectedDaysKnown];
+			}
+		};
+	});
+
+Object.entries(questions)
+	.filter(([key]) => key.startsWith('examinationHearingLocationType'))
+	.map(([, value]) => value)
+	.forEach((question) => {
+		question.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
+			const hearingId = Number(String(question.url).split('-').at(-1));
+			const answersFull = journey.response.answers;
+			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
+			const locationType = {
+				key: this.title,
+				value: hearingDetails.hearingLocationType,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 

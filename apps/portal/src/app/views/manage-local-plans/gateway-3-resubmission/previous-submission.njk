@@ -1,0 +1,138 @@
+{% extends "views/layouts/main.njk" %}
+
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block pageTitle %}Gateway 3; submission {{ submissionNumber }}{% endblock %}
+
+{% block pageHeading %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
+                {% if pageCaption %}
+                    <span class="govuk-caption-xl">{{ pageCaption }}</span>
+                {% endif %}
+                Gateway 3; submission {{ submissionNumber }}
+            </h1>
+            <p class="govuk-body govuk-!-margin-top-2 govuk-!-margin-bottom-6">
+                {{ govukTag({
+                    text: "Resubmission required",
+                    classes: "govuk-tag govuk-tag--red"
+                }) }}
+            </p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+
+        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-cy="submission-info-table">
+            {% if reportDocuments and reportDocuments.length > 0 %}
+            <div class="govuk-summary-list__row" data-cy="submission-report-row">
+                <dt class="govuk-summary-list__key govuk-!-width-one-third"><strong>Submission {{ reportSubmissionNumber }} report</strong></dt>
+                <dd class="govuk-summary-list__value">
+                    {% if reportDocuments.length === 1 %}
+                        <a href="{{ reportDocuments[0].downloadUrl }}" class="govuk-link" data-cy="download-report">{{ reportDocuments[0].fileName }}</a>
+                        {% if reportDocuments[0].dateIssued %}
+                            ({% if isInitialSubmission %}issued{% else %}shared on{% endif %} {{ reportDocuments[0].dateIssued }})
+                        {% endif %}
+                    {% else %}
+                        <ul class="govuk-list govuk-list--bullet">
+                            {% for doc in reportDocuments %}
+                                <li>
+                                    <a href="{{ doc.downloadUrl }}" class="govuk-link" data-cy="download-report">{{ doc.fileName }}</a>
+                                    {% if doc.dateIssued %}
+                                        ({% if isInitialSubmission %}issued{% else %}shared on{% endif %} {{ doc.dateIssued }})
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </dd>
+            </div>
+            {% endif %}
+            {% if previousSubmissions and previousSubmissions.length > 0 %}
+            <div class="govuk-summary-list__row" data-cy="previous-submissions-row">
+                <dt class="govuk-summary-list__key govuk-!-width-one-third"><strong>Previous submissions</strong></dt>
+                <dd class="govuk-summary-list__value">
+                    {% for submission in previousSubmissions %}
+                        <a href="{{ submission.url }}" class="govuk-link">Submission {{ submission.number }}</a>
+                        {% if submission.submittedDate %}
+                            (submitted on {{ submission.submittedDate }})
+                        {% endif %}
+                        {% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                </dd>
+            </div>
+            {% endif %}
+        </dl>
+
+        <hr class="govuk-section-break govuk-section-break--visible govuk-!-margin-bottom-6">
+
+        <p class="govuk-body" data-cy="submission-copy">Your submission was sent on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}.</p>
+
+        {% if isInitialSubmission %}
+            {# Submission 1: show required information and optional documents #}
+            {% for section in documentSections %}
+                {% if section.documents.length > 0 %}
+                <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
+                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+                    <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden govuk-!-width-one-third">Document</th>
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">File</th>
+                            </tr>
+                        </thead>
+                        <tbody class="govuk-table__body">
+                            {% for doc in section.documents %}
+                                <tr class="govuk-table__row">
+                                    <td class="govuk-table__cell govuk-!-width-one-third">{{ doc.title }}</td>
+                                    <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
+                                        {% if doc.files and doc.files.length > 0 %}
+                                            {% if doc.files.length === 1 %}
+                                                <a href="{{ doc.files[0].downloadUrl }}" class="govuk-link">{{ doc.files[0].fileName }}</a>
+                                            {% else %}
+                                                <ul class="govuk-list govuk-list--bullet">
+                                                    {% for file in doc.files %}
+                                                        <li><a href="{{ file.downloadUrl }}" class="govuk-link">{{ file.fileName }}</a></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        {% else %}
+                                            Not added
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% elif resubmissionDocuments and resubmissionDocuments.length > 0 %}
+            {# Submission 2+: show new or updated documents when available #}
+            <h2 class="govuk-heading-m" data-cy="new-documents-heading">New or updated documents</h2>
+
+            <dl class="govuk-summary-list" data-cy="new-documents-table">
+                <div class="govuk-summary-list__row" data-cy="documents-row">
+                    <dt class="govuk-summary-list__key"><strong>Documents</strong></dt>
+                    <dd class="govuk-summary-list__value" style="overflow-wrap: break-word; word-break: break-word">
+                        {% if resubmissionDocuments.length === 1 %}
+                            <a href="{{ resubmissionDocuments[0].downloadUrl }}" class="govuk-link">{{ resubmissionDocuments[0].fileName }}</a>
+                        {% else %}
+                            <ul class="govuk-list govuk-list--bullet">
+                                {% for doc in resubmissionDocuments %}
+                                    <li><a href="{{ doc.downloadUrl }}" class="govuk-link">{{ doc.fileName }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

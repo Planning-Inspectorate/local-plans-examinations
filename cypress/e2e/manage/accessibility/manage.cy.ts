@@ -1,7 +1,12 @@
 import { openSeededExaminationPage } from '../../../flows/manage/examination-flow.ts';
 import { seededCase } from '../../../fixtures/manage/case.ts';
 import { caseHistoryPage } from '../../../page-objects/manage/case-history/index.ts';
-import { caseOverviewPage, deleteCasePage } from '../../../page-objects/manage/case-overview/index.ts';
+import {
+	caseOverviewPage,
+	deleteCasePage,
+	deleteCaseReasonPage
+} from '../../../page-objects/manage/case-overview/index.ts';
+import { deleteCaseReason } from '../../../fixtures/manage/overview.ts';
 import {
 	caseOfficerPage,
 	checkYourAnswersPage,
@@ -111,6 +116,31 @@ describe('Manage accessibility', () => {
 		});
 	});
 
+	it('checks the delete case reason page', { tags: ['accessibility'] }, () => {
+		cy.task('seedDb');
+
+		manageHomePage.visit();
+		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
+		caseOverviewPage.verifyLoaded(seededCase.planTitle);
+		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+
+		cy.checkAccessibility();
+	});
+
+	it('checks the delete case reason page with a validation error', { tags: ['accessibility'] }, () => {
+		cy.task('seedDb');
+
+		manageHomePage.visit();
+		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
+		caseOverviewPage.verifyLoaded(seededCase.planTitle);
+		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.submitAndVerifyValidationErrors(deleteCaseReason.requiredMessage);
+
+		cy.checkAccessibility();
+	});
+
 	it('checks the delete case confirmation page', { tags: ['accessibility'] }, () => {
 		cy.task('seedDb');
 
@@ -118,6 +148,8 @@ describe('Manage accessibility', () => {
 		manageHomePage.openCaseByPlanTitle(seededCase.planTitle);
 		caseOverviewPage.verifyLoaded(seededCase.planTitle);
 		caseOverviewPage.navigateToDeletePage();
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.enterDeleteReason(deleteCaseReason.value);
 		deleteCasePage.verifyLoaded();
 
 		cy.checkAccessibility();

@@ -73,15 +73,17 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(this.heading);
-		this.verifyCaptionL(this.caption);
+		if (this.caption) {
+			this.verifyCaptionL(this.caption);
+		}
 		this.documentUpload.chooseFilesButton.should('be.visible');
 	}
 
-	verifyPageContent(backLinkPath: string) {
+	verifyPageContent(backLinkPath: string, text = 'Drag and drop or choose files') {
 		this.verifyLoaded();
 		this.verifyBackLink(backLinkPath);
 		this.verifyServiceNavigation('Guidance', 'Sign out');
-		this.verifyMainContains('Drag and drop or choose files');
+		this.verifyMainContains(text);
 		this.verifyNoFileChosen();
 		this.documentUpload.verifyUploadFormVisible();
 		this.documentUpload.verifyFileFormatHintText(
@@ -162,5 +164,20 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.saveAndReturn();
 		this.verifyLoaded();
 		this.verifyValidationError(ERROR_MESSAGES.NO_FILE_UPLOADED);
+	}
+
+	uploadAndSetVirusCheckStatus(
+		applicationPage: PortalPlanBasePage,
+		planReference: string,
+		fileName: string,
+		status: 'not_scanned' | 'scanned' | 'affected'
+	) {
+		this.uploadAndVerifyFiles([fileName]);
+		this.saveAndReturn();
+		applicationPage.verifyLoaded();
+
+		cy.task('setDocumentVirusCheckStatus', { reference: planReference, fileName, status });
+		cy.reload();
+		applicationPage.verifyLoaded();
 	}
 }

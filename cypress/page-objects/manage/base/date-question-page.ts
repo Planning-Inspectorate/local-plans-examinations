@@ -25,6 +25,7 @@ export class DateQuestionPage extends BasePage {
 	}
 
 	enterDate(date: DateAnswer) {
+		this.verifyLoaded();
 		this.dateInput.enter(this.fieldName, date);
 		this.saveAndContinue();
 	}

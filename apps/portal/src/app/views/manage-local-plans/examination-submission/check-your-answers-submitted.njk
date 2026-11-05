@@ -1,0 +1,95 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block pageTitle %}Examination submission{% endblock %}
+
+{% block pageHeading %}
+    <div class="govuk-grid-row govuk-!-margin-bottom-4">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
+                {% if pageCaption %}
+                    <span class="govuk-caption-xl">{{ pageCaption }}</span>
+                {% endif %}
+                {{ pageHeading or pageTitle }}
+            </h1>
+            {% if statusTag %}
+                {{ govukTag({
+                    text: statusTag.label,
+                    classes: statusTag.class
+                }) }}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
+        {% if miqDocuments and miqDocuments.length %}
+            {% set miqValueHtml %}
+                {% if miqDocuments.length > 1 %}
+                    {% for document in miqDocuments %}
+                        <div>
+                            {% if document.href %}
+                                <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                            {% else %}
+                                {{ document.fileName }}
+                            {% endif %}
+                            {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% set document = miqDocuments[0] %}
+                    {% if document.href %}
+                        <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                    {% else %}
+                        {{ document.fileName }}
+                    {% endif %}
+                    {% if document.sharedDate %} (issued on {{ document.sharedDate }}){% endif %}
+                {% endif %}
+            {% endset %}
+            <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-cy="miq-documents-table">
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key" data-cy="miq-documents-label"><strong>Matters, issues and questions</strong></dt>
+                    <dd class="govuk-summary-list__value" data-cy="miq-documents-value">{{ miqValueHtml | safe }}</dd>
+                </div>
+            </dl>
+        {% endif %}
+
+        {% if submissionDate or submitter %}
+            <p class="govuk-body" data-cy="submission-copy">Your submission was sent{% if submissionDate %} on {{ submissionDate }}{% endif %}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
+        {% endif %}
+
+        <h2 class="govuk-heading-m">Documents</h2>
+
+        {% for section in summaryListData.sections %}
+            {% if section.list.rows.length %}
+                <div class="govuk-!-margin-bottom-8" id="examination-details" data-cy="examination-details-section">
+                    <table class="govuk-table" data-cy="examination-details-table">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden govuk-!-width-one-half">Item</th>
+                                <th scope="col" class="govuk-table__header govuk-visually-hidden">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="govuk-table__body">
+                            {% for row in section.list.rows %}
+                                <tr class="govuk-table__row">
+                                    <td class="govuk-table__cell govuk-!-width-one-half">{{ row.key.text }}</td>
+                                    <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
+                                        {% if row.value.html %}
+                                            {{ row.value.html | safe }}
+                                        {% else %}
+                                            {{ row.value.text }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

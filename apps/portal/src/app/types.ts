@@ -14,7 +14,8 @@ export const STATUS = {
 	ActionNeeded: 3,
 	Invalid: 4,
 	Completed: 5,
-	UnderReview: 6
+	UnderReview: 6,
+	ResubmissionRequired: 7
 } as const;
 
 //state constants: the state of an individual document/section
@@ -29,7 +30,7 @@ export const STATE = {
 export const validStageTypes = [0, 1, 2, 3] as const;
 export type Stage = (typeof validStageTypes)[number];
 
-export const validStatusTypes = [0, 1, 2, 3, 4, 5, 6] as const;
+export const validStatusTypes = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 export type Status = (typeof validStatusTypes)[number];
 
 export const validStates = [0, 1, 2] as const;
@@ -57,7 +58,8 @@ export const StatusLabel: Record<Status, string> = {
 	3: 'Action required',
 	4: 'Invalid',
 	5: 'Completed',
-	6: 'Under review'
+	6: 'Under review',
+	7: 'Resubmission required'
 };
 
 export const StateLabel: Record<State, string> = {
@@ -101,7 +103,8 @@ export const StatusTag = {
 	3: { label: 'Action required', class: 'govuk-tag govuk-tag--red' },
 	4: { label: 'Invalid', class: 'govuk-tag govuk-tag--grey' },
 	5: { label: 'Completed', class: 'govuk-body' },
-	6: { label: 'Under review', class: 'govuk-tag govuk-tag--yellow' }
+	6: { label: 'Under review', class: 'govuk-tag govuk-tag--yellow' },
+	7: { label: 'Resubmission required', class: 'govuk-tag govuk-tag--red' }
 } as const;
 
 export const StateTag = {
@@ -134,6 +137,8 @@ export interface Plan {
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
 	status: Status; //Status
+	examinationStatus: string;
+	examinationStatusLabel: string;
 	dates: {
 		//dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: August 2026, E: September 2026"
 		G1: string;
@@ -208,6 +213,8 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		typeof plan.title === 'string' &&
 		validStage(plan.stage) &&
 		validStatus(plan.status) &&
+		typeof plan.examinationStatus === 'string' &&
+		typeof plan.examinationStatusLabel === 'string' &&
 		validDates(plan.dates) &&
 		validSections(plan.sections) &&
 		Array.isArray(plan.documents) &&
@@ -236,6 +243,8 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	title: 'East Borough Local Plan', //Plan Title
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
+	examinationStatus: 'cannot-start-yet',
+	examinationStatusLabel: 'Cannot start yet',
 	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed

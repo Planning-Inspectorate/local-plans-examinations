@@ -1,11 +1,18 @@
 import type { PortalService } from '#service';
+import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import { STAGE, STATUS, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan, Status } from '../../types.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 function statusTag(status: Status) {
 	const s = StatusTag[status as keyof typeof StatusTag] as { label: string; class: string } | undefined;
 	return s ? (s.class ? `<strong class="${s.class}">${s.label}</strong>` : s.label) : '';
+}
+
+function examinationStatusTag(plan: Plan) {
+	const classes = getExaminationStatusTagClass(plan.examinationStatus);
+	return classes ? `<strong class="${classes}">${plan.examinationStatusLabel}</strong>` : plan.examinationStatusLabel;
 }
 
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
@@ -20,17 +27,36 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			return;
 		}
 
-		const planStatus = statusTag(plan.status);
+		const examinationAvailable = plan.examinationStatus !== EXAMINATION_STATUS_ID.CANNOT_START_YET;
+		const planStatus =
+			plan.stage === STAGE.Examination && examinationAvailable ? examinationStatusTag(plan) : statusTag(plan.status);
 		const currentStage = StageLabel[plan.stage];
 		const encodedPlanRef = encodeURIComponent(plan.refNum);
 		const applicationBase = `/manage-local-plans/${encodedPlanRef}/gateway-2-submission`;
 		const gateway3Base = `/manage-local-plans/${encodedPlanRef}/gateway-3-submission`;
+		const gateway3ResubBase = `/manage-local-plans/${encodedPlanRef}/gateway-3-resubmission`;
+		const examinationBase = `/manage-local-plans/${encodedPlanRef}/examination`;
+		const isResubmissionRequired = plan.status === STATUS.ResubmissionRequired;
 		const currentApplicationLink =
-			plan.stage === STAGE.Gateway3 ? gateway3Base : `${applicationBase}/application-declaration`;
+			plan.stage === STAGE.Examination
+				? examinationBase
+				: isResubmissionRequired
+					? gateway3ResubBase
+					: plan.stage === STAGE.Gateway3
+						? gateway3Base
+						: `${applicationBase}/application-declaration`;
 		const applicationLink = () => applicationBase;
-		const gateway3Link = () => gateway3Base;
+		const gateway3Link = () => (isResubmissionRequired ? gateway3ResubBase : gateway3Base);
+		const examinationLink = () => examinationBase;
 
-		const button = plan.status === STATUS.ReadyToStart ? `Start ${currentStage} submission` : null;
+		const button =
+			plan.stage === STAGE.Examination
+				? plan.examinationStatus === EXAMINATION_STATUS_ID.READY_TO_START
+					? 'Start Examination submission'
+					: null
+				: plan.status === STATUS.ReadyToStart
+					? `Start ${currentStage} submission`
+					: null;
 
 		const notificationBanner = plan.status === STATUS.ActionNeeded;
 
@@ -58,17 +84,26 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
+				if (isResubmissionRequired || plan.status === STATUS.UnderReview) {
+					dateTextG3 = 'Submitted: ';
+				}
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
-				hrefE = applicationLink();
+				hrefE = examinationAvailable ? examinationLink() : null;
 				if (plan.status === STATUS.Completed) {
 					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
 					dateTextG2 = dateTextG3 = 'Completed: ';
-					tagE = planStatus;
+					if (
+						plan.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED ||
+						plan.examinationStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
+					) {
+						dateTextE = 'Submitted: ';
+					}
+					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
 					tagG2 = tagG3 = 'Completed';
 				}
 				break;

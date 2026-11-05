@@ -117,4 +117,26 @@ describe('Gateway 3 document upload journeys', () => {
 			'test-document.pdf'
 		);
 	});
+
+	it('Shows the virus scan in progress banner', { tags: ['regression'] }, () => {
+		const page = statementOfCompliancePage;
+		openGateway3DocumentUploadPage(planDetails, page);
+		page.uploadAndSetVirusCheckStatus(
+			gateway3ApplicationPage,
+			planDetails.reference,
+			'test-document.xlsx',
+			'not_scanned'
+		);
+
+		gateway3ApplicationPage.verifyVirusScanInProgressBanner();
+	});
+
+	it('Shows the virus detected banner and removes the download link', { tags: ['regression'] }, () => {
+		const page = environmentalReportPage;
+		openGateway3DocumentUploadPage(planDetails, page);
+		page.uploadAndSetVirusCheckStatus(gateway3ApplicationPage, planDetails.reference, 'test-document.docx', 'affected');
+
+		gateway3ApplicationPage.verifyVirusDetectedBanner('test-document.docx');
+		gateway3ApplicationPage.virusScanInProgressBanner.should('not.exist');
+	});
 });

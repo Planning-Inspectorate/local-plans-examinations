@@ -8,10 +8,15 @@ import {
 	createGateway2Journey,
 	createGateway2WorkshopJourney,
 	createExaminationJourney,
-	createGateway3Journey
+	createExaminationHearingJourney,
+	createExaminationPauseJourney,
+	createGateway3Journey,
+	createDeleteCaseJourney,
+	createTimetableJourney
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
+import { configureNunjucks } from '../../nunjucks.ts';
 
 function createOverviewJourneyForTest(overrideRequest?: Record<string, any>) {
 	const params = overrideRequest
@@ -61,10 +66,18 @@ function createGateway3JourneyForTest() {
 	);
 }
 
-function createExaminationJourneyForTest() {
+function createExaminationJourneyForTest(answers = {}, query = {}, session = {}) {
 	return createExaminationJourney(
-		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
-		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', {}),
+		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, query, session } as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', answers),
+		questions
+	);
+}
+
+function createTimetableJourneyForTest(answers = {}, query = {}, session = {}) {
+	return createTimetableJourney(
+		{ baseUrl: '/case/LP-TEST-001', params: { planReference: 'LP-TEST-001' }, query, session } as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.TIMETABLE_JOURNEY_ID, '', answers),
 		questions
 	);
 }
@@ -224,6 +237,38 @@ describe('gateway3Journey', () => {
 });
 
 describe('createExaminationJourney', () => {
+	it('returns to Plan outcome after uploading an unissued report', () => {
+		const journey = createExaminationJourneyForTest({ examinationReport: [{ id: 'report-1' }] });
+
+		assert.equal(
+			journey.getBackLink({ params: { section: 'outcome', question: 'examination-report' } }),
+			'/case/LP-TEST-001/examination/outcome/plan-outcome'
+		);
+	});
+
+	for (const { query, session, expectedPage } of [
+		{ query: {}, session: {}, expectedPage: 'examination-report-manage' },
+		{ query: { returnTo: 'check' }, session: {}, expectedPage: 'plan-outcome?returnTo=check' },
+		{
+			query: { returnTo: 'check' },
+			session: { examinationReportReturnToManage: true },
+			expectedPage: 'examination-report-manage'
+		}
+	]) {
+		it(`returns from the report uploader to ${expectedPage}`, () => {
+			const journey = createExaminationJourneyForTest(
+				{ examinationReport: [{ id: 'report-1' }], soundUnsoundDate: new Date('2026-10-19') },
+				query,
+				session
+			);
+
+			assert.equal(
+				journey.getBackLink({ params: { section: 'outcome', question: 'examination-report' } }),
+				`/case/LP-TEST-001/examination/outcome/${expectedPage}`
+			);
+		});
+	}
+
 	it('links Examination question pages back to the Gateway 3 page', () => {
 		const journey = createExaminationJourneyForTest();
 		const gateway2Questions = [
@@ -249,7 +294,7 @@ describe('createExaminationJourney', () => {
 			'plan-pause-start-date',
 			'plan-pause-end-date',
 			'withdrawn-date',
-			'is-sound',
+			'plan-outcome',
 			'sound-unsound-date',
 			'adoption-date',
 			'approved-for-cil-date'
@@ -262,5 +307,204 @@ describe('createExaminationJourney', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
+	});
+});
+
+describe('createTimetableJourney', () => {
+	it('shows the latest pause start and restart dates below the final report issue date in Fact Check', () => {
+		const journey = createTimetableJourneyForTest({
+			planPauseHistory: [
+				{
+					createdAt: new Date('2026-02-01'),
+					planPauseDate: new Date('2026-02-05'),
+					planPauseEndDate: new Date('2026-02-10')
+				},
+				{
+					createdAt: new Date('2026-01-01'),
+					planPauseDate: new Date('2026-01-05'),
+					planPauseEndDate: new Date('2026-01-10')
+				}
+			]
+		});
+		const factCheckQuestions = journey.sections[6].questions;
+
+		assert.deepEqual(
+			factCheckQuestions.slice(5, 7).map((question) => question.fieldName),
+			['planPauseDate-2', 'planPauseEndDate-2']
+		);
+		assert.equal(journey.response.answers['planPauseDate-2'].getTime(), new Date('2026-02-05').getTime());
+	});
+
+	it('shows only the latest pause start date if the examination has not restarted', () => {
+		const journey = createTimetableJourneyForTest({
+			planPauseHistory: [
+				{
+					createdAt: new Date('2026-01-01'),
+					planPauseDate: new Date('2026-01-05'),
+					planPauseEndDate: new Date('2026-01-10')
+				},
+				{
+					createdAt: new Date('2026-02-01'),
+					planPauseDate: new Date('2026-02-05'),
+					planPauseEndDate: null
+				}
+			]
+		});
+		const factCheckQuestions = journey.sections[6].questions;
+
+		assert.equal(factCheckQuestions[5]?.fieldName, 'planPauseDate-2');
+		assert.equal(factCheckQuestions[6]?.fieldName, 'withdrawnDate');
+	});
+});
+
+describe('createExaminationHearingJourney', () => {
+	it('keeps an in-progress conditional edit in its question flow', () => {
+		const session = {
+			answers: { hearings: [{ id: 'hearing-1', createdDate: new Date('2026-01-01') }] },
+			editingFromCheckAnswers: false
+		};
+		createExaminationHearingJourney(
+			{
+				baseUrl: '/case/PLAN-123456',
+				url: '/examination/set-up-hearing/hearing/examination-hearing-location-known-1',
+				session
+			} as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', { hearings: [] }),
+			questions
+		);
+		assert.equal(session.editingFromCheckAnswers, false);
+	});
+
+	for (const saved of [true, false]) {
+		it(`${saved ? 'returns a saved hearing edit to CYA' : 'keeps a new hearing in its question flow'}`, () => {
+			const session: Record<string, unknown> = { editingFromCheckAnswers: true };
+			const hearing = {
+				id: 'hearing-1',
+				createdDate: new Date('2026-01-01'),
+				hearingDate: new Date('2026-11-07'),
+				hearingTime: '10:30'
+			};
+			const response = new JourneyResponse(COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID, '', {
+				hearings: saved ? [hearing] : []
+			});
+			createExaminationHearingJourney(
+				{
+					baseUrl: '/case/PLAN-123456',
+					url: '/examination/set-up-hearing/hearing/examination-hearing-date-and-time-1',
+					session
+				} as unknown as Request,
+				response,
+				questions
+			);
+			assert.equal(session.editingFromCheckAnswers, saved);
+			if (saved) {
+				assert.equal(response.answers['hearingDate-1'], hearing.hearingDate);
+				assert.equal(response.answers['hearingTime-1'], hearing.hearingTime);
+			}
+		});
+	}
+});
+
+describe('createExaminationPauseJourney', () => {
+	for (const pauseId of [1, 2]) {
+		for (const [question, previousQuestion] of [
+			['examination-pause-start-date', null],
+			['examination-pause-details', 'examination-pause-start-date'],
+			['examination-pause-end-date', null],
+			['examination-pause-restart-details', 'examination-pause-end-date']
+		]) {
+			it(`links ${question}-${pauseId} back to ${previousQuestion ?? 'Examination'}`, () => {
+				const baseUrl = '/case/PLAN-123456';
+				const params = {
+					reference: 'PLAN-123456',
+					section: 'pause-examination',
+					question: `${question}-${pauseId}`
+				};
+				const journey = createExaminationPauseJourney(
+					{
+						baseUrl,
+						params,
+						url: `/examination-pause/pause-examination/${params.question}`,
+						session: {}
+					} as unknown as Request,
+					new JourneyResponse(COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID, '', { planPauseHistory: [] }),
+					questions
+				);
+				assert.equal(
+					journey.getBackLink({ params }),
+					previousQuestion
+						? `${baseUrl}/examination-pause/pause-examination/${previousQuestion}-${pauseId}`
+						: `${baseUrl}/examination`
+				);
+			});
+		}
+	}
+});
+
+describe('createDeleteCaseJourney', () => {
+	function createDeleteCaseJourneyForTest(session: Record<string, unknown> = {}) {
+		return createDeleteCaseJourney(
+			{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.DELETE_CASE_JOURNEY_ID, '', {}),
+			questions
+		);
+	}
+
+	it('asks for the delete reason in the delete-case section', () => {
+		const journey = createDeleteCaseJourneyForTest();
+		const [deleteCaseSection] = journey.sections;
+
+		assert.equal(journey.journeyId, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
+		assert.equal(journey.sections.length, 1);
+		assert.equal(deleteCaseSection.segment, COMMON_CONSTS.DELETE_CASE_SECTION);
+		assert.deepEqual(
+			deleteCaseSection.questions.map((question) => question.fieldName),
+			['deleteCaseWhy']
+		);
+	});
+
+	it('builds delete case URLs without repeating the delete-case segment', () => {
+		const journey = createDeleteCaseJourneyForTest();
+
+		assert.equal(journey.baseUrl, '/case/LP-TEST-001');
+		assert.equal(journey.taskListUrl, '/case/LP-TEST-001/delete-case/check');
+		assert.equal(journey.taskListTemplate, 'views/layouts/delete-case-check.njk');
+		assert.equal(
+			journey.getCurrentQuestionUrl(COMMON_CONSTS.DELETE_CASE_SECTION, COMMON_CONSTS.DELETE_CASE_REASON),
+			'/case/LP-TEST-001/delete-case/delete-case-reason'
+		);
+	});
+
+	it('links the reason page back to the case overview', () => {
+		const journey = createDeleteCaseJourneyForTest();
+
+		assert.equal(journey.initialBackLink, '/case/LP-TEST-001/overview');
+	});
+
+	it('renders Continue and a Cancel link returning to Overview', () => {
+		const journey = createDeleteCaseJourneyForTest();
+		const viewModel = questions.deleteCaseWhy.toViewModel({
+			params: { section: COMMON_CONSTS.DELETE_CASE_SECTION, question: COMMON_CONSTS.DELETE_CASE_REASON },
+			section: journey.sections[0],
+			journey
+		});
+		const html = configureNunjucks().render('components/single-line-input/index.njk', {
+			...viewModel,
+			config: { headerTitle: 'Manage', footerLinks: [] }
+		});
+		assert.equal(viewModel.continueButtonText, 'Continue');
+		assert.ok(html.includes('Why are you deleting this case?'));
+		const cancelLink = html.match(/<a\b[^>]*data-cy="button-back"[^>]*>Cancel<\/a>/)?.[0];
+		assert.ok(cancelLink);
+		assert.match(cancelLink, /class="govuk-link"/);
+		assert.match(cancelLink, /href="\/case\/LP-TEST-001\/overview"/);
+	});
+
+	it('marks the delete case journey as the current journey', () => {
+		const session: Record<string, unknown> = {};
+
+		createDeleteCaseJourneyForTest(session);
+
+		assert.equal(session.currentJourney, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
 	});
 });

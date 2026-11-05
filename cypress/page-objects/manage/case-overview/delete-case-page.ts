@@ -1,43 +1,55 @@
 import { BasePage } from '../../base-page.ts';
+import { deleteCaseConfirmation, deleteCaseReason } from '../../../fixtures/manage/overview.ts';
 
 export class DeleteCasePage extends BasePage {
 	constructor() {
-		super(/^\/case\/.+\/delete-case$/);
+		super(/^\/case\/.+\/delete-case\/check$/);
 	}
 
 	get deleteCaseButton() {
 		return cy.getByData('confirm-delete-button');
 	}
 
-	get table() {
+	get cancelLink() {
+		return cy.getByData('cancel-delete');
+	}
+
+	get caseDetailsList() {
 		return cy.getByData('delete-case-details');
 	}
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('Are you sure you want to delete this case?');
-		this.verifyMainContains(
-			'This will mark the case as deleted. It will no longer appear in the system but will still be available for audit purposes.',
-			'Case details'
-		);
-	}
-
-	caseDetailRow(label: string) {
-		return this.table.contains('tr', label);
+		this.verifyHeading(deleteCaseConfirmation.heading);
+		this.verifyMainContains(deleteCaseConfirmation.body, deleteCaseConfirmation.caseDetailsHeading);
+		this.caseDetailsList.should('be.visible');
 	}
 
 	verifyCaseDetails(planTitle: string, planType: string, localPlanningAuthority: string, caseOfficer: string) {
 		this.verifyCaseReference();
-		this.caseDetailRow('Plan title').should('contain.text', planTitle);
-		this.caseDetailRow('Plan type').should('contain.text', planType);
-		this.caseDetailRow('LPA').should('contain.text', localPlanningAuthority);
-		this.caseDetailRow('Case officer').should('contain.text', caseOfficer);
+		this.verifySummaryRowContains('Title', planTitle);
+		this.verifySummaryRowContains('Type', planType);
+		this.verifySummaryRowContains('Planning authority', localPlanningAuthority);
+		this.verifySummaryRowContains('Case officer', caseOfficer);
 	}
 
 	verifyCaseReference() {
-		this.caseDetailRow('Case reference')
+		this.summaryRowValue('Reference')
 			.invoke('text')
 			.should('match', /PLAN-\d+/);
+	}
+
+	verifyDeleteReason(deleteReason: string) {
+		this.verifySummaryRowContains(deleteCaseReason.row, deleteReason);
+		this.verifySummaryRowActionHref(deleteCaseReason.row, /^\/case\/.+\/delete-case\/delete-case-reason$/);
+	}
+
+	changeDeleteReason() {
+		this.summaryRowActionLink(deleteCaseReason.row).should('be.visible').click();
+	}
+
+	cancel() {
+		this.cancelLink.should('be.visible').click();
 	}
 
 	deleteCase() {

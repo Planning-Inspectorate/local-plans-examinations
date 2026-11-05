@@ -41,6 +41,7 @@ export class RadioQuestionPage extends BasePage {
 	}
 
 	selectAnswer(value: string) {
+		this.verifyLoaded();
 		this.answerOption(value).check({ force: true });
 		this.saveAndContinue();
 	}

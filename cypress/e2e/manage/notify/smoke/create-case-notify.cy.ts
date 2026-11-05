@@ -11,6 +11,7 @@ import {
 } from '../../../../page-objects/manage/create-case/index.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
+const createCaseTemplateId = '9f258ed8-295d-421f-af9c-34d3e7f9cb1e';
 
 describe('Manage Notify smoke', () => {
 	let createdCaseReference: string | undefined;
@@ -53,14 +54,16 @@ describe('Manage Notify smoke', () => {
 				createdCaseReference = caseReference;
 				const notifyReference = `create-case:${caseReference}`;
 
-				cy.task('waitForNotifyEmailByReference', { reference: notifyReference }, { timeout: 70000 }).then(
-					(notification) => {
-						expect(notification).to.include({ reference: notifyReference });
-						const notificationId = (notification as { id?: string }).id;
+				cy.task(
+					'waitForNotifyEmailByReference',
+					{ reference: notifyReference, templateId: createCaseTemplateId },
+					{ timeout: 70000 }
+				).then((notification) => {
+					expect(notification).to.include({ reference: notifyReference, templateId: createCaseTemplateId });
+					const notificationId = (notification as { id?: string }).id;
 
-						expect(notificationId).to.match(/\S+/);
-					}
-				);
+					expect(notificationId).to.match(/\S+/);
+				});
 			});
 		});
 	});

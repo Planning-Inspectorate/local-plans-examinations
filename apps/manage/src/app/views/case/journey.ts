@@ -10,7 +10,14 @@ import type { Request } from 'express';
 import { createLpaOptions } from '../create-a-case/journey.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
-import { sortGateway2Workshops } from '#util/util.ts';
+import { sortByDateColumn } from '#util/util.ts';
+import {
+	questionHasNonEmptyAnswer,
+	questionHasEmptyAnswer,
+	createGw2DocumentQuestions
+} from '../../util/journey-util.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
+import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 type JourneyWithReference = Journey & {
 	caseReference: string;
@@ -63,27 +70,133 @@ export function createOverviewJourney(req: Request, response: JourneyResponse, q
 	return getBackLinksAndSetReference(journey, overviewUrl, req.params.reference);
 }
 
+export function createExaminationHearingJourney(
+	req: Request,
+	response: JourneyResponse,
+	questions: Record<string, any>
+) {
+	const examinationHearingUrl = req.baseUrl + '/examination/set-up-hearing';
+	const examinationUrl = req.baseUrl + '/examination';
+	const hearingId = Number(String(req.url).split('-').at(-1));
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID,
+		sections: [
+			new Section('Hearing', 'hearing')
+				.addQuestion(questions[`examinationHearingDateAndTime-${hearingId}`])
+				.addQuestion(questions[`examinationHearingExpectedDays-${hearingId}`])
+				.addQuestion(questions[`examinationHearingLocationType-${hearingId}`])
+				.startMultiQuestionCondition('hearing-location', (response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions[`examinationHearingLocationType-${hearingId}`], 'in-person'],
+							[questions[`examinationHearingLocationType-${hearingId}`], 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions[`examinationHearingLocationKnown-${hearingId}`])
+				.addQuestion(questions[`examinationHearingVenueAddress-${hearingId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingLocationKnown-${hearingId}`], 'yes'))
+				.endMultiQuestionCondition('hearing-location')
+				.startMultiQuestionCondition('hearing-remote-meeting', (response) =>
+					questionsHaveAnswers(
+						response,
+						[
+							[questions[`examinationHearingLocationType-${hearingId}`], 'remote'],
+							[questions[`examinationHearingLocationType-${hearingId}`], 'hybrid']
+						],
+						{ logicalCombinator: 'or' }
+					)
+				)
+				.addQuestion(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`])
+				.addQuestion(questions[`examinationHearingRemoteMeetingLink-${hearingId}`])
+				.withCondition(whenQuestionHasAnswer(questions[`examinationHearingRemoteMeetingLinkKnown-${hearingId}`], 'yes'))
+				.endMultiQuestionCondition('hearing-remote-meeting')
+				.addQuestion(questions[`examinationHearingDuration-${hearingId}`])
+				.withCondition(() => false)
+				.addQuestion(questions[`examinationHearingEndDate-${hearingId}`])
+				.withCondition(() => false)
+		],
+		taskListUrl: `check-your-answers-${hearingId}`,
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/hearing-check-your-answers.njk',
+		journeyTitle: 'Set up hearing',
+		returnToListing: false,
+		makeBaseUrl: () => examinationHearingUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+	let currentHearingAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const hearingAnswers: object[] = sortByDateColumn(req.session.answers.hearings, 'createdDate');
+		currentHearingAnswers = hearingAnswers[hearingId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
+		const hearingAnswers: Record<string, any>[] = sortByDateColumn(
+			response.answers.hearings as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
+		) as object[];
+		currentHearingAnswers = hearingAnswers[hearingId - 1];
+	}
+	if (!req.session.answers) {
+		req.session.editingFromCheckAnswers = Boolean(currentHearingAnswers?.id);
+	}
+	if (currentHearingAnswers) {
+		Object.entries(currentHearingAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${hearingId}`] = value;
+		});
+		response.answers[`hearingExpectedDaysKnown-${hearingId}_hearingExpectedDays`] =
+			currentHearingAnswers.hearingExpectedDays;
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID;
+	}
+
+	const getBackLink = journey.getBackLink.bind(journey); // overide back links for hearing duration + end date
+	journey.getBackLink = (options: Parameters<Journey['getBackLink']>[0]) => {
+		if (
+			options.params.question.startsWith('examination-hearing-duration-') ||
+			options.params.question.startsWith('examination-hearing-end-date-')
+		) {
+			return examinationUrl;
+		}
+
+		return getBackLink(options);
+	};
+
+	const redirectToNextQuestion = journey.redirectToNextQuestion.bind(journey); // overide next question for hearing duration + end date (stops it going to CYA when submit is clicked)
+	journey.redirectToNextQuestion = (res, params, manageListQuestion) => {
+		if (res.locals.redirectToExamination) {
+			return res.redirect(examinationUrl);
+		}
+		return redirectToNextQuestion(res, params, manageListQuestion);
+	};
+
+	return journey;
+}
+
 export function createGateway3Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway3Url = req.baseUrl + '/gateway-3';
 	const submissionData = Array.isArray(response.answers.submissions) ? response.answers.submissions : null;
 	if (!submissionData) {
 		throw Error('submissionData is null');
 	}
-	let submissionSections: Section[] = [];
-	if (submissionData.length == 1) {
-		submissionSections.push(
-			new Section('Gateway 3 submission', 'gateway-3-submission-1')
-				.addQuestion(questions['gateway3Documents-1'])
-				.addQuestion(questions['gateway3Decision-1'])
-		);
-	} else {
-		submissionSections = sortGateway3Submissions(submissionData).map((submission, index) => {
-			const rowId = index + 1;
-			return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
-				.addQuestion(questions[`gateway3Documents-${rowId}`])
-				.addQuestion(questions[`gateway3Decision-${rowId}`]);
-		});
-	}
+
+	const submissionSections =
+		submissionData.length === 1
+			? [
+					new Section('Gateway 3 submission', 'gateway-3-submission-1')
+						.addQuestion(questions['gateway3DocumentsCheck-1'])
+						.addQuestion(questions['gateway3Decision-1'])
+				]
+			: sortGateway3Submissions(submissionData).map((_, index) => {
+					const rowId = index + 1;
+					return new Section(`Gateway 3 submission ${rowId}`, `gateway-3-submission-${rowId}`)
+						.addQuestion(questions[`gateway3DocumentsCheck-${rowId}`])
+						.addQuestion(questions[`gateway3Decision-${rowId}`]);
+				});
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
@@ -190,12 +303,13 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 	let currentWorkshopAnswers: any | undefined;
 	if (req.session.answers) {
 		response.answers = req.session.answers;
-		const workshopAnswers: object[] = sortGateway2Workshops(req.session.answers.workshops);
+		const workshopAnswers: object[] = sortByDateColumn(req.session.answers.workshops, 'createdDate');
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	} else {
 		// The journey expects the fields to be at the "root" of the answer, so unpack the current workshop answers
-		const workshopAnswers: Record<string, any>[] = sortGateway2Workshops(
-			response.answers.workshops as { createdDate: Date; [key: string]: any }[]
+		const workshopAnswers: Record<string, any>[] = sortByDateColumn(
+			response.answers.workshops as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
 		) as object[];
 		currentWorkshopAnswers = workshopAnswers[workshopId - 1];
 	}
@@ -215,16 +329,24 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
+	const gateway2DocumntUrl = req.baseUrl + '/gateway-2/gateway-2/gateway2Documents';
+	const backUrl = COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))
+		? gateway2DocumntUrl
+		: gateway2Url;
+	const gateway2Section = new Section('Gateway 2', 'gateway-2')
+		.addQuestion(questions.gateway2ExpectedDate)
+		.addQuestion(questions.gateway2ActualDate)
+		.addQuestion(questions.gateway2Documents)
+		.addQuestion(questions.gateway2AssessorsName)
+		.addQuestion(questions.assessorDateOfAppointment);
 
+	createGw2DocumentQuestions(questions).forEach((question) => {
+		gateway2Section.addQuestion(question).withCondition(() => false);
+	});
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		sections: [
-			new Section('Gateway 2', 'gateway-2')
-				.addQuestion(questions.gateway2ExpectedDate)
-				.addQuestion(questions.gateway2ActualDate)
-				.addQuestion(questions.gateway2Documents)
-				.addQuestion(questions.gateway2AssessorsName)
-				.addQuestion(questions.assessorDateOfAppointment),
+			gateway2Section,
 			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
 			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
 		],
@@ -239,9 +361,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 	if (!response.answers.workshops) {
 		throw Error('workshops property missing from answers for gateway2 journey');
 	}
-	const sortedWorkshops = sortGateway2Workshops(
-		response.answers.workshops as { createdDate: Date; [key: string]: any }[]
-	);
+	const sortedWorkshops = sortByDateColumn(response.answers.workshops as { [key: string]: any }[], 'createdDate');
 
 	response.answers.workshops = sortedWorkshops;
 	if (req.session) {
@@ -250,7 +370,7 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 			delete req.session.answers;
 		}
 	}
-	return getBackLinksAndSetReference(journey, gateway2Url, req.params.reference);
+	return getBackLinksAndSetReference(journey, backUrl, req.params.reference);
 }
 
 export function createGateway1Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
@@ -284,6 +404,33 @@ export function createGateway1Journey(req: Request, response: JourneyResponse, q
 
 export function createExaminationJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const examinationUrl = req.baseUrl + '/examination';
+	const reportUploaded =
+		Array.isArray(response.answers.examinationReport) && response.answers.examinationReport.length > 0;
+	const returnToCheck = req.query?.returnTo === 'check';
+	const reportIssued =
+		Boolean(response.answers.soundUnsoundDate) &&
+		(!returnToCheck || req.session?.examinationReportReturnToManage === true);
+
+	questions.examinationReport.actionLink = reportUploaded
+		? { href: `${examinationUrl}/outcome/${questions.examinationReportManage.url}`, text: 'Manage' }
+		: { href: `${examinationUrl}/outcome/${questions.isSound.url}`, text: 'Add' };
+
+	const pauseSection = new Section('Pause examination', 'pause-examination');
+	const pauseData = Array.isArray(response.answers.planPauseHistory) ? response.answers.planPauseHistory : [];
+	for (let i = 1; i <= pauseData.length; i++) {
+		pauseSection.addQuestion(questions[`examinationPauseStartDate-${i}`]);
+		pauseSection.addQuestion(questions[`examinationPauseDetail-${i}`]);
+		pauseSection.addQuestion(questions[`examinationPauseEndDate-${i}`]);
+		pauseSection
+			.addQuestion(questions[`examinationRestartDetail-${i}`])
+			.withCondition((response) => questionHasNonEmptyAnswer(response, questions[`examinationPauseEndDate-${i}`]));
+	}
+	if (pauseData.length == 0) {
+		pauseSection.addQuestion(questions['examinationPauseStartDate-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationPauseDetail-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationPauseEndDate-1']).withCondition(() => false);
+		pauseSection.addQuestion(questions['examinationRestartDetail-1']).withCondition(() => false);
+	}
 
 	const journey = new Journey({
 		journeyId: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
@@ -297,6 +444,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
 			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
+			new Section('Hearings', 'hearings').addQuestion(questions.miqs),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
@@ -313,9 +461,18 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.factCheckActualDate)
 				.addQuestion(questions.factCheckReceivedBackFromLPADate)
 				.addQuestion(questions.finalReportIssueDate),
+			new Section('Outcome', 'outcome')
+				.addQuestion(questions.isSoundNavigation)
+				.addQuestion(questions.examinationReport)
+				.addQuestion(questions.examinationReportManage)
+				.startMultiQuestionCondition('report-uploaded', () => reportUploaded)
+				.addQuestion(questions.soundUnsoundDateOutcome)
+				.addQuestion(questions.isSoundOutcome)
+				.addQuestion(questions.adoptionDateOutcome)
+				.addQuestion(questions.approvedForCILDateOutcome)
+				.endMultiQuestionCondition('report-uploaded'),
+			pauseSection,
 			new Section('Important dates for this plan', 'important-dates')
-				.addQuestion(questions.planPauseStartDate)
-				.addQuestion(questions.planPauseEndDate)
 				.addQuestion(questions.withdrawnDate)
 				.addQuestion(questions.isSound)
 				.addQuestion(questions.soundUnsoundDate)
@@ -330,13 +487,176 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		initialBackLink: examinationUrl,
 		response
 	});
+
+	if (response.answers.hearings) {
+		const sortedHearings = sortByDateColumn(
+			response.answers.hearings as { createdDate: Date; [key: string]: any }[],
+			'createdDate'
+		);
+
+		response.answers.hearings = sortedHearings;
+	}
+
+	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
+
+	response.answers.planPauseHistory = sortedPauses;
 	if (req.session) {
 		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_JOURNEY_ID;
+		if (req.session.answers) {
+			delete req.session.answers;
+		}
 	}
-	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference, (params) =>
+		params.section === 'outcome' && params.question === questions.examinationReport.url
+			? `${examinationUrl}/outcome/${reportIssued ? questions.examinationReportManage.url : questions.isSound.url}${returnToCheck && !reportIssued ? '?returnTo=check' : ''}`
+			: undefined
+	);
 }
 
-function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, caseReference: string | string[]): Journey {
+export function createExaminationPauseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const examinationUrl = req.baseUrl + '/examination';
+	const examinationPauseUrl = req.baseUrl + '/examination-pause';
+	const pauseId = Number(String(req.url).split('-').at(-1));
+	const currentQuestion = String(req.params.question);
+	const shouldShowPauseDetailsQuestion = !currentQuestion || currentQuestion.startsWith('examination-pause-details');
+	const shouldShowPauseEndQuestion = !currentQuestion || currentQuestion.startsWith('examination-pause-end-date');
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		sections: [
+			new Section('Pause examination', 'pause-examination')
+				.addQuestion(questions[`examinationPauseStartDate-${pauseId}`])
+				.addQuestion(questions[`examinationPauseDetail-${pauseId}`])
+				.withCondition(
+					(response) =>
+						shouldShowPauseDetailsQuestion ||
+						questionHasEmptyAnswer(response, questions[`examinationPauseDetail-${pauseId}`])
+				)
+				.addQuestion(questions[`examinationPauseEndDate-${pauseId}`])
+				.withCondition(() => shouldShowPauseEndQuestion)
+				.addQuestion(questions[`examinationRestartDetail-${pauseId}`])
+				.withCondition(
+					(response) =>
+						shouldShowPauseEndQuestion &&
+						questionHasEmptyAnswer(response, questions[`examinationRestartDetail-${pauseId}`])
+				)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Pause examination',
+		returnToListing: false,
+		makeBaseUrl: () => examinationPauseUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+	let currentPauseAnswers: any | undefined;
+	if (req.session.answers) {
+		response.answers = req.session.answers;
+		const pauseAnswers: object[] = sortByDateColumn(req.session.answers.planPauseHistory, 'createdAt');
+		currentPauseAnswers = pauseAnswers[pauseId - 1];
+	} else {
+		// The journey expects the fields to be at the "root" of the answer, so unpack the current examination pause answers
+		const pauseAnswers: Record<string, any>[] = sortByDateColumn(
+			response.answers.planPauseHistory as { createdDate: Date; [key: string]: any }[],
+			'createdAt'
+		) as object[];
+		currentPauseAnswers = pauseAnswers[pauseId - 1];
+	}
+	if (currentPauseAnswers) {
+		Object.entries(currentPauseAnswers).forEach(([key, value]) => {
+			response.answers[`${key}-${pauseId}`] = value;
+		});
+	}
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID;
+	}
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference, ({ question }) => {
+		if (String(question).startsWith('examination-pause-details-')) {
+			return `${examinationPauseUrl}/pause-examination/examination-pause-start-date-${pauseId}`;
+		}
+		if (String(question).startsWith('examination-pause-restart-details-')) {
+			return `${examinationPauseUrl}/pause-examination/examination-pause-end-date-${pauseId}`;
+		}
+		return undefined;
+	});
+}
+
+export function createTimetableJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const timetableUrl = req.baseUrl + '/timetable';
+	const pauseData = Array.isArray(response.answers.planPauseHistory) ? response.answers.planPauseHistory : [];
+	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
+	const latestPause = sortedPauses.at(-1);
+
+	const factCheckSection = new Section('Fact Check', 'fact-check')
+		.addQuestion(questions.factCheckDateReceivedFromInspector)
+		.addQuestion(questions.factCheckDueDate)
+		.addQuestion(questions.factCheckActualDate)
+		.addQuestion(questions.factCheckReceivedBackFromLPADate)
+		.addQuestion(questions.finalReportIssueDate);
+
+	if (latestPause) {
+		const latestPauseId = sortedPauses.length;
+		response.answers[`planPauseDate-${latestPauseId}`] = latestPause.planPauseDate;
+		response.answers[`planPauseEndDate-${latestPauseId}`] = latestPause.planPauseEndDate;
+		factCheckSection.addQuestion(questions[`examinationPauseStartDate-${latestPauseId}`]);
+		if (latestPause.planPauseEndDate) {
+			factCheckSection.addQuestion(questions[`examinationPauseEndDate-${latestPauseId}`]);
+		}
+	}
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.TIMETABLE_JOURNEY_ID,
+		sections: [
+			new Section('Timetable', 'timetable').addQuestion(questions.noticeOfIntentionPublishDate),
+			new Section('Gateway 1', 'gateway-1')
+				.addQuestion(questions.gateway1ExpectedDate)
+				.addQuestion(questions.gateway1ActualDate)
+				.addQuestion(questions.slaSentDate)
+				.addQuestion(questions.slaReceivedDate),
+			new Section('Gateway 2', 'gateway-2')
+				.addQuestion(questions.gateway2ExpectedDate)
+				.addQuestion(questions.gateway2ActualDate)
+				.addQuestion(questions.gateway2WorkshopDates)
+				.addQuestion(questions.reportIssuedDate)
+				.addQuestion(questions.reportPublishedDate),
+			new Section('Gateway 3', 'gateway-3')
+				.addQuestion(questions.timetableGateway3ExpectedDate)
+				.addQuestion(questions.timetableGateway3ActualDate)
+				.addQuestion(questions.timetableGateway3CompletionDate),
+			new Section('Examination', 'examination')
+				.addQuestion(questions.expectedSubmissionForExaminationDate)
+				.addQuestion(questions.submissionForExaminationDate)
+				.addQuestion(questions.hearingDates)
+				.addQuestion(questions.letterSentToMHCLGDate)
+				.addQuestion(questions.letterIssueDate),
+			new Section('QA', 'QA')
+				.addQuestion(questions.qaDate)
+				.addQuestion(questions.sentToPanelDate)
+				.addQuestion(questions.panelResponseSentToInspector),
+			factCheckSection
+				.addQuestion(questions.withdrawnDate)
+				.addQuestion(questions.isSound)
+				.addQuestion(questions.soundUnsoundDate)
+				.addQuestion(questions.adoptionDate)
+				.addQuestion(questions.approvedForCILDate)
+		],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Timetable',
+		returnToListing: false,
+		makeBaseUrl: () => timetableUrl,
+		initialBackLink: timetableUrl,
+		response
+	});
+	return getBackLinksAndSetReference(journey, timetableUrl, req.params.planReference);
+}
+
+function getBackLinksAndSetReference(
+	journey: Journey,
+	overviewUrl: string,
+	caseReference: string | string[],
+	backLinkOverride: (params: Record<string, string | string[] | undefined>) => string | undefined = () => undefined
+): Journey {
 	const getBackLink = journey.getBackLink.bind(journey);
 	const caseJourney = journey as JourneyWithReference;
 	caseJourney.caseReference = Array.isArray(caseReference) ? caseReference[0] : caseReference;
@@ -345,12 +665,39 @@ function getBackLinksAndSetReference(journey: Journey, overviewUrl: string, case
 		const { params, manageListQuestion } = options;
 		const isManageListStep = Boolean(params.manageListAction || params.manageListItemId || params.manageListQuestion);
 
+		const override = backLinkOverride(params);
+		if (override) {
+			return override;
+		}
+
 		if (!manageListQuestion && !isManageListStep) {
 			return overviewUrl;
 		}
 
 		return getBackLink(options);
 	};
+
+	return journey;
+}
+
+export function createDeleteCaseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const overviewUrl = req.baseUrl + '/overview';
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID,
+		sections: [new Section('Delete case', COMMON_CONSTS.DELETE_CASE_SECTION).addQuestion(questions.deleteCaseWhy)],
+		taskListUrl: `${COMMON_CONSTS.DELETE_CASE_SECTION}/check`,
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/delete-case-check.njk',
+		journeyTitle: 'Delete case',
+		returnToListing: false,
+		makeBaseUrl: () => req.baseUrl,
+		initialBackLink: overviewUrl,
+		response
+	});
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.DELETE_CASE_JOURNEY_ID;
+	}
 
 	return journey;
 }
@@ -366,9 +713,7 @@ const overviewQuestionNames = new Set<string>([
 	'examinationWebsite',
 	'assessorGateway2',
 	'assessorGateway3',
-	'examiningInspector1',
-	'examiningInspector2',
-	'examiningInspector3',
+	...EXAMINING_INSPECTOR_FIELDS,
 	'qaInspector1',
 	'qaInspector2',
 	'qaInspector3'
@@ -391,7 +736,19 @@ const gateway2QuestionNames = new Set<string>([
 	'assessorDateOfAppointment',
 	'gateway2Report',
 	'gateway2WorkshopDocuments',
-	'workshops'
+	'workshops',
+	'gateway2CoverLetter',
+	'localPlanTimetable',
+	'projectInitiationDocument',
+	'draftStatementOfCompliance',
+	'noticeOfIntention',
+	'gateway1SelfAssessment',
+	'consultationOnProposedContent',
+	'draftStatementOfSoundness',
+	'scopingConsultationDocuments',
+	'consultationSummaryFeedbackScoping',
+	'consultationSummaryProposedContent',
+	'subsequentWorkTowardsADraftPlan'
 ]);
 
 const gateway3QuestionNames = new Set<string>([
@@ -403,19 +760,17 @@ const gateway3QuestionNames = new Set<string>([
 	'examinationWebsite',
 	...Array.from(
 		// Gateway 3 submission questions
-		{ length: 50 },
-		() => ['gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
+		{ length: NUM_GW3_SUBMISSIONS_QUESTIONS },
+		() => ['gateway3DocumentsCheck', 'gateway3Documents', 'gateway3Decision', 'gateway3CompletionDate']
 	)
 		.flat()
-		.map((item, index) => `${item}-${Math.trunc(index / 3) + 1}`)
+		.map((item, index) => `${item}-${Math.trunc(index / 4) + 1}`)
 ]);
 
 const examinationQuestionNames = new Set<string>([
 	'expectedSubmissionForExaminationDate',
 	'submissionForExaminationDate',
-	'examiningInspector1',
-	'examiningInspector2',
-	'examiningInspector3',
+	...EXAMINING_INSPECTOR_FIELDS,
 	'examiningInspectorAppointmentDate',
 	'letterSentToMHCLGDate',
 	'letterIssueDate',
@@ -430,13 +785,13 @@ const examinationQuestionNames = new Set<string>([
 	'factCheckActualDate',
 	'factCheckReceivedBackFromLPADate',
 	'finalReportIssueDate',
-	'planPauseStartDate',
-	'planPauseEndDate',
 	'withdrawnDate',
 	'isSound',
 	'soundUnsoundDate',
 	'adoptionDate',
-	'approvedForCILDate'
+	'approvedForCILDate',
+	'examinationReport',
+	'miqs'
 ]);
 
 export const journeyQuestions = {
@@ -445,5 +800,7 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
-	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
 };

@@ -81,6 +81,15 @@ export class CaseOverviewPage extends BasePage {
 		});
 	}
 
+	verifyLatestCaseNoteMetadata(author: string) {
+		this.caseNoteEntries
+			.first()
+			.find('.govuk-hint')
+			.invoke('text')
+			.should('match', /\d{1,2} [A-Za-z]+ \d{4} at \d{2}:\d{2} by /)
+			.and('contain', `by ${author}`);
+	}
+
 	verifyCaseNotesContent() {
 		this.verifySectionHeading('Case Notes');
 		this.caseNotesDetails.should('not.have.attr', 'open');

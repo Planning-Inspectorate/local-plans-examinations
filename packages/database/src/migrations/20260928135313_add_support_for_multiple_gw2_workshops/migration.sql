@@ -45,8 +45,8 @@ FROM [dbo].[Gateway2Info]
 WHERE [workshopDate] IS NOT NULL OR [workshopVenue] IS NOT NULL;
 
 -- AlterTable
-ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN [workshopDate],
-[workshopVenue];
+ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN IF EXISTS [workshopDate];
+ALTER TABLE [dbo].[Gateway2Info] DROP COLUMN IF EXISTS [workshopVenue];
 
 COMMIT TRAN;
 

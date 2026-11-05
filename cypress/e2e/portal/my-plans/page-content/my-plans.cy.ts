@@ -1,4 +1,4 @@
-import { portalLogin, THIRD_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
+import { portalLogin, THIRD_TEST_EMAIL, FOURTH_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import type { Gateway2ReportIssuedFixture } from '../../../../fixtures/portal/types.ts';
 import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
@@ -7,8 +7,7 @@ import { openGateway2DocumentUploadPage } from '../../../../flows/portal/gateway
 import { cleanupPreparedPlanDetails, preparePlanDetails } from '../../../../flows/portal/plan-flow.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
-import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
-import { applicationCompletePage } from '../../../../page-objects/portal/gw2-application/application-complete-page.ts';
+import { gateway2SubmittedPlan } from '../../../../fixtures/portal/gateway-2-uploads.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -62,14 +61,21 @@ describe('My plans page content for gateway 2', () => {
 			});
 		}
 	);
+});
+
+describe('My plans page content after Gateway 2 submission', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+		portalLogin(FOURTH_TEST_EMAIL);
+	});
+
+	after(() => cy.task('clearDb'));
 
 	it('Shows Gateway 2 status as under review after submission', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			submitGateway2Application(plan, [{ page: gateway2CoverLetterPage, fileNames: ['test-document.pdf'] }]);
-			applicationCompletePage.returnToYourPlanLink(plan.urlReference).click();
-			planDetailsPage.backLink.click();
+			myPlansPage.verifyLoaded();
 			myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-				[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status3]
+				[gateway2SubmittedPlan.reference, plan.leadLpa, gateway2SubmittedPlan.title, plan.currentStage, plan.status3]
 			]);
 		});
 	});

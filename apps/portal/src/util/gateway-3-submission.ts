@@ -3,6 +3,7 @@ import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/stati
 export type Gateway3SubmissionSummary = {
 	decision: string | null;
 	completionDate: Date | null;
+	submittedDate?: Date | null;
 };
 
 type Gateway3InfoSubmissionState = {
@@ -34,10 +35,13 @@ export function getGateway3SubmissionState(gateway3Info: Gateway3InfoSubmissionS
 			(submission) => submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED && submission.completionDate
 		);
 	const previousCompletionDate = previousResubmissionRequired?.completionDate;
+	// The LPA has not yet submitted when submittedDate is null (and
+	// completionDate is also null — completionDate is set by the BO).
+	const latestNotSubmitted = !latestSubmission?.submittedDate && !latestSubmission?.completionDate;
 	const resubmissionAwaitingSubmission = Boolean(
 		latestSubmission &&
 		!latestSubmission.decision &&
-		!latestSubmission.completionDate &&
+		latestNotSubmitted &&
 		previousCompletionDate &&
 		(!gateway3Info?.actualDate || gateway3Info.actualDate <= previousCompletionDate)
 	);

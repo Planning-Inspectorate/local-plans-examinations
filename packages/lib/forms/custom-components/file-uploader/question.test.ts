@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import FileUploaderQuestion, { fileUploadBulletListFormat, fileUploadCountFormat } from './question.ts';
+import FileUploaderQuestion, {
+	buildVirusScanViewData,
+	fileUploadBulletListFormat,
+	fileUploadCountFormat
+} from './question.ts';
 
 describe('FileUploaderQuestion', () => {
 	it('is not answered when the uploaded files answer is missing', () => {
@@ -14,6 +18,41 @@ describe('FileUploaderQuestion', () => {
 
 		assert.equal(question.viewFolder, 'forms/custom-components/file-uploader');
 	});
+
+	for (const { currentUrl, submitAction, expectedSubmitAction, expectedQuery } of [
+		{
+			currentUrl: '/case/PLAN-123456/examination/outcome/examination-report',
+			submitAction: '/case/PLAN-123456/examination/outcome/examination-report/upload-documents/submit',
+			expectedSubmitAction: '/case/PLAN-123456/examination/outcome/examination-report/upload-documents/submit',
+			expectedQuery: ''
+		},
+		{
+			currentUrl: '/case/PLAN-123456/examination/outcome/examination-report?returnTo=check',
+			submitAction: '/case/PLAN-123456/examination/outcome/examination-report?returnTo=check/upload-documents/submit',
+			expectedSubmitAction:
+				'/case/PLAN-123456/examination/outcome/examination-report/upload-documents/submit?returnTo=check',
+			expectedQuery: '?returnTo=check'
+		},
+		{
+			currentUrl: '/case/PLAN-123456/examination/outcome/examination-report?returnTo=check',
+			submitAction: '',
+			expectedSubmitAction: '',
+			expectedQuery: '?returnTo=check'
+		}
+	]) {
+		it(`keeps upload paths separate from query parameters with submit action '${submitAction}'`, () => {
+			const viewModel = buildQuestion().toViewModel({
+				params: {},
+				section: { name: 'Documents' },
+				journey: { ...buildJourney(), response: { answers: {} }, getBackLink: () => '/back' },
+				customViewData: { currentUrl, submitAction }
+			});
+
+			assert.equal(viewModel.currentUrl, '/case/PLAN-123456/examination/outcome/examination-report');
+			assert.equal(viewModel.queryString, expectedQuery);
+			assert.equal(viewModel.submitAction, expectedSubmitAction);
+		});
+	}
 
 	it('is not answered when the uploaded files answer is empty', () => {
 		const question = buildQuestion();
@@ -73,6 +112,20 @@ describe('FileUploaderQuestion', () => {
 			'<ul class="govuk-list--bullet li"><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">beach.jpg</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-2">bridge.jpg</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-3">bullfrog.jpg</a></li></ul>'
 		);
 	});
+	it('formats multiple uploaded files as a bullet list of links when valueDisplayFormat is set to items with virus scan details', () => {
+		const question = buildQuestion({ formatSummaryValue: fileUploadBulletListFormat });
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
+			{ id: 'file-1', fileName: 'beach.jpg', virusCheckStatus: 'scanned' },
+			{ id: 'file-2', fileName: 'bridge.jpg', virusCheckStatus: 'not_scanned' },
+			{ id: 'file-3', fileName: 'bullfrog.jpg', virusCheckStatus: 'affected' }
+		]);
+
+		assert.equal(
+			row.value,
+			'<ul class="govuk-list--bullet li"><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">beach.jpg</a></li><li><a class="govuk-link" >bridge.jpg</a> <strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong></li><li><p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span>bullfrog.jpg contains a virus. Remove the file and upload a different version.</p><a class="govuk-link" >bullfrog.jpg</a> <strong class="govuk-tag govuk-tag--red">Virus detected</strong></li></ul>'
+		);
+	});
 	it('formats multiple uploaded files as a count of the files when valueDisplayFormat is set to count', () => {
 		const question = buildQuestion({ formatSummaryValue: fileUploadCountFormat });
 
@@ -112,12 +165,71 @@ describe('FileUploaderQuestion', () => {
 				},
 				session: {},
 				originalUrl: '/documents',
+				app: {
+					locals: {
+						appName: 'manage'
+					}
+				},
 				params: {}
 			} as any,
 			'section',
 			buildJourney() as any
 		);
 		assert.equal(result, viewModel);
+	});
+});
+
+describe('buildVirusScanViewData', () => {
+	it('reports scan in progress when a file is not yet scanned', () => {
+		const { virusScanInProgress, errorSummary } = buildVirusScanViewData([
+			{ id: 'file-1', fileName: 'plan.pdf', virusCheckStatus: 'not_scanned' } as never
+		]);
+
+		assert.equal(virusScanInProgress, true);
+		assert.equal(errorSummary, undefined);
+	});
+
+	it('does not report scan in progress when all files are scanned', () => {
+		const { virusScanInProgress, errorSummary } = buildVirusScanViewData([
+			{ id: 'file-1', fileName: 'plan.pdf', virusCheckStatus: 'scanned' } as never
+		]);
+
+		assert.equal(virusScanInProgress, false);
+		assert.equal(errorSummary, undefined);
+	});
+
+	it('adds a virus error for each affected file', () => {
+		const { errorSummary } = buildVirusScanViewData([
+			{ id: 'file-1', fileName: 'bad-one.pdf', virusCheckStatus: 'affected' } as never,
+			{ id: 'file-2', fileName: 'good.pdf', virusCheckStatus: 'scanned' } as never,
+			{ id: 'file-3', fileName: 'bad-two.pdf', virusCheckStatus: 'affected' } as never
+		]);
+
+		assert.deepEqual(errorSummary, [
+			{
+				text: 'bad-one.pdf contains a virus. Remove the file and upload a different version.',
+				href: '#uploaded-file-file-1'
+			},
+			{
+				text: 'bad-two.pdf contains a virus. Remove the file and upload a different version.',
+				href: '#uploaded-file-file-3'
+			}
+		]);
+	});
+
+	it('appends virus errors after any existing error summary entries', () => {
+		const { errorSummary } = buildVirusScanViewData(
+			[{ id: 'file-1', fileName: 'bad.pdf', virusCheckStatus: 'affected' } as never],
+			[{ text: 'Existing error', href: '#upload-form' }]
+		);
+
+		assert.deepEqual(errorSummary, [
+			{ text: 'Existing error', href: '#upload-form' },
+			{
+				text: 'bad.pdf contains a virus. Remove the file and upload a different version.',
+				href: '#uploaded-file-file-1'
+			}
+		]);
 	});
 });
 

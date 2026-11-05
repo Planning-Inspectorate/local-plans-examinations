@@ -14,6 +14,7 @@ import { caseRouter } from './views/case/index.ts';
 import { clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
 import { JOURNEY_ID } from './views/create-a-case/journey.ts';
 import { COMMON_CONSTS } from './classes/common-consts.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFunction) {
 	// clearCreateCaseWhenLeaving
@@ -29,6 +30,31 @@ function clearSessionDataWhenLeaving(req: Request, _: Response, next: NextFuncti
 		clearDataFromSession({ req, journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID });
 		delete req.session.currentJourney;
 		delete req.session.editingFromCheckAnswers;
+	}
+	if (
+		req.session?.currentJourney === COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID &&
+		!req.path.includes('set-up-hearing')
+	) {
+		clearDataFromSession({ req, journeyId: COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID });
+		delete req.session.currentJourney;
+		delete req.session.editingFromCheckAnswers;
+	}
+	next();
+}
+
+async function clearTempDocuments(req: Request, _: Response, next: NextFunction, service: ManageService) {
+	const gatewayPages = /^\/case\/PLAN-[^/]+\/(overview|gateway-\d+|examination)\/?$/;
+	const session = req.session.id;
+	const hasTempDocuments = req.session?.hasTempDocuments?.[session];
+	if (
+		req.method === 'GET' &&
+		hasTempDocuments?.hasUploadedFiles &&
+		hasTempDocuments.caseId &&
+		hasTempDocuments.question &&
+		(req.path === '/' || gatewayPages.test(req.path))
+	) {
+		await DocumentUtil.cleanUpTempDocuments(service, hasTempDocuments.caseId, hasTempDocuments.question);
+		delete req.session.hasTempDocuments?.[session];
 	}
 	next();
 }
@@ -47,6 +73,7 @@ export function buildRouter(service: ManageService): IRouter {
 	// don't cache responses, note no-cache allows some caching, but with revalidation
 	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#no-cache
 	router.use(cacheNoCacheMiddleware);
+	router.use((req, res, next) => clearTempDocuments(req, res, next, service));
 
 	router.get('/unauthenticated', (req, res) => res.status(401).render('views/errors/401.njk'));
 

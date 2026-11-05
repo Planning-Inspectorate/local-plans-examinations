@@ -72,6 +72,7 @@ export const gateway2Report = {
 	path: 'gateway-2-report',
 	caption: 'Issue report',
 	fileName: 'test-document.pdf',
+	updatedFileName: 'test-document.docx',
 	validationMessage: 'Please upload your Gateway 2 report'
 } as const;
 

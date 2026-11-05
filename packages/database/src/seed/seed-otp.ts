@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import { newDatabaseClient } from '../index.ts';
 import { loadConfig } from '../configuration/config.ts';
+import { seedStaticData } from './data-static.ts';
 import {
 	PLAN_TYPE_ID,
 	DOCUMENT_SET_ID,
@@ -28,16 +29,13 @@ const SUBMISSION_DATE = new Date('2026-09-12T12:00:00.000Z');
 const SUBMITTED_CASE_REFERENCE = 'PLAN-C02';
 const SUBMITTED_PLAN_TITLE = 'GW2SubmittedNotIssued';
 
-async function run() {
+export async function seedPortalCases({
+	email = 'test@planninginspectorate.gov.uk',
+	caseOnly = false
+}: { email?: string; caseOnly?: boolean } = {}) {
 	const config = loadConfig();
 	dotenv.config({ quiet: true });
 
-	// Allow specifying a custom email via --email flag for testing Gov Notify flows
-	// Without this, the script always used the default test@planninginspectorate.gov.uk
-	// The --email flag lets you specify any email for seeding, which is useful for testing real Gov Notify flows with different recipients
-	const emailArg = process.argv.find((arg) => arg.startsWith('--email='));
-	const email = emailArg ? emailArg.split('=')[1] : 'test@planninginspectorate.gov.uk';
-	const caseOnly = process.argv.includes('--case-only');
 	const dbClient = newDatabaseClient(config.db);
 	const lpas = [
 		{ lpaCode: 'southampton', lpaName: 'Southampton City Council' },
@@ -274,6 +272,7 @@ async function run() {
 	}
 
 	try {
+		await seedStaticData(dbClient);
 		await Promise.all(
 			lpas.map((lpa) =>
 				dbClient.lPA.upsert({
@@ -320,30 +319,13 @@ async function run() {
 			gateway2InfoUpsert: gateway2InfoReportIssued
 		});
 
-		await dbClient.document.upsert({
-			where: { guid: DOCUMENT_GUID },
-			update: {},
-			create: {
-				guid: DOCUMENT_GUID,
-				name: DOCUMENT_NAME,
-				caseId: reportIssuedCase.id,
-				documentSetId: DOCUMENT_SET_ID.G2_REPORT,
-				versions: {
-					create: {
-						version: 1,
-						originalFilename: DOCUMENT_NAME,
-						fileName: DOCUMENT_NAME,
-						sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.BACK_OFFICE,
-						virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED,
-						dateCreated: REPORT_SHARED_DATE
-					}
-				}
-			}
-		});
-		await dbClient.document.update({
-			where: { guid: DOCUMENT_GUID },
-			data: { latestVersionId: 1 }
-		});
+		await upsertDocument(
+			DOCUMENT_GUID,
+			DOCUMENT_NAME,
+			reportIssuedCase.id,
+			DOCUMENT_SET_ID.G2_REPORT,
+			REPORT_SHARED_DATE
+		);
 
 		// Case for fifth user, GW2 submitted and Workshop fields filled in BO
 		const planD01Case = await upsertCase({
@@ -394,4 +376,10 @@ async function run() {
 	}
 }
 
-run();
+if (import.meta.main) {
+	const emailArg = process.argv.find((arg) => arg.startsWith('--email='));
+	await seedPortalCases({
+		email: emailArg?.split('=')[1],
+		caseOnly: process.argv.includes('--case-only')
+	});
+}

@@ -1,7 +1,19 @@
 import type { PortalService } from '#service';
+import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
-import { StageLabel, StatusTag, validPlan } from '../../types.ts';
+import { STAGE, StageLabel, StatusTag, validPlan } from '../../types.ts';
 import type { Plan } from '../../types.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+
+function planStatusTag(plan: Plan): string {
+	if (plan.stage === STAGE.Examination && plan.examinationStatus !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
+		const classes = getExaminationStatusTagClass(plan.examinationStatus);
+		return classes ? `<strong class="${classes}">${plan.examinationStatusLabel}</strong>` : plan.examinationStatusLabel;
+	}
+
+	const status = StatusTag[plan.status];
+	return `<strong class="${status.class}">${status.label}</strong>`;
+}
 
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
@@ -39,12 +51,7 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 				{ text: plan.leadLPA },
 				{ text: plan.title },
 				{ text: StageLabel[plan.stage] },
-				{
-					html: (() => {
-						const s = StatusTag[plan.status];
-						return `<strong class="${s.class}">${s.label}</strong>`;
-					})()
-				}
+				{ html: planStatusTag(plan) }
 			]);
 		}
 

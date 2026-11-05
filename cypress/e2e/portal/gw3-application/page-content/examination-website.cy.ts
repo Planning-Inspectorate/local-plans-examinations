@@ -22,6 +22,7 @@ describe('Gateway 3 examination website page content', () => {
 			examinationWebsitePage.verifyServiceNavigation('Guidance', 'Sign out');
 			examinationWebsitePage.verifyCaptionL('Required Information');
 			examinationWebsitePage.verifyHintText('Enter the web address (URL) where your examination library is published');
+			examinationWebsitePage.verifySaveAndReturnButton();
 		});
 	});
 });

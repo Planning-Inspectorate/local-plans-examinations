@@ -22,8 +22,7 @@ export const submitGateway2Application = (
 			page.verifyLoaded();
 		}
 
-		page.uploadFile(fileNames);
-		page.clickUploadFiles();
+		page.uploadAndVerifyFiles(fileNames);
 		page.saveAndReturn();
 		gateway2ApplicationPage.verifyLoaded();
 	});

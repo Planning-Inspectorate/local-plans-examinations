@@ -1,0 +1,55 @@
+{% extends layoutTemplate %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block before_content %}
+	{% if backLink %}
+		<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
+	{% endif %}
+{% endblock before_content %}
+
+{% block content %}
+{% if virusErrorSummary and virusErrorSummary.length %}
+      {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: virusErrorSummary,
+          attributes: { "data-cy": "virus-detected-banner" }
+      }) }}
+  {% endif %}
+  {% if virusScanInProgress %}
+      {{ govukNotificationBanner({
+          titleText: "Important",
+          html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+          attributes: { "data-cy": "virus-scan-in-progress-banner" }
+      }) }}
+  {% endif %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {% if alerts %}
+        {% for alert in alerts %}
+          {{ govukNotificationBanner(alert) }}
+        {% endfor %}
+      {% endif %}
+      <span class="govuk-caption-l">{{ reference }}</span>
+      <h1 class="govuk-heading-l">{{ question.title }}</h1>
+
+      {{ govukButton({
+        text: "Add document",
+        href: uploadQuestionUrl,
+        attributes: { "data-cy": "add-document" },
+        classes: "govuk-button--secondary"
+      }) }}
+
+      {{ govukTable({
+        attributes: { "data-cy": "examination-report-documents" },
+        head: [
+          { text: "Document" },
+          { text: "Received" },
+          { text: "Actions" }
+        ],
+        rows: dataRows
+      }) }}
+    </div>
+  </div>
+{% endblock content %}

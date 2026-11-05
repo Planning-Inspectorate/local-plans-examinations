@@ -1,5 +1,10 @@
 import { GatewayBasePage } from '../base/gateway-page.ts';
-import { gateway1DateAnswers, gateway1DsaAnswer, gateway1ExpectedAnswers } from '../../../fixtures/manage/gateway-1.ts';
+import {
+	gateway1DateAnswers,
+	gateway1DsaAnswer,
+	gateway1ExpectedAnswers,
+	signedSLA
+} from '../../../fixtures/manage/gateway-1.ts';
 
 const filePath = 'cypress/downloads/';
 
@@ -41,6 +46,18 @@ export class Gateway1Page extends GatewayBasePage {
 		super.verifySummaryRowValueLinkHref(row, /case\/.+\/download-case-document\/.+$/);
 		this.summaryRowValue(row).find('a').click();
 		cy.readFile(`${filePath}${fileName}`).should('exist');
+	}
+
+	verifySignedSlaAwaitingScan(fileName: string) {
+		this.verifyVirusScanInProgressBanner();
+		this.summaryRowValue(signedSLA.row).contains('.govuk-tag--yellow', 'Virus scanning').should('be.visible');
+		this.summaryRowValue(signedSLA.row).contains('a', fileName).should('be.visible').and('not.have.attr', 'href');
+	}
+
+	verifySignedSlaScanned(fileName: string) {
+		this.virusScanInProgressBanner.should('not.exist');
+		this.summaryRowValue(signedSLA.row).should('not.contain.text', 'Virus scanning');
+		this.verifySummaryRowContainsFileLink(signedSLA.row, fileName);
 	}
 }
 
