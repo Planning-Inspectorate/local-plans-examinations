@@ -11,6 +11,9 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
 
+const { RESUBMISSION_DOCUMENTS_FIELD, RESUBMISSION_DOCUMENTS_LABEL } = COMMON_CONSTS;
+const RESUBMISSION_DOCUMENT_SET_PREFIX = 'g3-document-';
+
 type Gateway3Answers = {
 	id: string;
 	caseId: string;
@@ -34,6 +37,9 @@ export type CompiledGateway3Answers = Gateway3Answers & {
 	};
 	documentFiles: {
 		[key: string]: Gateway3DocumentFile[];
+	};
+	resubmissionDocumentFiles: {
+		[submissionNumber: number]: Gateway3DocumentFile[];
 	};
 };
 
@@ -63,6 +69,16 @@ export const compileGateway3Data = async (
 			}
 		},
 		include: { latestDocumentVersion: true }
+	});
+
+	const resubmissionDocuments = await db.document.findMany({
+		where: {
+			caseId: currentData.caseId,
+			isTemp: false,
+			documentSetId: { startsWith: RESUBMISSION_DOCUMENT_SET_PREFIX }
+		},
+		include: { latestDocumentVersion: true },
+		orderBy: { createdAt: 'asc' }
 	});
 
 	const examinationInfo = await db.gateway3Info.findUnique({ where: { caseId: currentData.caseId } });
@@ -96,7 +112,31 @@ export const compileGateway3Data = async (
 			])
 		);
 
+	const resubmissionDocumentFiles: CompiledGateway3Answers['resubmissionDocumentFiles'] = {};
+	const resubmissionDocumentsBySetId = new Map<string, typeof resubmissionDocuments>();
+
+	for (const document of resubmissionDocuments) {
+		const group = resubmissionDocumentsBySetId.get(document.documentSetId) ?? [];
+		group.push(document);
+		resubmissionDocumentsBySetId.set(document.documentSetId, group);
+	}
+
+	for (const [setId, setDocuments] of resubmissionDocumentsBySetId) {
+		const submissionNumber = Number(setId.slice(RESUBMISSION_DOCUMENT_SET_PREFIX.length));
+		if (!Number.isInteger(submissionNumber) || submissionNumber < 2) continue;
+
+		// Saving the BO report into the set soft-deletes the LPA uploads, so once any exist they are the LPA files.
+		// Until then every active file in the set is an LPA upload.
+		const deletedDocuments = setDocuments.filter((document) => document.isDeleted);
+		const lpaDocuments = deletedDocuments.length > 0 ? deletedDocuments : setDocuments;
+		resubmissionDocumentFiles[submissionNumber] = lpaDocuments.map((document) => ({
+			guid: document.guid,
+			fileName: fileNameFor(document)
+		}));
+	}
+
 	const data = {
+		resubmissionDocumentFiles,
 		...documentsForFields(REQUIRED_DOCUMENT_SETS),
 		optionalData: documentsForFields(OPTIONAL_DOCUMENT_SETS),
 		documentFiles: filesForFields({ ...REQUIRED_DOCUMENT_SETS, ...OPTIONAL_DOCUMENT_SETS }),
@@ -106,18 +146,26 @@ export const compileGateway3Data = async (
 	return { ...data, ...currentData };
 };
 
-export const getMissingRequiredDocuments = (answers: CompiledGateway3Answers) =>
-	(Object.keys(REQUIRED_DOCUMENT_SETS) as Array<keyof typeof REQUIRED_DOCUMENT_SETS>).filter(
-		(field) => !answers[field as keyof CompiledGateway3Answers]
-	);
+export const getMissingRequiredDocuments = (answers: CompiledGateway3Answers, submissionNumber = 1) =>
+	submissionNumber > 1
+		? (answers.resubmissionDocumentFiles?.[submissionNumber]?.length ?? 0) > 0
+			? []
+			: [RESUBMISSION_DOCUMENTS_FIELD]
+		: (Object.keys(REQUIRED_DOCUMENT_SETS) as Array<keyof typeof REQUIRED_DOCUMENT_SETS>).filter(
+				(field) => !answers[field as keyof CompiledGateway3Answers]
+			);
 
 const toDocumentId = (field: string) =>
-	`document-${(DOCUMENT_LABELS[field] ?? field)
+	`document-${(field === RESUBMISSION_DOCUMENTS_FIELD
+		? RESUBMISSION_DOCUMENTS_LABEL
+		: (DOCUMENT_LABELS[field] ?? field)
+	)
 		.trim()
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')}`;
 
 const toErrorText = (field: string) => {
+	if (field === RESUBMISSION_DOCUMENTS_FIELD) return `${RESUBMISSION_DOCUMENTS_LABEL} are required.`;
 	const label = DOCUMENT_LABELS[field] ?? field;
 	return `${label.charAt(0).toLocaleUpperCase()}${label.slice(1)} document is required.`;
 };
@@ -142,7 +190,7 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 				throw Error('No gateway3info data found');
 			}
 			const compiled = await compileGateway3Data(service.db, gateway3Info);
-			const missing = getMissingRequiredDocuments(compiled);
+			const missing = getMissingRequiredDocuments(compiled, submissionId);
 
 			if (missing.length > 0) {
 				req.session.gateway3DocumentErrors = missing.map((field) => ({
