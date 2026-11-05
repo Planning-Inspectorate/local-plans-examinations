@@ -119,6 +119,7 @@ async function addUploadedDocumentDetailsToAnswers(
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
 		if (
 			isUploadPages &&
+			!gateway3SubmissionNumber &&
 			(journeyFileUploadQuestionConfigs[overrideJourneyId].some((config: any) => config.url === questionConfig.url) ||
 				journeyFileUploadQuestionConfigs[overrideJourneyId].some((config: any) =>
 					config.url.startsWith(questionConfig.fieldName)
