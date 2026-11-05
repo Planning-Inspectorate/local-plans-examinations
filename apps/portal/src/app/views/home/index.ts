@@ -1,15 +1,13 @@
 import { Router as createRouter } from 'express';
-import { buildGuidancePage, buildHomePage } from './controller.ts';
+import { buildGuidancePage } from './controller.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
-import type { PortalService } from '#service';
 import type { IRouter } from 'express';
 import { checkIsAuthenticated } from '../../auth/guards.ts';
 
-export function createHomeRoutes(service: PortalService): IRouter {
+export function createHomeRoutes(): IRouter {
 	const router = createRouter({ mergeParams: true });
 
-	const homePageController = buildHomePage(service);
-	router.get('/', asyncHandler(homePageController));
+	router.get('/', (req, res) => res.redirect('/login'));
 	router.get('/guidance', checkIsAuthenticated, asyncHandler(buildGuidancePage()));
 
 	return router;
