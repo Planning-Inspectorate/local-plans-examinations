@@ -47,7 +47,7 @@ import {
 	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
-import { GW2QUESTIONS } from '../../../../../portal/src/app/views/manage-local-plans/gateway-2-submission/questions.ts';
+import { FRONT_OFFICE_GW2_QUESTIONS } from '@pins/local-plans-lib/app/questions.ts';
 import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
@@ -137,7 +137,7 @@ const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
 const gw2QuestionsWithContinue = Object.fromEntries(
 	//front office has save and return not continue
-	Object.entries(GW2QUESTIONS).map(([key, question]) => [
+	Object.entries(FRONT_OFFICE_GW2_QUESTIONS).map(([key, question]) => [
 		key,
 		{
 			...question,
