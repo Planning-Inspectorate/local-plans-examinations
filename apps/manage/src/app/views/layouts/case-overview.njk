@@ -134,9 +134,7 @@
                       {% endif %}
                     {% endif %}
                   {% endfor %}
-                  {% if section.heading %}
-                    <h2 class="govuk-heading-l">{{ section.heading }}</h2>
-                  {% endif %}
+                  <h2 class="govuk-heading-l">{{ section.heading }}</h2>
                   {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
                   {% if section.heading == 'Workshop'%}
                     {% if section.list.rows.length %}

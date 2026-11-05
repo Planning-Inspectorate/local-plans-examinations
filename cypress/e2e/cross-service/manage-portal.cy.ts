@@ -1,6 +1,7 @@
 import { toPortalPlanReference } from '../../flows/cross-service/service-apps.ts';
 import { completeCreateCaseFlow } from '../../flows/manage/create-case-flow.ts';
 import { openGateway2DocumentUploadPage } from '../../flows/portal/gateway-2-upload-flow.ts';
+import { GW2UpdateFileUploadedFromFO } from '../../flows/cross-service/gateway-2-update-files-flow.ts';
 import {
 	caseCreatedPage,
 	checkYourAnswersPage,
@@ -83,6 +84,33 @@ describe('Cross-service Manage and Portal', () => {
 					.contains('.govuk-summary-list__value a', fileName)
 					.should('be.visible');
 			});
+		});
+	});
+
+	it('updates files uploaded from the FO in the BO GW2 Submission Documents', () => {
+		cy.get<{ reference: string }>('@seededCase').then(({ reference }) => {
+			const portalPlanReference = toPortalPlanReference(reference);
+			const fileName = 'test-document.pdf';
+			const updatedFileName = 'test-document.docx';
+			const filePath = 'cypress/fixtures/files/';
+
+			portalLoginForExistingCase(FIXTURE_TEST_EMAIL);
+			openGateway2DocumentUploadPage({ reference: portalPlanReference }, gateway2CoverLetterPage);
+			gateway2CoverLetterPage.uploadAndVerifyFile(fileName);
+			gateway2CoverLetterPage.saveAndReturn();
+			gateway2ApplicationPage.verifyLoaded();
+			gateway2ApplicationPage.verifyDocumentRowContains(
+				gateway2ApplicationPage.proceduralDocumentsTable,
+				'Gateway 2 covering letter',
+				fileName
+			);
+			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
+			portalDeclarationPage.verifyLoaded();
+			portalDeclarationPage.confirmInformationCheckbox.click();
+			portalDeclarationPage.privacyNoteCheckbox.click();
+			portalDeclarationPage.confirmAndSubmitButton.click();
+
+			GW2UpdateFileUploadedFromFO(portalPlanReference, fileName, updatedFileName, filePath);
 		});
 	});
 });

@@ -21,9 +21,11 @@ import {
 	letterSentToMHCLGDate,
 	QADateAnswers,
 	QAInspectorsAnswers,
+	soundUnsoundDate,
 	seededExaminationInProgress,
 	seededPausedExamination,
 	seededExaminationHearing,
+	soundUnsound,
 	MIQcheckPage
 } from '../../../../fixtures/manage/examination.ts';
 import {
@@ -41,6 +43,8 @@ import {
 	examinationQAInspector1Page,
 	QADatePage,
 	QAPanelResponseDatePage,
+	soundUnsoundDatePage,
+	soundUnsoundPage,
 	examinationMIQCheckPage,
 	examinationMIQUploadPage
 } from '../../../../page-objects/manage/examination/index.ts';
@@ -209,6 +213,28 @@ describe('Examination updates', () => {
 			caseHistoryPage.verifyHistoryEvent(historyEventFor(QADateAnswers.QAPanelResponseDate));
 		}
 	);
+
+	it('updates Important Dates and records case history', { tags: ['regression'] }, () => {
+		updateDateAnswer(soundUnsoundDate, soundUnsoundDatePage);
+
+		examinationPage.openActionLinkFor(soundUnsound.row);
+		soundUnsoundPage.verifyLoaded(soundUnsound.value);
+		soundUnsoundPage.selectAnswer(soundUnsound.updatedValue);
+
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.verifySummaryRowContains(soundUnsound.row, soundUnsound.updatedDisplay);
+
+		openCaseHistory();
+
+		caseHistoryPage.verifyHistoryEvent(historyEventFor(soundUnsoundDate));
+		caseHistoryPage.verifyHistoryEvent(
+			`${soundUnsound.row} updated from ${soundUnsound.display} to ${soundUnsound.updatedDisplay}`
+		);
+	});
+
+	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
+		returnFromDatePage(soundUnsoundDate, soundUnsoundDatePage);
+	});
 
 	it('uploads MIQ documents and records case history', { tags: ['regression'] }, () => {
 		const today = new Date();
