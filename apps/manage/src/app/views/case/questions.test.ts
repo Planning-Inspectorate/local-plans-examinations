@@ -137,7 +137,7 @@ describe('Examination hearing questions', () => {
 			);
 			assert.deepEqual(yesOption.conditional, {
 				label: 'Number of days',
-				type: 'unit',
+				type: 'bold-numbers',
 				suffix: 'Days',
 				fieldName: 'hearingExpectedDays'
 			});
