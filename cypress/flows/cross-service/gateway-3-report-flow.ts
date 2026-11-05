@@ -18,7 +18,7 @@ export const verifyGateway3CompletedInPortal = (
 				.and('contain.text', 'Completed');
 
 			progressRow('Examination')
-				.should('contain.text', `Target date: ${examinationTargetDate}`)
+				.should('contain.text', `Submission expected: ${examinationTargetDate}`)
 				.and('contain.text', 'Ready to start');
 
 			planProgress().contains('a', 'Examination').click();
