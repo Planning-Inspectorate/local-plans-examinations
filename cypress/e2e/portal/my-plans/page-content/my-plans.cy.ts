@@ -32,7 +32,7 @@ describe('My plans page content for gateway 2', () => {
 			myPlansPage.verifyCaption(plan.leadLpa);
 			myPlansPage.verifyTableHeaders(myPlansPage.myPlansTable, [
 				'Reference number',
-				'Lead local planning authority',
+				'Local planning authority',
 				'Plan title',
 				'Current stage',
 				'Status'

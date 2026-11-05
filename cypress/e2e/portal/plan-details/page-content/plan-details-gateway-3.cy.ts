@@ -19,7 +19,7 @@ describe('Plan details page content for gateway 3', () => {
 		loadPlanDetails().then((plan) => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage2, plan.status3);
+			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
 			planDetailsPage.verifyProgressRow('Gateway 3 - readiness check', `Submitted: ${todayDisplay}`, plan.status3);
 		});
 	});
@@ -29,7 +29,7 @@ describe('Plan details page content for gateway 3', () => {
 		loadPlanDetails().then((plan) => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage2, plan.status4);
+			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
 			planDetailsPage.verifyProgressRow('Gateway 3 - readiness check', 'Submitted: 1 October 2026', plan.status4);
 		});
 	});

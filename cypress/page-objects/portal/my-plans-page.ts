@@ -2,7 +2,7 @@ import { PortalPlanBasePage } from './base/portal-plan-page.ts';
 
 const myPlansHeading = 'My plans';
 
-export class zMyPlansPage extends PortalPlanBasePage {
+export class MyPlansPage extends PortalPlanBasePage {
 	constructor() {
 		super('/manage-local-plans/your-plans');
 	}

@@ -29,7 +29,12 @@ function initialiseTest(params: { refNum: string }, plan?: unknown) {
 	const logger = mockLogger();
 	const mockService = {
 		logger,
-		getPlans: mock.fn(async () => (plan ? [buildPlan(plan)] : buildTestPlans()))
+		getPlans: mock.fn(async () =>
+			(plan ? [buildPlan(plan)] : buildTestPlans()).map((item) => ({
+				...item,
+				lpaNames: item.lpaNames ?? ['Southampton City Council', 'Romsey Town Council']
+			}))
+		)
 	};
 	const planPage = buildPlanPage(mockService);
 	return { planPage, mockRes, mockReq, nunjucks, logger, mockService };
@@ -149,7 +154,7 @@ describe('plan page', () => {
 		}
 	});
 
-	it('should render title and caption correctly', async () => {
+	it('should render title and reference correctly', async () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
 
 		const expectedTitle = 'East Borough Local Plan';
@@ -157,24 +162,87 @@ describe('plan page', () => {
 
 		assert.strictEqual(data.pageTitle, expectedTitle, `expected ${expectedTitle} but got ${data.pageTitle}`);
 		assert.ok(html.includes(expectedTitle), `expected html to contain ${expectedTitle}`);
-		assert.strictEqual(data.pageCaption, expectedRef, `expected ${expectedRef} but got ${data.pageCaption}`);
+		assert.strictEqual(data.planRef, expectedRef, `expected ${expectedRef} but got ${data.planRef}`);
 		assert.ok(html.includes(expectedRef), `expected html to contain ${expectedRef}`);
 	});
 
-	it('should render summary table correctly (Current stage, LPA, linked LPA)', async () => {
-		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
-
-		const expectedStage = 'Gateway 2';
-		const expectedLPA = 'Southampton City Council';
-		const expectedLinkLPA = 'Romsey Town Council';
-
-		assert.strictEqual(data.currentStage, expectedStage, `expected ${expectedStage} but got ${data.currentStage}`);
-		assert.ok(html.includes('Gateway 2'), `expected ${expectedStage}`);
-		assert.strictEqual(data.leadLPA, expectedLPA, `expected ${expectedLPA} but got ${data.leadLPA}`);
-		assert.ok(html.includes(expectedLPA), `expected ${expectedLPA}`);
-		assert.strictEqual(data.linkedLPA, expectedLinkLPA, `expected ${expectedLinkLPA} but got ${data.linkedLPA}`);
-		assert.ok(html.includes(expectedLinkLPA), `expected html to contain ${expectedLinkLPA}`);
+	it('should render the reference and all authorities in a single summary row', async () => {
+		const planLPAs = ['Alpha Council', 'Beta Council', 'Gamma Council'];
+		const { data, html } = await renderPlan(
+			{ refNum: 'PLAN-001' },
+			{
+				refNum: 'PLAN-001',
+				lpaNames: planLPAs,
+				dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+			}
+		);
+		assert.deepStrictEqual(data.planLPAs, planLPAs);
+		assert.strictEqual(data.lpaText, 'Joint planning authorities');
+		const summary = html.match(/<dl\b[\s\S]*?<\/dl>/)?.[0];
+		assert.ok(summary, 'expected a summary list');
+		assert.match(summary, />\s*Reference\s*<\/dt>/);
+		assert.match(summary, />\s*PLAN-001\s*<\/dd>/);
+		assert.deepStrictEqual(
+			[...summary.matchAll(/<span class="govuk-!-display-block">([^<]+)<\/span>/g)].map((match) => match[1]),
+			planLPAs
+		);
+		assert.ok(!summary.includes('Current stage'));
+		assert.ok(!summary.includes('Linked local planning authorities'));
 	});
+
+	it('renders the fallback authority label for an empty authority list', async () => {
+		const { data, html } = await renderPlan(
+			{ refNum: 'PLAN-001' },
+			{
+				refNum: 'PLAN-001',
+				lpaNames: [],
+				dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+			}
+		);
+		assert.deepStrictEqual(data.planLPAs, []);
+		assert.strictEqual(data.lpaText, 'LPA associated with plan');
+		assert.ok(html.includes('LPA associated with plan'));
+		assert.ok(!html.includes('Joint planning'));
+	});
+
+	it('escapes authority names rendered inside the HTML summary value', async () => {
+		const { html } = await renderPlan(
+			{ refNum: 'PLAN-001' },
+			{
+				refNum: 'PLAN-001',
+				lpaNames: ['<script>alert(1)</script>', 'Alpha & Beta Council'],
+				dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+			}
+		);
+		assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+		assert.ok(html.includes('Alpha &amp; Beta Council'));
+		assert.ok(!html.includes('<script>alert(1)</script>'));
+	});
+
+	for (const { stage, expected } of [
+		{ stage: STAGE.Gateway2, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] },
+		{ stage: STAGE.Gateway3, expected: ['Completed: ', 'Submission expected: ', 'Submission expected: '] },
+		{ stage: STAGE.Examination, expected: ['Completed: ', 'Completed: ', 'Submission expected: '] }
+	]) {
+		it(`renders expected submission dates at stage ${stage}`, async () => {
+			const { data, html } = await renderPlan(
+				{ refNum: 'PLAN-001' },
+				{
+					refNum: 'PLAN-001',
+					stage,
+					status: STATUS.ReadyToStart,
+					examinationStatus: 'ready-to-start',
+					examinationStatusLabel: 'Ready to start',
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			);
+			assert.deepStrictEqual([data.dateTextG2, data.dateTextG3, data.dateTextE], expected);
+			for (const [index, date] of [data.dateG2, data.dateG3, data.dateE].entries()) {
+				assert.ok(html.includes(expected[index] + date));
+			}
+			assert.ok(!html.includes('Target date:'));
+		});
+	}
 
 	it('should render Current status tag correctly', async () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
@@ -192,7 +260,7 @@ describe('plan page', () => {
 		assert.ok(html.includes(data.planStatus), `expected html to contain ${data.planStatus}`);
 	});
 
-	it('should render button with correct link if status == ready to start', async () => {
+	it('should expose Gateway 2 through the progress link when ready to start', async () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
 
 		const expectedButton = 'Start Gateway 2 submission';
@@ -202,10 +270,13 @@ describe('plan page', () => {
 			html.includes('href="/manage-local-plans/PLAN-001/gateway-2-submission"'),
 			'expected action link to point to Gateway 2 submission'
 		);
-		assert.ok(html.includes('data-cy="plan-details-action"'), 'expected action link to have a stable selector');
+		assert.ok(!html.includes('data-cy="plan-details-action"'), 'expected the standalone action to be removed');
+		assert.ok(
+			html.includes('class="govuk-link govuk-task-list__link" href="/manage-local-plans/PLAN-001/gateway-2-submission"')
+		);
 	});
 
-	it('should render Gateway 3 button with correct link if Gateway 3 is ready to start', async () => {
+	it('should expose Gateway 3 through the progress link when ready to start', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway3,
@@ -247,13 +318,10 @@ describe('plan page', () => {
 	it('should render task table headings correctly (g1, g2, g3, e)', async () => {
 		const { html } = await renderPlan({ refNum: 'PLAN-001' });
 
-		const expectedHeadings = [
-			'Gateway 1 - self-assessment',
-			'Gateway 2 - advisory check',
-			'Gateway 3 - readiness check',
-			'Examination'
-		];
+		const expectedHeadings = ['Gateway 2 - advisory check', 'Gateway 3 - readiness check', 'Examination'];
 
+		assert.ok(!html.includes('Gateway 1 - self-assessment'));
+		assert.strictEqual([...html.matchAll(/class="govuk-task-list__item/g)].length, 3);
 		for (const heading of expectedHeadings) {
 			assert.ok(html.trim().includes(heading), `expected html to contain ${heading}`);
 		}
@@ -284,7 +352,7 @@ describe('plan page', () => {
 		];
 		const tags = [data.tagG2, data.tagG3, data.tagE];
 		const expectedHTML =
-			'<div class="govuk-task-list__status" id="task-list-2-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>';
+			'<div class="govuk-task-list__status" id="task-list-1-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>';
 
 		for (let i = 0; i < expectedTags.length; i++) {
 			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
@@ -385,7 +453,7 @@ describe('plan page', () => {
 			'Cannot start yet'
 		];
 		const tags = [data.tagG2, data.tagG3, data.tagE];
-		const expectedHTML = `<div class="govuk-task-list__status" id="task-list-3-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>`;
+		const expectedHTML = `<div class="govuk-task-list__status" id="task-list-2-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>`;
 
 		for (let i = 0; i < expectedTags.length; i++) {
 			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
@@ -538,7 +606,7 @@ describe('plan page', () => {
 			'<strong class="govuk-tag govuk-tag--green">Ready to start</strong>'
 		];
 		const tags = [data.tagG2, data.tagG3, data.tagE];
-		const expectedHTML = `<div class="govuk-task-list__status" id="task-list-4-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>`;
+		const expectedHTML = `<div class="govuk-task-list__status" id="task-list-3-status"><strong class="govuk-tag govuk-tag--green">Ready to start</strong></div>`;
 
 		for (let i = 0; i < expectedTags.length; i++) {
 			assert.deepStrictEqual(tags[i], expectedTags[i], `expected ${expectedTags[i]} but got ${tags[i]}`);
@@ -664,18 +732,10 @@ describe('plan page', () => {
 		}
 	});
 
-	it('should render tab headings correctly', async () => {
+	it('should not render the removed assessment tabs', async () => {
 		const { html } = await renderPlan({ refNum: 'PLAN-001' });
-
-		const expectedTabTitle = [
-			`<a class="govuk-tabs__tab" href="#gateway-2">Gateway 2</a>`,
-			`<a class="govuk-tabs__tab" href="#gateway-3">Gateway 3</a>`,
-			`<a class="govuk-tabs__tab" href="#examination">Examination</a>`
-		];
-
-		for (const tabTitle of expectedTabTitle) {
-			assert.ok(cleanHtml(html).includes(cleanHtml(tabTitle)), `expected html to contain ${tabTitle}`);
-		}
+		assert.ok(!html.includes('Assessment information'));
+		assert.ok(!html.includes('govuk-tabs__tab'));
 	});
 
 	it('should return 404 when plan is not found', async () => {

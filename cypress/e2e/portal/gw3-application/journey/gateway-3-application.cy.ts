@@ -96,7 +96,7 @@ describe('Gateway 3 application page journeys once Gateway 2 is submitted and it
 				gateway3ApplicationPage.saveAndComeBackLink.click();
 				planDetailsPage.verifyProgressRow(
 					'Gateway 3 - readiness check',
-					`Target date: ${plan.dates.gateway3}`,
+					`Submission expected: ${plan.dates.gateway3}`,
 					plan.status2
 				);
 				planDetailsPage.backLink.click();

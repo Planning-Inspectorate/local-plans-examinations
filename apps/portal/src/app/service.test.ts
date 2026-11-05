@@ -391,6 +391,39 @@ describe('PortalService', () => {
 	});
 
 	describe('getPlans', () => {
+		for (const { label, lpas, expected } of [
+			{ label: 'no authorities', lpas: [], expected: [] },
+			{
+				label: 'one authority',
+				lpas: [{ lpaName: 'Alpha Council', lpaCode: 'ALPHA' }],
+				expected: ['Alpha Council']
+			},
+			{
+				label: 'multiple authorities in database order',
+				lpas: [
+					{ lpaName: 'Alpha Council', lpaCode: 'ALPHA' },
+					{ lpaName: 'Beta Council', lpaCode: 'BETA' },
+					{ lpaName: 'Gamma Council', lpaCode: 'GAMMA' }
+				],
+				expected: ['Alpha Council', 'Beta Council', 'Gamma Council']
+			},
+			{
+				label: 'missing and empty authority names',
+				lpas: [
+					{ lpaName: null, lpaCode: 'ALPHA' },
+					{ lpaName: '', lpaCode: 'BETA' }
+				],
+				expected: ['ALPHA', 'BETA']
+			}
+		]) {
+			it(`maps lpaNames for ${label}`, async () => {
+				const service = buildService([buildCase({ lpas })]);
+				const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+				assert.strictEqual(plans.length, 1);
+				assert.deepStrictEqual(plans[0].lpaNames, expected);
+			});
+		}
+
 		it('loads plans from the database for the signed-in email', async () => {
 			const service = buildService([buildCase()]);
 
@@ -434,6 +467,7 @@ describe('PortalService', () => {
 						}
 					},
 					lpas: {
+						select: { lpaCode: true, lpaName: true },
 						orderBy: {
 							lpaName: 'asc'
 						}
@@ -471,6 +505,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans.length, 1);
 			assert.strictEqual(plans[0].refNum, 'PLAN-941623');
 			assert.strictEqual(plans[0].title, 'Real local plan');
+			assert.deepStrictEqual(plans[0].lpaNames, ['Southampton City Council', 'Romsey Town Council']);
 			assert.strictEqual(plans[0].leadLPA, 'Southampton City Council');
 			assert.strictEqual(plans[0].linkedLPA, 'Romsey Town Council');
 			assert.strictEqual(plans[0].stage, STAGE.Gateway2);

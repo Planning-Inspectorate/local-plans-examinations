@@ -74,7 +74,11 @@ describe('Examination application page journeys', () => {
 				localPlanSubmissionForExaminationPage.uploadAndVerifyFile('test-document.pdf');
 				localPlanSubmissionForExaminationPage.saveAndReturn();
 				examinationPage.saveAndComeBackLink.click();
-				planDetailsPage.verifyProgressRow(plan.currentStage3, `Target date: ${plan.dates.examination}`, plan.status2);
+				planDetailsPage.verifyProgressRow(
+					plan.currentStage3,
+					`Submission expected: ${plan.dates.examination}`,
+					plan.status2
+				);
 			});
 		}
 	);
