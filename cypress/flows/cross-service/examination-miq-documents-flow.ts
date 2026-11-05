@@ -11,9 +11,11 @@ export const verifyExaminationMIQDocumentsInPortal = (
 			cy.contains('tr', reference).should('be.visible').and('contain.text', 'Examination');
 
 			cy.contains('[data-cy="plan-link"]', reference).click();
+			cy.location('pathname').should('eq', `/manage-local-plans/${reference}`);
 			cy.get('[data-cy="plan-progress"], section[aria-labelledby="plan-progress-heading"]')
 				.contains('a', 'Examination')
 				.click();
+			cy.location('pathname').should('eq', `/manage-local-plans/${reference}/examination`);
 
 			cy.contains('.govuk-summary-list__key', 'Matters, issues and questions')
 				.closest('.govuk-summary-list__row')

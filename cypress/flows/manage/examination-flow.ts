@@ -1,6 +1,7 @@
 import {
 	examinationPage,
 	examinationPausePages,
+	examinationReportUploadPage,
 	examinationReportCheckPage,
 	examinationReportManagePage,
 	examinationReportRemovePage,
@@ -12,7 +13,7 @@ import { openManageCase, openSeededManageCase, type SeededManageCase } from './s
 import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
 import type { ExaminationReportSeedOptions } from '../../tasks/examination.ts';
 import type { DateAnswer } from '../../types/date.ts';
-import { examinationPause, soundUnsound } from '../../fixtures/manage/examination.ts';
+import { examinationPause, examinationReport, soundUnsound } from '../../fixtures/manage/examination.ts';
 import { examinationMIQCheckPage } from '../../page-objects/manage/examination/miq-document-page.ts';
 import { MIQcheckPage } from '../../fixtures/manage/examination.ts';
 
@@ -82,4 +83,14 @@ export const uploadExaminationMIQDocuments = () => {
 
 	examinationPage.verifyNotificationBanner('2 MIQ documents uploaded');
 	examinationPage.verifySummaryRowContains(MIQcheckPage.row, MIQcheckPage.file1, MIQcheckPage.file2);
+};
+
+export const uploadExaminationFinalReportDocuments = () => {
+	examinationPage.openActionLinkFor(examinationReport.row);
+	soundUnsoundPage.selectAnswer(soundUnsound.value);
+	examinationReportUploadPage.uploadAndVerifyFile(examinationReport.fileName);
+	examinationReportUploadPage.uploadAndVerifyFile(examinationReport.fileName2);
+	examinationReportUploadPage.saveAndReturn();
+	examinationReportCheckPage.verifyDocuments(examinationReport.fileName, examinationReport.fileName2);
+	examinationReportCheckPage.confirm();
 };

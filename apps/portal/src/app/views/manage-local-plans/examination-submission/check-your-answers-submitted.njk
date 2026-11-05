@@ -56,6 +56,37 @@
             </dl>
         {% endif %}
 
+        {% if examinationReportFiles and examinationReportFiles.length %}
+            {% set reportValueHtml %}
+                {% if examinationReportFiles.length > 1 %}
+                    {% for file in examinationReportFiles %}
+                        <div>
+                            {% if file.href %}
+                                <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                            {% else %}
+                                {{ file.fileName }}
+                            {% endif %}
+                            {% if file.issuedDate %} (issued on {{ file.issuedDate }}){% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% set file = examinationReportFiles[0] %}
+                    {% if file.href %}
+                        <a href="{{ file.href }}" class="govuk-link" download>{{ file.fileName }}</a>
+                    {% else %}
+                        {{ file.fileName }}
+                    {% endif %}
+                    {% if file.issuedDate %} (issued on {{ file.issuedDate }}){% endif %}
+                {% endif %}
+            {% endset %}
+            <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-cy="examination-report-table">
+                <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key" data-cy="examination-report-label"><strong>Examination report</strong></dt>
+                    <dd class="govuk-summary-list__value" data-cy="examination-report-value">{{ reportValueHtml | safe }}</dd>
+                </div>
+            </dl>
+        {% endif %}
+
         {% if submissionDate or submitter %}
             <p class="govuk-body" data-cy="submission-copy">Your submission was sent{% if submissionDate %} on {{ submissionDate }}{% endif %}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
         {% endif %}
