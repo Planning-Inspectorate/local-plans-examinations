@@ -540,7 +540,7 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 				text: 'Yes',
 				conditional: {
 					label: 'Number of days',
-					type: 'unit',
+					type: 'bold-number',
 					suffix: 'Days',
 					fieldName: 'hearingExpectedDays'
 				}
