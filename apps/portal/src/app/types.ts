@@ -132,8 +132,7 @@ export interface Gateway2ReportFile {
 export interface Plan {
 	//BIG ? on name
 	refNum: string; //Reference Number
-	leadLPA: string; //Lead Local Planning Authority
-	linkedLPA: string; //Linked Local Planning Authority
+	lpaNames: string[];
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
 	status: Status; //Status

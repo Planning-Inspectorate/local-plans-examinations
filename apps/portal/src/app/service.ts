@@ -203,6 +203,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		leadLPA: lpaNames[0] ?? '',
 		linkedLPA: lpaNames.slice(1).join(', '),
 		title: caseRecord.planTitle,
+		lpaNames,
 		stage: progress.stage,
 		status: progress.status,
 		examinationStatus: caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET,
@@ -252,6 +253,10 @@ const planCaseInclude = {
 		}
 	},
 	lpas: {
+		select: {
+			lpaCode: true,
+			lpaName: true
+		},
 		orderBy: {
 			lpaName: 'asc' as const
 		}

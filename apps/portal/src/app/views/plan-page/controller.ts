@@ -66,7 +66,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
-		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
+		dateTextG2 = dateTextG3 = dateTextE = 'Submission expected: ';
 		switch (plan.stage) {
 			case STAGE.Gateway2:
 				hrefG2 = applicationLink();
@@ -109,6 +109,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				break;
 		}
 
+		const planLPAs = plan.lpaNames;
+		const lpaText = planLPAs?.length > 0 ? 'Joint planning authorities' : 'LPA associated with plan';
+
 		const viewModel = {
 			dateG1: plan.dates.G1,
 			dateG2: plan.dates.G2,
@@ -126,13 +129,13 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		};
 
 		return res.render('views/plan-page/view.njk', {
-			pageCaption: planRef,
+			planRef,
 			pageTitle: plan.title,
 			currentStage,
 			planStatus,
 			status: plan.status,
-			leadLPA: plan.leadLPA,
-			linkedLPA: plan.linkedLPA,
+			lpaText,
+			planLPAs,
 			button,
 			notificationBanner,
 			backLinkUrl: '/manage-local-plans/your-plans',

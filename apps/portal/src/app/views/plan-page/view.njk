@@ -65,10 +65,16 @@
     </p>
 {% endset %}
 
+{% set planLPAsHtml %}
+  {%- for lpa in planLPAs -%}
+    <span class="govuk-!-display-block">{{ lpa }}</span>
+  {%- endfor -%}
+{% endset %}
+
 
 {% block pageContent %}
 
-  
+
 
 
   {% if notificationBanner %}
@@ -82,56 +88,31 @@
   rows: [
     {
       key: {
-        text: "Current stage"
+        text: "Refernece"
       },
       value: {
-        html: currentStage + " " + planStatus
+        text: planRef
       }
     },
     {
       key: {
-        text: "Local planning authority"
+        html: lpaText | escape | replace("planning ", "planning<br>")
       },
       value: {
-        text: leadLPA
-      }
-    },
-    {
-      key: {
-        text: "Linked local planning authorities"
-      },
-      value: {
-        text: linkedLPA
+        html: planLPAsHtml
       }
     }
   ]
   }) }}
-  {% if button %}
-    <a href="{{ currentApplicationLink }}" class="govuk-button" data-cy="plan-details-action">
-      {{ button }}
-    </a>
-  {% endif %}
 
-	  <section aria-labelledby="plan-progress-heading" data-cy="plan-progress">
+      <section aria-labelledby="plan-progress-heading" data-cy="plan-progress">
     <h2 class="govuk-heading-m" id="plan-progress-heading">
       Plan progress
     </h2>
 
     {{ govukTaskList({
       items: [
-        {
-          title: {
-            text: "Gateway 1 - self-assessment (opens in a new tab)"
-          },
-          hint: {
-            text: "Completed outside this service on " +  dateG1
-          },
-          href: "#",
-          status: {
-            text: "Completed"
-          }
-        },
-        {
+       {
           title: {
             text: "Gateway 2 - advisory check"
           },
@@ -170,35 +151,6 @@
       ]
     }) }}
   </section>
-
-  <h2 class = "govuk-heading-m">Assessment information</h2>
-
-  {{ govukTabs({
-    items: [
-      {
-        label: "Gateway 2",
-        id: "gateway-2",
-        panel: {
-          html: G2TabTemplate
-        }
-      },
-      {
-        label: "Gateway 3",
-        id: "gateway-3",
-        panel: {
-          html: G3TabTemplate
-        }
-      },
-      {
-        label: "Examination",
-        id: "examination",
-        panel: {
-          html: ETabTemplate
-        }
-      }
-    ]
-  }) }}
-
 
 
 {% endblock %}
