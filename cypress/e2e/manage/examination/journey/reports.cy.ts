@@ -17,8 +17,8 @@ import {
 	examinationReportManagePage as managePage,
 	examinationReportRemovePage as removePage,
 	examinationReportUploadPage as uploadPage,
-	reportIssuedDatePage,
-	soundUnsoundPage
+	soundUnsoundPage,
+	soundUnsoundDatePage
 } from '../../../../page-objects/manage/examination/index.ts';
 
 describe('Examination report journeys', () => {
@@ -62,10 +62,18 @@ describe('Examination report journeys', () => {
 		caseHistoryPage.verifyHistoryEvent('Examination report issued on');
 	});
 
-	it('issues the first report with a manually entered CYA date', { tags: ['regression'] }, () => {
-		openReport({ state: 'awaiting-confirmation' }).then(({ reference }) => checkPage.visitForCase(reference));
-		checkPage.openChangeLinkFor('Date');
-		reportIssuedDatePage.enterDate(soundUnsoundDate.input);
+	it('issues the first report after its issue date was entered manually', { tags: ['regression'] }, () => {
+		openReport();
+		examinationPage.openActionLinkFor(soundUnsound.row);
+		soundUnsoundPage.selectAnswer(soundUnsound.value);
+		examinationPage.openActionLinkFor(soundUnsoundDate.row);
+		soundUnsoundDatePage.enterDate(soundUnsoundDate.input);
+
+		examinationPage.openActionLinkFor(report.row);
+		soundUnsoundPage.verifyLoaded(soundUnsound.value);
+		soundUnsoundPage.saveAndContinue();
+		uploadPage.uploadAndVerifyFile(report.fileName);
+		uploadPage.saveAndReturn();
 		checkPage.verifyAnswers(soundUnsound.display, soundUnsoundDate.display, report.fileName);
 		checkPage.confirm();
 

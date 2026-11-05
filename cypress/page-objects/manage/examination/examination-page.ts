@@ -3,12 +3,8 @@ import {
 	examinationPause,
 	examinationReport,
 	soundUnsound,
-	soundUnsoundDate,
-	adoptionDate,
-	approvedForCILDate
+	soundUnsoundDate
 } from '../../../fixtures/manage/examination.ts';
-
-const outcomeRows = [soundUnsound, soundUnsoundDate, adoptionDate, approvedForCILDate];
 
 export class ExaminationPage extends GatewayBasePage {
 	constructor() {
@@ -120,22 +116,9 @@ export class ExaminationPage extends GatewayBasePage {
 	}
 
 	verifyNoReport() {
-		this.verifyLoaded();
-		this.verifySummaryRowContains(examinationReport.row, 'Not provided');
-		this.mainContent.should('not.contain.text', 'Important dates for this plan');
-		outcomeRows.forEach(({ row }) => cy.contains('.govuk-summary-list__key', row).should('not.exist'));
+		this.verifyReportDetails(0, 'Not started', 'Not started');
 		this.summaryRowActionLink(examinationReport.row).should('contain.text', 'Add');
 		this.verifySummaryRowActionHref(examinationReport.row, /^\/case\/.+\/examination\/outcome\/plan-outcome$/);
-	}
-
-	verifyOutcomeContent() {
-		this.verifySectionHeading('Outcome');
-		this.mainContent.should('not.contain.text', 'Important dates for this plan');
-		outcomeRows.forEach(({ row }) => {
-			cy.get('.govuk-summary-list__key')
-				.filter((_, element) => element.textContent.trim() === row)
-				.should('have.length', 1);
-		});
 	}
 
 	verifySectionContent(heading: string, section: string, rows: Array<{ row: string; display: string; path: string }>) {
