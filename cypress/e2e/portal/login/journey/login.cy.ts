@@ -91,14 +91,22 @@ describe('Portal login journey', () => {
 		});
 	});
 
-	it('shows the new code banner when a new code is requested from the OTP page', { tags: ['regression'] }, () => {
+	it('unrecognised email cannot access the OTP page', { tags: ['regression'] }, () => {
+		portalLoginEmailPage.visit();
+		portalLoginEmailPage.submitEmail('unknown@example.com');
+		portalLoginEmailPage.verifyPath();
+
+		cy.visit('/login/enter-code', { failOnStatusCode: false });
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
+	});
+
+	it('switching to an unrecognised email clears the previous session', { tags: ['regression'] }, () => {
 		startPortalOtpLogin();
+		portalLoginOtpPage.verifyLoaded();
+		portalLoginOtpPage.goBack();
 
-		portalLoginOtpPage.clickRequestNewCode();
-
-		portalLoginOtpPage.verifyPath();
-		portalLoginOtpPage.verifyNewCodeBanner();
-		portalLoginOtpPage.verifyHintText('We sent a code to');
-		portalLoginOtpPage.requestNewCodeLink.should('be.visible');
+		portalLoginEmailPage.submitEmail('unknown@example.com');
+		cy.visit('/login/enter-code', { failOnStatusCode: false });
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
 	});
 });

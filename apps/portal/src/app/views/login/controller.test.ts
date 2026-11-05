@@ -3,6 +3,7 @@
 import { mockLogger } from '@planning-inspectorate/core/testing';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
+import { configureNunjucks } from '../../nunjucks.ts';
 import {
 	buildEnterEmailPage,
 	buildEnterOtpPage,
@@ -436,6 +437,7 @@ describe('buildSubmitOtpPage', () => {
 	it('should send a new code and show the new code message when resend succeeds', async () => {
 		const service = createMockService();
 		service.db.case.findFirst.mock.mockImplementation(async () => ({ id: 1, reference: 'PLAN-123456' }));
+		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {});
 		const handler = buildRequestNewCode(service);
 		const req = createMockReq({}, { email: 'test@example.com' });
 		const res = createMockRes();
@@ -463,6 +465,7 @@ describe('buildSubmitOtpPage', () => {
 			assert.strictEqual(data.errorSummaryTitle, 'We could not send a new code');
 			assert.strictEqual(data.otpDeliveryFailed, true);
 		});
+		assert.strictEqual(service.notifyClient.sendAuthCode.mock.callCount(), 1);
 		assert.strictEqual(req.session.showNewCodeMessage, undefined);
 	});
 
@@ -660,15 +663,27 @@ describe('buildEnterOtpPage', () => {
 	it('should show a delivery error once when the code email could not be sent', async () => {
 		const handler = buildEnterOtpPage();
 		const req = createMockReq({}, { email: 'test@example.com', otpDeliveryFailed: true });
-		const res = createMockRes();
+		const nunjucks = configureNunjucks();
+		let renderedHtml = '';
+		const res = {
+			render: mock.fn((view, data) => {
+				renderedHtml = nunjucks.render(view, data);
+				return res;
+			})
+		};
 
 		await handler(req, res);
 
-		const data = assertRender(res, 'views/login/enter-otp.njk');
+		assert.strictEqual(res.render.mock.callCount(), 1);
+		const [view, data] = res.render.mock.calls[0].arguments;
+		assert.strictEqual(view, 'views/login/enter-otp.njk');
 		assert.strictEqual(data.otpDeliveryFailed, true);
 		assert.match(data.errors.otp.msg, /could not send a code/i);
 		assert.strictEqual(data.errorSummaryTitle, 'There is a problem');
 		assert.deepStrictEqual(data.errorSummary, [{ text: data.errors.otp.msg, href: '#otp' }]);
+		assert.match(renderedHtml, /Request a new code to sign in to test@example\.com\./);
+		assert.doesNotMatch(renderedHtml, /We sent a code to test@example\.com/);
+		assert.match(renderedHtml, /data-cy="request-new-code"/);
 		assert.strictEqual(req.session.otpDeliveryFailed, undefined);
 	});
 });
