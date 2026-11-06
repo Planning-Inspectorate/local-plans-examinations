@@ -26,17 +26,8 @@
             {% endfor %}
         </div>
     </div>
-    <details class="govuk-details" data-cy="preview-email-to-lpa">
-  <summary class="govuk-details__summary">
-    <span class="govuk-details__summary-text">
-      Preview notification to LPA
-    </span>
-  </summary>
-  <div class="govuk-details__text">
-    {% include "views/layouts/notification-preview/" + notificationPreviewTemplate + ".njk" %}
-  </div>
-</details>
-<p class='govuk-body'>We’ll send a notification to the LPA to tell them that the hearing details are available.</p>
+
+
 
 
     {% if journeyComplete %}
