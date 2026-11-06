@@ -75,10 +75,6 @@
                         <p class="govuk-body">
                             You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions.
                         </p>
-                    {% elif section.heading == "Additional documents" %}
-                        <p class="govuk-body">
-                            Add any other documents that support your Gateway 2 submission.
-                        </p>
                     {% endif %}
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
