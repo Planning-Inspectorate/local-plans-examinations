@@ -609,7 +609,7 @@ describe('PortalService', () => {
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
-			assert.strictEqual(plans[0].dates.G2, '1 September 2026');
+			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
 			assert.deepStrictEqual(plans[0].gateway2ReportFiles, [
 				{
 					fileName: 'gateway-2-report.pdf',
@@ -619,7 +619,7 @@ describe('PortalService', () => {
 			]);
 		});
 
-		it('maps a submitted Gateway 3 plan to Under review using its actual date', async () => {
+		it('maps a submitted Gateway 3 plan to Under review using its timetabled date', async () => {
 			const actualDate = new Date('2026-10-01T12:00:00.000Z');
 			const service = buildService([
 				buildCase({
@@ -635,7 +635,7 @@ describe('PortalService', () => {
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.UnderReview);
-			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
 		});
 
 		it('maps a stored Report issued examination status using the BO issue date', async () => {
@@ -670,7 +670,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].dates.E, '20 October 2026');
 		});
 
-		it('maps an open Gateway 3 resubmission to Resubmission required using the actual submission date', async () => {
+		it('maps an open Gateway 3 resubmission to Resubmission required using the timetabled date', async () => {
 			const service = buildService([
 				buildCase({
 					gateway3Info: {
@@ -691,7 +691,7 @@ describe('PortalService', () => {
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ResubmissionRequired);
-			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
 		});
 
 		it('maps missing info table dates to Not set', async () => {

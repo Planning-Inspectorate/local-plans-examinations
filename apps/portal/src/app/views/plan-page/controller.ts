@@ -63,51 +63,35 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const submissionExpected = 'Submission expected: ';
 		// Task list tags and links based on current stage.
 		let tagG2, tagG3, tagE;
-		let dateTextG2, dateTextG3, dateTextE;
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
-		dateTextG2 = dateTextG3 = dateTextE = submissionExpected;
+		const dateTextG2 = submissionExpected;
+		const dateTextG3 = submissionExpected;
+		let dateTextE = submissionExpected;
 		switch (plan.stage) {
 			case STAGE.Gateway2:
 				hrefG2 = applicationLink();
 				tagG2 = planStatus;
-				if (plan.status === STATUS.UnderReview) {
-					dateTextG2 = submissionExpected;
-				}
 				break;
 			case STAGE.Gateway3:
-				dateTextG2 = 'Completed: ';
-				if (plan.status === STATUS.UnderReview) {
-					dateTextG3 = submissionExpected;
-				}
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
-				if (isResubmissionRequired || plan.status === STATUS.UnderReview) {
-					dateTextG3 = submissionExpected;
-				}
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				hrefE = examinationAvailable ? examinationLink() : null;
+				tagG2 = tagG3 = 'Completed';
 				if (plan.status === STATUS.Completed) {
-					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
-					tagG2 = tagG3 = tagE = 'Completed';
+					tagE = 'Completed';
 				} else {
-					dateTextG2 = dateTextG3 = 'Completed: ';
-					if (
-						plan.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED ||
-						plan.examinationStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
-					) {
-						dateTextE = submissionExpected;
-					} else if (plan.examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED) {
+					if (plan.examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED) {
 						dateTextE = 'Report issued: ';
 					}
 					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
-					tagG2 = tagG3 = 'Completed';
 				}
 				break;
 		}
