@@ -15,7 +15,8 @@ export const verifyGateway3CompletedInPortal = (
 
 			progressRow('Gateway 3 - readiness check')
 				.should('contain.text', `Completed: ${completedDate}`)
-				.and('contain.text', 'Completed');
+				.find('.govuk-task-list__status')
+				.should('contain.text', 'Completed');
 
 			progressRow('Examination')
 				.should('contain.text', `Target date: ${examinationTargetDate}`)

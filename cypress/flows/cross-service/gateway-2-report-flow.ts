@@ -18,6 +18,14 @@ export const verifyGateway2ReportInPortal = (reference: string, fileName: string
 				.find('.govuk-summary-list__value')
 				.should('contain.text', fileName)
 				.and('contain.text', `(shared on ${sharedDate})`);
+
+			cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
+			cy.contains('.govuk-task-list__item', 'Gateway 2 - advisory check')
+				.find('.govuk-task-list__status')
+				.should('contain.text', 'Completed');
+			cy.contains('.govuk-task-list__item', 'Gateway 3 - readiness check')
+				.find('.govuk-task-list__status')
+				.should('contain.text', 'Ready to start');
 		}
 	);
 };

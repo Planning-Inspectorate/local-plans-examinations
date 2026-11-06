@@ -312,7 +312,8 @@ export const soundUnsoundDate = {
 export const adoptionDate = {
 	row: 'Adoption date',
 	path: 'adoption-date',
-	display: '8 December 2026'
+	display: '8 December 2026',
+	input: { day: '8', month: '12', year: '2026' }
 };
 
 export const approvedForCILDate = {

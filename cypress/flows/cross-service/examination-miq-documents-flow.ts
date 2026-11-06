@@ -26,6 +26,8 @@ export const verifyExaminationMIQDocumentsInPortal = (
 					});
 				})
 				.and('contain.text', `(issued on ${sharedDate})`);
+
+			cy.contains('.govuk-tag', 'In examination').should('be.visible');
 		}
 	);
 };
