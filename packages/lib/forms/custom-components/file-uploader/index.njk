@@ -21,6 +21,10 @@
 			{% endif %}
 			<h1 class="govuk-heading-l">{{ question.question }}</h1>
 
+			{% if question.text.bodyText %}
+				<p class="govuk-body">{{ question.text.bodyText }}</p>
+			{% endif %}
+
 			{% if question.text.introduction %}
 				<h2 class="govuk-heading-m">{{ question.text.introduction }}</h2>
 			{% endif %}
@@ -31,6 +35,10 @@
 						<li>{{ item }}</li>
 					{% endfor %}
 				</ul>
+			{% endif %}
+
+			{% if question.text.bulletListFooter %}
+				<p class="govuk-body">{{ question.text.bulletListFooter }}</p>
 			{% endif %}
 
 			{% if question.text.fileRequirementsText %}

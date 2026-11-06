@@ -288,6 +288,14 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			}
 		}
 
+		// Load digital supporting material link from the database.
+		const digitalSupportingMaterialLink = currentCase.gateway2Info?.digitalSupportingMaterialLink;
+		if (digitalSupportingMaterialLink) {
+			answers['digitalSupportingMaterialLink'] = digitalSupportingMaterialLink;
+		} else {
+			delete answers['digitalSupportingMaterialLink'];
+		}
+
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...answers
 		});
@@ -502,12 +510,20 @@ export function buildSubmittedGateway2View(): RequestHandler {
 	};
 }
 
-// Saves case-scoped answers into the session.
-function buildSaveDataToCase(): SaveDataFn {
+// Saves case-scoped answers into the session and persists text fields to the database.
+function buildSaveDataToCase(service: PortalService): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 
 	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
+		const digitalSupportingMaterialLink = params.data.answers?.digitalSupportingMaterialLink;
+		if (typeof digitalSupportingMaterialLink !== 'string') {
+			return;
+		}
+		await service.db.gateway2Info.update({
+			where: { caseId: params.referenceId },
+			data: { digitalSupportingMaterialLink }
+		});
 	};
 }
 
@@ -700,7 +716,7 @@ export function buildGateway2Middleware(service: PortalService) {
 	);
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
-	const saveDataToCase = buildSaveDataToCase();
+	const saveDataToCase = buildSaveDataToCase(service);
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
 	const uploadGateway2Document = buildFileUploadRouteHandler(
 		new Map(

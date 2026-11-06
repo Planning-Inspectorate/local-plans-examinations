@@ -31,6 +31,9 @@
             {% if section.list.rows.length %}
                 <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+                    {% if section.heading == 'Plan content, evidence and background' %}
+                        <p class="govuk-body">You should include any available documents that will form part of your local plan and show progress towards completion. You can also include a link to any digital materials that are published publicly online. You should also include your latest policies map. These can all be in draft form.</p>
+                    {% endif %}
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
