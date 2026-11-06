@@ -806,20 +806,25 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('updates the submission and gateway3Info.actualDate in a transaction and redirects', async () => {
-		const submissionUpdateMock = mock.fn(async () => ({}));
-		const gateway3InfoUpdateMock = mock.fn(async () => ({}));
-		const transactionMock = mock.fn(async (updates: unknown[]) => Promise.all(updates));
-		const mockService = {
+	function buildDeclarationService() {
+		return {
 			db: {
-				$transaction: transactionMock,
-				gateway3Submission: { update: submissionUpdateMock },
-				gateway3Info: { update: gateway3InfoUpdateMock }
+				$transaction: mock.fn(async (updates: unknown[]) => Promise.all(updates)),
+				gateway3Submission: { update: mock.fn(async () => ({})) },
+				gateway3Info: { update: mock.fn(async () => ({})) },
+				documentSet: {
+					findMany: mock.fn(async ({ where }: { where: { folderName: { in: string[] } } }) =>
+						where.folderName.in.map((folderName) => ({ id: `ds-${folderName}`, folderName }))
+					)
+				},
+				document: { updateMany: mock.fn(async () => ({ count: 0 })) }
 			},
 			logger: { error: mock.fn() }
 		};
-		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
-		const req = {
+	}
+
+	function buildPendingResubmissionRequest() {
+		return {
 			params: { planReference: 'PLAN-001' },
 			currentCase: {
 				id: 'case-1',
@@ -836,6 +841,15 @@ describe('buildPostDeclarationPage', () => {
 				}
 			}
 		} as unknown as Request;
+	}
+
+	it('updates the submission and gateway3Info.actualDate in a transaction and redirects', async () => {
+		const mockService = buildDeclarationService();
+		const submissionUpdateMock = mockService.db.gateway3Submission.update;
+		const gateway3InfoUpdateMock = mockService.db.gateway3Info.update;
+		const transactionMock = mockService.db.$transaction;
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const req = buildPendingResubmissionRequest();
 		const { res, calls } = buildMockResponse();
 
 		await handler(req, res, () => {});
@@ -867,6 +881,46 @@ describe('buildPostDeclarationPage', () => {
 		const redirectCall = calls.find((c) => c.method === 'redirect');
 		assert.ok(redirectCall);
 		assert.ok((redirectCall.args[0] as string).includes('submission-complete'));
+	});
+
+	it('commits only the current resubmission document set in the same transaction', async () => {
+		const mockService = buildDeclarationService();
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const { res } = buildMockResponse();
+
+		await handler(buildPendingResubmissionRequest(), res, () => {});
+
+		const { db } = mockService;
+		assert.deepStrictEqual(db.documentSet.findMany.mock.calls[0].arguments[0].where.folderName.in, [
+			'gateway-3-document-2'
+		]);
+		assert.strictEqual(db.$transaction.mock.calls[0].arguments[0].length, 3);
+		assert.deepStrictEqual(db.document.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: { in: ['ds-gateway-3-document-2'] },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: { isTemp: false }
+		});
+	});
+
+	it('returns 500 without submitting when the document set lookup fails', async () => {
+		const mockService = buildDeclarationService();
+		mockService.db.documentSet.findMany.mock.mockImplementation(async () => []);
+		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
+		const { res, calls } = buildMockResponse();
+		(res as unknown as Record<string, unknown>).send = (body: string) => {
+			calls.push({ method: 'send', args: [body] });
+		};
+
+		await handler(buildPendingResubmissionRequest(), res, () => {});
+
+		assert.strictEqual(calls.find((c) => c.method === 'status')?.args[0], 500);
+		assert.deepStrictEqual(calls.find((c) => c.method === 'send')?.args, ['Failed to record submission']);
+		assert.strictEqual(mockService.db.$transaction.mock.callCount(), 0);
+		assert.strictEqual(mockService.logger.error.mock.callCount(), 1);
 	});
 
 	it('returns 500 when no pending submission exists', async () => {

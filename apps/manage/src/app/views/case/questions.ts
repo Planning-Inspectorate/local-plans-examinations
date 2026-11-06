@@ -18,7 +18,6 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -48,6 +47,8 @@ import {
 	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
+import { FRONT_OFFICE_GW2_QUESTIONS } from '@pins/local-plans-lib/app/questions.ts';
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -134,6 +135,20 @@ const MIQ_DOCUMENTS_ALLOWED_EXTENSIONS = [
 
 const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
+const gw2QuestionsWithContinue = Object.fromEntries(
+	//front office has save and return not continue
+	Object.entries(FRONT_OFFICE_GW2_QUESTIONS).map(([key, question]) => [
+		key,
+		{
+			...question,
+			text: {
+				...question.text,
+				continueButtonText: 'Continue'
+			}
+		}
+	])
+);
+
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
@@ -163,6 +178,13 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3DocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Gateway 3 documents',
+		fieldName: 'gateway3DocumentSubmission',
+		url: 'gateway-3-review-documents'
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
@@ -1624,7 +1646,8 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new FileUploadRequiredValidator('miqs', 'Choose a file to upload')]
 	},
 	...examinationPauseQuestions,
-	...gateway3Questions
+	...gateway3Questions,
+	...gw2QuestionsWithContinue
 };
 
 // Some questions require copies in order to be used in different conditions.

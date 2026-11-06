@@ -6,7 +6,13 @@ import type { ManageService } from '#service';
  * @param submissions
  */
 export function sortGateway3Submissions(
-	submissions: { id: string; decision: string | null; completionDate: Date | null; gateway3InfoId: string | null }[]
+	submissions: {
+		id: string;
+		decision: string | null;
+		completionDate: Date | null;
+		submittedDate?: Date | null;
+		gateway3InfoId: string | null;
+	}[]
 ) {
 	return submissions.toSorted((a, b) => {
 		if (!(a.completionDate || b.completionDate)) return 0;

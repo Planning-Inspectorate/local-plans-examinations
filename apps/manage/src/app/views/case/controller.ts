@@ -45,6 +45,7 @@ import {
 	sendGw3ResubmissionNeededNotifyEmail
 } from '../../../app/notify/notify-helper.ts';
 
+import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 type ManageListAction = 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
@@ -282,14 +283,18 @@ export function buildGetJourneyMiddleware(
 		const gateway2Documents = await db.document.findMany({
 			where: {
 				caseId: caseRecord.id,
-				documentSetId: { in: gateway2SetIds }
+				documentSetId: { in: gateway2SetIds },
+				isDeleted: false,
+				isTemp: false
 			}
 		});
 
 		const gateway3Documents = await db.document.findMany({
 			where: {
 				caseId: caseRecord.id,
-				documentSetId: { in: gateway3SetIds }
+				documentSetId: { in: gateway3SetIds },
+				isDeleted: false,
+				isTemp: false
 			}
 		});
 
@@ -330,7 +335,9 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			questionUrl,
 			req.originalUrl,
 			service,
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[],
+			questionConfig.title
 		);
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
@@ -765,7 +772,8 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
 		// Todo add error handling for if the file is not found
-		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
+		// LPA resubmission documents are soft-deleted once the BO report is saved to the same document set
+		await DocumentUtil.downloadDocumentToResponse(service, documentId, res, { includeDeleted: true });
 	};
 }
 
@@ -833,11 +841,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		if (existingExaminationDetails?.soundUnsoundDate && returnToManage) {
 			const manuallySetInFirstSubmission = await checkSoundUnsoundManuallySet(service, caseId);
 			const reportIssuedDate = manuallySetInFirstSubmission ? existingExaminationDetails.soundUnsoundDate : new Date();
-			if (!manuallySetInFirstSubmission) {
-				await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-					soundUnsoundDate: reportIssuedDate
-				});
-			}
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				...(!manuallySetInFirstSubmission && { soundUnsoundDate: reportIssuedDate })
+			});
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: `Examination report document added; report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			});
@@ -851,11 +858,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		}
 
 		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
-		if (!existingExaminationDetails?.soundUnsoundDate) {
-			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-				soundUnsoundDate: reportIssuedDate
-			});
-		}
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+			...(!existingExaminationDetails?.soundUnsoundDate && { soundUnsoundDate: reportIssuedDate })
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -929,11 +935,30 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 export function issueMiqs(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingExaminationDetails = await service.db.examinationInfo.findUnique({
+			select: {
+				miqDocumentSharedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (existingExaminationDetails?.miqDocumentSharedDate) {
+			pushAlertToSession(req, 'important', 'MIQ documents already shared');
+			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+			return;
+		}
 		const uploadedFiles =
 			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'miqs')]?.uploadedFiles ?? [];
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
 		const sentDate = new Date();
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			miqDocumentSharedDate: sentDate,
+			miqDocumentSharedBy: account?.username,
+			status: EXAMINATION_STATUS_ID.IN_EXAMINATION
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -956,6 +981,29 @@ export function issueMiqs(service: ManageService, journeyId: string): AsyncReque
 		);
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
+	};
+}
+
+export function issueGateway2Document(_service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res): Promise<void> => {
+		const caseReference = getParam(req.params.reference);
+		const questionUrl = getParam(req.params.question);
+
+		if (!COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(questionUrl)) {
+			res.sendStatus(404);
+			return;
+		}
+
+		const questionConfig = fileUploadQuestionsByUrl.get(questionUrl);
+
+		if (!questionConfig) {
+			res.sendStatus(404);
+			return;
+		}
+
+		res.redirect(
+			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/gateway-2/gateway2Documents`
+		);
 	};
 }
 
@@ -1103,6 +1151,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
+	if (COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))) {
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
+	}
 	const journey = req.url.split(String(req.params.section))[0];
 	if (
 		req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION &&
@@ -1215,6 +1266,25 @@ export function preprocessQuestionProperties(
 				delete questions['gateway2WorkshopDocuments'].actionLink;
 			}
 		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: true
+				},
+				where: {
+					reference
+				}
+			});
+			const miqComplete = !!caseDetails?.examinationInfo?.miqDocumentSharedDate;
+			if (miqComplete) {
+				questions['miqs'].actionLink = {
+					href: `/case/${reference}/examination/hearings/miqs/check`,
+					text: 'View'
+				};
+			} else {
+				delete questions['miqs'].actionLink;
+			}
+		}
 		if (journeyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
 			const decisionMap = {
 				'1': 'Proceed to examination',
@@ -1243,14 +1313,31 @@ export function preprocessQuestionProperties(
 			for (let i = 0; i < submissionDetailsSorted.length; i++) {
 				const submissionId = i + 1;
 				const submission = submissionDetailsSorted[i];
-				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3DocumentsCheck = `gateway3DocumentsCheck-${submissionId}`;
 				const gateway3Decision = `gateway3Decision-${submissionId}`;
-				const decisionValue = submissionDetailsSorted[i].decision;
-				const completionDate = submissionDetailsSorted[i].completionDate;
+				const decisionValue = submission.decision;
+				const completionDate = submission.completionDate;
+				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3Complete = !!completionDate;
+
+				(questions[gateway3DocumentsCheck] as CustomDocumentsQuestion).setActionLink(
+					String(submissionId),
+					reference,
+					_res.locals.journeyResponse.answers
+				);
+
+				questions[gateway3DocumentsCheck].changeActionText = 'Review';
+				const submissionReceived =
+					!!submission.submittedDate ||
+					!!submission.completionDate ||
+					(submissionId === 1 && !!caseDetails.gateway3Info?.actualDate);
+				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary =
+					submissionReceived && !!questions[gateway3DocumentsCheck].actionLink?.text;
+
 				questions[gateway3Documents].changeActionText = 'View';
-				const gateway3Complete = !!submission.completionDate;
 				(questions[gateway3Documents] as any).config.actionButtonVisibleInSummary = gateway3Complete;
 				questions[gateway3Documents].editable = !gateway3Complete;
+
 				if (gateway3Complete) {
 					if (!decisionValue) {
 						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
@@ -1259,20 +1346,20 @@ export function preprocessQuestionProperties(
 						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
-					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;
-					const formattedCompletionDate = completionDate
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(completionDate)
-						: null;
+					const decisionText = decisionMap[decisionValue as keyof typeof decisionMap] ?? null;
+					const formattedCompletionDate = new Intl.DateTimeFormat('en-GB', {
+						day: 'numeric',
+						month: 'long',
+						timeZone: 'Europe/London',
+						year: 'numeric'
+					}).format(completionDate);
 					questions[gateway3Decision].formatSummaryValue = () =>
 						decisionText ? `${decisionText}\nIssued on ${formattedCompletionDate}` : 'Not started';
 				} else {
-					// Reset for different journey
-					delete questions[gateway3Decision].actionLink;
+					questions[gateway3Decision].actionLink = {
+						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-decision-${submissionId}`,
+						text: 'Add'
+					};
 					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
 				}
 			}

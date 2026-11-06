@@ -60,7 +60,17 @@
           {{ answer.name }}
         </dt>
         <dd class="govuk-summary-list__value">
-          {{ answer.value | safe }}
+          {% if answer.name == 'Documents' and answer.value is iterable and answer.value is not string %}
+            {% for document in answer.value %}
+              <div>
+                <a class="govuk-link" href="{{ document.url }}">
+                  {{ document.name }}
+                </a>
+              </div>
+            {% endfor %}
+          {% else %}
+            {{ answer.value | safe }}
+          {% endif %}
         </dd>
         {% if answer.url %}
           <dd class="govuk-summary-list__actions">
