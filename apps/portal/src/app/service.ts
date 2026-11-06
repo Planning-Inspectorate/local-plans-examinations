@@ -187,9 +187,6 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const lpaNames = caseRecord.lpas.map((lpa) => lpa.lpaName || lpa.lpaCode);
 	const progress = derivePlanProgress(caseRecord);
 	const gateway1Date = caseRecord.gateway1Info?.completedGateway1Date ?? caseRecord.gateway1Info?.expectedGateway1Date;
-	// Plan progress shows the timetabled (expected) submission date for each stage,
-	// as set when the case is created in the back office. Actual, report and decision dates
-	// do not replace it. The only exception is the examination report issued date.
 	const gateway2Date = caseRecord.gateway2Info?.expectedDate;
 	const gateway3Date = caseRecord.gateway3Info?.expectedDate;
 	const examinationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
