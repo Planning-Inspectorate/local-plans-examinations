@@ -43,6 +43,7 @@ type PortalCase = {
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		adoptionDate: Date | null;
 		soundUnsoundDate: Date | null;
 		status: string;
 		statusLookup: { displayName: string } | null;
@@ -198,10 +199,12 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 			caseRecord.gateway3Info?.expectedDate);
 	const examinationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
 	const examinationDate =
-		examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
-			? caseRecord.examinationInfo?.soundUnsoundDate
-			: (caseRecord.examinationInfo?.submissionForExaminationDate ??
-				caseRecord.examinationInfo?.expectedSubmissionForExaminationDate);
+		examinationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED
+			? caseRecord.examinationInfo?.adoptionDate
+			: examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+				? caseRecord.examinationInfo?.soundUnsoundDate
+				: (caseRecord.examinationInfo?.submissionForExaminationDate ??
+					caseRecord.examinationInfo?.expectedSubmissionForExaminationDate);
 	const plan = buildPlan({
 		refNum: caseRecord.reference,
 		leadLPA: lpaNames[0] ?? '',
@@ -252,6 +255,7 @@ const planCaseInclude = {
 		select: {
 			expectedSubmissionForExaminationDate: true,
 			submissionForExaminationDate: true,
+			adoptionDate: true,
 			soundUnsoundDate: true,
 			status: true,
 			statusLookup: {

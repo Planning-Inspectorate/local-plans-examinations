@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import { describe, it, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { questions } from '../questions.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 type MockServiceType = {
 	db: {
@@ -204,14 +205,16 @@ describe('test TimetableSaveController', () => {
 				const mockService = createMockService();
 				const question = questions[name];
 				const answers = { [question.fieldName]: mockDate };
+				const expectedData =
+					name === 'adoptionDate' ? { ...answers, status: EXAMINATION_STATUS_ID.PLAN_ADOPTED } : answers;
 
 				await createController(mockService, question.url).prepareAndSave(answers);
 
 				assert.equal(mockService.db[model].upsert.mock.callCount(), 1);
 				assert.deepEqual(mockService.db[model].upsert.mock.calls[0].arguments[0], {
 					where: { caseId: 'someCaseId' },
-					update: answers,
-					create: { caseId: 'someCaseId', ...answers }
+					update: expectedData,
+					create: { caseId: 'someCaseId', ...expectedData }
 				});
 				for (const otherModel of ['gateway1Info', 'gateway2Info', 'gateway3Info', 'examinationInfo'] as const) {
 					if (otherModel !== model) assert.equal(mockService.db[otherModel].upsert.mock.callCount(), 0);

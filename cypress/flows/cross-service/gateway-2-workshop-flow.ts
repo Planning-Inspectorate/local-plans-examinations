@@ -37,6 +37,11 @@ export const verifyGateway2WorkshopInPortal = (
 							cy.contains(docName).should('be.visible');
 						});
 					});
+
+				cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
+				cy.contains('.govuk-task-list__item', 'Gateway 2 - advisory check')
+					.find('.govuk-task-list__status')
+					.should('contain.text', 'Under review');
 			}
 		}
 	);
