@@ -1,7 +1,7 @@
 import { createQuestions, questionClasses, type Question } from '@planning-inspectorate/dynamic-forms';
 import { CUSTOM_COMPONENT_CLASSES } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import { createDownloadDocumentSummaryFormatter as createFormatter } from '../utils.ts';
-import { FRONT_OFFICE_GW2_QUESTIONS } from '@pins/local-plans-lib/app/questions.ts';
+import { FRONT_OFFICE_GW2_QUESTIONS, FRONT_OFFICE_GW2_TEXT_QUESTIONS } from '@pins/local-plans-lib/app/questions.ts';
 
 const allQuestionClasses = {
 	...questionClasses,
@@ -16,11 +16,12 @@ export const CHECK_ANSWERS_REDIRECTS = {
 
 export type CheckAnswersRedirect = (typeof CHECK_ANSWERS_REDIRECTS)[keyof typeof CHECK_ANSWERS_REDIRECTS];
 
+// File-upload-only questions — used by gateway2FileUploadQuestionConfigs for upload routes.
 export const GW2QUESTIONS = FRONT_OFFICE_GW2_QUESTIONS;
 
 export function createGateway2Questions(planReference: string | undefined) {
-	const questionsForRequest = Object.fromEntries(
-		Object.entries(GW2QUESTIONS).map(([key, question]) => [
+	const fileUploadQuestions = Object.fromEntries(
+		Object.entries(FRONT_OFFICE_GW2_QUESTIONS).map(([key, question]) => [
 			key,
 			{
 				...question,
@@ -29,8 +30,13 @@ export function createGateway2Questions(planReference: string | undefined) {
 		])
 	);
 
+	const allQuestions = {
+		...fileUploadQuestions,
+		...FRONT_OFFICE_GW2_TEXT_QUESTIONS
+	};
+
 	return createQuestions(
-		questionsForRequest,
+		allQuestions,
 		allQuestionClasses,
 		{},
 		{

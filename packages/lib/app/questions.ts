@@ -158,6 +158,55 @@ export const frontOfficeGateway2questions = {
 		text: {
 			caption: 'Additional documents'
 		}
+	},
+	planContent: {
+		title: 'Plan content',
+		question: 'Upload plan content documents',
+		fieldName: 'planContent',
+		url: 'plan-content',
+		text: {
+			caption: 'Plan content, evidence and background',
+			bodyText:
+				'You should add any documents that will form part of your local plan. These can be in draft form and could include:',
+			bulletList: [
+				'vision, aims, objectives, up to 10 outcomes',
+				'spatial strategy options or spatial strategy',
+				'other plan content'
+			],
+			bulletListFooter: 'The document name must describe what it is, for example "spatial strategy options 2026 draft".'
+		}
+	},
+	evidenceAndProgress: {
+		title: 'Evidence and progress',
+		question: 'Upload evidence and progress',
+		fieldName: 'evidenceAndProgress',
+		url: 'evidence-and-progress',
+		text: {
+			caption: 'Plan content, evidence and background',
+			bodyText:
+				'You should add any documents that provide evidence to show the progress of your local plan. There is no need to add every document on this list, just those that are relevant to your local plan. These can be in draft form and could include:',
+			bulletList: [
+				'list of evidence documents with completion dates',
+				'progress towards setting a housing requirement and evidence such as a housing needs assessment and strategic housing market assessment',
+				'progress and evidence towards identifying needs for Traveller accommodation such as an accommodation assessment',
+				'progress and evidence towards setting other development needs and supply (like employment or retail)',
+				'progress on assessments required by the Habitats Regulations and the Environmental Assessment Regulations',
+				'topic papers (up to 5 issues, max 2,000 words each)',
+				'site selection approach and evidence',
+				'green belt review',
+				'evidence related to the matters of soundness to be discussed'
+			],
+			bulletListFooter: 'The document name must describe what it is, for example "green belt review 2026".'
+		}
+	},
+	latestPoliciesMap: {
+		title: 'Latest policies map',
+		question: 'Upload your latest policies map',
+		fieldName: 'latestPoliciesMap',
+		url: 'latest-policies-map',
+		text: {
+			caption: 'Plan content, evidence and background'
+		}
 	}
 };
 
@@ -184,3 +233,21 @@ export const FRONT_OFFICE_GW2_QUESTIONS = Object.fromEntries(
 		}
 	])
 );
+
+export const FRONT_OFFICE_GW2_TEXT_QUESTIONS = {
+	digitalSupportingMaterial: {
+		type: 'single-line-input' as const,
+		title: 'Digital supporting material',
+		question: 'Add a link to your digital supporting material',
+		fieldName: 'digitalSupportingMaterialLink',
+		url: 'digital-supporting-material',
+		label: 'Link',
+		description:
+			'Add a link to any digital or interactive supporting material that is published publicly online. Do not link to folders or repositories that are not publicly available.\n\nYou must still upload all requested documents separately, including your evidence base.',
+		text: {
+			caption: 'Plan content and evidence documents',
+			continueButtonText: 'Save and return'
+		},
+		validators: []
+	}
+};
