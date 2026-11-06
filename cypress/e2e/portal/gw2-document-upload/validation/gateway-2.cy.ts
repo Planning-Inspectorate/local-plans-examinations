@@ -4,7 +4,7 @@ import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
-	subsequentWorkTowardsDraftPlanPage
+	evidenceOnEngagementPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -79,7 +79,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = subsequentWorkTowardsDraftPlanPage;
+				const page = evidenceOnEngagementPage;
 				openGateway2DocumentUploadPage(plan, page);
 				page.verifyInvalidFileTypeError();
 			});
@@ -91,7 +91,7 @@ describe('Gateway 2 document upload validation tests', () => {
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = subsequentWorkTowardsDraftPlanPage;
+				const page = evidenceOnEngagementPage;
 				openGateway2DocumentUploadPage(plan, page);
 				page.verifyNoFileUploadedError();
 			});

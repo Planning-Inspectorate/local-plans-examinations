@@ -8,7 +8,7 @@ import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
-	subsequentWorkTowardsDraftPlanPage
+	evidenceOnEngagementPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 
 describe('Gateway 2 document upload journeys', () => {
@@ -114,10 +114,10 @@ describe('Gateway 2 document upload journeys', () => {
 	);
 
 	it(
-		'Adds subsequent work towards a draft plan using drag and drop, then replaces it with new document',
+		'Adds evidence on engagement using drag and drop, then replaces it with new document',
 		{ tags: ['regression'] },
 		() => {
-			const page = subsequentWorkTowardsDraftPlanPage;
+			const page = evidenceOnEngagementPage;
 			openGateway2DocumentUploadPage(planDetails, page);
 			page.dragAndDropAndVerifyFile('test-document.pdf');
 			page.verifyReplaceFile(gateway2ApplicationPage, 'test-document.pdf', 'test-document.docx');
@@ -125,16 +125,16 @@ describe('Gateway 2 document upload journeys', () => {
 	);
 
 	it(
-		'Shows all uploaded subsequent work towards a draft plan files on the Gateway 2 submission page',
+		'Shows all uploaded evidence on engagement files on the Gateway 2 submission page',
 		{ tags: ['regression'] },
 		() => {
-			const page = subsequentWorkTowardsDraftPlanPage;
+			const page = evidenceOnEngagementPage;
 			openGateway2DocumentUploadPage(planDetails, page);
 			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx', 'test-document.xlsx']);
 			page.saveAndVerifyDocumentRow(
 				gateway2ApplicationPage,
 				() => gateway2ApplicationPage.additionalDocumentsTable,
-				'Subsequent work towards a draft Plan',
+				'Evidence on engagement between plan making authorities and relevant bodies',
 				'test-document.pdf',
 				'test-document.docx',
 				'test-document.xlsx'

@@ -462,18 +462,6 @@ describe('Gateway 2 post-submission view template', () => {
 								}
 							]
 						}
-					},
-					{
-						heading: 'Additional Documents',
-						list: {
-							rows: [
-								{
-									key: { text: 'Subsequent work towards a draft Plan' },
-									value: { html: 'draft-plan.pdf' },
-									actions: { items: [{ href: '/change', text: 'Change' }] }
-								}
-							]
-						}
 					}
 				]
 			},
