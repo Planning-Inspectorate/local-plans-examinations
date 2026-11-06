@@ -32,6 +32,10 @@ export class ExaminationPage extends PortalPlanBasePage {
 		return cy.getByData('examination-details-table');
 	}
 
+	get examinationReportValue() {
+		return cy.getByData('examination-report-value');
+	}
+
 	get submitExaminationButton() {
 		return cy.getByData('submit-examination');
 	}
@@ -47,6 +51,20 @@ export class ExaminationPage extends PortalPlanBasePage {
 
 	verifyStatusTag(status: string) {
 		this.statusTag.should('be.visible').and('contain.text', status);
+	}
+
+	verifyExaminationReportDownloads(fileName: string, issuedDate: string) {
+		this.examinationReportValue
+			.should('contain.text', `issued on ${issuedDate}`)
+			.contains('a', fileName)
+			.should('be.visible')
+			.invoke('attr', 'href')
+			.then((href) => {
+				cy.request(href as string).then((response) => {
+					expect(response.status).to.equal(200);
+					expect(response.headers['content-disposition']).to.include(`attachment; filename="${fileName}"`);
+				});
+			});
 	}
 
 	verifyCheckTheGuidanceLink() {

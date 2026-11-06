@@ -6,7 +6,9 @@ export const assignExaminationInspectorInManage = (reference: string, inspector:
 			.find('.govuk-summary-list__actions a')
 			.click();
 
+		cy.get('#examiningInspector1__listbox').should('exist');
 		cy.get('input#examiningInspector1').should('be.visible').clear().type(inspector);
+
 		cy.get('#examiningInspector1__listbox').contains('[role="option"]', inspector).should('be.visible').click();
 		cy.get('[data-cy="button-save-and-continue"]').click();
 

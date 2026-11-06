@@ -43,6 +43,7 @@ type PortalCase = {
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		soundUnsoundDate: Date | null;
 		status: string;
 		statusLookup: { displayName: string } | null;
 	} | null;
@@ -195,9 +196,12 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		: (gateway3SubmissionState.latestSubmission?.completionDate ??
 			caseRecord.gateway3Info?.actualDate ??
 			caseRecord.gateway3Info?.expectedDate);
+	const examinationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
 	const examinationDate =
-		caseRecord.examinationInfo?.submissionForExaminationDate ??
-		caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
+		examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+			? caseRecord.examinationInfo?.soundUnsoundDate
+			: (caseRecord.examinationInfo?.submissionForExaminationDate ??
+				caseRecord.examinationInfo?.expectedSubmissionForExaminationDate);
 	const plan = buildPlan({
 		refNum: caseRecord.reference,
 		leadLPA: lpaNames[0] ?? '',
@@ -205,8 +209,11 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		title: caseRecord.planTitle,
 		stage: progress.stage,
 		status: progress.status,
-		examinationStatus: caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET,
-		examinationStatusLabel: caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet',
+		examinationStatus,
+		examinationStatusLabel:
+			examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+				? 'Report issued'
+				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
@@ -245,6 +252,7 @@ const planCaseInclude = {
 		select: {
 			expectedSubmissionForExaminationDate: true,
 			submissionForExaminationDate: true,
+			soundUnsoundDate: true,
 			status: true,
 			statusLookup: {
 				select: { displayName: true }

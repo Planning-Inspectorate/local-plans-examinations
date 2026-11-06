@@ -8,9 +8,12 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import type { Gateway3DocumentFile } from '../../case/overview-data-handlers/gateway-3-tab-handler.ts';
 
+const { RESUBMISSION_DOCUMENTS_LABEL } = COMMON_CONSTS;
+
 type JourneyAnswers = Journey['response']['answers'];
 type ExtendedAnswers = JourneyAnswers & {
 	optionalData?: Record<string, unknown>;
+	resubmissionDocumentFiles?: Record<number, Gateway3DocumentFile[]>;
 	[key: string]: unknown;
 };
 
@@ -39,7 +42,8 @@ export default class CustomDocumentsQuestion extends Question {
 
 	formatAnswerForSummary(sectionSegment: string, journey: Journey) {
 		const answers = journey.response.answers ?? {};
-		const documentCount = this.getDocumentsCount(journey.response.answers);
+		const submissionNumber = Number(sectionSegment.split('-').at(-1)) || 1;
+		const documentCount = this.getDocumentsCount(journey.response.answers, submissionNumber);
 		return [
 			{
 				key: this.title,
@@ -49,7 +53,8 @@ export default class CustomDocumentsQuestion extends Question {
 		];
 	}
 
-	private getDocumentsCount(answers: ExtendedAnswers) {
+	private getDocumentsCount(answers: ExtendedAnswers, submissionNumber: number) {
+		if (submissionNumber > 1) return answers.resubmissionDocumentFiles?.[submissionNumber]?.length ?? 0;
 		const values = [
 			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers?.[key]),
 			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers?.optionalData?.[key]),
@@ -60,7 +65,7 @@ export default class CustomDocumentsQuestion extends Question {
 
 	public setActionLink(submissionId: string, reference: string, answers: ExtendedAnswers) {
 		const submissionUrl = `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}/gateway-3-submission-${submissionId}`;
-		const documentCount = this.getDocumentsCount(answers);
+		const documentCount = this.getDocumentsCount(answers, Number(submissionId));
 		this.actionLink = {
 			href: `${submissionUrl}/gateway-3-review-documents-${submissionId}`,
 			text: documentCount > 0 ? 'Review' : ''
@@ -124,6 +129,15 @@ export default class CustomDocumentsQuestion extends Question {
 				}
 			: undefined;
 
+		const resubmissionFiles =
+			Number(submissionId) > 1 ? (answers.resubmissionDocumentFiles?.[Number(submissionId)] ?? []) : null;
+		const resubmissionDocumentFiles = resubmissionFiles && {
+			[RESUBMISSION_DOCUMENTS_LABEL]: resubmissionFiles.map((file: any) => ({
+				fileName: file.fileName,
+				downloadUrl: downloadUrlFor(file)
+			}))
+		};
+
 		const issueDecisionUrl = `/case/${options.params.reference}/gateway-3/${options.params.section}/gateway-3-decision-${submissionId}`;
 
 		return {
@@ -133,6 +147,9 @@ export default class CustomDocumentsQuestion extends Question {
 			requiredDocumentFiles,
 			optionalDocumentFiles,
 			examinationWebsiteLink,
+			resubmissionDocumentFiles,
+			resubmissionDocumentData: { [RESUBMISSION_DOCUMENTS_LABEL]: '' },
+			resubmissionDocumentsLabel: RESUBMISSION_DOCUMENTS_LABEL,
 			issueDecisionUrl
 		};
 	}

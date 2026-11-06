@@ -16,7 +16,7 @@ describe('Cross-service Gateway 2 report', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('Shows the Workshop data for Gateway 2 in Portal once it is entered in Manage', () => {
+	it('Shows the Workshop data for Gateway 2 in Portal once it is entered in Manage', { tags: ['regression'] }, () => {
 		openGateway2Page(CASE_REFERENCE, PLAN_TITLE);
 
 		manageToPortalLogin(FOURTH_TEST_EMAIL);
