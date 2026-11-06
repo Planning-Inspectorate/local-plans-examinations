@@ -104,6 +104,10 @@ describe('Examination application page journeys after final report issued', () =
 				examinationPage.verifyLoaded();
 				examinationPage.verifyStatusTag(plan.status7);
 				examinationPage.verifyExaminationReportDownloads(examinationReport.fileName, todayDisplay);
+				examinationPage.backLink.click();
+
+				planDetailsPage.verifyLoaded();
+				planDetailsPage.verifyProgressRow('Examination', `Report issued: ${todayDisplay}`, plan.status7);
 			});
 		}
 	);

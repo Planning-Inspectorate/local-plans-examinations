@@ -25,6 +25,8 @@ export const verifyExaminationFinalReportDocumentsInPortal = (
 						cy.contains('a', fileName).should('be.visible');
 					});
 				});
+
+			cy.contains('.govuk-tag', 'Report issued').should('be.visible');
 		}
 	);
 };
