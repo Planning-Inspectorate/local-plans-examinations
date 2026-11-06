@@ -8,6 +8,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Plan details page content', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin();
 		loadPlanDetails().then((plan) => {
 			myPlansPage.openPlan(plan.reference);
@@ -22,45 +23,42 @@ describe('Plan details page content', () => {
 			planDetailsPage.verifyServiceNavigation('Guidance', 'Sign out');
 			planDetailsPage.verifyBackLink('/manage-local-plans/your-plans');
 			planDetailsPage.verifyHeading(plan.title);
-			planDetailsPage.verifyCaption(plan.reference);
+			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
 
-			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage, plan.status);
-			planDetailsPage.verifyMetadataValue('Local planning authority', plan.leadLpa);
-			planDetailsPage.verifyMetadataValue('Linked local planning authorities', plan.linkedLpa);
+			cy.get('.govuk-summary-list').find('.govuk-summary-list__row').should('have.length', 2);
+			cy.contains('.govuk-summary-list__key', /Joint local planning\s*authorities/)
+				.should('have.descendants', 'br')
+				.closest('.govuk-summary-list__row')
+				.find('.govuk-summary-list__value > span')
+				.should('have.length', 2)
+				.then(($names) => {
+					expect([...$names].map((name) => name.textContent?.trim())).to.deep.equal([plan.leadLpa, plan.linkedLpa]);
+				});
+			cy.get('.govuk-summary-list').should('not.contain.text', 'Current stage');
+			cy.get('.govuk-summary-list').should('not.contain.text', 'Linked local planning authorities');
 		});
 	});
 
-	it('shows the Gateway 2 action and plan progress rows', { tags: ['regression'] }, () => {
+	it('shows three progress rows and uses the Gateway 2 task link', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyActionButton(
-				'Start Gateway 2 submission',
-				`/manage-local-plans/${plan.urlReference}/gateway-2-submission/application-declaration`
-			);
+			planDetailsPage.actionButton.should('not.exist');
+			planDetailsPage.gateway2Link
+				.should('be.visible')
+				.and('have.attr', 'href', `/manage-local-plans/${plan.urlReference}/gateway-2-submission`);
+			cy.contains('h2', 'Assessment information').should('not.exist');
+			cy.get('.govuk-tabs').should('not.exist');
 			planDetailsPage.verifyPlanProgressHeading();
-			planDetailsPage.verifyPlanProgressRowsInOrder(
-				'Gateway 1 - self-assessment (opens in a new tab)',
-				'Gateway 2 - advisory check',
-				'Gateway 3 - readiness check',
-				'Examination'
-			);
+			planDetailsPage.verifyPlanProgressRowsInOrder('Gateway 2', 'Gateway 3', 'Examination');
 
+			planDetailsPage.planProgress.should('not.contain.text', 'Gateway 1 - self-assessment');
+			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, plan.status);
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, 'Cannot start yet');
 			planDetailsPage.verifyProgressRow(
-				'Gateway 1 - self-assessment (opens in a new tab)',
-				`Completed outside this service on ${plan.dates.gateway1}`,
-				'Completed'
-			);
-			planDetailsPage.verifyProgressRow(
-				'Gateway 2 - advisory check',
-				`Target date: ${plan.dates.gateway2}`,
-				plan.status
-			);
-			planDetailsPage.verifyProgressRow(
-				'Gateway 3 - readiness check',
-				`Target date: ${plan.dates.gateway3}`,
+				'Examination',
+				`Submission expected: ${plan.dates.examination}`,
 				'Cannot start yet'
 			);
-			planDetailsPage.verifyProgressRow('Examination', `Target date: ${plan.dates.examination}`, 'Cannot start yet');
 		});
 	});
 });
@@ -69,6 +67,7 @@ const loadReportIssuedPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('port
 
 describe('Plan details page content after GW2 report issued in BO', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin(THIRD_TEST_EMAIL);
 		loadReportIssuedPlan().then((plan) => {
 			myPlansPage.openPlan(plan.reference);
@@ -80,13 +79,9 @@ describe('Plan details page content after GW2 report issued in BO', () => {
 	it('Shows Gateway 2 as completed and Gateway 3 as ready to start', { tags: ['regression'] }, () => {
 		loadReportIssuedPlan().then((plan) => {
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage, plan.status);
-			planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', `Completed: ${plan.dates.gateway2}`, 'Completed');
-			planDetailsPage.verifyProgressRow(
-				'Gateway 3 - readiness check',
-				`Target date: ${plan.dates.gateway3}`,
-				plan.status
-			);
+			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
+			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, 'Completed');
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status);
 		});
 	});
 

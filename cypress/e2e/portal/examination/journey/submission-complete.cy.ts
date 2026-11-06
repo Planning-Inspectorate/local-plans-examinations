@@ -6,8 +6,6 @@ import { planDetailsPage } from '../../../../page-objects/portal/plan-details/pl
 import { openSeededExaminationDeclarationPage } from '../../../../flows/portal/examination-submission-flow.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
-const today = new Date();
-const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Examination Submission complete page journeys', () => {
 	beforeEach(() => {
@@ -29,6 +27,8 @@ describe('Examination Submission complete page journeys', () => {
 		examinationSubmissionCompletePage.checkSubmissionStatusLink.click();
 
 		planDetailsPage.verifyLoaded();
-		planDetailsPage.verifyProgressRow('Examination', `Submitted: ${todayDisplay}`, 'Submitted');
+		loadPlanDetails().then((plan) => {
+			planDetailsPage.verifyProgressRow('Examination', `Submission expected: ${plan.dates.examination}`, 'Submitted');
+		});
 	});
 });

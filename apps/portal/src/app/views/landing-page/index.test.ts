@@ -104,13 +104,7 @@ describe('landing page', () => {
 			(match) => match[1]
 		);
 
-		const expectedHeadings = [
-			'Reference number',
-			'Lead local planning authority',
-			'Plan title',
-			'Current stage',
-			'Status'
-		];
+		const expectedHeadings = ['Reference number', 'Local planning authority', 'Plan title', 'Current stage', 'Status'];
 
 		assert.deepStrictEqual(headings, expectedHeadings, `Expected ${expectedHeadings} instead got "${headings}"`);
 	});

@@ -132,8 +132,9 @@ export interface Gateway2ReportFile {
 export interface Plan {
 	//BIG ? on name
 	refNum: string; //Reference Number
-	leadLPA: string; //Lead Local Planning Authority
-	linkedLPA: string; //Linked Local Planning Authority
+	lpaNames: string[];
+	leadLPA: string;
+	linkedLPA: string;
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
 	status: Status; //Status
@@ -238,6 +239,7 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 
 export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	refNum: 'PLAN-001', //Reference Number
+	lpaNames: [],
 	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
 	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
 	title: 'East Borough Local Plan', //Plan Title

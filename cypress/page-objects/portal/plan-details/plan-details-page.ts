@@ -18,11 +18,11 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 	}
 
 	get gateway2Link() {
-		return this.planProgress.contains('a', 'Gateway 2 - advisory check');
+		return this.planProgress.contains('a', 'Gateway 2');
 	}
 
 	get gateway3Link() {
-		return this.planProgress.contains('a', 'Gateway 3 - readiness check');
+		return this.planProgress.contains('a', 'Gateway 3');
 	}
 
 	get examinationLink() {
