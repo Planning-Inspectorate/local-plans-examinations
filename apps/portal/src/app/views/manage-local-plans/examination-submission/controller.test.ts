@@ -6,6 +6,7 @@ import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import type { PortalService } from '#service';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import {
 	buildExaminationCheckAnswersList,
 	buildExaminationMiddleware,
@@ -149,7 +150,7 @@ describe('examination view data', () => {
 		assert.equal(next.mock.callCount(), 2);
 	});
 
-	it('uses the submitted, in-examination and plan-adopted status tags', () => {
+	it('uses the submitted, in-examination, report-issued and plan-adopted status tags', () => {
 		for (const { status, label, className } of [
 			{
 				status: EXAMINATION_STATUS_ID.SUBMITTED,
@@ -159,6 +160,11 @@ describe('examination view data', () => {
 			{
 				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 				label: 'In examination',
+				className: 'govuk-tag govuk-tag--blue'
+			},
+			{
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				label: 'Report issued',
 				className: 'govuk-tag govuk-tag--blue'
 			},
 			{
@@ -226,7 +232,73 @@ describe('buildGetJourneyResponseFromCase', () => {
 				examinationWebsiteUrl: 'https://gateway-3.example.com'
 			}
 		});
-		assert.equal(service.db.document.findMany.mock.callCount(), documentSets.length);
+		assert.equal(service.db.document.findMany.mock.callCount(), documentSets.length + 1);
+	});
+
+	it('loads all examination report files with the BO issue date and download links', async () => {
+		const issuedDate = new Date('2026-10-20T12:00:00.000Z');
+		const currentCase = {
+			id: 'case-id',
+			reference: 'PLAN-61797',
+			planTitle: 'Test plan',
+			examinationInfo: {
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				examinationWebsite: null,
+				examinationWebsiteUrl: 'https://examination.example.com',
+				soundUnsoundDate: issuedDate,
+				statusLookup: { displayName: 'Report issued' }
+			},
+			gateway3Info: { examinationWebsiteUrl: null }
+		};
+		const service = buildService(currentCase);
+		const findDocuments = service.db.document.findMany as any;
+		findDocuments.mock.mockImplementation(async ({ where }: { where: { documentSetId: string } }) => {
+			if (where.documentSetId !== DOCUMENT_SET_ID.EXAMINATION_REPORT) {
+				return [];
+			}
+			return ['examination-report.pdf', 'main%20modifications.pdf'].map((fileName, index) => ({
+				guid: `report-guid-${index + 1}`,
+				name: fileName,
+				documentSetId: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+				isDeleted: false,
+				isTemp: false,
+				latestDocumentVersion: {
+					version: 1,
+					originalFilename: fileName,
+					fileName,
+					mime: 'application/pdf',
+					size: 100,
+					blobStorageContainer: 'documents',
+					blobStoragePath: fileName,
+					dateCreated: issuedDate,
+					documentURI: null,
+					virusCheckStatus: 'scanned',
+					isDeleted: false
+				}
+			}));
+		});
+		const handler = buildGetJourneyResponseFromCase(service);
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-61797' },
+			session: {}
+		} as unknown as Request;
+		const res = { locals: {} } as unknown as Response;
+
+		await handler(req, res, (() => {}) as NextFunction);
+
+		assert.deepEqual(res.locals.examinationReportFiles, [
+			{
+				fileName: 'examination-report.pdf',
+				href: '/manage-local-plans/PLAN-61797/examination/download-document/report-guid-1',
+				issuedDate: '20 October 2026'
+			},
+			{
+				fileName: 'main modifications.pdf',
+				href: '/manage-local-plans/PLAN-61797/examination/download-document/report-guid-2',
+				issuedDate: '20 October 2026'
+			}
+		]);
 	});
 
 	it('does not overwrite an existing examination website with the Gateway 3 website', async () => {
@@ -702,6 +774,59 @@ describe('examination declaration and completion', () => {
 		assert.equal(res.locals.submissionDate, undefined);
 		assert.equal(res.locals.submissionTime, undefined);
 		assert.equal(res.locals.saveAndComeBackUrl, undefined);
+		assert.equal(next.mock.callCount(), 1);
+	});
+});
+
+describe('examination submitted view MIQ submitter', () => {
+	function buildMiqContext(examinationInfo: Record<string, unknown>) {
+		const req = {
+			params: { planReference: 'PLAN-61797' },
+			currentCase: {
+				id: 'case-id',
+				email: 'planner@example.com',
+				caseOfficer: '00000000-0000-0000-0000-000000000000',
+				caseOfficerName: 'Test Officer',
+				examinationInfo: {
+					status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+					submissionForExaminationDate: new Date('2026-10-21T10:30:00Z'),
+					miqDocumentSharedDate: new Date('2026-10-25T09:15:00Z'),
+					...examinationInfo
+				}
+			}
+		} as unknown as Request;
+		const res = { locals: { journey: { taskListTemplate: 'editable.njk' } } } as unknown as Response;
+		const service = {
+			db: {
+				documentSet: {
+					findMany: mock.fn(async () => [{ id: 'miq-set', folderName: 'miqs' }])
+				},
+				document: { findMany: mock.fn(async () => []) }
+			},
+			logger: { error: mock.fn() }
+		} as unknown as PortalService;
+		return { req, res, service };
+	}
+
+	it('shows the email of the BO user who shared the MIQ documents', async () => {
+		const next = mock.fn();
+		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: 'test.officer@planninginspectorate.gov.uk' });
+
+		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
+
+		assert.equal(res.locals.submissionDate, '25 October 2026');
+		assert.equal(res.locals.submitter, 'test.officer@planninginspectorate.gov.uk');
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('falls back to the case email, not the case officer, when the sharer was not recorded', async () => {
+		const next = mock.fn();
+		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: null });
+
+		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
+
+		assert.equal(res.locals.submitter, 'planner@example.com');
+		assert.notEqual(res.locals.submitter, 'Test Officer');
 		assert.equal(next.mock.callCount(), 1);
 	});
 });

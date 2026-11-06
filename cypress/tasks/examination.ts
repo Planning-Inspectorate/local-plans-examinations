@@ -13,6 +13,7 @@ import {
 import { loadConfig } from '../../apps/manage/src/app/config.ts';
 import { BlobFileStorageAdapter } from '../../packages/lib/storage/blob-storage.ts';
 import { examinationReport, soundUnsound } from '../fixtures/manage/examination.ts';
+import { seedExaminationReportIssued } from '../../packages/database/src/seed/seed-examination-report-issued.ts';
 
 export type ExaminationReportSeedOptions = {
 	state?: 'empty' | 'awaiting-confirmation' | 'issued';
@@ -103,6 +104,61 @@ export async function seedExaminationReport({
 			});
 		}
 		return seededCase;
+	} finally {
+		await db.$disconnect();
+	}
+}
+
+const PLAN_REFERENCE = 'PLAN-001';
+
+export async function seedExaminationReportIssuedDocuments({
+	fileNames = [examinationReport.fileName]
+}: Pick<ExaminationReportSeedOptions, 'fileNames'> = {}) {
+	const storage = reportStorage();
+	const issued = await seedExaminationReportIssued();
+	const db = newDatabaseClient(loadDatabaseConfig().db);
+	try {
+		const { id: caseId } = await db.case.findUniqueOrThrow({ where: { reference: PLAN_REFERENCE } });
+
+		for (const fileName of fileNames) {
+			const buffer = await readFile(path.resolve('cypress/fixtures/files', fileName));
+			const file = await storage.upload(
+				{
+					originalname: fileName,
+					mimetype: fileName.endsWith('.pdf')
+						? 'application/pdf'
+						: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+					size: buffer.length,
+					buffer
+				},
+				{ folderPath: `${caseId}/${examinationReport.path}`, metadata: { caseId } }
+			);
+			const guid = randomUUID();
+			await db.document.create({
+				data: {
+					guid,
+					name: file.id,
+					caseId,
+					documentSetId: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+					versions: {
+						create: {
+							version: 1,
+							originalFilename: file.fileName,
+							fileName: file.fileName,
+							mime: file.mimeType,
+							size: file.size,
+							blobStorageContainer: file.containerName,
+							blobStoragePath: file.path,
+							sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.BACK_OFFICE,
+							virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED
+						}
+					}
+				}
+			});
+			await db.document.update({ where: { guid }, data: { latestVersionId: 1 } });
+		}
+
+		return issued;
 	} finally {
 		await db.$disconnect();
 	}

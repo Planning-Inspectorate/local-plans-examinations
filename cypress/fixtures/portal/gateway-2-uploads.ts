@@ -69,8 +69,8 @@ export const gateway2ApplicationDocuments = {
 			addCy: 'add-consultation-summary-of-feedback-to-scoping-consultation'
 		},
 		{
-			document: 'Summary of consultation for proposed local plan content and evidence',
-			addCy: 'add-summary-of-consultation-for-proposed-local-plan-content-and-evidence'
+			document: 'Summary of consultation on proposed local plan content and evidence',
+			addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence-documents'
 		},
 		{ document: 'Gateway 1 - Self Assessment of Readiness', addCy: 'add-gateway-1-self-assessment' },
 		{

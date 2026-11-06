@@ -335,7 +335,9 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			questionUrl,
 			req.originalUrl,
 			service,
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[],
+			questionConfig.title
 		);
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
@@ -770,7 +772,8 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
 		// Todo add error handling for if the file is not found
-		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
+		// LPA resubmission documents are soft-deleted once the BO report is saved to the same document set
+		await DocumentUtil.downloadDocumentToResponse(service, documentId, res, { includeDeleted: true });
 	};
 }
 
@@ -838,11 +841,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		if (existingExaminationDetails?.soundUnsoundDate && returnToManage) {
 			const manuallySetInFirstSubmission = await checkSoundUnsoundManuallySet(service, caseId);
 			const reportIssuedDate = manuallySetInFirstSubmission ? existingExaminationDetails.soundUnsoundDate : new Date();
-			if (!manuallySetInFirstSubmission) {
-				await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-					soundUnsoundDate: reportIssuedDate
-				});
-			}
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				...(!manuallySetInFirstSubmission && { soundUnsoundDate: reportIssuedDate })
+			});
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: `Examination report document added; report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			});
@@ -856,11 +858,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		}
 
 		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
-		if (!existingExaminationDetails?.soundUnsoundDate) {
-			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-				soundUnsoundDate: reportIssuedDate
-			});
-		}
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+			...(!existingExaminationDetails?.soundUnsoundDate && { soundUnsoundDate: reportIssuedDate })
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -934,11 +935,30 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 export function issueMiqs(service: ManageService, journeyId: string): AsyncRequestHandler {
 	return async (req, res) => {
 		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingExaminationDetails = await service.db.examinationInfo.findUnique({
+			select: {
+				miqDocumentSharedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (existingExaminationDetails?.miqDocumentSharedDate) {
+			pushAlertToSession(req, 'important', 'MIQ documents already shared');
+			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+			return;
+		}
 		const uploadedFiles =
 			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'miqs')]?.uploadedFiles ?? [];
 		const account = authSession.getAccount(req.session);
 		const currentUser = account?.name ?? 'Unknown';
 		const sentDate = new Date();
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			miqDocumentSharedDate: sentDate,
+			miqDocumentSharedBy: account?.username,
+			status: EXAMINATION_STATUS_ID.IN_EXAMINATION
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -961,6 +981,29 @@ export function issueMiqs(service: ManageService, journeyId: string): AsyncReque
 		);
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
+	};
+}
+
+export function issueGateway2Document(_service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res): Promise<void> => {
+		const caseReference = getParam(req.params.reference);
+		const questionUrl = getParam(req.params.question);
+
+		if (!COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(questionUrl)) {
+			res.sendStatus(404);
+			return;
+		}
+
+		const questionConfig = fileUploadQuestionsByUrl.get(questionUrl);
+
+		if (!questionConfig) {
+			res.sendStatus(404);
+			return;
+		}
+
+		res.redirect(
+			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/gateway-2/gateway2Documents`
+		);
 	};
 }
 
@@ -1108,6 +1151,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
+	if (COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))) {
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
+	}
 	const journey = req.url.split(String(req.params.section))[0];
 	if (
 		req.params.question === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION &&
@@ -1220,6 +1266,25 @@ export function preprocessQuestionProperties(
 				delete questions['gateway2WorkshopDocuments'].actionLink;
 			}
 		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: true
+				},
+				where: {
+					reference
+				}
+			});
+			const miqComplete = !!caseDetails?.examinationInfo?.miqDocumentSharedDate;
+			if (miqComplete) {
+				questions['miqs'].actionLink = {
+					href: `/case/${reference}/examination/hearings/miqs/check`,
+					text: 'View'
+				};
+			} else {
+				delete questions['miqs'].actionLink;
+			}
+		}
 		if (journeyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
 			const decisionMap = {
 				'1': 'Proceed to examination',
@@ -1263,7 +1328,9 @@ export function preprocessQuestionProperties(
 
 				questions[gateway3DocumentsCheck].changeActionText = 'Review';
 				const submissionReceived =
-					!!submission.submittedDate || (submissionId === 1 && !!caseDetails.gateway3Info?.actualDate);
+					!!submission.submittedDate ||
+					!!submission.completionDate ||
+					(submissionId === 1 && !!caseDetails.gateway3Info?.actualDate);
 				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary =
 					submissionReceived && !!questions[gateway3DocumentsCheck].actionLink?.text;
 

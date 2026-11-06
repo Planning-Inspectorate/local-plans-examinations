@@ -14,6 +14,7 @@ import {
 	issueGateway3Document,
 	issueGateway2WorkshopDocuments,
 	issueExaminationReport,
+	issueMiqs,
 	fileUploaderCaseSessionKeyForField,
 	redirectToFileUploaderQuestion,
 	redirectToChecks,
@@ -1914,7 +1915,7 @@ describe('downloadDocument', () => {
 		};
 		const res = {};
 		await downloadDocument(service)(req as unknown as Request, res as Response);
-		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res]);
+		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res, { includeDeleted: true }]);
 	});
 	it('rejects when the documentId is not found in the request', async () => {
 		const service = createService();
@@ -2014,7 +2015,12 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
+		assert.equal(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate, undefined);
 		assert.equal(req.session.alerts[0].text, 'Final report and supporting documents saved and notification sent');
 		assert.equal(
 			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
@@ -2037,6 +2043,10 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		const expectedMessage = {
 			type: 'success',
 			text: 'Final report and supporting documents saved and notification sent',
@@ -2068,6 +2078,10 @@ describe('issueExaminationReport', () => {
 		const savedDate = service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate;
 		assert.ok(savedDate instanceof Date);
 		assert.ok(savedDate.getTime() >= beforeConfirm.getTime());
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		assert.equal((req.session as any).examinationReportReturnToManage, undefined);
 	});
 
@@ -2088,7 +2102,10 @@ describe('issueExaminationReport', () => {
 
 		await issueExaminationReport(service, 'examination')(req, res, mock.fn());
 
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update, {
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED
+		});
 		assert.equal(
 			redirect.mock.calls[0].arguments[0],
 			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
@@ -2583,7 +2600,16 @@ describe('preprocessQuestionProperties', () => {
 				questions[`gateway3Documents-${submissionId}`] = { config: {} };
 				questions[`gateway3Decision-${submissionId}`] = {};
 			}
-			const res = { locals: { journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } } } };
+			const res = {
+				locals: {
+					journeyResponse: {
+						answers: {
+							proposedLocalPlan: 'plan.pdf',
+							resubmissionDocumentFiles: { 2: [{ guid: 'guid', fileName: 'new.pdf' }] }
+						}
+					}
+				}
+			};
 
 			await preprocessQuestionProperties(service, journeyId, questions)(
 				{ params: { reference: caseReference } } as Request,
@@ -3137,5 +3163,76 @@ describe('DeleteCase', () => {
 			assert.equal(getDeleteReason(createJourneyLocals('   ')), undefined);
 			assert.equal(getDeleteReason(createJourneyLocals(42)), undefined);
 		});
+	});
+});
+
+describe('issueMiqs', () => {
+	function createMiqRequest(session: Record<string, unknown> = {}): any {
+		return {
+			session: {
+				fileUploader: { [`${REFERENCE}:miqs`]: { uploadedFiles: [{ name: 'miqs.pdf' }] } },
+				...session
+			},
+			params: { reference: REFERENCE, question: 'miqs' }
+		};
+	}
+
+	it('records the share date and the signed-in user email', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ miqDocumentSharedDate: null }));
+		const req = createMiqRequest({
+			account: { name: 'Test Officer', username: 'test.officer@planninginspectorate.gov.uk' }
+		});
+		const res = { redirect: mock.fn() };
+
+		await issueMiqs(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		const { update, create } = service.db.examinationInfo.upsert.mock.calls[0].arguments[0];
+		assert.ok(update.miqDocumentSharedDate instanceof Date);
+		assert.equal(update.miqDocumentSharedBy, 'test.officer@planninginspectorate.gov.uk');
+		assert.equal(create.miqDocumentSharedBy, 'test.officer@planninginspectorate.gov.uk');
+		assert.match(
+			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
+			/^MIQs notification sent on /
+		);
+		assert.deepEqual(req.session.alerts[0], { type: 'success', text: '1 MIQ document uploaded', html: undefined });
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/examination`]);
+	});
+
+	it('still shares when there is no signed-in account', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ miqDocumentSharedDate: null }));
+		const req = createMiqRequest();
+		const res = { redirect: mock.fn() };
+
+		await issueMiqs(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		const { update } = service.db.examinationInfo.upsert.mock.calls[0].arguments[0];
+		assert.ok(update.miqDocumentSharedDate instanceof Date);
+		assert.equal(update.miqDocumentSharedBy, undefined);
+	});
+
+	it('does not overwrite who shared the MIQ documents once shared', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			miqDocumentSharedDate: new Date('2026-01-01T00:00:00.000Z')
+		}));
+		const req = createMiqRequest({
+			account: { name: 'Other Officer', username: 'other.officer@planninginspectorate.gov.uk' }
+		});
+		const res = { redirect: mock.fn() };
+
+		await issueMiqs(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.deepEqual(req.session.alerts[0], {
+			type: 'important',
+			text: 'MIQ documents already shared',
+			html: undefined
+		});
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/examination`]);
 	});
 });

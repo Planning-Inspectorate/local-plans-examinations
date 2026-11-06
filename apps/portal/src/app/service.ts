@@ -43,6 +43,7 @@ type PortalCase = {
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		soundUnsoundDate: Date | null;
 		status: string;
 		statusLookup: { displayName: string } | null;
 	} | null;
@@ -188,9 +189,21 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const gateway1Date = caseRecord.gateway1Info?.completedGateway1Date ?? caseRecord.gateway1Info?.expectedGateway1Date;
 	// Plan progress shows the timetabled (expected) submission date for each stage,
 	// as set when the case is created in the back office.
-	const gateway2Date = caseRecord.gateway2Info?.expectedDate;
-	const gateway3Date = caseRecord.gateway3Info?.expectedDate;
-	const examinationDate = caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
+	const gateway2Date = hasIssuedGateway2Report(caseRecord)
+		? caseRecord.gateway2Info?.reportIssuedDate
+		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+	const gateway3Date = gateway3SubmissionState.resubmissionAwaitingSubmission
+		? (caseRecord.gateway3Info?.actualDate ?? caseRecord.gateway3Info?.expectedDate)
+		: (gateway3SubmissionState.latestSubmission?.completionDate ??
+			caseRecord.gateway3Info?.actualDate ??
+			caseRecord.gateway3Info?.expectedDate);
+	const examinationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
+	const examinationDate =
+		examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+			? caseRecord.examinationInfo?.soundUnsoundDate
+			: (caseRecord.examinationInfo?.submissionForExaminationDate ??
+				caseRecord.examinationInfo?.expectedSubmissionForExaminationDate);
 	const plan = buildPlan({
 		refNum: caseRecord.reference,
 		leadLPA: lpaNames[0] ?? '',
@@ -199,8 +212,11 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		lpaNames,
 		stage: progress.stage,
 		status: progress.status,
-		examinationStatus: caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET,
-		examinationStatusLabel: caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet',
+		examinationStatus,
+		examinationStatusLabel:
+			examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+				? 'Report issued'
+				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
@@ -239,6 +255,7 @@ const planCaseInclude = {
 		select: {
 			expectedSubmissionForExaminationDate: true,
 			submissionForExaminationDate: true,
+			soundUnsoundDate: true,
 			status: true,
 			statusLookup: {
 				select: { displayName: true }
