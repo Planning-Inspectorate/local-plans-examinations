@@ -60,19 +60,24 @@ describe('landing page', () => {
 		assert.ok(html.includes(`<span class="govuk-caption-xl">${expectedCaption}</span>`));
 	});
 
-	it('should render plan data from service', async () => {
-		const plans = [
-			mockPlan({ refNum: 'PLAN-001', leadLPA: 'Southampton', title: 'East plan', documents: [mockApplicationDoc()] })
-		];
-		const { landingPage, mockRes, mockReq } = initialiseTest(plans);
+	it('should render reference, title and type in the same order as the table headings', async () => {
+		const localPlan = mockPlan({
+			refNum: 'PLAN-001',
+			title: 'East plan',
+			type: { id: 'local-plan', displayName: 'Local Plan', displayOrder: 1 }
+		});
+		const { landingPage, mockRes, mockReq } = initialiseTest([localPlan]);
 		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
-		const [view, data] = mockRes.render.mock.calls[0].arguments;
-
-		const refNum = data.plans[0][0].html.match(/>([^<]+)</)?.[1];
-
-		assert.deepStrictEqual(refNum, 'PLAN-001', `Expected PLAN-001 instead got ${refNum}`);
-		assert.strictEqual(data.plans[0][1].text, 'Southampton');
+		const viewModel = mockRes.render.mock.calls[0].arguments[1];
+		assert.deepStrictEqual(viewModel.plans, [
+			[
+				{ html: '<a class="govuk-link" data-cy="plan-link" href="/manage-local-plans/PLAN-001">PLAN-001</a>' },
+				{ text: 'East plan' },
+				{ text: 'Local Plan' }
+			]
+		]);
+		assert.strictEqual(viewModel.noPlansFlag, false);
 	});
 
 	it('should warn if no plans found and display No plans available', async () => {
@@ -104,13 +109,7 @@ describe('landing page', () => {
 			(match) => match[1]
 		);
 
-		const expectedHeadings = [
-			'Reference number',
-			'Lead local planning authority',
-			'Plan title',
-			'Current stage',
-			'Status'
-		];
+		const expectedHeadings = ['Reference number', 'Plan title', 'Type'];
 
 		assert.deepStrictEqual(headings, expectedHeadings, `Expected ${expectedHeadings} instead got "${headings}"`);
 	});
@@ -162,84 +161,20 @@ describe('landing page', () => {
 		}
 	});
 
-	it('should render correct status tags', async () => {
-		const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest();
-		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
+	for (const planType of [
+		{ id: 'local-plan', displayName: 'Local Plan', displayOrder: 1 },
+		{ id: 'other', displayName: 'Other', displayOrder: 2 }
+	]) {
+		it(`should render the ${planType.displayName} type as text`, async () => {
+			const { landingPage, mockRes, mockReq, nunjucks } = initialiseTest([mockPlan({ type: planType })]);
+			await assert.doesNotReject(() => landingPage(mockReq, mockRes));
 
-		const [view, data] = mockRes.render.mock.calls[0].arguments;
-		const html = nunjucks.render(view, data);
-
-		const targetTags = [
-			{ className: 'govuk-tag govuk-tag--green', text: 'Ready to start' },
-			{ className: 'govuk-tag govuk-tag--blue', text: 'In progress' },
-			{ className: 'govuk-tag govuk-tag--yellow', text: 'With PINS' },
-			{ className: 'govuk-tag govuk-tag--red', text: 'Action required' },
-			{ className: 'govuk-tag govuk-tag--grey', text: 'Invalid' },
-			{ className: 'govuk-body', text: 'Completed' },
-			{ className: 'govuk-tag govuk-tag--yellow', text: 'Under review' }
-		];
-
-		for (const plan of data.plans) {
-			const rawTagClass = plan[4].html.match(/"([^"]+)"/)?.[1]; // 4 for last cell - where tag should be
-			const rawTagText = plan[4].html.match(/>([^<]+)</)?.[1];
-
-			assert.ok(
-				targetTags.some((tag) => tag.className === rawTagClass && tag.text === rawTagText),
-				`Expected one of ${targetTags} but got ${rawTagClass}, ${rawTagText}`
-			);
-
-			assert.ok(
-				html.includes(`<strong class="${rawTagClass}">${rawTagText}</strong>`),
-				`expected <strong class="${rawTagClass}">${rawTagText}</strong>`
-			);
-		}
-	});
-
-	it('should use the examination status for plans in the Examination stage', async () => {
-		const { landingPage, mockRes, mockReq } = initialiseTest([
-			mockPlan({
-				refNum: 'PLAN-EXAMINATION',
-				stage: 3,
-				status: 0,
-				examinationStatus: 'in-examination',
-				examinationStatusLabel: 'In examination'
-			})
-		]);
-		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
-
-		const data = mockRes.render.mock.calls[0].arguments[1];
-		assert.strictEqual(data.plans[0][4].html, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
-	});
-
-	it('should render Plan adopted with a purple status tag', async () => {
-		const { landingPage, mockRes, mockReq } = initialiseTest([
-			mockPlan({
-				refNum: 'PLAN-ADOPTED',
-				stage: 3,
-				status: 0,
-				examinationStatus: 'plan-adopted',
-				examinationStatusLabel: 'Plan adopted'
-			})
-		]);
-		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
-
-		const data = mockRes.render.mock.calls[0].arguments[1];
-		assert.strictEqual(data.plans[0][4].html, '<strong class="govuk-tag govuk-tag--purple">Plan adopted</strong>');
-	});
-
-	it('should continue to use the plan status before the Examination stage', async () => {
-		const { landingPage, mockRes, mockReq } = initialiseTest([
-			mockPlan({
-				refNum: 'PLAN-GATEWAY-3',
-				stage: 2,
-				status: 6,
-				examinationStatus: 'in-examination',
-				examinationStatusLabel: 'In examination'
-			})
-		]);
-		await assert.doesNotReject(() => landingPage(mockReq, mockRes));
-
-		const data = mockRes.render.mock.calls[0].arguments[1];
-		assert.strictEqual(data.plans[0][4].html, '<strong class="govuk-tag govuk-tag--yellow">Under review</strong>');
-	});
+			const [view, viewModel] = mockRes.render.mock.calls[0].arguments;
+			const renderedHtml = nunjucks.render(view, viewModel);
+			assert.strictEqual(viewModel.plans[0][2].text, planType.displayName);
+			assert.ok(renderedHtml.includes(planType.displayName));
+			assert.ok(!renderedHtml.includes('[object Object]'));
+			assert.ok(!renderedHtml.includes('<strong class="govuk-tag'));
+		});
+	}
 });

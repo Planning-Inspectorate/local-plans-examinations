@@ -1,4 +1,6 @@
 //stage constants: which stage of the plan the case is in
+import type { PlanType } from '@pins/local-plans-database/src/client/client.ts';
+
 export const STAGE = {
 	Gateway1: 0,
 	Gateway2: 1,
@@ -136,6 +138,7 @@ export interface Plan {
 	linkedLPA: string; //Linked Local Planning Authority
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
+	type: PlanType;
 	status: Status; //Status
 	examinationStatus: string;
 	examinationStatusLabel: string;
@@ -241,6 +244,7 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
 	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
 	title: 'East Borough Local Plan', //Plan Title
+	type: { id: 'local-plan', displayName: 'Local Plan', displayOrder: 1 },
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
 	examinationStatus: 'cannot-start-yet',

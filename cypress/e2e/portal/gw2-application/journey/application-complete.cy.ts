@@ -49,9 +49,7 @@ describe('Application complete page journeys', () => {
 				planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', `Submitted: ${todayDisplay}`, 'Under review');
 				planDetailsPage.goBack();
 				myPlansPage.verifyLoaded();
-				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-					[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status3]
-				]);
+				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [[plan.reference, plan.title, plan.type]]);
 
 				gateway2ApplicationPage.visit(plan.urlReference);
 				gateway2ApplicationPage.verifySubmittedApplication(todayDisplay, TEST_EMAIL);
