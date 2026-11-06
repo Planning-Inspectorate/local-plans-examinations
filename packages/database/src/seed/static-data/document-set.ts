@@ -142,11 +142,11 @@ export const DOCUMENT_SET = [
 		displayOrder: 17
 	},
 	{
-		id: DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
-		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		id: DOCUMENT_SET_ID.G2_EVIDENCE_ON_ENGAGEMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Subsequent work towards draft plan',
-		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
+		displayName: 'Evidence on engagement',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_EVIDENCE_ON_ENGAGEMENT,
 		displayOrder: 18
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,

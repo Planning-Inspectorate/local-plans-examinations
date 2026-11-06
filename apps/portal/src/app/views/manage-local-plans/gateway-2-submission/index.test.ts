@@ -307,7 +307,7 @@ describe('Gateway 1 self assessment upload page', () => {
 		});
 
 		assert.ok(html.includes('Consultation documents'));
-		assert.ok(html.includes('Upload your Gateway 1 - Self Assessment of Readiness'));
+		assert.ok(html.includes('Upload your Gateway 1 self assessment'));
 		assert.ok(html.includes('Drag and drop or choose files'));
 		assert.ok(html.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE));
 	});
@@ -332,7 +332,7 @@ describe('Consultation on proposed content upload page', () => {
 		});
 
 		assert.ok(html.includes('Consultation documents'));
-		assert.ok(html.includes('Upload your Consultation on proposed local plan content and evidence documents'));
+		assert.ok(html.includes('Upload your consultation on proposed local plan content and evidence'));
 		assert.ok(html.includes('Drag and drop or choose files'));
 		assert.ok(html.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE));
 	});

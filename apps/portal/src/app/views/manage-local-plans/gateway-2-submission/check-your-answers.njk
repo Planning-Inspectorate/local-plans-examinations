@@ -36,8 +36,18 @@
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}
+        {% if statusTag %}
+            {{ govukTag({
+                text: statusTag.label,
+                classes: statusTag.class
+            }) }}
+        {% endif %}
         {{ govukInsetText({
-            text: "Your target submission date is " + (targetDate or "") + ". A Gateway 2 assessment usually takes about 6 weeks."
+            html: "
+                <p class='govuk-body'>Gateway 2 is the next step in the development of your local plan.</p>
+                <p class='govuk-body'>You've provided the expected submission date of " + (targetDate or "") + ". The assessment usually takes between 4 and 6 weeks from submission.</p>
+                <p class='govuk-body'>For more infomation on Gateway 2 documents, <a href='#' class='govuk-link'>check the guidance</a></p>
+            "
         }) }}
 
         {% if saveAndComeBackUrl %}
@@ -46,8 +56,6 @@
             </p>
             <hr class="govuk-section-break govuk-section-break--visible pins-app-section-break">
         {% endif %}
-
-        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
 
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
@@ -59,6 +67,19 @@
                     {% endif %}
 
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+                    {% if section.heading == "Procedural Documents" %}
+                        <p class="govuk-body">
+                            You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions except where drafts are specified.
+                        </p>
+                    {% elif section.heading == "Consultation Documents" %}
+                        <p class="govuk-body">
+                            You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions.
+                        </p>
+                    {% elif section.heading == "Additional documents" %}
+                        <p class="govuk-body">
+                            Add any other documents that support your Gateway 2 submission.
+                        </p>
+                    {% endif %}
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
@@ -105,10 +126,14 @@
             {% endif %}
         {% endfor %}
 
+        <h2 class="govuk-heading-m">Ready to submit for Gateway 2</h2>
+        <p class="govuk-body">You cannot make any changes after submission.</p>
+
+
         <form method="post" novalidate>
             <input type="hidden" name="_csrf" value="{{ _csrf }}">
             {{ govukButton({
-                text: "Submit for Gateway 2 assessment",
+                text: "Submit",
                 attributes: { "data-cy": "submit-gateway-2" }
             }) }}
         </form>
