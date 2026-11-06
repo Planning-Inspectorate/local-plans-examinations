@@ -109,8 +109,8 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				break;
 		}
 
-		const planLPAs = plan.lpaNames;
-		const lpaText = planLPAs?.length > 0 ? 'Joint planning authorities' : 'LPA associated with plan';
+		const planLPAs = plan.lpaNames ?? [];
+		const lpaText = planLPAs.length > 1 ? 'Joint local planning authorities' : 'Local planning authority';
 
 		const viewModel = {
 			dateG1: plan.dates.G1,

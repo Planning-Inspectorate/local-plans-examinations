@@ -177,7 +177,7 @@ describe('plan page', () => {
 			}
 		);
 		assert.deepStrictEqual(data.planLPAs, planLPAs);
-		assert.strictEqual(data.lpaText, 'Joint planning authorities');
+		assert.strictEqual(data.lpaText, 'Joint local planning authorities');
 		const summary = html.match(/<dl\b[\s\S]*?<\/dl>/)?.[0];
 		assert.ok(summary, 'expected a summary list');
 		assert.match(summary, />\s*Reference\s*<\/dt>/);
@@ -190,20 +190,37 @@ describe('plan page', () => {
 		assert.ok(!summary.includes('Linked local planning authorities'));
 	});
 
-	it('renders the fallback authority label for an empty authority list', async () => {
-		const { data, html } = await renderPlan(
-			{ refNum: 'PLAN-001' },
-			{
-				refNum: 'PLAN-001',
-				lpaNames: [],
-				dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
-			}
-		);
-		assert.deepStrictEqual(data.planLPAs, []);
-		assert.strictEqual(data.lpaText, 'LPA associated with plan');
-		assert.ok(html.includes('LPA associated with plan'));
-		assert.ok(!html.includes('Joint planning'));
-	});
+	for (const { label, lpaNames, expectedText } of [
+		{ label: 'one authority', lpaNames: ['Alpha Council'], expectedText: 'Local planning authority' },
+		{
+			label: 'two authorities',
+			lpaNames: ['Alpha Council', 'Beta Council'],
+			expectedText: 'Joint local planning authorities'
+		},
+		{ label: 'no authorities', lpaNames: [], expectedText: 'Local planning authority' }
+	]) {
+		it(`renders the authority row label for ${label}`, async () => {
+			const { data, html } = await renderPlan(
+				{ refNum: 'PLAN-001' },
+				{
+					refNum: 'PLAN-001',
+					lpaNames,
+					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+				}
+			);
+			assert.deepStrictEqual(data.planLPAs, lpaNames);
+			assert.strictEqual(data.lpaText, expectedText);
+			const summary = html.match(/<dl\b[\s\S]*?<\/dl>/)?.[0];
+			assert.ok(summary, 'expected a summary list');
+			const keyPattern = /<dt class="govuk-summary-list__key">\s*([^<]+?)\s*<\/dt>/g;
+			const keys = [...summary.matchAll(keyPattern)].map((match) => match[1]);
+			assert.deepStrictEqual(keys, ['Reference', expectedText]);
+			assert.deepStrictEqual(
+				[...summary.matchAll(/<span class="govuk-!-display-block">([^<]+)<\/span>/g)].map((match) => match[1]),
+				lpaNames
+			);
+		});
+	}
 
 	it('escapes authority names rendered inside the HTML summary value', async () => {
 		const { html } = await renderPlan(

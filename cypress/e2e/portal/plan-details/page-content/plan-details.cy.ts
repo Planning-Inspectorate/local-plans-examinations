@@ -26,7 +26,7 @@ describe('Plan details page content', () => {
 			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
 
 			cy.get('.govuk-summary-list').find('.govuk-summary-list__row').should('have.length', 2);
-			cy.contains('.govuk-summary-list__row', /Joint planning\s*authorities/)
+			cy.contains('.govuk-summary-list__row', 'Joint local planning authorities')
 				.find('.govuk-summary-list__value > span')
 				.should('have.length', 2)
 				.then(($names) => {
