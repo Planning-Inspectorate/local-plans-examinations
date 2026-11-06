@@ -46,7 +46,7 @@ describe('Application complete page journeys', () => {
 
 				applicationCompletePage.returnToYourPlanLink(plan.urlReference).click();
 				planDetailsPage.verifyLoaded();
-				planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', `Submitted: ${todayDisplay}`, 'Under review');
+				planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, 'Under review');
 				planDetailsPage.goBack();
 				myPlansPage.verifyLoaded();
 				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [

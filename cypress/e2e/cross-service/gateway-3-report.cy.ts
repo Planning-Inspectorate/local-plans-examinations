@@ -32,6 +32,7 @@ describe('Cross-service Gateway 3 report', () => {
 					plan.reference,
 					gateway3DocumentsAnswer.fileName,
 					todayDisplay,
+					plan.dates.gateway3,
 					plan.dates.examination
 				);
 			});

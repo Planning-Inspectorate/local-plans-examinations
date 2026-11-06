@@ -424,6 +424,45 @@ describe('PortalService', () => {
 			});
 		}
 
+		it('uses the timetabled expected dates even after actual, report and decision dates are set', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: {
+						expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+						actualDate: new Date('2026-08-15T12:00:00.000Z'),
+						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+					},
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-10-01T12:00:00.000Z'),
+						frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET,
+						submissions: [{ decision: null, completionDate: new Date('2026-10-15T12:00:00.000Z') }]
+					},
+					examinationInfo: {
+						expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
+						submissionForExaminationDate: new Date('2026-10-21T12:00:00.000Z'),
+						status: 'submitted',
+						statusLookup: { displayName: 'Submitted' }
+					}
+				})
+			]);
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+			assert.strictEqual(plans.length, 1);
+			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
+			assert.strictEqual(plans[0].dates.E, '1 September 2026');
+		});
+
+		it('shows Not set when a timetabled date is missing', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: { expectedDate: null, actualDate: new Date('2026-08-15T12:00:00.000Z'), reportIssuedDate: null }
+				})
+			]);
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+			assert.strictEqual(plans[0].dates.G2, 'Not set');
+		});
+
 		it('loads plans from the database for the signed-in email', async () => {
 			const service = buildService([buildCase()]);
 

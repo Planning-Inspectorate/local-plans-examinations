@@ -49,23 +49,11 @@ describe('Plan details page content', () => {
 			cy.contains('h2', 'Assessment information').should('not.exist');
 			cy.get('.govuk-tabs').should('not.exist');
 			planDetailsPage.verifyPlanProgressHeading();
-			planDetailsPage.verifyPlanProgressRowsInOrder(
-				'Gateway 2 - advisory check',
-				'Gateway 3 - readiness check',
-				'Examination'
-			);
+			planDetailsPage.verifyPlanProgressRowsInOrder('Gateway 2', 'Gateway 3', 'Examination');
 
 			planDetailsPage.planProgress.should('not.contain.text', 'Gateway 1 - self-assessment');
-			planDetailsPage.verifyProgressRow(
-				'Gateway 2 - advisory check',
-				`Submission expected: ${plan.dates.gateway2}`,
-				plan.status
-			);
-			planDetailsPage.verifyProgressRow(
-				'Gateway 3 - readiness check',
-				`Submission expected: ${plan.dates.gateway3}`,
-				'Cannot start yet'
-			);
+			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, plan.status);
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, 'Cannot start yet');
 			planDetailsPage.verifyProgressRow(
 				'Examination',
 				`Submission expected: ${plan.dates.examination}`,
@@ -92,12 +80,8 @@ describe('Plan details page content after GW2 report issued in BO', () => {
 		loadReportIssuedPlan().then((plan) => {
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
-			planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', `Completed: ${plan.dates.gateway2}`, 'Completed');
-			planDetailsPage.verifyProgressRow(
-				'Gateway 3 - readiness check',
-				`Submission expected: ${plan.dates.gateway3}`,
-				plan.status
-			);
+			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, 'Completed');
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status);
 		});
 	});
 

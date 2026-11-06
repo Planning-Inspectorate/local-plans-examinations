@@ -249,8 +249,8 @@ describe('plan page', () => {
 
 	for (const { stage, expected } of [
 		{ stage: STAGE.Gateway2, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] },
-		{ stage: STAGE.Gateway3, expected: ['Completed: ', 'Submission expected: ', 'Submission expected: '] },
-		{ stage: STAGE.Examination, expected: ['Completed: ', 'Completed: ', 'Submission expected: '] }
+		{ stage: STAGE.Gateway3, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] },
+		{ stage: STAGE.Examination, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] }
 	]) {
 		it(`renders expected submission dates at stage ${stage}`, async () => {
 			const { data, html } = await renderPlan(
@@ -346,13 +346,14 @@ describe('plan page', () => {
 	it('should render task table headings correctly (g1, g2, g3, e)', async () => {
 		const { html } = await renderPlan({ refNum: 'PLAN-001' });
 
-		const expectedHeadings = ['Gateway 2 - advisory check', 'Gateway 3 - readiness check', 'Examination'];
+		const expectedHeadings = ['Gateway 2', 'Gateway 3', 'Examination'];
 
 		assert.ok(!html.includes('Gateway 1 - self-assessment'));
-		assert.strictEqual([...html.matchAll(/class="govuk-task-list__item/g)].length, 3);
-		for (const heading of expectedHeadings) {
-			assert.ok(html.trim().includes(heading), `expected html to contain ${heading}`);
-		}
+		assert.ok(!html.includes('advisory check'));
+		assert.ok(!html.includes('readiness check'));
+		const titlePattern = /govuk-task-list__name-and-hint">\s*<(?:a|div)\b[^>]*>\s*([^<]+?)\s*<\/(?:a|div)>/g;
+		const titles = [...html.matchAll(titlePattern)].map((match) => match[1]);
+		assert.deepStrictEqual(titles, expectedHeadings);
 	});
 
 	it('should render task table links correctly for case 1 (G1 complete)', async () => {
@@ -418,7 +419,7 @@ describe('plan page', () => {
 		}
 	});
 
-	it('should render Under review tag and Submitted hint text for GW2 when status is UnderReview', async () => {
+	it('should render Under review tag and the expected submission date for GW2 when status is UnderReview', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway2,
@@ -432,9 +433,10 @@ describe('plan page', () => {
 		assert.strictEqual(data.tagG3, 'Cannot start yet', `expected 'Cannot start yet' but got ${data.tagG3}`);
 		assert.strictEqual(data.tagE, 'Cannot start yet', `expected 'Cannot start yet' but got ${data.tagE}`);
 
-		assert.strictEqual(data.dateTextG2, 'Submitted: ', `expected 'Submitted: ' but got ${data.dateTextG2}`);
+		assert.strictEqual(data.dateTextG2, 'Submission expected: ');
 
-		assert.ok(html.includes('Submitted: 21 July 2026'), 'expected html to contain Submitted hint text with date');
+		assert.ok(html.includes('Submission expected: 21 July 2026'), 'expected the expected submission date');
+		assert.ok(!html.includes('Submitted: '), 'expected no Submitted hint text');
 		assert.ok(html.includes(expectedTag), 'expected html to contain yellow Under review tag');
 	});
 
@@ -490,7 +492,7 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
 	});
 
-	it('should render Gateway 2 as completed with the shared report date when the report has been uploaded', async () => {
+	it('should render Gateway 2 as completed with the expected date when the report is uploaded', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway3,
@@ -500,9 +502,10 @@ describe('plan page', () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		assert.strictEqual(data.tagG2, 'Completed');
-		assert.strictEqual(data.dateTextG2, 'Completed: ');
-		assert.ok(cleanHtml(html).includes('Gateway 2 - advisory check'), 'expected Gateway 2 row to render');
-		assert.ok(cleanHtml(html).includes('Completed: 2 September 2026'), 'expected Gateway 2 shared date hint');
+		assert.strictEqual(data.dateTextG2, 'Submission expected: ');
+		assert.ok(cleanHtml(html).includes('Gateway 2'), 'expected Gateway 2 row to render');
+		assert.ok(cleanHtml(html).includes('Submission expected: 2 September 2026'), 'expected Gateway 2 date hint');
+		assert.ok(!cleanHtml(html).includes('Completed: '), 'expected no Completed hint text');
 	});
 
 	it('should not render the Gateway 2 report on the plan page', async () => {
@@ -537,7 +540,7 @@ describe('plan page', () => {
 
 		assert.strictEqual(data.tagG3, '<strong class="govuk-tag govuk-tag--green">Ready to start</strong>');
 		assert.strictEqual(data.hrefG3, '/manage-local-plans/PLAN-001/gateway-3-submission');
-		assert.ok(cleanHtml(html).includes('Gateway 3 - readiness check'), 'expected Gateway 3 row to render');
+		assert.ok(cleanHtml(html).includes('Gateway 3'), 'expected Gateway 3 row to render');
 		assert.ok(
 			html.includes('href="/manage-local-plans/PLAN-001/gateway-3-submission"'),
 			'expected Gateway 3 row to be a hyperlink'
@@ -545,7 +548,7 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes('Ready to start'), 'expected Gateway 3 status to be Ready to start');
 	});
 
-	it('should render Under review and Submitted hint text for Gateway 3', async () => {
+	it('should render Under review and the expected submission date for Gateway 3', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway3,
@@ -556,8 +559,9 @@ describe('plan page', () => {
 		const expectedTag = '<strong class="govuk-tag govuk-tag--yellow">Under review</strong>';
 
 		assert.strictEqual(data.tagG3, expectedTag);
-		assert.strictEqual(data.dateTextG3, 'Submitted: ');
-		assert.ok(html.includes('Submitted: 1 October 2026'));
+		assert.strictEqual(data.dateTextG3, 'Submission expected: ');
+		assert.ok(html.includes('Submission expected: 1 October 2026'));
+		assert.ok(!html.includes('Submitted: '));
 		assert.ok(html.includes(expectedTag));
 	});
 
@@ -677,7 +681,7 @@ describe('plan page', () => {
 		}
 	});
 
-	it('shows a yellow Submitted examination tag and the examination submission date', async () => {
+	it('shows a yellow Submitted examination tag and the expected examination submission date', async () => {
 		const plan = {
 			refNum: 'PLAN-003',
 			stage: STAGE.Examination,
@@ -689,13 +693,13 @@ describe('plan page', () => {
 
 		const { data, html } = await renderPlan({ refNum: 'PLAN-003' }, plan);
 
-		assert.equal(data.dateTextE, 'Submitted: ');
+		assert.equal(data.dateTextE, 'Submission expected: ');
 		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>');
-		assert.ok(html.includes('Submitted: 21 October 2026'));
+		assert.ok(html.includes('Submission expected: 21 October 2026'));
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>'));
 	});
 
-	it('shows an In examination tag and keeps the examination submission date', async () => {
+	it('shows an In examination tag and the expected examination submission date', async () => {
 		const plan = {
 			refNum: 'PLAN-004',
 			stage: STAGE.Examination,
@@ -707,9 +711,9 @@ describe('plan page', () => {
 
 		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
 
-		assert.equal(data.dateTextE, 'Submitted: ');
+		assert.equal(data.dateTextE, 'Submission expected: ');
 		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
-		assert.ok(html.includes('Submitted: 21 October 2026'));
+		assert.ok(html.includes('Submission expected: 21 October 2026'));
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
 	});
 

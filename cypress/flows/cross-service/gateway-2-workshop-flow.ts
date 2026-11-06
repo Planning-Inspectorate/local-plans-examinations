@@ -13,7 +13,7 @@ export const verifyGateway2WorkshopInPortal = (
 
 			cy.contains('[data-cy="plan-link"]', reference).click();
 			cy.get('[data-cy="plan-progress"], section[aria-labelledby="plan-progress-heading"]')
-				.contains('a', 'Gateway 2 - advisory check')
+				.contains('a', 'Gateway 2')
 				.click();
 
 			cy.contains('.govuk-summary-list__key', 'Workshop venue')

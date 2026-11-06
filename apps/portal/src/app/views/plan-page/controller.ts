@@ -60,49 +60,33 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		const notificationBanner = plan.status === STATUS.ActionNeeded;
 
-		// Task list tags and links based on current stage
+		// Task list tags and links based on current stage.
+		// Every stage shows its timetabled date as "Submission expected"; progress is shown by the status tag.
+		const dateTextG2 = 'Submission expected: ';
+		const dateTextG3 = 'Submission expected: ';
+		const dateTextE = 'Submission expected: ';
 		let tagG2, tagG3, tagE;
-		let dateTextG2, dateTextG3, dateTextE;
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
-		dateTextG2 = dateTextG3 = dateTextE = 'Submission expected: ';
 		switch (plan.stage) {
 			case STAGE.Gateway2:
 				hrefG2 = applicationLink();
 				tagG2 = planStatus;
-				if (plan.status === STATUS.UnderReview) {
-					dateTextG2 = 'Submitted: ';
-				}
 				break;
 			case STAGE.Gateway3:
-				dateTextG2 = 'Completed: ';
-				if (plan.status === STATUS.UnderReview) {
-					dateTextG3 = 'Submitted: ';
-				}
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
-				if (isResubmissionRequired || plan.status === STATUS.UnderReview) {
-					dateTextG3 = 'Submitted: ';
-				}
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				hrefE = examinationAvailable ? examinationLink() : null;
 				if (plan.status === STATUS.Completed) {
-					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
 					tagG2 = tagG3 = tagE = 'Completed';
 				} else {
-					dateTextG2 = dateTextG3 = 'Completed: ';
-					if (
-						plan.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED ||
-						plan.examinationStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
-					) {
-						dateTextE = 'Submitted: ';
-					}
 					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
 					tagG2 = tagG3 = 'Completed';
 				}
