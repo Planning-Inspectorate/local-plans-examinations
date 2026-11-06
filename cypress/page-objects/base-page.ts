@@ -71,7 +71,7 @@ export class BasePage {
 	}
 
 	get cancelButton() {
-		return cy.getByData('button-back');
+		return cy.getByData('button-cancel');
 	}
 
 	get addListItemButton() {
