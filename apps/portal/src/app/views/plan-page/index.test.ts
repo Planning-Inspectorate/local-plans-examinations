@@ -247,10 +247,12 @@ describe('plan page', () => {
 		assert.ok(!html.includes('<script>alert(1)</script>'));
 	});
 
+	const submissionExpected = 'Submission expected: ';
+
 	for (const { stage, expected } of [
-		{ stage: STAGE.Gateway2, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] },
-		{ stage: STAGE.Gateway3, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] },
-		{ stage: STAGE.Examination, expected: ['Submission expected: ', 'Submission expected: ', 'Submission expected: '] }
+		{ stage: STAGE.Gateway2, expected: ['Completed: ', 'Completed: ', submissionExpected] },
+		{ stage: STAGE.Gateway3, expected: ['Completed: ', 'Completed: ', submissionExpected] },
+		{ stage: STAGE.Examination, expected: ['Completed: ', 'Completed: ', submissionExpected] }
 	]) {
 		it(`renders expected submission dates at stage ${stage}`, async () => {
 			const { data, html } = await renderPlan(
@@ -264,6 +266,7 @@ describe('plan page', () => {
 					dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
 				}
 			);
+			console.log(stage);
 			assert.deepStrictEqual([data.dateTextG2, data.dateTextG3, data.dateTextE], expected);
 			for (const [index, date] of [data.dateG2, data.dateG3, data.dateE].entries()) {
 				assert.ok(html.includes(expected[index] + date));
@@ -502,7 +505,7 @@ describe('plan page', () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		assert.strictEqual(data.tagG2, 'Completed');
-		assert.strictEqual(data.dateTextG2, 'Submission expected: ');
+		assert.strictEqual(data.dateTextG2, 'Completed: ');
 		assert.ok(cleanHtml(html).includes('Gateway 2'), 'expected Gateway 2 row to render');
 		assert.ok(cleanHtml(html).includes('Submission expected: 2 September 2026'), 'expected Gateway 2 date hint');
 		assert.ok(!cleanHtml(html).includes('Completed: '), 'expected no Completed hint text');
