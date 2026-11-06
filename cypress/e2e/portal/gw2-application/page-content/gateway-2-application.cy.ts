@@ -45,10 +45,6 @@ describe('Gateway 2 application page content', () => {
 		]);
 	});
 
-	it('Shows Additional Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifyAdditionalDocuments();
-	});
-
 	it('Shows Submit for Gateway 2 assessment', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubmitGateway2AssessmentButton();
 	});

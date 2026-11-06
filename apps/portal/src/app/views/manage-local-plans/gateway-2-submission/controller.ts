@@ -39,6 +39,7 @@ import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/mo
 import type { Gateway2WorkshopModel } from '@pins/local-plans-database/src/client/models/Gateway2Workshop.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 type Gateway2SummaryDocument = {
 	guid: string;
@@ -309,6 +310,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 2 submission';
 	res.locals.pageHeading = 'Gateway 2 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
+	res.locals.statusTag = StatusTag[STATUS.ReadyToStart];
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);

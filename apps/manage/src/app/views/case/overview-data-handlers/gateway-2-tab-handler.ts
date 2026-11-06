@@ -36,10 +36,11 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 					title: 'Summary of consultation on proposed local plan content and evidence documents'
 				},
 				{ folderName: 'g1-self-assess', title: 'Gateway 1 - Self assessment of readiness' },
-				{ folderName: 'cons-of-proposed', title: 'Consultation on proposed local plan content and evidence documents' }
-			],
-			additional: [
-				{ folderName: 'subsequent-work-towards-a-draft-plan', title: 'Subsequent work towards a draft plan' }
+				{ folderName: 'cons-of-proposed', title: 'Consultation on proposed local plan content and evidence documents' },
+				{
+					folderName: 'evidence-on-engagement',
+					title: 'Evidence on engagement between plan making authorities and relevant bodies'
+				}
 			]
 		};
 
@@ -174,7 +175,7 @@ function initaliseFileInSession(req: any, documentsByCategory: DocumentsByCatego
 		[`${caseRef}:scopingConsultationDocuments`]: { uploadedFiles: [] },
 		[`${caseRef}:consultationSummaryFeedbackScoping`]: { uploadedFiles: [] },
 		[`${caseRef}:consultationSummaryProposedContent`]: { uploadedFiles: [] },
-		[`${caseRef}:subsequentWorkTowardsADraftPlan`]: { uploadedFiles: [] }
+		[`${caseRef}:evidenceOnEngagement`]: { uploadedFiles: [] }
 	};
 
 	const documentKeyMapping: Record<string, string> = {
@@ -191,7 +192,7 @@ function initaliseFileInSession(req: any, documentsByCategory: DocumentsByCatego
 			'consultationSummaryProposedContent',
 		'Gateway 1 - Self assessment of readiness': 'gateway1SelfAssessment',
 		'Consultation on proposed local plan content and evidence documents': 'consultationOnProposedContent',
-		'Subsequent work towards a draft plan': 'subsequentWorkTowardsADraftPlan'
+		'Evidence on engagement between plan making authorities and relevant bodies': 'evidenceOnEngagement'
 	};
 
 	const allDocsFlat = documentsByCategory.flatMap((category) => category.documents);

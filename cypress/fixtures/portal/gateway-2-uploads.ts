@@ -40,13 +40,13 @@ export const gateway2UploadAnswers = {
 		section: 'consultation',
 		addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
 	},
-	subsequentWorkTowardsDraftPlan: {
-		heading: 'Upload any subsequent work towards a draft plan',
-		caption: 'Additional documents',
-		fieldName: 'subsequentWorkTowardsADraftPlan',
-		path: 'subsequent-work-towards-a-draft-plan',
-		section: 'additional',
-		addCy: 'add-subsequent-work-towards-a-draft-plan'
+	evidenceOnEngagement: {
+		heading: 'Upload our evidence on engagement between plan making authorities and relevant bodies',
+		caption: 'Consultation documents',
+		fieldName: 'evidenceOnEngagement',
+		path: 'evidence-on-engagement',
+		section: 'consultation',
+		addCy: 'add-evidence-on-engagement'
 	}
 } as const satisfies Record<string, Gateway2UploadAnswer>;
 
@@ -63,7 +63,10 @@ export const gateway2ApplicationDocuments = {
 			document: 'Notice of intention to commence local plan preparation',
 			addCy: gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.addCy
 		},
-		{ document: 'Scoping consultation documents', addCy: 'add-scoping-consultation-documents' },
+		{
+			document: 'Scoping consultation documents',
+			addCy: 'add-scoping-consultation-documents'
+		},
 		{
 			document: 'Consultation summary of feedback to scoping consultation',
 			addCy: 'add-consultation-summary-of-feedback-to-scoping-consultation'
@@ -72,16 +75,17 @@ export const gateway2ApplicationDocuments = {
 			document: 'Summary of consultation on proposed local plan content and evidence',
 			addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence-documents'
 		},
-		{ document: 'Gateway 1 - Self Assessment of Readiness', addCy: 'add-gateway-1-self-assessment' },
+		{
+			document: 'Gateway 1 - Self Assessment of Readiness',
+			addCy: 'add-gateway-1-self-assessment'
+		},
 		{
 			document: 'Consultation on proposed local plan content and evidence documents',
 			addCy: 'add-consultation-proposed-content'
-		}
-	],
-	additional: [
+		},
 		{
-			document: 'Subsequent work towards a draft Plan',
-			addCy: gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.addCy
+			document: 'Upload our evidence on engagement between plan making authorities and relevant bodies',
+			addCy: 'add-evidence-on-engagement'
 		}
 	]
 };

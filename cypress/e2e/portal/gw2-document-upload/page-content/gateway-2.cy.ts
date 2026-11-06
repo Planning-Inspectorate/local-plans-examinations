@@ -5,7 +5,7 @@ import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
-	subsequentWorkTowardsDraftPlanPage
+	evidenceOnEngagementPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -40,9 +40,9 @@ describe('Gateway 2 document upload page content', () => {
 		});
 	});
 
-	it('Verifying page content for the subsequent work towards a draft plan', { tags: ['regression'] }, () => {
+	it('Verifying page content for the evidence on engagement', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
-			const page = subsequentWorkTowardsDraftPlanPage;
+			const page = evidenceOnEngagementPage;
 			openGateway2DocumentUploadPage(plan, page);
 			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference));
 		});

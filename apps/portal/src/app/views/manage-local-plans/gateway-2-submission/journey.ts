@@ -27,10 +27,10 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.noticeOfIntention)
 				.addQuestion(questions.scopingConsultationDocuments)
 				.addQuestion(questions.consultationSummaryFeedbackScoping)
-				.addQuestion(questions.consultationSummaryProposedContent)
 				.addQuestion(questions.gateway1SelfAssessment)
-				.addQuestion(questions.consultationOnProposedContent),
-			new Section('Additional documents', 'additional').addQuestion(questions.subsequentWorkTowardsADraftPlan)
+				.addQuestion(questions.consultationOnProposedContent)
+				.addQuestion(questions.consultationSummaryProposedContent)
+				.addQuestion(questions.evidenceOnEngagement)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',

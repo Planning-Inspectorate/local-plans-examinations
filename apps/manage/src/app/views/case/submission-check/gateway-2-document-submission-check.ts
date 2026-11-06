@@ -17,10 +17,6 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 			throw new Error(`Could not find a title for Gateway 2 document '${questionUrl}'`);
 		}
 
-		if (questionTitle == 'Subsequent work towards a draft Plan') {
-			questionTitle = 'Subsequent work towards draft plan';
-		}
-
 		const allDocuments = await _service.db.document.findMany({
 			where: {
 				caseId: _caseId,
