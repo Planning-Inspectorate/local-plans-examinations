@@ -46,7 +46,7 @@
     },
     {
       key: {
-        text: lpaText
+        html: lpaText | escape | replace("planning authorities", "planning<br>authorities")
       },
       value: {
         html: planLPAsHtml

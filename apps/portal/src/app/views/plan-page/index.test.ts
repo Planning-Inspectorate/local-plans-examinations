@@ -190,14 +190,25 @@ describe('plan page', () => {
 		assert.ok(!summary.includes('Linked local planning authorities'));
 	});
 
-	for (const { label, lpaNames, expectedText } of [
-		{ label: 'one authority', lpaNames: ['Alpha Council'], expectedText: 'Local planning authority' },
+	for (const { label, lpaNames, expectedText, expectedKeyHtml } of [
+		{
+			label: 'one authority',
+			lpaNames: ['Alpha Council'],
+			expectedText: 'Local planning authority',
+			expectedKeyHtml: 'Local planning authority'
+		},
 		{
 			label: 'two authorities',
 			lpaNames: ['Alpha Council', 'Beta Council'],
-			expectedText: 'Joint local planning authorities'
+			expectedText: 'Joint local planning authorities',
+			expectedKeyHtml: 'Joint local planning<br>authorities'
 		},
-		{ label: 'no authorities', lpaNames: [], expectedText: 'Local planning authority' }
+		{
+			label: 'no authorities',
+			lpaNames: [],
+			expectedText: 'Local planning authority',
+			expectedKeyHtml: 'Local planning authority'
+		}
 	]) {
 		it(`renders the authority row label for ${label}`, async () => {
 			const { data, html } = await renderPlan(
@@ -212,9 +223,9 @@ describe('plan page', () => {
 			assert.strictEqual(data.lpaText, expectedText);
 			const summary = html.match(/<dl\b[\s\S]*?<\/dl>/)?.[0];
 			assert.ok(summary, 'expected a summary list');
-			const keyPattern = /<dt class="govuk-summary-list__key">\s*([^<]+?)\s*<\/dt>/g;
+			const keyPattern = /<dt class="govuk-summary-list__key">\s*([\s\S]*?)\s*<\/dt>/g;
 			const keys = [...summary.matchAll(keyPattern)].map((match) => match[1]);
-			assert.deepStrictEqual(keys, ['Reference', expectedText]);
+			assert.deepStrictEqual(keys, ['Reference', expectedKeyHtml]);
 			assert.deepStrictEqual(
 				[...summary.matchAll(/<span class="govuk-!-display-block">([^<]+)<\/span>/g)].map((match) => match[1]),
 				lpaNames

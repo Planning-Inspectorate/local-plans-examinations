@@ -29,6 +29,8 @@ describe('Plan details page content', () => {
 			cy.contains('.govuk-summary-list__key', /Joint local planning\s*authorities/)
 				.should('have.descendants', 'br')
 				.closest('.govuk-summary-list__row')
+				.find('.govuk-summary-list__value > span')
+				.should('have.length', 2)
 				.then(($names) => {
 					expect([...$names].map((name) => name.textContent?.trim())).to.deep.equal([plan.leadLpa, plan.linkedLpa]);
 				});
