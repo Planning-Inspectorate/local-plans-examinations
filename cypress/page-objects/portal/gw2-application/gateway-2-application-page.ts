@@ -60,14 +60,6 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		);
 	}
 
-	verifyAdditionalDocuments() {
-		this.verifyDocumentSection(
-			this.additionalDocumentsTable,
-			'Additional documents',
-			gateway2ApplicationDocuments.additional
-		);
-	}
-
 	// Cross-service tests start in Manage, so these Portal assertions need to run inside cy.origin().
 	openForCrossServiceAndVerify(planReference: string, planTitle: string) {
 		const path = this.pathFor(planReference);
