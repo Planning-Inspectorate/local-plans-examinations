@@ -6,6 +6,16 @@
   {% endset %}
 {% endif %}
 
+{% set cancelHref = cancelLink or backLink %}
+{% if cancelHref %}
+  {% set secondaryActions = (secondaryActions or []).concat([{
+    text: "Cancel",
+    href: cancelHref,
+    asLink: true,
+    classes: cancelLinkClasses or "govuk-link"
+  }]) %}
+{% endif %}
+
 {% block pageTitle %}{{ "Error: " + title if errors else title }}{% endblock %}
 
 {% block content %}
@@ -17,12 +27,4 @@
         }) }}
     {% endif %}
     {% block dynQuestionContent %}{% endblock %}
-    {% block cancelButton %}
-    <a
-				href="{{ cancelLink or backLink }}"
-				class="{{ cancelLinkClasses or 'govuk-button govuk-button--secondary' }}"
-				data-cy="button-back"
-				aria-describedby="remove-description"
-		>Cancel</a>
-    {% endblock cancelButton %}
 {% endblock %}
