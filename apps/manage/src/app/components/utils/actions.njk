@@ -1,0 +1,41 @@
+{# Overrides the dynamic-forms actions.njk (appDir precedes the package in nunjucks.ts).
+   Identical to the package version except secondary actions with `asLink: true` render as plain links. #}
+{% from "govuk/components/button/macro.njk" import govukButton -%}
+
+{# for backwards compatibility #}
+{%- set secondaryActions = secondaryActions or extraActionButtons -%}
+{%- set hasSecondaryActions = secondaryActions|length > 0 -%}
+
+{% if hasSecondaryActions %}<div class="govuk-button-group">
+{% endif %}
+{{ govukButton({
+    text: continueButtonText,
+    type: "submit",
+    attributes: { "data-cy":"button-save-and-continue"}
+}) }}
+
+{% if hasSecondaryActions %}
+{% for secondaryAction in secondaryActions %}
+    {%- set name = secondaryAction.text|lower|replace(" ", "-") -%}
+    {%- if secondaryAction.asLink and secondaryAction.href -%}
+        <a href="{{ secondaryAction.href }}" class="{{ secondaryAction.classes or 'govuk-link' }}" data-cy="{{ secondaryAction.attributes['data-cy'] or 'button-' + name }}">{{ secondaryAction.text }}</a>
+    {%- else -%}
+        {%- if secondaryAction.href -%}
+            {# name and formaction aren't valid for <a> tags #}
+            {%- set attributes = {"data-cy": "button-" + name} -%}
+        {%- elseif secondaryAction.formaction and (not secondaryAction.type or secondaryAction.type == "submit") -%}
+            {%- set attributes = {"data-cy": "button-" + name, "name": name, "formaction": secondaryAction.formaction} -%}
+        {%- else -%}
+            {%- set attributes = {"data-cy": "button-" + name, "name": name} -%}
+        {%- endif %}
+        {{ govukButton({
+            text: secondaryAction.text,
+            type: secondaryAction.type,
+            href: secondaryAction.href,
+            attributes: attributes,
+            classes: secondaryAction.classes or "govuk-button--secondary"
+        }) }}
+    {%- endif %}
+{% endfor %}
+</div>
+{%- endif %}

@@ -494,7 +494,7 @@ describe('createDeleteCaseJourney', () => {
 		});
 		assert.equal(viewModel.continueButtonText, 'Continue');
 		assert.ok(html.includes('Why are you deleting this case?'));
-		const cancelLink = html.match(/<a\b[^>]*data-cy="button-back"[^>]*>Cancel<\/a>/)?.[0];
+		const cancelLink = html.match(/<a\b[^>]*data-cy="button-cancel"[^>]*>Cancel<\/a>/)?.[0];
 		assert.ok(cancelLink);
 		assert.match(cancelLink, /class="govuk-link"/);
 		assert.match(cancelLink, /href="\/case\/LP-TEST-001\/overview"/);

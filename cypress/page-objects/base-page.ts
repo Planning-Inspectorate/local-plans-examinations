@@ -71,7 +71,7 @@ export class BasePage {
 	}
 
 	get cancelButton() {
-		return cy.getByData('button-back');
+		return cy.getByData('button-cancel');
 	}
 
 	get addListItemButton() {
@@ -218,7 +218,12 @@ export class BasePage {
 	}
 
 	cancelChanges() {
-		this.cancelButton.should('be.visible').click();
+		this.cancelButton
+			.should('be.visible')
+			.and('match', 'a.govuk-link[href]')
+			.and('not.have.attr', 'href', '')
+			.and('not.have.class', 'govuk-button')
+			.click();
 	}
 
 	addListItem() {

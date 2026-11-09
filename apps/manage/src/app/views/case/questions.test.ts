@@ -314,7 +314,7 @@ describe('Delete case reason question', () => {
 		assert.equal(question.fieldName, 'deleteCaseWhy');
 		assert.equal(question.title, 'Reason for deletion');
 		assert.equal(question.question, 'Why are you deleting this case?');
-		assert.deepEqual(question.viewData, { continueButtonText: 'Continue', cancelLinkClasses: 'govuk-link' });
+		assert.deepEqual(question.viewData, { continueButtonText: 'Continue' });
 	});
 
 	for (const deleteCaseWhy of ['', undefined]) {

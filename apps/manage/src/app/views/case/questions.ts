@@ -764,7 +764,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'delete-case-reason' },
 		url: COMMON_CONSTS.DELETE_CASE_REASON,
 		title: 'Reason for deletion',
-		viewData: { continueButtonText: 'Continue', cancelLinkClasses: 'govuk-link' },
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Enter a reason for deleting this case')]
 	},
 	planBand: {
