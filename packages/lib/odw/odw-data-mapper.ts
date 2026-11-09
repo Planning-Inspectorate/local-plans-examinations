@@ -289,7 +289,7 @@ export class ODWDataMapper {
 		});
 		if (!caseData) {
 			throw Error(
-				`No case data could be found for case with id '${caseId}' when preparing plan workshop data for the ODW`
+				`No case data could be found for case with id '${caseId}' when preparing plan hearing data for the ODW`
 			);
 		}
 		const hearingData = caseData.examinationInfo?.hearings;
