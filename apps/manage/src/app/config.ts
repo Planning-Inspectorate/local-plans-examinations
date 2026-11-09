@@ -190,7 +190,8 @@ export function loadConfig(): Config {
 		BLOB_STORE_ACCOUNT_URL,
 		CLARITY_ID,
 		GOOGLE_ANALYTICS_ID,
-		LOCAL_PLANS_TEAM_EMAIL
+		LOCAL_PLANS_TEAM_EMAIL,
+		ODW_SERVICE_BUS_NAME
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -320,7 +321,10 @@ export function loadConfig(): Config {
 		appName: 'manage',
 		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true',
 		clarityId: CLARITY_ID || undefined,
-		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined
+		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined,
+		odw: {
+			odwServiceBusName: ODW_SERVICE_BUS_NAME
+		}
 	};
 
 	return config;

@@ -59,7 +59,8 @@ export function loadConfig(): Config {
 		CLARITY_ID,
 		GOOGLE_ANALYTICS_ID,
 		ENVIRONMENT,
-		OTP_BYPASS_CODE
+		OTP_BYPASS_CODE,
+		ODW_SERVICE_BUS_NAME
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -140,7 +141,10 @@ export function loadConfig(): Config {
 		clarityId: CLARITY_ID || undefined,
 		// Google Analytics measurement id for analytics tracking (optional)
 		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined,
-		appName: 'portal'
+		appName: 'portal',
+		odw: {
+			odwServiceBusName: ODW_SERVICE_BUS_NAME
+		}
 	};
 
 	return config;
