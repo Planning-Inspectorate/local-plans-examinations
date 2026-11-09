@@ -24,7 +24,8 @@ export function configureNunjucks(): nunjucks.Environment {
 	// configure nunjucks
 	const env = nunjucks.configure(
 		// ensure nunjucks templates can use govuk-frontend components, and templates we've defined in `web/src/app`
-		[govukFrontendRoot, dynamicFormsRoot, coreUi, libUi, appDir],
+		// appDir precedes dynamicFormsRoot so components/utils/actions.njk overrides the package version
+		[govukFrontendRoot, appDir, dynamicFormsRoot, coreUi, libUi],
 		{
 			// output with dangerous characters are escaped automatically
 			autoescape: true,
