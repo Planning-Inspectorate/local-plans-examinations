@@ -9,10 +9,12 @@ import { BaseService } from '@planning-inspectorate/core/app';
  */
 export class Service extends BaseService<PrismaClient> {
 	readonly #blobStorage: ConfigWithBlob['blobStorage'];
+	readonly odw: ConfigWithBlob['odw'];
 
 	constructor(config: ConfigWithBlob) {
 		super(config, initDatabaseClient);
 		this.#blobStorage = config.blobStorage;
+		this.odw = config.odw;
 	}
 
 	createFileStorage(basePath?: string, containerName?: string): BlobFileStorageAdapter {

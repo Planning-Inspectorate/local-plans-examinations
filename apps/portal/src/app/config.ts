@@ -56,7 +56,8 @@ export function loadConfig(): Config {
 		BLOB_STORE_ACCOUNT_URL,
 		CLARITY_ID,
 		ENVIRONMENT,
-		OTP_BYPASS_CODE
+		OTP_BYPASS_CODE,
+		ODW_SERVICE_BUS_NAME
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -135,7 +136,10 @@ export function loadConfig(): Config {
 		},
 		// Microsoft Clarity id for analytics tracking (optional)
 		clarityId: CLARITY_ID || undefined,
-		appName: 'portal'
+		appName: 'portal',
+		odw: {
+			odwServiceBusName: ODW_SERVICE_BUS_NAME
+		}
 	};
 
 	return config;

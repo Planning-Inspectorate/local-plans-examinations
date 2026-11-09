@@ -186,7 +186,8 @@ export function loadConfig(): Config {
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
-		LOCAL_PLANS_TEAM_EMAIL
+		LOCAL_PLANS_TEAM_EMAIL,
+		ODW_SERVICE_BUS_NAME
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -314,7 +315,10 @@ export function loadConfig(): Config {
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
 		appName: 'manage',
-		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
+		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true',
+		odw: {
+			odwServiceBusName: ODW_SERVICE_BUS_NAME
+		}
 	};
 
 	return config;
