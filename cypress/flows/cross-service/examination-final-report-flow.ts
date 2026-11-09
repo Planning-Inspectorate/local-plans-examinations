@@ -8,7 +8,12 @@ export const verifyExaminationFinalReportDocumentsInPortal = (
 		{ args: { reference, fileNames, sharedDate } },
 		({ reference, fileNames, sharedDate }) => {
 			cy.visit('/manage-local-plans/your-plans');
-			cy.contains('tr', reference).should('be.visible').and('contain.text', 'Examination');
+			cy.contains('tbody tr', reference)
+				.should('be.visible')
+				.find('th, td')
+				.should('have.length', 3)
+				.eq(2)
+				.should('contain.text', 'Local Plan');
 
 			cy.contains('[data-cy="plan-link"]', reference).click();
 			cy.location('pathname').should('eq', `/manage-local-plans/${reference}`);
