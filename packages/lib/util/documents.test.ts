@@ -84,6 +84,79 @@ describe('loadUploadedDocuments', () => {
 			}
 		});
 	});
+
+	it('includes temporary documents when includeTemp is set', async () => {
+		const service = createMockService({
+			existingDocuments: [
+				buildDocumentRow({ guid: 'document-1', name: 'saved-file', isTemp: false }),
+				buildDocumentRow({ guid: 'document-2', name: 'draft-file', isTemp: true })
+			]
+		});
+
+		const files = await DocumentUtil.loadUploadedDocuments(
+			service as unknown as Service,
+			'case-1',
+			COVER_LETTER_DOCUMENT_SET_ID,
+			{ includeTemp: true }
+		);
+
+		assert.deepEqual(
+			files.map((file) => ({ id: file.id, isTemp: file.isTemp })),
+			[
+				{ id: 'saved-file', isTemp: false },
+				{ id: 'draft-file', isTemp: true }
+			]
+		);
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0].where, {
+			caseId: 'case-1',
+			documentSetId: COVER_LETTER_DOCUMENT_SET_ID,
+			isDeleted: false
+		});
+	});
+
+	it('excludes temporary documents when includeTemp is false', async () => {
+		const service = createMockService();
+
+		await DocumentUtil.loadUploadedDocuments(service as unknown as Service, 'case-1', COVER_LETTER_DOCUMENT_SET_ID, {
+			includeTemp: false
+		});
+
+		assert.equal(service.db.document.findMany.mock.calls[0].arguments[0].where.isTemp, false);
+	});
+});
+
+describe('commitTempDocuments', () => {
+	it('marks active temporary documents in the given document sets as permanent', async () => {
+		const service = createMockService();
+
+		await DocumentUtil.commitTempDocuments(service as unknown as Service, 'case-1', [
+			COVER_LETTER_DOCUMENT_SET_ID,
+			DOCUMENT_SET_ID.G2_REPORT
+		]);
+
+		assert.equal(service.db.document.updateMany.mock.callCount(), 1);
+		assert.deepEqual(service.db.document.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: { in: [COVER_LETTER_DOCUMENT_SET_ID, DOCUMENT_SET_ID.G2_REPORT] },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: { isTemp: false }
+		});
+	});
+
+	it('returns the update query without awaiting it so it can join an array transaction', () => {
+		const service = createMockService();
+		const pendingUpdate = Promise.resolve({ count: 2 });
+		service.db.document.updateMany.mock.mockImplementation(() => pendingUpdate);
+
+		const result = DocumentUtil.commitTempDocuments(service as unknown as Service, 'case-1', [
+			COVER_LETTER_DOCUMENT_SET_ID
+		]);
+
+		assert.equal(result, pendingUpdate);
+	});
 });
 
 describe('getDocumentSetIdsByFolderName', () => {
@@ -136,6 +209,22 @@ describe('getDocumentSetIdsByFolderName', () => {
 });
 
 describe('saveDocuments', () => {
+	it('keeps a Portal upload temporary until formal submission', async () => {
+		const tx = createTransactionClient();
+		const service = createMockService({ tx });
+
+		await DocumentUtil.saveDocuments(
+			service as unknown as Service,
+			buildRequest(),
+			TEST_DOCUMENT_SET_FOLDER_NAME,
+			[buildUploadedFile()],
+			true
+		);
+
+		assert.equal(tx.document.create.mock.calls[0].arguments[0].data.isTemp, true);
+		assert.equal(service.db.document.updateMany.mock.callCount(), 0);
+	});
+
 	it('creates a document and version for a new uploaded file', async () => {
 		const tx = createTransactionClient();
 		const service = createMockService({ tx });

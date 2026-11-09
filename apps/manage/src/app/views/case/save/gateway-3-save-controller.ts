@@ -13,9 +13,14 @@ export async function saveGateway3Submissions(
 	caseId: string,
 	submissionDetails: NonNullable<Gateway3Input['submissions']>
 ) {
+	if (!submissionDetails.length) {
+		return;
+	}
+
 	const submissionDetailsCleaned = Object.values(submissionDetails).map((entry) => ({
 		decision: entry.decision,
-		completionDate: entry.completionDate
+		completionDate: entry.completionDate,
+		...(entry.submittedDate !== undefined && { submittedDate: entry.submittedDate })
 	}));
 	if (submissionDetailsCleaned.length > NUM_GW3_SUBMISSIONS_QUESTIONS) {
 		throw Error('Max number of submissions has been exceeded');
@@ -59,21 +64,50 @@ export class Gateway3SaveController extends SaveController {
 		if (!caseDetails) {
 			throw Error(`Could not find details for case with reference '${this.caseReference}'`);
 		}
-		if (caseDetails.gateway3Info?.submissions == undefined || caseDetails.gateway3Info?.submissions.length == 0) {
-			throw Error(`Could not find submission data for case with reference '${this.caseReference}'`);
-		}
-		const submissionDetails = sortGateway3Submissions(caseDetails.gateway3Info?.submissions);
+
+		const existingSubmissions = caseDetails.gateway3Info?.submissions;
+
+		const submissionsData = existingSubmissions?.length
+			? existingSubmissions
+			: [
+					{
+						id: crypto.randomUUID(),
+						decision: null,
+						completionDate: null,
+						gateway3InfoId: null
+					}
+				];
+
+		const submissionDetails = sortGateway3Submissions(submissionsData);
+
 		if (String(this.req.params.question).startsWith('gateway-3-completion-date')) {
 			const submissionId = Number(String(this.req.params.question).replace('gateway-3-completion-date-', ''));
-			submissionDetails[submissionId - 1].completionDate = answers[`completionDate-${submissionId}`];
-			answers = {
-				submissions: submissionDetails
-			};
+			const submission = submissionDetails[submissionId - 1];
+
+			if (submissionDetails.length > 0 && !submission) {
+				throw new Error(`Invalid Gateway 3 submission number: ${submissionId}`);
+			}
+
+			if (submission) {
+				submission.completionDate = answers[`completionDate-${submissionId}`];
+			}
+
+			answers = { submissions: submissionDetails };
 		}
 		return this.trimStringValues(answers as Gateway3Input);
 	}
 	public async prepareAndSave(answers: Record<string, any>) {
 		if (this.req.params.question === COMMON_CONSTS.EXAMINATION_WEBSITE_QUESTION) {
+			const examinationWebsite =
+				typeof answers.examinationWebsite === 'string' && answers.examinationWebsite.trim().length > 0
+					? answers.examinationWebsite.trim()
+					: null;
+			const caseId = await this.resolveCaseId();
+			await this.service.db.gateway3Info.upsert({
+				where: { caseId },
+				update: { examinationWebsiteUrl: examinationWebsite },
+				create: { caseId, examinationWebsiteUrl: examinationWebsite }
+			});
 			return await new ExaminationSaveController(this.service, this.req, this.caseReference).prepareAndSave({
 				examinationWebsite: answers.examinationWebsite
 			});

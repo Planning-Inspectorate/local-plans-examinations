@@ -22,12 +22,13 @@ import {
 	issueGateway1SLA,
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
-	issueGateway2WorkshopDocuments,
 	redirectToChecks,
 	preprocessQuestionProperties,
 	handleMulterFileSizeError,
 	journeyFileUploadQuestionConfigs,
-	issueMiqs
+	issueMiqs,
+	issueGateway2WorkshopDocuments,
+	issueGateway2Document
 } from './controller.ts';
 import { type SaveController } from './save/save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
@@ -95,6 +96,7 @@ import { ExaminationPauseHandler } from './overview-data-handlers/examination-pa
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 import { sendGw2WorkshopSetUpNotifyEmail } from '../../notify/notify-helper.ts';
 
@@ -127,11 +129,7 @@ function registerGateway2WorkshopJourney(
 	const { createJourney } = config;
 
 	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
-
-		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
-		}
+		questions.lpa.options = await loadLpaOptions(service, true);
 
 		next();
 	});
@@ -262,7 +260,7 @@ function registerExaminationHearingJourney(
 	const { createJourney } = config;
 
 	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
+		const loaded = await loadLpaOptions(service, false);
 
 		if (loaded.length > 0) {
 			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
@@ -646,8 +644,10 @@ function registerCaseJourney(
 	router.post(`/${path}/workshop/:question/check`, issueGateway2WorkshopDocuments(service, journeyId));
 	router.post(`/${path}/hearings/:question/check`, issueMiqs(service, journeyId));
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
+	router.post(`/${path}/gateway-2/:question/check`, issueGateway2Document(service, journeyId));
 	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
+	router.post(`/${path}/gateway-2/gateway-2/:question/check`, issueGateway2Document(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
 
 	// Save answer
@@ -768,6 +768,7 @@ function registerCaseJourney(
 								await service.db.examinationInfo.updateMany({
 									where: { caseId },
 									data: {
+										status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 										isSound: null,
 										soundUnsoundDate: null,
 										adoptionDate: null,

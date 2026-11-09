@@ -1,17 +1,21 @@
 import {
 	examinationPage,
 	examinationPausePages,
+	examinationReportUploadPage,
 	examinationReportCheckPage,
 	examinationReportManagePage,
 	examinationReportRemovePage,
 	reportIssuedDatePage,
-	soundUnsoundPage
+	soundUnsoundPage,
+	examinationMIQUploadPage
 } from '../../page-objects/manage/examination/index.ts';
 import { openManageCase, openSeededManageCase, type SeededManageCase } from './seeded-case-flow.ts';
 import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
 import type { ExaminationReportSeedOptions } from '../../tasks/examination.ts';
 import type { DateAnswer } from '../../types/date.ts';
-import { examinationPause, soundUnsound } from '../../fixtures/manage/examination.ts';
+import { examinationPause, examinationReport, soundUnsound } from '../../fixtures/manage/examination.ts';
+import { examinationMIQCheckPage } from '../../page-objects/manage/examination/miq-document-page.ts';
+import { MIQcheckPage } from '../../fixtures/manage/examination.ts';
 
 export const pauseExamination = (pause: { input: DateAnswer; details: string } = examinationPause, pauseNumber = 1) => {
 	const pages = examinationPausePages(pauseNumber);
@@ -63,4 +67,30 @@ export const openSeededExaminationPage = (options?: SeedCyOptions) => {
 		examinationPage.verifyLoaded(seededCase.planTitle);
 		return cy.wrap(seededCase, { log: false });
 	});
+};
+
+export const uploadExaminationMIQDocuments = () => {
+	examinationPage.openActionLinkFor(MIQcheckPage.row);
+
+	examinationMIQUploadPage.verifyLoaded();
+	examinationMIQUploadPage.uploadAndVerifyFile(MIQcheckPage.file1);
+	examinationMIQUploadPage.uploadAndVerifyFile(MIQcheckPage.file2);
+	examinationMIQUploadPage.saveAndReturn();
+
+	examinationMIQCheckPage.verifyLoaded();
+	examinationMIQCheckPage.verifyDocuments(MIQcheckPage.file1, MIQcheckPage.file2);
+	examinationMIQCheckPage.confirm();
+
+	examinationPage.verifyNotificationBanner('2 MIQ documents uploaded');
+	examinationPage.verifySummaryRowContains(MIQcheckPage.row, MIQcheckPage.file1, MIQcheckPage.file2);
+};
+
+export const uploadExaminationFinalReportDocuments = () => {
+	examinationPage.openActionLinkFor(examinationReport.row);
+	soundUnsoundPage.selectAnswer(soundUnsound.value);
+	examinationReportUploadPage.uploadAndVerifyFile(examinationReport.fileName);
+	examinationReportUploadPage.uploadAndVerifyFile(examinationReport.fileName2);
+	examinationReportUploadPage.saveAndReturn();
+	examinationReportCheckPage.verifyDocuments(examinationReport.fileName, examinationReport.fileName2);
+	examinationReportCheckPage.confirm();
 };

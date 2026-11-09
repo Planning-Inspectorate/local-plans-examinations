@@ -102,9 +102,15 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 						plan.examinationStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
 					) {
 						dateTextE = 'Submitted: ';
+					} else if (plan.examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED) {
+						dateTextE = 'Report issued: ';
 					}
 					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
 					tagG2 = tagG3 = 'Completed';
+				}
+				if (plan.examinationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED) {
+					dateTextE = 'Adopted: ';
+					tagE = examinationStatusTag(plan);
 				}
 				break;
 		}

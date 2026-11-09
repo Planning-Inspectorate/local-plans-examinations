@@ -4,6 +4,8 @@ export const COMMON_CONSTS = {
 	GATEWAY_2_JOURNEY_ID: 'gateway-2',
 	GATEWAY_2_WORKSHOP_JOURNEY_ID: 'gateway-2-workshop',
 	GATEWAY_3_JOURNEY_ID: 'gateway-3',
+	RESUBMISSION_DOCUMENTS_FIELD: 'resubmissionDocuments',
+	RESUBMISSION_DOCUMENTS_LABEL: 'New or updated documents',
 	GATEWAY_3_REPORT_JOURNEY_ID: 'gateway-3-report',
 	EXAMINATION_JOURNEY_ID: 'examination',
 	EXAMINATION_HEARING_JOURNEY_ID: 'examination-hearing',
@@ -40,7 +42,21 @@ export const COMMON_CONSTS = {
 	DELETE_CASE_JOURNEY_ID: 'delete-case',
 	DELETE_CASE_SECTION: 'delete-case',
 	DELETE_CASE_REASON: 'delete-case-reason',
-	MIQS_QUESTION: 'miqs'
+	MIQS_QUESTION: 'miqs',
+	GATEWAY_2_DOCUMENT_QUESTIONS: [
+		'covering-letter',
+		'local-plan-timetable',
+		'project-initiation-document',
+		'draft-stat-compliance',
+		'notice-of-intent',
+		'g1-self-assess',
+		'cons-of-proposed',
+		'draft-stat-soundness',
+		'scoping-cons',
+		'cons-summ',
+		'summary-of-consultation',
+		'subsequent-work-towards-a-draft-plan'
+	]
 };
 export const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 export const GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 25 * 10000 * 1000; // 250MB
