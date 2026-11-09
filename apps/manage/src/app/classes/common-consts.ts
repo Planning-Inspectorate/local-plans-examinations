@@ -66,5 +66,8 @@ export const NUM_EXAMINATION_HEARING_QUESTIONS = 200;
 export const questionPrefix = [
 	'examination-hearing-location-type-',
 	'examination-hearing-remote-meeting-link-known-',
-	'examination-hearing-location-known-'
+	'examination-hearing-location-known-',
+	'gateway-2-location-type-',
+	'gateway-2-workshop-location-known-',
+	'gateway-2-remote-meeting-link-known-'
 ];
