@@ -102,26 +102,51 @@ describe('test Gateway2SaveController', () => {
 		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await assert.rejects(gateway3Controller.prepareAndSave(answers));
 	});
-	it('rejects when there are no submissions', async () => {
+	for (const gateway3Info of [null, { submissions: [] }]) {
+		it(`does not write a completion date when Gateway 3 info is ${gateway3Info ? 'empty' : 'missing'}`, async () => {
+			const mockService = createMockService();
+			mockService.db.case.findUnique = mock.fn(async () => ({ id: 'someCaseId', gateway3Info }));
+			const req = { params: { question: 'gateway-3-completion-date-1' } } as unknown as Request;
+			const controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+
+			await controller.prepareAndSave({ 'completionDate-1': mockDate });
+
+			assert.equal(mockService.db.gateway3Info.upsert.mock.callCount(), 0);
+		});
+	}
+
+	it('saves another Gateway 3 field when there are no submissions', async () => {
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => ({
 			id: 'someCaseId',
-			gateway2Info: {
-				workshops: [{}]
-			},
-			gateway3Info: {
-				submissions: [] // Workshops is empty
-			}
+			gateway3Info: { submissions: [] }
 		}));
-		const req = {
-			params: {}
-		} as Request;
-		const answers = {};
-		const question = '';
-		req.params.question = question;
-		const gateway3Controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
-		await assert.rejects(gateway3Controller.prepareAndSave(answers));
+		const req = { params: { question: 'gateway-3-expected-date' } } as unknown as Request;
+		const controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+
+		await controller.prepareAndSave({ expectedDate: mockDate });
+
+		assert.deepEqual(mockService.db.gateway3Info.upsert.mock.calls[0].arguments[0], {
+			where: { caseId: 'someCaseId' },
+			update: { expectedDate: mockDate },
+			create: { caseId: 'someCaseId', expectedDate: mockDate }
+		});
 	});
+
+	for (const submissionNumber of ['0', '2', '-1', '1.5', 'invalid']) {
+		it(`rejects invalid submission number ${submissionNumber} without writing`, async () => {
+			const mockService = createMockService();
+			const req = {
+				params: { question: `gateway-3-completion-date-${submissionNumber}` }
+			} as unknown as Request;
+			const controller = new Gateway3SaveController(mockService as unknown as ManageService, req, 'caseRef');
+
+			await assert.rejects(controller.prepareAndSave({}), /Invalid Gateway 3 submission number/);
+
+			assert.equal(mockService.db.gateway3Info.upsert.mock.callCount(), 0);
+		});
+	}
+
 	it('saved for the completion date question', async () => {
 		const mockService = createMockService();
 		const question = 'gateway-3-completion-date-1';
@@ -198,6 +223,14 @@ describe('test Gateway2SaveController', () => {
 });
 
 describe('saveGateway3Submissions', () => {
+	it('does not write or delete submissions when the array is empty', async () => {
+		const upsert = mock.fn(async () => ({}));
+
+		await saveGateway3Submissions({ gateway3Info: { upsert } } as never, 'case-id', []);
+
+		assert.equal(upsert.mock.callCount(), 0);
+	});
+
 	it('preserves the received date for each submission when saving a decision', async () => {
 		const upsert = mock.fn(async (_data: any) => ({}));
 		const submissions = [
