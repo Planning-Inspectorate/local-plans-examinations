@@ -16,6 +16,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@planning-inspectorate/data-model": "github:Planning-Inspectorate/data-model#feat/LPBO-432-localPlans",
     "@prisma/adapter-mssql": "*",
     "@prisma/client": "*"
   },
