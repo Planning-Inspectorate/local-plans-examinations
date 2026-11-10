@@ -230,6 +230,11 @@ describe('Gateway 2 summary view data', () => {
 		} as any;
 		const res = { locals: {} } as any;
 
+		req.currentCase.documents.push({
+			...req.currentCase.documents[0],
+			guid: 'draft-report-guid',
+			isTemp: true
+		});
 		setGateway2CheckAnswersViewLocals(req, res);
 
 		assert.deepStrictEqual(

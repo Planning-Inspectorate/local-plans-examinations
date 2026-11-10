@@ -1,7 +1,11 @@
-import { verifyGateway2ReportInPortal } from '../../flows/cross-service/gateway-2-report-flow.ts';
+import {
+	verifyGateway2ReportInPortal,
+	verifyGateway2ReportNotIssuedInPortal
+} from '../../flows/cross-service/gateway-2-report-flow.ts';
 import { issueGateway2Report, openGateway2Page } from '../../flows/manage/gateway-2-flow.ts';
 import { FOURTH_TEST_EMAIL, manageToPortalLogin } from '../../flows/portal/login-flow.ts';
 import { gateway2Report } from '../../fixtures/manage/gateway-2.ts';
+import { gateway2Page, gateway2ReportPage } from '../../page-objects/manage/gateway-2/index.ts';
 
 const CASE_REFERENCE = 'PLAN-C02';
 const PLAN_TITLE = 'GW2SubmittedNotIssued';
@@ -15,7 +19,7 @@ describe('Cross-service Gateway 2 report', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('Shows the shared report for Gateway 2 in Portal once it is issued in Manage', { tags: ['regression'] }, () => {
+	it('shares issued Gateway 2 reports but hides unconfirmed replacements', { tags: ['regression'] }, () => {
 		openGateway2Page(CASE_REFERENCE, PLAN_TITLE);
 
 		manageToPortalLogin(FOURTH_TEST_EMAIL);
@@ -24,5 +28,12 @@ describe('Cross-service Gateway 2 report', () => {
 		issueGateway2Report(PLAN_TITLE);
 
 		verifyGateway2ReportInPortal(CASE_REFERENCE, gateway2Report.fileName, todayDisplay);
+
+		openGateway2Page(CASE_REFERENCE, PLAN_TITLE);
+		gateway2Page.openActionLinkFor(gateway2Report.row);
+		gateway2ReportPage.removeFile(gateway2Report.fileName);
+		gateway2ReportPage.uploadAndVerifyFile(gateway2Report.updatedFileName);
+
+		verifyGateway2ReportNotIssuedInPortal(CASE_REFERENCE);
 	});
 });

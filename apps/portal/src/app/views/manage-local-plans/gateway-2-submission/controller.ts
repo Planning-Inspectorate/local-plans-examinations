@@ -45,6 +45,7 @@ type Gateway2SummaryDocument = {
 	name: string;
 	documentSetId: string;
 	createdAt: Date;
+	isTemp: boolean;
 	latestDocumentVersion: {
 		originalFilename: string | null;
 		fileName: string | null;
@@ -240,6 +241,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 						name: true,
 						documentSetId: true,
 						createdAt: true,
+						isTemp: true,
 						latestDocumentVersion: {
 							select: {
 								originalFilename: true,
@@ -323,7 +325,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		planReference,
 		gateway2Info?.reportIssuedDate
 			? documents.flatMap((document) => {
-					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT) {
+					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT || document.isTemp) {
 						return [];
 					}
 

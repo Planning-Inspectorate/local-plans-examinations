@@ -202,6 +202,7 @@ function initaliseFileInSession(req: any, documentsByCategory: DocumentsByCatego
 		if (sessionKey && document.files?.length > 0) {
 			const key = `${caseRef}:${sessionKey}`;
 
+			fileUploader[key] ??= { uploadedFiles: [] };
 			fileUploader[key].uploadedFiles.push(...document.files);
 		}
 	});

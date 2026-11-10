@@ -40,6 +40,35 @@ function buildContext(journeyId: string, reference: string, session = {}) {
 	} as unknown as PageLoadContext;
 }
 
+describe('Gateway 2 document sessions', () => {
+	for (const previousReference of ['PLAN-123456', 'PLAN-654321']) {
+		it(`loads submitted documents after Gateway 1 on ${previousReference} without losing its uploads`, async () => {
+			const signedSla = { id: 'sla-1', fileName: 'signed-sla.pdf', virusCheckStatus: 'scanned' };
+			const coveringLetter = { id: 'cover-1', fileName: 'cover.pdf', virusCheckStatus: 'scanned' };
+			const loadFiles = mock.method(DocumentUtil, 'loadUploadedDocuments', async (_service, caseId, documentSetId) => {
+				if (caseId === previousReference && documentSetId === 'signed-sla') return [signedSla];
+				return caseId === 'PLAN-123456' && documentSetId === 'covering-letter' ? [coveringLetter] : [];
+			});
+			try {
+				const session = {};
+				const gateway1 = buildContext('gateway-1', previousReference, session);
+				await new Gateway1TabHandler().handle(gateway1);
+				const gateway2 = buildContext('gateway-2', 'PLAN-123456', session);
+				await new Gateway2TabHandler().handle(gateway2);
+
+				assert.deepEqual(gateway2.req.session.fileUploader?.['PLAN-123456:gateway2CoverLetter']?.uploadedFiles, [
+					coveringLetter
+				]);
+				assert.deepEqual(gateway2.req.session.fileUploader?.[`${previousReference}:signedSla`]?.uploadedFiles, [
+					signedSla
+				]);
+			} finally {
+				loadFiles.mock.restore();
+			}
+		});
+	}
+});
+
 describe('Case pause banners', () => {
 	for (const [journeyId, Handler] of [
 		['edit-case-overview', OverviewTabHandler],

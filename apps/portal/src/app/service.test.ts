@@ -63,6 +63,7 @@ function buildGateway2ReportDocument(dateCreated = new Date('2026-09-02T12:00:00
 		documentSetId: DOCUMENT_SET_ID.G2_REPORT,
 		createdAt: new Date('2026-09-01T12:00:00.000Z'),
 		isDeleted: false,
+		isTemp: false,
 		latestDocumentVersion: {
 			originalFilename: 'gateway-2-report.pdf',
 			fileName: 'stored-gateway-2-report.pdf',
@@ -533,6 +534,7 @@ describe('PortalService', () => {
 							documentSetId: true,
 							createdAt: true,
 							isDeleted: true,
+							isTemp: true,
 							latestDocumentVersion: {
 								select: {
 									originalFilename: true,
@@ -618,6 +620,58 @@ describe('PortalService', () => {
 					dateCreated: new Date('2026-09-02T12:00:00.000Z')
 				}
 			]);
+		});
+
+		it('does not expose a temporary report or unlock Gateway 3 when only the issue date is saved', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: {
+						expectedDate: null,
+						actualDate: new Date('2026-09-01T12:00:00.000Z'),
+						reportIssuedDate: new Date('2026-09-02T12:00:00.000Z')
+					},
+					documents: [{ ...buildGateway2ReportDocument(), isTemp: true }]
+				})
+			]);
+
+			const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plan.stage, STAGE.Gateway2);
+			assert.strictEqual(plan.status, STATUS.UnderReview);
+			assert.deepStrictEqual(plan.gateway2ReportFiles, []);
+		});
+
+		it('keeps the issued report visible but hides an additional report until it is confirmed', async () => {
+			const issuedReport = buildGateway2ReportDocument();
+			const additionalReport = {
+				...buildGateway2ReportDocument(),
+				guid: 'additional-report',
+				isTemp: true,
+				latestDocumentVersion: {
+					...issuedReport.latestDocumentVersion,
+					originalFilename: 'additional-report.pdf'
+				}
+			};
+			const service = buildService([
+				buildCase({
+					gateway2Info: { expectedDate: null, actualDate: null, reportIssuedDate: new Date('2026-09-01') },
+					documents: [issuedReport, additionalReport]
+				})
+			]);
+
+			const [before] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+			assert.strictEqual(before.stage, STAGE.Gateway3);
+			assert.deepStrictEqual(
+				before.gateway2ReportFiles.map((file) => file.fileName),
+				['gateway-2-report.pdf']
+			);
+
+			additionalReport.isTemp = false;
+			const [after] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+			assert.deepStrictEqual(
+				after.gateway2ReportFiles.map((file) => file.fileName),
+				['gateway-2-report.pdf', 'additional-report.pdf']
+			);
 		});
 
 		it('maps a submitted Gateway 3 plan to Under review using its timetabled date', async () => {

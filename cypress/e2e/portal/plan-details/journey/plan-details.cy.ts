@@ -15,6 +15,11 @@ describe('Plan details journey', () => {
 	});
 	afterEach(cleanupPreparedPlanDetails);
 
+	it("rejects direct access to another owner's plan", { tags: ['regression'] }, () => {
+		myPlansPage.verifyPlanNotListed('PLAN-B01');
+		planDetailsPage.verifyAccessDenied('PLAN-B01');
+	});
+
 	it('opens from My plans and returns using the back link', { tags: ['smoke', 'environment-smoke'] }, () => {
 		myPlansPage.verifyLoaded();
 		myPlansPage.openPlan(planDetails.reference);
