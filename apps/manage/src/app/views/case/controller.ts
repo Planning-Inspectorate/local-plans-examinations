@@ -1308,7 +1308,15 @@ export function preprocessQuestionProperties(
 			if (!submissionDetails) {
 				throw new Error(`No submission details found for case reference '${reference}'`);
 			}
-			const submissionDetailsSorted = sortGateway3Submissions(submissionDetails);
+			const submissionDetailsSorted: {
+				decision: string | null;
+				completionDate: Date | null;
+				submittedDate?: Date | null;
+			}[] = sortGateway3Submissions(submissionDetails);
+			if (submissionDetailsSorted.length === 0) {
+				// No submission rows yet: show submission 1 as not started. The row is created when a decision is saved.
+				submissionDetailsSorted.push({ decision: null, completionDate: null, submittedDate: null });
+			}
 			// todo update this to account for multiple gw3 submission questions
 			for (let i = 0; i < submissionDetailsSorted.length; i++) {
 				const submissionId = i + 1;

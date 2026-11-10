@@ -167,6 +167,16 @@ describe('file uploader contents when visiting a page', () => {
 
 				assert.deepEqual(answers['gateway3Documents-2'], [fileFor('saved', 'gateway-3-document-2')]);
 			});
+
+			it(`${journeyId}: submission 1 documents load before any submission row exists`, async (t) => {
+				mockDocuments(t, 'gateway-3');
+				const answers: Record<string, any> = { submissions: [] };
+
+				await visit(journeyId, 'gateway-3-document-1', answers, '/check');
+
+				assert.deepEqual(answers['gateway3Documents-1'], [fileFor('saved', 'gateway-3-document-1')]);
+				assert.equal(answers['gateway3Documents-2'], undefined);
+			});
 		}
 	});
 });

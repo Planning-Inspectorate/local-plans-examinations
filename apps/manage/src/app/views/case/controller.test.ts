@@ -2515,6 +2515,36 @@ describe('preprocessQuestionProperties', () => {
 		assert.equal(documentsRow.action, undefined);
 	});
 
+	it('prepares submission 1 as not started when there are no submission rows yet', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => ({
+			gateway3Info: { actualDate: null, submissions: [] }
+		}));
+		const res = { locals: { journeyResponse: { answers: {} } } };
+		const req = { session: {}, params: { reference: caseReference } };
+		const questions: Record<string, any> = {
+			'gateway3Decision-1': {},
+			'gateway3Documents-1': { config: {} },
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
+		};
+
+		const next = mock.fn(() => {});
+		await preprocessQuestionProperties(service, journeyId, questions)(
+			req as unknown as Request,
+			res as unknown as Response,
+			next
+		);
+
+		assert.equal(next.mock.callCount(), 1);
+		assert.deepEqual(questions['gateway3Decision-1'].actionLink, {
+			href: `/case/${caseReference}/gateway-3-report/gateway-3-submission-1/gateway-3-decision-1`,
+			text: 'Add'
+		});
+		assert.equal(questions['gateway3Decision-1'].formatSummaryValue(), 'Not started');
+		assert.equal(questions['gateway3Documents-1'].editable, true);
+		assert.equal(questions['gateway3DocumentsCheck-1'].config.actionButtonVisibleInSummary, false);
+	});
+
 	it('can preprocess gateway3 when the documents have submitted', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
