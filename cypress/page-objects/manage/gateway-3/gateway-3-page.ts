@@ -70,12 +70,16 @@ export class Gateway3Page extends GatewayBasePage {
 	}
 
 	verifySubmissionDocumentsReviewLink(documentCount: number) {
-		this.verifySummaryRowContains(gateway3ReviewDocumentsAnswer.row, `${documentCount} document(s)`);
+		this.verifyCountOfDocumentsSubmitted(documentCount);
 		this.verifySummaryRowActionHref(gateway3ReviewDocumentsAnswer.row, reviewDocumentsHref);
 		this.summaryRowActionLink(gateway3ReviewDocumentsAnswer.row).should(
 			'contain.text',
 			gateway3ReviewDocumentsAnswer.reviewLinkText
 		);
+	}
+
+	verifyCountOfDocumentsSubmitted(documentCount: number) {
+		this.verifySummaryRowContains(gateway3ReviewDocumentsAnswer.row, `${documentCount} document(s)`);
 	}
 
 	verifyNoSubmissionDocumentsReviewLink() {
