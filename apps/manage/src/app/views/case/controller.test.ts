@@ -2466,7 +2466,12 @@ describe('preprocessQuestionProperties', () => {
 		const res = {
 			render: mock.fn(() => {}),
 			locals: {
-				journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } }
+				journeyResponse: {
+					answers: {
+						proposedLocalPlan: 'plan.pdf',
+						documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] }
+					}
+				}
 			}
 		};
 		const req = {
@@ -2564,7 +2569,12 @@ describe('preprocessQuestionProperties', () => {
 		const res = {
 			render: mock.fn(() => {}),
 			locals: {
-				journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } }
+				journeyResponse: {
+					answers: {
+						proposedLocalPlan: 'plan.pdf',
+						documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] }
+					}
+				}
 			}
 		};
 		const req = {
@@ -2636,6 +2646,7 @@ describe('preprocessQuestionProperties', () => {
 					journeyResponse: {
 						answers: {
 							proposedLocalPlan: 'plan.pdf',
+							documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] },
 							resubmissionDocumentFiles: { 2: [{ guid: 'guid', fileName: 'new.pdf' }] }
 						}
 					}
