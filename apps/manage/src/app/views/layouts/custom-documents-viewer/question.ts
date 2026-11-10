@@ -57,8 +57,7 @@ export default class CustomDocumentsQuestion extends Question {
 		if (submissionNumber > 1) return answers.resubmissionDocumentFiles?.[submissionNumber]?.length ?? 0;
 		const values = [
 			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers?.[key]),
-			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers?.optionalData?.[key]),
-			answers.examinationWebsite
+			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers?.optionalData?.[key])
 		];
 		return values.reduce((total: number, value) => total + countDocuments(value), 0);
 	}
