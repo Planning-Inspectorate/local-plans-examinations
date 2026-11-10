@@ -23,9 +23,10 @@ function initialiseTest(params: { refNum: string }, plan?: unknown) {
 		status: mock.fn(function (code) {
 			return mockRes;
 		}),
-		send: mock.fn()
+		send: mock.fn(),
+		redirect: mock.fn()
 	};
-	const mockReq = { session: {}, params };
+	const mockReq = { session: { authenticatedEmail: 'user@example.com' }, params };
 	const logger = mockLogger();
 	const mockService = {
 		logger,
@@ -67,11 +68,35 @@ function statusTag(status: Status) {
 
 describe('plan page', () => {
 	it('should render without error', async () => {
-		const { mockRes } = await renderPlan({ refNum: 'PLAN-001' });
+		const { mockRes, mockService } = await renderPlan({ refNum: 'PLAN-001' });
 
+		assert.deepStrictEqual(mockService.getPlans.mock.calls[0].arguments, ['user@example.com']);
 		assert.strictEqual(mockRes.render.mock.callCount(), 1);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments.length, 2);
 		assert.strictEqual(mockRes.render.mock.calls[0].arguments[0], 'views/plan-page/view.njk');
+	});
+
+	it('redirects to login without loading plans when the signed-in email is missing', async () => {
+		const { planPage, mockReq, mockRes, mockService } = initialiseTest({ refNum: 'PLAN-001' });
+		delete mockReq.session.authenticatedEmail;
+
+		await planPage(mockReq, mockRes);
+
+		assert.deepStrictEqual(mockRes.redirect.mock.calls[0].arguments, ['/login']);
+		assert.strictEqual(mockService.getPlans.mock.callCount(), 0);
+		assert.strictEqual(mockRes.render.mock.callCount(), 0);
+	});
+
+	it("returns 404 for another owner's plan even when its reference is known", async () => {
+		const { planPage, mockReq, mockRes, mockService } = initialiseTest({ refNum: 'PLAN-001' });
+		mockService.getPlans.mock.mockImplementation(async (email) =>
+			email === 'user@example.com' ? [] : buildTestPlans()
+		);
+
+		await planPage(mockReq, mockRes);
+
+		assert.deepStrictEqual(mockRes.status.mock.calls[0].arguments, [404]);
+		assert.strictEqual(mockRes.render.mock.callCount(), 0);
 	});
 
 	it('should render notification banner if state = action needed', async () => {

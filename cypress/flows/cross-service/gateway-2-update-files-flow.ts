@@ -12,7 +12,8 @@ export const GW2UpdateFileUploadedFromFO = (
 			{ args: { reference, fileName, base64, updatedFileName } },
 			({ reference, fileName, base64, updatedFileName }) => {
 				const buffer = Cypress.Buffer.from(base64, 'base64');
-				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-2`);
+				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-1`);
+				cy.contains('.govuk-service-navigation__link', 'Gateway 2').should('be.visible').click();
 
 				cy.contains('.govuk-summary-list__row', 'Submission documents')
 					.contains('a', 'Review')

@@ -54,6 +54,7 @@ type PortalCase = {
 		documentSetId: string;
 		createdAt: Date;
 		isDeleted: boolean;
+		isTemp: boolean;
 		latestDocumentVersion: {
 			originalFilename: string | null;
 			fileName: string | null;
@@ -72,6 +73,7 @@ function getGateway2ReportUploadedDate(caseRecord: PortalCase): Date | null {
 		(document) =>
 			isGateway2ReportDocument(document) &&
 			!document.isDeleted &&
+			!document.isTemp &&
 			document.latestDocumentVersion &&
 			!document.latestDocumentVersion.isDeleted
 	);
@@ -100,7 +102,7 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 
 	return caseRecord.documents.flatMap((document) => {
 		const version = document.latestDocumentVersion;
-		if (!isGateway2ReportDocument(document) || document.isDeleted || !version || version.isDeleted) {
+		if (!isGateway2ReportDocument(document) || document.isDeleted || document.isTemp || !version || version.isDeleted) {
 			return [];
 		}
 
@@ -280,6 +282,7 @@ const planCaseInclude = {
 			documentSetId: true,
 			createdAt: true,
 			isDeleted: true,
+			isTemp: true,
 			latestDocumentVersion: {
 				select: {
 					originalFilename: true,

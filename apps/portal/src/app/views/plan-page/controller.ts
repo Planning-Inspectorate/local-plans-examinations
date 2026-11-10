@@ -18,8 +18,12 @@ function examinationStatusTag(plan: Plan) {
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
+		const email = req.session?.authenticatedEmail;
+		if (!email) {
+			return res.redirect('/login');
+		}
 		const planRef = String(req.params.refNum);
-		const rawPlans = await service.getPlans();
+		const rawPlans = await service.getPlans(email);
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
 			logger.warn({ planRef }, 'Plan not found');

@@ -34,6 +34,13 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 		this.verifyPlanProgressHeading();
 	}
 
+	verifyAccessDenied(planReference: string) {
+		const path = this.pathFor(planReference);
+		cy.intercept('GET', path).as('inaccessiblePlan');
+		cy.visit(path, { failOnStatusCode: false });
+		cy.wait('@inaccessiblePlan').its('response.statusCode').should('eq', 404);
+	}
+
 	verifyBackLink(href: string | RegExp = '/manage-local-plans/your-plans') {
 		super.verifyBackLink(href);
 		this.backLink.should('have.text', 'Back to my plans');

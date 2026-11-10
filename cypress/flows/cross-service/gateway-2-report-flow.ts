@@ -34,3 +34,19 @@ export const verifyGateway2ReportInPortal = (reference: string, fileName: string
 		}
 	);
 };
+
+export const verifyGateway2ReportNotIssuedInPortal = (reference: string) => {
+	cy.origin(Cypress.env('portalBaseUrl'), { args: { reference } }, ({ reference }) => {
+		cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}/gateway-2-submission`);
+		cy.get('[data-cy="gateway-2-report-section"]').should('not.exist');
+
+		cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
+		cy.contains('.govuk-task-list__item', 'Gateway 2')
+			.find('.govuk-task-list__status')
+			.should('contain.text', 'Under review');
+		cy.contains('.govuk-task-list__item', 'Gateway 3')
+			.should('contain.text', 'Cannot start yet')
+			.find('a')
+			.should('not.exist');
+	});
+};
