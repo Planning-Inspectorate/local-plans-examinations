@@ -185,7 +185,7 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 	}
 
 	const submissionSections =
-		submissionData.length === 1
+		submissionData.length <= 1
 			? [
 					new Section('Gateway 3 submission', 'gateway-3-submission-1')
 						.addQuestion(questions['gateway3DocumentsCheck-1'])

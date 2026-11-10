@@ -58,6 +58,15 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 			if (!updatedSubmissions) {
 				throw Error('No submission found');
 			}
+			if (updatedSubmissions.length === 0) {
+				updatedSubmissions.push({
+					id: crypto.randomUUID(),
+					decision: null,
+					completionDate: null,
+					submittedDate: null,
+					gateway3InfoId: journey3Data.id
+				});
+			}
 			const currentSubmission = updatedSubmissions.at(-1);
 			if (!currentSubmission) {
 				throw Error('Last submission was undefined');

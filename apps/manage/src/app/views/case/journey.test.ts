@@ -58,10 +58,10 @@ function createGateway2WorkshopJourneyForTest(workshop: Record<string, unknown>)
 	);
 }
 
-function createGateway3JourneyForTest() {
+function createGateway3JourneyForTest(submissions: Record<string, unknown>[] = [{}]) {
 	return createGateway3Journey(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
-		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions: [{}] }),
+		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions }),
 		questions
 	);
 }
@@ -233,6 +233,31 @@ describe('gateway3Journey', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/gateway-3');
 		});
+	});
+
+	it('shows the Gateway 3 submission section when there are no submissions yet', () => {
+		const journey = createGateway3JourneyForTest([]);
+		const submissionSections = journey.sections.filter((section) => section.segment.startsWith('gateway-3-submission'));
+
+		assert.equal(submissionSections.length, 1);
+		assert.equal(submissionSections[0].name, 'Gateway 3 submission');
+		assert.equal(submissionSections[0].segment, 'gateway-3-submission-1');
+		assert.deepEqual(
+			submissionSections[0].questions.map((question) => question.fieldName),
+			['gateway3DocumentsCheck-1', 'gateway3Decision-1']
+		);
+	});
+
+	it('shows one numbered section per submission when there are several', () => {
+		const journey = createGateway3JourneyForTest([
+			{ completionDate: new Date('2026-01-01') },
+			{ completionDate: null }
+		]);
+		const segments = journey.sections
+			.map((section) => section.segment)
+			.filter((segment) => segment.startsWith('gateway-3-submission'));
+
+		assert.deepEqual(segments, ['gateway-3-submission-1', 'gateway-3-submission-2']);
 	});
 });
 
