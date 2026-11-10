@@ -25,10 +25,18 @@ export class ODWServiceBusDataSender {
 			this.#service.logger.warn(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
 			return;
 		}
+		this.#service.logger.info(
+			`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with reference '${caseReference}'`
+		);
 		const dataToSend = await this.#dataMapper.mapData(caseReference, workshopsUpdated, hearingsUpdated);
-		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, dataToSend.case);
-		for (const event of dataToSend.events) {
-			this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, event);
+		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, [dataToSend.case]);
+		if (dataToSend.events.length > 0) {
+			this.#service.logger.info(
+				`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with reference '${caseReference}'`
+			);
+			this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, dataToSend.events);
+		} else {
+			this.#service.logger.info(`No event messages generated, skipping sending messages to the ODW`);
 		}
 	}
 }
