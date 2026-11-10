@@ -43,6 +43,9 @@ const buildAnswers = ({
 	optionalData: { ...withoutDocuments(optionalDocumentFields), ...optionalData }
 });
 
+const filesFor = (field: string, ...fileNames: string[]) =>
+	fileNames.map((fileName, index) => ({ guid: `${field}-guid-${index}`, fileName }));
+
 const buildJourney = (answers: Record<string, unknown>) => ({
 	response: { answers },
 	journeyTemplate: 'test-template',
@@ -62,13 +65,18 @@ const downloadUrl = (guid: string) => `/case/${REFERENCE}/download-case-document
 
 describe('CustomDocumentsQuestion', () => {
 	describe('formatAnswerForSummary', () => {
-		it('should count required, optional and examination website documents', () => {
+		it('should count required and optional document files but not the examination website', () => {
 			const question = buildQuestion();
 			const answers = buildAnswers({
 				proposedLocalPlan: 'plan.pdf, plan-appendix.pdf',
 				mapOfPolicies: 'map.pdf',
 				examinationWebsite: EXAMINATION_WEBSITE,
-				optionalData: { otherDocuments: 'other.pdf' }
+				optionalData: { otherDocuments: 'other.pdf' },
+				documentFiles: {
+					proposedLocalPlan: filesFor('proposedLocalPlan', 'plan.pdf', 'plan-appendix.pdf'),
+					mapOfPolicies: filesFor('mapOfPolicies', 'map.pdf'),
+					otherDocuments: filesFor('otherDocuments', 'other.pdf')
+				}
 			});
 
 			const summary = question.formatAnswerForSummary(SUBMISSION_SECTION, buildJourney(answers) as any);
@@ -76,10 +84,22 @@ describe('CustomDocumentsQuestion', () => {
 			assert.deepEqual(summary, [
 				{
 					key: 'Documents',
-					value: '5 document(s)',
+					value: '4 document(s)',
 					action: { href: '/review', text: 'Review', visuallyHiddenText: 'Documents' }
 				}
 			]);
+		});
+
+		it('should count a file whose name contains a comma as one document', () => {
+			const question = buildQuestion();
+			const answers = buildAnswers({
+				proposedLocalPlan: 'Plan, final version.pdf',
+				documentFiles: { proposedLocalPlan: filesFor('proposedLocalPlan', 'Plan, final version.pdf') }
+			});
+
+			const [summaryRow] = question.formatAnswerForSummary(SUBMISSION_SECTION, buildJourney(answers) as any);
+
+			assert.equal(summaryRow.value, '1 document(s)');
 		});
 
 		it('should show zero documents when nothing has been added', () => {
@@ -95,7 +115,14 @@ describe('CustomDocumentsQuestion', () => {
 		it('should link to the submission review documents page with Review text when documents have been added', () => {
 			const question = buildQuestion();
 
-			question.setActionLink(SUBMISSION_ID, REFERENCE, buildAnswers({ proposedLocalPlan: 'plan.pdf' }));
+			question.setActionLink(
+				SUBMISSION_ID,
+				REFERENCE,
+				buildAnswers({
+					proposedLocalPlan: 'plan.pdf',
+					documentFiles: { proposedLocalPlan: filesFor('proposedLocalPlan', 'plan.pdf') }
+				})
+			);
 
 			assert.deepEqual(question.actionLink, { href: reviewDocumentsHref, text: 'Review' });
 		});
@@ -150,7 +177,14 @@ describe('CustomDocumentsQuestion', () => {
 		it('should set the Review action link for the submission being reviewed', () => {
 			const question = buildQuestion();
 
-			question.toViewModel(buildViewModelOptions(buildAnswers({ statementOfCompliance: 'compliance.pdf' })));
+			question.toViewModel(
+				buildViewModelOptions(
+					buildAnswers({
+						statementOfCompliance: 'compliance.pdf',
+						documentFiles: { statementOfCompliance: filesFor('statementOfCompliance', 'compliance.pdf') }
+					})
+				)
+			);
 
 			assert.deepEqual(question.actionLink, { href: reviewDocumentsHref, text: 'Review' });
 		});
