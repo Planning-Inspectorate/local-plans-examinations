@@ -44,21 +44,25 @@ export class ODWServiceBusDataSender {
 			this.tryLogWarning(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
 			return;
 		}
-		const detailString = caseIdOrCaseReference.caseReference
-			? `reference '${caseIdOrCaseReference.caseReference}'`
-			: `caseId '${caseIdOrCaseReference.caseId}'`;
-		this.tryLogInfo(
-			`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
-		);
-		const dataToSend = await this.#dataMapper.mapData(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated);
-		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, [dataToSend.case]);
-		if (dataToSend.events.length > 0) {
+		try {
+			const detailString = caseIdOrCaseReference.caseReference
+				? `reference '${caseIdOrCaseReference.caseReference}'`
+				: `caseId '${caseIdOrCaseReference.caseId}'`;
 			this.tryLogInfo(
-				`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
+				`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
 			);
-			this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, dataToSend.events);
-		} else {
-			this.tryLogInfo(`No event messages generated, skipping sending messages to the ODW`);
+			const dataToSend = await this.#dataMapper.mapData(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated);
+			this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, [dataToSend.case]);
+			if (dataToSend.events.length > 0) {
+				this.tryLogInfo(
+					`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
+				);
+				this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, dataToSend.events);
+			} else {
+				this.tryLogInfo(`No event messages generated, skipping sending messages to the ODW`);
+			}
+		} catch (error) {
+			this.tryLogWarning(`An error occurred while sending a message to the ODW Service Bus: ${error}`);
 		}
 	}
 }
