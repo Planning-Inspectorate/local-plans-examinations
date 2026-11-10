@@ -13,6 +13,7 @@ import {
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import { examinationPage } from '../../../../page-objects/manage/examination/index.ts';
 import {
+	openGateway3Page,
 	openGateway3ReviewDocumentsPage,
 	openSeededGateway3Page,
 	openSeededGateway3PageWithSubmissionDocuments
@@ -45,6 +46,12 @@ const todayDisplay = today.toLocaleDateString('en-GB', {
 const openCaseHistory = () => {
 	gateway3Page.openServiceNavigationItem('Case History');
 	caseHistoryPage.verifyLoaded();
+};
+
+const seedGateway3FilesNotSubmitted = () => {
+	cy.task('seedCase');
+	cy.task('seedGateway3DeclarationDocuments');
+	openGateway3Page('PLAN-001', 'East Borough Local Plan');
 };
 
 describe('Gateway 3 updates', () => {
@@ -263,6 +270,14 @@ describe('Gateway 3 submission documents', () => {
 				gateway3ExaminationWebsite.href
 			);
 		});
+	});
+
+	it('does not show documents uploaded from fo without submission', { tags: ['regression'] }, () => {
+		seedGateway3FilesNotSubmitted();
+
+		gateway3Page.verifyLoaded();
+		gateway3Page.verifyCountOfDocumentsSubmitted(9);
+		gateway3Page.verifyNoSubmissionDocumentsReviewLink();
 	});
 
 	it('opens the Gateway 3 decision when every required document has been added', { tags: ['regression'] }, () => {
