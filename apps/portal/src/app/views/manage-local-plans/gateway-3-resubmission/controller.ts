@@ -13,6 +13,7 @@ import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { sortGateway3Submissions, type Gateway3SubmissionSummary } from '#util/gateway-3-submission.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -515,6 +516,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			service.logger.error({ error }, `Failed to complete resubmission for case ${planReference ?? ''}`);
 			return res.status(500).send('Failed to record submission');
 		}
+		new ODWServiceBusDataSender(service).sendUpdateMessage({ caseId: caseId }, false, false);
 
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission-complete`);
 	};

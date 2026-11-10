@@ -5,6 +5,7 @@ import { getRoutePlanReference } from '../utils.ts';
 import { loadConfig } from '../../../../config.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
 
@@ -116,6 +117,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			logger.error({ error }, `Failed to update submission date for case ${reference}`);
 			return res.status(500).send('Failed to record submission');
 		}
+		new ODWServiceBusDataSender(service).sendUpdateMessage({ caseReference: reference }, false, false);
 
 		// send email to LPA using GOV.UK Notify
 		await Promise.allSettled(

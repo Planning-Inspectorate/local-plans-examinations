@@ -15,6 +15,7 @@ import type {
 } from '@pins/local-plans-database/src/client/client.ts';
 import type { Schemas } from '@planning-inspectorate/data-model';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
+import type { CaseIdOrCaseReference } from '../util/types.ts';
 
 function sortGateway3Submissions(submissions: Gateway3Submission[]) {
 	return submissions.toSorted((a, b) => {
@@ -200,11 +201,20 @@ export class ODWDataMapper {
 	 * @param hearingsUpdated Whether or not hearing data should be queried
 	 * @returns The data in the ODW service bus format
 	 */
-	public async mapData(caseReference: string, workshopsUpdated: boolean, hearingsUpdated: boolean): Promise<ODWData> {
+	public async mapData(
+		caseIdOrCaseReference: CaseIdOrCaseReference,
+		workshopsUpdated: boolean,
+		hearingsUpdated: boolean
+	): Promise<ODWData> {
+		const whereClause = caseIdOrCaseReference.caseId
+			? {
+					id: caseIdOrCaseReference.caseId
+				}
+			: {
+					reference: caseIdOrCaseReference.caseReference
+				};
 		const allData = await this.#service.db.case.findUnique({
-			where: {
-				reference: caseReference
-			},
+			where: whereClause,
 			include: {
 				gateway1Info: true,
 				gateway2Info: {
@@ -228,7 +238,10 @@ export class ODWDataMapper {
 			}
 		});
 		if (!allData) {
-			throw Error(`No data was found for case with reference '${caseReference}'`);
+			const errorDetail = caseIdOrCaseReference.caseId
+				? `caseId '${caseIdOrCaseReference.caseId}'`
+				: `reference '${caseIdOrCaseReference.caseReference}'`;
+			throw Error(`No data was found for case with ${errorDetail}`);
 		}
 		const caseData = await this.mapPlanCase(allData);
 		const eventData: Schemas.PlansEvent[] = [];

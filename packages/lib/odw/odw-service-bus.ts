@@ -1,6 +1,7 @@
 import { ServiceBusUtil } from '../util/service-bus-util.ts';
 import { ODWDataMapper } from './odw-data-mapper.ts';
 import type { Service } from '../app/service.ts';
+import type { CaseIdOrCaseReference } from '../util/types.ts';
 
 export const PLAN_CASE_SB_TOPIC = 'plans-case';
 export const PLAN_EVENT_SB_TOPIC = 'plans-event';
@@ -20,19 +21,26 @@ export class ODWServiceBusDataSender {
 		}
 		this.#dataMapper = new ODWDataMapper(this.#service);
 	}
-	async sendUpdateMessage(caseReference: string, workshopsUpdated: boolean, hearingsUpdated: boolean) {
+	async sendUpdateMessage(
+		caseIdOrCaseReference: CaseIdOrCaseReference,
+		workshopsUpdated: boolean,
+		hearingsUpdated: boolean
+	) {
 		if (!this.#serviceBusUtil) {
 			this.#service.logger.warn(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
 			return;
 		}
+		const detailString = caseIdOrCaseReference.caseReference
+			? `reference '${caseIdOrCaseReference.caseReference}'`
+			: `caseId '${caseIdOrCaseReference.caseId}'`;
 		this.#service.logger.info(
-			`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with reference '${caseReference}'`
+			`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
 		);
-		const dataToSend = await this.#dataMapper.mapData(caseReference, workshopsUpdated, hearingsUpdated);
+		const dataToSend = await this.#dataMapper.mapData(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated);
 		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, [dataToSend.case]);
 		if (dataToSend.events.length > 0) {
 			this.#service.logger.info(
-				`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with reference '${caseReference}'`
+				`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
 			);
 			this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, dataToSend.events);
 		} else {

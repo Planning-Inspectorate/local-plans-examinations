@@ -64,7 +64,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser, caseOfficerNames, req);
 
 		service.logger.info(answers, 'case created');
-		new ODWServiceBusDataSender(service).sendUpdateMessage(answers.reference, true, true);
+		new ODWServiceBusDataSender(service).sendUpdateMessage({ caseReference: answers.reference }, true, true);
 		const lpaOptions = await loadLpaOptions(service, false);
 		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
 		const questions = await getQuestions(service, req.session);
