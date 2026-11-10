@@ -1754,7 +1754,7 @@ describe('compileGateway3Data', () => {
 		return service;
 	}
 
-	it('looks up the current required and optional Gateway 3 documents for the case', async () => {
+	it('looks up only the submitted required and optional Gateway 3 documents for the case', async () => {
 		const service = createServiceWithDocuments([]);
 
 		await compileGateway3Data(service.db, gateway3Answers);
@@ -1763,6 +1763,7 @@ describe('compileGateway3Data', () => {
 			where: {
 				caseId: CASE_ID,
 				isDeleted: false,
+				isTemp: false,
 				documentSetId: {
 					in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
 				}
