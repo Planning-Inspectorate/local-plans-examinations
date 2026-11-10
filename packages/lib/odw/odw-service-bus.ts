@@ -15,11 +15,25 @@ export class ODWServiceBusDataSender {
 
 	constructor(service: Service) {
 		this.#service = service;
-		const serviceBusName = service.odw.odwServiceBusName;
+		const serviceBusName = service.odw?.odwServiceBusName;
 		if (serviceBusName) {
 			this.#serviceBusUtil = new ServiceBusUtil(`${serviceBusName}.servicebus.windows.net`);
 		}
 		this.#dataMapper = new ODWDataMapper(this.#service);
+	}
+
+	private tryLogWarning(message: string) {
+		const logWarning = this.#service?.logger?.warn;
+		if (logWarning) {
+			logWarning(message);
+		}
+	}
+
+	private tryLogInfo(message: string) {
+		const logInfo = this.#service?.logger?.info;
+		if (logInfo) {
+			logInfo(message);
+		}
 	}
 	async sendUpdateMessage(
 		caseIdOrCaseReference: CaseIdOrCaseReference,
@@ -27,24 +41,24 @@ export class ODWServiceBusDataSender {
 		hearingsUpdated: boolean
 	) {
 		if (!this.#serviceBusUtil) {
-			this.#service.logger.warn(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
+			this.tryLogWarning(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
 			return;
 		}
 		const detailString = caseIdOrCaseReference.caseReference
 			? `reference '${caseIdOrCaseReference.caseReference}'`
 			: `caseId '${caseIdOrCaseReference.caseId}'`;
-		this.#service.logger.info(
+		this.tryLogInfo(
 			`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
 		);
 		const dataToSend = await this.#dataMapper.mapData(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated);
 		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, [dataToSend.case]);
 		if (dataToSend.events.length > 0) {
-			this.#service.logger.info(
+			this.tryLogInfo(
 				`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
 			);
 			this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, dataToSend.events);
 		} else {
-			this.#service.logger.info(`No event messages generated, skipping sending messages to the ODW`);
+			this.tryLogInfo(`No event messages generated, skipping sending messages to the ODW`);
 		}
 	}
 }
