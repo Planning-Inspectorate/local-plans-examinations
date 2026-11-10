@@ -52,7 +52,7 @@ export const submitGateway3InPortal = (reference: string) => {
 		cy.contains('h1', 'Gateway 3 submission complete').should('be.visible');
 
 		cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
-		cy.contains('.govuk-task-list__item', 'Gateway 3 - readiness check')
+		cy.contains('.govuk-task-list__item', 'Gateway 3')
 			.find('.govuk-task-list__status')
 			.should('contain.text', 'Under review');
 	});

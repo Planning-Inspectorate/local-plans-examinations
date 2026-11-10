@@ -63,11 +63,7 @@ describe('Gateway 2 application page journeys', () => {
 			page.dragAndDropAndVerifyFile('test-document.pdf');
 			page.saveAndReturn();
 			gateway2ApplicationPage.saveAndComeBackLink.click();
-			planDetailsPage.verifyProgressRow(
-				'Gateway 2 - advisory check',
-				`Target date: ${plan.dates.gateway2}`,
-				plan.status2
-			);
+			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, plan.status2);
 		});
 	});
 });

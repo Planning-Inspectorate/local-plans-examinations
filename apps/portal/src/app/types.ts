@@ -134,8 +134,9 @@ export interface Gateway2ReportFile {
 export interface Plan {
 	//BIG ? on name
 	refNum: string; //Reference Number
-	leadLPA: string; //Lead Local Planning Authority
-	linkedLPA: string; //Linked Local Planning Authority
+	lpaNames: string[];
+	leadLPA: string;
+	linkedLPA: string;
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
 	type: PlanType;
@@ -241,6 +242,7 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 
 export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	refNum: 'PLAN-001', //Reference Number
+	lpaNames: [],
 	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
 	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
 	title: 'East Borough Local Plan', //Plan Title
@@ -438,60 +440,3 @@ export function buildTestPlans(): unknown[] {
 	];
 	return buildPlans(testData);
 }
-
-export const testPlan: unknown[] = [
-	{
-		refNum: 'PLAN-001',
-		leadLPA: 'Southampton',
-		linkedLPA: 'Romsey Town Council',
-		title: 'East plan',
-		stage: 1,
-		status: 0,
-		dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
-		sections: [0, 0, 0],
-		documents: [
-			{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-		]
-	},
-	{
-		refNum: 'PLAN-123456',
-		leadLPA: 'Test LPA',
-		linkedLPA: 'Test Council',
-		title: 'Test plan',
-		stage: 1,
-		status: 0,
-		dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
-		sections: [0, 0, 0],
-		documents: [
-			{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-		]
-	}
-];

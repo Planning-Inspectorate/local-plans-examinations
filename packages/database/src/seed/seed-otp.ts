@@ -31,8 +31,9 @@ const SUBMITTED_PLAN_TITLE = 'GW2SubmittedNotIssued';
 
 export async function seedPortalCases({
 	email = 'test@planninginspectorate.gov.uk',
-	caseOnly = false
-}: { email?: string; caseOnly?: boolean } = {}) {
+	caseOnly = false,
+	singleLpa = false
+}: { email?: string; caseOnly?: boolean; singleLpa?: boolean } = {}) {
 	const config = loadConfig();
 	dotenv.config({ quiet: true });
 
@@ -42,7 +43,7 @@ export async function seedPortalCases({
 		{ lpaCode: 'romsey', lpaName: 'Romsey Town Council' }
 	];
 	const lpaRelations = {
-		set: lpas.map(({ lpaCode }) => ({ lpaCode }))
+		set: (singleLpa ? lpas.slice(1) : lpas).map(({ lpaCode }) => ({ lpaCode }))
 	};
 	const planDates = {
 		gateway1Date: new Date('2026-05-07T12:00:00.000Z'),

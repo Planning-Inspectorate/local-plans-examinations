@@ -93,11 +93,7 @@ describe('Gateway 3 application page journeys once Gateway 2 is submitted and it
 				mapOfProposedLocalPlanPoliciesPage.uploadAndVerifyFile('test-document.pdf');
 				mapOfProposedLocalPlanPoliciesPage.saveAndReturn();
 				gateway3ApplicationPage.saveAndComeBackLink.click();
-				planDetailsPage.verifyProgressRow(
-					'Gateway 3 - readiness check',
-					`Target date: ${plan.dates.gateway3}`,
-					plan.status2
-				);
+				planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status2);
 			});
 		}
 	);
