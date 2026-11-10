@@ -42,7 +42,7 @@ export abstract class SaveController {
 	 */
 	protected tryToSendMessageToTheODW(answers: Record<string, any>) {
 		new ODWServiceBusDataSender(this.service).sendUpdateMessage(
-			this.caseReference,
+			{ caseReference: this.caseReference },
 			'workshops' in answers,
 			'hearings' in answers
 		);
