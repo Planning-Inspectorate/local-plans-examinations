@@ -64,6 +64,7 @@ export const compileGateway3Data = async (
 		where: {
 			caseId: currentData.caseId,
 			isDeleted: false,
+			isTemp: false,
 			documentSetId: {
 				in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
 			}
