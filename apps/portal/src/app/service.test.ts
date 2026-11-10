@@ -396,6 +396,78 @@ describe('PortalService', () => {
 	});
 
 	describe('getPlans', () => {
+		for (const { label, lpas, expected } of [
+			{ label: 'no authorities', lpas: [], expected: [] },
+			{
+				label: 'one authority',
+				lpas: [{ lpaName: 'Alpha Council', lpaCode: 'ALPHA' }],
+				expected: ['Alpha Council']
+			},
+			{
+				label: 'multiple authorities in database order',
+				lpas: [
+					{ lpaName: 'Alpha Council', lpaCode: 'ALPHA' },
+					{ lpaName: 'Beta Council', lpaCode: 'BETA' },
+					{ lpaName: 'Gamma Council', lpaCode: 'GAMMA' }
+				],
+				expected: ['Alpha Council', 'Beta Council', 'Gamma Council']
+			},
+			{
+				label: 'missing and empty authority names',
+				lpas: [
+					{ lpaName: null, lpaCode: 'ALPHA' },
+					{ lpaName: '', lpaCode: 'BETA' }
+				],
+				expected: ['ALPHA', 'BETA']
+			}
+		]) {
+			it(`maps lpaNames for ${label}`, async () => {
+				const service = buildService([buildCase({ lpas })]);
+				const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+				assert.strictEqual(plans.length, 1);
+				assert.deepStrictEqual(plans[0].lpaNames, expected);
+			});
+		}
+
+		it('uses the timetabled expected dates even after actual, report and decision dates are set', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: {
+						expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+						actualDate: new Date('2026-08-15T12:00:00.000Z'),
+						reportIssuedDate: new Date('2026-09-01T12:00:00.000Z')
+					},
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-10-01T12:00:00.000Z'),
+						frontOfficeStatus: GATEWAY_3_STATUS.CANNOT_START_YET,
+						submissions: [{ decision: null, completionDate: new Date('2026-10-15T12:00:00.000Z') }]
+					},
+					examinationInfo: {
+						expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
+						submissionForExaminationDate: new Date('2026-10-21T12:00:00.000Z'),
+						status: 'submitted',
+						statusLookup: { displayName: 'Submitted' }
+					}
+				})
+			]);
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+			assert.strictEqual(plans.length, 1);
+			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
+			assert.strictEqual(plans[0].dates.E, '1 September 2026');
+		});
+
+		it('shows Not set when a timetabled date is missing', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: { expectedDate: null, actualDate: new Date('2026-08-15T12:00:00.000Z'), reportIssuedDate: null }
+				})
+			]);
+			const plans = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+			assert.strictEqual(plans[0].dates.G2, 'Not set');
+		});
+
 		it('loads plans from the database for the signed-in email', async () => {
 			const service = buildService([buildCase()]);
 
@@ -441,6 +513,7 @@ describe('PortalService', () => {
 						}
 					},
 					lpas: {
+						select: { lpaCode: true, lpaName: true },
 						orderBy: {
 							lpaName: 'asc'
 						}
@@ -478,6 +551,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans.length, 1);
 			assert.strictEqual(plans[0].refNum, 'PLAN-941623');
 			assert.strictEqual(plans[0].title, 'Real local plan');
+			assert.deepStrictEqual(plans[0].lpaNames, ['Southampton City Council', 'Romsey Town Council']);
 			assert.strictEqual(plans[0].leadLPA, 'Southampton City Council');
 			assert.strictEqual(plans[0].linkedLPA, 'Romsey Town Council');
 			assert.strictEqual(plans[0].stage, STAGE.Gateway2);
@@ -536,7 +610,7 @@ describe('PortalService', () => {
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ReadyToStart);
-			assert.strictEqual(plans[0].dates.G2, '1 September 2026');
+			assert.strictEqual(plans[0].dates.G2, '21 July 2026');
 			assert.deepStrictEqual(plans[0].gateway2ReportFiles, [
 				{
 					fileName: 'gateway-2-report.pdf',
@@ -546,7 +620,7 @@ describe('PortalService', () => {
 			]);
 		});
 
-		it('maps a submitted Gateway 3 plan to Under review using its actual date', async () => {
+		it('maps a submitted Gateway 3 plan to Under review using its timetabled date', async () => {
 			const actualDate = new Date('2026-10-01T12:00:00.000Z');
 			const service = buildService([
 				buildCase({
@@ -562,7 +636,7 @@ describe('PortalService', () => {
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.UnderReview);
-			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
 		});
 
 		it('maps a stored Report issued examination status using the BO issue date', async () => {
@@ -597,7 +671,7 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].dates.E, '20 October 2026');
 		});
 
-		it('maps an open Gateway 3 resubmission to Resubmission required using the actual submission date', async () => {
+		it('maps an open Gateway 3 resubmission to Resubmission required using the timetabled date', async () => {
 			const service = buildService([
 				buildCase({
 					gateway3Info: {
@@ -618,7 +692,7 @@ describe('PortalService', () => {
 
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ResubmissionRequired);
-			assert.strictEqual(plans[0].dates.G3, '1 October 2026');
+			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
 		});
 
 		for (const { status, adoptionDate, soundUnsoundDate, submissionDate, expectedDate } of [
@@ -655,7 +729,7 @@ describe('PortalService', () => {
 				adoptionDate: null,
 				soundUnsoundDate: null,
 				submissionDate: new Date('2026-09-05'),
-				expectedDate: '5 September 2026'
+				expectedDate: '1 September 2026'
 			},
 			{
 				status: EXAMINATION_STATUS_ID.READY_TO_START,

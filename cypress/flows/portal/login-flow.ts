@@ -59,7 +59,7 @@ export const completePortalLogin = () => {
 	portalLoginOtpPage.saveAndContinue();
 };
 
-export const portalLogin = (email?: string) => {
+export const portalLogin = (email?: string, { singleLpa = false } = {}) => {
 	if (isEnvironmentSmoke()) {
 		authenticatePortalUserIfRequired(completePortalLoginByRequest, validatePortalLogin);
 		myPlansPage.visit();
@@ -67,7 +67,7 @@ export const portalLogin = (email?: string) => {
 	}
 
 	const loginEmail = email ?? TEST_EMAIL;
-	cy.task('seedCase');
+	cy.task('seedCase', { singleLpa });
 	completePortalLoginByRequest(loginEmail, LOCAL_TEST_OTP);
 	myPlansPage.visit();
 };

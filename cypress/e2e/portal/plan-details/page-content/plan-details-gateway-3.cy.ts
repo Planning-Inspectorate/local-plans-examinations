@@ -4,8 +4,6 @@ import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
-const today = new Date();
-const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Plan details page content for gateway 3', () => {
 	beforeEach(() => {
@@ -19,8 +17,8 @@ describe('Plan details page content for gateway 3', () => {
 		loadPlanDetails().then((plan) => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage2, plan.status3);
-			planDetailsPage.verifyProgressRow('Gateway 3 - readiness check', `Submitted: ${todayDisplay}`, plan.status3);
+			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status3);
 		});
 	});
 
@@ -29,8 +27,8 @@ describe('Plan details page content for gateway 3', () => {
 		loadPlanDetails().then((plan) => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyMetadataValue('Current stage', plan.currentStage2, plan.status4);
-			planDetailsPage.verifyProgressRow('Gateway 3 - readiness check', 'Submitted: 1 October 2026', plan.status4);
+			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status4);
 		});
 	});
 });

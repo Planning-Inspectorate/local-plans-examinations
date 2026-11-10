@@ -127,8 +127,8 @@ export default defineConfig({
 					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;
 				},
-				seedCase: async () => {
-					await seedPortalCases({ caseOnly: true });
+				seedCase: async (options?: { singleLpa?: boolean }) => {
+					await seedPortalCases({ caseOnly: true, singleLpa: options?.singleLpa });
 					return null;
 				},
 				seedAssignedToMeCase: async () => {

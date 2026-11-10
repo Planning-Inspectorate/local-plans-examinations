@@ -14,7 +14,7 @@ export const verifyGateway2ReportInPortal = (reference: string, fileName: string
 			cy.contains('[data-cy="plan-link"]', reference).click();
 			cy.location('pathname').should('eq', `/manage-local-plans/${reference}`);
 			cy.get('[data-cy="plan-progress"], section[aria-labelledby="plan-progress-heading"]')
-				.contains('a', 'Gateway 2 - advisory check')
+				.contains('a', 'Gateway 2')
 				.click();
 			cy.location('pathname').should('include', `/manage-local-plans/${reference}/gateway-2-submission`);
 
@@ -25,10 +25,10 @@ export const verifyGateway2ReportInPortal = (reference: string, fileName: string
 				.and('contain.text', `(shared on ${sharedDate})`);
 
 			cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
-			cy.contains('.govuk-task-list__item', 'Gateway 2 - advisory check')
+			cy.contains('.govuk-task-list__item', 'Gateway 2')
 				.find('.govuk-task-list__status')
 				.should('contain.text', 'Completed');
-			cy.contains('.govuk-task-list__item', 'Gateway 3 - readiness check')
+			cy.contains('.govuk-task-list__item', 'Gateway 3')
 				.find('.govuk-task-list__status')
 				.should('contain.text', 'Ready to start');
 		}

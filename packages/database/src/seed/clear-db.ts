@@ -25,6 +25,7 @@ async function run() {
 		await dbClient.case.deleteMany({});
 		await dbClient.contact.deleteMany({});
 		await dbClient.lPA.deleteMany({});
+		await dbClient.oneTimePassword.deleteMany({});
 		console.log('Database cleared');
 	} catch (error) {
 		console.error(error);
