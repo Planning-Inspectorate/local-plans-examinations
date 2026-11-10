@@ -244,7 +244,7 @@ describe('gateway3Journey', () => {
 		assert.equal(submissionSections[0].segment, 'gateway-3-submission-1');
 		assert.deepEqual(
 			submissionSections[0].questions.map((question) => question.fieldName),
-			['gateway3DocumentsCheck-1', 'gateway3Decision-1']
+			['gateway3DocumentSubmission-1', 'decision-1']
 		);
 	});
 
