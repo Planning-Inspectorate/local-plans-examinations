@@ -7,6 +7,7 @@ import { parseDate } from '../../util/date.ts';
 import { getQuestions } from './questions.ts';
 import type { ManageQuestionConfig } from './questions.ts';
 import { retrieveCaseOfficers, loadLpaOptions } from '../../util/options-helper.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 /**
  * The structure of data for the journey answers
@@ -63,6 +64,7 @@ export function buildSaveController(service: ManageService): RequestHandler {
 		await saveDataToDatabase(service, answers, uniqueLpaCodes, currentUser, caseOfficerNames, req);
 
 		service.logger.info(answers, 'case created');
+		new ODWServiceBusDataSender(service).sendUpdateMessage(answers.reference, true, true);
 		const lpaOptions = await loadLpaOptions(service, false);
 		const lpaOptionsMap = new Map(lpaOptions.map((elem) => [elem.value, elem.text]));
 		const questions = await getQuestions(service, req.session);

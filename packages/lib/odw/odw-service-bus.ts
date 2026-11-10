@@ -16,37 +16,19 @@ export class ODWServiceBusDataSender {
 		this.#service = service;
 		const serviceBusName = service.odw.odwServiceBusName;
 		if (serviceBusName) {
-			this.#serviceBusUtil = new ServiceBusUtil(serviceBusName);
+			this.#serviceBusUtil = new ServiceBusUtil(`${serviceBusName}.servicebus.windows.net`);
 		}
 		this.#dataMapper = new ODWDataMapper(this.#service);
 	}
-
-	async sendCaseUpdateMessage(caseId: string) {
+	async sendUpdateMessage(caseReference: string, workshopsUpdated: boolean, hearingsUpdated: boolean) {
 		if (!this.#serviceBusUtil) {
 			this.#service.logger.warn(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
 			return;
 		}
-		const message = await this.#dataMapper.mapPlanCase(caseId);
-		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, message);
-	}
-
-	async sendWorkshopUpdateMessage(caseId: string) {
-		if (!this.#serviceBusUtil) {
-			this.#service.logger.warn(ACTION_MESSAGE.replace('ACTION', 'send a workshop update message to the ODW'));
-			return;
+		const dataToSend = await this.#dataMapper.mapData(caseReference, workshopsUpdated, hearingsUpdated);
+		this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, dataToSend.case);
+		for (const event of dataToSend.events) {
+			this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, event);
 		}
-		const message = await this.#dataMapper.mapPlanWorkshop(caseId);
-		this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, message);
-		this.sendCaseUpdateMessage(caseId);
-	}
-
-	async sendHearingUpdateMessage(caseId: string) {
-		if (!this.#serviceBusUtil) {
-			this.#service.logger.warn(ACTION_MESSAGE.replace('ACTION', 'send a hearing update message to the ODW'));
-			return;
-		}
-		const message = await this.#dataMapper.mapPlanHearing(caseId);
-		this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, message);
-		this.sendCaseUpdateMessage(caseId);
 	}
 }
