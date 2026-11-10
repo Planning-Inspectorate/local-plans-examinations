@@ -58,7 +58,13 @@ function createGateway2WorkshopJourneyForTest(workshop: Record<string, unknown>)
 	);
 }
 
-function createGateway3JourneyForTest(submissions: Record<string, unknown>[] = [{}]) {
+function createGateway3JourneyForTest(
+	submissions:
+		| {
+				completionDate: Date | null;
+		  }
+		| {}[] = [{}]
+) {
 	return createGateway3Journey(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions }),
