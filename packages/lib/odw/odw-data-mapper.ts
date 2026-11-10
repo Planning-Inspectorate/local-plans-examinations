@@ -70,15 +70,6 @@ export class ODWDataMapper {
 	}
 
 	/**
-	 * Map local plans kebab case strings to ODW slug case strings
-	 * @param value The local plans field value
-	 * @returns The value converted to ODW value format
-	 */
-	private mapKebabCaseToSlugCase(value: string) {
-		return value.replace('-', '_');
-	}
-
-	/**
 	 * Map local plans outcome srings to ODW outcome strings
 	 * @param value The local plans outcome
 	 * @returns The ODW outcome
@@ -88,6 +79,18 @@ export class ODWDataMapper {
 			sound: 'Sound',
 			unsound: 'Unsound',
 			['sound-with-modifications']: 'Sound with modifications'
+		};
+		if (value in map) {
+			return map[value];
+		}
+		return value;
+	}
+
+	private mapLocationTypeToODW(value: string) {
+		const map: Record<string, string> = {
+			['in-person']: 'in_person',
+			hybrid: 'hybrid',
+			remote: 'virtual'
 		};
 		if (value in map) {
 			return map[value];
@@ -325,7 +328,7 @@ export class ODWDataMapper {
 			eventLocationType: this.validateField(
 				workshop.workshopLocationType,
 				this.#VALID_LOCATION_TYPES,
-				this.mapKebabCaseToSlugCase
+				this.mapLocationTypeToODW
 			),
 			eventStartDateTime: workshop.workshopDate?.toISOString(),
 			eventEndDateTime: null, // not currently stored
@@ -359,7 +362,7 @@ export class ODWDataMapper {
 			eventLocationType: this.validateField(
 				hearing.hearingLocationType,
 				this.#VALID_LOCATION_TYPES,
-				this.mapKebabCaseToSlugCase
+				this.mapLocationTypeToODW
 			),
 			eventStartDateTime: hearing.hearingDate?.toISOString(),
 			eventEndDateTime: hearing.hearingEndDate?.toISOString(),

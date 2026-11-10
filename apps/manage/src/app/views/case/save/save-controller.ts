@@ -1,6 +1,7 @@
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 import type { SaveInput } from './save-inputs.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 export abstract class SaveController {
 	protected caseReference;
@@ -35,6 +36,18 @@ export abstract class SaveController {
 
 	protected abstract shouldSaveToSession(): Promise<boolean>;
 
+	/**
+	 * Attempt to send a message to the ODW system to signal that the case has been modified
+	 * @param answers The answers that were saved
+	 */
+	protected tryToSendMessageToTheODW(answers: Record<string, any>) {
+		new ODWServiceBusDataSender(this.service).sendUpdateMessage(
+			this.caseReference,
+			'workshops' in answers,
+			'hearings' in answers
+		);
+	}
+
 	protected async save(answers: SaveInput) {
 		if (await this.shouldSaveToSession()) {
 			return { dataWritten: this.saveToSession(answers), writtenToDB: false };
@@ -49,7 +62,12 @@ export abstract class SaveController {
 	 */
 	public async prepareAndSave(answers: Record<string, any>) {
 		const preparedData = await this.prepareData(answers);
-		return await this.save(preparedData);
+		const response = await this.save(preparedData);
+		if (response.writtenToDB) {
+			// Try to send a message to the ODW service bus
+			this.tryToSendMessageToTheODW(preparedData);
+		}
+		return response;
 	}
 	protected async resolveCaseId(): Promise<string> {
 		const caseRecord = await this.service.db.case.findUnique({

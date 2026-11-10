@@ -12,9 +12,12 @@ export class ServiceBusUtil {
 		this.client = new ServiceBusClient(this.fullyQualifiedNamespace, this.credential);
 	}
 
-	public async sendMessage<T>(topicName: string, message: T) {
+	public async sendMessage<T>(topicName: string, messages: T[]) {
+		if (messages.length == 0) {
+			throw Error('Attempted to send 0 messages to the service bus. Please verify the messages being sent');
+		}
 		const sender = this.client.createSender(topicName);
-		await sender.sendMessages({ body: message });
+		await sender.sendMessages(messages.map((message) => ({ body: message })));
 		await sender.close();
 	}
 }
