@@ -66,6 +66,11 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_SUMMARY_OF_CONSULTATION: 'g2-sum-of-cons',
 	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
 
+	// Plan content, evidence and background
+	G2_PLAN_CONTENT: 'g2-plan-content',
+	G2_EVIDENCE_AND_PROGRESS: 'g2-evidence-progress',
+	G2_LATEST_POLICIES_MAP: 'g2-policies-map',
+
 	// Other
 	EXAMINATION_REPORT: 'exam-report',
 	// Others
@@ -128,6 +133,11 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation',
 	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
 
+	// Plan content, evidence and background
+	G2_PLAN_CONTENT: 'plan-content',
+	G2_EVIDENCE_AND_PROGRESS: 'evidence-and-progress',
+	G2_LATEST_POLICIES_MAP: 'latest-policies-map',
+
 	// Other
 	EXAMINATION_REPORT: 'examination-report',
 	// Others
@@ -147,7 +157,10 @@ export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_G1_SELF_ASSESSMENT,
 	DOCUMENT_SET_ID.G2_CONSULTATION_ON_PROPOSED,
 	DOCUMENT_SET_ID.G2_SUMMARY_OF_CONSULTATION,
-	DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN
+	DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
+	DOCUMENT_SET_ID.G2_PLAN_CONTENT,
+	DOCUMENT_SET_ID.G2_EVIDENCE_AND_PROGRESS,
+	DOCUMENT_SET_ID.G2_LATEST_POLICIES_MAP
 ];
 export const gateway3SetIds = [
 	DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,

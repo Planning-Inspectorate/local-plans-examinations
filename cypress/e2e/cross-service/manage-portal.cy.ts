@@ -9,7 +9,7 @@ import {
 } from '../../page-objects/manage/create-case/index.ts';
 import { gateway2ApplicationPage } from '../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { manageToPortalLogin, portalLoginForExistingCase } from '../../flows/portal/login-flow.ts';
-import { gateway2CoverLetterPage } from '../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+import { gateway2CoverLetterPage } from '../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import { portalDeclarationPage } from '../../page-objects/portal/gw2-application/declaration-page.ts';
 import { applicationCompletePage } from '../../page-objects/portal/gw2-application/application-complete-page.ts';
 

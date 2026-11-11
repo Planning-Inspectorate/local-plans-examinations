@@ -29,8 +29,8 @@ export class SingleLineInputPage extends PortalPlanBasePage {
 			.and('contain.text', 'Save and return');
 	}
 
-	verifyHintText(text: string) {
-		this.hintText.should('be.visible').and('contain.text', text);
+	verifyHintText(...hintText: string[]) {
+		hintText.forEach((text) => this.hintText.should('be.visible').and('contain.text', text));
 	}
 
 	verifyLoaded(value?: string) {

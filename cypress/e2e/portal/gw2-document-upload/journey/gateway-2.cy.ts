@@ -9,7 +9,7 @@ import {
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
 	subsequentWorkTowardsDraftPlanPage
-} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 
 describe('Gateway 2 document upload journeys', () => {
 	let planDetails: PlanDetailsFixture;

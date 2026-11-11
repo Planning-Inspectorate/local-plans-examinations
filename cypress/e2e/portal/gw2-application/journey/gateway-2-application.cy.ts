@@ -5,7 +5,7 @@ import { planDetailsPage } from '../../../../page-objects/portal/plan-details/pl
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { openGateway2DocumentUploadPage } from '../../../../flows/portal/gateway-2-upload-flow.ts';
-import { gateway2CoverLetterPage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+import { gateway2CoverLetterPage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
