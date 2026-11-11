@@ -2,6 +2,7 @@ import { ServiceBusUtil } from '../util/service-bus-util.ts';
 import { ODWDataMapper } from './odw-data-mapper.ts';
 import type { Service } from '../app/service.ts';
 import type { CaseIdOrCaseReference } from '../util/types.ts';
+import type { Logger } from 'pino';
 
 export const PLAN_CASE_SB_TOPIC = 'plans-case';
 export const PLAN_EVENT_SB_TOPIC = 'plans-event';
@@ -23,16 +24,16 @@ export class ODWServiceBusDataSender {
 	}
 
 	private tryLogWarning(message: string) {
-		const logWarning = this.#service?.logger?.warn;
-		if (logWarning) {
-			logWarning(message);
+		const logger: Logger | null = this.#service?.logger;
+		if (logger?.warn) {
+			logger.warn(message);
 		}
 	}
 
 	private tryLogInfo(message: string) {
-		const logInfo = this.#service?.logger?.info;
-		if (logInfo) {
-			logInfo(message);
+		const logger: Logger | null = this.#service?.logger;
+		if (logger?.info) {
+			logger.info(message);
 		}
 	}
 	async sendUpdateMessage(
