@@ -37,6 +37,35 @@ describe('createJourney', () => {
 		);
 	});
 
+	it('includes the plan content evidence and background section with correct URLs', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: {
+				planReference: 'PLAN-123456'
+			}
+		} as unknown as Request;
+
+		const journey = createJourney(req, response, createGateway2Questions('PLAN/123456'));
+
+		assert.strictEqual(
+			journey.getCurrentQuestionUrl('plan-content-evidence', 'plan-content'),
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/plan-content-evidence/plan-content'
+		);
+		assert.strictEqual(
+			journey.getCurrentQuestionUrl('plan-content-evidence', 'digital-supporting-material'),
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/plan-content-evidence/digital-supporting-material'
+		);
+		assert.strictEqual(
+			journey.getCurrentQuestionUrl('plan-content-evidence', 'evidence-and-progress'),
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/plan-content-evidence/evidence-and-progress'
+		);
+		assert.strictEqual(
+			journey.getCurrentQuestionUrl('plan-content-evidence', 'latest-policies-map'),
+			'/manage-local-plans/PLAN-123456/gateway-2-submission/plan-content-evidence/latest-policies-map'
+		);
+	});
+
 	it('builds session Gateway 2 submission URLs without a plan reference', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'session', {});
 		const req = {

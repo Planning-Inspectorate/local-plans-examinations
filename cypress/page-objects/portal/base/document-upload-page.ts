@@ -8,6 +8,7 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 	private readonly section: string;
 	private readonly docPath: string;
 	private readonly documentUpload: DocumentUpload;
+	private readonly guidanceText?: string[];
 	readonly addCy: string;
 
 	constructor(
@@ -17,7 +18,8 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		caption: string,
 		addCy: string,
 		section: string,
-		docPath: string
+		docPath: string,
+		guidanceText?: string[]
 	) {
 		super(path);
 		this.heading = heading;
@@ -25,6 +27,7 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.addCy = addCy;
 		this.section = section;
 		this.docPath = docPath;
+		this.guidanceText = guidanceText;
 		this.documentUpload = new DocumentUpload(fieldName);
 	}
 
@@ -79,11 +82,11 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.documentUpload.chooseFilesButton.should('be.visible');
 	}
 
-	verifyPageContent(backLinkPath: string, text = 'Drag and drop or choose files') {
+	verifyPageContent(backLinkPath: string, text: string[] = ['Drag and drop or choose files']) {
 		this.verifyLoaded();
 		this.verifyBackLink(backLinkPath);
 		this.verifyServiceNavigation('Guidance', 'Sign out');
-		this.verifyMainContains(text);
+		this.verifyMainContains(...text);
 		this.verifyNoFileChosen();
 		this.documentUpload.verifyUploadFormVisible();
 		this.documentUpload.verifyFileFormatHintText(

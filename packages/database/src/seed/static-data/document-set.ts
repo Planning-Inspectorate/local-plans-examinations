@@ -141,13 +141,39 @@ export const DOCUMENT_SET = [
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP_DOCUMENTS,
 		displayOrder: 17
 	},
+	// Plan content, evidence and background
+	{
+		id: DOCUMENT_SET_ID.G2_PLAN_CONTENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Plan content',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_PLAN_CONTENT,
+		displayOrder: 18
+	},
+	{
+		id: DOCUMENT_SET_ID.G2_EVIDENCE_AND_PROGRESS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Evidence and progress',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_EVIDENCE_AND_PROGRESS,
+		displayOrder: 19
+	},
+	{
+		id: DOCUMENT_SET_ID.G2_LATEST_POLICIES_MAP,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Latest policies map',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_LATEST_POLICIES_MAP,
+		displayOrder: 20
+	},
+	// Additional
 	{
 		id: DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
 		displayName: 'Subsequent work towards draft plan',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
-		displayOrder: 18
+		displayOrder: 21
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 

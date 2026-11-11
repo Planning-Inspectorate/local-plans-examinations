@@ -748,7 +748,10 @@ const gateway2QuestionNames = new Set<string>([
 	'scopingConsultationDocuments',
 	'consultationSummaryFeedbackScoping',
 	'consultationSummaryProposedContent',
-	'subsequentWorkTowardsADraftPlan'
+	'subsequentWorkTowardsADraftPlan',
+	'planContent',
+	'evidenceAndProgress',
+	'latestPoliciesMap'
 ]);
 
 const gateway3QuestionNames = new Set<string>([

@@ -30,6 +30,11 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.consultationSummaryProposedContent)
 				.addQuestion(questions.gateway1SelfAssessment)
 				.addQuestion(questions.consultationOnProposedContent),
+			new Section('Plan content, evidence and background', 'plan-content-evidence')
+				.addQuestion(questions.planContent)
+				.addQuestion(questions.digitalSupportingMaterial)
+				.addQuestion(questions.evidenceAndProgress)
+				.addQuestion(questions.latestPoliciesMap),
 			new Section('Additional documents', 'additional').addQuestion(questions.subsequentWorkTowardsADraftPlan)
 		],
 		taskListUrl: '',

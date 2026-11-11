@@ -6,7 +6,7 @@ import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-app
 import {
 	localPlanTimetablePage,
 	gateway2CoverLetterPage
-} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
 import { gateway2SubmittedPlan } from '../../../../fixtures/portal/gateway-2-uploads.ts';
 

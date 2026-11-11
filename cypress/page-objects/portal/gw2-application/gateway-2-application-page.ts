@@ -35,6 +35,10 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('additional-documents-table');
 	}
 
+	get planContentEvidenceBackgroundTable() {
+		return cy.getByData('plan-content,-evidence-and-background-table');
+	}
+
 	get workshopDetailsTable() {
 		return cy.getByData('gateway-2-workshop-section');
 	}
@@ -65,6 +69,17 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			this.additionalDocumentsTable,
 			'Additional documents',
 			gateway2ApplicationDocuments.additional
+		);
+	}
+
+	verifyPlanContentEvidenceBackgroundDocuments() {
+		this.verifyDocumentSection(
+			this.planContentEvidenceBackgroundTable,
+			'Plan content, evidence and background',
+			gateway2ApplicationDocuments.PlanContentEvidenceBackground
+		);
+		this.verifyMainContains(
+			'You should include any available documents that will form part of your local plan and show progress towards completion. You can also include a link to any digital materials that are published publicly online. You should also include your latest policies map. These can all be in draft form.'
 		);
 	}
 

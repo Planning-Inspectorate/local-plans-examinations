@@ -5,7 +5,7 @@ import {
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
 	subsequentWorkTowardsDraftPlanPage
-} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');

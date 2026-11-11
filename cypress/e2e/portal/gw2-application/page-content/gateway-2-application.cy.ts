@@ -13,6 +13,8 @@ describe('Gateway 2 application page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
@@ -33,16 +35,11 @@ describe('Gateway 2 application page content', () => {
 	});
 
 	it('Shows Consultation Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifySubHeading('Consultation Documents');
 		gateway2ApplicationPage.verifyConsultationDocuments();
-		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
-			'Notice of intention to commence local plan preparation',
-			'Scoping consultation documents',
-			'Consultation summary of feedback to scoping consultation',
-			'Summary of consultation on proposed local plan content and evidence documents',
-			'Gateway 1 - Self Assessment of Readiness',
-			'Consultation on proposed local plan content and evidence documents'
-		]);
+	});
+
+	it('Shows Plan content, evidence and background documents', { tags: ['regression'] }, () => {
+		gateway2ApplicationPage.verifyPlanContentEvidenceBackgroundDocuments();
 	});
 
 	it('Shows Additional Documents', { tags: ['regression'] }, () => {
