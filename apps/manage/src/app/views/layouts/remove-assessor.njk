@@ -1,0 +1,25 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageTitle %}Remove assessor?{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ reference | replace('-', '/') }}</span>
+      <h1 class="govuk-heading-l" data-cy="remove-assessor-heading">Remove assessor?</h1>
+      <p class="govuk-body" data-cy="remove-assessor-name">{{ assessorName }}</p>
+
+      <form method="post" action="{{ formAction }}">
+        {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Remove assessor",
+            classes: "govuk-button--warning",
+            attributes: { "data-cy": "confirm-remove-assessor" }
+          }) }}
+          <a href="{{ cancelLink }}" class="govuk-link" data-cy="cancel-remove-assessor">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

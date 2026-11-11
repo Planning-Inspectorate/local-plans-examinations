@@ -1,13 +1,21 @@
-import { SmartLookupPage } from '../base/index.ts';
+import { AssessorConfirmPage, RemoveAssessorPage, SmartLookupPage } from '../base/index.ts';
 import { gateway2AssessorAnswer } from '../../../fixtures/manage/gateway-2.ts';
+
+export const gateway2TabPath = /^\/case\/.+\/gateway-2$/;
+export const gateway2AssessorQuestionPath = new RegExp(
+	`^/case/.+/gateway-2/assessor/assessors/${gateway2AssessorAnswer.path}$`
+);
+export const gateway2AssessorRemovePath = /^\/case\/.+\/gateway-2\/assessor\/remove$/;
 
 export class Gateway2AssessorPage extends SmartLookupPage {
 	constructor() {
-		super(
-			/^\/case\/.+\/gateway-2\/gateway-2\/assessor-gateway-2$/,
-			gateway2AssessorAnswer.inputField,
-			gateway2AssessorAnswer.heading
-		);
+		super(gateway2AssessorQuestionPath, gateway2AssessorAnswer.inputField, gateway2AssessorAnswer.heading);
+	}
+
+	verifyContent() {
+		this.verifyLoaded();
+		this.saveAndContinueButton.invoke('text').should((text) => expect(text.trim()).to.eq('Continue'));
+		this.verifyBackLink(gateway2TabPath);
 	}
 
 	enterAssessorName(assessorInput: string) {
@@ -23,3 +31,10 @@ export class Gateway2AssessorPage extends SmartLookupPage {
 	}
 }
 export const gateway2AssessorPage = new Gateway2AssessorPage();
+
+export const gateway2AssessorConfirmPage = new AssessorConfirmPage(
+	/^\/case\/.+\/gateway-2\/assessor\/check$/,
+	gateway2AssessorQuestionPath
+);
+
+export const gateway2RemoveAssessorPage = new RemoveAssessorPage(gateway2AssessorRemovePath, gateway2TabPath);

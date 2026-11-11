@@ -12,7 +12,9 @@ import {
 	createExaminationPauseJourney,
 	createGateway3Journey,
 	createDeleteCaseJourney,
-	createTimetableJourney
+	createTimetableJourney,
+	createGateway2AssessorJourney,
+	createGateway3AssessorJourney
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
@@ -537,5 +539,153 @@ describe('createDeleteCaseJourney', () => {
 		createDeleteCaseJourneyForTest(session);
 
 		assert.equal(session.currentJourney, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
+	});
+});
+
+describe('assessor journeys', () => {
+	const assessorJourneys = [
+		{
+			gateway: 'gateway-2',
+			createJourney: createGateway2AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway2AssessorsName.fieldName,
+			questionUrl: 'assessor-gateway-2'
+		},
+		{
+			gateway: 'gateway-3',
+			createJourney: createGateway3AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway3AssessorsName.fieldName,
+			questionUrl: 'gateway-3-assessor-name'
+		}
+	];
+
+	for (const { gateway, createJourney, journeyId, fieldName, questionUrl } of assessorJourneys) {
+		const createJourneyForTest = (session: Record<string, unknown> = {}) =>
+			createJourney(
+				{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+				new JourneyResponse(journeyId, '', {}),
+				questions
+			);
+
+		it(`only asks who the assessor is for ${gateway}`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.journeyId, journeyId);
+			assert.equal(journey.sections.length, 1);
+			assert.equal(journey.sections[0].segment, 'assessors');
+			assert.deepEqual(
+				journey.sections[0].questions.map((question) => question.fieldName),
+				[fieldName]
+			);
+		});
+
+		it(`sends the ${gateway} assessor question on to the confirm page`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.baseUrl, `/case/LP-TEST-001/${gateway}/assessor`);
+			assert.equal(journey.taskListUrl, `/case/LP-TEST-001/${gateway}/assessor/check`);
+			assert.equal(
+				journey.getCurrentQuestionUrl('assessors', questionUrl),
+				`/case/LP-TEST-001/${gateway}/assessor/assessors/${questionUrl}`
+			);
+		});
+
+		it(`links the ${gateway} assessor question back to the ${gateway} tab`, () => {
+			const journey = createJourneyForTest();
+
+			const backLink = journey.getBackLink({ params: { section: 'assessors', question: questionUrl } });
+
+			assert.equal(backLink, `/case/LP-TEST-001/${gateway}`);
+		});
+
+		it(`marks the ${gateway} assessor journey as the current journey`, () => {
+			const session: Record<string, unknown> = {};
+
+			createJourneyForTest(session);
+
+			assert.equal(session.currentJourney, journeyId);
+		});
+	}
+
+	it('uses a Continue button on the assessor questions', () => {
+		const assessorQuestions = questions as Record<string, any>;
+
+		assert.equal(assessorQuestions.gateway2AssessorsName.viewData?.continueButtonText, 'Continue');
+		assert.equal(assessorQuestions.gateway3AssessorsName.viewData?.continueButtonText, 'Continue');
+	});
+});
+
+describe('assessor journeys', () => {
+	const assessorJourneys = [
+		{
+			gateway: 'gateway-2',
+			createJourney: createGateway2AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway2AssessorsName.fieldName,
+			questionUrl: 'assessor-gateway-2'
+		},
+		{
+			gateway: 'gateway-3',
+			createJourney: createGateway3AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway3AssessorsName.fieldName,
+			questionUrl: 'gateway-3-assessor-name'
+		}
+	];
+
+	for (const { gateway, createJourney, journeyId, fieldName, questionUrl } of assessorJourneys) {
+		const createJourneyForTest = (session: Record<string, unknown> = {}) =>
+			createJourney(
+				{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+				new JourneyResponse(journeyId, '', {}),
+				questions
+			);
+
+		it(`only asks who the assessor is for ${gateway}`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.journeyId, journeyId);
+			assert.equal(journey.sections.length, 1);
+			assert.equal(journey.sections[0].segment, 'assessors');
+			assert.deepEqual(
+				journey.sections[0].questions.map((question) => question.fieldName),
+				[fieldName]
+			);
+		});
+
+		it(`sends the ${gateway} assessor question on to the confirm page`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.baseUrl, `/case/LP-TEST-001/${gateway}/assessor`);
+			assert.equal(journey.taskListUrl, `/case/LP-TEST-001/${gateway}/assessor/check`);
+			assert.equal(
+				journey.getCurrentQuestionUrl('assessors', questionUrl),
+				`/case/LP-TEST-001/${gateway}/assessor/assessors/${questionUrl}`
+			);
+		});
+
+		it(`links the ${gateway} assessor question back to the ${gateway} tab`, () => {
+			const journey = createJourneyForTest();
+
+			const backLink = journey.getBackLink({ params: { section: 'assessors', question: questionUrl } });
+
+			assert.equal(backLink, `/case/LP-TEST-001/${gateway}`);
+		});
+
+		it(`marks the ${gateway} assessor journey as the current journey`, () => {
+			const session: Record<string, unknown> = {};
+
+			createJourneyForTest(session);
+
+			assert.equal(session.currentJourney, journeyId);
+		});
+	}
+
+	it('uses a Continue button on the assessor questions', () => {
+		const assessorQuestions = questions as Record<string, any>;
+
+		assert.equal(assessorQuestions.gateway2AssessorsName.viewData?.continueButtonText, 'Continue');
+		assert.equal(assessorQuestions.gateway3AssessorsName.viewData?.continueButtonText, 'Continue');
 	});
 });

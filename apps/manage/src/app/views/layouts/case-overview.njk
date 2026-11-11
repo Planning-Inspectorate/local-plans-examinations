@@ -157,14 +157,41 @@
                         })
                       }}
                     {% endif %}
-                {% if assessorLink and (section.heading == 'Gateway 2' or section.heading == 'Gateway 3') %}
-                      <section>
+                    {% if assessorLink and (section.heading == 'Gateway 2' or section.heading == 'Gateway 3') %}
+                      <section data-cy="assessors-section">
                         <h2 class="govuk-heading-l govuk-!-margin-bottom-5">Assessors</h2>
-                        <p class="govuk-body">
-                          <a href="{{ assessorLink }}" class="govuk-link" data-cy="add-assessor">Add assessor</a>
-                        </p>
+                        {% if assessors and assessors.length %}
+                          {% set assessorRows = [] %}
+                          {% for assessor in assessors %}
+                            {% set _ = assessorRows.push({
+                              key: { text: 'Assessor ' + assessor.number },
+                              value: { text: assessor.name },
+                              actions: {
+                                items: [{
+                                  href: assessor.removeLink,
+                                  text: 'Remove',
+                                  visuallyHiddenText: 'assessor ' + assessor.number,
+                                  attributes: { 'data-cy': 'remove-assessor-' + assessor.number }
+                                }]
+                              }
+                            }) %}
+                            {% set _ = assessorRows.push({
+                              key: { text: 'Assessor ' + assessor.number + ' appointed' },
+                              value: { text: assessor.appointedDate }
+                            }) %}
+                          {% endfor %}
+                          {{ govukSummaryList({
+                                rows: assessorRows,
+                                attributes: { 'data-cy': 'assessors-list' }
+                            })
+                          }}
+                        {% else %}
+                          <p class="govuk-body">
+                            <a href="{{ assessorLink }}" class="govuk-link" data-cy="add-assessor">Add assessor</a>
+                          </p>
+                        {% endif %}
                       </section>
-                {% endif %}
+                    {% endif %}
                   {% endif %}
               {% endfor %}
           </div>

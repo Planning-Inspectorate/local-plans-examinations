@@ -1,13 +1,21 @@
-import { SmartLookupPage } from '../base/index.ts';
+import { AssessorConfirmPage, RemoveAssessorPage, SmartLookupPage } from '../base/index.ts';
 import { gateway3AssessorAnswer } from '../../../fixtures/manage/gateway-3.ts';
+
+export const gateway3TabPath = /^\/case\/.+\/gateway-3$/;
+export const gateway3AssessorQuestionPath = new RegExp(
+	`^/case/.+/gateway-3/assessor/assessors/${gateway3AssessorAnswer.path}$`
+);
+export const gateway3AssessorRemovePath = /^\/case\/.+\/gateway-3\/assessor\/remove$/;
 
 export class Gateway3AssessorPage extends SmartLookupPage {
 	constructor() {
-		super(
-			/^\/case\/.+\/gateway-3\/gateway-3\/gateway-3-assessor-name$/,
-			gateway3AssessorAnswer.inputField,
-			gateway3AssessorAnswer.heading
-		);
+		super(gateway3AssessorQuestionPath, gateway3AssessorAnswer.inputField, gateway3AssessorAnswer.heading);
+	}
+
+	verifyContent() {
+		this.verifyLoaded();
+		this.saveAndContinueButton.invoke('text').should((text) => expect(text.trim()).to.eq('Continue'));
+		this.verifyBackLink(gateway3TabPath);
 	}
 
 	enterAssessorName(assessorInput: string) {
@@ -23,3 +31,10 @@ export class Gateway3AssessorPage extends SmartLookupPage {
 	}
 }
 export const gateway3AssessorPage = new Gateway3AssessorPage();
+
+export const gateway3AssessorConfirmPage = new AssessorConfirmPage(
+	/^\/case\/.+\/gateway-3\/assessor\/check$/,
+	gateway3AssessorQuestionPath
+);
+
+export const gateway3RemoveAssessorPage = new RemoveAssessorPage(gateway3AssessorRemovePath, gateway3TabPath);

@@ -63,9 +63,7 @@ import {
 	createExaminationPauseJourney,
 	createGateway3ReportJourney,
 	createTimetableJourney,
-	createDeleteCaseJourney,
-	createGateway2AssessorJourney,
-	createGateway3AssessorJourney
+	createDeleteCaseJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -101,6 +99,7 @@ import { TimetableSaveController } from './save/timetable-save-controller.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 import { sendGw2WorkshopSetUpNotifyEmail } from '../../notify/notify-helper.ts';
+import { registerAssessorJourney } from './assessor.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -451,16 +450,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		saveController: Gateway1SaveController
 	},
 	{
-		path: 'gateway-2/assessor',
-		journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
-		createJourney: createGateway2AssessorJourney,
-		pageLoadHandler: Gateway2TabHandler,
-		supportsManageList: false,
-		supportsFileUpload: false,
-		redirectToTaskListOnSuccess: true,
-		saveController: Gateway2SaveController
-	},
-	{
 		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
@@ -470,7 +459,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
-
 	{
 		path: 'gateway-2/set-up-workshop',
 		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
@@ -481,17 +469,6 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
-	{
-		path: 'gateway-3/assessor',
-		journeyId: COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION,
-		createJourney: createGateway3AssessorJourney,
-		pageLoadHandler: Gateway3TabHandler,
-		supportsManageList: false,
-		supportsFileUpload: false,
-		redirectToTaskListOnSuccess: true,
-		saveController: Gateway3SaveController
-	},
-
 	{
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
@@ -580,6 +557,12 @@ export function caseRouter(service: ManageService): IRouter {
 	if (hearingConfig) {
 		registerExaminationHearingJourney(router, service, hearingConfig, updateCase);
 	}
+
+	registerAssessorJourney(router, service, 'gateway-2');
+	registerAssessorJourney(router, service, 'gateway-3');
+
+	registerAssessorJourney(router, service, 'gateway-2');
+	registerAssessorJourney(router, service, 'gateway-3');
 
 	for (const config of CASE_JOURNEYS) {
 		if (

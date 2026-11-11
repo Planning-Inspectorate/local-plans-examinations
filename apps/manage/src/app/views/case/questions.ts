@@ -1229,6 +1229,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'assessor-gateway-2',
 		title: 'Assessor',
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
@@ -1366,6 +1367,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'gateway-3-assessor-name',
 		title: 'Assessor',
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
 	},

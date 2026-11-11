@@ -11,6 +11,7 @@ import {
 const gateway2Rows = [
 	...Object.values(gateway2DateAnswers).map(({ row }) => row),
 	gateway2AssessorAnswer.row,
+	gateway2AssessorAnswer.appointedRow,
 	gateway2Report.row
 ];
 
@@ -19,7 +20,8 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 		row,
 		new RegExp(`^/case/.+/gateway-2/${section}/${path}$`)
 	]),
-	[gateway2AssessorAnswer.row, new RegExp(`^/case/.+/gateway-2/gateway-2/${gateway2AssessorAnswer.path}$`)],
+	// the assessor row only has a Remove link
+	[gateway2AssessorAnswer.row, /^\/case\/.+\/gateway-2\/assessor\/remove$/],
 	[gateway2Report.row, new RegExp(`^/case/.+/gateway-2/report/${gateway2Report.path}$`)]
 ];
 

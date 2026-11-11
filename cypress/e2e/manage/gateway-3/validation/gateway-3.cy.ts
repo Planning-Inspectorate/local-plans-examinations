@@ -1,11 +1,12 @@
 import {
 	openSeededGateway3Page,
 	openSeededGateway3PageWithSubmissionDocuments,
+	removeGateway3Assessor,
 	requestGateway3DecisionWithMissingDocuments
 } from '../../../../flows/manage/gateway-3-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway3DateAnswers,
-	gateway3AssessorAnswer,
 	gateway3ProgrammeOfficerAnswer,
 	gateway3DecisionAnswer,
 	gateway3RequiredSubmissionDocuments
@@ -42,10 +43,10 @@ describe('Gateway 3 validation', () => {
 	});
 
 	it('shows an error when Gateway 3 assessor name is blank', { tags: ['regression'] }, () => {
-		gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
+		removeGateway3Assessor(seededCase.planTitle);
+		gateway3Page.openAddAssessor();
 		gateway3AssessorPage.verifyLoaded();
-		gateway3AssessorPage.assessorNamePopulated(gateway3AssessorAnswer.assessor1);
-		gateway3AssessorPage.clearAssessorNameField();
+		gateway3AssessorPage.assessorNamePopulated('');
 		gateway3AssessorPage.saveAndContinue();
 
 		gateway3AssessorPage.verifyLoaded();
