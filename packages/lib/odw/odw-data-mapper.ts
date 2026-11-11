@@ -26,7 +26,7 @@ function sortGateway3Submissions(submissions: Gateway3Submission[]) {
 	});
 }
 
-type AllCaseData = Case & {
+export type AllCaseData = Case & {
 	lpas: LPA[];
 	contacts: Contact[];
 	gateway1Info: null | Gateway1Info;
@@ -60,7 +60,7 @@ export class ODWDataMapper {
 	 * @param value The local plans planType value
 	 * @returns The value converted to ODW value format
 	 */
-	private mapPlanTypeToODW(value: string) {
+	protected mapPlanTypeToODW(value: string) {
 		const map: Record<string, string> = {
 			['local-plan']: 'local_plans'
 		};
@@ -75,7 +75,7 @@ export class ODWDataMapper {
 	 * @param value The local plans outcome
 	 * @returns The ODW outcome
 	 */
-	private mapExamOutcomeToODW(value: string) {
+	protected mapExamOutcomeToODW(value: string) {
 		const map: Record<string, string> = {
 			sound: 'Sound',
 			unsound: 'Unsound',
@@ -87,7 +87,7 @@ export class ODWDataMapper {
 		return value;
 	}
 
-	private mapLocationTypeToODW(value: string) {
+	protected mapLocationTypeToODW(value: string) {
 		const map: Record<string, string> = {
 			['in-person']: 'in_person',
 			hybrid: 'hybrid',
@@ -106,14 +106,14 @@ export class ODWDataMapper {
 	 * @param mappingFunction Optional function to convert the value before comparing against `allowedValues`
 	 * @returns The value if it is valid, raises an exception if not valid
 	 */
-	private validateField(value: any, allowedValues: any[], mappingFunction?: (value: any) => any) {
+	protected validateField(value: any, allowedValues: any[], mappingFunction?: (value: any) => any) {
 		const valueToCheck = mappingFunction ? mappingFunction(value) : value;
 		if (!allowedValues.includes(valueToCheck)) {
 			throw Error(
 				`Expected the raw field value '${value}' to match one of ${allowedValues}, but checked was '${valueToCheck}'`
 			);
 		}
-		return value;
+		return valueToCheck;
 	}
 
 	/**
@@ -121,7 +121,7 @@ export class ODWDataMapper {
 	 * @param value The string value
 	 * @returns The string value as a boolean
 	 */
-	private formatYesNoField(value: string | null | undefined) {
+	protected formatYesNoField(value: string | null | undefined) {
 		if (!value) {
 			return null;
 		}
@@ -137,7 +137,7 @@ export class ODWDataMapper {
 	 * @param contact
 	 * @returns
 	 */
-	private formatContact(contact: Contact): Schemas.LocalPlansContact {
+	protected formatContact(contact: Contact): Schemas.LocalPlansContact {
 		return {
 			id: contact.id,
 			firstName: contact.firstName,
@@ -154,7 +154,7 @@ export class ODWDataMapper {
 	 * Format an inspector in Local Plans format to the ODW format
 	 * @returns
 	 */
-	private formatInspector(): Schemas.Inspector {
+	protected formatInspector(): Schemas.Inspector {
 		// Will be fixed by LPBO-465, currently this is just a placeholder
 		return {
 			entraId: '', // We identify some assessors by name rather than entraid - i need to confirm if all of these people have entra accounts before we switch on our side
@@ -168,7 +168,7 @@ export class ODWDataMapper {
 	 * @param pauses The pauses in Local Plans format
 	 * @returns The pauses in ODW format
 	 */
-	private formatPauses(pauses: PlanPauseHistory[]): Schemas.PlanPauseHistory[] {
+	protected formatPauses(pauses: PlanPauseHistory[]): Schemas.PlanPauseHistory[] {
 		return pauses.map((pause) => ({
 			id: pause.id,
 			startDate: pause.planPauseDate?.toISOString(),
@@ -181,7 +181,7 @@ export class ODWDataMapper {
 	 * @param submissions The gw3 submissions to check
 	 * @returns The date of the last complete sumission, or null if gw3 is not complete
 	 */
-	private calculateGateway3CompletionDate(submissions: Gateway3Submission[]) {
+	protected calculateGateway3CompletionDate(submissions: Gateway3Submission[]) {
 		if (!submissions) {
 			return null;
 		}
@@ -243,14 +243,14 @@ export class ODWDataMapper {
 				: `reference '${caseIdOrCaseReference.caseReference}'`;
 			throw Error(`No data was found for case with ${errorDetail}`);
 		}
-		const caseData = await this.mapPlanCase(allData);
+		const caseData = this.mapPlanCase(allData);
 		const eventData: Schemas.PlansEvent[] = [];
 		if (workshopsUpdated) {
-			const workshopData = await this.mapPlanWorkshop(allData);
+			const workshopData = this.mapPlanWorkshop(allData);
 			eventData.push(...workshopData);
 		}
 		if (hearingsUpdated) {
-			const hearingData = await this.mapPlanHearing(allData);
+			const hearingData = this.mapPlanHearing(allData);
 			eventData.push(...hearingData);
 		}
 		return { case: caseData, events: eventData };
@@ -261,7 +261,7 @@ export class ODWDataMapper {
 	 * @param caseData The data to prepare
 	 * @returns The case data that the ODW requires
 	 */
-	private async mapPlanCase(caseData: AllCaseData): Promise<Schemas.LocalPlansCase> {
+	protected mapPlanCase(caseData: AllCaseData): Schemas.LocalPlansCase {
 		return {
 			id: caseData.id,
 			caseReference: caseData.reference,
@@ -325,7 +325,7 @@ export class ODWDataMapper {
 	 * @param caseData The data to prepare
 	 * @returns The workshop data that the ODW requires
 	 */
-	private async mapPlanWorkshop(caseData: AllCaseData) {
+	protected mapPlanWorkshop(caseData: AllCaseData) {
 		const workshopData = caseData.gateway2Info?.workshops;
 		if (!workshopData) {
 			throw Error(
@@ -344,7 +344,12 @@ export class ODWDataMapper {
 				this.mapLocationTypeToODW
 			),
 			eventStartDateTime: workshop.workshopDate?.toISOString(),
-			eventEndDateTime: null, // not currently stored
+			eventEndDateTime:
+				workshop.workshopDate && workshop.workshopExpectedDays
+					? new Date(
+							workshop.workshopDate.getTime() + 1000 * 60 * 60 * 24 * parseInt(workshop.workshopExpectedDays)
+						).toISOString()
+					: null,
 			addressLine1: workshop.workshopAddressLine,
 			addressLine2: workshop.workshopAddressLine2,
 			addressTown: workshop.workshopTownOrCity,
@@ -359,7 +364,7 @@ export class ODWDataMapper {
 	 * @param caseData The data to prepare
 	 * @returns The hearing data that the ODW requires
 	 */
-	private async mapPlanHearing(caseData: AllCaseData) {
+	protected mapPlanHearing(caseData: AllCaseData) {
 		const hearingData = caseData.examinationInfo?.hearings;
 		if (!hearingData) {
 			throw Error(
