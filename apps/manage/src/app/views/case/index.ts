@@ -63,7 +63,9 @@ import {
 	createExaminationPauseJourney,
 	createGateway3ReportJourney,
 	createTimetableJourney,
-	createDeleteCaseJourney
+	createDeleteCaseJourney,
+	createGateway2AssessorJourney,
+	createGateway3AssessorJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -449,6 +451,16 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		saveController: Gateway1SaveController
 	},
 	{
+		path: 'gateway-2/assessor',
+		journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
+		createJourney: createGateway2AssessorJourney,
+		pageLoadHandler: Gateway2TabHandler,
+		supportsManageList: false,
+		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
+		saveController: Gateway2SaveController
+	},
+	{
 		path: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
 		createJourney: createGateway2Journey,
@@ -458,6 +470,7 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
+
 	{
 		path: 'gateway-2/set-up-workshop',
 		journeyId: COMMON_CONSTS.GATEWAY_2_WORKSHOP_JOURNEY_ID,
@@ -468,6 +481,17 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		redirectToTaskListOnSuccess: true,
 		saveController: Gateway2SaveController
 	},
+	{
+		path: 'gateway-3/assessor',
+		journeyId: COMMON_CONSTS.ASSESSOR_GATEWAY_3_QUESTION,
+		createJourney: createGateway3AssessorJourney,
+		pageLoadHandler: Gateway3TabHandler,
+		supportsManageList: false,
+		supportsFileUpload: false,
+		redirectToTaskListOnSuccess: true,
+		saveController: Gateway3SaveController
+	},
+
 	{
 		path: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,

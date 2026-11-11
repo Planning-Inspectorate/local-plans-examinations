@@ -5,6 +5,7 @@ import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
 import { fileUploaderCaseSessionKeyForField, fileUploadQuestionConfigs } from '../controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
+import { questions } from '../questions.ts';
 
 export class Gateway2TabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -96,6 +97,10 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 
 		const journeyResponse = res.locals.journeyResponse as JourneyResponse;
 		journeyResponse.answers.gateway2Documents = documentsByCategory;
+
+		if (journeyId === COMMON_CONSTS.GATEWAY_2_JOURNEY_ID) {
+			res.locals.assessorLink = `/case/${encodeURIComponent(String(req.params.reference))}/gateway-2/assessor/assessors/${questions.gateway2AssessorsName.url}`;
+		}
 
 		res.locals.journeyResponse = journeyResponse;
 		const question = String(req.params.question ?? '');

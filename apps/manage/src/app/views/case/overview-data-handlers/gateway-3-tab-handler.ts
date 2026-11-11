@@ -10,6 +10,7 @@ import {
 	REQUIRED_DOCUMENT_SETS
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
+import { questions } from '../questions.ts';
 
 const { RESUBMISSION_DOCUMENTS_FIELD, RESUBMISSION_DOCUMENTS_LABEL } = COMMON_CONSTS;
 const RESUBMISSION_DOCUMENT_SET_PREFIX = 'g3-document-';
@@ -243,6 +244,11 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 		journeyResponse.answers = await compileGateway3Data(db, {
 			...journey3Data
 		});
+
+		if (journeyId === COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
+			res.locals.assessorLink = `/case/${encodeURIComponent(String(req.params.reference))}/gateway-3/assessor/assessors/${questions.gateway3AssessorsName.url}`;
+		}
+
 		res.locals.journeyResponse = journeyResponse;
 		this.addVirusScanStatusToLocals(req, res, journeyId);
 
