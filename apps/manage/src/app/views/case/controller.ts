@@ -485,7 +485,7 @@ async function formatCaseHistoryEvent(
 	if (overrideLabel) {
 		return overrideLabel;
 	}
-	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
+	const label = Object.hasOwn(caseHistoryLabels, key) ? (caseHistoryLabels[key] ?? key) : key;
 	let oldValueText = 'updated to';
 	if (oldValue != null && oldValue != '') {
 		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;

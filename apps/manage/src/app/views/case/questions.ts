@@ -844,30 +844,35 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'firstName',
 				label: 'First name',
+				title: 'First name',
 				attributes: { 'data-cy': 'contact-first-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'lastName',
 				label: 'Last name',
+				title: 'Last name',
 				attributes: { 'data-cy': 'contact-last-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'email',
 				label: 'Email address',
+				title: 'Email address',
 				attributes: { 'data-cy': 'contact-email' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'phone',
 				label: 'Phone number (optional)',
+				title: 'Phone number',
 				attributes: { 'data-cy': 'contact-phone' }
 			},
 			{
 				type: COMPONENT_TYPES.RADIO,
 				fieldName: 'lpaContact',
 				legend: 'Select the organisation for this contact',
+				title: 'Planning authority',
 				options: []
 			}
 		],
