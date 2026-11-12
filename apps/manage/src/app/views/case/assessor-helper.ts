@@ -19,7 +19,6 @@ export type AssessorSaveDetails = {
 
 const questions = caseQuestions as Record<string, any>;
 
-/** The key of the "Who is the Gateway X assessor?" question in questions.ts */
 const ASSESSOR_QUESTION_KEYS: Record<AssessorGateway, string> = {
 	'gateway-2': 'gateway2AssessorsName',
 	'gateway-3': 'gateway3AssessorsName'
@@ -75,7 +74,6 @@ export function saveGateway3Assessor(
 	});
 }
 
-/** The section segment used in the assessor question url */
 export const ASSESSOR_SECTION = 'assessors';
 
 /**
@@ -93,7 +91,6 @@ export function getAssessorUrls(reference: string, gateway: AssessorGateway) {
 	};
 }
 
-// The chosen assessor is held in the session until the user confirms it on the "Confirm and send notification" page
 const SESSION_KEY = 'assessorDrafts';
 
 function draftKey(reference: string, gateway: AssessorGateway) {
@@ -145,7 +142,7 @@ export async function resolveAssessorDisplayName(
 				return displayName;
 			}
 		} catch {
-			// fall back to the stored value
+			/* empty */
 		}
 	}
 	return assessor;

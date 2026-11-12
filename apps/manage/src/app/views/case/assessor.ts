@@ -43,9 +43,7 @@ interface AssessorJourneyConfig {
 	journeyId: string;
 	createJourney: (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 	sendAppointedEmail: (service: ManageService, req: Request, reference: string, assessorName: string) => Promise<void>;
-	/** Get the assessor from this gateway's own table */
 	getAssessor: (db: ManageService['db'], caseId: string) => Promise<AssessorDetails | null>;
-	/** Save the assessor to this gateway's own table */
 	saveAssessor: (db: ManageService['db'], caseId: string, details: AssessorSaveDetails) => Promise<unknown>;
 }
 
@@ -75,15 +73,6 @@ function getCurrentUser(req: Request): string {
 	return authSession.getAccount(req.session)?.name ?? 'Unknown';
 }
 
-/**
- * Register the add / remove assessor pages for a gateway tab:
- * - GET|POST /<gateway>/assessor/assessors/<question>  who is the assessor (held in the session)
- * - GET|POST /<gateway>/assessor/check                 confirm and send notification
- * - GET|POST /<gateway>/assessor/remove                remove assessor
- *
- * This must be registered before the gateway tab journeys, as `/<gateway>/assessor/check` would
- * otherwise be matched by their `/<gateway>/:section/:question` routes.
- */
 export function registerAssessorJourney(router: IRouter, service: ManageService, gateway: AssessorGateway): void {
 	const { journeyId, createJourney, sendAppointedEmail, getAssessor, saveAssessor } = ASSESSOR_JOURNEYS[gateway];
 	const basePath = `/${gateway}/assessor`;
