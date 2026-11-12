@@ -202,3 +202,18 @@ variable "web_domains" {
     portal = string
   })
 }
+
+variable "odw_service_bus_connection_enabled" {
+  description = "Whether or not to set up connections to the ODW Service Bus"
+  type        = bool
+  default     = true
+}
+variable "odw_subscription_id" {
+  description = "The Azure subscription that holds the Operational Data Warehouse (ODW) Service Bus"
+  type        = string
+}
+
+variable "odw_service_bus_name" {
+  description = "The name of the ODW's Service Bus"
+  type        = string
+}

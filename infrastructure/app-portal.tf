@@ -103,6 +103,9 @@ module "app_portal" {
     MANAGED_REDIS_URL       = local.managed_redis_url
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]
     SESSION_SECRET          = local.key_vault_refs["session-secret-portal"]
+
+    # ODW
+    ODW_SERVICE_BUS_NAME = var.odw_service_bus_connection_enabled ? var.odw_service_bus_name : null
   }
 
   providers = {
@@ -136,6 +139,14 @@ resource "azurerm_role_assignment" "app_web_documents_contributor" {
 resource "azurerm_role_assignment" "app_web_staging_documents_contributor" {
   scope                = azurerm_storage_account.documents.id
   role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = module.app_portal.staging_principal_id
+}
+
+## RBAC for ODW Service Bus
+resource "azurerm_role_assignment" "odw_service_bus_data_sender" {
+  count                = var.odw_service_bus_connection_enabled ? 1 : 0
+  scope                = data.azurerm_servicebus_namespace.odw[0].id
+  role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = module.app_portal.staging_principal_id
 }
 

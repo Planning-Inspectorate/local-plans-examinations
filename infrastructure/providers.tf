@@ -32,3 +32,9 @@ provider "azurerm" {
 
   features {}
 }
+
+provider "azurerm" {
+  alias           = "odw"
+  subscription_id = var.odw_subscription_id
+  features {}
+}
