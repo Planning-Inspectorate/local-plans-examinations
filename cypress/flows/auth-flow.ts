@@ -14,7 +14,8 @@ export function isEnvironmentSmoke() {
 
 export function authenticateManageIfRequired() {
 	authenticateWithMicrosoftIfRequired('manage', '/auth/signin?redirect_to=/', {
-		afterMicrosoftLogin: verifyManageLogin
+		afterMicrosoftLogin: verifyManageLogin,
+		validate: validateManageSession
 	});
 }
 
@@ -48,6 +49,10 @@ function authenticateWithMicrosoftIfRequired(
 	cy.session(
 		[name, Cypress.config('baseUrl'), username],
 		() => {
+			if (name === 'manage') {
+				cy.intercept('GET', `${applicationOrigin}/auth/redirect*`).as('manageAuthCallback');
+			}
+
 			cy.request({
 				failOnStatusCode: false,
 				followRedirect: false,
@@ -60,7 +65,20 @@ function authenticateWithMicrosoftIfRequired(
 				completeMicrosoftLogin(username, password, loginUrl);
 			});
 
-			cy.location('origin', { timeout: 60000 }).should('eq', applicationOrigin);
+			if (name === 'manage') {
+				cy.wait('@manageAuthCallback', { requestTimeout: 15000, responseTimeout: 15000, log: false }).then(
+					({ response }) => {
+						expect(response?.statusCode, 'Manage authentication callback must redirect after login').to.be.oneOf([
+							302, 303
+						]);
+						const redirect = new URL(String(response?.headers.location), applicationOrigin);
+						expect(redirect.origin, 'Manage authentication redirect origin').to.eq(applicationOrigin);
+						expect(redirect.pathname, 'Manage authentication redirect path').to.eq('/');
+					}
+				);
+			} else {
+				cy.location('origin', { timeout: 60000 }).should('eq', applicationOrigin);
+			}
 			options.afterMicrosoftLogin?.();
 		},
 		{
@@ -71,8 +89,15 @@ function authenticateWithMicrosoftIfRequired(
 }
 
 function verifyManageLogin() {
-	cy.location('pathname', { timeout: 60000 }).should('eq', '/');
+	validateManageSession();
+	cy.visit('/');
 	cy.get('h1').should('contain.text', 'All cases');
+}
+
+function validateManageSession() {
+	cy.request({ url: '/', followRedirect: false, failOnStatusCode: false, timeout: 15000 }).then((response) => {
+		expect(response.status, 'Manage session must allow access without redirecting to login').to.eq(200);
+	});
 }
 
 function verifyPortalLogin() {
