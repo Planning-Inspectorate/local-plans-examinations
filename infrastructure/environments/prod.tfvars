@@ -130,3 +130,7 @@ web_domains = {
 
 # Microsoft Clarity id for portal in this environment
 clarity_id = ""
+
+# ODW variables
+odw_subscription_id  = "a82fd28d-5989-4e06-a0bb-1a5d859f9e0c"
+odw_service_bus_name = "pins-sb-odw-prod-uks-mwzecc"

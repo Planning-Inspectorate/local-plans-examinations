@@ -132,3 +132,7 @@ clarity_id = "zimp89g58o"
 
 # Microsoft Clarity id for manage in this environment
 manage_clarity_id = "zimqjdqw21"
+
+# ODW variables
+odw_subscription_id  = "ff442a29-fc06-4a13-8e3e-65fd5da513b3"
+odw_service_bus_name = "pins-sb-odw-dev-uks-b9rt9m"
