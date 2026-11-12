@@ -1,5 +1,4 @@
 import { portalLogin, THIRD_TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
-import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
@@ -84,7 +83,7 @@ describe('Gateway 3 application page journeys once Gateway 2 is submitted and it
 	});
 
 	it(
-		'Navigates to Plan details page and My plans and verifies the status is In progress after a document is uploaded',
+		'Navigates to Plan details page and verifies the status is In progress after a document is uploaded',
 		{ tags: ['smoke'] },
 		() => {
 			loadReportIssuedPlan().then((plan) => {
@@ -94,15 +93,7 @@ describe('Gateway 3 application page journeys once Gateway 2 is submitted and it
 				mapOfProposedLocalPlanPoliciesPage.uploadAndVerifyFile('test-document.pdf');
 				mapOfProposedLocalPlanPoliciesPage.saveAndReturn();
 				gateway3ApplicationPage.saveAndComeBackLink.click();
-				planDetailsPage.verifyProgressRow(
-					'Gateway 3 - readiness check',
-					`Target date: ${plan.dates.gateway3}`,
-					plan.status2
-				);
-				planDetailsPage.backLink.click();
-				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-					[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status2]
-				]);
+				planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status2);
 			});
 		}
 	);

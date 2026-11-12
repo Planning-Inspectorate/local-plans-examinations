@@ -12,18 +12,19 @@ export const GW2UpdateFileUploadedFromFO = (
 			{ args: { reference, fileName, base64, updatedFileName } },
 			({ reference, fileName, base64, updatedFileName }) => {
 				const buffer = Cypress.Buffer.from(base64, 'base64');
-				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-2`);
+				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-1`);
+				cy.contains('.govuk-service-navigation__link', 'Gateway 2').should('be.visible').click();
 
 				cy.contains('.govuk-summary-list__row', 'Submission documents')
 					.contains('a', 'Review')
 					.should('be.visible')
 					.click();
 				cy.contains('h1', 'Submitted GW2 documents').should('be.visible');
-				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter')
 					.contains('.govuk-summary-list__value a', fileName)
 					.should('be.visible');
 
-				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter')
 					.contains('.govuk-link', 'Manage')
 					.should('be.visible')
 					.click();
@@ -38,6 +39,8 @@ export const GW2UpdateFileUploadedFromFO = (
 					.click();
 
 				cy.contains('.pins-app-link-button', 'Remove').should('be.visible').click();
+				cy.get('#gateway2CoverLetter-input').should('exist');
+				cy.contains('.govuk-summary-list__row', `${fileName}`).should('not.exist');
 
 				cy.contains('.govuk-summary-list__row', `${fileName}`).should('not.exist');
 
@@ -58,11 +61,11 @@ export const GW2UpdateFileUploadedFromFO = (
 
 				cy.contains('.govuk-button', 'Upload document').should('be.visible').click();
 
-				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter')
 					.contains('.govuk-summary-list__value a', updatedFileName)
 					.should('be.visible');
 
-				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter')
 					.contains('.govuk-summary-list__value a', fileName)
 					.should('not.exist');
 			}

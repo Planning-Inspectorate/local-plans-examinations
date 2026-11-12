@@ -40,7 +40,7 @@ export const DOCUMENT_SET = [
 		id: DOCUMENT_SET_ID.G2_COVER_LETTER,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Gateway 2 Covering Letter',
+		displayName: 'Gateway 2 Cover Letter',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_COVER_LETTER,
 		displayOrder: 1
 	},
@@ -97,7 +97,7 @@ export const DOCUMENT_SET = [
 		id: DOCUMENT_SET_ID.G2_CONSULTATION_SUMMARY,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Consultation summary of feedback to scoping consultation',
+		displayName: 'Summary of scoping consultation feedback',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_CONSULTATION_SUMMARY,
 		displayOrder: 12
 	},
@@ -105,7 +105,7 @@ export const DOCUMENT_SET = [
 		id: DOCUMENT_SET_ID.G2_G1_SELF_ASSESSMENT,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Gateway 1 - Self assessment of readiness',
+		displayName: 'Gateway 1 self-assessment',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_G1_SELF_ASSESSMENT,
 		displayOrder: 13
 	},
@@ -113,7 +113,7 @@ export const DOCUMENT_SET = [
 		id: DOCUMENT_SET_ID.G2_CONSULTATION_ON_PROPOSED,
 		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Consultation on proposed local plan content and evidence documents',
+		displayName: 'Consultation on proposed local plan content and evidence',
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_CONSULTATION_ON_PROPOSED,
 		displayOrder: 14
 	},
@@ -141,13 +141,39 @@ export const DOCUMENT_SET = [
 		folderName: DOCUMENT_SET_FOLDER_NAME.G2_WORKSHOP_DOCUMENTS,
 		displayOrder: 17
 	},
+	// Plan content, evidence and background
 	{
-		id: DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
-		documentCategoryId: DOCUMENT_CATEGORY_ID.ADDITIONAL,
+		id: DOCUMENT_SET_ID.G2_PLAN_CONTENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
 		gatewayId: GATEWAY_ID.GATEWAY_2,
-		displayName: 'Subsequent work towards draft plan',
-		folderName: DOCUMENT_SET_FOLDER_NAME.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN,
+		displayName: 'Plan content',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_PLAN_CONTENT,
 		displayOrder: 18
+	},
+	{
+		id: DOCUMENT_SET_ID.G2_EVIDENCE_AND_PROGRESS,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Evidence and progress',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_EVIDENCE_AND_PROGRESS,
+		displayOrder: 19
+	},
+	{
+		id: DOCUMENT_SET_ID.G2_LATEST_POLICIES_MAP,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.PROCEDURAL,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Latest policies map',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_LATEST_POLICIES_MAP,
+		displayOrder: 20
+	},
+	// Additional
+	{
+		id: DOCUMENT_SET_ID.G2_EVIDENCE_ON_ENGAGEMENT,
+		documentCategoryId: DOCUMENT_CATEGORY_ID.CONSULATION,
+		gatewayId: GATEWAY_ID.GATEWAY_2,
+		displayName: 'Evidence on engagement',
+		folderName: DOCUMENT_SET_FOLDER_NAME.G2_EVIDENCE_ON_ENGAGEMENT,
+		displayOrder: 21
 	},
 	...GATEWAY_3_DOCUMENT_FOLDERS,
 

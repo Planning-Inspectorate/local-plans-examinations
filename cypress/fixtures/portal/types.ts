@@ -9,6 +9,7 @@ export interface PlanDetailsFixture {
 	reference: string;
 	urlReference: string;
 	title: string;
+	type: string;
 	currentStage: string;
 	currentStage2: string;
 	currentStage3: string;
@@ -18,6 +19,8 @@ export interface PlanDetailsFixture {
 	status4: string;
 	status5: string;
 	status6: string;
+	status7: string;
+	status8: string;
 	leadLpa: string;
 	linkedLpa: string;
 	dates: PlanDetailsDates;

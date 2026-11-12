@@ -66,6 +66,12 @@ export class HearingCheckPage extends GatewayBasePage {
 		this.verifyLoaded();
 		this.confirmButton.should('contain.text', 'Confirm and save').click();
 	}
+
+	verifyNoLpaNotification() {
+		this.verifyLoaded();
+		this.mainContent.should('not.contain.text', 'send a notification to the LPA');
+		cy.getByData('preview-email-to-lpa').should('not.exist');
+	}
 }
 
 class CancelHearingPage extends BasePage {
@@ -100,6 +106,44 @@ export class HearingExpectedDaysPage extends RadioQuestionPage {
 			hearingPath(`examination-hearing-expected-days-${hearingNumber}`),
 			`hearingExpectedDaysKnown-${hearingNumber}`,
 			'Do you know the expected number of days to carry out the hearing?',
+			[
+				{ value: 'yes', text: 'Yes' },
+				{ value: 'no', text: 'No' }
+			]
+		);
+	}
+
+	get daysField() {
+		return cy.get(`[name="${this.fieldName}_hearingExpectedDays"]`);
+	}
+
+	verifyDaysField() {
+		this.verifyLoaded();
+		this.answerOption('yes').check({ force: true });
+		cy.get(`label[for="${this.fieldName}_hearingExpectedDays"]`)
+			.should('be.visible')
+			.and('contain.text', 'Number of days');
+		this.daysField
+			.should('be.visible')
+			.and('have.class', 'govuk-input--width-5')
+			.and('have.attr', 'inputmode', 'numeric');
+		this.daysField.siblings('.govuk-input__suffix').should('be.visible').and('contain.text', 'Days');
+	}
+
+	enterDays(days: string) {
+		this.verifyLoaded();
+		this.answerOption('yes').check({ force: true });
+		this.daysField.clearAndWrite(days);
+		this.saveAndContinue();
+	}
+}
+
+export class HearingLocationKnownPage extends RadioQuestionPage {
+	constructor(hearingNumber = 1) {
+		super(
+			hearingPath(`examination-hearing-location-known-${hearingNumber}`),
+			`hearingLocationKnown-${hearingNumber}`,
+			'Does the hearing have a venue address?',
 			[
 				{ value: 'yes', text: 'Yes' },
 				{ value: 'no', text: 'No' }

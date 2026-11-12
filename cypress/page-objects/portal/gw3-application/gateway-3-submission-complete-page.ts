@@ -19,23 +19,12 @@ export class Gateway3SubmissionCompletePage extends PortalPlanBasePage {
 		return cy.get(`a[href="/manage-local-plans/${planReference}"]`);
 	}
 
-	get getInTouchLink() {
-		return cy.getByData('get-in-touch');
-	}
-
-	verifyGetInTouchLink() {
-		this.getInTouchLink
-			.should('be.visible')
-			.and('contain.text', 'get in touch')
-			.and('have.attr', 'class', 'govuk-link');
-	}
-
 	verifyPageContent(planReference: string) {
 		this.verifyLoaded();
 		this.verifyServiceNavigation('Guidance', 'Sign out');
 		cy.getByData('confirmation-email-copy')
 			.should('be.visible')
-			.and('have.text', 'We have sent you a confirmation email.');
+			.and('have.text', "We've sent you a confirmation email.");
 		cy.getByData('what-happens-next-heading').should('be.visible').and('have.text', 'What happens next');
 		cy.getByData('what-happens-next-list')
 			.find('li')
@@ -48,10 +37,7 @@ export class Gateway3SubmissionCompletePage extends PortalPlanBasePage {
 				expect(items.eq(2)).to.have.text('At any point you can check your submission status');
 			});
 		this.checkSubmissionStatusLink(planReference).should('be.visible').and('have.text', 'check your submission status');
-		cy.getByData('get-in-touch-copy')
-			.should('be.visible')
-			.and('have.text', 'If you need to adjust your submission, get in touch.');
-		this.verifyGetInTouchLink();
+		cy.getByData('get-in-touch-copy').should('not.exist');
 	}
 }
 

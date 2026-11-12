@@ -18,11 +18,11 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 	}
 
 	get gateway2Link() {
-		return this.planProgress.contains('a', 'Gateway 2 - advisory check');
+		return this.planProgress.contains('a', 'Gateway 2');
 	}
 
 	get gateway3Link() {
-		return this.planProgress.contains('a', 'Gateway 3 - readiness check');
+		return this.planProgress.contains('a', 'Gateway 3');
 	}
 
 	get examinationLink() {
@@ -32,6 +32,23 @@ export class PlanDetailsPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		this.verifyPathMatches(/^\/manage-local-plans\/[^/]+$/);
 		this.verifyPlanProgressHeading();
+	}
+
+	verifyAccessDenied(planReference: string) {
+		const path = this.pathFor(planReference);
+		cy.intercept('GET', path).as('inaccessiblePlan');
+		cy.visit(path, { failOnStatusCode: false });
+		cy.wait('@inaccessiblePlan').its('response.statusCode').should('eq', 404);
+	}
+
+	verifyBackLink(href: string | RegExp = '/manage-local-plans/your-plans') {
+		super.verifyBackLink(href);
+		this.backLink.should('have.text', 'Back to my plans');
+	}
+
+	verifyPlanningAuthorities(...names: string[]) {
+		const key = names.length > 1 ? 'Joint local planning' : 'Local planning authority';
+		this.verifyMetadataValue(key, ...names);
 	}
 
 	verifyMetadataValue(key: string, ...expectedText: string[]) {

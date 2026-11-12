@@ -37,15 +37,37 @@ export const noticeOfIntentionToCommenceLocalPlanPage = new DocumentUploadPage(
 	gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.path
 );
 
-export const subsequentWorkTowardsDraftPlanPage = new DocumentUploadPage(
+export const evidenceOnEngagementPage = new DocumentUploadPage(
 	gateway2UploadPath(
-		gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.section,
-		gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.path
+		gateway2UploadAnswers.evidenceOnEngagement.section,
+		gateway2UploadAnswers.evidenceOnEngagement.path
 	),
-	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.fieldName,
-	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.heading,
-	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.caption,
-	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.addCy,
-	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.section,
-	gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.path
+	gateway2UploadAnswers.evidenceOnEngagement.fieldName,
+	gateway2UploadAnswers.evidenceOnEngagement.heading,
+	gateway2UploadAnswers.evidenceOnEngagement.caption,
+	gateway2UploadAnswers.evidenceOnEngagement.addCy,
+	gateway2UploadAnswers.evidenceOnEngagement.section,
+	gateway2UploadAnswers.evidenceOnEngagement.path
+);
+
+export const planContentPage = new DocumentUploadPage(
+	gateway2UploadPath(gateway2UploadAnswers.planContent.section, gateway2UploadAnswers.planContent.path),
+	gateway2UploadAnswers.planContent.fieldName,
+	gateway2UploadAnswers.planContent.heading,
+	gateway2UploadAnswers.planContent.caption,
+	gateway2UploadAnswers.planContent.addCy,
+	gateway2UploadAnswers.planContent.section,
+	gateway2UploadAnswers.planContent.path,
+	gateway2UploadAnswers.planContent.guidanceText
+);
+
+export const evidenceAndProgressPage = new DocumentUploadPage(
+	gateway2UploadPath(gateway2UploadAnswers.evidenceAndProgress.section, gateway2UploadAnswers.evidenceAndProgress.path),
+	gateway2UploadAnswers.evidenceAndProgress.fieldName,
+	gateway2UploadAnswers.evidenceAndProgress.heading,
+	gateway2UploadAnswers.evidenceAndProgress.caption,
+	gateway2UploadAnswers.evidenceAndProgress.addCy,
+	gateway2UploadAnswers.evidenceAndProgress.section,
+	gateway2UploadAnswers.evidenceAndProgress.path,
+	gateway2UploadAnswers.evidenceAndProgress.guidanceText
 );

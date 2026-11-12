@@ -2,6 +2,7 @@ import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { examinationWebsitePage } from '../../../../page-objects/portal/gw3-application/examination-website-page.ts';
+import { examinationWebsite } from '../../../../fixtures/portal/examination-website.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -20,8 +21,8 @@ describe('Gateway 3 examination website page content', () => {
 			examinationWebsitePage.verifyLoaded();
 			examinationWebsitePage.verifyBackLink(gateway3ApplicationPage.pathFor(plan.urlReference));
 			examinationWebsitePage.verifyServiceNavigation('Guidance', 'Sign out');
-			examinationWebsitePage.verifyCaptionL('Plan content and evidence documents');
-			examinationWebsitePage.verifyHintText('Enter the web address (URL) where your examination library is published');
+			examinationWebsitePage.verifyCaptionL(examinationWebsite.caption);
+			examinationWebsitePage.verifyHintText(...examinationWebsite.hintText);
 			examinationWebsitePage.verifySaveAndReturnButton();
 		});
 	});

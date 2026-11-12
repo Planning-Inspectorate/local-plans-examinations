@@ -1,10 +1,11 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
 import { gateway2ApplicationDocuments, gateway2SubmittedPlan } from '../../../fixtures/portal/gateway-2-uploads.ts';
 
-const gateway2SubmissionRows = ['Gateway 2 covering letter', 'Local plan timetable', 'Project initiation document'];
+const gateway2SubmissionRows = ['Gateway 2 cover letter', 'Local plan timetable', 'Project initiation document'];
 const gateway2SubmissionHeading = 'Gateway 2 submission';
+const readyToSubmitGateway2Heading = 'Ready to submit for Gateway 2';
 const notAddedStatus = 'Not added';
-const submitButtonText = 'Submit for Gateway 2 assessment';
+const submitButtonText = 'Submit';
 
 export class Gateway2ApplicationPage extends PortalPlanBasePage {
 	constructor() {
@@ -31,12 +32,20 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('consultation-documents-table');
 	}
 
-	get additionalDocumentsTable() {
-		return cy.getByData('additional-documents-table');
+	get planContentEvidenceBackgroundTable() {
+		return cy.getByData('plan-content,-evidence-and-background-table');
 	}
 
 	get workshopDetailsTable() {
 		return cy.getByData('gateway-2-workshop-section');
+	}
+
+	get checkTheGuidanceLink() {
+		return cy.get('.govuk-inset-text .govuk-link');
+	}
+
+	get readyToSubmitHeading() {
+		return cy.contains('h2', readyToSubmitGateway2Heading);
 	}
 
 	verifyLoaded() {
@@ -44,11 +53,19 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		this.verifyHeading(gateway2SubmissionHeading);
 	}
 
+	verifySectionText(table: Cypress.Chainable, text: string) {
+		table.prev('p.govuk-body').should('be.visible').and('contain.text', text);
+	}
+
 	verifyProceduralDocuments() {
 		this.verifyDocumentSection(
 			this.proceduralDocumentsTable,
 			'Procedural Documents',
 			gateway2ApplicationDocuments.procedural
+		);
+		this.verifySectionText(
+			this.proceduralDocumentsTable,
+			'You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions except where drafts are specified.'
 		);
 	}
 
@@ -58,13 +75,28 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 			'Consultation Documents',
 			gateway2ApplicationDocuments.consultation
 		);
+		this.verifySectionText(
+			this.consultationDocumentsTable,
+			'You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions.'
+		);
 	}
 
-	verifyAdditionalDocuments() {
+	verifyCheckTheGuidanceLink() {
+		this.checkTheGuidanceLink
+			.should('be.visible')
+			.and('contain.text', 'check the guidance')
+			.and('have.attr', 'href', `/guidance`);
+	}
+
+	verifyPlanContentEvidenceBackgroundDocuments() {
 		this.verifyDocumentSection(
-			this.additionalDocumentsTable,
-			'Additional documents',
-			gateway2ApplicationDocuments.additional
+			this.planContentEvidenceBackgroundTable,
+			'Plan content, evidence and background',
+			gateway2ApplicationDocuments.PlanContentEvidenceBackground
+		);
+		this.verifySectionText(
+			this.planContentEvidenceBackgroundTable,
+			'You should include any available documents that will form part of your local plan and show progress towards completion. You can also include a link to any digital materials that are published publicly online. You should also include your latest policies map. These can all be in draft form.'
 		);
 	}
 
@@ -101,8 +133,12 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 	verifySubmitGateway2AssessmentButton() {
 		this.submitGateway2AssessmentButton
 			.should('be.visible')
-			.and('contain.text', 'Submit for Gateway 2 assessment')
+			.and('contain.text', 'Submit')
 			.and('have.attr', 'type', 'submit');
+		this.readyToSubmitHeading
+			.should('be.visible')
+			.next('p.govuk-body')
+			.should('contain.text', 'You cannot make any changes after submission.');
 	}
 
 	verifySubmissionData(todayDisplay: string, submitterEmail: string) {
@@ -119,7 +155,7 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		this.verifySubmissionData(submittedDate, submitterEmail);
 		this.verifyDocumentRowContains(
 			this.proceduralDocumentsTable,
-			'Gateway 2 covering letter',
+			'Gateway 2 cover letter',
 			gateway2SubmittedPlan.coveringLetter
 		);
 		this.verifyDocumentRowContains(

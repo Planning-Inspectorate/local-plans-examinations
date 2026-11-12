@@ -18,8 +18,12 @@ function examinationStatusTag(plan: Plan) {
 export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 	const { logger } = service;
 	return async (req, res) => {
+		const email = req.session?.authenticatedEmail;
+		if (!email) {
+			return res.redirect('/login');
+		}
 		const planRef = String(req.params.refNum);
-		const rawPlans = await service.getPlans();
+		const rawPlans = await service.getPlans(email);
 		const plan = (rawPlans as Plan[]).find((plan) => plan.refNum === planRef);
 		if (!validPlan(plan)) {
 			logger.warn({ planRef }, 'Plan not found');
@@ -60,54 +64,48 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		const notificationBanner = plan.status === STATUS.ActionNeeded;
 
-		// Task list tags and links based on current stage
+		const submissionExpected = 'Submission expected: ';
+		// Task list tags and links based on current stage.
 		let tagG2, tagG3, tagE;
-		let dateTextG2, dateTextG3, dateTextE;
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
-		dateTextG2 = dateTextG3 = dateTextE = 'Target date: ';
+		const dateTextG2 = submissionExpected;
+		const dateTextG3 = submissionExpected;
+		let dateTextE = submissionExpected;
 		switch (plan.stage) {
 			case STAGE.Gateway2:
 				hrefG2 = applicationLink();
 				tagG2 = planStatus;
-				if (plan.status === STATUS.UnderReview) {
-					dateTextG2 = 'Submitted: ';
-				}
 				break;
 			case STAGE.Gateway3:
-				dateTextG2 = 'Completed: ';
-				if (plan.status === STATUS.UnderReview) {
-					dateTextG3 = 'Submitted: ';
-				}
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
-				if (isResubmissionRequired || plan.status === STATUS.UnderReview) {
-					dateTextG3 = 'Submitted: ';
-				}
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				hrefE = examinationAvailable ? examinationLink() : null;
+				tagG2 = tagG3 = 'Completed';
 				if (plan.status === STATUS.Completed) {
-					dateTextG2 = dateTextG3 = dateTextE = 'Completed: ';
-					tagG2 = tagG3 = tagE = 'Completed';
+					tagE = 'Completed';
 				} else {
-					dateTextG2 = dateTextG3 = 'Completed: ';
-					if (
-						plan.examinationStatus === EXAMINATION_STATUS_ID.SUBMITTED ||
-						plan.examinationStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
-					) {
-						dateTextE = 'Submitted: ';
+					if (plan.examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED) {
+						dateTextE = 'Report issued: ';
 					}
 					tagE = examinationAvailable ? examinationStatusTag(plan) : 'Cannot start yet';
-					tagG2 = tagG3 = 'Completed';
+				}
+				if (plan.examinationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED) {
+					dateTextE = 'Adopted: ';
+					tagE = examinationStatusTag(plan);
 				}
 				break;
 		}
+
+		const planLPAs = plan.lpaNames ?? [];
+		const lpaText = planLPAs.length > 1 ? 'Joint local planning authorities' : 'Local planning authority';
 
 		const viewModel = {
 			dateG1: plan.dates.G1,
@@ -126,13 +124,13 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		};
 
 		return res.render('views/plan-page/view.njk', {
-			pageCaption: planRef,
+			planRef,
 			pageTitle: plan.title,
 			currentStage,
 			planStatus,
 			status: plan.status,
-			leadLPA: plan.leadLPA,
-			linkedLPA: plan.linkedLPA,
+			lpaText,
+			planLPAs,
 			button,
 			notificationBanner,
 			backLinkUrl: '/manage-local-plans/your-plans',

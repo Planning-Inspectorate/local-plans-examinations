@@ -50,7 +50,7 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use('/manage-local-plans', gateway3SubmissionRoutes(service));
 	router.use('/manage-local-plans', gateway3ResubmissionRoutes(service));
 	router.use('/manage-local-plans', examinationSubmissionRoutes(service));
-	router.use('/', createHomeRoutes(service));
+	router.use('/', createHomeRoutes());
 	router.use('/', createCookiesRoutes());
 	router.use('/error', createErrorRoutes(service));
 

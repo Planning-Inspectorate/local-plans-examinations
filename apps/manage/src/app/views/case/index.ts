@@ -96,6 +96,7 @@ import { ExaminationPauseHandler } from './overview-data-handlers/examination-pa
 import { createFileSubmitUploadController } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 import { sendGw2WorkshopSetUpNotifyEmail } from '../../notify/notify-helper.ts';
 
@@ -128,11 +129,7 @@ function registerGateway2WorkshopJourney(
 	const { createJourney } = config;
 
 	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
-
-		if (loaded.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
-		}
+		questions.lpa.options = await loadLpaOptions(service, true);
 
 		next();
 	});
@@ -263,7 +260,7 @@ function registerExaminationHearingJourney(
 	const { createJourney } = config;
 
 	const buildLpaOptions = asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
-		const loaded = await loadLpaOptions(service);
+		const loaded = await loadLpaOptions(service, false);
 
 		if (loaded.length > 0) {
 			questions.lpa.options = [{ value: '', text: '' }, ...loaded];
@@ -768,6 +765,7 @@ function registerCaseJourney(
 								await service.db.examinationInfo.updateMany({
 									where: { caseId },
 									data: {
+										status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 										isSound: null,
 										soundUnsoundDate: null,
 										adoptionDate: null,

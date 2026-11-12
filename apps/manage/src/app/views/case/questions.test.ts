@@ -104,9 +104,18 @@ describe('Examination hearing questions', () => {
 
 	for (const [answer, days, valid] of [
 		['yes', '3', true],
+		['yes', '12', true],
+		['yes', ' 4 ', true],
 		['yes', '', false],
 		['yes', '   ', false],
+		['yes', undefined, false],
+		['yes', 'abc', false],
+		['yes', '3 days', false],
+		['yes', '2.5', false],
+		['yes', '-1', false],
+		['yes', '1e3', false],
 		['no', '', true],
+		['no', 'abc', true],
 		['', '', false]
 	] as const) {
 		it(`${valid ? 'accepts' : 'rejects'} expected days ${JSON.stringify({ answer, days })}`, async () => {
@@ -116,10 +125,88 @@ describe('Examination hearing questions', () => {
 			});
 			assert.equal(Object.keys(errors).length === 0, valid);
 			if (answer === 'yes' && !valid) {
-				assert.equal(errors['hearingExpectedDaysKnown-2'].msg, 'Enter the expected number of days');
+				assert.equal(errors['hearingExpectedDaysKnown-2'].msg, 'Expected number of days must be a whole number');
 			}
 		});
 	}
+
+	it('asks for the expected days in a narrow numeric box with a Days suffix', () => {
+		for (const hearingId of [1, 2]) {
+			const yesOption = questions[`examinationHearingExpectedDays-${hearingId}`].options.find(
+				(option: { value: string }) => option.value === 'yes'
+			);
+			assert.deepEqual(yesOption.conditional, {
+				label: 'Number of days',
+				type: 'bold-number',
+				suffix: 'Days',
+				fieldName: 'hearingExpectedDays'
+			});
+		}
+	});
+
+	function hearingJourney(hearing: Record<string, unknown>) {
+		return {
+			getCurrentQuestionUrl: () => '/change',
+			response: {
+				answers: {
+					hearings: [{ createdDate: new Date('2026-01-01'), ...hearing }]
+				}
+			}
+		};
+	}
+
+	for (const [known, expected] of [
+		['yes', 'Yes'],
+		['no', 'No']
+	] as const) {
+		it(`shows the expected-days answer "${known}" as "${expected}" on check your answers`, () => {
+			const rows = questions['examinationHearingExpectedDays-1'].formatAnswerForSummary(
+				'hearing',
+				hearingJourney({ hearingExpectedDaysKnown: known, hearingExpectedDays: known === 'yes' ? '3' : null })
+			);
+			assert.equal(rows[0].value, expected);
+			if (known === 'yes') {
+				assert.deepEqual(
+					rows.map(({ key, value }) => ({ key, value })),
+					[
+						{ key: 'Do you know the expected number of days?', value: 'Yes' },
+						{ key: 'Estimated number of days', value: '3' }
+					]
+				);
+			} else {
+				assert.equal(rows.length, 1);
+			}
+		});
+	}
+
+	for (const [locationType, expected] of [
+		['in-person', 'In-person'],
+		['hybrid', 'Hybrid'],
+		['remote', 'Remote']
+	] as const) {
+		it(`shows the hearing location type "${locationType}" as "${expected}" on check your answers`, () => {
+			const rows = questions['examinationHearingLocationType-1'].formatAnswerForSummary(
+				'hearing',
+				hearingJourney({ hearingLocationType: locationType })
+			);
+			assert.deepEqual(
+				rows.map(({ key, value }) => ({ key, value })),
+				[{ key: 'Is the hearing in-person, hybrid or remote?', value: expected }]
+			);
+		});
+	}
+
+	it('falls back to the saved value when it does not match an option', () => {
+		const journey = hearingJourney({ hearingExpectedDaysKnown: 'unknown', hearingLocationType: 'outdoors' });
+		assert.equal(
+			questions['examinationHearingExpectedDays-1'].formatAnswerForSummary('hearing', journey)[0].value,
+			'unknown'
+		);
+		assert.equal(
+			questions['examinationHearingLocationType-1'].formatAnswerForSummary('hearing', journey)[0].value,
+			'outdoors'
+		);
+	});
 
 	it('formats hearing date, time and expected-days summary labels', () => {
 		const journey = {
@@ -227,7 +314,7 @@ describe('Delete case reason question', () => {
 		assert.equal(question.fieldName, 'deleteCaseWhy');
 		assert.equal(question.title, 'Reason for deletion');
 		assert.equal(question.question, 'Why are you deleting this case?');
-		assert.deepEqual(question.viewData, { continueButtonText: 'Continue', cancelLinkClasses: 'govuk-link' });
+		assert.deepEqual(question.viewData, { continueButtonText: 'Continue' });
 	});
 
 	for (const deleteCaseWhy of ['', undefined]) {

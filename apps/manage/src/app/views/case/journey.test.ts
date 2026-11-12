@@ -58,10 +58,16 @@ function createGateway2WorkshopJourneyForTest(workshop: Record<string, unknown>)
 	);
 }
 
-function createGateway3JourneyForTest() {
+function createGateway3JourneyForTest(
+	submissions:
+		| {
+				completionDate: Date | null;
+		  }
+		| {}[] = [{}]
+) {
 	return createGateway3Journey(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
-		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions: [{}] }),
+		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions }),
 		questions
 	);
 }
@@ -233,6 +239,31 @@ describe('gateway3Journey', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/gateway-3');
 		});
+	});
+
+	it('shows the Gateway 3 submission section when there are no submissions yet', () => {
+		const journey = createGateway3JourneyForTest([]);
+		const submissionSections = journey.sections.filter((section) => section.segment.startsWith('gateway-3-submission'));
+
+		assert.equal(submissionSections.length, 1);
+		assert.equal(submissionSections[0].name, 'Gateway 3 submission');
+		assert.equal(submissionSections[0].segment, 'gateway-3-submission-1');
+		assert.deepEqual(
+			submissionSections[0].questions.map((question) => question.fieldName),
+			['gateway3DocumentSubmission-1', 'decision-1']
+		);
+	});
+
+	it('shows one numbered section per submission when there are several', () => {
+		const journey = createGateway3JourneyForTest([
+			{ completionDate: new Date('2026-01-01') },
+			{ completionDate: null }
+		]);
+		const segments = journey.sections
+			.map((section) => section.segment)
+			.filter((segment) => segment.startsWith('gateway-3-submission'));
+
+		assert.deepEqual(segments, ['gateway-3-submission-1', 'gateway-3-submission-2']);
 	});
 });
 
@@ -494,7 +525,7 @@ describe('createDeleteCaseJourney', () => {
 		});
 		assert.equal(viewModel.continueButtonText, 'Continue');
 		assert.ok(html.includes('Why are you deleting this case?'));
-		const cancelLink = html.match(/<a\b[^>]*data-cy="button-back"[^>]*>Cancel<\/a>/)?.[0];
+		const cancelLink = html.match(/<a\b[^>]*data-cy="button-cancel"[^>]*>Cancel<\/a>/)?.[0];
 		assert.ok(cancelLink);
 		assert.match(cancelLink, /class="govuk-link"/);
 		assert.match(cancelLink, /href="\/case\/LP-TEST-001\/overview"/);

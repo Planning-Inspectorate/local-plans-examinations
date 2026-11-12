@@ -16,7 +16,7 @@ import { GW2QUESTIONS } from './questions.ts';
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
 	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
 
-describe('Gateway 2 covering letter upload page', () => {
+describe('Gateway 2 cover letter upload page', () => {
 	it('renders file requirements and total upload size guidance as one paragraph', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('forms/custom-components/file-uploader/index.njk', {
@@ -230,6 +230,11 @@ describe('Gateway 2 summary view data', () => {
 		} as any;
 		const res = { locals: {} } as any;
 
+		req.currentCase.documents.push({
+			...req.currentCase.documents[0],
+			guid: 'draft-report-guid',
+			isTemp: true
+		});
 		setGateway2CheckAnswersViewLocals(req, res);
 
 		assert.deepStrictEqual(
@@ -307,8 +312,8 @@ describe('Gateway 1 self assessment upload page', () => {
 		});
 
 		assert.ok(html.includes('Consultation documents'));
-		assert.ok(html.includes('Upload your Gateway 1 - Self Assessment of Readiness'));
-		assert.ok(html.includes('Drag and drop or choose files'));
+		assert.ok(html.includes('Upload your Gateway 1 self assessment'));
+		assert.ok(html.includes('Upload a file'));
 		assert.ok(html.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE));
 	});
 });
@@ -332,8 +337,8 @@ describe('Consultation on proposed content upload page', () => {
 		});
 
 		assert.ok(html.includes('Consultation documents'));
-		assert.ok(html.includes('Upload your Consultation on proposed local plan content and evidence documents'));
-		assert.ok(html.includes('Drag and drop or choose files'));
+		assert.ok(html.includes('Upload your consultation on proposed local plan content and evidence'));
+		assert.ok(html.includes('Upload a file'));
 		assert.ok(html.includes(GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE));
 	});
 });
@@ -444,7 +449,7 @@ describe('Gateway 2 post-submission view template', () => {
 						list: {
 							rows: [
 								{
-									key: { text: 'Gateway 2 covering letter' },
+									key: { text: 'Gateway 2 cover letter' },
 									value: { html: 'cover-letter.pdf' },
 									actions: { items: [{ href: '/change', text: 'Change' }] }
 								}
@@ -458,18 +463,6 @@ describe('Gateway 2 post-submission view template', () => {
 								{
 									key: { text: 'Notice of intention' },
 									value: { html: '<ul class="govuk-list"><li>notice1.pdf</li><li>notice2.pdf</li></ul>' },
-									actions: { items: [{ href: '/change', text: 'Change' }] }
-								}
-							]
-						}
-					},
-					{
-						heading: 'Additional Documents',
-						list: {
-							rows: [
-								{
-									key: { text: 'Subsequent work towards a draft Plan' },
-									value: { html: 'draft-plan.pdf' },
 									actions: { items: [{ href: '/change', text: 'Change' }] }
 								}
 							]
@@ -610,7 +603,7 @@ describe('Gateway 2 post-submission view template', () => {
 						list: {
 							rows: [
 								{
-									key: { text: 'Gateway 2 covering letter' },
+									key: { text: 'Gateway 2 cover letter' },
 									value: { html: 'cover-letter.pdf' },
 									actions: { items: [{ href: '/change', text: 'Change' }] }
 								}
@@ -629,7 +622,7 @@ describe('Gateway 2 post-submission view template', () => {
 
 		assert.ok(!html.includes('Change'), 'expected no Change action');
 		assert.ok(!html.includes('>Add<'), 'expected no Add action');
-		assert.ok(!html.includes('Submit for Gateway 2 assessment'), 'expected no submit button');
+		assert.doesNotMatch(html, /<button\b[^>]*>[\s\S]*?\bSubmit\b[\s\S]*?<\/button>/i, 'expected no submit button');
 		assert.ok(!html.includes('Save and come back later'), 'expected no save and come back link');
 	});
 
@@ -646,7 +639,7 @@ describe('Gateway 2 post-submission view template', () => {
 						list: {
 							rows: [
 								{
-									key: { text: 'Gateway 2 covering letter' },
+									key: { text: 'Gateway 2 cover letter' },
 									value: { html: '<ul class="govuk-list"><li>letter1.pdf</li><li>letter2.pdf</li></ul>' }
 								}
 							]

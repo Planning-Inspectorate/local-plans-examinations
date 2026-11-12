@@ -13,6 +13,8 @@ describe('Gateway 2 application page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
@@ -20,11 +22,12 @@ describe('Gateway 2 application page content', () => {
 			gateway2ApplicationPage.verifyCaption(plan.title);
 			gateway2ApplicationPage.verifyHeading('Gateway 2 submission');
 			gateway2ApplicationPage.verifyMainContains(
-				`Your target submission date is ${plan.dates.gateway2}. A Gateway 2 assessment usually takes about 6 weeks.`,
-				'Save and come back later',
-				'Add the documents that are relevant to your plan.'
+				'Gateway 2 is the next step in the development of your local plan.',
+				`You've provided the expected submission date of ${plan.dates.gateway2}. The assessment usually takes between 4 and 6 weeks from submission.`,
+				'For more infomation on Gateway 2 documents'
 			);
 			gateway2ApplicationPage.verifySaveAndComeBackLink(`/manage-local-plans/${plan.urlReference}`);
+			gateway2ApplicationPage.verifyCheckTheGuidanceLink();
 		});
 	});
 
@@ -33,20 +36,11 @@ describe('Gateway 2 application page content', () => {
 	});
 
 	it('Shows Consultation Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifySubHeading('Consultation Documents');
 		gateway2ApplicationPage.verifyConsultationDocuments();
-		gateway2ApplicationPage.verifyTableRowsInOrder(gateway2ApplicationPage.consultationDocumentsTable, [
-			'Notice of intention to commence local plan preparation',
-			'Scoping consultation documents',
-			'Consultation summary of feedback to scoping consultation',
-			'Summary of consultation on proposed local plan content and evidence documents',
-			'Gateway 1 - Self Assessment of Readiness',
-			'Consultation on proposed local plan content and evidence documents'
-		]);
 	});
 
-	it('Shows Additional Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifyAdditionalDocuments();
+	it('Shows Plan content, evidence and background documents', { tags: ['regression'] }, () => {
+		gateway2ApplicationPage.verifyPlanContentEvidenceBackgroundDocuments();
 	});
 
 	it('Shows Submit for Gateway 2 assessment', { tags: ['regression'] }, () => {

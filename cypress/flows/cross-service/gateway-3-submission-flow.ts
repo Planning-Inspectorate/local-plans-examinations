@@ -32,6 +32,7 @@ export const uploadGateway3DocumentInPortal = (reference: string, fileName: stri
 				cy.get('.govuk-summary-list__value').should('contain.text', fileName);
 				cy.get('[data-cy="save-and-return-button"]').click();
 				cy.contains('h1', 'Gateway 3 submission').should('be.visible');
+				cy.contains('.govuk-tag', 'In progress').should('be.visible');
 			}
 		);
 	});
@@ -49,5 +50,10 @@ export const submitGateway3InPortal = (reference: string) => {
 			`/manage-local-plans/${reference}/gateway-3-submission/submission-complete`
 		);
 		cy.contains('h1', 'Gateway 3 submission complete').should('be.visible');
+
+		cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
+		cy.contains('.govuk-task-list__item', 'Gateway 3')
+			.find('.govuk-task-list__status')
+			.should('contain.text', 'Under review');
 	});
 };

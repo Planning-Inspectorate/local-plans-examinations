@@ -841,11 +841,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		if (existingExaminationDetails?.soundUnsoundDate && returnToManage) {
 			const manuallySetInFirstSubmission = await checkSoundUnsoundManuallySet(service, caseId);
 			const reportIssuedDate = manuallySetInFirstSubmission ? existingExaminationDetails.soundUnsoundDate : new Date();
-			if (!manuallySetInFirstSubmission) {
-				await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-					soundUnsoundDate: reportIssuedDate
-				});
-			}
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				...(!manuallySetInFirstSubmission && { soundUnsoundDate: reportIssuedDate })
+			});
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: `Examination report document added; report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			});
@@ -859,11 +858,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		}
 
 		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
-		if (!existingExaminationDetails?.soundUnsoundDate) {
-			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-				soundUnsoundDate: reportIssuedDate
-			});
-		}
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+			...(!existingExaminationDetails?.soundUnsoundDate && { soundUnsoundDate: reportIssuedDate })
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -1310,7 +1308,15 @@ export function preprocessQuestionProperties(
 			if (!submissionDetails) {
 				throw new Error(`No submission details found for case reference '${reference}'`);
 			}
-			const submissionDetailsSorted = sortGateway3Submissions(submissionDetails);
+			const submissionDetailsSorted: {
+				decision: string | null;
+				completionDate: Date | null;
+				submittedDate?: Date | null;
+			}[] = sortGateway3Submissions(submissionDetails);
+			if (submissionDetailsSorted.length === 0) {
+				// No submission rows yet: show submission 1 as not started. The row is created when a decision is saved.
+				submissionDetailsSorted.push({ decision: null, completionDate: null, submittedDate: null });
+			}
 			// todo update this to account for multiple gw3 submission questions
 			for (let i = 0; i < submissionDetailsSorted.length; i++) {
 				const submissionId = i + 1;

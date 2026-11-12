@@ -17,7 +17,7 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 
 		const gateway2DocumentSets = {
 			procedural: [
-				{ folderName: 'covering-letter', title: 'Gateway 2 covering letter' },
+				{ folderName: 'covering-letter', title: 'Gateway 2 cover letter' },
 				{ folderName: 'local-plan-timetable', title: 'Local plan timetable' },
 				{ folderName: 'project-initiation-document', title: 'Project initiation document' },
 				{ folderName: 'draft-stat-compliance', title: 'Draft statement of compliance' },
@@ -30,16 +30,17 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 					title: 'Notice of intention to commence local plan preparation'
 				},
 				{ folderName: 'scoping-cons', title: 'Scoping consultation documents' },
-				{ folderName: 'cons-summ', title: 'Consultation summary of feedback to scoping consultation' },
+				{ folderName: 'cons-summ', title: 'Summary of scoping consultation feedback' },
 				{
 					folderName: 'summary-of-consultation',
-					title: 'Summary of consultation on proposed local plan content and evidence documents'
+					title: 'Summary of consultation on proposed local plan content and evidence'
 				},
-				{ folderName: 'g1-self-assess', title: 'Gateway 1 - Self assessment of readiness' },
-				{ folderName: 'cons-of-proposed', title: 'Consultation on proposed local plan content and evidence documents' }
-			],
-			additional: [
-				{ folderName: 'subsequent-work-towards-a-draft-plan', title: 'Subsequent work towards a draft plan' }
+				{ folderName: 'g1-self-assess', title: 'Gateway 1 self-assessment' },
+				{ folderName: 'cons-of-proposed', title: 'Consultation on proposed local plan content and evidence' },
+				{
+					folderName: 'evidence-on-engagement',
+					title: 'Evidence on engagement between plan making authorities and relevant bodies'
+				}
 			]
 		};
 
@@ -174,11 +175,11 @@ function initaliseFileInSession(req: any, documentsByCategory: DocumentsByCatego
 		[`${caseRef}:scopingConsultationDocuments`]: { uploadedFiles: [] },
 		[`${caseRef}:consultationSummaryFeedbackScoping`]: { uploadedFiles: [] },
 		[`${caseRef}:consultationSummaryProposedContent`]: { uploadedFiles: [] },
-		[`${caseRef}:subsequentWorkTowardsADraftPlan`]: { uploadedFiles: [] }
+		[`${caseRef}:evidenceOnEngagement`]: { uploadedFiles: [] }
 	};
 
 	const documentKeyMapping: Record<string, string> = {
-		'Gateway 2 covering letter': 'gateway2CoverLetter',
+		'Gateway 2 cover letter': 'gateway2CoverLetter',
 		'Local plan timetable': 'localPlanTimetable',
 		'Project initiation document': 'projectInitiationDocument',
 		'Draft statement of compliance': 'draftStatementOfCompliance',
@@ -186,12 +187,11 @@ function initaliseFileInSession(req: any, documentsByCategory: DocumentsByCatego
 		'Workshop document': 'gateway2WorkshopDocuments',
 		'Notice of intention to commence local plan preparation': 'noticeOfIntention',
 		'Scoping consultation documents': 'scopingConsultationDocuments',
-		'Consultation summary of feedback to scoping consultation': 'consultationSummaryFeedbackScoping',
-		'Summary of consultation on proposed local plan content and evidence documents':
-			'consultationSummaryProposedContent',
-		'Gateway 1 - Self assessment of readiness': 'gateway1SelfAssessment',
-		'Consultation on proposed local plan content and evidence documents': 'consultationOnProposedContent',
-		'Subsequent work towards a draft plan': 'subsequentWorkTowardsADraftPlan'
+		'Summary of scoping consultation feedback': 'consultationSummaryFeedbackScoping',
+		'Summary of consultation on proposed local plan content and evidence': 'consultationSummaryProposedContent',
+		'Gateway 1 self-assessment': 'gateway1SelfAssessment',
+		'Consultation on proposed local plan content and evidence': 'consultationOnProposedContent',
+		'Evidence on engagement between plan making authorities and relevant bodies': 'evidenceOnEngagement'
 	};
 
 	const allDocsFlat = documentsByCategory.flatMap((category) => category.documents);
@@ -202,6 +202,7 @@ function initaliseFileInSession(req: any, documentsByCategory: DocumentsByCatego
 		if (sessionKey && document.files?.length > 0) {
 			const key = `${caseRef}:${sessionKey}`;
 
+			fileUploader[key] ??= { uploadedFiles: [] };
 			fileUploader[key].uploadedFiles.push(...document.files);
 		}
 	});

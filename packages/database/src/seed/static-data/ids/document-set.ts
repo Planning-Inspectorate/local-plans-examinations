@@ -64,7 +64,12 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_G1_SELF_ASSESSMENT: 'g2-g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'g2-cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'g2-sum-of-cons',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
+	G2_EVIDENCE_ON_ENGAGEMENT: 'engagement-evidence',
+
+	// Plan content, evidence and background
+	G2_PLAN_CONTENT: 'g2-plan-content',
+	G2_EVIDENCE_AND_PROGRESS: 'g2-evidence-progress',
+	G2_LATEST_POLICIES_MAP: 'g2-policies-map',
 
 	// Other
 	EXAMINATION_REPORT: 'exam-report',
@@ -126,7 +131,12 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_G1_SELF_ASSESSMENT: 'g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
+	G2_EVIDENCE_ON_ENGAGEMENT: 'evidence-on-engagement',
+
+	// Plan content, evidence and background
+	G2_PLAN_CONTENT: 'plan-content',
+	G2_EVIDENCE_AND_PROGRESS: 'evidence-and-progress',
+	G2_LATEST_POLICIES_MAP: 'latest-policies-map',
 
 	// Other
 	EXAMINATION_REPORT: 'examination-report',
@@ -147,7 +157,10 @@ export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_G1_SELF_ASSESSMENT,
 	DOCUMENT_SET_ID.G2_CONSULTATION_ON_PROPOSED,
 	DOCUMENT_SET_ID.G2_SUMMARY_OF_CONSULTATION,
-	DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN
+	DOCUMENT_SET_ID.G2_EVIDENCE_ON_ENGAGEMENT,
+	DOCUMENT_SET_ID.G2_PLAN_CONTENT,
+	DOCUMENT_SET_ID.G2_EVIDENCE_AND_PROGRESS,
+	DOCUMENT_SET_ID.G2_LATEST_POLICIES_MAP
 ];
 export const gateway3SetIds = [
 	DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
@@ -219,6 +232,7 @@ export const DOCUMENT_LABELS: Record<string, string> = {
 	scopingConsultationSummary: 'Summary of scoping consultation',
 	consultationContentEvidenceSummary: 'Summary of consultation on proposed local plan content and evidence',
 	consultationProposedPlanSummary: 'Summary of consultation on proposed local plan',
+	evidenceOnEngagement: 'Evidence on engagement between plan making authorities and relevant bodies',
 	practicalArrangementsStatement: 'Statement setting out practical arrangements',
 	copiesOfRepresentations: 'Copies of representations',
 	supplementaryPlansStatement: 'Supplementary plans statement',

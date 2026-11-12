@@ -21,6 +21,10 @@
 			{% endif %}
 			<h1 class="govuk-heading-l">{{ question.question }}</h1>
 
+			{% if question.text.bodyText %}
+				<p class="govuk-body govuk-!-font-weight-regular">{{ question.text.bodyText }}</p>
+			{% endif %}
+
 			{% if question.text.introduction %}
 				<h2 class="govuk-heading-m">{{ question.text.introduction }}</h2>
 			{% endif %}
@@ -33,7 +37,12 @@
 				</ul>
 			{% endif %}
 
-			{% if question.text.fileRequirementsText %}
+			{% if question.text.bulletListFooter %}
+				<p class="govuk-body">{{ question.text.bulletListFooter }}</p>
+			{% endif %}
+
+			{# Render hint text separately for standard file uploads with introduction heading #}
+			{% if question.text.introduction and question.text.fileRequirementsText %}
 				<p class="govuk-hint" data-cy="file-requirements-hint">{{ question.text.fileRequirementsText  | safe}}</p>
 			{% endif %}
 
@@ -43,6 +52,14 @@
 
 			{% set uploadError = errors["upload-form"] or errors[question.fieldName] %}
 
+			{# When no introduction heading, pass hint into the component so it renders after the visible label #}
+			{% if not question.text.introduction and question.text.fileRequirementsText %}
+				{% set fileUploadHintConfig = {
+				text: question.text.fileRequirementsText,
+				attributes: { 'data-cy': 'file-requirements-hint' }
+			} %}
+			{% endif %}
+
 			{% if question.editable %}
 				<form id="upload-form" method="post" enctype="multipart/form-data" action="{{ currentUrl }}/upload-documents{{ queryString }}" data-cy="upload-form">
 					<input type="hidden" name="_csrf" value="{{ _csrf }}">
@@ -51,12 +68,13 @@
 						name: "files[]",
 						label: {
 							text: question.text.uploadLabel or "Upload files",
-							classes: "govuk-visually-hidden"
+							classes: "govuk-visually-hidden" if question.text.introduction else "govuk-label--m"
 						},
 						javascript: true,
 						multiple: question.multiple,
 						chooseFilesButtonText: question.text.chooseFilesButtonText or "Choose files",
 						dropInstructionText: question.text.dropInstructionText or "or drop files",
+						hint: fileUploadHintConfig,
 						attributes: {
 							accept: question.allowedMimeTypes | join(", ")
 						},

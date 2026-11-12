@@ -67,6 +67,7 @@ export const examinationReport = {
 	row: 'Examination report',
 	path: 'examination-report',
 	fileName: 'test-document.pdf',
+	fileName2: 'test-document.docx',
 	supportingFileName: 'test-document.docx',
 	receivedDate: '2026-10-01T12:00:00.000Z',
 	receivedDisplay: '1 Oct 2026',
@@ -311,7 +312,8 @@ export const soundUnsoundDate = {
 export const adoptionDate = {
 	row: 'Adoption date',
 	path: 'adoption-date',
-	display: '8 December 2026'
+	display: '8 December 2026',
+	input: { day: '8', month: '12', year: '2026' }
 };
 
 export const approvedForCILDate = {

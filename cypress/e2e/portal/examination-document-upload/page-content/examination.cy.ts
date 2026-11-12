@@ -22,17 +22,16 @@ describe('Examination document upload page content', () => {
 	it('Verify the page content for the local plan submission for examination page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			examinationPage.clickAddLink(localPlanSubmissionForExaminationPage.addCy);
-			localPlanSubmissionForExaminationPage.verifyPageContent(
-				examinationPage.pathFor(plan.urlReference),
+			localPlanSubmissionForExaminationPage.verifyPageContent(examinationPage.pathFor(plan.urlReference), [
 				'Upload a file'
-			);
+			]);
 		});
 	});
 
 	it('Verify the page content for the statement of compliance page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			examinationPage.clickAddLink(gateway3CompletionStatementPage.addCy);
-			gateway3CompletionStatementPage.verifyPageContent(examinationPage.pathFor(plan.urlReference), 'Upload a file');
+			gateway3CompletionStatementPage.verifyPageContent(examinationPage.pathFor(plan.urlReference), ['Upload a file']);
 		});
 	});
 });

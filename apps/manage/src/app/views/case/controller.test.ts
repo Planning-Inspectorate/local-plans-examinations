@@ -62,10 +62,13 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '9', folderName: 'g1-self-assess' },
 	{ id: '10', folderName: 'cons-of-proposed' },
 	{ id: '11', folderName: 'summary-of-consultation' },
-	{ id: '12', folderName: 'subsequent-work-towards-a-draft-plan' },
+	{ id: '12', folderName: 'evidence-on-engagement' },
 	{ id: '13', folderName: 'gateway-2-report' },
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
+	{ id: '16', folderName: 'plan-content' },
+	{ id: '17', folderName: 'evidence-and-progress' },
+	{ id: '18', folderName: 'latest-policies-map' },
 	{ id: '16', folderName: 'gateway-3-document-1' },
 	{ id: '17', folderName: 'gateway-2-workshop-documents' },
 	{ id: '18', folderName: 'examination-report' },
@@ -1739,7 +1742,7 @@ describe('Gateway 3 document loading', () => {
 			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'gateway-3-report');
 
 			const fieldName = question.replace('gateway-3-document-', 'gateway3Documents-');
-			assert.deepEqual(answers[fieldName], temporary ? [savedFile, draftFile] : [savedFile]);
+			assert.deepEqual(answers[fieldName], temporary ? [draftFile] : [savedFile]);
 			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
 		});
 	}
@@ -1754,7 +1757,7 @@ describe('compileGateway3Data', () => {
 		return service;
 	}
 
-	it('looks up the current required and optional Gateway 3 documents for the case', async () => {
+	it('looks up only the submitted required and optional Gateway 3 documents for the case', async () => {
 		const service = createServiceWithDocuments([]);
 
 		await compileGateway3Data(service.db, gateway3Answers);
@@ -1763,6 +1766,7 @@ describe('compileGateway3Data', () => {
 			where: {
 				caseId: CASE_ID,
 				isDeleted: false,
+				isTemp: false,
 				documentSetId: {
 					in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
 				}
@@ -2015,7 +2019,12 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
+		assert.equal(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate, undefined);
 		assert.equal(req.session.alerts[0].text, 'Final report and supporting documents saved and notification sent');
 		assert.equal(
 			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
@@ -2038,6 +2047,10 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		const expectedMessage = {
 			type: 'success',
 			text: 'Final report and supporting documents saved and notification sent',
@@ -2069,6 +2082,10 @@ describe('issueExaminationReport', () => {
 		const savedDate = service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate;
 		assert.ok(savedDate instanceof Date);
 		assert.ok(savedDate.getTime() >= beforeConfirm.getTime());
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		assert.equal((req.session as any).examinationReportReturnToManage, undefined);
 	});
 
@@ -2089,7 +2106,10 @@ describe('issueExaminationReport', () => {
 
 		await issueExaminationReport(service, 'examination')(req, res, mock.fn());
 
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update, {
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED
+		});
 		assert.equal(
 			redirect.mock.calls[0].arguments[0],
 			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
@@ -2449,7 +2469,12 @@ describe('preprocessQuestionProperties', () => {
 		const res = {
 			render: mock.fn(() => {}),
 			locals: {
-				journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } }
+				journeyResponse: {
+					answers: {
+						proposedLocalPlan: 'plan.pdf',
+						documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] }
+					}
+				}
 			}
 		};
 		const req = {
@@ -2499,6 +2524,36 @@ describe('preprocessQuestionProperties', () => {
 		assert.equal(documentsRow.action, undefined);
 	});
 
+	it('prepares submission 1 as not started when there are no submission rows yet', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => ({
+			gateway3Info: { actualDate: null, submissions: [] }
+		}));
+		const res = { locals: { journeyResponse: { answers: {} } } };
+		const req = { session: {}, params: { reference: caseReference } };
+		const questions: Record<string, any> = {
+			'gateway3Decision-1': {},
+			'gateway3Documents-1': { config: {} },
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
+		};
+
+		const next = mock.fn(() => {});
+		await preprocessQuestionProperties(service, journeyId, questions)(
+			req as unknown as Request,
+			res as unknown as Response,
+			next
+		);
+
+		assert.equal(next.mock.callCount(), 1);
+		assert.deepEqual(questions['gateway3Decision-1'].actionLink, {
+			href: `/case/${caseReference}/gateway-3-report/gateway-3-submission-1/gateway-3-decision-1`,
+			text: 'Add'
+		});
+		assert.equal(questions['gateway3Decision-1'].formatSummaryValue(), 'Not started');
+		assert.equal(questions['gateway3Documents-1'].editable, true);
+		assert.equal(questions['gateway3DocumentsCheck-1'].config.actionButtonVisibleInSummary, false);
+	});
+
 	it('can preprocess gateway3 when the documents have submitted', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -2517,7 +2572,12 @@ describe('preprocessQuestionProperties', () => {
 		const res = {
 			render: mock.fn(() => {}),
 			locals: {
-				journeyResponse: { answers: { proposedLocalPlan: 'plan.pdf' } }
+				journeyResponse: {
+					answers: {
+						proposedLocalPlan: 'plan.pdf',
+						documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] }
+					}
+				}
 			}
 		};
 		const req = {
@@ -2589,6 +2649,7 @@ describe('preprocessQuestionProperties', () => {
 					journeyResponse: {
 						answers: {
 							proposedLocalPlan: 'plan.pdf',
+							documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] },
 							resubmissionDocumentFiles: { 2: [{ guid: 'guid', fileName: 'new.pdf' }] }
 						}
 					}

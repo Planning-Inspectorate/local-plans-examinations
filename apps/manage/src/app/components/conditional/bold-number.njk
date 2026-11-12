@@ -1,0 +1,22 @@
+<div class="govuk-form-group">
+    <label
+        class="govuk-label govuk-!-font-weight-bold"
+        for="{{ fieldName }}"
+    >
+        {{ label }}
+    </label>
+
+    <div class="govuk-input__wrapper">
+        <input
+            class="govuk-input govuk-input--width-5"
+            id="{{ fieldName }}"
+            name="{{ fieldName }}"
+            type="number"
+            inputmode="numeric"
+            value="{{ value }}"
+        >
+        <div class="govuk-input__suffix" aria-hidden="true">
+            {{ suffix }}
+        </div>
+    </div>
+</div>

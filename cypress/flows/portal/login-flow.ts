@@ -59,7 +59,7 @@ export const completePortalLogin = () => {
 	portalLoginOtpPage.saveAndContinue();
 };
 
-export const portalLogin = (email?: string) => {
+export const portalLogin = (email?: string, { singleLpa = false } = {}) => {
 	if (isEnvironmentSmoke()) {
 		authenticatePortalUserIfRequired(completePortalLoginByRequest, validatePortalLogin);
 		myPlansPage.visit();
@@ -67,7 +67,7 @@ export const portalLogin = (email?: string) => {
 	}
 
 	const loginEmail = email ?? TEST_EMAIL;
-	cy.task('seedCase');
+	cy.task('seedCase', { singleLpa });
 	completePortalLoginByRequest(loginEmail, LOCAL_TEST_OTP);
 	myPlansPage.visit();
 };
@@ -150,15 +150,16 @@ export const portalLoginForExistingCase = (email: string) => {
 };
 
 export const manageToPortalLogin = (email: string) => {
-	cy.origin(Cypress.env('portalBaseUrl'), { args: { email } }, ({ email }) => {
+	cy.origin(Cypress.env('portalBaseUrl'), { args: { email, otp: LOCAL_TEST_OTP } }, ({ email, otp }) => {
 		cy.visit('/login');
 		cy.setCookie('cookie_consent', 'accept');
 		cy.get('[data-cy="email"]').clear().type(email);
 		cy.get('[data-cy="button-save-and-continue"]').click();
-	});
+		cy.location('pathname').should('eq', '/login/enter-code');
 
-	cy.origin(Cypress.env('portalBaseUrl'), { args: { otp: LOCAL_TEST_OTP } }, ({ otp }) => {
 		cy.get('[data-cy="otp"]').clear().type(otp);
 		cy.get('[data-cy="button-save-and-continue"]').click();
+		cy.location('pathname').should('eq', '/manage-local-plans/your-plans');
+		cy.contains('h1', 'My plans').should('be.visible');
 	});
 };

@@ -367,11 +367,7 @@ describe('Gateway 3 submission complete page', () => {
 	it('renders the confirmation email copy', () => {
 		const html = renderSubmissionComplete();
 		assert.ok(html.includes('data-cy="confirmation-email-copy"'), 'expected confirmation email copy data-cy');
-		assert.ok(
-			html.includes('We have sent you a confirmation email.') ||
-				html.includes('We have sent you a confirmation email.'),
-			'expected confirmation email text'
-		);
+		assert.ok(html.includes("We've sent you a confirmation email."), 'expected confirmation email text');
 	});
 
 	it('renders the what happens next heading and list', () => {
@@ -399,10 +395,9 @@ describe('Gateway 3 submission complete page', () => {
 		assert.ok(html.includes('/manage-local-plans/PLAN-001'), 'expected plan overview URL');
 	});
 
-	it('renders the get in touch link', () => {
+	it('does not render the get in touch link', () => {
 		const html = renderSubmissionComplete();
-		assert.ok(html.includes('data-cy="get-in-touch"'), 'expected get-in-touch data-cy');
-		assert.ok(html.includes('If you need to adjust your submission,'), 'expected get in touch copy');
-		assert.ok(html.includes('get in touch'), 'expected get in touch link text');
+		assert.ok(!html.includes('data-cy="get-in-touch"'), 'expected no get-in-touch data-cy');
+		assert.ok(!html.includes('If you need to adjust your submission,'), 'expected no get in touch copy');
 	});
 });

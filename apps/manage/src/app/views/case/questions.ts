@@ -47,7 +47,7 @@ import {
 	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
-import { GW2QUESTIONS } from '../../../../../portal/src/app/views/manage-local-plans/gateway-2-submission/questions.ts';
+import { FRONT_OFFICE_GW2_QUESTIONS } from '@pins/local-plans-lib/app/questions.ts';
 import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
@@ -137,7 +137,7 @@ const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
 
 const gw2QuestionsWithContinue = Object.fromEntries(
 	//front office has save and return not continue
-	Object.entries(GW2QUESTIONS).map(([key, question]) => [
+	Object.entries(FRONT_OFFICE_GW2_QUESTIONS).map(([key, question]) => [
 		key,
 		{
 			...question,
@@ -561,8 +561,9 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 				value: 'yes',
 				text: 'Yes',
 				conditional: {
-					question: 'Expected number of days to carry out the hearing',
-					type: 'number',
+					label: 'Number of days',
+					type: 'bold-number',
+					suffix: 'Days',
 					fieldName: 'hearingExpectedDays'
 				}
 			},
@@ -763,7 +764,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		inputAttributes: { 'data-cy': 'delete-case-reason' },
 		url: COMMON_CONSTS.DELETE_CASE_REASON,
 		title: 'Reason for deletion',
-		viewData: { continueButtonText: 'Continue', cancelLinkClasses: 'govuk-link' },
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Enter a reason for deleting this case')]
 	},
 	planBand: {
@@ -1719,11 +1720,7 @@ questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: 
 export async function updateQuestionsWithOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	await loadCaseOfficerOptions(service, req, questions);
 	await loadInspectorOptions(service, req, questions);
-
-	const lpaOptions = await loadLpaOptions(service);
-	if (lpaOptions.length > 0) {
-		questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
-	}
+	questions.lpa.options = await loadLpaOptions(service, true);
 }
 
 export async function getQuestions(
@@ -1862,7 +1859,9 @@ Object.entries(questions)
 			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const expectedDaysKnown = {
 				key: this.title,
-				value: hearingDetails.hearingExpectedDaysKnown,
+				value:
+					this.options.find((option: { value: string }) => option.value === hearingDetails.hearingExpectedDaysKnown)
+						?.text ?? hearingDetails.hearingExpectedDaysKnown,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 
@@ -1890,7 +1889,9 @@ Object.entries(questions)
 			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const locationType = {
 				key: this.title,
-				value: hearingDetails.hearingLocationType,
+				value:
+					this.options.find((option: { value: string }) => option.value === hearingDetails.hearingLocationType)?.text ??
+					hearingDetails.hearingLocationType,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 

@@ -9,7 +9,7 @@ import {
 } from '../../page-objects/manage/create-case/index.ts';
 import { gateway2ApplicationPage } from '../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { manageToPortalLogin, portalLoginForExistingCase } from '../../flows/portal/login-flow.ts';
-import { gateway2CoverLetterPage } from '../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+import { gateway2CoverLetterPage } from '../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import { portalDeclarationPage } from '../../page-objects/portal/gw2-application/declaration-page.ts';
 import { applicationCompletePage } from '../../page-objects/portal/gw2-application/application-complete-page.ts';
 
@@ -54,7 +54,7 @@ describe('Cross-service Manage and Portal', () => {
 			gateway2ApplicationPage.verifyLoaded();
 			gateway2ApplicationPage.verifyDocumentRowContains(
 				gateway2ApplicationPage.proceduralDocumentsTable,
-				'Gateway 2 covering letter',
+				'Gateway 2 cover letter',
 				fileName
 			);
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
@@ -80,7 +80,7 @@ describe('Cross-service Manage and Portal', () => {
 				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-2`);
 				cy.contains('.govuk-summary-list__row', 'Submission documents').contains('a', 'Review').click();
 				cy.contains('h1', 'Submitted GW2 documents').should('be.visible');
-				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter')
 					.contains('.govuk-summary-list__value a', fileName)
 					.should('be.visible');
 			});
@@ -101,7 +101,7 @@ describe('Cross-service Manage and Portal', () => {
 			gateway2ApplicationPage.verifyLoaded();
 			gateway2ApplicationPage.verifyDocumentRowContains(
 				gateway2ApplicationPage.proceduralDocumentsTable,
-				'Gateway 2 covering letter',
+				'Gateway 2 cover letter',
 				fileName
 			);
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();

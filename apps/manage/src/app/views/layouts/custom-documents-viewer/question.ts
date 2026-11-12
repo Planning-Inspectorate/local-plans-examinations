@@ -13,15 +13,10 @@ const { RESUBMISSION_DOCUMENTS_LABEL } = COMMON_CONSTS;
 type JourneyAnswers = Journey['response']['answers'];
 type ExtendedAnswers = JourneyAnswers & {
 	optionalData?: Record<string, unknown>;
+	documentFiles?: Record<string, Gateway3DocumentFile[]>;
 	resubmissionDocumentFiles?: Record<number, Gateway3DocumentFile[]>;
 	[key: string]: unknown;
 };
-
-function countDocuments(value: unknown): number {
-	if (Array.isArray(value)) return value.length;
-	if (typeof value === 'string' && value.trim() !== '') return value.split(', ').length;
-	return 0;
-}
 
 export default class CustomDocumentsQuestion extends Question {
 	private config: { actionButtonVisibleInSummary: boolean };
@@ -55,12 +50,12 @@ export default class CustomDocumentsQuestion extends Question {
 
 	private getDocumentsCount(answers: ExtendedAnswers, submissionNumber: number) {
 		if (submissionNumber > 1) return answers.resubmissionDocumentFiles?.[submissionNumber]?.length ?? 0;
-		const values = [
-			...Object.keys(REQUIRED_DOCUMENT_SETS).map((key) => answers?.[key]),
-			...Object.keys(OPTIONAL_DOCUMENT_SETS).map((key) => answers?.optionalData?.[key]),
-			answers.examinationWebsite
-		];
-		return values.reduce((total: number, value) => total + countDocuments(value), 0);
+		// Count the compiled files, not the joined file names, so a name containing ", " is still one document
+		const documentFiles = answers?.documentFiles ?? {};
+		return [...Object.keys(REQUIRED_DOCUMENT_SETS), ...Object.keys(OPTIONAL_DOCUMENT_SETS)].reduce(
+			(total, field) => total + (documentFiles[field]?.length ?? 0),
+			0
+		);
 	}
 
 	public setActionLink(submissionId: string, reference: string, answers: ExtendedAnswers) {

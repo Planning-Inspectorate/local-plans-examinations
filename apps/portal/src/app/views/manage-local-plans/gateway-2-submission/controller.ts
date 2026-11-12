@@ -39,12 +39,14 @@ import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/mo
 import type { Gateway2WorkshopModel } from '@pins/local-plans-database/src/client/models/Gateway2Workshop.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 type Gateway2SummaryDocument = {
 	guid: string;
 	name: string;
 	documentSetId: string;
 	createdAt: Date;
+	isTemp: boolean;
 	latestDocumentVersion: {
 		originalFilename: string | null;
 		fileName: string | null;
@@ -240,6 +242,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 						name: true,
 						documentSetId: true,
 						createdAt: true,
+						isTemp: true,
 						latestDocumentVersion: {
 							select: {
 								originalFilename: true,
@@ -288,6 +291,14 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			}
 		}
 
+		// Load digital supporting material link from the database.
+		const digitalSupportingMaterialLink = currentCase.gateway2Info?.digitalSupportingMaterialLink;
+		if (digitalSupportingMaterialLink) {
+			answers['digitalSupportingMaterialLink'] = digitalSupportingMaterialLink;
+		} else {
+			delete answers['digitalSupportingMaterialLink'];
+		}
+
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
 			...answers
 		});
@@ -309,6 +320,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 2 submission';
 	res.locals.pageHeading = 'Gateway 2 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
+	res.locals.statusTag = StatusTag[STATUS.ReadyToStart];
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);
@@ -323,7 +335,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		planReference,
 		gateway2Info?.reportIssuedDate
 			? documents.flatMap((document) => {
-					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT) {
+					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT || document.isTemp) {
 						return [];
 					}
 
@@ -502,12 +514,20 @@ export function buildSubmittedGateway2View(): RequestHandler {
 	};
 }
 
-// Saves case-scoped answers into the session.
-function buildSaveDataToCase(): SaveDataFn {
+// Saves case-scoped answers into the session and persists text fields to the database.
+function buildSaveDataToCase(service: PortalService): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 
 	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
+		const digitalSupportingMaterialLink = params.data.answers?.digitalSupportingMaterialLink;
+		if (typeof digitalSupportingMaterialLink !== 'string') {
+			return;
+		}
+		await service.db.gateway2Info.update({
+			where: { caseId: params.referenceId },
+			data: { digitalSupportingMaterialLink }
+		});
 	};
 }
 
@@ -700,7 +720,7 @@ export function buildGateway2Middleware(service: PortalService) {
 	);
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
-	const saveDataToCase = buildSaveDataToCase();
+	const saveDataToCase = buildSaveDataToCase(service);
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
 	const uploadGateway2Document = buildFileUploadRouteHandler(
 		new Map(
