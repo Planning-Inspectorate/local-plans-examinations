@@ -52,8 +52,8 @@ const baseFileUploadConfig = {
 
 export const frontOfficeGateway2questions = {
 	gateway2CoverLetter: {
-		title: 'Gateway 2 covering letter',
-		question: 'Upload your Gateway 2 covering letter',
+		title: 'Gateway 2 cover letter',
+		question: 'Upload your Gateway 2 cover letter',
 		fieldName: 'gateway2CoverLetter',
 		url: 'covering-letter',
 		text: {
@@ -62,7 +62,7 @@ export const frontOfficeGateway2questions = {
 	},
 	localPlanTimetable: {
 		title: 'Local plan timetable',
-		question: 'Upload local plan timetable',
+		question: 'Upload your local plan timetable',
 		fieldName: 'localPlanTimetable',
 		url: 'local-plan-timetable',
 		text: {
@@ -71,7 +71,7 @@ export const frontOfficeGateway2questions = {
 	},
 	projectInitiationDocument: {
 		title: 'Project initiation document',
-		question: 'Upload project initiation document',
+		question: 'Upload your project initiation document',
 		fieldName: 'projectInitiationDocument',
 		url: 'project-initiation-document',
 		text: {
@@ -80,7 +80,7 @@ export const frontOfficeGateway2questions = {
 	},
 	draftStatementOfCompliance: {
 		title: 'Draft statement of compliance',
-		question: 'Upload draft statement of compliance',
+		question: 'Upload your draft statement of compliance',
 		fieldName: 'draftStatementOfCompliance',
 		url: 'draft-stat-compliance',
 		text: {
@@ -97,8 +97,8 @@ export const frontOfficeGateway2questions = {
 		}
 	},
 	gateway1SelfAssessment: {
-		title: 'Gateway 1 - Self Assessment of Readiness',
-		question: 'Upload your Gateway 1 - Self Assessment of Readiness',
+		title: 'Gateway 1 self-assessment',
+		question: 'Upload your Gateway 1 self assessment',
 		fieldName: 'gateway1SelfAssessment',
 		url: 'g1-self-assess',
 		text: {
@@ -106,8 +106,8 @@ export const frontOfficeGateway2questions = {
 		}
 	},
 	consultationOnProposedContent: {
-		title: 'Consultation on proposed local plan content and evidence documents',
-		question: 'Upload your Consultation on proposed local plan content and evidence documents',
+		title: 'Consultation on proposed local plan content and evidence',
+		question: 'Upload your consultation on proposed local plan content and evidence',
 		fieldName: 'consultationOnProposedContent',
 		url: 'cons-of-proposed',
 		text: {
@@ -133,8 +133,8 @@ export const frontOfficeGateway2questions = {
 		}
 	},
 	consultationSummaryFeedbackScoping: {
-		title: 'Consultation summary of feedback to scoping consultation',
-		question: 'Upload consultation summary of feedback to scoping consultation documents',
+		title: 'Summary of scoping consultation feedback',
+		question: 'Upload your summary of scoping consultation feedback',
 		fieldName: 'consultationSummaryFeedbackScoping',
 		url: 'cons-summ',
 		text: {
@@ -142,7 +142,7 @@ export const frontOfficeGateway2questions = {
 		}
 	},
 	consultationSummaryProposedContent: {
-		title: 'Summary of consultation on proposed local plan content and evidence documents',
+		title: 'Summary of consultation on proposed local plan content and evidence',
 		question: 'Upload your summary of consultation on proposed local plan content and evidence',
 		fieldName: 'consultationSummaryProposedContent',
 		url: 'summary-of-consultation',
@@ -150,13 +150,13 @@ export const frontOfficeGateway2questions = {
 			caption: 'Consultation documents'
 		}
 	},
-	subsequentWorkTowardsADraftPlan: {
-		title: 'Subsequent work towards a draft Plan',
-		question: 'Upload any subsequent work towards a draft plan',
-		fieldName: 'subsequentWorkTowardsADraftPlan',
-		url: 'subsequent-work-towards-a-draft-plan',
+	evidenceOnEngagement: {
+		title: 'Evidence on engagement between plan-making authorities and relevant bodies',
+		question: 'Upload our evidence on engagement between plan making authorities and relevant bodies',
+		fieldName: 'evidenceOnEngagement',
+		url: 'evidence-on-engagement',
 		text: {
-			caption: 'Additional documents'
+			caption: 'Consultation documents'
 		}
 	},
 	planContent: {
@@ -214,7 +214,7 @@ export const frontOfficeGateway2questions = {
 };
 
 const fileUploadText = {
-	introduction: 'Drag and drop or choose files',
+	introduction: 'Upload a file',
 	uploadLabel: 'Upload a file',
 	fileRequirementsText:
 		'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
