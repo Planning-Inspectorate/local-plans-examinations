@@ -754,7 +754,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan title?',
 		fieldName: 'planTitle',
 		url: 'plan-title',
-		title: 'Plan title',
+		title: 'Title',
 		validators: [new RequiredValidator('Enter a plan title')]
 	},
 	deleteCaseWhy: {
@@ -777,7 +777,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan band?',
 		fieldName: 'planBand',
 		url: 'plan-band',
-		title: 'Plan band',
+		title: 'Band',
 		validators: [new RequiredValidator('Select a plan band')]
 	},
 	planType: {
@@ -789,7 +789,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan type?',
 		fieldName: 'planType',
 		url: 'plan-type',
-		title: 'Plan type',
+		title: 'Type',
 		validators: [new RequiredValidator('Select a plan type')]
 	},
 	lpa: {
@@ -1733,6 +1733,23 @@ export async function getQuestions(
 	req: Request
 ): Promise<Record<string, ManageQuestionConfig>> {
 	await updateQuestionsWithOptions(service, req, questions);
+
+	const rawReference = req.params?.reference;
+	const reference = Array.isArray(rawReference) ? rawReference[0] : rawReference;
+
+	let lpaCount = 0;
+
+	if (reference) {
+		const currentCase = await service.db.case.findUnique({
+			where: { reference },
+			select: { _count: { select: { lpas: true } } }
+		});
+
+		lpaCount = currentCase ? currentCase._count.lpas : 0;
+	}
+
+	questions.checkLpas.title = lpaCount > 1 ? 'Planning authorities' : 'Planning authority';
+
 	return questions;
 }
 
