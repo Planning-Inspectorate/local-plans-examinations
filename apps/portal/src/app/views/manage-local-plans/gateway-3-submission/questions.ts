@@ -68,6 +68,7 @@ const baseFileUploadConfig = {
 
 const fileUploadText = {
 	introduction: 'Upload a file',
+	uploadLabel: 'Upload a file',
 	fileRequirementsText:
 		'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 	chooseFilesButtonText: 'Choose files',
