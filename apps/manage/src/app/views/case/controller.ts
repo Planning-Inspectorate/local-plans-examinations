@@ -112,7 +112,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		const currentItemId = getParam(req.params.manageListItemId);
 
 		if (action === 'remove') {
-			await removeItem({ db, reference, section, currentItemId });
+			await removeItem({ db, reference, section, currentItemId, service, req });
 			return;
 		}
 
@@ -187,7 +187,19 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 
-			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+			if ('lpa' in data.answers) {
+				if (action == 'edit') {
+					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+						lpa: currentItemId + ' updated to ' + data.answers.lpa
+					});
+				} else if (action == 'add') {
+					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+						lpa: data.answers.lpa + ' added'
+					});
+				}
+			} else {
+				await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+			}
 
 			if (data.answers.assessorName) {
 				if (firstSegmentUrl === COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
@@ -218,12 +230,16 @@ async function removeItem({
 	db,
 	reference,
 	section,
-	currentItemId
+	currentItemId,
+	service,
+	req
 }: {
 	db: ManageService['db'];
 	reference: string;
 	section: string;
 	currentItemId: string;
+	service: ManageService;
+	req: Request;
 }): Promise<void> {
 	if (section === CONTACTS_SECTION) {
 		await db.contact.delete({ where: { id: currentItemId } });
@@ -232,6 +248,11 @@ async function removeItem({
 	await db.case.update({
 		where: { reference },
 		data: { lpas: { disconnect: { lpaCode: currentItemId } } }
+	});
+	const account = authSession.getAccount(req.session);
+	const currentUser = account?.name ?? 'Unknown';
+	updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
+		lpa: currentItemId + ' removed'
 	});
 }
 
