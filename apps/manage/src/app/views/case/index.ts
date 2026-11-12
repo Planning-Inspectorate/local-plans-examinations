@@ -63,7 +63,8 @@ import {
 	createExaminationPauseJourney,
 	createGateway3ReportJourney,
 	createTimetableJourney,
-	createDeleteCaseJourney
+	createDeleteCaseJourney,
+	createExaminationProgrammeOfficerDetailsJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
@@ -496,6 +497,16 @@ const CASE_JOURNEYS: CaseJourneyConfig[] = [
 		redirectToTaskListOnSuccess: true,
 		saveController: ExaminationSaveController
 	},
+	// {
+	// 	path: COMMON_CONSTS.EXAMINATION_JOURNEY_ID,
+	// 	journeyId: COMMON_CONSTS.EXAMINATION_PROGRAMME_OFFICER_ID,
+	// 	createJourney: createExaminationProgrammeOfficerDetailsJourney,
+	// 	pageLoadHandler: ExaminationTabHandler,
+	// 	supportsManageList: true,
+	// 	supportsFileUpload: true,
+	// 	redirectToTaskListOnSuccess: true,
+	// 	saveController: ExaminationSaveController
+	// },
 	{
 		path: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
 		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,

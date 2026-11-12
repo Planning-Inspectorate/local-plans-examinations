@@ -437,7 +437,8 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		sections: [
 			new Section('Examination', 'examination')
 				.addQuestion(questions.expectedSubmissionForExaminationDate)
-				.addQuestion(questions.submissionForExaminationDate),
+				.addQuestion(questions.submissionForExaminationDate)
+				.addQuestion(questions.programmeOfficerDetailsExam),
 			new Section('Inspectors', 'inspectors')
 				.addQuestion(questions.examiningInspector1)
 				.addQuestion(questions.examiningInspector2)
@@ -512,6 +513,25 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			: undefined
 	);
 }
+export function createExaminationProgrammeOfficerDetailsJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const examinationUrl = req.baseUrl + '/examination';
+	const examinationProgrammeUrl = req.baseUrl + '/programmeOfficer';
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID,
+		sections: [],
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/case-overview.njk',
+		journeyTitle: 'Programme officer details',
+		returnToListing: false,
+		makeBaseUrl: () => examinationProgrammeUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.planReference);
+}
+
 
 export function createExaminationPauseJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const examinationUrl = req.baseUrl + '/examination';
@@ -773,6 +793,7 @@ const gateway3QuestionNames = new Set<string>([
 const examinationQuestionNames = new Set<string>([
 	'expectedSubmissionForExaminationDate',
 	'submissionForExaminationDate',
+	'programmeOfficerDetailsExam',
 	...EXAMINING_INSPECTOR_FIELDS,
 	'examiningInspectorAppointmentDate',
 	'letterSentToMHCLGDate',
@@ -805,5 +826,6 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
 	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
-	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_PROGRAMME_OFFICER_ID]: examinationQuestionNames
 };
