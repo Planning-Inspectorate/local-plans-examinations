@@ -54,8 +54,8 @@ describe('Gateway 3 document upload journeys', () => {
 			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx']);
 			page.saveAndVerifyDocumentRow(
 				gateway3ApplicationPage,
-				() => gateway3ApplicationPage.requiredInformationTable,
-				'Statement of Compliance',
+				() => gateway3ApplicationPage.proceduralDocumentsTable,
+				'Statement of compliance',
 				'test-document.pdf',
 				'test-document.docx'
 			);
@@ -71,8 +71,8 @@ describe('Gateway 3 document upload journeys', () => {
 			page.uploadAndVerifyFile('test-document.docx');
 			page.saveAndVerifyDownloadLink(
 				gateway3ApplicationPage,
-				() => gateway3ApplicationPage.requiredInformationTable,
-				'Statement of Compliance',
+				() => gateway3ApplicationPage.proceduralDocumentsTable,
+				'Statement of compliance',
 				'test-document.docx'
 			);
 		}
@@ -98,7 +98,7 @@ describe('Gateway 3 document upload journeys', () => {
 			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx']);
 			page.saveAndVerifyDocumentRow(
 				gateway3ApplicationPage,
-				() => gateway3ApplicationPage.optionalDocumentsTable,
+				() => gateway3ApplicationPage.planContentTable,
 				'Environmental report',
 				'test-document.pdf',
 				'test-document.docx'
@@ -112,7 +112,7 @@ describe('Gateway 3 document upload journeys', () => {
 		page.uploadAndVerifyFile('test-document.pdf');
 		page.saveAndVerifyDownloadLink(
 			gateway3ApplicationPage,
-			() => gateway3ApplicationPage.optionalDocumentsTable,
+			() => gateway3ApplicationPage.planContentTable,
 			'Environmental report',
 			'test-document.pdf'
 		);

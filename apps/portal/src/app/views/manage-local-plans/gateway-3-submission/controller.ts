@@ -21,7 +21,8 @@ import {
 	CHECK_ANSWERS_REDIRECTS,
 	createGateway3Questions,
 	GW3_FILE_UPLOAD_QUESTIONS,
-	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS
+	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS,
+	REQUIRED_GATEWAY_3_ITEM_TITLES
 } from './questions.ts';
 import {
 	getDocumentSetIdsByFolderName,
@@ -459,7 +460,8 @@ export function buildGateway3CheckAnswersList(): RequestHandler {
 	return (req, res, next) => {
 		const request = req as Gateway3Request;
 		return buildList({
-			pageCaption: request.currentCase?.planTitle
+			pageCaption: request.currentCase?.planTitle,
+			requiredItemTitles: REQUIRED_GATEWAY_3_ITEM_TITLES
 		})(req, res, next);
 	};
 }
@@ -749,7 +751,7 @@ export function buildValidateGateway3Submission(): RequestHandler {
 		res.locals.errorSummary = [
 			{
 				text: GATEWAY_3_SUBMIT_ERROR,
-				href: '#required-information'
+				href: '#procedural-documents'
 			}
 		];
 

@@ -28,13 +28,13 @@ describe('Gateway 3 examination website journeys', () => {
 		examinationWebsitePage.verifyLoaded();
 		examinationWebsitePage.enterAnswer(examinationWebsite.value);
 		gateway3ApplicationPage.verifyLoaded();
-		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.requiredInformationTable, [
+		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.planContentTable, [
 			{ document: examinationWebsite.row, status: examinationWebsite.value, addCy: examinationWebsite.addCy }
 		]);
 		gateway3ApplicationPage.clickAddLink(examinationWebsite.addCy);
 		examinationWebsitePage.verifyLoaded(examinationWebsite.value);
 		examinationWebsitePage.enterAnswer(examinationWebsite.updatedValue);
-		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.requiredInformationTable, [
+		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.planContentTable, [
 			{ document: examinationWebsite.row, status: examinationWebsite.updatedValue, addCy: examinationWebsite.addCy }
 		]);
 	});

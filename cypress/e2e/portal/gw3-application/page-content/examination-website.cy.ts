@@ -20,7 +20,7 @@ describe('Gateway 3 examination website page content', () => {
 			examinationWebsitePage.verifyLoaded();
 			examinationWebsitePage.verifyBackLink(gateway3ApplicationPage.pathFor(plan.urlReference));
 			examinationWebsitePage.verifyServiceNavigation('Guidance', 'Sign out');
-			examinationWebsitePage.verifyCaptionL('Required Information');
+			examinationWebsitePage.verifyCaptionL('Plan content and evidence documents');
 			examinationWebsitePage.verifyHintText('Enter the web address (URL) where your examination library is published');
 			examinationWebsitePage.verifySaveAndReturnButton();
 		});

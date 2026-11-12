@@ -24,14 +24,14 @@ describe('Gateway 3 application page content after submission', () => {
 			gateway3ApplicationPage.verifySubmissionData(todayDisplay, 'test@planninginspectorate.gov.uk');
 
 			gateway3ApplicationPage.verifyDocumentRowContains(
-				gateway3ApplicationPage.requiredInformationTable,
+				gateway3ApplicationPage.planContentTable,
 				'Map of proposed local plan policies',
 				'g3-map-of-policies.pdf'
 			);
 
 			gateway3ApplicationPage.verifyDocumentRowContains(
-				gateway3ApplicationPage.requiredInformationTable,
-				'Statement of Compliance',
+				gateway3ApplicationPage.proceduralDocumentsTable,
+				'Statement of compliance',
 				'g3-stat-compliance.pdf'
 			);
 

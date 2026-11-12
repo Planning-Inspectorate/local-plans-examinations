@@ -50,9 +50,12 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
-        {{ govukInsetText({
-            html: "Gateway 3 is a more formal step in the development of your local plan. At this point some documents are mandatory to submit.<br><br>You have provided the expected submission date of " + (targetDate or "") + ". The assessment usually takes between 4 and 6 weeks from submission."
-        }) }}
+        {% set gateway3GuidanceHtml %}
+            <p class="govuk-body">Gateway 3 is the next step in the development of your local plan.</p>
+            <p class="govuk-body">You've provided the expected submission date of {{ targetDate or "" }}. The assessment usually takes between 4 and 6 weeks from submission.</p>
+            <p class="govuk-body">Some of these documents are required but you should aim to include all listed documents in your submission if possible. For more information on the Gateway 3 documents, <a href="/guidance" class="govuk-link">check the guidance</a>.</p>
+        {% endset %}
+        {{ govukInsetText({ html: gateway3GuidanceHtml }) }}
 
         {% if saveAndComeBackUrl %}
             <p class="govuk-body">
@@ -63,14 +66,10 @@
 
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
-                <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
-                    <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
-                    {% if section.heading === 'Required Information' %}
-                        <p class="govuk-body">You must add these documents before you can submit.</p>
-                    {% elif section.heading === 'Optional Documents' %}
-                        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
-                    {% endif %}
-                    <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
+                {% set sectionId = section.heading | lower | replace(',', '') | replace(' ', '-') %}
+                <div class="govuk-!-margin-bottom-8" data-cy="{{ sectionId }}-section">
+                    <h2 class="govuk-heading-m" id="{{ sectionId }}">{{ section.heading }}</h2>
+                    <table class="govuk-table" data-cy="{{ sectionId }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
                                 <th scope="col" class="govuk-table__header govuk-visually-hidden">Document</th>
@@ -81,7 +80,12 @@
                         <tbody class="govuk-table__body">
                             {% for row in section.list.rows %}
                                 <tr class="govuk-table__row">
-                                    <td class="govuk-table__cell">{{ row.key.text }}</td>
+                                    <td class="govuk-table__cell">
+                                        {{ row.key.text }}
+                                        {% if row.key.text in requiredItemTitles %}
+                                            <div class="govuk-hint govuk-!-margin-bottom-0">Required</div>
+                                        {% endif %}
+                                    </td>
                                     <td class="govuk-table__cell" style="overflow-wrap: break-word; word-break: break-word">
                                         {% if row.value.html %}
                                             {{ row.value.html | safe }}
@@ -93,13 +97,13 @@
                                         {% if row.actions and row.actions.items %}
                                             {% for action in row.actions.items %}
                                                 {% set actionDataCy = "add-" + (row.key.text | lower | replace(' ', '-')) %}
-                                                {% if row.key.text == "Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects" %}
+                                                {% if row.key.text == "Statement demonstrating that the proposed local plan is unlikely to have significant environmental effects" %}
                                                     {% set actionDataCy = "add-statement-of-reasons-determination" %}
                                                 {% endif %}
-                                                {% if row.key.text == "Summary of representations relating to progress towards meeting prescribed requirements and the LPA response" %}
+                                                {% if row.key.text == "Summary of representations and responses on meeting prescribed requirements" %}
                                                     {% set actionDataCy = "add-representations-progress-summary" %}
                                                 {% endif %}
-                                                {% if row.key.text == "Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation" %}
+                                                {% if row.key.text == "Statement explaining changes since the proposed local plan consultation, reasons for changes, any additional consultations" %}
                                                     {% set actionDataCy = "add-changes-since-consultation-statement" %}
                                                 {% endif %}
                                                 <a href="{{ action.href }}" class="govuk-link" data-cy="{{ actionDataCy }}">
@@ -120,7 +124,7 @@
         {% endfor %}
 
         <h2 class="govuk-heading-m" id="ready-to-submit" data-cy="ready-to-submit-section">Ready to submit for Gateway 3</h2>
-        <p class="govuk-body">Once submitted, Gateway 3 will be locked and you cannot make further changes. By submitting, you're confirming that the information you're sharing is correct to the best of your knowledge.</p>
+        <p class="govuk-body">You cannot make any changes after submission.</p>
 
         <form method="post" novalidate>
             <input type="hidden" name="_csrf" value="{{ _csrf }}">

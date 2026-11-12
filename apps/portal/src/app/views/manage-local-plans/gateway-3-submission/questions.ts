@@ -67,7 +67,7 @@ const baseFileUploadConfig = {
 };
 
 const fileUploadText = {
-	introduction: 'Drag and drop or choose files',
+	introduction: 'Upload a file',
 	fileRequirementsText:
 		'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.',
 	chooseFilesButtonText: 'Choose files',
@@ -75,8 +75,10 @@ const fileUploadText = {
 	continueButtonText: 'Save and return'
 };
 
-const REQUIRED_INFO_CAPTION = 'Required information';
-const OPTIONAL_DOCS_CAPTION = 'Optional documents';
+const PROCEDURAL_DOCUMENTS_CAPTION = 'Procedural documents';
+const CONSULTATION_DOCUMENTS_CAPTION = 'Consultation documents';
+const PLAN_CONTENT_CAPTION = 'Plan content, evidence and background';
+const PLAN_CONTENT_AND_EVIDENCE_DOCUMENTS_CAPTION = 'Plan content and evidence documents';
 
 const gateway3TextInputQuestions = {
 	examinationWebsite: {
@@ -88,8 +90,11 @@ const gateway3TextInputQuestions = {
 		hint: 'Enter the web address (URL) where your examination library is published',
 		capitaliseAnswer: false,
 		validators: [new WebsiteUrlValidator()],
+		viewData: {
+			pageCaption: PLAN_CONTENT_AND_EVIDENCE_DOCUMENTS_CAPTION
+		},
 		text: {
-			caption: REQUIRED_INFO_CAPTION,
+			caption: PLAN_CONTENT_AND_EVIDENCE_DOCUMENTS_CAPTION,
 			continueButtonText: 'Save and return'
 		}
 	}
@@ -97,105 +102,105 @@ const gateway3TextInputQuestions = {
 
 const gateway3FileUploadQuestions = {
 	proposedLocalPlan: {
-		title: 'Proposed local plan intended for submission for examination',
-		question: 'Upload your proposed local plan',
+		title: 'Proposed local plan submission for examination',
+		question: 'Upload your proposed local plan submission for examination',
 		fieldName: 'proposedLocalPlan',
 		url: 'proposed-local-plan',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	},
 	mapOfPolicies: {
 		title: 'Map of proposed local plan policies',
-		question: 'Upload map of proposed local plan policies',
+		question: 'Upload your map of proposed local plan policies',
 		fieldName: 'mapOfPolicies',
 		url: 'map-of-policies',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	},
 	statementOfCompliance: {
-		title: 'Statement of Compliance',
-		question: 'Upload your Statement of Compliance',
+		title: 'Statement of compliance',
+		question: 'Upload your statement of compliance',
 		fieldName: 'statementOfCompliance',
 		url: 'statement-of-compliance',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: PROCEDURAL_DOCUMENTS_CAPTION
 		}
 	},
 	statementOfSoundness: {
-		title: 'Statement of Soundness',
-		question: 'Upload your Statement of Soundness',
+		title: 'Statement of soundness',
+		question: 'Upload your statement of soundness',
 		fieldName: 'statementOfSoundness',
 		url: 'statement-of-soundness',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: PROCEDURAL_DOCUMENTS_CAPTION
 		}
 	},
 	consultationEngagementSummary: {
-		title: 'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
-		question: 'Upload summary of consultation and engagement activities',
+		title: 'Summary of consultation and engagement activities in preparing the proposed local plan',
+		question: 'Upload your summary of consultation and engagement activities in preparing the proposed local plan',
 		fieldName: 'consultationEngagementSummary',
 		url: 'consultation-engagement-summary',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: CONSULTATION_DOCUMENTS_CAPTION
 		}
 	},
 	scopingConsultationSummary: {
 		title: 'Summary of scoping consultation',
-		question: 'Upload summary of scoping consultation',
+		question: 'Upload your summary of scoping consultation',
 		fieldName: 'scopingConsultationSummary',
 		url: 'scoping-consultation-summary',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: CONSULTATION_DOCUMENTS_CAPTION
 		}
 	},
 	consultationContentEvidenceSummary: {
 		title: 'Summary of consultation on proposed local plan content and evidence',
-		question: 'Upload summary of consultation on proposed local plan content and evidence',
+		question: 'Upload your summary of consultation on proposed local plan content and evidence',
 		fieldName: 'consultationContentEvidenceSummary',
 		url: 'consultation-content-evidence-summary',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: CONSULTATION_DOCUMENTS_CAPTION
 		}
 	},
 	consultationProposedPlanSummary: {
 		title: 'Summary of consultation on proposed local plan',
-		question: 'Upload summary of consultation on proposed local plan',
+		question: 'Upload your summary of consultation on proposed local plan',
 		fieldName: 'consultationProposedPlanSummary',
 		url: 'consultation-proposed-plan-summary',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: PROCEDURAL_DOCUMENTS_CAPTION
 		}
 	},
 	practicalArrangementsStatement: {
-		title: 'Statement setting out practical arrangements demonstrating readiness for examination',
-		question: 'Upload your statement of practical arrangements demonstrating readiness for examination',
+		title: 'Practical arrangements demonstrating readiness for examination',
+		question: 'Upload your practical arrangements demonstrating readiness for examination',
 		fieldName: 'practicalArrangementsStatement',
 		url: 'practical-arrangements-statement',
 		text: {
-			caption: REQUIRED_INFO_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	}
 };
 
 const gateway3OptionalFileUploadQuestions = {
 	copiesOfRepresentations: {
-		title: 'Copies of representations',
-		question: 'Upload copies of representations',
+		title: 'Representations',
+		question: 'Upload representations',
 		fieldName: 'copiesOfRepresentations',
 		url: 'copies-of-representations',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: CONSULTATION_DOCUMENTS_CAPTION
 		}
 	},
 	supplementaryPlansStatement: {
 		title: 'Supplementary plans statement',
-		question: 'Upload your supplementary plans statement',
+		question: 'Upload your supplementary plans statement page',
 		fieldName: 'supplementaryPlansStatement',
 		url: 'supplementary-plans-statement',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	},
 	environmentalReport: {
@@ -204,58 +209,55 @@ const gateway3OptionalFileUploadQuestions = {
 		fieldName: 'environmentalReport',
 		url: 'environmental-report',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	},
 	statementOfReasonsDetermination: {
-		title:
-			'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+		title: 'Statement demonstrating that the proposed local plan is unlikely to have significant environmental effects',
 		question:
-			'Upload statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+			'Upload your statement demonstrating that the proposed local plan is unlikely to have significant environmental effects',
 		fieldName: 'statementOfReasonsDetermination',
 		url: 'statement-of-reasons-determination',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	},
 	representationsProgressSummary: {
-		title:
-			'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
-		question:
-			'Upload summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+		title: 'Summary of representations and responses on meeting prescribed requirements',
+		question: 'Upload your summary of representations and responses on meeting prescribed requirements',
 		fieldName: 'representationsProgressSummary',
 		url: 'representations-progress-summary',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: CONSULTATION_DOCUMENTS_CAPTION
 		}
 	},
 	gateway2IssuesSummary: {
 		title: 'Summary of how Gateway 2 assessor issues have been addressed',
-		question: 'Upload summary of how Gateway 2 assessor issues have been addressed',
+		question: 'Upload your summary of how Gateway 2 assessor issues have been addressed',
 		fieldName: 'gateway2IssuesSummary',
 		url: 'gateway-2-issues-summary',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: PROCEDURAL_DOCUMENTS_CAPTION
 		}
 	},
 	changesSinceConsultationStatement: {
 		title:
-			'Statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+			'Statement explaining changes since the proposed local plan consultation, reasons for changes, any additional consultations',
 		question:
-			'Upload statement explaining changes since the proposed local plan consultation, reasons for those changes, and any additional consultation',
+			'Upload your statement explaining changes since the proposed local plan consultation, reasons for changes, any additional consultation',
 		fieldName: 'changesSinceConsultationStatement',
 		url: 'changes-since-consultation-statement',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: PROCEDURAL_DOCUMENTS_CAPTION
 		}
 	},
 	otherDocuments: {
-		title: 'Other documents',
-		question: 'Upload other documents',
+		title: 'Supporting material',
+		question: 'Upload your supporting material',
 		fieldName: 'otherDocuments',
 		url: 'other-documents',
 		text: {
-			caption: OPTIONAL_DOCS_CAPTION
+			caption: PLAN_CONTENT_CAPTION
 		}
 	}
 };
@@ -301,6 +303,11 @@ export const GW3_FILE_UPLOAD_QUESTIONS = {
 	...GW3_REQUIRED_FILE_UPLOAD_QUESTIONS,
 	...GW3_OPTIONAL_FILE_UPLOAD_QUESTIONS
 };
+
+export const REQUIRED_GATEWAY_3_ITEM_TITLES = [
+	gateway3TextInputQuestions.examinationWebsite.title,
+	...Object.values(gateway3FileUploadQuestions).map((questionDefinition) => questionDefinition.title)
+];
 
 export const GW3QUESTIONS = {
 	...GW3_TEXT_INPUT_QUESTIONS,

@@ -1,10 +1,10 @@
 export const examinationWebsite = {
 	row: 'Examination website',
 	heading: 'Add a link to your examination website',
-	caption: 'Required information',
+	caption: 'Plan content and evidence documents',
 	fieldName: 'examinationWebsite',
 	path: 'examination-website',
-	section: 'required-information',
+	section: 'plan-content-evidence-and-background',
 	addCy: 'add-examination-website',
 	value: 'https://www.gov.uk/register-to-vote',
 	updatedValue: 'https://www.updated-example.com',

@@ -782,8 +782,8 @@ describe('buildValidateGateway3Submission', () => {
 				journey: {
 					sections: [
 						{
-							name: 'Required Information',
-							segment: 'required-information',
+							name: 'Procedural documents',
+							segment: 'procedural-documents',
 							getStatus: () => 'in-progress',
 							questions: []
 						}
@@ -802,7 +802,7 @@ describe('buildValidateGateway3Submission', () => {
 		assert.strictEqual(statusCode, 400);
 		assert.strictEqual(res.locals.errors?.submit?.text, 'Add all required documents before submitting');
 		assert.deepStrictEqual(res.locals.errorSummary, [
-			{ text: 'Add all required documents before submitting', href: '#required-information' }
+			{ text: 'Add all required documents before submitting', href: '#procedural-documents' }
 		]);
 	});
 });
@@ -853,7 +853,11 @@ describe('handleMulterFileSizeError', () => {
 	it('redirects with error when multer file size limit is exceeded', () => {
 		const err = new multer.MulterError('LIMIT_FILE_SIZE');
 		const req = {
-			params: { planReference: 'PLAN-001', section: 'required-information', question: 'proposed-local-plan' },
+			params: {
+				planReference: 'PLAN-001',
+				section: 'plan-content-evidence-and-background',
+				question: 'proposed-local-plan'
+			},
 			baseUrl: '/manage-local-plans',
 			session: {}
 		} as unknown as Request;

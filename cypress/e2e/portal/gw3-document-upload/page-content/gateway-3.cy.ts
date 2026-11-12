@@ -21,21 +21,24 @@ describe('Gateway 3 document upload page content', () => {
 	it('Verify the page content for the map of proposed local plan policies page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.clickAddLink(mapOfProposedLocalPlanPoliciesPage.addCy);
-			mapOfProposedLocalPlanPoliciesPage.verifyPageContent(gateway3ApplicationPage.pathFor(plan.urlReference));
+			mapOfProposedLocalPlanPoliciesPage.verifyPageContent(
+				gateway3ApplicationPage.pathFor(plan.urlReference),
+				'Upload a file'
+			);
 		});
 	});
 
 	it('Verify the page content for the statement of compliance page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.clickAddLink(statementOfCompliancePage.addCy);
-			statementOfCompliancePage.verifyPageContent(gateway3ApplicationPage.pathFor(plan.urlReference));
+			statementOfCompliancePage.verifyPageContent(gateway3ApplicationPage.pathFor(plan.urlReference), 'Upload a file');
 		});
 	});
 
 	it('Verify the page content for the environmental report page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.clickAddLink(environmentalReportPage.addCy);
-			environmentalReportPage.verifyPageContent(gateway3ApplicationPage.pathFor(plan.urlReference));
+			environmentalReportPage.verifyPageContent(gateway3ApplicationPage.pathFor(plan.urlReference), 'Upload a file');
 		});
 	});
 });
