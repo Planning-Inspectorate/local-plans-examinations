@@ -123,7 +123,6 @@ model Case {
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
-  programmeOfficerPhone     String?
   assessorGateway3          String?
   intentionToCommenceDate   DateTime?
   gateway1Date              DateTime?
@@ -212,6 +211,7 @@ model Gateway3Info {
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
+  programmeOfficerPhone     String?
   assessorName              String?
   assessorAppointmentDate   DateTime?                 @db.DateTime2
   submissions               Gateway3Submission[]

@@ -1167,7 +1167,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				label: 'Email address',
 				title: 'Programme Officer email address',
 				attributes: { 'data-cy': 'programme-officer-email' }
-			},
+			}
 		],
 		validators: [
 			new MultiFieldInputValidator({
@@ -1191,6 +1191,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer',
 		title: 'Programme officer'
+	},
+	examinationDocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_EXAMINATION_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Examination documents',
+		fieldName: 'examinationDocuments',
+		url: 'examination-documents'
 	},
 	programmeOfficerDetailsExam: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
@@ -1220,7 +1227,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'programmeOfficerPhone',
 				label: 'Phone number (optional)',
-				title: 'Programme Phone numbers',
+				title: 'Programme officer phone number',
 				excludeFromSummary: true,
 				attributes: { 'data-cy': 'programme-officer-phone' }
 			}
@@ -1243,7 +1250,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				]
 			})
 		],
-		question: 'Programme Officer details',
+		question: 'Programme officer details',
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer',
 		title: 'Programme officer'

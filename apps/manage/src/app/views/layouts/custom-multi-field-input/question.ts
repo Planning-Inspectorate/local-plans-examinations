@@ -8,6 +8,8 @@ import { formatDateAnswer } from '../../../util/util.ts';
 
 interface BaseField {
 	fieldName: string;
+	/** When true the field is still shown on the question page but left out of the summary row. */
+	excludeFromSummary?: boolean;
 	formatJoinString?: string;
 	formatPrefix?: string;
 	formatTextFunction?: (value: string) => string;
@@ -279,6 +281,7 @@ export default class CustomMultiFieldInputQuestion extends Question {
 	formatAnswerForSummary(sectionSegment: string, journey: any) {
 		const dateFormat = 'd MMMM yyyy';
 		const summaryDetails = this.inputFields.reduce((acc: any, field: any) => {
+			if (field.excludeFromSummary) return acc;
 			let answer;
 			if (field.type === 'boolean' || field.type === 'radio') {
 				answer = field.options.find((opt: any) => opt.value === journey.response.answers[field.fieldName])?.text || '';

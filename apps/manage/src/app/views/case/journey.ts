@@ -438,7 +438,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 			new Section('Examination', 'examination')
 				.addQuestion(questions.expectedSubmissionForExaminationDate)
 				.addQuestion(questions.submissionForExaminationDate)
-				.addQuestion(questions.programmeOfficerDetails)
+				.addQuestion(questions.programmeOfficerDetailsExam)
 				.addQuestion(questions.examinationWebsite)
 				.addQuestion(questions.examinationDocumentsCheck),
 			new Section('Inspectors', 'inspectors')
@@ -446,7 +446,6 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.examiningInspector2)
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
-			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
 			new Section('Hearings', 'hearings').addQuestion(questions.miqs),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
@@ -809,5 +808,5 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
 	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
-	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
 };
