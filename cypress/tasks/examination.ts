@@ -7,12 +7,18 @@ import { loadConfig as loadDatabaseConfig } from '../../packages/database/src/co
 import {
 	DOCUMENT_SET_ID,
 	DOCUMENT_SOURCE_SYSTEM_ID,
+	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID,
 	VIRUS_CHECK_STATUS_ID
 } from '../../packages/database/src/seed/static-data/ids/index.ts';
 import { loadConfig } from '../../apps/manage/src/app/config.ts';
 import { BlobFileStorageAdapter } from '../../packages/lib/storage/blob-storage.ts';
-import { examinationReport, soundUnsound } from '../fixtures/manage/examination.ts';
+import {
+	examinationReport,
+	examinationSubmissionDocuments,
+	soundUnsound,
+	type ExaminationSubmissionDocument
+} from '../fixtures/manage/examination.ts';
 import { seedExaminationReportIssued } from '../../packages/database/src/seed/seed-examination-report-issued.ts';
 
 export type ExaminationReportSeedOptions = {
@@ -181,6 +187,74 @@ export async function clearExaminationReportFiles(reference: string) {
 			}
 		}
 		return null;
+	} finally {
+		await db.$disconnect();
+	}
+}
+
+export type ExaminationSubmissionDocumentsSeedOptions = {
+	documents?: readonly ExaminationSubmissionDocument[];
+	examinationWebsiteUrl?: string;
+	submitted?: boolean;
+};
+
+/**
+ * Seeds a manage case with the examination documents the LPA added in the front office.
+ * Pass submitted: false to leave the submission in progress, so the documents are not yet reviewable.
+ */
+export async function seedExaminationSubmissionDocuments({
+	documents = examinationSubmissionDocuments,
+	examinationWebsiteUrl,
+	submitted = true
+}: ExaminationSubmissionDocumentsSeedOptions = {}) {
+	if (process.env.ENVIRONMENT_SMOKE === 'true') {
+		throw new Error('Examination submission document seeds are only for the isolated regression database');
+	}
+	const seededCase = await seedCy();
+	const db = newDatabaseClient(loadDatabaseConfig().db);
+	try {
+		const { id: caseId } = await db.case.findUniqueOrThrow({
+			where: { reference: seededCase.reference },
+			select: { id: true }
+		});
+
+		// Content checks need document metadata; file transfers remain covered by the portal upload journeys.
+		for (const { documentSetKey, fileName } of documents) {
+			const documentSetId = DOCUMENT_SET_ID[documentSetKey];
+			if (!documentSetId) {
+				throw new Error(`Unknown examination document set "${documentSetKey}"`);
+			}
+			const guid = randomUUID();
+			await db.document.create({
+				data: {
+					guid,
+					name: guid,
+					caseId,
+					documentSetId,
+					versions: {
+						create: {
+							version: 1,
+							originalFilename: fileName,
+							fileName,
+							mime: 'application/pdf',
+							size: 1,
+							sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.FRONT_OFFICE,
+							virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED
+						}
+					}
+				}
+			});
+			await db.document.update({ where: { guid }, data: { latestVersionId: 1 } });
+		}
+
+		await db.examinationInfo.update({
+			where: { caseId },
+			data: {
+				status: submitted ? EXAMINATION_STATUS_ID.SUBMITTED : EXAMINATION_STATUS_ID.IN_PROGRESS,
+				...(examinationWebsiteUrl && { examinationWebsiteUrl })
+			}
+		});
+		return seededCase;
 	} finally {
 		await db.$disconnect();
 	}

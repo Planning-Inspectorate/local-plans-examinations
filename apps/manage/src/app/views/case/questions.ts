@@ -1187,7 +1187,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				]
 			})
 		],
-		question: 'Programme Officer details',
+		question: 'Programme officer details',
 		fieldName: 'programmeOfficerDetails',
 		url: 'programme-officer',
 		title: 'Programme officer'

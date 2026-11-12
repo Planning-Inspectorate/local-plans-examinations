@@ -158,6 +158,14 @@ export class ExaminationPage extends GatewayBasePage {
 			this.verifySummaryRowActionHref(row, new RegExp(`^/case/.+/examination/${section}/${path}$`));
 		});
 	}
+	// Both rows must be in the same summary list, with the second directly after the first
+	verifyRowOrder(firstRow: string, secondRow: string) {
+		this.summaryRow(firstRow)
+			.next('.govuk-summary-list__row')
+			.find('.govuk-summary-list__key')
+			.should('contain.text', secondRow);
+	}
+
 	verifyHearingsOrder(...hearingNumbers: number[]) {
 		this.hearingsHeadings.should('have.length', hearingNumbers.length);
 		hearingNumbers.forEach((hearingNumbers, index) => {
