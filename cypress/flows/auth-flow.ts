@@ -71,7 +71,7 @@ function authenticateWithMicrosoftIfRequired(
 }
 
 function verifyManageLogin() {
-	cy.visit('/');
+	cy.location('pathname', { timeout: 60000 }).should('eq', '/');
 	cy.get('h1').should('contain.text', 'All cases');
 }
 
