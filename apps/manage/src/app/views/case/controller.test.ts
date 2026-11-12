@@ -45,6 +45,7 @@ import {
 	REQUIRED_DOCUMENT_SETS
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
+import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -765,6 +766,88 @@ describe('updateCaseHistory', () => {
 	const context = createSaveContext({
 		url: '/case'
 	});
+
+	it('uses question and multi-field titles for case history labels', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service,
+			context.req,
+			service.db,
+			{ planTitle: 'Old plan', firstName: 'Jane', email: null },
+			{ planTitle: 'New plan', firstName: 'Joan', email: 'joan@example.com' },
+			REFERENCE,
+			CURRENT_USER
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		assert.deepEqual(entries, [
+			{ event: 'Plan title updated from Old plan to New plan', username: CURRENT_USER },
+			{ event: 'First name updated from Jane to Joan', username: CURRENT_USER },
+			{ event: 'Email address updated to joan@example.com', username: CURRENT_USER }
+		]);
+	});
+
+	it('uses a defined label for every configured question and multi-field input', async () => {
+		const service = createService();
+
+		const questionList = Object.values(questions);
+		const inputFields = questionList
+			.filter((question) => question instanceof CUSTOM_COMPONENT_CLASSES[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT])
+			.flatMap((question) => question.inputFields);
+		const configuredFields = [...questionList, ...inputFields];
+		const fieldNames = new Set(
+			configuredFields.map((question) => question.fieldName).filter((fieldName) => !!fieldName)
+		);
+		const previousValues = Object.fromEntries([...fieldNames].map((fieldName) => [fieldName, 'old value']));
+		const newValues = Object.fromEntries([...fieldNames].map((fieldName) => [fieldName, 'new value']));
+
+		await updateCaseHistory(service, context.req, service.db, previousValues, newValues, REFERENCE, CURRENT_USER);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		for (const [index, fieldName] of [...fieldNames].entries()) {
+			const label = entries[index].event.split(' updated from ')[0];
+			const question = configuredFields.findLast((question) => question.fieldName === fieldName);
+			assert.equal(label, question?.title ?? fieldName, `Incorrect label for ${fieldName}`);
+			assert.notEqual(label, 'undefined', `Missing label for ${fieldName}`);
+		}
+	});
+
+	it('falls back to the field name when no question title provided', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service,
+			context.req,
+			service.db,
+			{ exampleFieldName: 'old value' },
+			{ exampleFieldName: 'new value' },
+			REFERENCE,
+			CURRENT_USER
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		assert.equal(entries[0].event, 'exampleFieldName updated from old value to new value');
+	});
+
+	it('uses an override event when provided', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service,
+			context.req,
+			service.db,
+			{ firstName: 'Jane' },
+			{ firstName: 'Joan' },
+			REFERENCE,
+			CURRENT_USER,
+			{ firstName: 'Contact updated' }
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		assert.equal(entries[0].event, 'Contact updated');
+	});
+
 	it('uses readable copy for Examination letter date updates', async () => {
 		const db = {
 			case: {
