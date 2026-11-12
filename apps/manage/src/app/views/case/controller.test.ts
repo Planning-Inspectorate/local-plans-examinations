@@ -292,7 +292,7 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});
 
-	it('disconnects an LPA when removing from a non-contact section', async () => {
+	it('disconnects an LPA and records its removal in case history', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
 		const context = createSaveContext({
@@ -305,7 +305,7 @@ describe('updateCaseField', () => {
 
 		await save(handler, context);
 
-		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 2);
 		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
 			where: {
 				reference: REFERENCE
@@ -318,6 +318,9 @@ describe('updateCaseField', () => {
 				}
 			}
 		});
+
+		const caseHistory = service.db.case.update.mock.calls[1].arguments[0];
+		assert.deepEqual(caseHistory.data.caseHistories.create[0].event, 'E60000001 removed');
 
 		assert.equal(service.db.contact.delete.mock.callCount(), 0);
 	});
