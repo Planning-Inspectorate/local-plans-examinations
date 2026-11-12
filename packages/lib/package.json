@@ -12,6 +12,7 @@
     "@azure/identity": "*",
     "@azure/msal-node": "*",
     "@azure/storage-blob": "^12.34.0",
+    "@azure/service-bus": "^7.10.0",
     "@pins/local-plans-database": "*",
     "@redis/entraid": "*",
     "connect-redis": "*",
