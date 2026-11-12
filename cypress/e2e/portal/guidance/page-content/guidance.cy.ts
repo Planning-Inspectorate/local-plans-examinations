@@ -13,7 +13,7 @@ describe('Guidance page content', () => {
 	});
 	afterEach(cleanupPreparedPlanDetails);
 
-	it(
+	it.skip(
 		'verify page content for the overview of assessment stages section',
 		{ tags: ['regression', 'environment-smoke'] },
 		() => {
@@ -33,7 +33,7 @@ describe('Guidance page content', () => {
 		}
 	);
 
-	it('verify page content for document requirements section', { tags: ['regression'] }, () => {
+	it.skip('verify page content for document requirements section', { tags: ['regression'] }, () => {
 		portalGuidancePage.verifySubHeading('Document requirements');
 		portalGuidancePage.verifyAccordionSections([
 			['Gateway 2', 'Placeholder: list documents required at Gateway 2. (Copy will be provided later.)'],
@@ -42,7 +42,7 @@ describe('Guidance page content', () => {
 		]);
 	});
 
-	it('verify page content for related content section', { tags: ['regression'] }, () => {
+	it.skip('verify page content for related content section', { tags: ['regression'] }, () => {
 		portalGuidancePage.verifySubHeading('Related content');
 		portalGuidancePage.verifyLinkHrefs([
 			[

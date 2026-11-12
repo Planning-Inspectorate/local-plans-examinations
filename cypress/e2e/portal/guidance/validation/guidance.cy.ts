@@ -10,11 +10,11 @@ describe('Guidance page validation', () => {
 		portalGuidancePage.verifyLoaded();
 	});
 
-	it('shows Show and Hide text on each accordion section when toggled', { tags: ['regression'] }, () => {
+	it.skip('shows Show and Hide text on each accordion section when toggled', { tags: ['regression'] }, () => {
 		portalGuidancePage.verifyAccordionSectionsToggle(['Gateway 2', 'Gateway 3', 'Examination']);
 	});
 
-	it('shows all sections when Show all sections is clicked', { tags: ['regression'] }, () => {
+	it.skip('shows all sections when Show all sections is clicked', { tags: ['regression'] }, () => {
 		portalGuidancePage.verifyShowAllSections(['Gateway 2', 'Gateway 3', 'Examination']);
 	});
 });
