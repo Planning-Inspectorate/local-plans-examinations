@@ -107,3 +107,12 @@ resource "azurerm_private_dns_zone_virtual_network_link" "keyvault" {
 
   provider = azurerm.tooling
 }
+
+resource "azurerm_private_dns_zone_virtual_network_link" "servicebus" {
+  name                = "${local.org}-vnetlink-servicebus-${local.service_name}-${var.environment}"
+  private_dns_zone_id = data.azurerm_private_dns_zone.servicebus.id
+  virtual_network_id  = azurerm_virtual_network.main.id
+  provider            = azurerm.tooling
+
+  tags = local.tags
+}
