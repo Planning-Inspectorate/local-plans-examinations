@@ -16,6 +16,19 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			where: { caseId: caseRecord.id },
 			include: { planPauseHistory: true, hearings: true }
 		});
+		const programmeOfficer = await db.gateway3Info.findUnique({
+			where: { caseId: caseRecord.id },
+			select: {
+				programmeOfficerFirstName: true,
+				programmeOfficerLastName: true,
+				programmeOfficerEmail: true,
+				programmeOfficerPhone: true
+			}
+		});
+
+
+
+
 		if (!journey4Data) {
 			throw Error(`Could not fetch exam data for case '${caseRecord.id}'`);
 		}
@@ -29,6 +42,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			COMMON_CONSTS.EXAMINATION_JOURNEY_ID
 		);
 		const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+		Object.assign(journeyResponse.answers, programmeOfficer ?? {});
 		journeyResponse.answers.isSound = isSound;
 		const sortedPauseData = sortByDateColumn(
 			journey4Data?.planPauseHistory ? journey4Data?.planPauseHistory : [],
@@ -54,6 +68,7 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 				delete req.session.examinationReportReturnToManage;
 			}
 		}
+
 
 		if (
 			req.method === 'POST' &&

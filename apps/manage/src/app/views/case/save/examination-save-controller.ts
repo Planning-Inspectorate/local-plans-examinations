@@ -101,6 +101,25 @@ export class ExaminationSaveController extends SaveController {
 		return true;
 	}
 
+	public async prepareAndSave(answers: Record<string, any>) {
+		if (this.req.params.question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
+			const caseId = await this.resolveCaseId();
+			const data = this.trimStringValues({
+				programmeOfficerFirstName: answers.programmeOfficerFirstName,
+				programmeOfficerLastName: answers.programmeOfficerLastName,
+				programmeOfficerEmail: answers.programmeOfficerEmail,
+				programmeOfficerPhone: answers.programmeOfficerPhone || null
+			});
+			await this.service.db.gateway3Info.upsert({
+				where: { caseId },
+				update: data,
+				create: { caseId, ...data }
+			});
+			return { dataWritten: true, writtenToDB: true };
+		}
+		return await super.prepareAndSave(answers);
+	}
+
 	protected async prepareData(answers: Record<string, any>) {
 		const caseDetails = await this.service.db.case.findUnique({
 			select: {

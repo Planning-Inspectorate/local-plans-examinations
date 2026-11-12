@@ -1144,6 +1144,54 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		],
 		validators: [new RequiredValidator('Select an option')]
 	},
+	programmeOfficerDetails: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerFirstName',
+				label: 'First name',
+				title: 'Programme Officer first name',
+				attributes: { 'data-cy': 'programme-officer-first-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerLastName',
+				label: 'Last name',
+				title: 'Programme Officer last name',
+				attributes: { 'data-cy': 'programme-officer-last-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerEmail',
+				label: 'Email address',
+				title: 'Programme Officer email address',
+				attributes: { 'data-cy': 'programme-officer-email' }
+			},
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'programmeOfficerFirstName',
+						validators: [new RequiredValidator('Input a first name')]
+					},
+					{
+						fieldName: 'programmeOfficerLastName',
+						validators: [new RequiredValidator('Input a last name')]
+					},
+					{
+						fieldName: 'programmeOfficerEmail',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
+		question: 'Programme Officer details',
+		fieldName: 'programmeOfficerDetails',
+		url: 'programme-officer',
+		title: 'Programme officer'
+	},
 	programmeOfficerDetailsExam: {
 		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
 		inputFields: [
@@ -1170,64 +1218,10 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'programmeOfficerPhoneNumber ',
-				label: 'Phone number (optional)',
-				title: 'Programme Officer email address',
-				attributes: { 'data-cy': 'programme-officer-PhoneNumber' }
-			}
-		],
-		validators: [
-			new MultiFieldInputValidator({
-				fields: [
-					{
-						fieldName: 'programmeOfficerFirstName',
-						validators: [new RequiredValidator('Input a first name')]
-					},
-					{
-						fieldName: 'programmeOfficerLastName',
-						validators: [new RequiredValidator('Input a last name')]
-					},
-					{
-						fieldName: 'programmeOfficerEmail',
-						validators: [new RequiredValidator('Input an email address')]
-					}
-				]
-			})
-		],
-		question: 'Programme Officer details',
-		fieldName: 'programmeOfficerDetails',
-		url: 'programmeOfficer',
-		title: 'Programme officer'
-	},
-	programmeOfficerDetails: {
-		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
-		inputFields: [
-			{
-				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'programmeOfficerFirstName',
-				label: 'First name',
-				title: 'Programme Officer first name',
-				attributes: { 'data-cy': 'programme-officer-first-name' }
-			},
-			{
-				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'programmeOfficerLastName',
-				label: 'Last name',
-				title: 'Programme Officer last name',
-				attributes: { 'data-cy': 'programme-officer-last-name' }
-			},
-			{
-				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
-				fieldName: 'programmeOfficerEmail',
-				label: 'Email address',
-				title: 'Programme Officer email address',
-				attributes: { 'data-cy': 'programme-officer-email' }
-			},
-			{
-				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'programmeOfficerPhone',
-				label: 'Phone number (Optional)',
+				label: 'Phone number (optional)',
 				title: 'Programme Phone numbers',
+				excludeFromSummary: true,
 				attributes: { 'data-cy': 'programme-officer-phone' }
 			}
 		],

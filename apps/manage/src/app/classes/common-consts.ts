@@ -12,7 +12,6 @@ export const COMMON_CONSTS = {
 	EXAMINATION_REPORT_QUESTION: 'examination-report',
 	EXAMINATION_REPORT_MANAGE_QUESTION: 'examination-report-manage',
 	EXAMINATION_PAUSE_JOURNEY_ID: 'examination-pause',
-	EXAMINATION_PROGRAMME_OFFICER_ID: 'programme-officer',
 	TIMETABLE_JOURNEY_ID: 'timetable',
 	OVERVIEW: 'overview',
 	GATEWAY_2_INFO: 'gateway2Info',
