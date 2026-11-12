@@ -132,7 +132,7 @@ resource "azurerm_role_assignment" "app_manage_staging_documents_contributor" {
 }
 
 ## RBAC for ODW Service Bus
-resource "azurerm_role_assignment" "odw_service_bus_data_sender" {
+resource "azurerm_role_assignment" "back_office_odw_service_bus_data_sender" {
   count                = var.odw_service_bus_connection_enabled ? 1 : 0
   scope                = data.azurerm_servicebus_namespace.odw[0].id
   role_definition_name = "Azure Service Bus Data Sender"
