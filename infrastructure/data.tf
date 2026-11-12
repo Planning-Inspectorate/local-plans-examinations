@@ -73,6 +73,6 @@ data "azurerm_virtual_network" "tooling" {
 data "azurerm_servicebus_namespace" "odw" {
   count               = var.odw_service_bus_connection_enabled ? 1 : 0
   name                = var.odw_service_bus_name
-  resource_group_name = "pins-rg-ingestion-odw-uks-${var.environment}-prod"
+  resource_group_name = "pins-rg-ingestion-odw-${var.environment}-uks"
   provider            = azurerm.odw
 }
