@@ -1,7 +1,7 @@
 import type { Request, RequestHandler, Response } from 'express';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
-import { getRoutePlanReference } from '../utils.ts';
+import { getRoutePlanReference, getWorkshopWeekMonday } from '../utils.ts';
 import { loadConfig } from '../../../../config.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
@@ -15,19 +15,20 @@ export function buildGetDeclarationPage(): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		const reference = getRoutePlanReference(req) ?? '';
 		const encodedReference = encodeURIComponent(reference);
+		const submissionUrl = `/manage-local-plans/${encodedReference}/gateway-2-submission`;
 
 		return res.render(VIEW_PATH, {
-			pageTitle: 'Review declaration',
-			pageHeading: 'Review declaration',
-			pageCaption: 'Your application',
-			backLinkUrl: `/manage-local-plans/${encodedReference}/gateway-2-submission`
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			backLinkUrl: submissionUrl,
+			goBackUrl: submissionUrl
 		});
 	};
 }
 
 /**
  * Handles the declaration form submission.
- * Validates that both checkboxes are checked, then redirects to the application-complete page.
+ * Records the submission and redirects to the confirmation page.
  */
 export function buildPostDeclarationPage(service: PortalService): RequestHandler {
 	return async (req: Request, res: Response) => {
@@ -35,38 +36,6 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const encodedReference = encodeURIComponent(reference);
 		const { logger, db, notifyClient } = service;
 		const { govNotify } = loadConfig();
-
-		const declarations = req.body.declaration;
-		const selected = Array.isArray(declarations) ? declarations : declarations ? [declarations] : [];
-
-		const hasInformationTrue = selected.includes('informationTrue');
-		const hasPrivacyNotice = selected.includes('privacyNotice');
-
-		if (!hasInformationTrue || !hasPrivacyNotice) {
-			logger.info(`Declaration validation failed for case ${reference}`);
-
-			return res.render(VIEW_PATH, {
-				pageTitle: 'Review declaration',
-				pageHeading: 'Review declaration',
-				pageCaption: 'Your application',
-				backLinkUrl: `/manage-local-plans/${encodedReference}/gateway-2-submission`,
-				errorSummary: [
-					{
-						text: 'You must confirm both declarations before you can submit your application.',
-						href: '#declaration'
-					}
-				],
-				errors: {
-					declaration: {
-						text: 'You must confirm both declarations before you can submit your application.'
-					}
-				},
-				formValues: {
-					informationTrue: hasInformationTrue,
-					privacyNotice: hasPrivacyNotice
-				}
-			});
-		}
 
 		logger.info(`Declaration confirmed for case ${reference}`);
 
@@ -127,7 +96,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 							['authority_name']: contact.lpa.lpaName || contact.lpa.lpaCode,
 							['contact_info']: govNotify.localPlansTeamEmail,
 							planType: 'plan type',
-							workshopWeekMonday: 'workshop week monday',
+							workshopWeekMonday: getWorkshopWeekMonday(submissionDate),
 							teamEmailAddress: 'team email address',
 							teamPhone: 'team phone'
 						},
@@ -139,6 +108,6 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				}
 			})
 		);
-		return res.redirect(`/manage-local-plans/${encodedReference}/gateway-2-submission/application-complete`);
+		return res.redirect(`/manage-local-plans/${encodedReference}/gateway-2/confirmation`);
 	};
 }

@@ -48,7 +48,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 					? gateway3ResubBase
 					: plan.stage === STAGE.Gateway3
 						? gateway3Base
-						: `${applicationBase}/application-declaration`;
+						: `/manage-local-plans/${encodedPlanRef}/gateway-2/declaration`;
 		const applicationLink = () => applicationBase;
 		const gateway3Link = () => (isResubmissionRequired ? gateway3ResubBase : gateway3Base);
 		const examinationLink = () => examinationBase;

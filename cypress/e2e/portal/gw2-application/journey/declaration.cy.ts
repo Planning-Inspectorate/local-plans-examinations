@@ -21,38 +21,23 @@ describe('Declaration page journeys', () => {
 		});
 	});
 
-	it(
-		'Navigates to application complete page when both checkboxes are checked and confirm and submit is clicked',
-		{ tags: ['smoke'] },
-		() => {
-			loadPlanDetails().then((plan) => {
-				portalDeclarationPage.visit(plan.urlReference);
-				portalDeclarationPage.verifyLoaded();
+	it('Navigates to gateway 2 application when No, go back is clicked', { tags: ['smoke'] }, () => {
+		loadPlanDetails().then((plan) => {
+			portalDeclarationPage.visit(plan.urlReference);
+			portalDeclarationPage.verifyLoaded();
 
-				portalDeclarationPage.confirmInformationCheckbox.click();
-				portalDeclarationPage.privacyNoteCheckbox.click();
-				portalDeclarationPage.confirmAndSubmitButton.click();
-				applicationCompletePage.verifyPathForPlan(plan.urlReference);
-			});
-		}
-	);
+			portalDeclarationPage.noGoBackLink.click();
+			gateway2ApplicationPage.verifyPathForPlan(plan.urlReference);
+		});
+	});
 
-	it(
-		'Navigates to customer privacy notice guidance form after privacy note link is clicked',
-		{ tags: ['smoke'] },
-		() => {
-			loadPlanDetails().then((plan) => {
-				portalDeclarationPage.visit(plan.urlReference);
-				portalDeclarationPage.verifyLoaded();
+	it('Navigates to application complete page when Yes, confirm submission is clicked', { tags: ['smoke'] }, () => {
+		loadPlanDetails().then((plan) => {
+			portalDeclarationPage.visit(plan.urlReference);
+			portalDeclarationPage.verifyLoaded();
 
-				portalDeclarationPage.privacyNoteLink
-					.should(
-						'have.attr',
-						'href',
-						'https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice'
-					)
-					.and('have.attr', 'target', '_blank');
-			});
-		}
-	);
+			portalDeclarationPage.confirmSubmissionButton.click();
+			applicationCompletePage.verifyPathForPlan(plan.urlReference);
+		});
+	});
 });
