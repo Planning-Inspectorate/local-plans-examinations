@@ -94,12 +94,25 @@ footer.govuk-footer.pins-footer-border {
 
 	&__heading {
 		display: flex;
-		align-items: flex-start;
 		margin-bottom: govuk.govuk-spacing(1);
 	}
 
 	&__link {
 		flex: 1;
+		display: flex;
+		align-items: flex-start;
+		text-decoration: none;
+	}
+
+	&__link-text {
+		flex: 1;
+		text-decoration: underline;
+		text-decoration-thickness: max(1px, 0.0625rem);
+		text-underline-offset: 0.1578em;
+	}
+
+	&__link:hover &__link-text {
+		text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
 	}
 
 	&__chevron {
