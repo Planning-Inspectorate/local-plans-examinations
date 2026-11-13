@@ -48,6 +48,7 @@ function buildCase(overrides = {}) {
 			expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 			submissionForExaminationDate: null,
 			soundUnsoundDate: null,
+			adoptionDate: null,
 			status: 'cannot-start-yet',
 			statusLookup: { displayName: 'Cannot start yet' }
 		},

@@ -5,20 +5,24 @@
 
 {% block pageContent %}
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
-            titleText: "Application complete"
+            titleText: "Gateway 2 submission complete"
         }) }}
 
-        <p class="govuk-body">We have sent you a confirmation email.</p>
+        <p class="govuk-body" data-cy="confirmation-email-copy">We've sent you a confirmation email.</p>
 
-        <h2 class="govuk-heading-m">What happens next</h2>
+        <h2 class="govuk-heading-m" data-cy="what-happens-next-heading">What happens next</h2>
 
-        <p class="govuk-body">We've sent your application to the Planning Inspectorate. They will check that your application is complete and that they have all the information required to proceed to the next stage of the plan.</p>
-
-        <p class="govuk-body">They will contact you if any further information is required.</p>
-
-        <p class="govuk-body">You can <a href="{{ returnToPlanUrl }}" class="govuk-link">return to your plan</a> to check the status of your submission at any time.</p>
+        <p class="govuk-body">An assessor will be appointed to your case in the next few days</p>
+        <p class="govuk-body">Your case officer will:</p>
+        <ul class="govuk-list govuk-list--bullet" data-cy="what-happens-next-list">
+            <li>contact you to arrange a workshop, which is likely to be 2 consecutive days in the week beginning {{ workshopWeekMonday }}</li>
+            <li>let you know whether this workshop will be online or in-person</li>
+            <li>contact you if they need further information before or after the workshop</li>
+        </ul>
+        <p class="govuk-body">They will usually send the assessment report within 2 weeks of the workshop</p>
+        <p class="govuk-body">At any point you can <a href="{{ returnToPlanUrl }}" class="govuk-link" data-cy="check-submission-status">check your submission status</a></p>
     </div>
 </div>
 {% endblock %}

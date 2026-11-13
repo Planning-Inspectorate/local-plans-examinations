@@ -321,9 +321,10 @@ describe('plan page', () => {
 		const expectedButton = 'Start Gateway 2 submission';
 
 		assert.strictEqual(data.button, expectedButton, `expected ${expectedButton} but got ${data.button}`);
+		assert.strictEqual(data.currentApplicationLink, '/manage-local-plans/PLAN-001/gateway-2/declaration');
 		assert.ok(
-			html.includes('href="/manage-local-plans/PLAN-001/gateway-2-submission"'),
-			'expected action link to point to Gateway 2 submission'
+			!html.includes('href="/manage-local-plans/PLAN-001/gateway-2/declaration"'),
+			'expected the removed standalone declaration link not to be rendered'
 		);
 		assert.ok(!html.includes('data-cy="plan-details-action"'), 'expected the standalone action to be removed');
 		assert.ok(

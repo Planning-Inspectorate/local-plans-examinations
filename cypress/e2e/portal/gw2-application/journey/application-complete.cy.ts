@@ -43,6 +43,15 @@ describe('Application complete page journeys', () => {
 					{ page: localPlanTimetablePage, fileNames: gateway2SubmittedPlan.timetableFiles }
 				]);
 
+				const workshopDate = new Date(today);
+				workshopDate.setDate(workshopDate.getDate() + 2);
+				const workshopDateDisplay = workshopDate.toLocaleDateString('en-GB', {
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric'
+				});
+				applicationCompletePage.verifyMainContains(`in the week beginning ${workshopDateDisplay}`);
+
 				applicationCompletePage.returnToYourPlanLink(plan.urlReference).click();
 				planDetailsPage.verifyLoaded();
 				planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, plan.underReview);
