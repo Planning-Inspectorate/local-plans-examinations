@@ -33,15 +33,16 @@
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
         {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
-        {% if gateway2ReportFiles and gateway2ReportFiles.length %}
-            {{ gateway2ReportSummary(gateway2ReportFiles) }}
-        {% endif %}
         {% if statusTag %}
             {{ govukTag({
                 text: statusTag.label,
                 classes: statusTag.class
             }) }}
         {% endif %}
+        {% if gateway2ReportFiles and gateway2ReportFiles.length %}
+            {{ gateway2ReportSummary(gateway2ReportFiles) }}
+        {% endif %}
+        
         {{ govukInsetText({
             html: "
                 <p class='govuk-body'>Gateway 2 is the next step in the development of your local plan.</p>

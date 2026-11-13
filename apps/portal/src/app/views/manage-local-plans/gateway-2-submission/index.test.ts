@@ -12,6 +12,7 @@ import {
 import { JOURNEY_ID } from './journey.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
 import { GW2QUESTIONS } from './questions.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 const GATEWAY_2_COVER_LETTER_UPLOAD_GUIDANCE =
 	'Each file must be a PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, MSG, JPG, JPEG, PNG, TIF or TIFF and smaller than 250MB. The total size of your uploaded files must be smaller than 1GB.';
@@ -764,5 +765,60 @@ describe('buildSubmittedGateway2View middleware', () => {
 		assert.strictEqual((locals.journey as { taskListTemplate: string }).taskListTemplate, 'original-template.njk');
 		assert.strictEqual(locals.saveAndComeBackUrl, '/save');
 		assert.strictEqual(locals.submissionDate, undefined);
+	});
+});
+
+describe('Gateway 2 status tag', () => {
+	function getStatusTag(currentCase?: Record<string, unknown>) {
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			currentCase
+		} as any;
+
+		const res = { locals: {} } as any;
+
+		setGateway2CheckAnswersViewLocals(req, res);
+
+		return res.locals.statusTag;
+	}
+
+	it('returns an empty string when there is no current case', () => {
+		assert.strictEqual(getStatusTag(), '');
+	});
+
+	it('returns Ready to start when there are no documents or submission dates', () => {
+		assert.deepStrictEqual(getStatusTag({}), StatusTag[STATUS.ReadyToStart]);
+	});
+
+	it('returns In progress when documents have been uploaded', () => {
+		assert.deepStrictEqual(
+			getStatusTag({
+				documents: [{ guid: 'document-1' }]
+			}),
+			StatusTag[STATUS.InProgress]
+		);
+	});
+
+	it('returns Under review when the case has a submission date', () => {
+		assert.deepStrictEqual(
+			getStatusTag({
+				submissionDate: new Date('1999-07-21'),
+				documents: [{ guid: 'document-1' }]
+			}),
+			StatusTag[STATUS.UnderReview]
+		);
+	});
+
+	it('returns Completed when the Gateway 2 report has been issued', () => {
+		assert.deepStrictEqual(
+			getStatusTag({
+				gateway2Info: {
+					reportIssuedDate: new Date('2002-11-20')
+				},
+				submissionDate: new Date('2026-08-01'),
+				documents: [{ guid: 'document-1' }]
+			}),
+			StatusTag[STATUS.Completed]
+		);
 	});
 });
