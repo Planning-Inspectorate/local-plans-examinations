@@ -9,6 +9,8 @@ describe('Application Complete page content', () => {
 		portalLogin();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verifying page content for the application complete page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			applicationCompletePage.visit(plan.urlReference);

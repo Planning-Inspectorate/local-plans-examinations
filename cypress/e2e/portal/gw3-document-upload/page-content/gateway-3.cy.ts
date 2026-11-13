@@ -18,6 +18,8 @@ describe('Gateway 3 document upload page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verify the page content for the map of proposed local plan policies page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.clickAddLink(mapOfProposedLocalPlanPoliciesPage.addCy);

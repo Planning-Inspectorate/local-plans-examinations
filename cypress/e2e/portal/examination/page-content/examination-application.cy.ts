@@ -15,6 +15,8 @@ describe('Examination page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			examinationPage.verifyServiceNavigation('Guidance', 'Sign out');

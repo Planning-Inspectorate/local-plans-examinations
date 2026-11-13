@@ -86,3 +86,45 @@
 footer.govuk-footer.pins-footer-border {
 	border-top: 4px solid pins.$pins-green-200;
 }
+
+.pins-guidance-card {
+	padding-top: govuk.govuk-spacing(4);
+	padding-bottom: govuk.govuk-spacing(4);
+	border-top: 1px solid govuk.$govuk-border-colour;
+
+	&__heading {
+		display: flex;
+		margin-bottom: govuk.govuk-spacing(1);
+	}
+
+	&__link {
+		flex: 1;
+		display: flex;
+		align-items: flex-start;
+		text-decoration: none;
+	}
+
+	&__link-text {
+		flex: 1;
+		text-decoration: underline;
+		text-decoration-thickness: max(1px, 0.0625rem);
+		text-underline-offset: 0.1578em;
+	}
+
+	&__link:hover &__link-text {
+		text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
+	}
+
+	&__chevron {
+		flex-shrink: 0;
+		margin-left: govuk.govuk-spacing(2);
+		font-size: 22px;
+		font-weight: 700;
+		line-height: 1.2;
+		color: govuk.$govuk-link-colour;
+	}
+
+	&__description {
+		margin-bottom: 0;
+	}
+}

@@ -6,6 +6,8 @@ describe('Portal login OTP page', () => {
 		startPortalOtpLogin();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('displays the OTP page content', { tags: ['smoke'] }, () => {
 		portalLoginOtpPage.verifyHeading('Enter your one-time password');
 		portalLoginOtpPage.verifyHintText('We sent a code to');
