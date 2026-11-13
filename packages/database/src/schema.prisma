@@ -178,13 +178,10 @@ model Gateway2Info {
   additionalAssessors          Gateway2Assessor[]
 }
 
-/// Gateway 2 assessors appointed after the first one.
-/// The first assessor of a case is stored on Gateway2Info (assessorName, assessorAppointmentDate).
 model Gateway2Assessor {
   id                      String       @id @default(uuid()) @db.UniqueIdentifier
   gateway2Info            Gateway2Info @relation(fields: [gateway2InfoId], references: [id], onDelete: Cascade)
   gateway2InfoId          String       @db.UniqueIdentifier
-  /// Value of the selected assessor option (the Entra user id when auth is enabled).
   assessorName            String
   assessorAppointmentDate DateTime     @db.DateTime2
   createdDate             DateTime     @default(now())
@@ -234,8 +231,6 @@ model Gateway3Info {
   @@index([frontOfficeStatus])
 }
 
-/// Gateway 3 assessors appointed after the first one.
-/// The first assessor of a case is stored on Gateway3Info (assessorName, assessorAppointmentDate).
 model Gateway3Assessor {
   id                      String       @id @default(uuid()) @db.UniqueIdentifier
   gateway3Info            Gateway3Info @relation(fields: [gateway3InfoId], references: [id], onDelete: Cascade)
