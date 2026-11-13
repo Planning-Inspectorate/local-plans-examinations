@@ -24,6 +24,22 @@ describe('Gateway 2 application page content after submission', () => {
 	it('Shows the Gateway 2 submission data has been recorded correctly', { tags: ['regression'] }, () => {
 		gateway2ApplicationPage.verifySubmittedApplication(gateway2SubmittedPlan.submittedDate, FOURTH_TEST_EMAIL);
 	});
+
+	it('shows an online workshop meeting link without a venue or unuploaded documents', { tags: ['regression'] }, () => {
+		const meetingLink = 'https://teams.example.com/workshop';
+		cy.task('seedUpdateGateway2Workshop', {
+			reference: gateway2SubmittedPlan.reference,
+			workshopData: {
+				workshopDate: '2027-02-15T00:00:00.000Z',
+				workshopTime: '14:30',
+				workshopLocationType: 'remote',
+				remoteMeetingLinkKnown: 'yes',
+				remoteMeetingLink: meetingLink
+			}
+		});
+		cy.reload();
+		gateway2ApplicationPage.verifyRemoteWorkshopWithoutDocuments(meetingLink);
+	});
 });
 
 describe('Gateway 2 application page content after submission and GW2 report issued', () => {
@@ -68,9 +84,10 @@ describe('Gateway 2 application page content after workshop fields filled in BO'
 		});
 		openGateway2ApplicationPage('PLAN-D01');
 		gateway2ApplicationPage.verifyWorkshopData(gateway2ApplicationPage.workshopDetailsTable, [
-			['Workshop venue', 'Conference Hall, 12 Milton Lane, Westside, London, WW1 2RT'],
-			['Workshop date and time', '8 March 2027 at 11:44 to 15:45'],
-			['Workshop documents', 'test-document.docx', 'test-document.pdf', `(shared on ${dateShared}`]
+			['Format', 'In-person'],
+			['Venue', 'Conference Hall', '12 Milton Lane', 'Westside', 'London', 'WW1 2RT'],
+			['Start time', '11:44am, 8 March 2027'],
+			['Documents', 'test-document.docx', 'test-document.pdf', `(shared: ${dateShared}`]
 		]);
 
 		cy.task('seedUpdateGateway2Workshop', {
@@ -92,8 +109,9 @@ describe('Gateway 2 application page content after workshop fields filled in BO'
 		cy.reload();
 
 		gateway2ApplicationPage.verifyWorkshopData(gateway2ApplicationPage.workshopDetailsTable, [
-			['Workshop venue', 'London Workshop Centre, 88 Test place, Eastside, Manchester, ME1 9PL'],
-			['Workshop date and time', '15 February 2027 at 14:30 to 16:20']
+			['Format', 'In-person'],
+			['Venue', 'London Workshop Centre', '88 Test place', 'Eastside', 'Manchester', 'ME1 9PL'],
+			['Start time', '2:30pm, 15 February 2027']
 		]);
 	});
 });

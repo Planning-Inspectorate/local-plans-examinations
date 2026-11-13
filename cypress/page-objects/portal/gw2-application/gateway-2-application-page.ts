@@ -178,11 +178,23 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 
 	verifyWorkshopData(table: Cypress.Chainable, rows: string[][]) {
 		table.within(() => {
+			this.verifySubHeading('Workshop');
 			rows.forEach(([key, ...values]) => {
 				const row = cy.contains('.govuk-summary-list__row', key);
 				row.should('be.visible');
 				values.forEach((value) => row.should('contain.text', value));
 			});
+		});
+	}
+
+	verifyRemoteWorkshopWithoutDocuments(meetingLink: string) {
+		this.verifyWorkshopData(this.workshopDetailsTable, [
+			['Format', 'Remote'],
+			['Meeting link', meetingLink]
+		]);
+		this.workshopDetailsTable.within(() => {
+			cy.contains('.govuk-summary-list__key', /^(Venue|Documents)$/).should('not.exist');
+			this.verifySummaryRowValueLinkHref('Meeting link', meetingLink);
 		});
 	}
 }

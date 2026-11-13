@@ -100,6 +100,7 @@ export const workshopSetUp = {
 		inputTime: { hour: '14', minute: '30' },
 		display: '10 December 2026',
 		displayTime: '14:30',
+		displayTime12Hour: '2:30pm',
 		row: 'Workshop date',
 		rowTime: 'Workshop start time'
 	},
