@@ -1,49 +1,73 @@
-{% macro gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) %}
-    {% if workshopVenue or workshopDateAndTime or (workshopDocuments and workshopDocuments.length) %}
-        <dl class="govuk-summary-list" data-cy="gateway-2-workshop-section">
-            {% if workshopVenue %}
-                <div class="govuk-summary-list__row">
-                    <dt class="govuk-summary-list__key">Workshop venue</dt>
-                    <dd class="govuk-summary-list__value">{{ workshopVenue }}</dd>
-                </div>
+{% macro gateway2WorkshopSummary(hasWorkshop, workshopFormat, workshopVenue, workShopStartTime, workshopMeetingLink, workshopDocuments) %}
+    {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+    {% set hasWorkshopDocuments = workshopDocuments and workshopDocuments.length %}
+
+    {# The workshop set up and the workshop documents are added separately in the BO, so show either on its own. #}
+    {% if hasWorkshop or hasWorkshopDocuments %}
+        {% set formatLabels = { "in-person": "In-person", "hybrid": "Hybrid", "remote": "Remote" } %}
+        {% set isRemote = workshopFormat == "remote" %}
+        {% set venueLines = ([workshopVenue] if workshopVenue is string else workshopVenue) if workshopVenue else [] %}
+
+        <div data-cy="gateway-2-workshop-section">
+            <h2 class="govuk-heading-m">Workshop</h2>
+
+            {% set rows = [] %}
+
+            {% if hasWorkshop %}
+                {% if workshopFormat %}
+                    {% set _ = rows.push({ key: { text: "Format" }, value: { text: formatLabels[workshopFormat] or workshopFormat } }) %}
+                {% endif %}
+
+                {# Remote workshops have no venue. #}
+                {% if not isRemote %}
+                    {% if venueLines.length %}
+                        {% set venueHtml %}
+                            {% for line in venueLines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+                        {% endset %}
+                        {% set _ = rows.push({ key: { text: "Venue" }, value: { html: venueHtml } }) %}
+                    {% else %}
+                        {% set _ = rows.push({ key: { text: "Venue" }, value: { text: "Not provided" } }) %}
+                    {% endif %}
+                {% endif %}
+
+                {% if workshopMeetingLink %}
+                    {% set meetingLinkLower = workshopMeetingLink | lower %}
+                    {% if meetingLinkLower.indexOf("https://") == 0 or meetingLinkLower.indexOf("http://") == 0 %}
+                        {% set meetingLinkHtml %}<a href="{{ workshopMeetingLink }}" class="govuk-link" rel="noreferrer noopener" target="_blank">{{ workshopMeetingLink }}</a>{% endset %}
+                        {% set _ = rows.push({ key: { text: "Meeting link" }, value: { html: meetingLinkHtml } }) %}
+                    {% else %}
+                        {% set _ = rows.push({ key: { text: "Meeting link" }, value: { text: workshopMeetingLink } }) %}
+                    {% endif %}
+                {% endif %}
+
+                {% if workShopStartTime %}
+                    {% set _ = rows.push({ key: { text: "Start time" }, value: { text: workShopStartTime } }) %}
+                {% endif %}
             {% endif %}
 
-            {% if workshopDateAndTime %}
-                <div class="govuk-summary-list__row">
-                    <dt class="govuk-summary-list__key">Workshop date and time</dt>
-                    <dd class="govuk-summary-list__value">{{ workshopDateAndTime }}</dd>
-                </div>
+            {% if hasWorkshopDocuments %}
+                {% set documentsHtml %}
+                    <ul class="govuk-list">
+                        {% for document in workshopDocuments %}
+                            <li>
+                                {% if document.href %}
+                                    <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
+                                {% else %}
+                                    {{ document.fileName }}
+                                {% endif %}
+                                {% if document.sharedDate %} (shared: {{ document.sharedDate }}){% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endset %}
+                {% set _ = rows.push({ key: { text: "Documents" }, value: { html: documentsHtml } }) %}
             {% endif %}
 
-            {% if workshopDocuments and workshopDocuments.length %}
-                <div class="govuk-summary-list__row">
-                    <dt class="govuk-summary-list__key">Workshop documents</dt>
-                    <dd class="govuk-summary-list__value">
-                        {% if workshopDocuments.length > 1 %}
-                            <ul class="govuk-list">
-                                {% for document in workshopDocuments %}
-                                    <li>
-                                        {% if document.href %}
-                                            <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
-                                        {% else %}
-                                            {{ document.fileName }}
-                                        {% endif %}
-                                        {% if document.sharedDate %}<span class="govuk-body"> (shared on {{ document.sharedDate }})</span>{% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            {% set document = workshopDocuments[0] %}
-                            {% if document.href %}
-                                <a href="{{ document.href }}" class="govuk-link" download>{{ document.fileName }}</a>
-                            {% else %}
-                                {{ document.fileName }}
-                            {% endif %}
-                            {% if document.sharedDate %}<span class="govuk-body"> (shared on {{ document.sharedDate }})</span>{% endif %}
-                        {% endif %}
-                    </dd>
-                </div>
-            {% endif %}
-        </dl>
+            {{ govukSummaryList({
+                classes: "govuk-summary-list--no-border",
+                rows: rows
+            }) }}
+        </div>
     {% endif %}
 {% endmacro %}
