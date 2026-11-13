@@ -1700,6 +1700,10 @@ Object.keys(examinationHearingQuestions).forEach((key) => {
 	questions[key].continueButtonText = 'Continue';
 });
 
+Object.keys(gateway2WorkshopQuestions).forEach((key) => {
+	questions[key].continueButtonText = 'Continue';
+});
+
 // The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
