@@ -29,11 +29,13 @@ try { loadEnvFile(); } catch {/* ignore errors*/}
 const target = process.env.TEST_TARGET || 'portal';
 const baseUrls: Record<string, string> = {
 	'cross-service': process.env.MANAGE_BASE_URL || 'http://localhost:8090',
+	'full-journey': process.env.MANAGE_BASE_URL || 'http://localhost:8090',
 	manage: process.env.MANAGE_BASE_URL || 'http://localhost:8090',
 	portal: process.env.PORTAL_BASE_URL || 'http://localhost:8080'
 };
 const specPatterns: Record<string, string> = {
 	'cross-service': 'cypress/e2e/cross-service/**/*',
+	'full-journey': 'cypress/e2e/full-journey/**/*',
 	manage: 'cypress/e2e/manage/**/*',
 	portal: 'cypress/e2e/portal/**/*'
 };
