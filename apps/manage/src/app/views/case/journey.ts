@@ -437,13 +437,15 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 		sections: [
 			new Section('Examination', 'examination')
 				.addQuestion(questions.expectedSubmissionForExaminationDate)
-				.addQuestion(questions.submissionForExaminationDate),
+				.addQuestion(questions.submissionForExaminationDate)
+				.addQuestion(questions.programmeOfficerDetailsExam)
+				.addQuestion(questions.examinationWebsite)
+				.addQuestion(questions.examinationDocumentsCheck),
 			new Section('Inspectors', 'inspectors')
 				.addQuestion(questions.examiningInspector1)
 				.addQuestion(questions.examiningInspector2)
 				.addQuestion(questions.examiningInspector3)
 				.addQuestion(questions.examiningInspectorAppointmentDate),
-			new Section('Examination website', 'examination-website').addQuestion(questions.examinationWebsite),
 			new Section('Hearings', 'hearings').addQuestion(questions.miqs),
 			new Section('Letters', 'letters')
 				.addQuestion(questions.letterSentToMHCLGDate)
@@ -773,6 +775,7 @@ const gateway3QuestionNames = new Set<string>([
 const examinationQuestionNames = new Set<string>([
 	'expectedSubmissionForExaminationDate',
 	'submissionForExaminationDate',
+	'programmeOfficerDetailsExam',
 	...EXAMINING_INSPECTOR_FIELDS,
 	'examiningInspectorAppointmentDate',
 	'letterSentToMHCLGDate',

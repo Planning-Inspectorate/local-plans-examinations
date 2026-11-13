@@ -142,8 +142,12 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				writeResponse = await new Gateway3SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
+
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				if (writeResponse.writtenToDB && req.params.question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
+					pushAlertToSession(req, 'success', 'Changes saved');
+				}
 				break;
 			}
 			case COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID: {

@@ -16,7 +16,8 @@ import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-vi
 import {
 	clearExaminationReportFiles,
 	seedExaminationReport,
-	seedExaminationReportIssuedDocuments
+	seedExaminationReportIssuedDocuments,
+	seedExaminationSubmissionDocuments
 } from './cypress/tasks/examination.ts';
 import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
 import { seedGateway3SubmissionDocuments } from './cypress/tasks/gateway-3.ts';
@@ -109,6 +110,7 @@ export default defineConfig({
 				seedDb: seedCy,
 				seedExaminationReport,
 				seedExaminationReportIssuedDocuments,
+				seedExaminationSubmissionDocuments,
 				clearExaminationReportFiles,
 				setDocumentVirusCheckStatus,
 				seedGateway2SubmittedDocuments,

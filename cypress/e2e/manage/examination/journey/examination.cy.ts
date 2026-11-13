@@ -1,5 +1,6 @@
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import {
+	openSeededExaminationDocuments,
 	openSeededExaminationPage,
 	pauseExamination,
 	restartExamination
@@ -10,6 +11,7 @@ import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	actualSubmissionDate,
 	examiningInspector1,
+	examinationDocuments,
 	examinationWebsite,
 	examinationPause,
 	factCheckActualDate,
@@ -19,6 +21,7 @@ import {
 	finalReportIssueDate,
 	hearingDateAndTime,
 	letterSentToMHCLGDate,
+	programmeOfficer,
 	QADateAnswers,
 	QAInspectorsAnswers,
 	soundUnsoundDate,
@@ -30,8 +33,10 @@ import {
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
+	examinationDocumentsPage,
 	examinationPage,
 	examinationPausePages,
+	examinationProgrammeOfficerPage,
 	examiningInspector1Page,
 	examinationWebsitePage,
 	factCheckActualDatePage,
@@ -139,6 +144,55 @@ describe('Examination updates', () => {
 		examinationPage.verifyLoaded(seededCase.planTitle);
 		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
 	});
+
+	it('saves the Programme officer details and shows them on the Examination tab', { tags: ['regression'] }, () => {
+		const { updated } = programmeOfficer;
+		examinationPage.openActionLinkFor(programmeOfficer.row);
+
+		examinationProgrammeOfficerPage.verifyLoaded(
+			programmeOfficer.firstName,
+			programmeOfficer.lastName,
+			programmeOfficer.email
+		);
+		examinationProgrammeOfficerPage.enterProgrammeOfficerDetails(
+			updated.firstName,
+			updated.lastName,
+			updated.email,
+			updated.phone
+		);
+
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.verifyNotificationBanner(programmeOfficer.savedMessage);
+		examinationPage.verifySummaryRowContains(programmeOfficer.row, updated.firstName, updated.lastName, updated.email);
+		// The phone number is saved but not shown in the row
+		examinationPage.summaryRowValue(programmeOfficer.row).should('not.contain.text', updated.phone);
+		examinationPage.summaryRowActionLink(programmeOfficer.row).should('contain.text', 'Change');
+
+		examinationPage.openActionLinkFor(programmeOfficer.row);
+		examinationProgrammeOfficerPage.verifyLoaded(updated.firstName, updated.lastName, updated.email, updated.phone);
+	});
+
+	it(
+		'returns to Examination from the Programme officer page back link without saving',
+		{ tags: ['regression'] },
+		() => {
+			examinationPage.openActionLinkFor(programmeOfficer.row);
+			examinationProgrammeOfficerPage.verifyLoaded(
+				programmeOfficer.firstName,
+				programmeOfficer.lastName,
+				programmeOfficer.email
+			);
+			examinationProgrammeOfficerPage.programmeOfficerFirstNameInput.clearAndWrite(programmeOfficer.updated.firstName);
+			examinationProgrammeOfficerPage.goBack();
+
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifyNotificationBannerAbsent(programmeOfficer.savedMessage);
+			examinationPage.verifySummaryRowContains(programmeOfficer.row, programmeOfficer.firstName);
+			examinationPage
+				.summaryRowValue(programmeOfficer.row)
+				.should('not.contain.text', programmeOfficer.updated.firstName);
+		}
+	);
 
 	it('updates the Examination website and records case history', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examinationWebsite.row);
@@ -261,6 +315,22 @@ describe('Examination updates', () => {
 		examinationPage.verifySummaryRowContains(MIQcheckPage.row, MIQcheckPage.file1, MIQcheckPage.file2);
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(`MIQs notification sent on ${todayDisplay}`);
+	});
+});
+
+describe('Examination documents', () => {
+	beforeEach(() => cy.task('clearDb'));
+	after(() => cy.task('clearDb'));
+
+	it('returns to Examination from the Examination documents page back link', { tags: ['regression'] }, () => {
+		openSeededExaminationDocuments();
+		examinationPage.openActionLinkFor(examinationDocuments.row);
+
+		examinationDocumentsPage.verifyLoaded();
+		examinationDocumentsPage.goBack();
+
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.verifySummaryRowContains(examinationDocuments.row, '3 document(s)');
 	});
 });
 

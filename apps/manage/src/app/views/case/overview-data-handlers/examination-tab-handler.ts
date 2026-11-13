@@ -6,6 +6,52 @@ import { sortByDateColumn } from '#util/util.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
+import {
+	EXAMINATION_OTHER_DOCUMENT_SETS,
+	EXAMINATION_REQUIRED_DOCUMENT_SETS
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+
+export type ExaminationDocumentFile = {
+	guid: string;
+	fileName: string;
+};
+
+/**
+ * Loads the documents the LPA uploaded in the examination submission (front office)
+ * and groups them by the field they were uploaded against, so they can be listed and downloaded.
+ */
+export const compileExaminationDocumentFiles = async (
+	db: PrismaClient,
+	caseId: string
+): Promise<Record<string, ExaminationDocumentFile[]>> => {
+	const fieldBySetId = new Map(
+		Object.entries({ ...EXAMINATION_REQUIRED_DOCUMENT_SETS, ...EXAMINATION_OTHER_DOCUMENT_SETS }).map(
+			([field, setId]) => [setId, field]
+		)
+	);
+	const documents = await db.document.findMany({
+		where: {
+			caseId,
+			isDeleted: false,
+			isTemp: false,
+			documentSetId: { in: [...fieldBySetId.keys()] }
+		},
+		include: { latestDocumentVersion: true },
+		orderBy: { createdAt: 'asc' }
+	});
+
+	const documentFiles: Record<string, ExaminationDocumentFile[]> = {};
+	for (const document of documents) {
+		const field = fieldBySetId.get(document.documentSetId);
+		if (!field) continue;
+		(documentFiles[field] ??= []).push({
+			guid: document.guid,
+			fileName: document.latestDocumentVersion?.originalFilename ?? document.name
+		});
+	}
+	return documentFiles;
+};
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -15,6 +61,15 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 		const journey4Data = await db.examinationInfo.findUnique({
 			where: { caseId: caseRecord.id },
 			include: { planPauseHistory: true, hearings: true }
+		});
+		const programmeOfficer = await db.gateway3Info.findUnique({
+			where: { caseId: caseRecord.id },
+			select: {
+				programmeOfficerFirstName: true,
+				programmeOfficerLastName: true,
+				programmeOfficerEmail: true,
+				programmeOfficerPhone: true
+			}
 		});
 		if (!journey4Data) {
 			throw Error(`Could not fetch exam data for case '${caseRecord.id}'`);
@@ -29,6 +84,8 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			COMMON_CONSTS.EXAMINATION_JOURNEY_ID
 		);
 		const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+		Object.assign(journeyResponse.answers, programmeOfficer ?? {});
+		journeyResponse.answers.examinationDocumentFiles = await compileExaminationDocumentFiles(db, caseRecord.id);
 		journeyResponse.answers.isSound = isSound;
 		const sortedPauseData = sortByDateColumn(
 			journey4Data?.planPauseHistory ? journey4Data?.planPauseHistory : [],

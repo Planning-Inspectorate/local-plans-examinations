@@ -8,6 +8,7 @@ import {
 import CustomFileReviewerQuestion from './custom-file-reviewer/question.ts';
 import CustomNoteQuestion from './custom-note-input/question.ts';
 import CustomDocumentsQuestion from './custom-documents-viewer/question.ts';
+import CustomExaminationDocumentsQuestion from './custom-examination-documents-viewer/question.ts';
 import CustomFileManagerQuestion from './custom-file-manager/question.ts';
 import CustomWorkshopDatesQuestion from './custom-workshop-dates/question.ts';
 
@@ -24,6 +25,7 @@ export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_MANAGE_LIST: 'custom-manage-list',
 	CUSTOM_FILE_REVIEWER: 'custom-file-reviewer',
 	CUSTOM_DOCUMENTS_VIEW: 'custom-documents-viewer',
+	CUSTOM_EXAMINATION_DOCUMENTS_VIEW: 'custom-examination-documents-viewer',
 	CUSTOM_NOTE_INPUT: 'custom-note-input',
 	CUSTOM_FILE_MANAGER: 'custom-file-manager',
 	CUSTOM_WORKSHOP_DATES: 'custom-workshop-dates',
@@ -40,5 +42,6 @@ export const CUSTOM_COMPONENT_CLASSES = freeze({
 	[CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES]: CustomWorkshopDatesQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES]: CustomHearingDatesQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW]: CustomDocumentsQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_EXAMINATION_DOCUMENTS_VIEW]: CustomExaminationDocumentsQuestion,
 	...CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES
 });

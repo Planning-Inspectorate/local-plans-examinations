@@ -16,9 +16,8 @@
 
                 {% call govukFieldset({
                     legend: {
-                        text: question.question,
-                        classes: "govuk-fieldset__legend--l",
-                        isPageHeading: true
+                        html: '<h1 class="govuk-fieldset__heading">' ~ (question.question | trim | escape) ~ '</h1>',
+                        classes: "govuk-fieldset__legend--l"
                     },
                     describedBy: question.hint and "multi-field-hint"
                 }) %}
