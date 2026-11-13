@@ -1,6 +1,7 @@
 import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flow.ts';
 import { caseOverviewPage, caseOverviewPlanTypePage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
+import { planType } from '../../../../fixtures/manage/overview.ts';
 import {
 	caseCreatedPage,
 	checkYourAnswersPage,
@@ -58,15 +59,15 @@ describe('Case history', () => {
 
 		openSeededManageCase();
 
-		caseOverviewPage.openActionLinkFor('Plan type');
+		caseOverviewPage.openActionLinkFor(planType.row);
 		caseOverviewPlanTypePage.verifyLoaded();
 		caseOverviewPlanTypePage.selectPlanType(planTypeSelectionValue);
-		caseOverviewPage.verifySummaryRowContains('Plan type', planTypeSelectionName);
+		caseOverviewPage.verifySummaryRowContains(planType.row, planTypeSelectionName);
 
 		openCaseHistory();
 
 		caseHistoryPage.verifyHistoryEvent(
-			`Plan type updated from ${originalPlanTypeName} to ${planTypeSelectionValue}`,
+			`Type updated from ${originalPlanTypeName} to ${planTypeSelectionValue}`,
 			expectedHistoryUser()
 		);
 	});

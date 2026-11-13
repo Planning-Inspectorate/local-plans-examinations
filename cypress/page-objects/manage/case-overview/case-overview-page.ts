@@ -2,6 +2,9 @@ import {
 	localPlanningAuthority,
 	overviewExpectedAnswers,
 	overviewSummaryRows,
+	planBand,
+	planTitle,
+	planType,
 	programmeOfficer,
 	seededCaseNotes
 } from '../../../fixtures/manage/overview.ts';
@@ -18,11 +21,11 @@ const serviceNavigationItems = [
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
-	['Plan title', /^\/case\/.+\/overview\/case-details\/plan-title$/],
-	['Plan type', /^\/case\/.+\/overview\/case-details\/plan-type$/],
-	['Planning authorities', /^\/case\/.+\/overview\/case-details\/check-lpas$/],
+	[planTitle.row, /^\/case\/.+\/overview\/case-details\/plan-title$/],
+	[planType.row, /^\/case\/.+\/overview\/case-details\/plan-type$/],
+	[localPlanningAuthority.row, /^\/case\/.+\/overview\/case-details\/check-lpas$/],
 	['Case officer', /^\/case\/.+\/overview\/case-details\/case-officer$/],
-	['Plan band', /^\/case\/.+\/overview\/case-details\/plan-band$/],
+	[planBand.row, /^\/case\/.+\/overview\/case-details\/plan-band$/],
 	['Contact details', /^\/case\/.+\/overview\/contacts\/check-contact-details$/],
 	['Programme officer', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
 	['Examination website', /^\/case\/.+\/overview\/contacts\/examination-website$/],
