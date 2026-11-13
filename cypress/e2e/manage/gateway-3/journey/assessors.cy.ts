@@ -24,6 +24,15 @@ const openCaseHistory = () => {
 	caseHistoryPage.verifyLoaded();
 };
 
+const addGateway3Assessor = (assessorName: string) => {
+	gateway3Page.openAddAssessor();
+	gateway3AssessorPage.verifyLoaded();
+	gateway3AssessorPage.enterAssessorName(assessorName);
+	gateway3AssessorConfirmPage.verifyLoaded(assessorName, todayDisplay);
+	gateway3AssessorConfirmPage.confirmAndSend();
+	gateway3Page.verifyLoaded(seededCase.planTitle);
+};
+
 // The seeded case starts with "Assessor 1" appointed as the Gateway 3 assessor
 describe('Gateway 3 assessors', () => {
 	beforeEach(() => {
@@ -88,6 +97,54 @@ describe('Gateway 3 assessors', () => {
 
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor2} added`);
+	});
+
+	it('adds more assessors, each in their own rows, and removes them one at a time', { tags: ['regression'] }, () => {
+		// the Add assessor link stays available while the gateway already has an assessor
+		gateway3Page.verifyAddAssessorLink(gateway3AssessorQuestionPath);
+		addGateway3Assessor(gateway3AssessorAnswer.assessor2);
+
+		gateway3Page.verifyNotificationBanner('Assessor added');
+		gateway3Page.verifyAssessorCount(2);
+		gateway3Page.verifyAssessor(
+			1,
+			gateway3AssessorAnswer.display,
+			gateway3AssessorAnswer.appointedDisplay,
+			gateway3AssessorRemovePath
+		);
+		gateway3Page.verifyAssessor(2, gateway3AssessorAnswer.assessor2, todayDisplay, gateway3AssessorRemovePath);
+
+		addGateway3Assessor(gateway3AssessorAnswer.assessor3);
+
+		gateway3Page.verifyAssessorCount(3);
+		gateway3Page.verifyAssessor(1, gateway3AssessorAnswer.display, gateway3AssessorAnswer.appointedDisplay);
+		gateway3Page.verifyAssessor(2, gateway3AssessorAnswer.assessor2, todayDisplay);
+		gateway3Page.verifyAssessor(3, gateway3AssessorAnswer.assessor3, todayDisplay);
+
+		// removing an assessor in the middle leaves the others in place
+		gateway3Page.openRemoveAssessor(2);
+		gateway3RemoveAssessorPage.verifyContent(gateway3AssessorAnswer.assessor2);
+		gateway3RemoveAssessorPage.confirmRemoval();
+
+		gateway3Page.verifyLoaded(seededCase.planTitle);
+		gateway3Page.verifyAssessorCount(2);
+		gateway3Page.verifyAssessor(1, gateway3AssessorAnswer.display, gateway3AssessorAnswer.appointedDisplay);
+		gateway3Page.verifyAssessor(2, gateway3AssessorAnswer.assessor3, todayDisplay);
+
+		// removing the first assessor moves the remaining assessor up to "Assessor 1"
+		gateway3Page.openRemoveAssessor(1);
+		gateway3RemoveAssessorPage.verifyContent(gateway3AssessorAnswer.display);
+		gateway3RemoveAssessorPage.confirmRemoval();
+
+		gateway3Page.verifyLoaded(seededCase.planTitle);
+		gateway3Page.verifyAssessorCount(1);
+		gateway3Page.verifyAssessor(1, gateway3AssessorAnswer.assessor3, todayDisplay);
+
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor2} added`);
+		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor3} added`);
+		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor2} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.display} removed`);
 	});
 
 	it('changes the chosen assessor from the confirm page before sending', { tags: ['regression'] }, () => {

@@ -164,18 +164,32 @@ model Gateway1Info {
 
 /// Gateway 2 stage dates, assessor details and report/workshop tracking for a case.
 model Gateway2Info {
-  id                            String             @id @default(uuid()) @db.UniqueIdentifier
-  case                          Case               @relation(fields: [caseId], references: [id])
-  caseId                        String             @unique @db.UniqueIdentifier
-  expectedDate                  DateTime?          @db.DateTime2
-  actualDate                    DateTime?          @db.DateTime2
-  assessorName                  String?
-  assessorAppointmentDate       DateTime?          @db.DateTime2
-  reportIssuedDate              DateTime?          @db.DateTime2
-  reportPublishedByLPA          DateTime?          @db.DateTime2
-  workshopDocumentUploadedDate  DateTime?
-  digitalSupportingMaterialLink String?            @db.NVarChar(1000)
-  workshops                     Gateway2Workshop[]
+  id                           String             @id @default(uuid()) @db.UniqueIdentifier
+  case                         Case               @relation(fields: [caseId], references: [id])
+  caseId                       String             @unique @db.UniqueIdentifier
+  expectedDate                 DateTime?          @db.DateTime2
+  actualDate                   DateTime?          @db.DateTime2
+  assessorName                 String?
+  assessorAppointmentDate      DateTime?          @db.DateTime2
+  reportIssuedDate             DateTime?          @db.DateTime2
+  reportPublishedByLPA         DateTime?          @db.DateTime2
+  workshopDocumentUploadedDate DateTime?
+  workshops                    Gateway2Workshop[]
+  additionalAssessors          Gateway2Assessor[]
+}
+
+/// Gateway 2 assessors appointed after the first one.
+/// The first assessor of a case is stored on Gateway2Info (assessorName, assessorAppointmentDate).
+model Gateway2Assessor {
+  id                      String       @id @default(uuid()) @db.UniqueIdentifier
+  gateway2Info            Gateway2Info @relation(fields: [gateway2InfoId], references: [id], onDelete: Cascade)
+  gateway2InfoId          String       @db.UniqueIdentifier
+  /// Value of the selected assessor option (the Entra user id when auth is enabled).
+  assessorName            String
+  assessorAppointmentDate DateTime     @db.DateTime2
+  createdDate             DateTime     @default(now())
+
+  @@index([gateway2InfoId])
 }
 
 model Gateway2Workshop {
@@ -214,9 +228,24 @@ model Gateway3Info {
   assessorName              String?
   assessorAppointmentDate   DateTime?                 @db.DateTime2
   submissions               Gateway3Submission[]
+  additionalAssessors       Gateway3Assessor[]
   frontOfficeStatusLookup   Gateway3FrontOfficeStatus @relation(fields: [frontOfficeStatus], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([frontOfficeStatus])
+}
+
+/// Gateway 3 assessors appointed after the first one.
+/// The first assessor of a case is stored on Gateway3Info (assessorName, assessorAppointmentDate).
+model Gateway3Assessor {
+  id                      String       @id @default(uuid()) @db.UniqueIdentifier
+  gateway3Info            Gateway3Info @relation(fields: [gateway3InfoId], references: [id], onDelete: Cascade)
+  gateway3InfoId          String       @db.UniqueIdentifier
+  /// Value of the selected assessor option (the Entra user id when auth is enabled).
+  assessorName            String
+  assessorAppointmentDate DateTime     @db.DateTime2
+  createdDate             DateTime     @default(now())
+
+  @@index([gateway3InfoId])
 }
 
 model Gateway3Submission {

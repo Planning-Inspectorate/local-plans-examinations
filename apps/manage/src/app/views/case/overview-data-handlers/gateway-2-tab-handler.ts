@@ -81,7 +81,8 @@ export class Gateway2TabHandler extends OverviewPageLoadHandler {
 				caseId: caseRecord.id
 			},
 			include: {
-				workshops: true
+				workshops: true,
+				additionalAssessors: true
 			}
 		});
 

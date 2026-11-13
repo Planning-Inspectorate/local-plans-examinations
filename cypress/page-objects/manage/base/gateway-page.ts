@@ -63,7 +63,12 @@ export class GatewayBasePage extends BasePage {
 		if (removeHref) {
 			this.removeAssessorLink(assessorNumber).should('have.attr', 'href').and('match', removeHref);
 		}
-		this.addAssessorLink.should('not.exist');
+		// more assessors can be added while the gateway already has assessors
+		this.addAssessorLink.should('be.visible');
+	}
+
+	verifyAssessorCount(count: number) {
+		this.assessorsSection.find('[data-cy^="remove-assessor-"]').should('have.length', count);
 	}
 
 	verifyNoAssessor() {

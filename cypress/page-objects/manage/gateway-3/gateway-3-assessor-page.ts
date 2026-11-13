@@ -5,7 +5,8 @@ export const gateway3TabPath = /^\/case\/.+\/gateway-3$/;
 export const gateway3AssessorQuestionPath = new RegExp(
 	`^/case/.+/gateway-3/assessor/assessors/${gateway3AssessorAnswer.path}$`
 );
-export const gateway3AssessorRemovePath = /^\/case\/.+\/gateway-3\/assessor\/remove$/;
+// each assessor has its own remove page: /remove/first for the first assessor, /remove/<id> for the others
+export const gateway3AssessorRemovePath = /^\/case\/.+\/gateway-3\/assessor\/remove\/[^/]+$/;
 
 export class Gateway3AssessorPage extends SmartLookupPage {
 	constructor() {

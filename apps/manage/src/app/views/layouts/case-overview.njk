@@ -185,11 +185,10 @@
                                 attributes: { 'data-cy': 'assessors-list' }
                             })
                           }}
-                        {% else %}
-                          <p class="govuk-body">
-                            <a href="{{ assessorLink }}" class="govuk-link" data-cy="add-assessor">Add assessor</a>
-                          </p>
                         {% endif %}
+                        <p class="govuk-body">
+                          <a href="{{ assessorLink }}" class="govuk-link" data-cy="add-assessor">Add assessor</a>
+                        </p>
                       </section>
                     {% endif %}
                   {% endif %}

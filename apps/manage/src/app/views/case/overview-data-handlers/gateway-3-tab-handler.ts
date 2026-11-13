@@ -215,7 +215,8 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 
 		const journey3Data = await db.gateway3Info.findUnique({
 			include: {
-				submissions: true
+				submissions: true,
+				additionalAssessors: true
 			},
 			where: { caseId: caseRecord.id }
 		});

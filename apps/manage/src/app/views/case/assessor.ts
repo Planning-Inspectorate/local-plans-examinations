@@ -24,18 +24,16 @@ import {
 } from '../../notify/notify-helper.ts';
 import {
 	ASSESSOR_SECTION,
-	type AssessorDetails,
 	type AssessorGateway,
-	type AssessorSaveDetails,
+	addGatewayAssessor,
 	clearAssessorDraft,
 	escapeHtml,
 	getAssessorDraft,
+	getAssessorRemoveUrl,
 	getAssessorUrls,
-	getGateway2Assessor,
-	getGateway3Assessor,
+	getGatewayAssessors,
+	removeGatewayAssessor,
 	resolveAssessorDisplayName,
-	saveGateway2Assessor,
-	saveGateway3Assessor,
 	setAssessorDraft
 } from './assessor-helper.ts';
 
@@ -43,24 +41,18 @@ interface AssessorJourneyConfig {
 	journeyId: string;
 	createJourney: (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 	sendAppointedEmail: (service: ManageService, req: Request, reference: string, assessorName: string) => Promise<void>;
-	getAssessor: (db: ManageService['db'], caseId: string) => Promise<AssessorDetails | null>;
-	saveAssessor: (db: ManageService['db'], caseId: string, details: AssessorSaveDetails) => Promise<unknown>;
 }
 
 const ASSESSOR_JOURNEYS: Record<AssessorGateway, AssessorJourneyConfig> = {
 	'gateway-2': {
 		journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
 		createJourney: createGateway2AssessorJourney,
-		sendAppointedEmail: sendGw2AssessorAppointedNotifyEmail,
-		getAssessor: getGateway2Assessor,
-		saveAssessor: saveGateway2Assessor
+		sendAppointedEmail: sendGw2AssessorAppointedNotifyEmail
 	},
 	'gateway-3': {
 		journeyId: COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID,
 		createJourney: createGateway3AssessorJourney,
-		sendAppointedEmail: sendGw3AssessorAppointedNotifyEmail,
-		getAssessor: getGateway3Assessor,
-		saveAssessor: saveGateway3Assessor
+		sendAppointedEmail: sendGw3AssessorAppointedNotifyEmail
 	}
 };
 
@@ -74,7 +66,7 @@ function getCurrentUser(req: Request): string {
 }
 
 export function registerAssessorJourney(router: IRouter, service: ManageService, gateway: AssessorGateway): void {
-	const { journeyId, createJourney, sendAppointedEmail, getAssessor, saveAssessor } = ASSESSOR_JOURNEYS[gateway];
+	const { journeyId, createJourney, sendAppointedEmail } = ASSESSOR_JOURNEYS[gateway];
 	const basePath = `/${gateway}/assessor`;
 
 	const loadCase = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -146,7 +138,11 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		const caseRecord = res.locals.assessorCase as AssessorCase;
 		const assessorDisplayName = await resolveAssessorDisplayName(service, req, gateway, draft);
 
-		await saveAssessor(service.db, caseRecord.id, { assessorName: draft, assessorAppointmentDate: new Date() });
+		// the assessor is added alongside any assessors the gateway already has
+		await addGatewayAssessor(service.db, caseRecord.id, gateway, {
+			assessorName: draft,
+			assessorAppointmentDate: new Date()
+		});
 		clearAssessorDraft(req, reference, gateway);
 
 		await updateCaseHistory(service, req, service.db, { assessorName: null }, {}, reference, getCurrentUser(req), {
@@ -164,20 +160,27 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		res.redirect(urls.tabUrl);
 	});
 
+	const findAssessor = async (req: Request, res: Response) => {
+		const caseRecord = res.locals.assessorCase as AssessorCase;
+		const assessorKey = getParam(req.params.assessorKey);
+		const assessors = await getGatewayAssessors(service.db, caseRecord.id, gateway);
+		return assessors.find((assessor) => assessor.key === assessorKey);
+	};
+
 	const getRemove = asyncHandler(async (req: Request, res: Response) => {
 		const reference = getParam(req.params.reference);
 		const urls = getAssessorUrls(reference, gateway);
-		const caseRecord = res.locals.assessorCase as AssessorCase;
-		const current = await getAssessor(service.db, caseRecord.id);
-		if (!current?.assessorName) {
+		const assessor = await findAssessor(req, res);
+		if (!assessor) {
 			return res.redirect(urls.tabUrl);
 		}
 		res.render(REMOVE_TEMPLATE, {
 			reference,
-			assessorName: await resolveAssessorDisplayName(service, req, gateway, current.assessorName),
+			assessorName: await resolveAssessorDisplayName(service, req, gateway, assessor.assessorName),
+			assessorValue: assessor.assessorName,
 			backLink: urls.tabUrl,
 			cancelLink: urls.tabUrl,
-			formAction: urls.removeUrl
+			formAction: getAssessorRemoveUrl(reference, gateway, assessor.key)
 		});
 	});
 
@@ -185,14 +188,18 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		const reference = getParam(req.params.reference);
 		const urls = getAssessorUrls(reference, gateway);
 		const caseRecord = res.locals.assessorCase as AssessorCase;
-		const current = await getAssessor(service.db, caseRecord.id);
-		if (!current?.assessorName) {
+		const assessor = await findAssessor(req, res);
+		// When the first assessor is removed the next assessor takes its place (and its key), so only remove
+		// the assessor if it is still the one the user was asked to confirm
+		if (!assessor || String(req.body?.assessor ?? '') !== assessor.assessorName) {
 			return res.redirect(urls.tabUrl);
 		}
-		const assessorDisplayName = await resolveAssessorDisplayName(service, req, gateway, current.assessorName);
+		const assessorDisplayName = await resolveAssessorDisplayName(service, req, gateway, assessor.assessorName);
 
-		await saveAssessor(service.db, caseRecord.id, { assessorName: null, assessorAppointmentDate: null });
-		clearAssessorDraft(req, reference, gateway);
+		const removed = await removeGatewayAssessor(service.db, caseRecord.id, gateway, assessor.key);
+		if (!removed) {
+			return res.redirect(urls.tabUrl);
+		}
 
 		await updateCaseHistory(service, req, service.db, { assessorName: null }, {}, reference, getCurrentUser(req), {
 			assessorName: `Assessor ${assessorDisplayName} removed`
@@ -204,8 +211,8 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 	router.get(`${basePath}/check`, loadCase, resolveQuestions, getConfirm);
 	router.post(`${basePath}/check`, loadCase, resolveQuestions, postConfirm);
 
-	router.get(`${basePath}/remove`, loadCase, resolveQuestions, getRemove);
-	router.post(`${basePath}/remove`, loadCase, resolveQuestions, postRemove);
+	router.get(`${basePath}/remove/:assessorKey`, loadCase, resolveQuestions, getRemove);
+	router.post(`${basePath}/remove/:assessorKey`, loadCase, resolveQuestions, postRemove);
 
 	router.get(`${basePath}/:section/:question`, loadCase, resolveQuestions, getJourneyResponse, getJourney, question);
 	router.post(

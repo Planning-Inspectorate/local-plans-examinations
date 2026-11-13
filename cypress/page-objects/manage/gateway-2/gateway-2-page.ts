@@ -21,7 +21,7 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 		new RegExp(`^/case/.+/gateway-2/${section}/${path}$`)
 	]),
 	// the assessor row only has a Remove link
-	[gateway2AssessorAnswer.row, /^\/case\/.+\/gateway-2\/assessor\/remove$/],
+	[gateway2AssessorAnswer.row, /^\/case\/.+\/gateway-2\/assessor\/remove\/[^/]+$/],
 	[gateway2Report.row, new RegExp(`^/case/.+/gateway-2/report/${gateway2Report.path}$`)]
 ];
 
