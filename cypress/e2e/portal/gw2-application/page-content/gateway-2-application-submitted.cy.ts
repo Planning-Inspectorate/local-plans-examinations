@@ -47,6 +47,7 @@ describe('Gateway 2 application page content after submission and GW2 report iss
 				'Gateway 2 report',
 				/\/gateway-2-submission\/download-document\/.+/
 			);
+			gateway2ApplicationPage.verifyStatusTag(plan.completed);
 		});
 	});
 });
