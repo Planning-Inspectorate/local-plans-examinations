@@ -1,5 +1,6 @@
-import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
-import { gateway2DateAnswers, gateway2AssessorAnswer, gateway2Report } from '../../../../fixtures/manage/gateway-2.ts';
+import { openSeededGateway2Page, removeGateway2Assessor } from '../../../../flows/manage/gateway-2-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
+import { gateway2DateAnswers, gateway2Report } from '../../../../fixtures/manage/gateway-2.ts';
 import {
 	gateway2Page,
 	gateway2ActualDatePage,
@@ -27,10 +28,10 @@ describe('Gateway 2 validation', () => {
 	});
 
 	it('shows an error when Gateway 2 assessor name is blank', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
+		removeGateway2Assessor(seededCase.planTitle);
+		gateway2Page.openAddAssessor();
 		gateway2AssessorPage.verifyLoaded();
-		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
-		gateway2AssessorPage.clearAssessorNameField();
+		gateway2AssessorPage.assessorNamePopulated('');
 		gateway2AssessorPage.saveAndContinue();
 
 		gateway2AssessorPage.verifyLoaded();

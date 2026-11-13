@@ -25,6 +25,7 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 						//{ qaInspector2: caseOfficer },
 						//{ qaInspector3: caseOfficerText },
 						{ gateway2Info: { assessorName: caseOfficer } },
+						{ gateway2Info: { additionalAssessors: { some: { assessorName: caseOfficer } } } },
 						//{gateway3Info: 							****to be implemented****
 						//	{assessorName: caseOfficer}			****to be implemented****
 						//},

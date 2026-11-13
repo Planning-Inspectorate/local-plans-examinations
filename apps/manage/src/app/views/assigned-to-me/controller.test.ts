@@ -113,6 +113,7 @@ describe('buildAssignedToMe', () => {
 					//{ qaInspector2: 'officer-1' },
 					//{ qaInspector3: 'officer-1' },
 					{ gateway2Info: { assessorName: 'officer-1' } },
+					{ gateway2Info: { additionalAssessors: { some: { assessorName: 'officer-1' } } } },
 					//{gateway3Info:
 					//	{assessorName: 'officer-1'}
 					//},

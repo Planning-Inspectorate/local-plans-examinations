@@ -125,8 +125,11 @@
                       {% endif %}
                     {% endif %}
                   {% endfor %}
+
                   <h2 class="govuk-heading-l">{{ section.heading }}</h2>
+
                   {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
+
                   {% if section.heading == 'Workshop'%}
                     {% if section.list.rows.length %}
                       {{ govukSummaryList({
@@ -134,6 +137,7 @@
                         })
                       }}
                     {% endif %}
+
                     {{ workshopDetails(journeyResponse.answers, reference) }}
                     <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
                     <p></p>
@@ -152,6 +156,40 @@
                             rows: formattedRows
                         })
                       }}
+                    {% endif %}
+                    {% if assessorLink and (section.heading == 'Gateway 2' or section.heading == 'Gateway 3') %}
+                      <section data-cy="assessors-section">
+                        <h2 class="govuk-heading-l govuk-!-margin-bottom-5">Assessors</h2>
+                        {% if assessors and assessors.length %}
+                          {% set assessorRows = [] %}
+                          {% for assessor in assessors %}
+                            {% set _ = assessorRows.push({
+                              key: { text: 'Assessor ' + assessor.number },
+                              value: { text: assessor.name },
+                              actions: {
+                                items: [{
+                                  href: assessor.removeLink,
+                                  text: 'Remove',
+                                  visuallyHiddenText: 'assessor ' + assessor.number,
+                                  attributes: { 'data-cy': 'remove-assessor-' + assessor.number }
+                                }]
+                              }
+                            }) %}
+                            {% set _ = assessorRows.push({
+                              key: { text: 'Assessor ' + assessor.number + ' appointed' },
+                              value: { text: assessor.appointedDate }
+                            }) %}
+                          {% endfor %}
+                          {{ govukSummaryList({
+                                rows: assessorRows,
+                                attributes: { 'data-cy': 'assessors-list' }
+                            })
+                          }}
+                        {% endif %}
+                        <p class="govuk-body">
+                          <a href="{{ assessorLink }}" class="govuk-link" data-cy="add-assessor">Add assessor</a>
+                        </p>
+                      </section>
                     {% endif %}
                   {% endif %}
               {% endfor %}

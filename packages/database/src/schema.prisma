@@ -176,6 +176,18 @@ model Gateway2Info {
   workshopDocumentUploadedDate  DateTime?
   digitalSupportingMaterialLink String?            @db.NVarChar(1000)
   workshops                     Gateway2Workshop[]
+  additionalAssessors           Gateway2Assessor[]
+}
+
+model Gateway2Assessor {
+  id                      String       @id @default(uuid()) @db.UniqueIdentifier
+  gateway2Info            Gateway2Info @relation(fields: [gateway2InfoId], references: [id], onDelete: Cascade)
+  gateway2InfoId          String       @db.UniqueIdentifier
+  assessorName            String
+  assessorAppointmentDate DateTime     @db.DateTime2
+  createdDate             DateTime     @default(now())
+
+  @@index([gateway2InfoId])
 }
 
 model Gateway2Workshop {
@@ -214,9 +226,21 @@ model Gateway3Info {
   assessorName              String?
   assessorAppointmentDate   DateTime?                 @db.DateTime2
   submissions               Gateway3Submission[]
+  additionalAssessors       Gateway3Assessor[]
   frontOfficeStatusLookup   Gateway3FrontOfficeStatus @relation(fields: [frontOfficeStatus], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([frontOfficeStatus])
+}
+
+model Gateway3Assessor {
+  id                      String       @id @default(uuid()) @db.UniqueIdentifier
+  gateway3Info            Gateway3Info @relation(fields: [gateway3InfoId], references: [id], onDelete: Cascade)
+  gateway3InfoId          String       @db.UniqueIdentifier
+  assessorName            String
+  assessorAppointmentDate DateTime     @db.DateTime2
+  createdDate             DateTime     @default(now())
+
+  @@index([gateway3InfoId])
 }
 
 model Gateway3Submission {

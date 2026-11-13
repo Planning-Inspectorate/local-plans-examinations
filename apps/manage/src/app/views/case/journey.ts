@@ -204,7 +204,6 @@ export function createGateway3Journey(req: Request, response: JourneyResponse, q
 			new Section('Gateway 3', 'gateway-3')
 				.addQuestion(questions.gateway3ExpectedDate)
 				.addQuestion(questions.gateway3ActualDate)
-				.addQuestion(questions.gateway3AssessorsName)
 				.addQuestion(questions.gateway3AssessorDateOfAppointment)
 				.addQuestion(questions.programmeOfficerDetails)
 				.addQuestion(questions.examinationWebsite),
@@ -337,7 +336,6 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		.addQuestion(questions.gateway2ExpectedDate)
 		.addQuestion(questions.gateway2ActualDate)
 		.addQuestion(questions.gateway2Documents)
-		.addQuestion(questions.gateway2AssessorsName)
 		.addQuestion(questions.assessorDateOfAppointment);
 
 	createGw2DocumentQuestions(questions).forEach((question) => {
@@ -702,6 +700,62 @@ export function createDeleteCaseJourney(req: Request, response: JourneyResponse,
 	return journey;
 }
 
+type AssessorJourneyOptions = {
+	journeyId: string;
+	gatewayPath: string;
+	journeyTitle: string;
+	question: any;
+};
+
+/**
+ * The add assessor journey for a gateway tab. It only holds the "Who is the Gateway X assessor?" question:
+ * the answer is kept in the session and saved from the "Confirm and send notification" page (see assessor.ts).
+ */
+function createAssessorJourney(
+	req: Request,
+	response: JourneyResponse,
+	{ journeyId, gatewayPath, journeyTitle, question }: AssessorJourneyOptions
+) {
+	const gatewayUrl = `${req.baseUrl}/${gatewayPath}`;
+
+	const journey = new Journey({
+		journeyId,
+		sections: [new Section('Assessors', 'assessors').addQuestion(question)],
+		// after answering the question, go to the "Confirm and send notification" page
+		taskListUrl: 'check',
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		journeyTitle,
+		returnToListing: false,
+		makeBaseUrl: () => `${gatewayUrl}/assessor`,
+		initialBackLink: gatewayUrl,
+		response
+	});
+
+	if (req.session) {
+		req.session.currentJourney = journeyId;
+	}
+	return getBackLinksAndSetReference(journey, gatewayUrl, req.params.reference);
+}
+
+export function createGateway2AssessorJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	return createAssessorJourney(req, response, {
+		journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
+		gatewayPath: COMMON_CONSTS.GATEWAY_2_JOURNEY_ID,
+		journeyTitle: 'Gateway 2 assessors',
+		question: questions.gateway2AssessorsName
+	});
+}
+
+export function createGateway3AssessorJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	return createAssessorJourney(req, response, {
+		journeyId: COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID,
+		gatewayPath: COMMON_CONSTS.GATEWAY_3_JOURNEY_ID,
+		journeyTitle: 'Gateway 3 assessors',
+		question: questions.gateway3AssessorsName
+	});
+}
+
 const overviewQuestionNames = new Set<string>([
 	'planTitle',
 	'planType',
@@ -801,6 +855,8 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.OVERVIEW_JOURNEY_ID]: overviewQuestionNames,
 	[COMMON_CONSTS.GATEWAY_1_JOURNEY_ID]: gateway1QuestionNames,
 	[COMMON_CONSTS.GATEWAY_2_JOURNEY_ID]: gateway2QuestionNames,
+	[COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID]: gateway2QuestionNames,
+	[COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,

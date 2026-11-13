@@ -1,6 +1,7 @@
 import { gateway2Report } from '../../fixtures/manage/gateway-2.ts';
 import {
 	gateway2Page,
+	gateway2RemoveAssessorPage,
 	gateway2ReportCheckPage,
 	gateway2ReportPage,
 	WorkshopDateAndTimePage,
@@ -26,6 +27,17 @@ export const openSeededGateway2Page = (options?: SeedCyOptions) => {
 export const openGateway2Page = (reference: string, planTitle: string) => {
 	cy.visit(`/case/${encodeURIComponent(reference)}/gateway-2`);
 	gateway2Page.verifyLoaded(planTitle);
+};
+
+/**
+ * The seeded case already has a Gateway 2 assessor, so remove it to get back to the "Add assessor" link
+ */
+export const removeGateway2Assessor = (planTitle: string) => {
+	gateway2Page.openRemoveAssessor();
+	gateway2RemoveAssessorPage.confirmRemoval();
+
+	gateway2Page.verifyLoaded(planTitle);
+	gateway2Page.verifyNoAssessor();
 };
 
 export const issueGateway2Report = (planTitle: string) => {

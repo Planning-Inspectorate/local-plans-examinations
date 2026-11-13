@@ -1,6 +1,5 @@
 import {
 	gateway3Page,
-	gateway3AssessorPage,
 	gateway3ProgrammeOfficerPage,
 	gateway3ActualDatePage,
 	gateway3ExpectedDatePage,
@@ -20,7 +19,6 @@ import {
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway3AdditionalSubmissionDocuments,
-	gateway3AssessorAnswer,
 	gateway3DateAnswers,
 	gateway3DecisionAnswer,
 	gateway3ExaminationWebsite,
@@ -33,14 +31,6 @@ import {
 } from '../../../../fixtures/manage/gateway-3.ts';
 import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
-
-const today = new Date();
-const todayDisplay = today.toLocaleDateString('en-GB', {
-	day: 'numeric',
-	month: 'long',
-	year: 'numeric',
-	timeZone: 'GMT'
-});
 
 const openCaseHistory = () => {
 	gateway3Page.openServiceNavigationItem('Case History');
@@ -71,21 +61,6 @@ describe('Gateway 3 updates', () => {
 		openCaseHistory();
 		// Known gap: Gateway 3 fields aren't in caseHistoryLabels; asserting only the prefix since raw Date.toString() is timezone dependent
 		caseHistoryPage.verifyHistoryEvent('Expected updated from');
-	});
-
-	it('updates the Gateway 3 assessor name answer', { tags: ['regression'] }, () => {
-		gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
-
-		gateway3AssessorPage.verifyLoaded();
-		gateway3AssessorPage.assessorNamePopulated(gateway3AssessorAnswer.assessor1);
-		gateway3AssessorPage.enterAssessorName(gateway3AssessorAnswer.assessor2);
-
-		gateway3Page.verifyLoaded(seededCase.planTitle);
-		gateway3Page.verifySummaryRowContains(gateway3AssessorAnswer.row, gateway3AssessorAnswer.assessor2);
-
-		gateway3Page.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('Assessor updated from assessor-1 to assessor-2');
 	});
 
 	it('updates the programme officer details answer and records case history', { tags: ['regression'] }, () => {
@@ -147,20 +122,6 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 		gateway3Page.verifySummaryRowContains(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.display);
 	});
-
-	it(
-		'auto-fills the assessor date of appointment when the assessor name is saved and records case history',
-		{ tags: ['regression'] },
-		() => {
-			gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
-
-			gateway3AssessorPage.verifyLoaded();
-			gateway3AssessorPage.enterAssessorName(gateway3AssessorAnswer.assessor2);
-
-			gateway3Page.verifyLoaded(seededCase.planTitle);
-			gateway3Page.verifySummaryRowContains(gateway3DateAnswers.gateway3AssessorDateAppointment.row, todayDisplay);
-		}
-	);
 
 	it('returns to Gateway 3 from Gateway 3 answer page back links', { tags: ['regression'] }, () => {
 		gateway3Page.openActionLinkFor(gateway3DateAnswers.gateway3ActualDate.row);

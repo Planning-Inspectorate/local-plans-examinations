@@ -54,13 +54,17 @@ export const gateway2DateAnswers = {
 	}
 } as const satisfies Record<string, Gateway2DateAnswer>;
 
+// The assessor is shown under the "Assessors" sub-heading of the Gateway 2 tab
 export const gateway2AssessorAnswer = {
-	row: 'Assessor',
+	row: 'Assessor 1',
+	appointedRow: 'Assessor 1 appointed',
 	path: 'assessor-gateway-2',
 	heading: 'Who is the Gateway 2 assessor?',
 	assessor1: 'Assessor 1',
 	assessor2: 'Assessor 2',
+	assessor3: 'Assessor 3',
 	display: 'Assessor 1',
+	appointedDisplay: '1 September 2026',
 	inputField: 'assessorName',
 	boxListField: 'assessorName__listbox'
 } as const;
@@ -175,7 +179,8 @@ export const workshopSetUp = {
 
 export const gateway2ExpectedAnswers = [
 	...Object.values(gateway2DateAnswers).map(({ row, display }) => ({ row, display })),
-	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display }
+	{ row: gateway2AssessorAnswer.row, display: gateway2AssessorAnswer.display },
+	{ row: gateway2AssessorAnswer.appointedRow, display: gateway2AssessorAnswer.appointedDisplay }
 ];
 
 export const seededWorkshopMeetingLink = {

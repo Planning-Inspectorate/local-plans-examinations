@@ -22,6 +22,8 @@ describe('Gateway 3 page content', () => {
 
 		gateway3Page.verifySectionHeading('Gateway 3 submission');
 
+		gateway3Page.verifyAssessorsHeading();
+
 		gateway3Page.verifyExpectedSeededAnswers();
 
 		gateway3Page.verifyExpectedActionLinkHrefs();

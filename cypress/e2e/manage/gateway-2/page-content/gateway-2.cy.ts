@@ -13,6 +13,7 @@ describe('Gateway 2 page content', () => {
 
 		gateway2Page.verifyBackLink('/');
 		gateway2Page.verifySectionHeading('Gateway 2');
+		gateway2Page.verifyAssessorsHeading();
 		gateway2Page.verifyExpectedRows();
 		gateway2Page.verifyExpectedSeededAnswers();
 		gateway2Page.verifyExpectedActionLinkHrefs();
