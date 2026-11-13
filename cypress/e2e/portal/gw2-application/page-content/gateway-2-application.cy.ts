@@ -6,6 +6,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Gateway 2 application page content', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin();
 		loadPlanDetails().then((plan) => {
 			gateway2ApplicationPage.visit(plan.urlReference);

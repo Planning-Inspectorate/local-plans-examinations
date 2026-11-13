@@ -30,9 +30,7 @@ export const submitGateway2Application = (
 	gateway2ApplicationPage.submitGateway2AssessmentButton.click();
 
 	portalDeclarationPage.verifyLoaded();
-	portalDeclarationPage.confirmInformationCheckbox.click();
-	portalDeclarationPage.privacyNoteCheckbox.click();
-	portalDeclarationPage.confirmAndSubmitButton.click();
+	portalDeclarationPage.confirmSubmissionButton.click();
 
 	applicationCompletePage.verifyLoaded();
 };

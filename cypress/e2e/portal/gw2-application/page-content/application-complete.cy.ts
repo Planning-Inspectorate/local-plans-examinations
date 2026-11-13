@@ -17,13 +17,18 @@ describe('Application Complete page content', () => {
 			applicationCompletePage.verifyLoaded();
 			applicationCompletePage.verifyServiceNavigation('Guidance', 'Sign out');
 			applicationCompletePage.verifyMainContains(
-				'Application complete',
+				'Gateway 2 submission complete',
+				"We've sent you a confirmation email.",
 				'What happens next',
-				`We've sent your application to the Planning Inspectorate. They will check that your application is complete and that they have all the information required to proceed to the next stage of the plan.`,
-				'They will contact you if any further information is required.',
-				'You can return to your plan to check the status of your submission at any time.'
+				'An assessor will be appointed to your case in the next few days',
+				'Your case officer will:',
+				'contact you to arrange a workshop, which is likely to be 2 consecutive days in the week beginning to be confirmed',
+				'let you know whether this workshop will be online or in-person',
+				'contact you if they need further information before or after the workshop',
+				'They will usually send the assessment report within 2 weeks of the workshop',
+				'At any point you can check your submission status'
 			);
-			applicationCompletePage.returnToYourPlanLink(plan.urlReference).should('be.visible');
+			applicationCompletePage.verifyReturnToYourPlanLink(plan.urlReference);
 		});
 	});
 });

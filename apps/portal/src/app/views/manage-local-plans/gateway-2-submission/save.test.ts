@@ -16,7 +16,7 @@ describe('buildSaveController', () => {
 		mockResponse = createMockResponse();
 	});
 
-	it('should log the submitted answers, clear the scoped journey session and redirect to application complete', async () => {
+	it('should log submitted answers, clear the scoped journey session and redirect to declaration', async () => {
 		process.env.PORTAL_URL = 'http://localhost:3000';
 		process.env.GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID = 'template-123';
 
@@ -33,7 +33,7 @@ describe('buildSaveController', () => {
 		assert.strictEqual(mockRequest.session.forms['LPE-TEST-001'][JOURNEY_ID], undefined);
 		assert.strictEqual(mockResponse.render.mock.callCount(), 0);
 		assert.deepStrictEqual(mockResponse.redirect.mock.calls[0].arguments, [
-			'/manage-local-plans/LPE-TEST-001/gateway-2-submission/application-declaration'
+			'/manage-local-plans/LPE-TEST-001/gateway-2/declaration'
 		]);
 	});
 });

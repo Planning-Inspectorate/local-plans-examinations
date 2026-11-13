@@ -33,9 +33,7 @@ export function buildSaveController(service: PortalService): RequestHandler {
 		const planReference = getRoutePlanReference(req);
 		if (planReference) {
 			clearDataFromSession({ req, journeyId: JOURNEY_ID, reqParam: 'planReference' });
-			return res.redirect(
-				`/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2-submission/application-declaration`
-			);
+			return res.redirect(`/manage-local-plans/${encodeURIComponent(planReference)}/gateway-2/declaration`);
 		}
 
 		clearDataFromSession({ req, journeyId: JOURNEY_ID });

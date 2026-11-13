@@ -1,4 +1,6 @@
 import type { Request } from 'express';
+import { addDays } from 'date-fns';
+import { formatDisplayDate } from '#util/date.ts';
 import { CUSTOM_COMPONENTS } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import {
 	SINGLE_FILE_UPLOAD_LIMIT,
@@ -9,6 +11,11 @@ import {
 import type { FileUploaderQuestionProps } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 
 const UNLIMITED_FILES = Number.MAX_SAFE_INTEGER;
+
+export function getWorkshopWeekMonday(submissionDate: Date | null | undefined): string {
+	return (submissionDate ? formatDisplayDate(addDays(submissionDate, 2)) : undefined) ?? 'to be confirmed';
+}
+
 const DEFAULT_FILE_UPLOAD_TEXT = {
 	chooseFilesButtonText: 'Choose files',
 	dropInstructionText: 'or drop files',
