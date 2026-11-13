@@ -1,5 +1,5 @@
 export const planTitle = {
-	row: 'Plan title',
+	row: 'Title',
 	path: 'plan-title',
 	value: 'Cypress Test Plan',
 	display: 'Cypress Test Plan',
@@ -12,7 +12,7 @@ export const seededCaseNotes = [
 ] as const;
 
 export const planType = {
-	row: 'Plan type',
+	row: 'Type',
 	path: 'plan-type',
 	display: 'Local plan',
 	updatedValue: 'other',
@@ -33,7 +33,7 @@ export const caseOfficer = {
 } as const;
 
 export const planBand = {
-	row: 'Plan band',
+	row: 'Band',
 	path: 'plan-band',
 	heading: 'What is the plan band?',
 	display: 'Not started'
