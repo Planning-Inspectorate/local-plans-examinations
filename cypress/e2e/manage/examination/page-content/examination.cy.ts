@@ -112,7 +112,7 @@ describe('Examination page content', () => {
 		() => {
 			examinationPage.verifyRowOrder(examinationWebsite.row, examinationDocuments.row);
 			examinationPage.verifySummaryRowContains(examinationDocuments.row, '0 document(s)');
-			examinationPage.summaryRowActionLink(examinationDocuments.row).should('not.exist');
+			examinationPage.summaryRow(examinationDocuments.row).find('a').should('not.exist');
 		}
 	);
 
@@ -203,7 +203,7 @@ describe('Examination documents content', () => {
 		openSeededExaminationDocuments({ submitted: false });
 
 		examinationPage.verifySummaryRowContains(examinationDocuments.row, '3 document(s)');
-		examinationPage.summaryRowActionLink(examinationDocuments.row).should('not.exist');
+		examinationPage.summaryRow(examinationDocuments.row).find('a').should('not.exist');
 	});
 });
 
