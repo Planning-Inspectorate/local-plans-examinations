@@ -1,6 +1,10 @@
 import { BasePage } from '../../../page-objects/base-page.ts';
 
 export class PortalPlanBasePage extends BasePage {
+	get statusTag() {
+		return cy.get('.govuk-tag');
+	}
+
 	pathFor(planReference: string): string {
 		throw new Error(`${this.constructor.name} does not define pathFor for ${planReference}`);
 	}
@@ -70,11 +74,30 @@ export class PortalPlanBasePage extends BasePage {
 	}
 
 	verifyTableRowsInOrder(table: Cypress.Chainable, documents: string[]) {
+		cy.log(`Expected documents: ${documents.length}`);
+		console.log(`Expected documents: ${documents.length}`);
+
+		console.log(`Documents: ${JSON.stringify(documents)}`);
+
 		table.within(() => {
+			cy.get('tbody tr').then(($rows) => {
+				cy.log(`Actual table rows: ${$rows.length}`);
+
+				console.log(
+					'Actual table rows:',
+					[...$rows].map((row) => row.innerText)
+				);
+			});
+
 			cy.get('tbody tr').should('have.length', documents.length);
+
 			documents.forEach((document, index) => {
 				cy.get('tbody tr').eq(index).should('contain.text', document);
 			});
 		});
+	}
+
+	verifyStatusTag(status: string) {
+		this.statusTag.should('be.visible').and('contain.text', status);
 	}
 }

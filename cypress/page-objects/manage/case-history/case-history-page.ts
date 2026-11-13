@@ -25,8 +25,8 @@ export class CaseHistoryPage extends BasePage {
 	verifyTableHeadings() {
 		this.table.find('thead th').should('have.length', 3);
 		this.table.find('thead').within(() => {
-			cy.contains('th', 'Date').should('be.visible');
-			cy.contains('th', 'Event').should('be.visible');
+			cy.contains('th', 'Timestamp').should('be.visible');
+			cy.contains('th', 'Activity').should('be.visible');
 			cy.contains('th', 'User').should('be.visible');
 		});
 	}

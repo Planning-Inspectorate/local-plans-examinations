@@ -13,7 +13,7 @@ import { createFileUploadQuestion, getRoutePlanReference } from './utils.ts';
 describe('createFileUploadQuestion', () => {
 	it('creates a file upload question with default upload settings and text', () => {
 		const question = createFileUploadQuestion({
-			title: 'Gateway 1 - Self Assessment of Readiness',
+			title: 'Gateway 1 self-assessment',
 			question: 'Upload your Gateway 1 - Self assessment of readiness',
 			fieldName: 'gateway1SelfAssessment',
 			url: 'g1-self-assess',
@@ -28,7 +28,7 @@ describe('createFileUploadQuestion', () => {
 
 		assert.deepStrictEqual(question, {
 			type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-			title: 'Gateway 1 - Self Assessment of Readiness',
+			title: 'Gateway 1 self-assessment',
 			question: 'Upload your Gateway 1 - Self assessment of readiness',
 			fieldName: 'gateway1SelfAssessment',
 			url: 'g1-self-assess',
@@ -55,8 +55,8 @@ describe('createFileUploadQuestion', () => {
 	it('allows upload settings and default text to be overridden', () => {
 		const validator = () => undefined;
 		const question = createFileUploadQuestion({
-			title: 'Consultation on proposed local plan content and evidence documents',
-			question: 'Upload your consultation on proposed local plan content and evidence documents',
+			title: 'Consultation on proposed local plan content and evidence',
+			question: 'Upload your consultation on proposed local plan content and evidence',
 			fieldName: 'consultationOnProposedContent',
 			url: 'cons-of-proposed',
 			allowedFileExtensions: ['pdf', 'doc'],

@@ -55,7 +55,7 @@ export const COMMON_CONSTS = {
 		'scoping-cons',
 		'cons-summ',
 		'summary-of-consultation',
-		'subsequent-work-towards-a-draft-plan'
+		'evidence-on-engagement'
 	]
 };
 export const GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB

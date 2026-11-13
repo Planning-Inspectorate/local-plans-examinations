@@ -27,15 +27,15 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 				.addQuestion(questions.noticeOfIntention)
 				.addQuestion(questions.scopingConsultationDocuments)
 				.addQuestion(questions.consultationSummaryFeedbackScoping)
-				.addQuestion(questions.consultationSummaryProposedContent)
 				.addQuestion(questions.gateway1SelfAssessment)
-				.addQuestion(questions.consultationOnProposedContent),
+				.addQuestion(questions.consultationOnProposedContent)
+				.addQuestion(questions.consultationSummaryProposedContent)
+				.addQuestion(questions.evidenceOnEngagement),
 			new Section('Plan content, evidence and background', 'plan-content-evidence')
 				.addQuestion(questions.planContent)
 				.addQuestion(questions.digitalSupportingMaterial)
 				.addQuestion(questions.evidenceAndProgress)
-				.addQuestion(questions.latestPoliciesMap),
-			new Section('Additional documents', 'additional').addQuestion(questions.subsequentWorkTowardsADraftPlan)
+				.addQuestion(questions.latestPoliciesMap)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',

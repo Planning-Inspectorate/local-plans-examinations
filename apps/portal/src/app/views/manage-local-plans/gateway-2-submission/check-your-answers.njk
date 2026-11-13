@@ -33,11 +33,22 @@
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
         {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
+        {% if statusTag %}
+            {{ govukTag({
+                text: statusTag.label,
+                classes: statusTag.class
+            }) }}
+        {% endif %}
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}
+        
         {{ govukInsetText({
-            text: "Your target submission date is " + (targetDate or "") + ". A Gateway 2 assessment usually takes about 6 weeks."
+            html: "
+                <p class='govuk-body'>Gateway 2 is the next step in the development of your local plan.</p>
+                <p class='govuk-body'>You've provided the expected submission date of " + (targetDate or "") + ". The assessment usually takes between 4 and 6 weeks from submission.</p>
+                <p class='govuk-body'>For more infomation on Gateway 2 documents, <a href='/guidance' class='govuk-link'>check the guidance</a></p>
+            "
         }) }}
 
         {% if saveAndComeBackUrl %}
@@ -46,8 +57,6 @@
             </p>
             <hr class="govuk-section-break govuk-section-break--visible pins-app-section-break">
         {% endif %}
-
-        <p class="govuk-body">Add the documents that are relevant to your plan.</p>
 
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
@@ -59,7 +68,15 @@
                     {% endif %}
 
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
-                    {% if section.heading == 'Plan content, evidence and background' %}
+                    {% if section.heading == "Procedural Documents" %}
+                        <p class="govuk-body">
+                            You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions except where drafts are specified.
+                        </p>
+                    {% elif section.heading == "Consultation Documents" %}
+                        <p class="govuk-body">
+                            You should aim to include all these documents in your submission. Your assessor may request them if not submitted. They should be final versions.
+                        </p>
+                    {% elif section.heading == 'Plan content, evidence and background' %}
                         <p class="govuk-body">You should include any available documents that will form part of your local plan and show progress towards completion. You can also include a link to any digital materials that are published publicly online. You should also include your latest policies map. These can all be in draft form.</p>
                     {% endif %}
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
@@ -85,10 +102,10 @@
                                         {% if row.actions and row.actions.items %}
                                             {% for action in row.actions.items %}
                                                 {% set actionDataCy = "add-" + (row.key.text | lower | replace(' ', '-')) %}
-                                                {% if row.key.text == "Gateway 1 - Self Assessment of Readiness" %}
+                                                {% if row.key.text == "Gateway 1 self-assessment" %}
                                                     {% set actionDataCy = "add-gateway-1-self-assessment" %}
                                                 {% endif %}
-                                                {% if row.key.text == "Consultation on proposed local plan content and evidence documents" %}
+                                                {% if row.key.text == "Consultation on proposed local plan content and evidence" %}
                                                     {% set actionDataCy = "add-consultation-proposed-content" %}
                                                 {% endif %}
                                                 <a href="{{ action.href }}" class="govuk-link" data-cy="{{ actionDataCy }}">
@@ -108,10 +125,13 @@
             {% endif %}
         {% endfor %}
 
+        <h2 class="govuk-heading-m">Ready to submit for Gateway 2</h2>
+        <p class="govuk-body">You cannot make any changes after submission.</p>
+
         <form method="post" novalidate>
             <input type="hidden" name="_csrf" value="{{ _csrf }}">
             {{ govukButton({
-                text: "Submit for Gateway 2 assessment",
+                text: "Submit",
                 attributes: { "data-cy": "submit-gateway-2" }
             }) }}
         </form>

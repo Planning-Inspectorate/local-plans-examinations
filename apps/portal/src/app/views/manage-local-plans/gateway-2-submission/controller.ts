@@ -37,8 +37,9 @@ import {
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
 import type { Gateway2WorkshopModel } from '@pins/local-plans-database/src/client/models/Gateway2Workshop.ts';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 type Gateway2SummaryDocument = {
 	guid: string;
@@ -231,7 +232,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				documents: {
 					where: {
 						documentSetId: {
-							in: [DOCUMENT_SET_ID.G2_REPORT, DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS]
+							in: gateway2SetIds
 						},
 						isDeleted: false
 					},
@@ -311,6 +312,28 @@ export function setGateway2CheckAnswersViewData(req: Request, res: Response, nex
 	next();
 }
 
+function setGateway2StatusTag(currentCase: CaseWithGateway2Info | undefined) {
+	if (!currentCase) {
+		return '';
+	}
+
+	const gateway2Info = currentCase.gateway2Info;
+
+	if (gateway2Info?.reportIssuedDate) {
+		return StatusTag[STATUS.Completed];
+	}
+
+	if (currentCase.submissionDate) {
+		return StatusTag[STATUS.UnderReview];
+	}
+
+	if (currentCase.documents?.length) {
+		return StatusTag[STATUS.InProgress];
+	}
+
+	return StatusTag[STATUS.ReadyToStart];
+}
+
 export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	const request = req as Gateway2Request;
 	const planReference = getRoutePlanReference(req);
@@ -319,6 +342,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 2 submission';
 	res.locals.pageHeading = 'Gateway 2 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
+	res.locals.statusTag = setGateway2StatusTag(currentCase);
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);

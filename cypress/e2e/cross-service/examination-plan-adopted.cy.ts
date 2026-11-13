@@ -27,21 +27,21 @@ describe('Cross-service Examination plan adopted', { baseUrl: Cypress.env('porta
 		() => {
 			loadPlanDetails().then((plan) => {
 				planDetailsPage.visit(plan.urlReference);
-				planDetailsPage.verifyProgressRow('Examination', `Report issued: ${todayDisplay}`, plan.status7);
+				planDetailsPage.verifyProgressRow('Examination', `Report issued: ${todayDisplay}`, plan.reportIssued);
 
 				examinationPage.visit(plan.urlReference);
 				examinationPage.verifyLoaded();
-				examinationPage.verifyStatusTag(plan.status7);
+				examinationPage.verifyStatusTag(plan.reportIssued);
 
 				enterAdoptionDateInManage(plan.reference, adoptionDate.input, adoptionDate.display);
 
 				examinationPage.visit(plan.urlReference);
 				examinationPage.verifyLoaded();
-				examinationPage.verifyStatusTag(plan.status8);
+				examinationPage.verifyStatusTag(plan.planAdopted);
 				examinationPage.backLink.click();
 
 				planDetailsPage.verifyLoaded();
-				planDetailsPage.verifyProgressRow('Examination', `Adopted: ${adoptionDate.display}`, plan.status8);
+				planDetailsPage.verifyProgressRow('Examination', `Adopted: ${adoptionDate.display}`, plan.planAdopted);
 			});
 		}
 	);

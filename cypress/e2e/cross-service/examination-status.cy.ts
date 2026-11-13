@@ -24,25 +24,25 @@ describe('Cross-service examination status', { baseUrl: Cypress.env('portalBaseU
 				planDetailsPage.verifyProgressRow(
 					'Examination',
 					`Submission expected: ${plan.dates.examination}`,
-					plan.status5
+					plan.submitted
 				);
 
 				examinationPage.visit(plan.urlReference);
 				examinationPage.verifyLoaded();
-				examinationPage.verifyStatusTag(plan.status5);
+				examinationPage.verifyStatusTag(plan.submitted);
 
 				assignExaminationInspectorInManage(plan.reference, 'Inspector 1');
 
 				examinationPage.visit(plan.urlReference);
 				examinationPage.verifyLoaded();
-				examinationPage.verifyStatusTag(plan.status6);
+				examinationPage.verifyStatusTag(plan.inExamination);
 				examinationPage.backLink.click();
 
 				planDetailsPage.verifyLoaded();
 				planDetailsPage.verifyProgressRow(
 					'Examination',
 					`Submission expected: ${plan.dates.examination}`,
-					plan.status6
+					plan.inExamination
 				);
 			});
 		}
