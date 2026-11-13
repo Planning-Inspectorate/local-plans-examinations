@@ -5,8 +5,13 @@ import { workshopSetUp } from '../../fixtures/manage/gateway-2.ts';
 
 const CASE_REFERENCE = 'PLAN-C02';
 const PLAN_TITLE = 'GW2SubmittedNotIssued';
-const fullVenueAddress = `${workshopSetUp.workshopVenueAddress.values.venueName}, ${workshopSetUp.workshopVenueAddress.values.addressLine1}, ${workshopSetUp.workshopVenueAddress.values.townOrCity}, ${workshopSetUp.workshopVenueAddress.values.postcode}`;
-const fullDateAndTime = `${workshopSetUp.workshopDateAndTime.display} at ${workshopSetUp.workshopDateAndTime.displayTime}`;
+const venueAddressLines = [
+	workshopSetUp.workshopVenueAddress.values.venueName,
+	workshopSetUp.workshopVenueAddress.values.addressLine1,
+	workshopSetUp.workshopVenueAddress.values.townOrCity,
+	workshopSetUp.workshopVenueAddress.values.postcode
+];
+const workshopStartTime = `${workshopSetUp.workshopDateAndTime.displayTime12Hour}, ${workshopSetUp.workshopDateAndTime.display}`;
 
 describe('Cross-service Gateway 2 report', () => {
 	beforeEach(() => {
@@ -24,6 +29,6 @@ describe('Cross-service Gateway 2 report', () => {
 		openGateway2Page(CASE_REFERENCE, PLAN_TITLE);
 		workshopSetUpFlow(PLAN_TITLE);
 
-		verifyGateway2WorkshopInPortal(CASE_REFERENCE, fullVenueAddress, fullDateAndTime);
+		verifyGateway2WorkshopInPortal(CASE_REFERENCE, venueAddressLines, workshopStartTime);
 	});
 });

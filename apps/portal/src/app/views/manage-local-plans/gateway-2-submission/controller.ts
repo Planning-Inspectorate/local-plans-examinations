@@ -41,6 +41,22 @@ import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
 import { STATUS, StatusTag } from '../../../types.ts';
 
+type Gateway2WorkshopSummary = Pick<
+	Gateway2WorkshopModel,
+	| 'createdDate'
+	| 'workshopDate'
+	| 'workshopTime'
+	| 'workshopEndTime'
+	| 'workshopVenueName'
+	| 'workshopAddressLine'
+	| 'workshopAddressLine2'
+	| 'workshopTownOrCity'
+	| 'workshopPostcode'
+	| 'workshopLocationType'
+	| 'remoteMeetingLinkKnown'
+	| 'remoteMeetingLink'
+>;
+
 type Gateway2SummaryDocument = {
 	guid: string;
 	name: string;
@@ -56,9 +72,8 @@ type Gateway2SummaryDocument = {
 };
 
 type Gateway2InfoWithWorkshops = Gateway2InfoModel & {
-	workshops?: Gateway2WorkshopModel[];
+	workshops?: Gateway2WorkshopSummary[];
 };
-
 type Gateway2InfoWithLegacyWorkshopFields = {
 	workshopVenue?: string | null;
 	workshopDate?: Date | string | null;
@@ -225,6 +240,20 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				gateway2Info: {
 					include: {
 						workshops: {
+							select: {
+								createdDate: true,
+								workshopDate: true,
+								workshopTime: true,
+								workshopEndTime: true,
+								workshopVenueName: true,
+								workshopAddressLine: true,
+								workshopAddressLine2: true,
+								workshopTownOrCity: true,
+								workshopPostcode: true,
+								workshopLocationType: true,
+								remoteMeetingLinkKnown: true,
+								remoteMeetingLink: true
+							},
 							orderBy: { createdDate: 'desc' }
 						}
 					}
@@ -456,35 +485,17 @@ function toDate(value: Date | string): Date {
 	return value instanceof Date ? value : new Date(value);
 }
 
-function getLatestWorkshop(workshops: Gateway2WorkshopModel[] | undefined): Gateway2WorkshopModel | undefined {
+function getLatestWorkshop(workshops: Gateway2WorkshopSummary[] | undefined): Gateway2WorkshopSummary | undefined {
 	return workshops?.toSorted((a, b) => toDate(b.createdDate).getTime() - toDate(a.createdDate).getTime())[0];
-}
-
-function formatWorkshopTimeRange(workshop: Gateway2WorkshopModel): string | undefined {
-	if (workshop.workshopTime && workshop.workshopEndTime) {
-		return `${workshop.workshopTime} to ${workshop.workshopEndTime}`;
-	}
-
-	return workshop.workshopTime ?? workshop.workshopEndTime ?? undefined;
-}
-
-function formatWorkshopDateAndTime(workshop: Gateway2WorkshopModel): string | undefined {
-	const workshopDate = workshop.workshopDate ? formatDisplayDate(toDate(workshop.workshopDate)) : undefined;
-	const workshopTime = formatWorkshopTimeRange(workshop);
-
-	if (workshopDate && workshopTime) {
-		return `${workshopDate} at ${workshopTime}`;
-	}
-
-	return workshopDate ?? workshopTime;
 }
 
 function isNonEmptyString(value: string | null | undefined): value is string {
 	return typeof value === 'string' && value.trim() !== '';
 }
 
-function formatWorkshopVenue(workshop: Gateway2WorkshopModel): string | undefined {
-	const addressParts = [
+// Returns the venue as address lines so the view can show one line per row.
+function formatWorkshopVenue(workshop: Gateway2WorkshopSummary): string[] | undefined {
+	const addressLines = [
 		workshop.workshopVenueName,
 		workshop.workshopAddressLine,
 		workshop.workshopAddressLine2,
@@ -492,22 +503,97 @@ function formatWorkshopVenue(workshop: Gateway2WorkshopModel): string | undefine
 		workshop.workshopPostcode
 	].filter(isNonEmptyString);
 
-	return addressParts.length ? addressParts.join(', ') : undefined;
+	return addressLines.length ? addressLines : undefined;
+}
+
+const MIDDAY = Date.UTC(2000, 0, 1, 12);
+const MIDNIGHT = Date.UTC(2000, 0, 1, 0);
+const TIME_PATTERN = /^(\d{1,2}):(\d{2})$/;
+
+const HOUR_ONLY: Intl.DateTimeFormatOptions = {
+	hour: 'numeric',
+	hourCycle: 'h12',
+	timeZone: 'UTC'
+};
+
+const HOUR_MINUTE: Intl.DateTimeFormatOptions = {
+	...HOUR_ONLY,
+	minute: '2-digit'
+};
+
+function parseTime(time: string): Date | null {
+	const match = TIME_PATTERN.exec(time.trim());
+	if (!match) {
+		return null;
+	}
+
+	const hour = Number(match[1]);
+	const minute = Number(match[2]);
+
+	if (hour > 23 || minute > 59) {
+		return null;
+	}
+
+	return new Date(Date.UTC(2000, 0, 1, hour, minute));
+}
+
+export function formatWorkshopTime(time: string): string {
+	const date = parseTime(time);
+	if (!date) {
+		return time;
+	}
+
+	const timestamp = date.getTime();
+	if (timestamp === MIDDAY) {
+		return 'midday';
+	}
+
+	if (timestamp === MIDNIGHT) {
+		return 'midnight';
+	}
+
+	const options = date.getUTCMinutes() === 0 ? HOUR_ONLY : HOUR_MINUTE;
+
+	return date.toLocaleTimeString('en-US', options).replace(/\s/g, '').toLowerCase();
+}
+
+function formatWorkshopStartTime(time: string | null | undefined, date: Date | string | null | undefined) {
+	const displayDate = date ? formatDisplayDate(toDate(date)) : undefined;
+	const displayTime = isNonEmptyString(time) ? formatWorkshopTime(time) : undefined;
+	const parts = [displayTime, displayDate].filter(Boolean);
+
+	return parts.length ? parts.join(', ') : undefined;
+}
+
+function formatWorkshopMeetingLink(workshop: Gateway2WorkshopSummary): string | undefined {
+	if (workshop.workshopLocationType === 'in-person' || workshop.remoteMeetingLinkKnown === 'no') {
+		return undefined;
+	}
+
+	return isNonEmptyString(workshop.remoteMeetingLink) ? workshop.remoteMeetingLink : undefined;
 }
 
 function setGateway2WorkshopViewLocals(res: Response, gateway2Info: Gateway2InfoWithWorkshops | null | undefined) {
 	const latestWorkshop = getLatestWorkshop(gateway2Info?.workshops);
 	if (latestWorkshop) {
+		res.locals.hasWorkshop = true;
+		res.locals.workshopFormat = latestWorkshop.workshopLocationType ?? undefined;
 		res.locals.workshopVenue = formatWorkshopVenue(latestWorkshop);
-		res.locals.workshopDateAndTime = formatWorkshopDateAndTime(latestWorkshop);
+		res.locals.workShopStartTime = formatWorkshopStartTime(latestWorkshop.workshopTime, latestWorkshop.workshopDate);
+		res.locals.workshopMeetingLink = formatWorkshopMeetingLink(latestWorkshop);
 		return;
 	}
 
+	// Older cases store a single venue string and date-time on gateway2Info.
 	const legacyWorkshopInfo = gateway2Info as (Gateway2InfoModel & Gateway2InfoWithLegacyWorkshopFields) | undefined;
+	const legacyDate = legacyWorkshopInfo?.workshopDate ? toDate(legacyWorkshopInfo.workshopDate) : undefined;
+	res.locals.workshopFormat = undefined;
 	res.locals.workshopVenue = legacyWorkshopInfo?.workshopVenue || undefined;
-	res.locals.workshopDateAndTime = legacyWorkshopInfo?.workshopDate
-		? `${formatDisplayDate(toDate(legacyWorkshopInfo.workshopDate))} at ${formatDisplayTime(toDate(legacyWorkshopInfo.workshopDate))}`
+	res.locals.workShopStartTime = legacyDate
+		? formatWorkshopStartTime(formatDisplayTime(legacyDate), legacyDate)
 		: undefined;
+	res.locals.workshopMeetingLink = undefined;
+	res.locals.hasWorkshop = Boolean(res.locals.workshopVenue || res.locals.workShopStartTime);
 }
 
 const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk';

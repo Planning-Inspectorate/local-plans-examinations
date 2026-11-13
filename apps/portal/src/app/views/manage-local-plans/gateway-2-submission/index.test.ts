@@ -7,6 +7,7 @@ import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-rep
 import {
 	syncGateway2UploadAnswer,
 	buildSubmittedGateway2View,
+	formatWorkshopTime,
 	setGateway2CheckAnswersViewLocals
 } from './controller.ts';
 import { JOURNEY_ID } from './journey.ts';
@@ -122,13 +123,15 @@ describe('Gateway 2 submission check answers page', () => {
 		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
 			targetDate: '21 July 2026',
 			gateway2ReportFiles: [{ fileName: 'gateway-2-report.pdf' }],
-			workshopVenue: 'Virtual',
-			workshopDateAndTime: '19 May 2026 at 10:00',
+			hasWorkshop: true,
+			workshopFormat: 'in-person',
+			workshopVenue: ['East Borough Civic Centre', '14 Market Street', 'East Borough', 'EB1 4QT'],
+			workShopStartTime: '10:00, 12 May 2026',
 			workshopDocuments: [
 				{
 					fileName: 'workshop-agenda.pdf',
 					href: '/manage-local-plans/PLAN-001/gateway-2-submission/download-document/workshop-guid',
-					sharedDate: '8 May 2026'
+					sharedDate: '8 April 2026'
 				}
 			],
 			summaryListData: { sections: [] },
@@ -143,19 +146,26 @@ describe('Gateway 2 submission check answers page', () => {
 		const reportPosition = html.indexOf('data-cy="gateway-2-report-section"');
 		const workshopPosition = html.indexOf('data-cy="gateway-2-workshop-section"');
 		assert.ok(workshopPosition >= 0 && reportPosition > workshopPosition);
-		assert.ok(html.includes('Workshop venue'));
-		assert.ok(html.includes('Virtual'));
-		assert.ok(html.includes('Workshop date and time'));
-		assert.ok(html.includes('19 May 2026 at 10:00'));
-		assert.ok(html.includes('Workshop documents'));
+		assert.match(html, /<h2 class="govuk-heading-m">Workshop<\/h2>/);
+		const workshopHtml = html.slice(workshopPosition, reportPosition);
+		const keys = [...workshopHtml.matchAll(/<dt class="govuk-summary-list__key">\s*([^<]+?)\s*<\/dt>/g)].map(
+			(m) => m[1]
+		);
+		assert.deepStrictEqual(keys, ['Format', 'Venue', 'Start time', 'Documents']);
+		assert.match(html, /Format(?:\s|<[^>]+>)*In-person/);
+		assert.match(html, /East Borough Civic Centre<br>14 Market Street<br>East Borough<br>EB1 4QT/);
+		assert.match(html, /Start time(?:\s|<[^>]+>)*10:00, 12 May 2026/);
 		assert.ok(html.includes('workshop-agenda.pdf'));
-		assert.ok(html.includes('(shared on 8 May 2026)'));
+		assert.ok(html.includes('(shared: 8 April 2026)'));
 	});
 
-	it('renders only the workshop rows that have data', () => {
+	it('hides the documents row when no workshop documents have been uploaded', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
-			workshopVenue: 'Virtual',
+			hasWorkshop: true,
+			workshopFormat: 'in-person',
+			workshopVenue: ['East Borough Civic Centre'],
+			workShopStartTime: '10:00, 12 May 2026',
 			summaryListData: { sections: [] },
 			config: {
 				styleFile: 'style.css',
@@ -165,9 +175,117 @@ describe('Gateway 2 submission check answers page', () => {
 			}
 		});
 
-		assert.ok(html.includes('Workshop venue'));
-		assert.ok(!html.includes('Workshop date and time'));
-		assert.ok(!html.includes('Workshop documents'));
+		assert.match(html, /Venue\s*<\/dt>/);
+		assert.ok(!/Documents\s*<\/dt>/.test(html));
+	});
+
+	it('shows workshop documents before the workshop has been set up', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			workshopDocuments: [{ fileName: 'workshop-agenda.pdf', sharedDate: '8 April 2026' }],
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="gateway-2-workshop-section"'));
+		assert.match(html, /Documents\s*<\/dt>/);
+		assert.ok(!/(Format|Venue|Start time)\s*<\/dt>/.test(html));
+	});
+
+	it('hides the workshop section when there is no workshop and no documents', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(!html.includes('data-cy="gateway-2-workshop-section"'));
+	});
+
+	it('shows Not provided when an in-person workshop has no address', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			hasWorkshop: true,
+			workshopFormat: 'in-person',
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.match(html, /Venue(?:\s|<[^>]+>)*Not provided/);
+	});
+
+	it('hides the venue and shows the meeting link for a remote workshop', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			hasWorkshop: true,
+			workshopFormat: 'remote',
+			workshopMeetingLink: 'https://teams.example.com/meeting/123',
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.match(html, /Format(?:\s|<[^>]+>)*Remote/);
+		assert.ok(!/Venue\s*<\/dt>/.test(html));
+		assert.match(html, /Meeting link\s*<\/dt>/);
+		assert.ok(html.includes('<a href="https://teams.example.com/meeting/123" class="govuk-link"'));
+	});
+
+	it('hides the meeting link row for a remote workshop without a link', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			hasWorkshop: true,
+			workshopFormat: 'remote',
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(!/Meeting link\s*<\/dt>/.test(html));
+		assert.ok(!/Venue\s*<\/dt>/.test(html));
+	});
+
+	it('does not turn a non-http meeting link into a link', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers.njk', {
+			hasWorkshop: true,
+			workshopFormat: 'hybrid',
+			workshopVenue: ['Town Hall'],
+			workshopMeetingLink: 'javascript:alert(1)',
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(!html.includes('href="javascript:'));
+		assert.match(html, /Meeting link\s*<\/dt>/);
 	});
 
 	it('renders multiple workshop documents as a list', () => {
@@ -186,6 +304,91 @@ describe('Gateway 2 submission check answers page', () => {
 		assert.ok(html.includes('<ul class="govuk-list">'));
 		assert.match(html, /<li>\s*workshop-agenda\.pdf\s*<\/li>/);
 		assert.match(html, /<li>\s*workshop-questions\.pdf\s*<\/li>/);
+	});
+});
+
+describe('formatWorkshopTime', () => {
+	const cases: [string, string][] = [
+		['09:00', '9am'],
+		['10:00', '10am'],
+		['10:15', '10:15am'],
+		['11:44', '11:44am'],
+		['12:00', 'midday'],
+		['12:30', '12:30pm'],
+		['13:00', '1pm'],
+		['14:30', '2:30pm'],
+		['23:59', '11:59pm'],
+		['00:00', 'midnight'],
+		['00:30', '12:30am'],
+		['9:05', '9:05am'],
+		[' 10:00 ', '10am']
+	];
+
+	for (const [input, expected] of cases) {
+		it(`formats ${JSON.stringify(input)} as ${expected}`, () => {
+			assert.strictEqual(formatWorkshopTime(input), expected);
+		});
+	}
+
+	it('returns values that are not a valid HH:MM time unchanged', () => {
+		for (const value of ['', 'TBC', '10am', '1000', '24:00', '12:60', '10:5']) {
+			assert.strictEqual(formatWorkshopTime(value), value);
+		}
+	});
+});
+
+describe('Gateway 2 workshop start time locals', () => {
+	function startTimeFor(workshopTime: string | null, workshopDate: Date | null) {
+		const middleware = buildSubmittedGateway2View();
+		const req = {
+			currentCase: {
+				submissionDate: new Date('2026-09-01T14:30:00Z'),
+				email: 'user@example.com',
+				gateway2Info: {
+					workshops: [
+						{
+							createdDate: new Date('2026-09-01T09:00:00Z'),
+							workshopDate,
+							workshopTime,
+							workshopEndTime: null,
+							workshopLocationType: 'in-person',
+							remoteMeetingLinkKnown: null,
+							remoteMeetingLink: null,
+							workshopVenueName: 'Town Hall',
+							workshopAddressLine: null,
+							workshopAddressLine2: null,
+							workshopTownOrCity: null,
+							workshopPostcode: null
+						}
+					]
+				}
+			}
+		} as any;
+		const locals: Record<string, unknown> = { journey: { taskListTemplate: 'original-template.njk' } };
+
+		middleware(req, { locals } as any, () => {});
+
+		return locals.workShopStartTime;
+	}
+
+	it('shows the formatted time before the date', () => {
+		assert.strictEqual(startTimeFor('14:30', new Date('2026-05-12T12:00:00Z')), '2:30pm, 12 May 2026');
+	});
+
+	it('shows midday for 12:00', () => {
+		assert.strictEqual(startTimeFor('12:00', new Date('2026-05-12T12:00:00Z')), 'midday, 12 May 2026');
+	});
+
+	it('shows only the date when there is no time', () => {
+		assert.strictEqual(startTimeFor(null, new Date('2026-05-12T12:00:00Z')), '12 May 2026');
+	});
+
+	it('shows only the time when there is no date', () => {
+		assert.strictEqual(startTimeFor('09:30', null), '9:30am');
+	});
+
+	it('is undefined when there is no time or date', () => {
+		assert.strictEqual(startTimeFor(null, null), undefined);
 	});
 });
 
@@ -246,8 +449,9 @@ describe('Gateway 2 summary view data', () => {
 			res.locals.workshopDocuments.map((file: { fileName: string }) => file.fileName),
 			['workshop-agenda.pdf']
 		);
+		assert.strictEqual(res.locals.hasWorkshop, true);
 		assert.strictEqual(res.locals.workshopVenue, 'Virtual');
-		assert.strictEqual(res.locals.workshopDateAndTime, '19 May 2026 at 10:00');
+		assert.deepStrictEqual(res.locals.workShopStartTime, '10am, 19 May 2026');
 	});
 
 	it('flags a virus scan in progress when an uploaded document has not been scanned', () => {
@@ -545,7 +749,8 @@ describe('Gateway 2 post-submission view template', () => {
 					sharedDate: '24 September 2026'
 				}
 			],
-			workshopDateAndTime: '11 November 2026 at 12:30 to 13:30',
+			hasWorkshop: true,
+			workShopStartTime: '12:30, 11 November 2026',
 			summaryListData: { sections: [] },
 			config: {
 				styleFile: 'style.css',
@@ -557,8 +762,7 @@ describe('Gateway 2 post-submission view template', () => {
 
 		assert.ok(html.includes('data-cy="gateway-2-report-section"'));
 		assert.ok(html.includes('Gateway 2 report'));
-		assert.ok(html.includes('Workshop date and time'));
-		assert.ok(html.includes('11 November 2026 at 12:30 to 13:30'));
+		assert.match(html, /Start time(?:\s|<[^>]+>)*12:30, 11 November 2026/);
 		assert.ok(!html.includes('data-cy="workshop-details-table"'));
 	});
 
@@ -719,6 +923,9 @@ describe('buildSubmittedGateway2View middleware', () => {
 							workshopDate: new Date('2026-11-03T12:00:00Z'),
 							workshopTime: '10:15',
 							workshopEndTime: '15:45',
+							workshopLocationType: 'hybrid',
+							remoteMeetingLinkKnown: 'yes',
+							remoteMeetingLink: 'https://teams.example.com/latest',
 							workshopVenueName: 'Latest venue',
 							workshopAddressLine: '1 Latest Street',
 							workshopAddressLine2: null,
@@ -737,8 +944,11 @@ describe('buildSubmittedGateway2View middleware', () => {
 
 		middleware(req, res, () => {});
 
-		assert.strictEqual(locals.workshopVenue, 'Latest venue, 1 Latest Street, Newtown, NW1 1AA');
-		assert.strictEqual(locals.workshopDateAndTime, '3 November 2026 at 10:15 to 15:45');
+		assert.strictEqual(locals.hasWorkshop, true);
+		assert.strictEqual(locals.workshopFormat, 'hybrid');
+		assert.deepStrictEqual(locals.workshopVenue, ['Latest venue', '1 Latest Street', 'Newtown', 'NW1 1AA']);
+		assert.strictEqual(locals.workShopStartTime, '10:15am, 3 November 2026');
+		assert.strictEqual(locals.workshopMeetingLink, 'https://teams.example.com/latest');
 	});
 
 	it('calls next without changes when case has no submissionDate', () => {
