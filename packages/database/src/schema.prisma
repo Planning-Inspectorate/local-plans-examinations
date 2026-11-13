@@ -174,8 +174,8 @@ model Gateway2Info {
   reportIssuedDate              DateTime?          @db.DateTime2
   reportPublishedByLPA          DateTime?          @db.DateTime2
   workshopDocumentUploadedDate  DateTime?
-  workshops                     Gateway2Workshop[]
   digitalSupportingMaterialLink String?            @db.NVarChar(1000)
+  workshops                     Gateway2Workshop[]
   additionalAssessors           Gateway2Assessor[]
 }
 
