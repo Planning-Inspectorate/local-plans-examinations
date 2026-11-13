@@ -48,7 +48,10 @@
     "cy:manage:test-smoke": "cross-env TEST_TARGET=manage ENVIRONMENT_SMOKE=true npx cypress run --browser chrome --config chromeWebSecurity=false,experimentalModifyObstructiveThirdPartyCode=true --expose grepTags=environment-smoke,grepFilterSpecs=true",
     "cy:open:manage": "cross-env TEST_TARGET=manage npx cypress open",
     "cy:cross-service:all": "cross-env TEST_TARGET=cross-service npx cypress run --spec='cypress/e2e/cross-service/**/*'",
-    "cy:open:cross-service": "cross-env TEST_TARGET=cross-service npx cypress open"
+    "cy:open:cross-service": "cross-env TEST_TARGET=cross-service npx cypress open",
+    "cy:full-journey": "cross-env TEST_TARGET=full-journey npx cypress run --spec='cypress/e2e/full-journey/**/*'",
+    "cy:open:full-journey": "cross-env TEST_TARGET=full-journey npx cypress open"
+
   },
   "dependencies": {
     "@azure/functions": "^4.17.0",
