@@ -236,7 +236,6 @@ model Gateway3Assessor {
   id                      String       @id @default(uuid()) @db.UniqueIdentifier
   gateway3Info            Gateway3Info @relation(fields: [gateway3InfoId], references: [id], onDelete: Cascade)
   gateway3InfoId          String       @db.UniqueIdentifier
-  /// Value of the selected assessor option (the Entra user id when auth is enabled).
   assessorName            String
   assessorAppointmentDate DateTime     @db.DateTime2
   createdDate             DateTime     @default(now())
