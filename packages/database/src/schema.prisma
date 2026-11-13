@@ -164,18 +164,19 @@ model Gateway1Info {
 
 /// Gateway 2 stage dates, assessor details and report/workshop tracking for a case.
 model Gateway2Info {
-  id                           String             @id @default(uuid()) @db.UniqueIdentifier
-  case                         Case               @relation(fields: [caseId], references: [id])
-  caseId                       String             @unique @db.UniqueIdentifier
-  expectedDate                 DateTime?          @db.DateTime2
-  actualDate                   DateTime?          @db.DateTime2
-  assessorName                 String?
-  assessorAppointmentDate      DateTime?          @db.DateTime2
-  reportIssuedDate             DateTime?          @db.DateTime2
-  reportPublishedByLPA         DateTime?          @db.DateTime2
-  workshopDocumentUploadedDate DateTime?
-  workshops                    Gateway2Workshop[]
-  additionalAssessors          Gateway2Assessor[]
+  id                            String             @id @default(uuid()) @db.UniqueIdentifier
+  case                          Case               @relation(fields: [caseId], references: [id])
+  caseId                        String             @unique @db.UniqueIdentifier
+  expectedDate                  DateTime?          @db.DateTime2
+  actualDate                    DateTime?          @db.DateTime2
+  assessorName                  String?
+  assessorAppointmentDate       DateTime?          @db.DateTime2
+  reportIssuedDate              DateTime?          @db.DateTime2
+  reportPublishedByLPA          DateTime?          @db.DateTime2
+  workshopDocumentUploadedDate  DateTime?
+  workshops                     Gateway2Workshop[]
+  digitalSupportingMaterialLink String?            @db.NVarChar(1000)
+  additionalAssessors           Gateway2Assessor[]
 }
 
 model Gateway2Assessor {
