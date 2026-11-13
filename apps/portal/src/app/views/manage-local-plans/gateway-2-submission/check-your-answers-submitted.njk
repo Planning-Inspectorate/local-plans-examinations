@@ -31,7 +31,7 @@
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}
-       
+
         <p class="govuk-body" data-cy="submission-copy">Your application was submitted on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
 
         {% for section in summaryListData.sections %}

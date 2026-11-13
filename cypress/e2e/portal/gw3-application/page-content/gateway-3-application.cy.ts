@@ -21,27 +21,31 @@ describe('Gateway 3 application page content', () => {
 			gateway3ApplicationPage.verifyCaption(plan.title);
 			gateway3ApplicationPage.verifyHeading('Gateway 3 submission');
 			gateway3ApplicationPage.verifyMainContains(
-				'Gateway 3 is a more formal step in the development of your local plan. At this point some documents are mandatory to submit.',
-				`You have provided the expected submission date of ${plan.dates.gateway3}. The assessment usually takes between 4 and 6 weeks from submission.`,
+				'Gateway 3 is the next step in the development of your local plan.',
+				`You've provided the expected submission date of ${plan.dates.gateway3}. The assessment usually takes between 4 and 6 weeks from submission.`,
+				'Some of these documents are required but you should aim to include all listed documents in your submission if possible.',
 				'Save and come back later'
 			);
+			cy.contains('a', 'check the guidance').should('have.attr', 'href', '/guidance');
 			gateway3ApplicationPage.verifySaveAndComeBackLink(`/manage-local-plans/${plan.urlReference}`);
 		});
 	});
 
-	it('Shows Required Information', { tags: ['regression'] }, () => {
-		gateway3ApplicationPage.verifyRequiredInformation();
+	it('Shows Procedural documents', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifyProceduralDocuments();
 	});
 
-	it('Shows Optional Documents', { tags: ['regression'] }, () => {
-		gateway3ApplicationPage.verifyOptionalDocuments();
+	it('Shows Consultation documents', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifyConsultationDocuments();
+	});
+
+	it('Shows Plan content, evidence and background', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifyPlanContent();
 	});
 
 	it('Shows ready to submit for Gateway 3 section', { tags: ['regression'] }, () => {
 		gateway3ApplicationPage.verifySubHeading('Ready to submit for Gateway 3');
-		gateway3ApplicationPage.verifyMainContains(
-			`Once submitted, Gateway 3 will be locked and you cannot make further changes. By submitting, you're confirming that the information you're sharing is correct to the best of your knowledge.`
-		);
+		gateway3ApplicationPage.verifyMainContains('You cannot make any changes after submission.');
 		gateway3ApplicationPage.verifySubmitGateway3Button();
 	});
 });

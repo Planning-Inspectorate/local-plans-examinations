@@ -24,6 +24,9 @@ import type { PortalService } from '#service';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { createJourney, JOURNEY_ID } from './journey.ts';
+import { createGateway3Questions } from './questions.ts';
 
 function buildMockDocumentSets() {
 	const folderNames = [
@@ -737,6 +740,32 @@ describe('buildGateway3CheckAnswersList', () => {
 });
 
 describe('buildValidateGateway3Submission', () => {
+	async function validateMissingAnswers(answers: Record<string, unknown>) {
+		const handler = buildValidateGateway3Submission();
+		let statusCode: number | undefined;
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-001' },
+			session: {}
+		} as unknown as Request;
+		const journeyResponse = new JourneyResponse(JOURNEY_ID, 'case-id', answers);
+		const res = {
+			status(code: number) {
+				statusCode = code;
+				return res;
+			},
+			render: () => {},
+			locals: {
+				journey: createJourney(req, journeyResponse, createGateway3Questions('PLAN-001')),
+				journeyResponse
+			}
+		} as unknown as Response;
+
+		await handler(req, res, (() => {}) as NextFunction);
+
+		return { statusCode, locals: res.locals };
+	}
+
 	it('calls next when all required answers are present', () => {
 		const handler = buildValidateGateway3Submission();
 		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
@@ -769,41 +798,34 @@ describe('buildValidateGateway3Submission', () => {
 	});
 
 	it('renders the check your answers page with an error when required answers are missing', async () => {
-		const handler = buildValidateGateway3Submission();
-		const req = { params: { planReference: 'PLAN-001' }, session: {} } as unknown as Request;
-		let statusCode: number | undefined;
-		const res = {
-			status(code: number) {
-				statusCode = code;
-				return res;
-			},
-			render: () => {},
-			locals: {
-				journey: {
-					sections: [
-						{
-							name: 'Required Information',
-							segment: 'required-information',
-							getStatus: () => 'in-progress',
-							questions: []
-						}
-					],
-					isComplete: () => false,
-					taskListTemplate: 'views/layouts/main.njk',
-					journeyTitle: 'Gateway 3 submission'
-				},
-				journeyResponse: { answers: {} }
-			}
-		} as unknown as Response;
-		const next = () => {};
-
-		await handler(req, res, next as NextFunction);
+		const { statusCode, locals } = await validateMissingAnswers({});
 
 		assert.strictEqual(statusCode, 400);
-		assert.strictEqual(res.locals.errors?.submit?.text, 'Add all required documents before submitting');
-		assert.deepStrictEqual(res.locals.errorSummary, [
-			{ text: 'Add all required documents before submitting', href: '#required-information' }
+		assert.strictEqual(locals.errors?.submit?.text, 'Add all required documents before submitting');
+		assert.deepStrictEqual(locals.errorSummary, [
+			{ text: 'Add all required documents before submitting', href: '#procedural-documents' }
 		]);
+	});
+
+	it('links the error to the first section with a missing required answer', async () => {
+		const { locals: consultationLocals } = await validateMissingAnswers({
+			statementOfCompliance: [{}],
+			statementOfSoundness: [{}],
+			consultationProposedPlanSummary: [{}]
+		});
+
+		assert.strictEqual(consultationLocals.errorSummary?.[0]?.href, '#consultation-documents');
+
+		const { locals: planContentLocals } = await validateMissingAnswers({
+			statementOfCompliance: [{}],
+			statementOfSoundness: [{}],
+			consultationProposedPlanSummary: [{}],
+			consultationEngagementSummary: [{}],
+			scopingConsultationSummary: [{}],
+			consultationContentEvidenceSummary: [{}]
+		});
+
+		assert.strictEqual(planContentLocals.errorSummary?.[0]?.href, '#plan-content-evidence-and-background');
 	});
 });
 
@@ -853,7 +875,11 @@ describe('handleMulterFileSizeError', () => {
 	it('redirects with error when multer file size limit is exceeded', () => {
 		const err = new multer.MulterError('LIMIT_FILE_SIZE');
 		const req = {
-			params: { planReference: 'PLAN-001', section: 'required-information', question: 'proposed-local-plan' },
+			params: {
+				planReference: 'PLAN-001',
+				section: 'plan-content-evidence-and-background',
+				question: 'proposed-local-plan'
+			},
 			baseUrl: '/manage-local-plans',
 			session: {}
 		} as unknown as Request;

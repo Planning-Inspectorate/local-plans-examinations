@@ -7,6 +7,7 @@ import {
 	buildList,
 	buildSave,
 	buildSaveDataToSession,
+	type Journey,
 	JourneyResponse,
 	question,
 	type SaveDataFn,
@@ -21,7 +22,8 @@ import {
 	CHECK_ANSWERS_REDIRECTS,
 	createGateway3Questions,
 	GW3_FILE_UPLOAD_QUESTIONS,
-	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS
+	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS,
+	REQUIRED_GATEWAY_3_ITEM_TITLES
 } from './questions.ts';
 import {
 	getDocumentSetIdsByFolderName,
@@ -459,7 +461,8 @@ export function buildGateway3CheckAnswersList(): RequestHandler {
 	return (req, res, next) => {
 		const request = req as Gateway3Request;
 		return buildList({
-			pageCaption: request.currentCase?.planTitle
+			pageCaption: request.currentCase?.planTitle,
+			requiredItemTitles: REQUIRED_GATEWAY_3_ITEM_TITLES
 		})(req, res, next);
 	};
 }
@@ -712,6 +715,13 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 
 const GATEWAY_3_SUBMIT_ERROR = 'Add all required documents before submitting';
 
+const REQUIRED_GATEWAY_3_FIELD_NAMES = [
+	'examinationWebsite',
+	...gateway3RequiredFileUploadQuestionConfigs.map((question) => question.fieldName)
+];
+
+const REQUIRED_GATEWAY_3_FIELD_NAME_SET = new Set(REQUIRED_GATEWAY_3_FIELD_NAMES);
+
 function hasRequiredQuestionAnswer(answers: Record<string, unknown>, fieldName: string) {
 	const answer = answers[fieldName];
 	if (Array.isArray(answer)) {
@@ -724,11 +734,19 @@ function hasRequiredQuestionAnswer(answers: Record<string, unknown>, fieldName: 
 }
 
 function hasAllRequiredAnswers(answers: Record<string, unknown>) {
-	const requiredFieldNames = [
-		'examinationWebsite',
-		...gateway3RequiredFileUploadQuestionConfigs.map((q) => q.fieldName)
-	];
-	return requiredFieldNames.every((fieldName) => hasRequiredQuestionAnswer(answers, fieldName));
+	return REQUIRED_GATEWAY_3_FIELD_NAMES.every((fieldName) => hasRequiredQuestionAnswer(answers, fieldName));
+}
+
+function getFirstIncompleteRequiredSection(answers: Record<string, unknown>, journey: Journey | undefined) {
+	const section = journey?.sections.find((section) =>
+		section.questions.some(
+			(question) =>
+				REQUIRED_GATEWAY_3_FIELD_NAME_SET.has(question.fieldName) &&
+				!hasRequiredQuestionAnswer(answers, question.fieldName)
+		)
+	);
+
+	return section?.segment ?? 'ready-to-submit';
 }
 
 export function buildValidateGateway3Submission(): RequestHandler {
@@ -749,7 +767,7 @@ export function buildValidateGateway3Submission(): RequestHandler {
 		res.locals.errorSummary = [
 			{
 				text: GATEWAY_3_SUBMIT_ERROR,
-				href: '#required-information'
+				href: `#${getFirstIncompleteRequiredSection(answers, res.locals.journey as Journey | undefined)}`
 			}
 		];
 
