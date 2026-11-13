@@ -21,6 +21,7 @@ describe('Gateway 2 application page content', () => {
 			gateway2ApplicationPage.verifyBackLink(`/manage-local-plans/${plan.urlReference}`);
 			gateway2ApplicationPage.verifyCaption(plan.title);
 			gateway2ApplicationPage.verifyHeading('Gateway 2 submission');
+			gateway2ApplicationPage.verifyStatusTag(plan.readyToStart);
 			gateway2ApplicationPage.verifyMainContains(
 				'Gateway 2 is the next step in the development of your local plan.',
 				`You've provided the expected submission date of ${plan.dates.gateway2}. The assessment usually takes between 4 and 6 weeks from submission.`,

@@ -62,8 +62,9 @@ describe('Gateway 2 application page journeys', () => {
 			openGateway2DocumentUploadPage(planDetails, page);
 			page.dragAndDropAndVerifyFile('test-document.pdf');
 			page.saveAndReturn();
+			gateway2ApplicationPage.verifyStatusTag(plan.inProgress);
 			gateway2ApplicationPage.saveAndComeBackLink.click();
-			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, plan.status2);
+			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, plan.inProgress);
 		});
 	});
 });
