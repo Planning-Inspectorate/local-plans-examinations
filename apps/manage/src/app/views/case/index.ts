@@ -63,7 +63,7 @@ import {
 	createExaminationPauseJourney,
 	createGateway3ReportJourney,
 	createTimetableJourney,
-	createDeleteCaseJourney,
+	createDeleteCaseJourney
 } from './journey.ts';
 import multer from 'multer';
 import {
