@@ -1194,7 +1194,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 	},
 	examinationDocumentsCheck: {
 		type: CUSTOM_COMPONENTS.CUSTOM_EXAMINATION_DOCUMENTS_VIEW,
-		title: 'Documents',
+		title: 'Examination documents',
 		question: 'Examination documents',
 		fieldName: 'examinationDocuments',
 		url: 'examination-documents'

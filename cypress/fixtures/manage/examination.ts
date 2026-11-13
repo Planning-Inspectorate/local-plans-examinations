@@ -414,7 +414,7 @@ export type ExaminationSubmissionDocument = {
 };
 
 export const examinationDocuments = {
-	row: 'Documents',
+	row: 'Examination documents',
 	heading: 'Examination documents',
 	path: 'examination-documents',
 	websiteLabel: 'Examination website',
