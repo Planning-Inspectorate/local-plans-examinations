@@ -14,6 +14,8 @@ describe('Gateway 3 application page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');

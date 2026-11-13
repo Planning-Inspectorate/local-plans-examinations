@@ -16,6 +16,8 @@ describe('Gatway 3 resubmission complete page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verifying page content for the Gateway 3 resubmission complete page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ResubmissionSubmissionCompletePage.verifyLoaded();

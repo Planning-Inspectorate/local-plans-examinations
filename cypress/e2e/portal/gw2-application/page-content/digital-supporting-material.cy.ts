@@ -15,6 +15,8 @@ describe('Gateway 2 digital supporting materials page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verify page content for digital supporting materials page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway2ApplicationPage.clickAddLink(digitalSupportingMaterialPage.addCy);

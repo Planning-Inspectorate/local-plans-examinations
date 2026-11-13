@@ -6,6 +6,8 @@ describe('Portal cookie banner', () => {
 		cy.clearCookies();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('links to the cookies page', { tags: ['smoke'] }, () => {
 		portalHomePage.visit();
 		portalCookieBanner.verifyVisible();

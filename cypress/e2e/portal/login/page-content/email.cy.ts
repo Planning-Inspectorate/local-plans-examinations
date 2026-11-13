@@ -6,6 +6,8 @@ describe('Portal login email page', () => {
 		portalLoginEmailPage.visit();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('displays the sign-in page content', { tags: ['smoke'] }, () => {
 		portalLoginEmailPage.verifyHeading('Sign-in');
 		portalLoginEmailPage.verifyMainContains('What is your email address');

@@ -11,6 +11,8 @@ describe('Declaration page journeys', () => {
 		portalLogin();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Navigates to gateway 2 application when back link is clicked', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
 			portalDeclarationPage.visit(plan.urlReference);

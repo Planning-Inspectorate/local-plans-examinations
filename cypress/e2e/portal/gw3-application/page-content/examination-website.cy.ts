@@ -15,6 +15,8 @@ describe('Gateway 3 examination website page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verify page content for examination website page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.clickAddLink(examinationWebsitePage.addCy);

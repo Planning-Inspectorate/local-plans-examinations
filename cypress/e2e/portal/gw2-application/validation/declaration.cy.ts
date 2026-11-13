@@ -16,6 +16,8 @@ describe('Portal declaration page validation tests', () => {
 		portalLogin();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows an error when no checkbox has been selected', { tags: ['regression'] }, () => {
 		openDeclarationPage();
 		portalDeclarationPage.confirmAndSubmitButton.click();
