@@ -20,6 +20,8 @@ describe('Portal login journey', () => {
 		}
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
 		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');

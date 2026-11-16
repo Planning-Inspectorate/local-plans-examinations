@@ -19,6 +19,8 @@ describe('Examination document upload page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verify the page content for the local plan submission for examination page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			examinationPage.clickAddLink(localPlanSubmissionForExaminationPage.addCy);
