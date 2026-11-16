@@ -92,7 +92,7 @@ export class Gateway2ApplicationPage extends PortalPlanBasePage {
 		this.verifyDocumentSection(
 			this.planContentEvidenceBackgroundTable,
 			'Plan content, evidence and background',
-			gateway2ApplicationDocuments.PlanContentEvidenceBackground
+			gateway2ApplicationDocuments.planContentEvidenceBackground
 		);
 		this.verifySectionText(
 			this.planContentEvidenceBackgroundTable,

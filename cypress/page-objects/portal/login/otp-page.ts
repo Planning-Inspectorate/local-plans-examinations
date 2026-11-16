@@ -29,6 +29,10 @@ export class PortalLoginOtpPage extends BasePage {
 		this.otpInput.clear().type(code);
 	}
 
+	verifyRequestNewCodeLink() {
+		this.requestNewCodeLink.should('be.visible').and('have.attr', 'href', '/login/request-new-code');
+	}
+
 	clickRequestNewCode() {
 		this.requestNewCodeLink.click();
 	}
