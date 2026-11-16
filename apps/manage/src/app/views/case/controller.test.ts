@@ -782,7 +782,7 @@ describe('updateCaseHistory', () => {
 
 		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
 		assert.deepEqual(entries, [
-			{ event: 'Plan title updated from Old plan to New plan', username: CURRENT_USER },
+			{ event: 'Title updated from Old plan to New plan', username: CURRENT_USER },
 			{ event: 'First name updated from Jane to Joan', username: CURRENT_USER },
 			{ event: 'Email address updated to joan@example.com', username: CURRENT_USER }
 		]);
