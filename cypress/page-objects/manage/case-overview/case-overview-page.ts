@@ -1,7 +1,11 @@
 import {
 	localPlanningAuthority,
+	overviewDetailsRows,
 	overviewExpectedAnswers,
 	overviewSummaryRows,
+	planBand,
+	planTitle,
+	planType,
 	programmeOfficer,
 	seededCaseNotes
 } from '../../../fixtures/manage/overview.ts';
@@ -18,11 +22,11 @@ const serviceNavigationItems = [
 ];
 
 const actionLinkHrefs: Array<[string, RegExp]> = [
-	['Plan title', /^\/case\/.+\/overview\/case-details\/plan-title$/],
-	['Plan type', /^\/case\/.+\/overview\/case-details\/plan-type$/],
-	['Planning authorities', /^\/case\/.+\/overview\/case-details\/check-lpas$/],
+	[planTitle.row, /^\/case\/.+\/overview\/case-details\/plan-title$/],
+	[planType.row, /^\/case\/.+\/overview\/case-details\/plan-type$/],
+	[localPlanningAuthority.row, /^\/case\/.+\/overview\/case-details\/check-lpas$/],
 	['Case officer', /^\/case\/.+\/overview\/case-details\/case-officer$/],
-	['Plan band', /^\/case\/.+\/overview\/case-details\/plan-band$/],
+	[planBand.row, /^\/case\/.+\/overview\/case-details\/plan-band$/],
 	['Contact details', /^\/case\/.+\/overview\/contacts\/check-contact-details$/],
 	['Programme officer', /^\/case\/.+\/overview\/contacts\/programme-officer$/],
 	['Examination website', /^\/case\/.+\/overview\/contacts\/examination-website$/],
@@ -51,6 +55,10 @@ export class CaseOverviewPage extends BasePage {
 
 	get headerStatusTag() {
 		return cy.getByData('status-tag');
+	}
+
+	get overviewRowHeadings() {
+		return cy.getByData('overview-details').find('.govuk-summary-list__key');
 	}
 
 	get caseNotesDetails() {
@@ -158,6 +166,10 @@ export class CaseOverviewPage extends BasePage {
 	}
 
 	verifyExpectedSummaryRows() {
+		this.overviewRowHeadings.should('have.length', overviewDetailsRows.length).each(($key, index) => {
+			expect($key.text().trim()).to.equal(overviewDetailsRows[index].row);
+		});
+
 		overviewSummaryRows.forEach(({ row }) => {
 			this.verifySummaryRows(row);
 		});

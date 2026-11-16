@@ -149,7 +149,8 @@
                   {% else %}
                     {% if section.list.rows.length %}
                       {{ govukSummaryList({
-                            rows: formattedRows
+                            rows: formattedRows,
+                            attributes: { "data-cy": "overview-details" } if section.heading == 'Overview' else {}
                         })
                       }}
                     {% endif %}
