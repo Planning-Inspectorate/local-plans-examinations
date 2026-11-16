@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { questions } from './questions.ts';
+import type { Request } from 'express';
+import type { ManageService } from '#service';
+import { getQuestions, questions } from './questions.ts';
 import { validationResult } from 'express-validator';
 
 async function validate(key: string, body: Record<string, unknown>) {
@@ -12,6 +14,31 @@ async function validate(key: string, body: Record<string, unknown>) {
 	}
 	return validationResult(req).mapped();
 }
+
+describe('Overview planning authority label', () => {
+	for (const [lpaCount, title] of [
+		[1, 'Planning authority'],
+		[2, 'Planning authorities']
+	] as const) {
+		it(`uses ${title} for ${lpaCount} linked authorities`, async (t) => {
+			const originalTitle = questions.checkLpas.title;
+			const originalOptions = questions.lpa.options;
+			t.after(() => {
+				questions.checkLpas.title = originalTitle;
+				questions.lpa.options = originalOptions;
+			});
+			const service = {
+				authDisabled: true,
+				db: { case: { findUnique: async () => ({ _count: { lpas: lpaCount } }) } }
+			} as unknown as ManageService;
+			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
+
+			const result = await getQuestions(service, req);
+
+			assert.equal(result.checkLpas.title, title);
+		});
+	}
+});
 
 describe('Gateway 2 workshop question summaries', () => {
 	function formatWorkshopDate(workshopDate: string, workshopEndTime: string | null = null) {

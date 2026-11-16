@@ -16,10 +16,7 @@ export const ERROR_MESSAGES = {
 
 	INCORRECT_CODE_SUMMARY: 'The code you entered is incorrect',
 
-	// Declaration page
-
 	THERE_IS_A_PROBLEM: 'There is a problem',
-	DECLARATIONS_NOT_CONFIRMED: 'You must confirm both declarations before you can submit your application.',
 
 	//Gateway 2 application page
 

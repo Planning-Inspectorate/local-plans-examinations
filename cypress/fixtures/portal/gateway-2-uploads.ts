@@ -10,15 +10,15 @@ type Gateway2UploadAnswer = {
 
 export const gateway2UploadAnswers = {
 	coveringLetter: {
-		heading: 'Upload your Gateway 2 covering letter',
+		heading: 'Upload your Gateway 2 cover letter',
 		caption: 'Procedural documents',
 		fieldName: 'gateway2CoverLetter',
 		path: 'covering-letter',
 		section: 'procedural',
-		addCy: 'add-gateway-2-covering-letter'
+		addCy: 'add-gateway-2-cover-letter'
 	},
 	localPlanTimetable: {
-		heading: 'Upload local plan timetable',
+		heading: 'Upload your local plan timetable',
 		caption: 'Procedural documents',
 		fieldName: 'localPlanTimetable',
 		path: 'local-plan-timetable',
@@ -41,13 +41,13 @@ export const gateway2UploadAnswers = {
 		section: 'consultation',
 		addCy: 'add-notice-of-intention-to-commence-local-plan-preparation'
 	},
-	subsequentWorkTowardsDraftPlan: {
-		heading: 'Upload any subsequent work towards a draft plan',
-		caption: 'Additional documents',
-		fieldName: 'subsequentWorkTowardsADraftPlan',
-		path: 'subsequent-work-towards-a-draft-plan',
-		section: 'additional',
-		addCy: 'add-subsequent-work-towards-a-draft-plan'
+	evidenceOnEngagement: {
+		heading: 'Upload our evidence on engagement between plan making authorities and relevant bodies',
+		caption: 'Consultation documents',
+		fieldName: 'evidenceOnEngagement',
+		path: 'evidence-on-engagement',
+		section: 'consultation',
+		addCy: 'add-evidence-on-engagement-between-plan-making-authorities-and-relevant-bodies'
 	},
 	planContent: {
 		heading: 'Upload plan content documents',
@@ -91,7 +91,7 @@ export const gateway2UploadAnswers = {
 
 export const gateway2ApplicationDocuments = {
 	procedural: [
-		{ document: 'Gateway 2 covering letter', addCy: gateway2UploadAnswers.coveringLetter.addCy },
+		{ document: 'Gateway 2 cover letter', addCy: gateway2UploadAnswers.coveringLetter.addCy },
 		{ document: 'Local plan timetable', addCy: gateway2UploadAnswers.localPlanTimetable.addCy },
 		{ document: 'Project initiation document', addCy: 'add-project-initiation-document' },
 		{ document: 'Draft statement of compliance', addCy: 'add-draft-statement-of-compliance' },
@@ -102,19 +102,29 @@ export const gateway2ApplicationDocuments = {
 			document: 'Notice of intention to commence local plan preparation',
 			addCy: gateway2UploadAnswers.noticeOfIntentionToCommenceLocalPlan.addCy
 		},
-		{ document: 'Scoping consultation documents', addCy: 'add-scoping-consultation-documents' },
 		{
-			document: 'Consultation summary of feedback to scoping consultation',
-			addCy: 'add-consultation-summary-of-feedback-to-scoping-consultation'
+			document: 'Scoping consultation documents',
+			addCy: 'add-scoping-consultation-documents'
+		},
+		{
+			document: 'Summary of scoping consultation feedback',
+			addCy: 'add-summary-of-scoping-consultation-feedback'
+		},
+		{
+			document: 'Gateway 1 self-assessment',
+			addCy: 'add-gateway-1-self-assessment'
+		},
+		{
+			document: 'Consultation on proposed local plan content and evidence',
+			addCy: 'add-consultation-proposed-content'
 		},
 		{
 			document: 'Summary of consultation on proposed local plan content and evidence',
-			addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence-documents'
+			addCy: 'add-summary-of-consultation-on-proposed-local-plan-content-and-evidence'
 		},
-		{ document: 'Gateway 1 - Self Assessment of Readiness', addCy: 'add-gateway-1-self-assessment' },
 		{
-			document: 'Consultation on proposed local plan content and evidence documents',
-			addCy: 'add-consultation-proposed-content'
+			document: 'Evidence on engagement between plan-making authorities and relevant bodies',
+			addCy: 'add-evidence-on-engagement-between-plan-making-authorities-and-relevant-bodies'
 		}
 	],
 	PlanContentEvidenceBackground: [
@@ -122,12 +132,6 @@ export const gateway2ApplicationDocuments = {
 		{ document: 'Digital supporting material', addCy: 'add-digital-supporting-material' },
 		{ document: 'Evidence and progress', addCy: gateway2UploadAnswers.evidenceAndProgress.addCy },
 		{ document: 'Latest policies map', addCy: 'add-latest-policies-map' }
-	],
-	additional: [
-		{
-			document: 'Subsequent work towards a draft Plan',
-			addCy: gateway2UploadAnswers.subsequentWorkTowardsDraftPlan.addCy
-		}
 	]
 };
 

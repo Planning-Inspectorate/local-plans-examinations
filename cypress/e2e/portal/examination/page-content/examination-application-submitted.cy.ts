@@ -23,7 +23,7 @@ describe('Examination application page content after submission', () => {
 			examinationPage.visit(plan.urlReference);
 			examinationPage.verifyLoaded();
 
-			examinationPage.verifyStatusTag(plan.status5);
+			examinationPage.verifyStatusTag(plan.submitted);
 			examinationPage.verifySubmissionData(todayDisplay, 'test@planninginspectorate.gov.uk');
 
 			examinationPage.verifySubHeading('Documents');

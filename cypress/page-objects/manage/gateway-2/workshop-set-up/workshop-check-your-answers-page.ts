@@ -25,7 +25,7 @@ export class WorkshopCYAPage extends BasePage {
 	}
 
 	submitWorkshop() {
-		this.submitButton.should('be.visible').click();
+		this.submitButton.should('be.visible').should('contain.text', 'Set up workshop').click();
 	}
 
 	openChangeLinkFor(key: string) {

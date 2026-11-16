@@ -1,6 +1,6 @@
 export const verifyGateway2WorkshopInPortal = (
 	reference: string,
-	workshopVenue: string,
+	workshopVenue: string[],
 	workshopDateandTime: string,
 	workshopDocuments: string[] = []
 ) => {
@@ -22,19 +22,22 @@ export const verifyGateway2WorkshopInPortal = (
 				.contains('a', 'Gateway 2')
 				.click();
 			cy.location('pathname').should('include', `/manage-local-plans/${reference}/gateway-2-submission`);
+			cy.get('[data-cy="gateway-2-workshop-section"]').contains('h2', 'Workshop').should('be.visible');
 
-			cy.contains('.govuk-summary-list__key', 'Workshop venue')
+			cy.contains('.govuk-summary-list__key', 'Venue')
 				.closest('.govuk-summary-list__row')
 				.find('.govuk-summary-list__value')
-				.should('contain.text', workshopVenue);
+				.then(($venue) => {
+					workshopVenue.forEach((line) => expect($venue.text()).to.contain(line));
+				});
 
-			cy.contains('.govuk-summary-list__key', 'Workshop date and time')
+			cy.contains('.govuk-summary-list__key', 'Start time')
 				.closest('.govuk-summary-list__row')
 				.find('.govuk-summary-list__value')
 				.should('contain.text', workshopDateandTime);
 
 			if (workshopDocuments.length > 0) {
-				cy.contains('.govuk-summary-list__key', 'Workshop documents')
+				cy.contains('.govuk-summary-list__key', 'Documents')
 					.closest('.govuk-summary-list__row')
 					.find('.govuk-summary-list__value')
 					.within(() => {
@@ -47,6 +50,10 @@ export const verifyGateway2WorkshopInPortal = (
 				cy.contains('.govuk-task-list__item', 'Gateway 2')
 					.find('.govuk-task-list__status')
 					.should('contain.text', 'Under review');
+			} else {
+				cy.get('[data-cy="gateway-2-workshop-section"]')
+					.contains('.govuk-summary-list__key', 'Documents')
+					.should('not.exist');
 			}
 		}
 	);

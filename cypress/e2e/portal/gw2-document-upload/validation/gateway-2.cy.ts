@@ -4,7 +4,7 @@ import {
 	gateway2CoverLetterPage,
 	localPlanTimetablePage,
 	noticeOfIntentionToCommenceLocalPlanPage,
-	subsequentWorkTowardsDraftPlanPage
+	evidenceOnEngagementPage
 } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
@@ -75,11 +75,11 @@ describe('Gateway 2 document upload validation tests', () => {
 	);
 
 	it(
-		'Shows error message when the subsequent work towards a draft plan file type is not allowed',
+		'Shows error message when the evidence on engagement page file type is not allowed',
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = subsequentWorkTowardsDraftPlanPage;
+				const page = evidenceOnEngagementPage;
 				openGateway2DocumentUploadPage(plan, page);
 				page.verifyInvalidFileTypeError();
 			});
@@ -87,11 +87,11 @@ describe('Gateway 2 document upload validation tests', () => {
 	);
 
 	it(
-		'Shows error message when no file is uploaded to the subsequent work towards a draft plan',
+		'Shows error message when no file is uploaded to the evidence on engagement page',
 		{ tags: ['regression'] },
 		() => {
 			loadPlanDetails().then((plan) => {
-				const page = subsequentWorkTowardsDraftPlanPage;
+				const page = evidenceOnEngagementPage;
 				openGateway2DocumentUploadPage(plan, page);
 				page.verifyNoFileUploadedError();
 			});
