@@ -28,14 +28,10 @@
         {% for section in summaryListData.sections %}
             {% if section.list.rows.length %}
                 {% set sectionHeading = section.heading %}
-                {% if section.heading === 'Required Information' %}
-                    {% set sectionHeading = 'Required information' %}
-                {% elif section.heading === 'Optional Documents' %}
-                    {% set sectionHeading = 'Optional documents' %}
-                {% endif %}
-                <div class="govuk-!-margin-bottom-8" data-cy="{{ sectionHeading | lower | replace(' ', '-') }}-section">
-                    <h2 class="govuk-heading-m" id="{{ sectionHeading | lower | replace(' ', '-') }}">{{ sectionHeading }}</h2>
-                    <table class="govuk-table" data-cy="{{ sectionHeading | lower | replace(' ', '-') }}-table">
+                {% set sectionId = sectionHeading | lower | replace(',', '') | replace(' ', '-') %}
+                <div class="govuk-!-margin-bottom-8" data-cy="{{ sectionId }}-section">
+                    <h2 class="govuk-heading-m" id="{{ sectionId }}">{{ sectionHeading }}</h2>
+                    <table class="govuk-table" data-cy="{{ sectionId }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
                                 <th scope="col" class="govuk-table__header govuk-visually-hidden govuk-!-width-one-third">Document</th>
