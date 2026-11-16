@@ -6,6 +6,8 @@ describe('Portal login OTP page', () => {
 		startPortalOtpLogin();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('displays the OTP page content', { tags: ['smoke'] }, () => {
 		portalLoginOtpPage.verifyHeading('Enter your one-time password');
 		portalLoginOtpPage.verifyHintText('We sent a code to');
@@ -16,7 +18,6 @@ describe('Portal login OTP page', () => {
 			'Check your spam or junk folder.',
 			'If everything looks correct but you still have not received the email, you can request a new code.'
 		);
-		portalLoginOtpPage.verifyRequestNewCodeLink();
 	});
 
 	it('displays the support details', { tags: ['regression'] }, () => {

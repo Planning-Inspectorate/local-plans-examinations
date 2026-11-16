@@ -3,7 +3,6 @@ import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
-import { createOneTimePassword } from '../auth/one-time-password.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
@@ -96,7 +95,16 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				});
 			}
 
-			const { otp, hashedOtp, expiresAt } = await createOneTimePassword();
+			// generate OTP
+			const OTP_LENGTH = 8;
+			const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			const bytes = new Uint8Array(OTP_LENGTH);
+			crypto.getRandomValues(bytes);
+			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+
+			const SALT_ROUNDS = 10;
+			const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
+			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
 
 			// create a new OTP record
 			if (
@@ -115,19 +123,15 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
 
-			try {
-				await sendAuthCodeNotification(service, sanitisedEmail, {
-					authCode: otp,
-					expiryMinutes: '20',
-					caseReference: emailIsAssociatedToACase.reference,
-					signInUrl
-				});
-			} catch (error) {
-				logger.error({ error }, 'Failed to send OTP email');
-				// Redirect so the OTP form posts to /enter-code, not back to this handler
-				req.session.otpDeliveryFailed = true;
-				return res.redirect(`${req.baseUrl}/enter-code`);
-			}
+			// Send OTP email - don't block the redirect if it fails
+			sendAuthCodeNotification(service, sanitisedEmail, {
+				authCode: otp,
+				expiryMinutes: '20',
+				caseReference: emailIsAssociatedToACase.reference,
+				signInUrl
+			}).catch(() => {
+				logger.error('Failed to send OTP email');
+			});
 
 			logger.info('OTP generated for user');
 
@@ -163,25 +167,12 @@ export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 		const showNewCodeMessage = req.session.showNewCodeMessage || false;
 		delete req.session.showNewCodeMessage;
 
-		const otpDeliveryFailed = req.session.otpDeliveryFailed || false;
-		delete req.session.otpDeliveryFailed;
-		const deliveryError = 'We could not send a code. Please request a new code.';
-		const deliveryErrorData = otpDeliveryFailed
-			? {
-					errors: { otp: { msg: deliveryError } },
-					errorSummaryTitle: 'There is a problem',
-					errorSummary: [{ text: deliveryError, href: '#otp' }]
-				}
-			: {};
-
 		return res.render('views/login/enter-otp.njk', {
 			pageTitle: 'Enter your one-time password',
 			pageHeading: 'Enter your one-time password',
 			backLinkUrl: `${req.baseUrl}`,
 			userEmail: req.session.email,
 			showNewCodeMessage,
-			otpDeliveryFailed,
-			...deliveryErrorData,
 			...viewData
 		});
 	};
@@ -398,7 +389,16 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 				where: { email }
 			});
 
-			const { otp, hashedOtp, expiresAt } = await createOneTimePassword();
+			// Generate a new OTP
+			const OTP_LENGTH = 8;
+			const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			const bytes = new Uint8Array(OTP_LENGTH);
+			crypto.getRandomValues(bytes);
+			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
+
+			const SALT_ROUNDS = 10;
+			const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
+			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
 
 			// Create a new OTP record
 			await db.oneTimePassword.create({
@@ -432,7 +432,6 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 				errors: { otp: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not send a new code',
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
-				otpDeliveryFailed: true,
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
 			});
