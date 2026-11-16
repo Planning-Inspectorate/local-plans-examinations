@@ -239,7 +239,6 @@ describe('sendNotifyEmail examination templates', () => {
 	for (const { templateKey, expectedTemplateId } of examinationTemplates) {
 		it(`sends the ${templateKey} template once to each unique LPA contact`, async () => {
 			const { service, sendEmail } = createService();
-			console.log(process.env);
 
 			await sendNotifyEmail(service, reference, templateKey);
 
