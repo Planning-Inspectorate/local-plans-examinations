@@ -112,7 +112,6 @@ export const sendNotifyEmail = async (
 	options: SendNotifyEmailOptions = {}
 ) => {
 	const config = getNotifyConfig(service);
-	console.log(config);
 	if (!config) return;
 	if (config?.disabled) return;
 
