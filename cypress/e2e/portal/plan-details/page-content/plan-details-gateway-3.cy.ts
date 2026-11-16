@@ -18,7 +18,7 @@ describe('Plan details page content for gateway 3', () => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
-			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status3);
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.underReview);
 		});
 	});
 
@@ -28,7 +28,11 @@ describe('Plan details page content for gateway 3', () => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
-			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.status4);
+			planDetailsPage.verifyProgressRow(
+				'Gateway 3',
+				`Submission expected: ${plan.dates.gateway3}`,
+				plan.resubmissionRequired
+			);
 		});
 	});
 });

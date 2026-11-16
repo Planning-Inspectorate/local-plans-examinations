@@ -754,7 +754,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan title?',
 		fieldName: 'planTitle',
 		url: 'plan-title',
-		title: 'Plan title',
+		title: 'Title',
 		validators: [new RequiredValidator('Enter a plan title')]
 	},
 	deleteCaseWhy: {
@@ -777,7 +777,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan band?',
 		fieldName: 'planBand',
 		url: 'plan-band',
-		title: 'Plan band',
+		title: 'Band',
 		validators: [new RequiredValidator('Select a plan band')]
 	},
 	planType: {
@@ -789,7 +789,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan type?',
 		fieldName: 'planType',
 		url: 'plan-type',
-		title: 'Plan type',
+		title: 'Type',
 		validators: [new RequiredValidator('Select a plan type')]
 	},
 	lpa: {
@@ -844,30 +844,35 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'firstName',
 				label: 'First name',
+				title: 'First name',
 				attributes: { 'data-cy': 'contact-first-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'lastName',
 				label: 'Last name',
+				title: 'Last name',
 				attributes: { 'data-cy': 'contact-last-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'email',
 				label: 'Email address',
+				title: 'Email address',
 				attributes: { 'data-cy': 'contact-email' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'phone',
 				label: 'Phone number (optional)',
+				title: 'Phone number',
 				attributes: { 'data-cy': 'contact-phone' }
 			},
 			{
 				type: COMPONENT_TYPES.RADIO,
 				fieldName: 'lpaContact',
 				legend: 'Select the organisation for this contact',
+				title: 'Planning authority',
 				options: []
 			}
 		],
@@ -1695,6 +1700,10 @@ Object.keys(examinationHearingQuestions).forEach((key) => {
 	questions[key].continueButtonText = 'Continue';
 });
 
+Object.keys(gateway2WorkshopQuestions).forEach((key) => {
+	questions[key].continueButtonText = 'Continue';
+});
+
 // The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
@@ -1728,6 +1737,23 @@ export async function getQuestions(
 	req: Request
 ): Promise<Record<string, ManageQuestionConfig>> {
 	await updateQuestionsWithOptions(service, req, questions);
+
+	const rawReference = req.params?.reference;
+	const reference = Array.isArray(rawReference) ? rawReference[0] : rawReference;
+
+	let lpaCount = 0;
+
+	if (reference) {
+		const currentCase = await service.db.case.findUnique({
+			where: { reference },
+			select: { _count: { select: { lpas: true } } }
+		});
+
+		lpaCount = currentCase ? currentCase._count.lpas : 0;
+	}
+
+	questions.checkLpas.title = lpaCount > 1 ? 'Planning authorities' : 'Planning authority';
+
 	return questions;
 }
 

@@ -20,10 +20,6 @@ export class ExaminationPage extends PortalPlanBasePage {
 		return cy.getByData('save-and-come-back');
 	}
 
-	get statusTag() {
-		return cy.get('.govuk-tag');
-	}
-
 	get checkTheGuidanceLink() {
 		return cy.get('.govuk-inset-text .govuk-link');
 	}
@@ -47,10 +43,6 @@ export class ExaminationPage extends PortalPlanBasePage {
 	verifyLoaded() {
 		super.verifyLoaded();
 		this.verifyHeading(examinationHeading);
-	}
-
-	verifyStatusTag(status: string) {
-		this.statusTag.should('be.visible').and('contain.text', status);
 	}
 
 	verifyExaminationReportDownloads(fileName: string, issuedDate: string) {

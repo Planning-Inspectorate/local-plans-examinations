@@ -29,6 +29,6 @@ export function createGw2DocumentQuestions(questions: Record<string, Question>):
 		questions.consultationSummaryProposedContent,
 		questions.gateway1SelfAssessment,
 		questions.consultationOnProposedContent,
-		questions.subsequentWorkTowardsADraftPlan
+		questions.evidenceOnEngagement
 	];
 }

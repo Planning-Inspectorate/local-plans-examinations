@@ -16,15 +16,9 @@ describe('Declaration page content', () => {
 			portalDeclarationPage.verifyLoaded();
 			portalDeclarationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			portalDeclarationPage.verifyBackLink(gateway2ApplicationPage.pathFor(plan.urlReference));
-			portalDeclarationPage.verifyMainContains(
-				'Your application',
-				'Your declaration will be linked to the email address you used to sign in. This helps us identify who submitted the application.',
-				'By submitting this application, I confirm that:',
-				'To the best of my knowledge, the information given in this application and enclosed maps, plans and other documents are true.',
-				`I have read and agree to The Planning Inspectorate's privacy note`
-			);
-			portalDeclarationPage.verifyPrivacyNoteLink();
-			portalDeclarationPage.verifyConfirmAndSubmitButton();
+			portalDeclarationPage.verifyMainContains("This can't be undone.");
+			portalDeclarationPage.verifyConfirmSubmissionButton();
+			portalDeclarationPage.verifyNoGoBackLink(plan.urlReference);
 		});
 	});
 });

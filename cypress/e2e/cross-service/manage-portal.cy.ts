@@ -54,7 +54,7 @@ describe('Cross-service Manage and Portal', () => {
 			gateway2ApplicationPage.verifyLoaded();
 			gateway2ApplicationPage.verifyDocumentRowContains(
 				gateway2ApplicationPage.proceduralDocumentsTable,
-				'Gateway 2 covering letter',
+				'Gateway 2 cover letter',
 				fileName
 			);
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
@@ -71,16 +71,14 @@ describe('Cross-service Manage and Portal', () => {
 			gateway2ApplicationPage.verifyLoaded();
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
 			portalDeclarationPage.verifyLoaded();
-			portalDeclarationPage.confirmInformationCheckbox.check();
-			portalDeclarationPage.privacyNoteCheckbox.check();
-			portalDeclarationPage.confirmAndSubmitButton.click();
+			portalDeclarationPage.confirmSubmissionButton.click();
 			applicationCompletePage.verifyLoaded();
 
 			cy.origin(Cypress.env('manageBaseUrl'), { args: { reference, fileName } }, ({ reference, fileName }) => {
 				cy.visit(`/case/${encodeURIComponent(reference)}/gateway-2`);
 				cy.contains('.govuk-summary-list__row', 'Submission documents').contains('a', 'Review').click();
 				cy.contains('h1', 'Submitted GW2 documents').should('be.visible');
-				cy.contains('.govuk-summary-list__row', 'Gateway 2 covering letter')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter')
 					.contains('.govuk-summary-list__value a', fileName)
 					.should('be.visible');
 			});
@@ -101,14 +99,12 @@ describe('Cross-service Manage and Portal', () => {
 			gateway2ApplicationPage.verifyLoaded();
 			gateway2ApplicationPage.verifyDocumentRowContains(
 				gateway2ApplicationPage.proceduralDocumentsTable,
-				'Gateway 2 covering letter',
+				'Gateway 2 cover letter',
 				fileName
 			);
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
 			portalDeclarationPage.verifyLoaded();
-			portalDeclarationPage.confirmInformationCheckbox.click();
-			portalDeclarationPage.privacyNoteCheckbox.click();
-			portalDeclarationPage.confirmAndSubmitButton.click();
+			portalDeclarationPage.confirmSubmissionButton.click();
 
 			GW2UpdateFileUploadedFromFO(portalPlanReference, fileName, updatedFileName, filePath);
 		});

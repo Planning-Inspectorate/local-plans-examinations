@@ -54,9 +54,9 @@
 
 			{# When no introduction heading, pass hint into the component so it renders after the visible label #}
 			{% if not question.text.introduction and question.text.fileRequirementsText %}
-				{% set fileUploadHintConfig = { 
+				{% set fileUploadHintConfig = {
 				text: question.text.fileRequirementsText,
-				attributes: { 'data-cy': 'file-requirements-hint' } 
+				attributes: { 'data-cy': 'file-requirements-hint' }
 			} %}
 			{% endif %}
 

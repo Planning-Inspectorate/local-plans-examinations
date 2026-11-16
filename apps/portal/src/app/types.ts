@@ -88,9 +88,9 @@ export const docTitleLabel: Record<DocTitle, string> = {
 	7: 'Consultation summary for proposed local plan content and evidence documents',
 	8: 'Notice of intention to commence local plan preparation',
 	9: 'Scoping consultation documents',
-	10: 'Consultation summary of feedback to scoping consultation',
+	10: 'Summary of scoping consultation feedback',
 	11: 'Gateway 1 Self assessment of readiness',
-	12: 'Consultation on proposed local plan content and evidence documents',
+	12: 'Consultation on proposed local plan content and evidence',
 	13: 'Summary of consultation responses',
 
 	14: 'Accept declaration and submit' //Submit

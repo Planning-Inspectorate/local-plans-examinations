@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import { buildGetDeclarationPage, buildPostDeclarationPage } from './controller.ts';
 import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
 import type { PortalService } from '#service';
+import { configureNunjucks } from '../../../../nunjucks.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
 process.env.SESSION_SECRET = 'not-a-real-secret';
@@ -68,10 +69,10 @@ function createMockService() {
 						]
 					};
 				},
-				update: async () => ({})
+				update: mock.fn(async () => ({}))
 			},
 			gateway2Info: {
-				update: async () => ({})
+				update: mock.fn(async () => ({}))
 			},
 			documentSet: {
 				findMany: mock.fn(async ({ where }: { where: { folderName: { in: string[] } } }) =>
@@ -105,25 +106,48 @@ describe('buildGetDeclarationPage', () => {
 		assert.equal(renderCalls.length, 1);
 		assert.equal(renderCalls[0][0], VIEW_PATH);
 		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.equal(model.pageTitle, 'Review declaration');
-		assert.equal(model.pageHeading, 'Review declaration');
-		assert.equal(model.pageCaption, 'Your application');
+		assert.equal(model.pageTitle, "Are you sure you're ready to submit?");
+		assert.equal(model.pageHeading, "Are you sure you're ready to submit?");
 		assert.equal(model.backLinkUrl, '/manage-local-plans/PLAN-123456/gateway-2-submission');
+		assert.equal(model.goBackUrl, model.backLinkUrl);
+	});
+
+	it('renders the declaration confirmation content and return link', async () => {
+		const { req, res, renderCalls } = createReq();
+		await buildGetDeclarationPage()(req, res);
+
+		const html = configureNunjucks().render(VIEW_PATH, {
+			...(renderCalls[0][1] as Record<string, unknown>),
+			_csrf: 'test-csrf-token',
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('Are you sure you&#39;re ready to submit?'));
+		assert.ok(html.includes("This can't be undone."));
+		assert.ok(html.includes('Yes, confirm submission'));
+		assert.ok(html.includes('No, go back'));
+		assert.ok(html.includes('href="/manage-local-plans/PLAN-123456/gateway-2-submission"'));
+		assert.ok(html.includes('name="_csrf" value="test-csrf-token"'));
+		assert.ok(!html.includes('type="checkbox"'));
 	});
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('redirects to application-complete when both checkboxes are checked', async () => {
+	it('submits without checkbox input and redirects to confirmation', async (context) => {
+		context.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-09T12:00:00.000Z') });
 		const service = createMockService();
 		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls, renderCalls } = createReq({
-			body: { declaration: ['informationTrue', 'privacyNotice'] }
-		});
+		const { req, res, redirectCalls, renderCalls } = createReq();
 
 		await handler(req, res);
 
 		assert.equal(redirectCalls.length, 1);
-		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2-submission/application-complete');
+		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2/confirmation');
 		assert.equal(renderCalls.length, 0);
 
 		assert.equal(service.sendCalls.length, 1);
@@ -134,7 +158,7 @@ describe('buildPostDeclarationPage', () => {
 			authority_name: 'Test Planning Authority',
 			contact_info: 'team@email.co.uk',
 			planType: 'plan type',
-			workshopWeekMonday: 'workshop week monday',
+			workshopWeekMonday: '11 November 2026',
 			teamEmailAddress: 'team email address',
 			teamPhone: 'team phone'
 		});
@@ -144,9 +168,7 @@ describe('buildPostDeclarationPage', () => {
 	it('commits the temporary Gateway 2 documents in the same transaction as the submission', async () => {
 		const service = createMockService();
 		const handler = buildPostDeclarationPage(service);
-		const { req, res } = createReq({
-			body: { declaration: ['informationTrue', 'privacyNotice'] }
-		});
+		const { req, res } = createReq();
 
 		await handler(req, res);
 
@@ -155,6 +177,12 @@ describe('buildPostDeclarationPage', () => {
 		assert.deepEqual(db.documentSet.findMany.mock.calls[0].arguments[0].where.folderName.in, [...new Set(folderNames)]);
 		assert.equal(db.$transaction.mock.callCount(), 1);
 		assert.equal(db.$transaction.mock.calls[0].arguments[0].length, 3);
+		const submissionDate = db.case.update.mock.calls[0].arguments[0].data.submissionDate;
+		assert.ok(submissionDate instanceof Date);
+		assert.deepEqual(db.gateway2Info.update.mock.calls[0].arguments[0], {
+			where: { caseId: 'case-1' },
+			data: { actualDate: submissionDate }
+		});
 		assert.deepEqual(db.document.updateMany.mock.calls[0].arguments[0], {
 			where: {
 				caseId: 'case-1',
@@ -171,9 +199,7 @@ describe('buildPostDeclarationPage', () => {
 		const db = service.db as any;
 		db.documentSet.findMany.mock.mockImplementation(async () => []);
 		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls } = createReq({
-			body: { declaration: ['informationTrue', 'privacyNotice'] }
-		});
+		const { req, res, redirectCalls } = createReq();
 		const statusCalls: number[] = [];
 		const sendCalls: unknown[] = [];
 		res.status = ((code: number) => {
@@ -193,99 +219,5 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(db.$transaction.mock.callCount(), 0);
 		assert.equal(service.sendCalls.length, 0);
 		assert.equal(service.errorCalls.length, 1);
-	});
-
-	it('renders error when no checkboxes are checked', async () => {
-		const service = createMockService();
-		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls, renderCalls } = createReq({
-			body: {}
-		});
-
-		await handler(req, res);
-
-		assert.equal(redirectCalls.length, 0);
-		assert.equal(renderCalls.length, 1);
-		assert.equal(renderCalls[0][0], VIEW_PATH);
-		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.ok(model.errorSummary);
-		assert.ok(model.errors);
-	});
-
-	it('renders error when only informationTrue is checked', async () => {
-		const service = createMockService();
-		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls, renderCalls } = createReq({
-			body: { declaration: ['informationTrue'] }
-		});
-
-		await handler(req, res);
-
-		assert.equal(redirectCalls.length, 0);
-		assert.equal(renderCalls.length, 1);
-		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.ok(model.errors);
-	});
-
-	it('renders error when only privacyNotice is checked', async () => {
-		const service = createMockService();
-		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls, renderCalls } = createReq({
-			body: { declaration: ['privacyNotice'] }
-		});
-
-		await handler(req, res);
-
-		assert.equal(redirectCalls.length, 0);
-		assert.equal(renderCalls.length, 1);
-		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.ok(model.errors);
-	});
-
-	it('handles single checkbox value as a string (not array)', async () => {
-		const service = createMockService();
-		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls, renderCalls } = createReq({
-			body: { declaration: 'informationTrue' }
-		});
-
-		await handler(req, res);
-
-		assert.equal(redirectCalls.length, 0);
-		assert.equal(renderCalls.length, 1);
-		const model = renderCalls[0][1] as Record<string, unknown>;
-		assert.ok(model.errors);
-		const formValues = model.formValues as Record<string, boolean>;
-		assert.equal(formValues.informationTrue, true);
-		assert.equal(formValues.privacyNotice, false);
-	});
-
-	it('preserves checked state in formValues on error', async () => {
-		const service = createMockService();
-		const handler = buildPostDeclarationPage(service);
-		const { req, res, renderCalls } = createReq({
-			body: { declaration: ['informationTrue'] }
-		});
-
-		await handler(req, res);
-
-		const model = renderCalls[0][1] as Record<string, unknown>;
-		const formValues = model.formValues as Record<string, boolean>;
-		assert.equal(formValues.informationTrue, true);
-		assert.equal(formValues.privacyNotice, false);
-	});
-
-	it('error message matches acceptance criteria', async () => {
-		const service = createMockService();
-		const handler = buildPostDeclarationPage(service);
-		const { req, res, renderCalls } = createReq({
-			body: {}
-		});
-
-		await handler(req, res);
-
-		const model = renderCalls[0][1] as Record<string, unknown>;
-		const errorSummary = model.errorSummary as Array<{ text: string }>;
-		assert.equal(errorSummary[0].text, 'You must confirm both declarations before you can submit your application.');
 	});
 });

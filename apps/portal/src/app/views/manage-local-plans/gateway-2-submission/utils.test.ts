@@ -8,12 +8,31 @@ import {
 import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { createFileUploadQuestion, getRoutePlanReference } from './utils.ts';
+import { createFileUploadQuestion, getRoutePlanReference, getWorkshopWeekMonday } from './utils.ts';
+
+describe('getWorkshopWeekMonday', () => {
+	for (const [submissionDate, expected] of [
+		['2026-11-09T12:00:00.000Z', '11 November 2026'],
+		['2026-11-13T12:00:00.000Z', '15 November 2026'],
+		['2026-12-31T12:00:00.000Z', '2 January 2027']
+	]) {
+		it(`adds two calendar days to ${submissionDate} without adjusting to Monday`, () => {
+			const date = new Date(submissionDate);
+			assert.equal(getWorkshopWeekMonday(date), expected);
+			assert.equal(date.toISOString(), submissionDate);
+		});
+	}
+
+	it('returns to be confirmed when the submission date is missing', () => {
+		assert.equal(getWorkshopWeekMonday(null), 'to be confirmed');
+		assert.equal(getWorkshopWeekMonday(undefined), 'to be confirmed');
+	});
+});
 
 describe('createFileUploadQuestion', () => {
 	it('creates a file upload question with default upload settings and text', () => {
 		const question = createFileUploadQuestion({
-			title: 'Gateway 1 - Self Assessment of Readiness',
+			title: 'Gateway 1 self-assessment',
 			question: 'Upload your Gateway 1 - Self assessment of readiness',
 			fieldName: 'gateway1SelfAssessment',
 			url: 'g1-self-assess',
@@ -28,7 +47,7 @@ describe('createFileUploadQuestion', () => {
 
 		assert.deepStrictEqual(question, {
 			type: CUSTOM_COMPONENTS.FILE_UPLOADER,
-			title: 'Gateway 1 - Self Assessment of Readiness',
+			title: 'Gateway 1 self-assessment',
 			question: 'Upload your Gateway 1 - Self assessment of readiness',
 			fieldName: 'gateway1SelfAssessment',
 			url: 'g1-self-assess',
@@ -55,8 +74,8 @@ describe('createFileUploadQuestion', () => {
 	it('allows upload settings and default text to be overridden', () => {
 		const validator = () => undefined;
 		const question = createFileUploadQuestion({
-			title: 'Consultation on proposed local plan content and evidence documents',
-			question: 'Upload your consultation on proposed local plan content and evidence documents',
+			title: 'Consultation on proposed local plan content and evidence',
+			question: 'Upload your consultation on proposed local plan content and evidence',
 			fieldName: 'consultationOnProposedContent',
 			url: 'cons-of-proposed',
 			allowedFileExtensions: ['pdf', 'doc'],

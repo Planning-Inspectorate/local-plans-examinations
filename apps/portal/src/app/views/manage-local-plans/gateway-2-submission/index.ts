@@ -46,12 +46,9 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission, saveToDatabase);
 
-	router.use(
-		'/:planReference/gateway-2-submission/application-declaration',
-		createApplicationDeclarationRoutes(service)
-	);
+	router.use('/:planReference/gateway-2/declaration', createApplicationDeclarationRoutes(service));
 
-	router.use('/:planReference/gateway-2-submission/application-complete', createApplicationCompleteRoutes());
+	router.use('/:planReference/gateway-2/confirmation', createApplicationCompleteRoutes(service));
 
 	router.get(
 		'/:planReference/gateway-2-submission',
