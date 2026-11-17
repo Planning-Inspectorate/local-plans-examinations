@@ -50,6 +50,7 @@ export interface Config extends ConfigWithBlob {
 			gw3Pass?: string;
 			gw3ResubmissionRequired?: string;
 			appointedInspectorNotifyId?: string;
+			appointedInspectorLpaNotifyId?: string;
 			examinationOutcomeSoundId?: string;
 			examinationOutcomeUnsoundId?: string;
 		};
@@ -106,6 +107,7 @@ export function loadGovNotifyConfig(): GovNotifyConfig {
 		GOV_NOTIFY_GW3_PASS_TEMPLATE_ID,
 		GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID,
 		GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID,
 		GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID,
 		GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID,
 		LOCAL_PLANS_TEAM_EMAIL
@@ -137,6 +139,7 @@ export function loadGovNotifyConfig(): GovNotifyConfig {
 			gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
 			gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || '',
 			appointedInspectorNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
+			appointedInspectorLpaNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
 			examinationOutcomeSoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
 			examinationOutcomeUnsoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
 		},
@@ -198,6 +201,7 @@ export function loadConfig(): Config {
 		BLOB_STORE_ACCOUNT_URL,
 		LOCAL_PLANS_TEAM_EMAIL,
 		GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID,
 		GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID,
 		GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID
 	} = process.env;
@@ -324,6 +328,7 @@ export function loadConfig(): Config {
 				gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
 				gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || '',
 				appointedInspectorNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
+				appointedInspectorLpaNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
 				examinationOutcomeSoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
 				examinationOutcomeUnsoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
 			},

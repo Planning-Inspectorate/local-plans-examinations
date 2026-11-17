@@ -9,7 +9,7 @@ import { formatDateToString } from '../../../util/date.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { syncPortalExaminationWebsite } from '../../../util/examination-website.ts';
-import { sendNotifyEmail } from '../../../notify/notify-helper.ts';
+import { sendAppointedInspectorNotifyEmail, sendExaminationNotifyEmail } from '../../../notify/notify-helper.ts';
 
 const notificationsMap = {
 	examiningInspector1: 'appointedInspectorNotifyId',
@@ -131,13 +131,20 @@ export class ExaminationSaveController extends SaveController {
 		const notificationKey = notificationsMap[currentKey];
 
 		if (typeof notificationKey === 'string') {
-			await sendNotifyEmail(this.service, this.caseReference, notificationKey);
+			await sendExaminationNotifyEmail(this.service, this.caseReference, notificationKey);
+			if (
+				currentKey === 'examiningInspector1' ||
+				currentKey === 'examiningInspector2' ||
+				currentKey === 'examiningInspector3'
+			) {
+				await sendAppointedInspectorNotifyEmail(this.service, this.req, this.caseReference);
+			}
 			return;
 		}
 
 		const { isSound } = answers as { isSound?: string };
 		if (isIsSoundAnswer(isSound)) {
-			await sendNotifyEmail(this.service, this.caseReference, notificationKey[isSound]);
+			await sendExaminationNotifyEmail(this.service, this.caseReference, notificationKey[isSound]);
 		}
 	}
 
