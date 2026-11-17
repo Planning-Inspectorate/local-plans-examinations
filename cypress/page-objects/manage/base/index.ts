@@ -1,3 +1,4 @@
+export * from './assessor-pages.ts';
 export * from './contact-details-form-page.ts';
 export * from './contact-details-list-page.ts';
 export * from './date-question-page.ts';

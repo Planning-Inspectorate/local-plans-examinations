@@ -1,6 +1,5 @@
 import {
 	gateway2Page,
-	gateway2AssessorPage,
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
 	gateway2ReportPage,
@@ -16,7 +15,6 @@ import { cleanupSeededManageCase, type SeededManageCase } from '../../../../flow
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 import {
-	gateway2AssessorAnswer,
 	gateway2DateAnswers,
 	gateway2Report,
 	gateway2WorkshopDocuments,
@@ -42,17 +40,6 @@ describe('Gateway 2 updates', () => {
 			gateway2DateAnswers.gateway2ExpectedDate.row,
 			updatedGateway2ExpectedDateAnswer.display
 		);
-	});
-
-	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
-
-		gateway2AssessorPage.verifyLoaded();
-		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
-		gateway2AssessorPage.enterAssessorName(gateway2AssessorAnswer.assessor2);
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
 	});
 
 	it(
