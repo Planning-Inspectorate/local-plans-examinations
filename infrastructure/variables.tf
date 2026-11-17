@@ -117,6 +117,10 @@ variable "gov_notify" {
       gw3_assessor_updated_lpa      = string
       gw3_passed                    = string
       gw3_resubmission_required     = string
+      appointedInspectorNotifyId    = string
+      appointedInspectorLpaNotifyId = string
+      examinationOutcomeSoundId     = string
+      examinationOutcomeUnsoundId   = string
     })
   })
 }
