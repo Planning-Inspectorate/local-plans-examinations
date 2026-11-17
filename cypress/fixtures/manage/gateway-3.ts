@@ -81,7 +81,13 @@ export const gateway3ExaminationWebsite = {
 	display: 'Not started',
 	value: 'www.gateway-3-example.com',
 	href: 'https://www.gateway-3-example.com',
-	unsavedValue: 'www.unsaved-gateway-3-example.com'
+	unsavedValue: 'www.unsaved-gateway-3-example.com',
+	// Entered by the LPA in the Portal examination submission
+	examinationSubmissionValue: 'www.examination-submission-example.com',
+	examinationSubmissionHref: 'https://www.examination-submission-example.com',
+	// Saved in Manage from the Examination tab
+	changedOnExaminationValue: 'www.changed-on-examination-example.com',
+	changedOnExaminationHref: 'https://www.changed-on-examination-example.com'
 } as const;
 
 export const gateway3DocumentsAnswer = {

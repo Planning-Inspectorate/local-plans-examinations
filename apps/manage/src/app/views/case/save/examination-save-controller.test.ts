@@ -89,6 +89,53 @@ class ExamSaveControllerWrapper extends ExaminationSaveController {
 }
 
 describe('ExaminationSaveController', () => {
+	it('saves trimmed Programme officer details on Gateway 3 without changing examination fields', async () => {
+		const service = createMockService();
+		const req = { params: { question: 'programme-officer' } } as unknown as Request;
+		const controller = new ExaminationSaveController(service as unknown as ManageService, req, 'caseRef');
+		const result = await controller.prepareAndSave({
+			programmeOfficerFirstName: '  Jane  ',
+			programmeOfficerLastName: ' Officer ',
+			programmeOfficerEmail: ' jane@example.com ',
+			programmeOfficerPhone: ' 01234 567890 ',
+			examiningInspector1: 'not-an-officer-field'
+		});
+
+		const data = {
+			programmeOfficerFirstName: 'Jane',
+			programmeOfficerLastName: 'Officer',
+			programmeOfficerEmail: 'jane@example.com',
+			programmeOfficerPhone: '01234 567890'
+		};
+		assert.deepEqual(service.db.gateway3Info.upsert.mock.calls[0].arguments, [
+			{
+				where: { caseId: 'someCaseId' },
+				update: data,
+				create: { caseId: 'someCaseId', ...data }
+			}
+		]);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.deepEqual(result, { dataWritten: true, writtenToDB: true });
+	});
+
+	for (const phone of ['', undefined]) {
+		it(`clears an optional Programme officer phone when ${phone === '' ? 'blank' : 'omitted'}`, async () => {
+			const service = createMockService();
+			const req = { params: { question: 'programme-officer' } } as unknown as Request;
+			const controller = new ExaminationSaveController(service as unknown as ManageService, req, 'caseRef');
+			await controller.prepareAndSave({
+				programmeOfficerFirstName: 'Jane',
+				programmeOfficerLastName: 'Officer',
+				programmeOfficerEmail: 'jane@example.com',
+				programmeOfficerPhone: phone
+			});
+
+			const query = service.db.gateway3Info.upsert.mock.calls[0].arguments.at(0) as any;
+			assert.equal(query.update.programmeOfficerPhone, null);
+			assert.equal(query.create.programmeOfficerPhone, null);
+		});
+	}
+
 	it('can save an examination', async () => {
 		const mockService = createMockService();
 		const req = { params: { question: 'examining-inspector-1' } } as unknown as Request;

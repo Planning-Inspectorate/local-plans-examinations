@@ -11,7 +11,10 @@ import {
 } from '../../page-objects/manage/examination/index.ts';
 import { openManageCase, openSeededManageCase, type SeededManageCase } from './seeded-case-flow.ts';
 import type { SeedCyOptions } from '../../../packages/database/src/seed/seed-cy.ts';
-import type { ExaminationReportSeedOptions } from '../../tasks/examination.ts';
+import type {
+	ExaminationReportSeedOptions,
+	ExaminationSubmissionDocumentsSeedOptions
+} from '../../tasks/examination.ts';
 import type { DateAnswer } from '../../types/date.ts';
 import { examinationPause, examinationReport, soundUnsound } from '../../fixtures/manage/examination.ts';
 import { examinationMIQCheckPage } from '../../page-objects/manage/examination/miq-document-page.ts';
@@ -49,6 +52,13 @@ export const removeExaminationReportDocument = (fileName: string) => {
 
 export const openSeededExaminationReport = (options: ExaminationReportSeedOptions = {}) => {
 	return cy.task<SeededManageCase>('seedExaminationReport', options).then((seededCase) => {
+		openExaminationPage(seededCase);
+		return cy.wrap(seededCase, { log: false });
+	});
+};
+
+export const openSeededExaminationDocuments = (options: ExaminationSubmissionDocumentsSeedOptions = {}) => {
+	return cy.task<SeededManageCase>('seedExaminationSubmissionDocuments', options).then((seededCase) => {
 		openExaminationPage(seededCase);
 		return cy.wrap(seededCase, { log: false });
 	});

@@ -8,6 +8,17 @@
 {% from "govuk/components/date-input/macro.njk" import govukDateInput %}
 {% set inputFields = question.value %}
 
+{% block backLink %}
+  {% if backLink %}
+    {{ govukBackLink({
+      href: backLink,
+      attributes: {
+        "data-cy": "back-link"
+      }
+    }) }}
+  {% endif %}
+{% endblock %}
+
 {% block dynQuestionContent %}
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
@@ -16,9 +27,8 @@
 
                 {% call govukFieldset({
                     legend: {
-                        text: question.question,
-                        classes: "govuk-fieldset__legend--l",
-                        isPageHeading: true
+                        html: '<h1 class="govuk-fieldset__heading">' ~ (question.question | trim | escape) ~ '</h1>',
+                        classes: "govuk-fieldset__legend--l"
                     },
                     describedBy: question.hint and "multi-field-hint"
                 }) %}
@@ -203,11 +213,18 @@
                     {% endfor %}
                 {% endcall %}
 
-                {{ govukButton({
-                    text: continueButtonText,
-                    type: "submit",
-                    attributes: { "data-cy":"button-save-and-continue"}
-                }) }}
+                <div class="govuk-button-group">
+                    {{ govukButton({
+                        text: continueButtonText,
+                        type: "submit",
+                        attributes: { "data-cy":"button-save-and-continue"}
+                    }) }}
+                    {# Programme officer details has a Cancel link next to the Save button that leaves without saving #}
+                    {% set programmeOfficerCancelHref = cancelLink or backLink %}
+                    {% if programmeOfficerCancelHref and question.fieldName == "programmeOfficerDetails" %}
+                        <a href="{{ programmeOfficerCancelHref }}" class="govuk-link" data-cy="button-cancel">Cancel</a>
+                    {% endif %}
+                </div>
 
             </form>
         </div>

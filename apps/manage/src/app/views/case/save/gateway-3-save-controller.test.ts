@@ -67,11 +67,13 @@ function createMockService(): MockServiceType {
 			},
 			gateway3Info: {
 				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
+				upsert: mock.fn(async () => ({})),
+				updateMany: mock.fn(async () => ({ count: 1 }))
 			},
 			examinationInfo: {
 				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
+				upsert: mock.fn(async () => ({})),
+				updateMany: mock.fn(async () => ({ count: 1 }))
 			},
 			contacts: {
 				upsert: mock.fn(async () => ({}))
@@ -231,6 +233,11 @@ describe('test Gateway2SaveController', () => {
 			mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0).update.examinationWebsite,
 			'www.example.com/examination'
 		);
+		// A website the LPA already gave in the Portal examination submission is updated too
+		assert.deepEqual(mockService.db.examinationInfo.updateMany.mock.calls[0].arguments.at(0), {
+			where: { caseId: 'someCaseId', examinationWebsiteUrl: { not: null } },
+			data: { examinationWebsiteUrl: 'www.example.com/examination' }
+		});
 	});
 });
 
