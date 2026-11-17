@@ -1,5 +1,5 @@
 import { openSeededGateway2Page } from '../../../../flows/manage/gateway-2-flow.ts';
-import { gateway2Page } from '../../../../page-objects/manage/gateway-2/index.ts';
+import { gateway2Page, gateway2AssessorQuestionPath } from '../../../../page-objects/manage/gateway-2/index.ts';
 
 describe('Gateway 2 page content', () => {
 	beforeEach(() => {
@@ -13,6 +13,7 @@ describe('Gateway 2 page content', () => {
 
 		gateway2Page.verifyBackLink('/');
 		gateway2Page.verifySectionHeading('Gateway 2');
+		gateway2Page.verifyAddAssessorLink(gateway2AssessorQuestionPath);
 		gateway2Page.verifyExpectedRows();
 		gateway2Page.verifyExpectedSeededAnswers();
 		gateway2Page.verifyExpectedActionLinkHrefs();
