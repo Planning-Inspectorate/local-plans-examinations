@@ -10,6 +10,7 @@ import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/stati
 function createMockService(examinationStatus?: string) {
 	return {
 		logger: { warn: mock.fn(), info: mock.fn(), error: mock.fn() },
+		getEntraClient: mock.fn(async () => ({})),
 		db: {
 			case: {
 				findUnique: mock.fn(async () => ({
