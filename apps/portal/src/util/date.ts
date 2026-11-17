@@ -6,6 +6,7 @@ export function formatDisplayDate(date: Date | null | undefined): string | undef
 	return date.toLocaleDateString('en-GB', {
 		day: 'numeric',
 		month: 'long',
+		timeZone: 'Europe/London',
 		year: 'numeric'
 	});
 }

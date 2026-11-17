@@ -143,6 +143,10 @@ export interface Plan {
 	status: Status; //Status
 	examinationStatus: string;
 	examinationStatusLabel: string;
+	pause: {
+		startDate: string;
+		restartDate: string | null;
+	} | null;
 	dates: {
 		//dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: August 2026, E: September 2026"
 		G1: string;
@@ -186,6 +190,18 @@ function validGateway2ReportFile(rawFile: unknown): rawFile is Gateway2ReportFil
 	);
 }
 
+function validPause(rawPause: unknown): rawPause is Plan['pause'] {
+	if (rawPause === null) return true;
+	if (typeof rawPause !== 'object') return false;
+
+	const pause = rawPause as Record<string, unknown>;
+	return (
+		typeof pause.startDate === 'string' &&
+		pause.startDate.trim().length > 0 &&
+		(pause.restartDate === null || (typeof pause.restartDate === 'string' && pause.restartDate.trim().length > 0))
+	);
+}
+
 export function validPlan(rawPlan: unknown): rawPlan is Plan {
 	if (typeof rawPlan !== 'object' || rawPlan === null) return false;
 
@@ -219,6 +235,7 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		validStatus(plan.status) &&
 		typeof plan.examinationStatus === 'string' &&
 		typeof plan.examinationStatusLabel === 'string' &&
+		validPause(plan.pause) &&
 		validDates(plan.dates) &&
 		validSections(plan.sections) &&
 		Array.isArray(plan.documents) &&
@@ -251,6 +268,7 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
 	examinationStatus: 'cannot-start-yet',
 	examinationStatusLabel: 'Cannot start yet',
+	pause: null,
 	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed

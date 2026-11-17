@@ -21,6 +21,12 @@
   {%- endfor -%}
 {% endset %}
 
+{% set examinationHint = { text: dateTextE + dateE } %}
+{% if pauseStartDate %}
+  {% set examinationPauseHint %}Paused: {{ pauseStartDate }}<br>Due to restart: {{ pauseRestartDate or "Not provided" }}{% endset %}
+  {% set examinationHint = { html: examinationPauseHint } %}
+{% endif %}
+
 
 {% block pageContent %}
 
@@ -90,9 +96,7 @@
           title: {
             text: "Examination"
           },
-          hint: {
-            text: dateTextE + dateE
-          },
+          hint: examinationHint,
           href: hrefE,
           status: {
             html: tagE
