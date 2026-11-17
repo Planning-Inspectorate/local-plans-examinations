@@ -282,7 +282,11 @@ export async function sendAppointedInspectorNotifyEmail(
 	req: Request & { session: AuthSession },
 	reference: string
 ) {
-	const examInfo = await service.db.examinationInfo.findUnique({ where: { caseId: reference } });
+	const caseRecord = await service.db.case.findUnique({ where: { reference }, select: { id: true } });
+	if (!caseRecord) {
+		throw new Error(`Case not found for reference '${reference}'`);
+	}
+	const examInfo = await service.db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 	const recipients = await getExaminingInspectorContacts(service, req, examInfo);
 	await sendNotifyEmail(service, reference, 'appointedInspectorNotifyId', {
 		recipients
