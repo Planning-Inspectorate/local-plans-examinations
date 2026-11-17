@@ -2,6 +2,7 @@ import { type GovTemplateIdsKeys, loadGovNotifyConfig } from '../config.ts';
 import type { AuthSession } from '#util/cached-entra-client.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
+import { getExaminingInspectorContacts } from '#util/util.ts';
 
 type TemplateLogMessage = { emailSent: string; failedToSend: string };
 
@@ -53,6 +54,10 @@ export const TemplateLogMessages = {
 	appointedInspectorNotifyId: {
 		emailSent: 'Appointed inspector email sent',
 		failedToSend: 'Failed to send appointed inspector email'
+	},
+	appointedInspectorLpaNotifyId: {
+		emailSent: 'Appointed inspector email sent to LPA',
+		failedToSend: 'Failed to send appointed inspector email to LPA'
 	},
 	examinationOutcomeSoundId: {
 		emailSent: 'Examination outcome email sent',
@@ -262,4 +267,24 @@ export async function sendGw3PassNotifyEmail(service: ManageService, req: Reques
 
 export async function sendGw3ResubmissionNeededNotifyEmail(service: ManageService, req: Request, reference: string) {
 	await sendNotifyEmail(service, reference, 'gw3ResubmissionRequired');
+}
+
+export async function sendExaminationNotifyEmail(
+	service: ManageService,
+	reference: string,
+	templateKey: NotifyEmailTemplateKey
+) {
+	await sendNotifyEmail(service, reference, templateKey);
+}
+
+export async function sendAppointedInspectorNotifyEmail(
+	service: ManageService,
+	req: Request & { session: AuthSession },
+	reference: string
+) {
+	const examInfo = await service.db.examinationInfo.findUnique({ where: { caseId: reference } });
+	const recipients = await getExaminingInspectorContacts(service, req, examInfo);
+	await sendNotifyEmail(service, reference, 'appointedInspectorNotifyId', {
+		recipients
+	});
 }
