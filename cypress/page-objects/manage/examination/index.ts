@@ -9,3 +9,5 @@ export * from './report-manage-page.ts';
 export * from './report-remove-page.ts';
 export * from './pause-page.ts';
 export * from './miq-document-page.ts';
+export * from './examination-programme-officer-page.ts';
+export * from './examination-documents-page.ts';

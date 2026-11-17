@@ -120,19 +120,10 @@ class Gateway3ReviewDocumentsPage extends BasePage {
 
 	verifyDocumentDownload(documentLabel: string, fileName: string) {
 		this.verifyDocumentDownloadLinks(documentLabel, fileName);
-		this.documentRow(documentLabel)
+		const fileLink = this.documentRow(documentLabel)
 			.find('.govuk-summary-list__value')
-			.contains('a', exactText(fileName))
-			.invoke('attr', 'href')
-			.then((href) => {
-				cy.fixture(`files/${fileName}`, 'binary').then((contents) => {
-					cy.request({ url: String(href), encoding: 'binary' }).then((response) => {
-						expect(response.status).to.equal(200);
-						expect(response.headers['content-disposition']).to.include('attachment').and.include(fileName);
-						expect(response.body).to.equal(contents);
-					});
-				});
-			});
+			.contains('a', exactText(fileName));
+		this.verifyFileDownload(fileLink, fileName);
 	}
 
 	verifyExaminationWebsiteLink(text: string, href: string) {

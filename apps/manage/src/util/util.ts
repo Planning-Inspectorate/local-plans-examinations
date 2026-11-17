@@ -1,4 +1,10 @@
 import type { ManageService } from '#service';
+import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
+import {
+	EXAMINATION_OTHER_DOCUMENT_SETS,
+	EXAMINATION_REQUIRED_DOCUMENT_SETS
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 /**
  * Immutably sort the given list submission details, with null completionDate values at the end
@@ -68,6 +74,17 @@ export const getExaminationStages = async (service: ManageService, caseId: strin
 		return examinationStatus;
 	}
 };
+
+// The LPA has not submitted for examination while the front office journey is in one of these states
+export const NOT_SUBMITTED_STATUSES = new Set<string>([
+	EXAMINATION_STATUS_ID.CANNOT_START_YET,
+	EXAMINATION_STATUS_ID.READY_TO_START,
+	EXAMINATION_STATUS_ID.IN_PROGRESS
+]);
+
+export const REQUIRED_FIELDS = Object.keys(EXAMINATION_REQUIRED_DOCUMENT_SETS);
+export const OTHER_FIELDS = Object.keys(EXAMINATION_OTHER_DOCUMENT_SETS);
+
 /**
  * Immutably sort the given list of objects by a date column. details, with null createdDate values at the end
  * @param workshops The objects to filter and sort
@@ -84,3 +101,44 @@ export function sortByDateColumn(objects: { [key: string]: any }[], columnName: 
 		return aDate.getTime() - bDate.getTime();
 	});
 }
+
+export type ExaminationDocumentFile = {
+	guid: string;
+	fileName: string;
+};
+
+/**
+ * Loads the documents the LPA uploaded in the examination submission (front office)
+ * and groups them by the field they were uploaded against, so they can be listed and downloaded.
+ */
+export const compileExaminationDocumentFiles = async (
+	db: PrismaClient,
+	caseId: string
+): Promise<Record<string, ExaminationDocumentFile[]>> => {
+	const fieldBySetId = new Map(
+		Object.entries({ ...EXAMINATION_REQUIRED_DOCUMENT_SETS, ...EXAMINATION_OTHER_DOCUMENT_SETS }).map(
+			([field, setId]) => [setId, field]
+		)
+	);
+	const documents = await db.document.findMany({
+		where: {
+			caseId,
+			isDeleted: false,
+			isTemp: false,
+			documentSetId: { in: [...fieldBySetId.keys()] }
+		},
+		include: { latestDocumentVersion: true },
+		orderBy: { createdAt: 'asc' }
+	});
+
+	const documentFiles: Record<string, ExaminationDocumentFile[]> = {};
+	for (const document of documents) {
+		const field = fieldBySetId.get(document.documentSetId);
+		if (!field) continue;
+		(documentFiles[field] ??= []).push({
+			guid: document.guid,
+			fileName: document.latestDocumentVersion?.originalFilename ?? document.name
+		});
+	}
+	return documentFiles;
+};

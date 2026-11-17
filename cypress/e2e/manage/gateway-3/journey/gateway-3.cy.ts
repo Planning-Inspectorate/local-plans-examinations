@@ -11,8 +11,9 @@ import {
 	gateway3ReviewDocumentsPage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
-import { examinationPage } from '../../../../page-objects/manage/examination/index.ts';
+import { examinationPage, examinationWebsitePage } from '../../../../page-objects/manage/examination/index.ts';
 import {
+	openGateway3Page,
 	openGateway3ReviewDocumentsPage,
 	openSeededGateway3Page,
 	openSeededGateway3PageWithSubmissionDocuments
@@ -264,6 +265,78 @@ describe('Gateway 3 submission documents', () => {
 			);
 		});
 	});
+
+	it(
+		'shows the examination website the LPA submitted on the Gateway 3 tab instead of Not started',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({ examinationWebsiteUrl: gateway3ExaminationWebsite.value });
+
+			gateway3Page
+				.summaryRowValue(gateway3ExaminationWebsite.row)
+				.should('not.contain.text', gateway3ExaminationWebsite.display);
+			gateway3Page.verifySummaryRowContains(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.value);
+			gateway3Page.verifySummaryRowValueLinkHref(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.href);
+
+			// The Examination tab reads the same address
+			gateway3Page.openServiceNavigationItem('Examination');
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifySummaryRowContains(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.value);
+			examinationPage.verifySummaryRowValueLinkHref(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.href);
+		}
+	);
+
+	it(
+		'shows the examination website from the Portal examination submission on the Gateway 3 tab',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({
+				examinationSubmissionWebsiteUrl: gateway3ExaminationWebsite.examinationSubmissionValue
+			});
+
+			gateway3Page.verifySummaryRowContains(
+				gateway3ExaminationWebsite.row,
+				gateway3ExaminationWebsite.examinationSubmissionValue
+			);
+			gateway3Page.verifySummaryRowValueLinkHref(
+				gateway3ExaminationWebsite.row,
+				gateway3ExaminationWebsite.examinationSubmissionHref
+			);
+		}
+	);
+
+	it(
+		'shows the examination website changed on the Examination tab on Gateway 3 and its review documents page',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({
+				examinationWebsiteUrl: gateway3ExaminationWebsite.value
+			}).then(({ reference, planTitle }) => {
+				gateway3Page.openServiceNavigationItem('Examination');
+				examinationPage.verifyLoaded(planTitle);
+				examinationPage.openActionLinkFor(gateway3ExaminationWebsite.row);
+				examinationWebsitePage.verifyLoaded(gateway3ExaminationWebsite.value);
+				examinationWebsitePage.enterAnswer(gateway3ExaminationWebsite.changedOnExaminationValue);
+				examinationPage.verifyLoaded(planTitle);
+
+				openGateway3Page(reference, planTitle);
+				gateway3Page.verifySummaryRowContains(
+					gateway3ExaminationWebsite.row,
+					gateway3ExaminationWebsite.changedOnExaminationValue
+				);
+				gateway3Page.verifySummaryRowValueLinkHref(
+					gateway3ExaminationWebsite.row,
+					gateway3ExaminationWebsite.changedOnExaminationHref
+				);
+
+				openGateway3ReviewDocumentsPage();
+				gateway3ReviewDocumentsPage.verifyExaminationWebsiteLink(
+					gateway3ExaminationWebsite.changedOnExaminationValue,
+					gateway3ExaminationWebsite.changedOnExaminationHref
+				);
+			});
+		}
+	);
 
 	it('opens the Gateway 3 decision when every required document has been added', { tags: ['regression'] }, () => {
 		openSeededGateway3PageWithSubmissionDocuments();

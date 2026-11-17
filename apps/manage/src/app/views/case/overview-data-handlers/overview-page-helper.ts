@@ -27,7 +27,8 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 					programmeOfficerFirstName: true,
 					programmeOfficerLastName: true,
 					programmeOfficerEmail: true,
-					assessorName: true
+					assessorName: true,
+					examinationWebsiteUrl: true
 				}
 			},
 			caseHistories: {
@@ -39,6 +40,7 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 					examiningInspector2: true,
 					examiningInspector3: true,
 					examinationWebsite: true,
+					examinationWebsiteUrl: true,
 					qaInspector1: true,
 					qaInspector2: true,
 					qaInspector3: true

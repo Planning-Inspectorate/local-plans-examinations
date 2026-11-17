@@ -211,6 +211,7 @@ model Gateway3Info {
   programmeOfficerFirstName String?
   programmeOfficerLastName  String?
   programmeOfficerEmail     String?
+  programmeOfficerPhone     String?
   assessorName              String?
   assessorAppointmentDate   DateTime?                 @db.DateTime2
   submissions               Gateway3Submission[]
