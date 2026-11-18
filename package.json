@@ -84,7 +84,7 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.0.1",
-    "@cypress/grep": "^6.0.3",
+    "@cypress/grep": "^7.0.0",
     "@eslint/js": "^10.0.1",
     "@microsoft/microsoft-graph-types": "^2.43.1",
     "@planning-inspectorate/coding-standards": "^1.2.0",
