@@ -819,6 +819,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
 		const submissionDate = new Date();
 		const caseId = request.currentCase?.id;
+		const latestSubmission = sortGateway3Submissions(request.currentCase?.gateway3Info?.submissions ?? []).at(-1);
+		const existingOpenSubmission =
+			latestSubmission?.id && latestSubmission.decision == null && latestSubmission.completionDate == null
+				? latestSubmission
+				: null;
 
 		if (!caseId) {
 			service.logger.error(`No case loaded for Gateway 3 declaration submission ${planReference ?? ''}`);
@@ -837,7 +842,17 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				}),
 				service.db.gateway3Info.update({
 					where: { caseId },
-					data: { actualDate: submissionDate }
+					data: {
+						actualDate: submissionDate,
+						submissions: existingOpenSubmission
+							? {
+									update: {
+										where: { id: existingOpenSubmission.id },
+										data: { submittedDate: submissionDate }
+									}
+								}
+							: { create: { submittedDate: submissionDate } }
+					}
 				}),
 				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
 			]);
