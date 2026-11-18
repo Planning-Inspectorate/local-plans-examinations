@@ -1,5 +1,6 @@
 import { NotifyClient } from 'notifications-node-client';
 import type { Logger } from 'pino';
+import { describeNotifyError } from './notify-error.ts';
 import type { GovNotifyOptions, TemplateIds, AuthCodePersonalisation, NotifyEmail } from './types.ts';
 
 type NotifyEmailListResponse = {
@@ -20,7 +21,13 @@ export class GovNotifyClient {
 	}
 
 	async sendAuthCode(email: string, personalisation: AuthCodePersonalisation, reference?: string): Promise<void> {
-		await this.sendEmail(this.#templateIds.authCode!, email, {
+		const templateId = this.#templateIds.authCode;
+		if (!templateId) {
+			const message = 'GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID is not set';
+			this.logger.error(`${message} - cannot send auth code email`);
+			throw new Error(`email failed to dispatch: ${message}`);
+		}
+		await this.sendEmail(templateId, email, {
 			personalisation,
 			...(reference && { reference })
 		});
@@ -31,11 +38,11 @@ export class GovNotifyClient {
 			this.logger.info(`dispatching email template: ${templateId}`);
 			await this.notifyClient.sendEmail(templateId, emailAddress, options);
 		} catch (error) {
+			const { status, notifyErrors, hint } = describeNotifyError(error);
 			const message = error instanceof Error ? error.message : String(error);
-			const hasNotifyErrors = error instanceof Error && (error as any).response?.data?.errors;
-			this.logger.error({ error, templateId }, 'failed to dispatch email');
-			if (hasNotifyErrors) {
-				this.logger.error({ message: (error as any).response.data.errors }, 'received from Notify API');
+			this.logger.error({ error, templateId, status, hint }, 'failed to dispatch email');
+			if (notifyErrors) {
+				this.logger.error({ message: notifyErrors }, 'received from Notify API');
 			}
 			throw new Error(`email failed to dispatch: ${message}`, { cause: error });
 		}
