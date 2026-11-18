@@ -1,7 +1,168 @@
-import { loadGovNotifyConfig } from '../../app/config.ts';
+import { type GovTemplateIdsKeys, loadGovNotifyConfig } from '../config.ts';
 import type { AuthSession } from '#util/cached-entra-client.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
+
+type TemplateLogMessage = { emailSent: string; failedToSend: string };
+
+export const TemplateLogMessages = {
+	authCode: {
+		emailSent: 'Auth code email sent',
+		failedToSend: 'Failed to send auth code email'
+	},
+	gw2WorkshopInspector: {
+		emailSent: 'Email sent to GW2 assessor for workshop set up',
+		failedToSend: 'Failed to send workshop set up email'
+	},
+	gw2WorkshopLpa: {
+		emailSent: 'Email sent to LPA for workshop set up',
+		failedToSend: 'Failed to send workshop set up email'
+	},
+	gw2AssessorUpdatedAssessor: {
+		emailSent: 'GW2 Assessor email sent',
+		failedToSend: 'Failed to send GW2 Assessor email'
+	},
+	gw2AssessorUpdatedLpa: {
+		emailSent: 'GW2 Assessor updated email sent to LPA',
+		failedToSend: 'Failed to send GW2 Assessor updated email to LPA'
+	},
+	gw2WorkshopAgenda: {
+		emailSent: 'GW2 workshop agenda email sent',
+		failedToSend: 'Failed to send GW2 workshop agenda email to LPA'
+	},
+	gw2ReportUploaded: {
+		emailSent: 'GW2 report uploaded email sent',
+		failedToSend: 'Failed to send GW2 report uploaded email to LPA'
+	},
+	gw3AssessorUpdatedAssessor: {
+		emailSent: 'GW3 Assessor updated email sent to assessor',
+		failedToSend: 'Failed to send GW3 Assessor updated email to assessor'
+	},
+	gw3AssessorUpdatedLpa: {
+		emailSent: 'GW3 Assessor updated email sent to LPA',
+		failedToSend: 'Failed to send GW3 Assessor updated email to LPA'
+	},
+	gw3Pass: {
+		emailSent: 'GW3 pass email sent',
+		failedToSend: 'Failed to send GW3 pass email'
+	},
+	gw3ResubmissionRequired: {
+		emailSent: 'GW3 resubmission required email sent',
+		failedToSend: 'Failed to send GW3 resubmission required email'
+	},
+	appointedInspectorNotifyId: {
+		emailSent: 'Appointed inspector email sent',
+		failedToSend: 'Failed to send appointed inspector email'
+	},
+	examinationOutcomeSoundId: {
+		emailSent: 'Examination outcome email sent',
+		failedToSend: 'Failed to send examination outcome email'
+	},
+	examinationOutcomeUnsoundId: {
+		emailSent: 'Examination outcome unsound email sent',
+		failedToSend: 'Failed to send examination outcome unsound email'
+	}
+} satisfies Partial<Record<GovTemplateIdsKeys, TemplateLogMessage>>;
+export type NotifyEmailTemplateKey = keyof typeof TemplateLogMessages;
+
+export interface SendNotifyEmailOptions {
+	recipients?: string[];
+	personalisation?: Record<string, any>;
+}
+
+/**
+ * Returns the Gov Notify config when emails can be sent, otherwise null.
+ * Logs a warning when the client is missing; stays silent when Notify is disabled.
+ */
+function getNotifyConfig(service: ManageService) {
+	if (!service.notifyClient) {
+		service.logger.warn('Notify client not configured');
+		return null;
+	}
+	const config = loadGovNotifyConfig();
+	return config.disabled ? null : config;
+}
+
+function templateEnvVarName(templateKey: GovTemplateIdsKeys): string {
+	const snakeCase = templateKey.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+	return `GOV_NOTIFY_${snakeCase}_TEMPLATE_ID`;
+}
+
+async function getGw2Info(service: ManageService, reference: string) {
+	const caseRecord = await service.db.case.findUnique({
+		where: { reference },
+		select: { id: true }
+	});
+	return service.db.gateway2Info.findUnique({
+		where: { caseId: caseRecord?.id }
+	});
+}
+
+async function getAssessorEmail(service: ManageService, req: Request, assessorId: string | null | undefined) {
+	const entraClient = service.getEntraClient(req.session as AuthSession)!;
+	const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
+	const inspectorId = allInspectors.find((inspector) => inspector.id === assessorId)?.id;
+	return entraClient.getUserEmailFromId(inspectorId ?? '');
+}
+
+export const sendNotifyEmail = async (
+	service: ManageService,
+	reference: string,
+	templateKey: NotifyEmailTemplateKey,
+	options: SendNotifyEmailOptions = {}
+) => {
+	const config = getNotifyConfig(service);
+	console.log(config);
+	if (!config) return;
+	if (config?.disabled) return;
+
+	const portalUrl = process.env.PORTAL_URL;
+	const templateId = config.templateIds[templateKey];
+	if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
+	if (!templateId) throw new Error(`${templateEnvVarName(templateKey)} environment variable is not set`);
+
+	const caseRecord = await service.db.case.findUnique({
+		where: { reference },
+		select: {
+			id: true,
+			lpas: true,
+			planType: true,
+			contacts: true
+		}
+	});
+	const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
+	const recipients = options.recipients ?? [...new Set(caseRecord!.contacts.map((contact) => contact.email))];
+
+	const notifyReference = `create-case:${reference}`;
+	const personalisationDetails = {
+		portalLoginURL: `${portalUrl}/login`,
+		['plan_ref']: reference,
+		['authority_name']: caseLpas.join(', '),
+		['plan_type']: caseRecord!.planType
+			.split('-')
+			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+			.join(' '),
+		['team_email_address']: service.localPlansTeamEmail,
+		['contact_info']: 'If you need to contact us, call 0303 444 5000',
+		...options.personalisation
+	};
+
+	const { emailSent, failedToSend } = TemplateLogMessages[templateKey];
+
+	await Promise.allSettled(
+		recipients.map(async (email) => {
+			try {
+				await service.notifyClient?.sendEmail(templateId, email.trim(), {
+					personalisation: personalisationDetails,
+					reference: notifyReference
+				});
+				service.logger.info({ email }, emailSent);
+			} catch (error) {
+				service.logger.error({ error, email }, failedToSend);
+			}
+		})
+	);
+};
 
 export async function sendGw2WorkshopSetUpNotifyEmail(
 	service: ManageService,
@@ -9,94 +170,29 @@ export async function sendGw2WorkshopSetUpNotifyEmail(
 	reference: string,
 	answers: Record<string, any>
 ) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
+	if (!getNotifyConfig(service)) return;
 
-		const portalUrl = process.env.PORTAL_URL;
-		const workshopInspectorTemplateId = config.templateIds.gw2WorkshopInspector;
-		const workshopLpaTemplateId = config.templateIds.gw2WorkshopLpa;
+	const workshopCount = (answers.workshops as []).length;
+	const workshopEndDate = answers[`workshopEndDate-${workshopCount}`];
+	const workshopType = answers[`workshopLocationType-${workshopCount}`];
+	const personalisation = {
+		['workshop_start_date']: answers[`workshopDate-${workshopCount}`],
+		['workshop_end_date']: workshopEndDate ? workshopEndDate : '',
+		['workshop_type']: workshopType,
+		['if_workshop_online']: workshopType === 'remote' ? 'yes' : 'no',
+		['if_workshop_in-person']: workshopType === 'in-person' ? 'yes' : 'no'
+	};
 
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!workshopInspectorTemplateId)
-			throw new Error('GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID environment variable is not set');
-		if (!workshopLpaTemplateId)
-			throw new Error('GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID environment variable is not set');
+	const gw2Info = await getGw2Info(service, reference);
+	const assessorEmail = await getAssessorEmail(service, req, gw2Info?.assessorName);
 
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-		const gw2Info = await service.db.gateway2Info.findUnique({
-			where: { caseId: caseRecord?.id }
-		});
-
-		const workshopCount = (answers.workshops as []).length;
-
-		const workshopStartDate = answers[`workshopDate-${workshopCount}`];
-		const workshopEndDate = answers[`workshopEndDate-${workshopCount}`];
-		const workshopType = answers[`workshopLocationType-${workshopCount}`];
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['contact_info']: 'If you need to contact us, call 0303 444 5000',
-			['team_email_address']: service.localPlansTeamEmail,
-			['workshop_start_date']: workshopStartDate,
-			['workshop_end_date']: workshopEndDate ? workshopEndDate : '',
-			['workshop_type']: workshopType,
-			['if_workshop_online']: workshopType === 'remote' ? 'yes' : 'no',
-			['if_workshop_in-person']: workshopType === 'in-person' ? 'yes' : 'no'
-		};
-
-		const entraClient = service.getEntraClient(req.session as AuthSession)!;
-		const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
-		const inspectorId = allInspectors.find((inspector) => inspector.id === gw2Info?.assessorName)?.id;
-		const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		// Notify the GW2 assessor (aka inspector)
-		try {
-			await service.notifyClient?.sendEmail(workshopInspectorTemplateId, assessorEmail.trim(), {
-				personalisation: personalisationDetails,
-				reference: notifyReference
-			});
-			service.logger.info({ email: assessorEmail }, 'Email sent to GW2 assessor for workshop set up');
-		} catch (error) {
-			service.logger.error({ error, email: assessorEmail }, 'Failed to send workshop set up email');
-		}
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(workshopLpaTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'Email sent to LPA for workshop set up');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send workshop set up email');
-				}
-			})
-		);
-	}
+	// Notify the GW2 assessor (aka inspector)
+	await sendNotifyEmail(service, reference, 'gw2WorkshopInspector', {
+		recipients: [assessorEmail],
+		personalisation
+	});
+	// All LPAs notified
+	await sendNotifyEmail(service, reference, 'gw2WorkshopLpa', { personalisation });
 }
 
 export async function sendGw2AssessorAppointedNotifyEmail(
@@ -105,208 +201,37 @@ export async function sendGw2AssessorAppointedNotifyEmail(
 	reference: string,
 	assessorName: string
 ) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
+	if (!getNotifyConfig(service)) return;
 
-		const portalUrl = process.env.PORTAL_URL;
-		const gw2AssessorTemplateId = config.templateIds.gw2AssessorUpdatedAssessor;
-		const gw2AssessorLpaTemplateId = config.templateIds.gw2AssessorUpdatedLpa;
+	const gw2Info = await getGw2Info(service, reference);
+	const assessorEmail = await getAssessorEmail(service, req, assessorName);
 
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!gw2AssessorTemplateId)
-			throw new Error('GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID environment variable is not set');
-		if (!gw2AssessorLpaTemplateId)
-			throw new Error('GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID environment variable is not set');
+	const mondayAfterSubmissionPlusTwoWeeks = new Date(gw2Info?.actualDate?.getDate() ?? Date.now());
+	mondayAfterSubmissionPlusTwoWeeks.setDate(mondayAfterSubmissionPlusTwoWeeks.getDate() + 14);
+	mondayAfterSubmissionPlusTwoWeeks.setDate(
+		mondayAfterSubmissionPlusTwoWeeks.getDate() + ((1 + 7 - mondayAfterSubmissionPlusTwoWeeks.getDay()) % 7)
+	);
 
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const gw2Info = await service.db.gateway2Info.findUnique({
-			where: { caseId: caseRecord?.id }
-		});
+	const personalisation = {
+		['gw2_assessor_initial']: assessorName[0],
+		['gw2_assessor_lastname']: assessorName.split(' ').slice(-1)[0],
+		['workshop_week_monday']: mondayAfterSubmissionPlusTwoWeeks.toISOString().split('T')[0]
+	};
 
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-
-		const entraClient = service.getEntraClient(req.session as AuthSession)!;
-		const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
-		const inspectorId = allInspectors.find((inspector) => inspector.id === assessorName)?.id;
-		const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		const mondayAfterSubmissionPlusTwoWeeks = new Date(gw2Info?.actualDate?.getDate() ?? Date.now());
-		mondayAfterSubmissionPlusTwoWeeks.setDate(mondayAfterSubmissionPlusTwoWeeks.getDate() + 14);
-		mondayAfterSubmissionPlusTwoWeeks.setDate(
-			mondayAfterSubmissionPlusTwoWeeks.getDate() + ((1 + 7 - mondayAfterSubmissionPlusTwoWeeks.getDay()) % 7)
-		);
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['team_email_address']: service.localPlansTeamEmail,
-			['gw2_assessor_initial']: assessorName[0],
-			['gw2_assessor_lastname']: assessorName.split(' ').slice(-1)[0],
-			['workshop_week_monday']: mondayAfterSubmissionPlusTwoWeeks.toISOString().split('T')[0],
-			['contact_info']: 'If you need to contact us, call 0303 444 5000'
-		};
-
-		try {
-			await service.notifyClient?.sendEmail(gw2AssessorTemplateId, assessorEmail.trim(), {
-				personalisation: personalisationDetails,
-				reference: notifyReference
-			});
-			service.logger.info({ email: assessorEmail }, 'GW2 Assessor email sent');
-		} catch (error) {
-			service.logger.error({ error, email: assessorEmail }, 'Failed to send GW2 Assessor email');
-		}
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(gw2AssessorLpaTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'GW2 Assessor updated email sent to LPA');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send GW2 Assessor updated email to LPA');
-				}
-			})
-		);
-	}
+	await sendNotifyEmail(service, reference, 'gw2AssessorUpdatedAssessor', {
+		recipients: [assessorEmail],
+		personalisation
+	});
+	// All LPAs notified
+	await sendNotifyEmail(service, reference, 'gw2AssessorUpdatedLpa', { personalisation });
 }
 
 export async function sendWorkshopDocsUploadedNotifyEmail(service: ManageService, req: Request, reference: string) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
-
-		const portalUrl = process.env.PORTAL_URL;
-		const gw2WorkshopAgendaTemplateId = config.templateIds.gw2WorkshopAgenda;
-
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!gw2WorkshopAgendaTemplateId)
-			throw new Error('GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID environment variable is not set');
-
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['team_email_address']: service.localPlansTeamEmail,
-			['contact_info']: 'If you need to contact us, call 0303 444 5000'
-		};
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(gw2WorkshopAgendaTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'GW2 workshop agenda email sent');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send GW2 workshop agenda email to LPA');
-				}
-			})
-		);
-	}
+	await sendNotifyEmail(service, reference, 'gw2WorkshopAgenda');
 }
 
 export async function sendWorkshopReportUploadedNotifyEmail(service: ManageService, req: Request, reference: string) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
-
-		const portalUrl = process.env.PORTAL_URL;
-		const gw2ReportUploadedTemplateId = config.templateIds.gw2ReportUploaded;
-
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!gw2ReportUploadedTemplateId)
-			throw new Error('GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID environment variable is not set');
-
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['team_email_address']: service.localPlansTeamEmail,
-			['contact_info']: 'If you need to contact us, call 0303 444 5000'
-		};
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(gw2ReportUploadedTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'GW2 report uploaded email sent');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send GW2 report uploaded email to LPA');
-				}
-			})
-		);
-	}
+	await sendNotifyEmail(service, reference, 'gw2ReportUploaded');
 }
 
 export async function sendGw3AssessorAppointedNotifyEmail(
@@ -315,194 +240,27 @@ export async function sendGw3AssessorAppointedNotifyEmail(
 	reference: string,
 	assessorName: string
 ) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
+	if (!getNotifyConfig(service)) return;
 
-		const portalUrl = process.env.PORTAL_URL;
-		const gw3AssessorAppointedTemplateId = config.templateIds.gw3AssessorUpdatedAssessor;
-		const gw3AssessorAppointedLpaTemplateId = config.templateIds.gw3AssessorUpdatedLpa;
+	const assessorEmail = await getAssessorEmail(service, req, assessorName);
+	const personalisation = {
+		['gw3_assessor_initial']: assessorName[0],
+		['gw3_assessor_lastname']: assessorName.split(' ').slice(-1)[0]
+	};
 
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!gw3AssessorAppointedTemplateId)
-			throw new Error('GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID environment variable is not set');
-		if (!gw3AssessorAppointedLpaTemplateId)
-			throw new Error('GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID environment variable is not set');
-
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-		const entraClient = service.getEntraClient(req.session as AuthSession)!;
-		const allInspectors = await entraClient.listAllGroupMembers(service.entraGroupIds.inspectors ?? '');
-		const inspectorId = allInspectors.find((inspector) => inspector.id === assessorName)?.id;
-		const assessorEmail = await entraClient.getUserEmailFromId(inspectorId ?? '');
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['team_email_address']: service.localPlansTeamEmail,
-			['contact_info']: 'If you need to contact us, call 0303 444 5000',
-			['gw3_assessor_initial']: assessorName[0],
-			['gw3_assessor_lastname']: assessorName.split(' ').slice(-1)[0]
-		};
-
-		// Send to assessor
-		try {
-			await service.notifyClient?.sendEmail(gw3AssessorAppointedTemplateId, assessorEmail.trim(), {
-				personalisation: personalisationDetails,
-				reference: notifyReference
-			});
-			service.logger.info({ email: assessorEmail }, 'GW3 Assessor email sent');
-		} catch (error) {
-			service.logger.error({ error, email: assessorEmail }, 'Failed to send GW3 Assessor email');
-		}
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(gw3AssessorAppointedLpaTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'GW3 assessor appointed email sent');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send GW3 assessor appointed email to LPA');
-				}
-			})
-		);
-	}
+	// Send to assessor
+	await sendNotifyEmail(service, reference, 'gw3AssessorUpdatedAssessor', {
+		recipients: [assessorEmail],
+		personalisation
+	});
+	// All LPAs notified
+	await sendNotifyEmail(service, reference, 'gw3AssessorUpdatedLpa', { personalisation });
 }
 
 export async function sendGw3PassNotifyEmail(service: ManageService, req: Request, reference: string) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
-
-		const portalUrl = process.env.PORTAL_URL;
-		const gw3PassTemplateId = config.templateIds.gw3Pass;
-
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!gw3PassTemplateId) throw new Error('GOV_NOTIFY_GW3_PASS_TEMPLATE_ID environment variable is not set');
-
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['team_email_address']: service.localPlansTeamEmail,
-			['contact_info']: 'If you need to contact us, call 0303 444 5000'
-		};
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(gw3PassTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'GW3 pass email sent');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send GW3 pass email to LPA');
-				}
-			})
-		);
-	}
+	await sendNotifyEmail(service, reference, 'gw3Pass');
 }
 
 export async function sendGw3ResubmissionNeededNotifyEmail(service: ManageService, req: Request, reference: string) {
-	if (!service.notifyClient) {
-		service.logger.warn('Notify client not configured');
-	} else {
-		const config = loadGovNotifyConfig();
-		if (config.disabled) return;
-
-		const portalUrl = process.env.PORTAL_URL;
-		const gw3ResubmissionRequiredTemplateId = config.templateIds.gw3ResubmissionRequired;
-
-		if (!portalUrl) throw new Error('PORTAL_URL environment variable is not set');
-		if (!gw3ResubmissionRequiredTemplateId)
-			throw new Error('GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID environment variable is not set');
-
-		const caseRecord = await service.db.case.findUnique({
-			where: { reference },
-			select: {
-				id: true,
-				lpas: true,
-				planType: true,
-				contacts: true
-			}
-		});
-		const caseLpas = caseRecord?.lpas.map((lpa) => lpa.lpaName) ?? [];
-		const lpasToSendTo = [...new Set([...caseRecord!.contacts.map((contact) => contact.email)])];
-
-		const portalLoginURL = `${portalUrl}/login`;
-		const caseReference = reference;
-		const notifyReference = `create-case:${caseReference}`;
-		const personalisationDetails = {
-			portalLoginURL,
-			['plan_ref']: caseReference,
-			['authority_name']: caseLpas?.join(', '),
-			['plan_type']: caseRecord!.planType
-				.split('-')
-				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-				.join(' '),
-			['team_email_address']: service.localPlansTeamEmail,
-			['contact_info']: 'If you need to contact us, call 0303 444 5000'
-		};
-
-		// All LPAs notified
-		await Promise.allSettled(
-			lpasToSendTo.map(async (email) => {
-				try {
-					await service.notifyClient?.sendEmail(gw3ResubmissionRequiredTemplateId, email.trim(), {
-						personalisation: personalisationDetails,
-						reference: notifyReference
-					});
-					service.logger.info({ email: email }, 'GW3 resubmission needed email sent');
-				} catch (error) {
-					service.logger.error({ error, email: email }, 'Failed to send GW3 resubmission needed email to LPA');
-				}
-			})
-		);
-	}
+	await sendNotifyEmail(service, reference, 'gw3ResubmissionRequired');
 }

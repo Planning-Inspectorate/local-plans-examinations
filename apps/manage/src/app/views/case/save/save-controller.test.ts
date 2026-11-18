@@ -1,128 +1,103 @@
-import { SaveController } from './save-controller.ts';
+import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it, mock } from 'node:test';
+import { SaveController } from './save-controller.ts';
 import type { SaveInput } from './save-inputs.ts';
-
-type MockServiceType = {
-	db: {
-		case: {
-			findUnique: any;
-			upsert: any;
-		};
-		gateway1Info: {
-			findUnique: any;
-			upsert: any;
-		};
-		gateway2Info: {
-			findUnique: any;
-			upsert: any;
-		};
-		gateway3Info: {
-			findUnique: any;
-			upsert: any;
-		};
-		examinationInfo: {
-			findUnique: any;
-			upsert: any;
-		};
-		contacts: {
-			upsert: any;
-		};
-		lpas: {
-			upsert: any;
-		};
-	};
-};
-function createMockService(): MockServiceType {
-	return {
-		db: {
-			case: {
-				findUnique: mock.fn(async () => ({
-					id: 'someCaseId',
-					gateway2Info: {
-						workshops: [{}]
-					},
-					gateway3Info: {
-						submissions: [
-							{
-								id: 'someId',
-								decision: undefined,
-								completionDate: undefined,
-								gateway3InfoId: undefined
-							}
-						]
-					}
-				})),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway1Info: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway2Info: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			gateway3Info: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			examinationInfo: {
-				findUnique: mock.fn<() => {}>(),
-				upsert: mock.fn(async () => ({}))
-			},
-			contacts: {
-				upsert: mock.fn(async () => ({}))
-			},
-			lpas: {
-				upsert: mock.fn(async () => ({}))
-			}
-		}
-	};
-}
 
 class MockSaveController extends SaveController {
 	protected async prepareData(answers: Record<string, any>) {
-		return {};
+		return this.trimStringValues(answers);
 	}
-	protected async saveToDatabase(answers: SaveInput, question?: string) {
-		return true;
-	}
-	protected async shouldSaveToSession() {
-		return true;
-	}
-	public async resolveCaseIdProxy() {
+
+	public saveToDatabase = mock.fn(async (_answers: SaveInput) => true);
+
+	public shouldSaveToSession = mock.fn(async () => true);
+
+	public fireNotifications = mock.fn(async (_answers: SaveInput) => {});
+
+	public resolveCaseIdProxy() {
 		return this.resolveCaseId();
 	}
-	public async saveToSessionProxy(answers: Record<string, string>) {
+
+	public saveToSessionProxy(answers: SaveInput) {
 		return this.saveToSession(answers);
 	}
 }
 
-describe('test SaveController', () => {
-	it('resolveCaseId rejects when no case can be found', async () => {
-		const mockService = createMockService();
-		mockService.db.case.findUnique = mock.fn(async () => undefined);
-		const req = {
-			params: {}
-		} as Request;
-		const mockSaveController = new MockSaveController(mockService as any, req, 'someRef');
-		await assert.rejects(mockSaveController.resolveCaseIdProxy());
+function createController(caseRecord: { id: string } | null = { id: 'someCaseId' }) {
+	const findUnique = mock.fn(async () => caseRecord);
+	const service = { db: { case: { findUnique } } };
+	const req = { session: {} } as Request;
+	const controller = new MockSaveController(service as unknown as ManageService, req, 'someRef');
+
+	return { controller, req };
+}
+
+describe('SaveController', () => {
+	it('rejects when no case can be found for the reference', async () => {
+		const { controller } = createController(null);
+
+		await assert.rejects(controller.resolveCaseIdProxy(), {
+			message: 'Case not found for reference "someRef"'
+		});
 	});
-	it('can save to a session', async () => {
-		const mockService = createMockService();
-		mockService.db.case.findUnique = mock.fn(async () => undefined);
-		const req = {
-			params: {},
-			session: {}
-		} as Request;
-		const answers = {
-			someField: 'a',
-			anotherField: 'b'
-		};
-		const mockSaveController = new MockSaveController(mockService as any, req, 'someRef');
-		mockSaveController.saveToSessionProxy(answers);
-		assert.deepEqual(req.session, { answers: answers });
+
+	it('can save answers to the session', () => {
+		const { controller, req } = createController();
+		const answers = { someField: 'a', anotherField: 'b' };
+
+		assert.strictEqual(controller.saveToSessionProxy(answers), true);
+		assert.deepStrictEqual(req.session.answers, answers);
+	});
+
+	it('fires notifications with the prepared answers after a successful database save', async () => {
+		const { controller, req } = createController();
+		controller.shouldSaveToSession.mock.mockImplementationOnce(async () => false);
+
+		const events: string[] = [];
+		controller.saveToDatabase.mock.mockImplementationOnce(async () => {
+			await Promise.resolve();
+			events.push('database save completed');
+			return true;
+		});
+		controller.fireNotifications.mock.mockImplementationOnce(async () => {
+			await Promise.resolve();
+			events.push('notifications completed');
+		});
+
+		const result = await controller.prepareAndSave({ someField: '  a  ' });
+		const preparedAnswers = { someField: 'a' };
+
+		assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+		assert.strictEqual(controller.saveToDatabase.mock.callCount(), 1);
+		assert.deepStrictEqual(controller.saveToDatabase.mock.calls[0].arguments, [preparedAnswers]);
+		assert.strictEqual(controller.fireNotifications.mock.callCount(), 1);
+		assert.deepStrictEqual(controller.fireNotifications.mock.calls[0].arguments, [preparedAnswers]);
+		assert.deepStrictEqual(events, ['database save completed', 'notifications completed']);
+		assert.strictEqual(req.session.answers, undefined);
+	});
+
+	it('skips notifications when the database save returns false', async () => {
+		const { controller } = createController();
+		controller.shouldSaveToSession.mock.mockImplementationOnce(async () => false);
+		controller.saveToDatabase.mock.mockImplementationOnce(async () => false);
+
+		const result = await controller.prepareAndSave({ someField: 'a' });
+
+		assert.deepStrictEqual(result, { dataWritten: false, writtenToDB: true });
+		assert.strictEqual(controller.saveToDatabase.mock.callCount(), 1);
+		assert.strictEqual(controller.fireNotifications.mock.callCount(), 0);
+	});
+
+	it('saves prepared answers to the session and skips the database and notifications', async () => {
+		const { controller, req } = createController();
+
+		const result = await controller.prepareAndSave({ someField: '  a  ' });
+
+		assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: false });
+		assert.deepStrictEqual(req.session.answers, { someField: 'a' });
+		assert.strictEqual(controller.saveToDatabase.mock.callCount(), 0);
+		assert.strictEqual(controller.fireNotifications.mock.callCount(), 0);
 	});
 });

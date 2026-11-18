@@ -1,3 +1,4 @@
+import { resetGovNotifyConfig } from '../../../config.ts';
 import { ExaminationSaveController } from './examination-save-controller.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
@@ -8,6 +9,7 @@ import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/stati
 
 function createMockService(examinationStatus?: string) {
 	return {
+		logger: { warn: mock.fn(), info: mock.fn(), error: mock.fn() },
 		db: {
 			case: {
 				findUnique: mock.fn(async () => ({
@@ -185,6 +187,89 @@ describe('ExaminationSaveController', () => {
 				...expectedAnswers
 			}
 		});
+	});
+
+	describe('notifications', () => {
+		const notifyEnv = {
+			PORTAL_URL: 'https://portal.example.com',
+			GOV_NOTIFY_DISABLED: 'false',
+			GOV_NOTIFY_API_KEY: 'test-api-key',
+			GOV_NOTIFY_WEBHOOK_TOKEN: 'test-webhook-token',
+			GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID: 'inspector-appointed',
+			GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID: 'outcome-sound',
+			GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID: 'outcome-unsound'
+		};
+
+		const cases = [
+			{
+				question: 'examining-inspector-1',
+				answers: { examiningInspector1: 'inspector-id' },
+				template: 'inspector-appointed'
+			},
+			{
+				question: 'examining-inspector-2',
+				answers: { examiningInspector2: 'inspector-id' },
+				template: 'inspector-appointed'
+			},
+			{
+				question: 'examining-inspector-3',
+				answers: { examiningInspector3: 'inspector-id' },
+				template: 'inspector-appointed'
+			},
+			{ question: 'is-sound', answers: { isSound: 'sound' }, template: 'outcome-sound' },
+			{ question: 'is-sound', answers: { isSound: 'sound-with-modifications' }, template: 'outcome-sound' },
+			{ question: 'is-sound', answers: { isSound: 'unsound' }, template: 'outcome-unsound' },
+			{ question: 'is-sound', answers: { isSound: 'unknown' }, template: undefined },
+			{ question: 'examining-inspector-1', answers: {}, template: undefined }
+		];
+
+		for (const { question, answers, template } of cases) {
+			it(`uses the expected notification for ${question} with ${JSON.stringify(answers)}`, async (t) => {
+				const previousEnv = new Map<string, string | undefined>();
+				t.after(() => {
+					for (const [key, value] of previousEnv) {
+						if (value === undefined) {
+							delete process.env[key];
+						} else {
+							process.env[key] = value;
+						}
+					}
+					resetGovNotifyConfig();
+				});
+				for (const [key, value] of Object.entries(notifyEnv)) {
+					previousEnv.set(key, process.env[key]);
+					process.env[key] = value;
+				}
+				resetGovNotifyConfig();
+
+				const baseService = createMockService();
+				const caseRecord = await baseService.db.case.findUnique();
+				const findUnique = mock.fn(async () => ({
+					...caseRecord,
+					lpas: [{ lpaName: 'Test Council' }],
+					planType: 'local-plan',
+					contacts: [{ email: 'lpa@example.com' }]
+				}));
+				const sendEmail = mock.fn(async (_template: string, _email: string, _options: unknown) => ({}));
+				const service = {
+					...baseService,
+					db: { ...baseService.db, case: { ...baseService.db.case, findUnique } },
+					notifyClient: { sendEmail },
+					localPlansTeamEmail: 'team@example.com'
+				};
+				const req = { params: { question } } as unknown as Request;
+				const controller = new ExaminationSaveController(service as unknown as ManageService, req, 'caseRef');
+
+				const result = await controller.prepareAndSave({ ...answers });
+
+				assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+				assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+				assert.deepStrictEqual(
+					sendEmail.mock.calls.map(({ arguments: args }) => args.slice(0, 2)),
+					template ? [[template, 'lpa@example.com']] : []
+				);
+			});
+		}
 	});
 
 	describe('should save to session', async () => {

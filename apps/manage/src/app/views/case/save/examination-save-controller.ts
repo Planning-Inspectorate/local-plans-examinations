@@ -2,14 +2,36 @@ import { SaveController } from './save-controller.ts';
 import { examinationHearingBaseUrls } from '../questions.ts';
 import { sortByDateColumn } from '#util/util.ts';
 import { parseDate } from '../../../util/date.ts';
-import type { ExaminationInput } from './save-inputs.ts';
+import type { ExaminationInput, SaveInput } from './save-inputs.ts';
 import { examinationPauseBaseUrls } from '../questions.ts';
 import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../classes/common-consts.ts';
 import { formatDateToString } from '../../../util/date.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { syncPortalExaminationWebsite } from '../../../util/examination-website.ts';
+import { sendNotifyEmail } from '../../../notify/notify-helper.ts';
 
+const notificationsMap = {
+	examiningInspector1: 'appointedInspectorNotifyId',
+	examiningInspector2: 'appointedInspectorNotifyId',
+	examiningInspector3: 'appointedInspectorNotifyId',
+	isSound: {
+		unsound: 'examinationOutcomeUnsoundId',
+		sound: 'examinationOutcomeSoundId',
+		'sound-with-modifications': 'examinationOutcomeSoundId'
+	}
+} as const;
+
+type NotificationKey = keyof typeof notificationsMap;
+type IsSoundAnswer = keyof typeof notificationsMap.isSound;
+
+function isNotificationKey(key: string | undefined): key is NotificationKey {
+	return key !== undefined && Object.hasOwn(notificationsMap, key);
+}
+
+function isIsSoundAnswer(value: unknown): value is IsSoundAnswer {
+	return typeof value === 'string' && Object.hasOwn(notificationsMap.isSound, value);
+}
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
 	private examinationStatus: string | undefined;
@@ -100,6 +122,23 @@ export class ExaminationSaveController extends SaveController {
 			previousPause = pause;
 		}
 		return true;
+	}
+
+	protected async fireNotifications(answers: SaveInput) {
+		const currentKey = Object.keys(answers)[0];
+		if (!isNotificationKey(currentKey)) return;
+
+		const notificationKey = notificationsMap[currentKey];
+
+		if (typeof notificationKey === 'string') {
+			await sendNotifyEmail(this.service, this.caseReference, notificationKey);
+			return;
+		}
+
+		const { isSound } = answers as { isSound?: string };
+		if (isIsSoundAnswer(isSound)) {
+			await sendNotifyEmail(this.service, this.caseReference, notificationKey[isSound]);
+		}
 	}
 
 	public async prepareAndSave(answers: Record<string, any>) {
