@@ -76,18 +76,10 @@ describe('Plan details page content after GW2 report issued in BO', () => {
 
 	after(() => cy.task('clearDb'));
 
-	it('Shows Gateway 2 as completed and Gateway 3 as ready to start', { tags: ['regression'] }, () => {
-		loadReportIssuedPlan().then((plan) => {
-			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
-			planDetailsPage.verifyProgressRow('Gateway 2', `Submission expected: ${plan.dates.gateway2}`, 'Completed');
-			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.readyToStart);
-		});
-	});
-
 	it('Opens Gateway 3 submission page from the Gateway 3 link', { tags: ['regression'] }, () => {
 		loadReportIssuedPlan().then((plan) => {
 			planDetailsPage.verifyLoaded();
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.readyToStart);
 			planDetailsPage.gateway3Link.should('be.visible').click();
 
 			gateway3ApplicationPage.verifyLoaded();

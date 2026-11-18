@@ -4,6 +4,7 @@ import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+const todayDisplay = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Plan details page content for gateway 3', () => {
 	beforeEach(() => {
@@ -18,7 +19,7 @@ describe('Plan details page content for gateway 3', () => {
 			myPlansPage.openPlan(plan.reference);
 			planDetailsPage.verifyLoaded();
 			planDetailsPage.verifyMetadataValue('Reference', plan.reference);
-			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, plan.underReview);
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submitted: ${todayDisplay}`, plan.underReview);
 		});
 	});
 

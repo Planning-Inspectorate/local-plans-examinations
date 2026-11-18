@@ -6,6 +6,7 @@ import { openSeededGateway3DeclarationPage } from '../../../../flows/portal/gate
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+const todayDisplay = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Gateway 3 application complete page journeys', () => {
 	beforeEach(() => {
@@ -28,7 +29,7 @@ describe('Gateway 3 application complete page journeys', () => {
 			gateway3SubmissionCompletePage.checkSubmissionStatusLink(plan.urlReference).click();
 
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, 'Under review');
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submitted: ${todayDisplay}`, 'Under review');
 		});
 	});
 });
