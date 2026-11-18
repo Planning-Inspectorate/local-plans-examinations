@@ -1,18 +1,21 @@
 import assert from 'node:assert/strict';
-import { before, describe, it, mock } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import {
 	buildCheckReportMiddleware,
 	issueGateway2Report,
 	issueGateway2WorkshopDocuments,
 	updateCaseField
 } from '../views/case/controller.ts';
+import { resetGovNotifyConfig } from '../config.ts';
 import { caseRouter } from '../views/case/index.ts';
 import {
+	type NotifyEmailTemplateKey,
 	sendGw2AssessorAppointedNotifyEmail,
 	sendGw2WorkshopSetUpNotifyEmail,
 	sendGw3AssessorAppointedNotifyEmail,
 	sendGw3PassNotifyEmail,
 	sendGw3ResubmissionNeededNotifyEmail,
+	sendNotifyEmail,
 	sendWorkshopDocsUploadedNotifyEmail,
 	sendWorkshopReportUploadedNotifyEmail
 } from './notify-helper.ts';
@@ -27,33 +30,58 @@ const templates = {
 	gw3AssessorUpdatedAssessor: 'gw3_assessor_updated_assessor',
 	gw3AssessorUpdatedLpa: 'gw3_assessor_updated_lpa',
 	gw3Pass: 'gw3_passed',
-	gw3ResubmissionRequired: 'gw3_resubmission_required'
+	gw3ResubmissionRequired: 'gw3_resubmission_required',
+	appointedInspector: 'appointed_inspector',
+	examinationOutcomeSound: 'examination_outcome_sound',
+	examinationOutcomeUnsound: 'examination_outcome_unsound'
 };
 
 const reference = 'PLAN-123456';
 const request = { session: {} };
 
-before(() => {
-	process.env.PORTAL_URL = 'https://portal.example.com';
-	process.env.GOV_NOTIFY_DISABLED = 'false';
-	process.env.GOV_NOTIFY_API_KEY = 'test-api-key';
-	process.env.GOV_NOTIFY_WEBHOOK_TOKEN = 'test-webhook-token';
-	process.env.LOCAL_PLANS_TEAM_EMAIL = 'team@example.com';
+const testEnv = {
+	PORTAL_URL: 'https://portal.example.com',
+	GOV_NOTIFY_DISABLED: 'false',
+	GOV_NOTIFY_API_KEY: 'test-api-key',
+	GOV_NOTIFY_WEBHOOK_TOKEN: 'test-webhook-token',
+	LOCAL_PLANS_TEAM_EMAIL: 'team@example.com',
+	GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID: templates.gw2WorkshopInspector,
+	GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID: templates.gw2WorkshopLpa,
+	GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID: templates.gw2AssessorUpdatedAssessor,
+	GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID: templates.gw2AssessorUpdatedLpa,
+	GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID: templates.gw2WorkshopAgenda,
+	GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID: templates.gw2ReportUploaded,
+	GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID: templates.gw3AssessorUpdatedAssessor,
+	GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID: templates.gw3AssessorUpdatedLpa,
+	GOV_NOTIFY_GW3_PASS_TEMPLATE_ID: templates.gw3Pass,
+	GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID: templates.gw3ResubmissionRequired,
+	GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID: templates.appointedInspector,
+	GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID: templates.examinationOutcomeSound,
+	GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID: templates.examinationOutcomeUnsound
+};
 
-	for (const [key, value] of Object.entries({
-		GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID: templates.gw2WorkshopInspector,
-		GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID: templates.gw2WorkshopLpa,
-		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID: templates.gw2AssessorUpdatedAssessor,
-		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID: templates.gw2AssessorUpdatedLpa,
-		GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID: templates.gw2WorkshopAgenda,
-		GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID: templates.gw2ReportUploaded,
-		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID: templates.gw3AssessorUpdatedAssessor,
-		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID: templates.gw3AssessorUpdatedLpa,
-		GOV_NOTIFY_GW3_PASS_TEMPLATE_ID: templates.gw3Pass,
-		GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID: templates.gw3ResubmissionRequired
-	})) {
+const previousEnv = new Map<string, string | undefined>();
+
+beforeEach(() => {
+	resetGovNotifyConfig();
+
+	for (const [key, value] of Object.entries(testEnv)) {
+		previousEnv.set(key, process.env[key]);
 		process.env[key] = value;
 	}
+});
+
+afterEach(() => {
+	for (const [key, value] of previousEnv) {
+		if (value === undefined) {
+			delete process.env[key];
+		} else {
+			process.env[key] = value;
+		}
+	}
+
+	previousEnv.clear();
+	resetGovNotifyConfig();
 });
 
 function createService() {
@@ -201,6 +229,37 @@ describe('notify helper functions', () => {
 	});
 });
 
+describe('sendNotifyEmail examination templates', () => {
+	const examinationTemplates: { templateKey: NotifyEmailTemplateKey; expectedTemplateId: string }[] = [
+		{ templateKey: 'appointedInspectorNotifyId', expectedTemplateId: templates.appointedInspector },
+		{ templateKey: 'examinationOutcomeSoundId', expectedTemplateId: templates.examinationOutcomeSound },
+		{ templateKey: 'examinationOutcomeUnsoundId', expectedTemplateId: templates.examinationOutcomeUnsound }
+	];
+
+	for (const { templateKey, expectedTemplateId } of examinationTemplates) {
+		it(`sends the ${templateKey} template once to each unique LPA contact`, async () => {
+			const { service, sendEmail } = createService();
+			console.log(process.env);
+
+			await sendNotifyEmail(service, reference, templateKey);
+
+			assert.strictEqual(sendEmail.mock.callCount(), 1);
+			assert.deepStrictEqual(sendEmail.mock.calls[0].arguments.slice(0, 2), [expectedTemplateId, 'lpa@example.com']);
+			assert.strictEqual(sendEmail.mock.calls[0].arguments[2].reference, `create-case:${reference}`);
+		});
+
+		it(`sends the ${templateKey} template only to explicit recipients when provided`, async () => {
+			const { service, sendEmail } = createService();
+			const explicitRecipient = 'explicit@example.com';
+
+			await sendNotifyEmail(service, reference, templateKey, { recipients: [explicitRecipient] });
+
+			assert.strictEqual(sendEmail.mock.callCount(), 1);
+			assert.deepStrictEqual(sendEmail.mock.calls[0].arguments.slice(0, 2), [expectedTemplateId, explicitRecipient]);
+		});
+	}
+});
+
 describe('Gateway 2 notification triggers', () => {
 	function createContext(section: string, question: string) {
 		return {
@@ -330,4 +389,14 @@ describe('Gateway 2 notification triggers', () => {
 			assert.equal(res.redirect.mock.calls[0].arguments[0], `/case/${reference}/gateway-2`);
 		});
 	}
+});
+
+it('does not send any email when Gov Notify is disabled', async () => {
+	process.env.GOV_NOTIFY_DISABLED = 'true';
+	const { service, sendEmail } = createService();
+
+	await sendNotifyEmail(service, reference, 'examinationOutcomeSoundId');
+
+	assert.strictEqual(sendEmail.mock.callCount(), 0);
+	assert.strictEqual(service.db.case.findUnique.mock.callCount(), 0);
 });
