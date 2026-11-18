@@ -46,7 +46,7 @@ import {
 } from '../../../app/notify/notify-helper.ts';
 
 import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
-type ManageListAction = 'edit' | 'remove' | undefined;
+type ManageListAction = 'add' | 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
@@ -115,6 +115,17 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			await removeItem({ db, reference, section, currentItemId, service, req });
 			return;
 		}
+		const existingLpa =
+			req.url.includes('check-lpas') && action === 'edit'
+				? (
+						await db.lPA.findUnique({
+							where: { lpaCode: currentItemId },
+							select: {
+								lpaName: true
+							}
+						})
+					)?.lpaName
+				: null;
 
 		let writeResponse: { dataWritten: boolean; writtenToDB: boolean };
 		const firstSegmentUrl = getFirstSegmentOfUrl(req.url);
@@ -187,14 +198,21 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 
-			if ('lpa' in data.answers) {
-				if (action == 'edit') {
+			if (req.url.includes('check-lpas')) {
+				const lpa = await db.lPA.findUnique({
+					where: { lpaCode: data.answers.lpa },
+					select: {
+						lpaName: true
+					}
+				});
+				const lpaName = lpa?.lpaName ?? data.answers.lpa;
+				if (action == 'edit' && existingLpa) {
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						lpa: currentItemId + ' updated to ' + data.answers.lpa
+						lpa: existingLpa + ' updated to ' + lpaName
 					});
 				} else if (action == 'add') {
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						lpa: data.answers.lpa + ' added'
+						lpa: lpaName + ' added'
 					});
 				}
 			} else {
@@ -241,19 +259,28 @@ async function removeItem({
 	service: ManageService;
 	req: Request;
 }): Promise<void> {
+	const account = authSession.getAccount(req.session);
+	const currentUser = account?.name ?? 'Unknown';
+
 	if (section === CONTACTS_SECTION) {
 		await db.contact.delete({ where: { id: currentItemId } });
 		return;
+	} else {
+		const lpa = await db.lPA.findUnique({
+			where: { lpaCode: currentItemId },
+			select: {
+				lpaName: true
+			}
+		});
+		const existingLpa = lpa?.lpaName ?? currentItemId;
+		await db.case.update({
+			where: { reference },
+			data: { lpas: { disconnect: { lpaCode: currentItemId } } }
+		});
+		updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
+			lpa: existingLpa + ' removed'
+		});
 	}
-	await db.case.update({
-		where: { reference },
-		data: { lpas: { disconnect: { lpaCode: currentItemId } } }
-	});
-	const account = authSession.getAccount(req.session);
-	const currentUser = account?.name ?? 'Unknown';
-	updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
-		lpa: currentItemId + ' removed'
-	});
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
