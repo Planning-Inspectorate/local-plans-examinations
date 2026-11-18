@@ -49,10 +49,10 @@ export interface Config extends ConfigWithBlob {
 			gw3AssessorUpdatedLpa?: string;
 			gw3Pass?: string;
 			gw3ResubmissionRequired?: string;
-			appointedInspectorNotifyId?: string;
-			appointedInspectorLpaNotifyId?: string;
-			examinationOutcomeSoundId?: string;
-			examinationOutcomeUnsoundId?: string;
+			appointedInspector?: string;
+			appointedInspectorLpa?: string;
+			examinationOutcomeSound?: string;
+			examinationOutcomeUnsound?: string;
 		};
 		localPlansTeamEmail: string;
 	};
@@ -138,10 +138,10 @@ export function loadGovNotifyConfig(): GovNotifyConfig {
 			gw3AssessorUpdatedLpa: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
 			gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
 			gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || '',
-			appointedInspectorNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
-			appointedInspectorLpaNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
-			examinationOutcomeSoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
-			examinationOutcomeUnsoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
+			appointedInspector: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
+			appointedInspectorLpa: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
+			examinationOutcomeSound: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
+			examinationOutcomeUnsound: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
 		},
 		localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 	};
@@ -327,10 +327,10 @@ export function loadConfig(): Config {
 				gw3AssessorUpdatedLpa: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
 				gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
 				gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || '',
-				appointedInspectorNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
-				appointedInspectorLpaNotifyId: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
-				examinationOutcomeSoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
-				examinationOutcomeUnsoundId: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
+				appointedInspector: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
+				appointedInspectorLpa: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
+				examinationOutcomeSound: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
+				examinationOutcomeUnsound: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
 			},
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},

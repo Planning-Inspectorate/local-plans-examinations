@@ -47,19 +47,19 @@ export const TemplateLogMessages = {
 		emailSent: 'GW3 resubmission required email sent',
 		failedToSend: 'Failed to send GW3 resubmission required email'
 	},
-	appointedInspectorNotifyId: {
+	appointedInspector: {
 		emailSent: 'Appointed inspector email sent',
 		failedToSend: 'Failed to send appointed inspector email'
 	},
-	appointedInspectorLpaNotifyId: {
+	appointedInspectorLpa: {
 		emailSent: 'Appointed inspector email sent to LPA',
 		failedToSend: 'Failed to send appointed inspector email to LPA'
 	},
-	examinationOutcomeSoundId: {
+	examinationOutcomeSound: {
 		emailSent: 'Examination outcome email sent',
 		failedToSend: 'Failed to send examination outcome email'
 	},
-	examinationOutcomeUnsoundId: {
+	examinationOutcomeUnsound: {
 		emailSent: 'Examination outcome unsound email sent',
 		failedToSend: 'Failed to send examination outcome unsound email'
 	}
