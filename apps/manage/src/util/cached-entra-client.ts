@@ -1,6 +1,6 @@
 import { Client } from '@microsoft/microsoft-graph-client';
 import { EntraClient } from './entra.ts';
-import type { GroupMember , UserName } from './entra.ts';
+import type { GroupMember, UserName } from './entra.ts';
 import type { MapCache } from '@planning-inspectorate/core/util';
 
 export type InitEntraClient = (session: AuthSession) => CachedEntraClient | null;
