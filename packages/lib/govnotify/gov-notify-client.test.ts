@@ -31,6 +31,12 @@ function createTestClient(templateIds = { authCode: 'template-123' }) {
 	return { logger, client, mockNotify };
 }
 
+function notifyApiError(status: number, errors: { error: string; message: string }[]) {
+	return Object.assign(new Error(`Request failed with status code ${status}`), {
+		response: { status, data: { status_code: status, errors } }
+	});
+}
+
 describe('GovNotifyClient', () => {
 	describe('sendEmail', () => {
 		it('should call notifyClient.sendEmail with correct arguments', async () => {
@@ -86,6 +92,68 @@ describe('GovNotifyClient', () => {
 			const notifyErrorLog = logger.error.mock.calls[1].arguments;
 			assert.deepStrictEqual(notifyErrorLog[0].message, [{ error: 'ValidationError', message: 'Invalid email' }]);
 		});
+
+		it('logs the status and an actionable hint for a team-only API key rejection', async () => {
+			const { logger, client, mockNotify } = createTestClient();
+			const errors = [{ error: 'BadRequestError', message: "Can't send to this recipient using a team-only API key" }];
+			mockNotify.sendEmail.mock.mockImplementation(async () => {
+				throw notifyApiError(400, errors);
+			});
+
+			await assert.rejects(
+				() => client.sendEmail('template-123', 'someone@example.com', { personalisation: {} }),
+				/email failed to dispatch/
+			);
+
+			assert.strictEqual(mockNotify.sendEmail.mock.callCount(), 1);
+			const [details, message] = logger.error.mock.calls[0].arguments;
+			assert.strictEqual(message, 'failed to dispatch email');
+			assert.strictEqual(details.status, 400);
+			assert.match(details.hint, /team or guest list/);
+			assert.deepStrictEqual(logger.error.mock.calls[1].arguments[0].message, errors);
+		});
+
+		// fail fast: nothing is retried, whatever the cause
+		const failures = [
+			[
+				'a Notify 5xx',
+				() => notifyApiError(500, [{ error: 'Exception', message: 'Internal server error' }]),
+				/unavailable/i
+			],
+			[
+				'a rate limit response',
+				() => notifyApiError(429, [{ error: 'RateLimitError', message: 'Exceeded rate limit' }]),
+				/rate limit/i
+			],
+			[
+				'a network error',
+				() => Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }),
+				/could not reach gov\.uk notify/i
+			]
+		];
+		for (const [name, makeError, hint] of failures) {
+			it(`throws on the first failure without retrying for ${name}`, async () => {
+				const { logger, client, mockNotify } = createTestClient();
+				const error = makeError();
+				mockNotify.sendEmail.mock.mockImplementation(async () => {
+					throw error;
+				});
+
+				await assert.rejects(
+					() => client.sendEmail('template-123', 'test@example.com', { personalisation: {} }),
+					(err) => {
+						assert.match(err.message, /email failed to dispatch/);
+						assert.strictEqual(err.cause, error);
+						return true;
+					}
+				);
+
+				assert.strictEqual(mockNotify.sendEmail.mock.callCount(), 1);
+				assert.strictEqual(logger.info.mock.callCount(), 1);
+				assert.strictEqual(logger.warn.mock.callCount(), 0);
+				assert.match(logger.error.mock.calls[0].arguments[0].hint, hint);
+			});
+		}
 	});
 
 	describe('sendAuthCode', () => {
@@ -108,6 +176,21 @@ describe('GovNotifyClient', () => {
 				reference: 'portal-login:PLAN-123456'
 			});
 		});
+
+		for (const authCode of ['', undefined]) {
+			it(`throws without calling Notify when the authCode template id is ${JSON.stringify(authCode)}`, async () => {
+				const { logger, client, mockNotify } = createTestClient({ authCode });
+
+				await assert.rejects(
+					() => client.sendAuthCode('user@example.com', { authCode: 'XYZABC', expiryMinutes: '20' }),
+					/email failed to dispatch: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID is not set/
+				);
+
+				assert.strictEqual(mockNotify.sendEmail.mock.callCount(), 0);
+				assert.strictEqual(logger.error.mock.callCount(), 1);
+				assert.match(logger.error.mock.calls[0].arguments[0], /GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID is not set/);
+			});
+		}
 	});
 
 	describe('getNotificationById', () => {
