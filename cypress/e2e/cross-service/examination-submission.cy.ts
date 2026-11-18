@@ -8,6 +8,7 @@ import { examinationDocuments } from '../../fixtures/manage/examination.ts';
 import { examinationSubmissionWebsite } from '../../fixtures/portal/examination-website.ts';
 import type { PlanDetailsFixture } from '../../fixtures/portal/types.ts';
 import { examinationDocumentsPage, examinationPage } from '../../page-objects/manage/examination/index.ts';
+import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 
 describe('Cross-service Examination submission', () => {
 	beforeEach(() => {
@@ -31,10 +32,12 @@ describe('Cross-service Examination submission', () => {
 				uploadExaminationDocumentInPortal(plan.reference, fileName);
 
 				openExaminationPage(currentCase);
+				examinationPage.verifyHeaderStatus('Submission pending');
 				examinationPage.verifyNoSubmissionDocumentsReviewLink();
 				submitExaminationInPortal(plan.reference);
 
 				openExaminationPage(currentCase);
+				examinationPage.verifyHeaderStatus('Submission received');
 				examinationPage.verifySummaryRowContains(
 					examinationSubmissionWebsite.row,
 					examinationSubmissionWebsite.updatedValue
@@ -46,6 +49,8 @@ describe('Cross-service Examination submission', () => {
 					examinationSubmissionWebsite.updatedValue
 				);
 				examinationDocumentsPage.verifyDocumentDownload('required', examinationDocuments.required[0].label, fileName);
+				manageHomePage.visit();
+				manageHomePage.verifyCaseStatus(plan.title, 'Submission received');
 			});
 		}
 	);

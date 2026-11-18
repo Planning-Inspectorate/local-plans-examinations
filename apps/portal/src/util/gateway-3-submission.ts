@@ -1,6 +1,7 @@
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 
 export type Gateway3SubmissionSummary = {
+	id?: string;
 	decision: string | null;
 	completionDate: Date | null;
 	submittedDate?: Date | null;

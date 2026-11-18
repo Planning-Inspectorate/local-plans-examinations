@@ -124,6 +124,7 @@ describe('getExaminationStages', () => {
 
 	const buildRecord = (overrides: Partial<examinationStatusWithPause> = {}): examinationStatusWithPause => ({
 		id: 'exam-1',
+		submissionForExaminationDate: null,
 		examiningInspector1: 'inspector-1',
 		examiningInspector2: null,
 		examiningInspector3: null,
@@ -154,6 +155,7 @@ describe('getExaminationStages', () => {
 			where: { caseId: CASE_ID },
 			select: {
 				id: true,
+				submissionForExaminationDate: true,
 				examiningInspector1: true,
 				examiningInspector2: true,
 				examiningInspector3: true,
@@ -182,13 +184,17 @@ describe('getExaminationStages', () => {
 	});
 
 	it('returns the record with its original fields preserved', async () => {
-		const record = buildRecord({ adoptionDate: new Date('2026-01-01') });
+		const record = buildRecord({
+			submissionForExaminationDate: new Date('2025-12-01'),
+			adoptionDate: new Date('2026-01-01')
+		});
 		const { service } = mockService(record);
 
 		const result = await getExaminationStages(service, CASE_ID);
 
 		assert.strictEqual(result, record);
 		assert.strictEqual(result?.id, 'exam-1');
+		assert.deepStrictEqual(result?.submissionForExaminationDate, new Date('2025-12-01'));
 		assert.strictEqual(result?.examiningInspector1, 'inspector-1');
 		assert.deepStrictEqual(result?.adoptionDate, new Date('2026-01-01'));
 	});
