@@ -3,72 +3,8 @@ import type { AuthSession } from '#util/cached-entra-client.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
 import { getExaminingInspectorContacts } from '#util/util.ts';
-
-type TemplateLogMessage = { emailSent: string; failedToSend: string };
-
-export const TemplateLogMessages = {
-	authCode: {
-		emailSent: 'Auth code email sent',
-		failedToSend: 'Failed to send auth code email'
-	},
-	gw2WorkshopInspector: {
-		emailSent: 'Email sent to GW2 assessor for workshop set up',
-		failedToSend: 'Failed to send workshop set up email'
-	},
-	gw2WorkshopLpa: {
-		emailSent: 'Email sent to LPA for workshop set up',
-		failedToSend: 'Failed to send workshop set up email'
-	},
-	gw2AssessorUpdatedAssessor: {
-		emailSent: 'GW2 Assessor email sent',
-		failedToSend: 'Failed to send GW2 Assessor email'
-	},
-	gw2AssessorUpdatedLpa: {
-		emailSent: 'GW2 Assessor updated email sent to LPA',
-		failedToSend: 'Failed to send GW2 Assessor updated email to LPA'
-	},
-	gw2WorkshopAgenda: {
-		emailSent: 'GW2 workshop agenda email sent',
-		failedToSend: 'Failed to send GW2 workshop agenda email to LPA'
-	},
-	gw2ReportUploaded: {
-		emailSent: 'GW2 report uploaded email sent',
-		failedToSend: 'Failed to send GW2 report uploaded email to LPA'
-	},
-	gw3AssessorUpdatedAssessor: {
-		emailSent: 'GW3 Assessor updated email sent to assessor',
-		failedToSend: 'Failed to send GW3 Assessor updated email to assessor'
-	},
-	gw3AssessorUpdatedLpa: {
-		emailSent: 'GW3 Assessor updated email sent to LPA',
-		failedToSend: 'Failed to send GW3 Assessor updated email to LPA'
-	},
-	gw3Pass: {
-		emailSent: 'GW3 pass email sent',
-		failedToSend: 'Failed to send GW3 pass email'
-	},
-	gw3ResubmissionRequired: {
-		emailSent: 'GW3 resubmission required email sent',
-		failedToSend: 'Failed to send GW3 resubmission required email'
-	},
-	appointedInspectorNotifyId: {
-		emailSent: 'Appointed inspector email sent',
-		failedToSend: 'Failed to send appointed inspector email'
-	},
-	appointedInspectorLpaNotifyId: {
-		emailSent: 'Appointed inspector email sent to LPA',
-		failedToSend: 'Failed to send appointed inspector email to LPA'
-	},
-	examinationOutcomeSoundId: {
-		emailSent: 'Examination outcome email sent',
-		failedToSend: 'Failed to send examination outcome email'
-	},
-	examinationOutcomeUnsoundId: {
-		emailSent: 'Examination outcome unsound email sent',
-		failedToSend: 'Failed to send examination outcome unsound email'
-	}
-} satisfies Partial<Record<GovTemplateIdsKeys, TemplateLogMessage>>;
-export type NotifyEmailTemplateKey = keyof typeof TemplateLogMessages;
+import { getExaminingInspectorNames } from '../util/util.ts';
+import { type NotifyEmailTemplateKey, TemplateLogMessages } from './notify-consts.ts';
 
 export interface SendNotifyEmailOptions {
 	recipients?: string[];
@@ -91,6 +27,18 @@ function getNotifyConfig(service: ManageService) {
 function templateEnvVarName(templateKey: GovTemplateIdsKeys): string {
 	const snakeCase = templateKey.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
 	return `GOV_NOTIFY_${snakeCase}_TEMPLATE_ID`;
+}
+
+/**
+ * Extracts the useful parts of a Notify/Axios error without logging request headers (which contain the bearer token).
+ */
+function notifyErrorDetails(error: unknown) {
+	const err = error as { message?: string; response?: { status?: number; data?: { errors?: unknown } } };
+	return {
+		message: err?.message,
+		status: err?.response?.status,
+		errors: err?.response?.data?.errors
+	};
 }
 
 async function getGw2Info(service: ManageService, reference: string) {
@@ -118,7 +66,6 @@ export const sendNotifyEmail = async (
 ) => {
 	const config = getNotifyConfig(service);
 	if (!config) return;
-	if (config?.disabled) return;
 
 	const portalUrl = process.env.PORTAL_URL;
 	const templateId = config.templateIds[templateKey];
@@ -153,6 +100,11 @@ export const sendNotifyEmail = async (
 
 	const { emailSent, failedToSend } = TemplateLogMessages[templateKey];
 
+	service.logger.debug(
+		{ templateKey, templateId, recipients, personalisation: personalisationDetails },
+		'Sending notify emails'
+	);
+
 	await Promise.allSettled(
 		recipients.map(async (email) => {
 			try {
@@ -160,9 +112,9 @@ export const sendNotifyEmail = async (
 					personalisation: personalisationDetails,
 					reference: notifyReference
 				});
-				service.logger.info({ email }, emailSent);
+				service.logger.info({ email, templateKey }, emailSent);
 			} catch (error) {
-				service.logger.error({ error, email }, failedToSend);
+				service.logger.error({ email, templateKey, ...notifyErrorDetails(error) }, failedToSend);
 			}
 		})
 	);
@@ -269,18 +221,81 @@ export async function sendGw3ResubmissionNeededNotifyEmail(service: ManageServic
 	await sendNotifyEmail(service, reference, 'gw3ResubmissionRequired');
 }
 
+type ExaminationEmailParams = {
+	request?: Request & { session: AuthSession };
+	personalisation?: Record<string, string>;
+};
+
+type ExaminationEmailHandler = (service: ManageService, reference: string) => Promise<void>;
+
+type InspectorName = { firstName?: string | null; lastName?: string | null };
+
+const INSPECTOR_SLOTS = ['lead_inspector', 'inspector2', 'inspector3', 'inspector4'] as const;
+
+/**
+ * Builds a mapping of inspector personalization fields for the configured inspector slots.
+ *
+ * @param inspectors - Inspectors used to populate each slot, defaulting to an empty list.
+ * @return A record containing each slot's uppercase first-name initial and last name, with empty strings for missing values.
+ */
+function buildInspectorPersonalisation(inspectors: InspectorName[] = []): Record<string, string> {
+	return Object.fromEntries(
+		INSPECTOR_SLOTS.flatMap((slot, i) => [
+			[`${slot}_initial`, inspectors[i]?.firstName?.charAt(0).toUpperCase() ?? ''],
+			[`${slot}_lastname`, inspectors[i]?.lastName ?? '']
+		])
+	);
+}
+
+/**
+ * Creates the email handler map used to send examination-related notification emails.
+ *
+ * @param params - The parameters used to configure the examination email handlers.
+ * @param params.request - The request context required by handlers that need request-specific data.
+ * @param params.personalisation - Additional personalisation values to include when sending notification emails.
+ * @return A partial record of notification template keys mapped to their corresponding examination email handlers.
+ */
+function getExaminationEmailHandlers({
+	request,
+	personalisation = {}
+}: ExaminationEmailParams): Partial<Record<NotifyEmailTemplateKey, ExaminationEmailHandler>> {
+	return {
+		appointedInspectorNotifyId: (service, reference) => {
+			if (!request) {
+				throw new Error('Request object is required for sending appointed inspector notify email');
+			}
+			return sendAppointedInspectorNotifyEmail(service, reference, request, personalisation);
+		},
+
+		appointedInspectorLpaNotifyId: async (service, reference) => {
+			if (!request) {
+				throw new Error('Request object is required for sending LPA notify email');
+			}
+			const inspectors = await getExaminingInspectorNames(service, reference, request);
+			return sendLPANotifications(service, reference, {
+				...buildInspectorPersonalisation(inspectors),
+				...personalisation
+			});
+		},
+		examinationOutcomeSoundId: (service, reference) => sendSoundNotifyEmail(service, reference, personalisation),
+		examinationOutcomeUnsoundId: (service, reference) => sendUnSoundNotifyEmail(service, reference, personalisation)
+	};
+}
+
 export async function sendExaminationNotifyEmail(
 	service: ManageService,
 	reference: string,
-	templateKey: NotifyEmailTemplateKey
+	templateKey: NotifyEmailTemplateKey,
+	params: ExaminationEmailParams = {}
 ) {
-	await sendNotifyEmail(service, reference, templateKey);
+	await getExaminationEmailHandlers(params)[templateKey]?.(service, reference);
 }
 
 export async function sendAppointedInspectorNotifyEmail(
 	service: ManageService,
+	reference: string,
 	req: Request & { session: AuthSession },
-	reference: string
+	personalisation?: Record<string, string>
 ) {
 	const caseRecord = await service.db.case.findUnique({ where: { reference }, select: { id: true } });
 	if (!caseRecord) {
@@ -289,6 +304,31 @@ export async function sendAppointedInspectorNotifyEmail(
 	const examInfo = await service.db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 	const recipients = await getExaminingInspectorContacts(service, req, examInfo);
 	await sendNotifyEmail(service, reference, 'appointedInspectorNotifyId', {
-		recipients
+		recipients,
+		personalisation
 	});
+}
+
+export async function sendLPANotifications(
+	service: ManageService,
+	reference: string,
+	personalisation?: Record<string, string>
+) {
+	await sendNotifyEmail(service, reference, 'appointedInspectorLpaNotifyId', { personalisation });
+}
+
+export async function sendSoundNotifyEmail(
+	service: ManageService,
+	reference: string,
+	personalisation?: Record<string, string>
+) {
+	await sendNotifyEmail(service, reference, 'examinationOutcomeSoundId', { personalisation });
+}
+
+export async function sendUnSoundNotifyEmail(
+	service: ManageService,
+	reference: string,
+	personalisation?: Record<string, string>
+) {
+	await sendNotifyEmail(service, reference, 'examinationOutcomeUnsoundId', { personalisation });
 }

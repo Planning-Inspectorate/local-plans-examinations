@@ -8,8 +8,8 @@ import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../class
 import { formatDateToString } from '../../../util/date.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { sendExaminationNotifyEmail } from '../../../notify/notify-helper.ts';
 import { syncPortalExaminationWebsite } from '../../../util/examination-website.ts';
-import { sendAppointedInspectorNotifyEmail, sendExaminationNotifyEmail } from '../../../notify/notify-helper.ts';
 
 const notificationsMap = {
 	examiningInspector1: 'appointedInspectorNotifyId',
@@ -131,13 +131,15 @@ export class ExaminationSaveController extends SaveController {
 		const notificationKey = notificationsMap[currentKey];
 
 		if (typeof notificationKey === 'string') {
-			await sendExaminationNotifyEmail(this.service, this.caseReference, notificationKey);
 			if (
 				currentKey === 'examiningInspector1' ||
 				currentKey === 'examiningInspector2' ||
 				currentKey === 'examiningInspector3'
 			) {
-				await sendAppointedInspectorNotifyEmail(this.service, this.req, this.caseReference);
+				await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorLpaNotifyId');
+				await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorNotifyId', {
+					request: this.req
+				});
 			}
 			return;
 		}
