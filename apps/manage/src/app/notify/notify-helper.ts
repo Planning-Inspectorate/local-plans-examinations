@@ -255,14 +255,14 @@ function getExaminationEmailHandlers({
 	personalisation = {}
 }: ExaminationEmailParams): Partial<Record<NotifyEmailTemplateKey, ExaminationEmailHandler>> {
 	return {
-		appointedInspectorNotifyId: (service, reference) => {
+		appointedInspector: (service, reference) => {
 			if (!request) {
 				throw new Error('Request object is required for sending appointed inspector notify email');
 			}
 			return sendAppointedInspectorNotifyEmail(service, reference, request, personalisation);
 		},
 
-		appointedInspectorLpaNotifyId: async (service, reference) => {
+		appointedInspectorLpa: async (service, reference) => {
 			if (!request) {
 				throw new Error('Request object is required for sending LPA notify email');
 			}
@@ -272,8 +272,8 @@ function getExaminationEmailHandlers({
 				...personalisation
 			});
 		},
-		examinationOutcomeSoundId: (service, reference) => sendSoundNotifyEmail(service, reference, personalisation),
-		examinationOutcomeUnsoundId: (service, reference) => sendUnSoundNotifyEmail(service, reference, personalisation)
+		examinationOutcomeSound: (service, reference) => sendSoundNotifyEmail(service, reference, personalisation),
+		examinationOutcomeUnsound: (service, reference) => sendUnSoundNotifyEmail(service, reference, personalisation)
 	};
 }
 
@@ -302,7 +302,7 @@ export async function sendAppointedInspectorNotifyEmail(
 	}
 	const examInfo = await service.db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 	const recipients = await getExaminingInspectorContacts(service, req, examInfo);
-	await sendNotifyEmail(service, reference, 'appointedInspectorNotifyId', {
+	await sendNotifyEmail(service, reference, 'appointedInspector', {
 		recipients,
 		personalisation
 	});
@@ -313,7 +313,7 @@ export async function sendLPANotifications(
 	reference: string,
 	personalisation?: Record<string, string>
 ) {
-	await sendNotifyEmail(service, reference, 'appointedInspectorLpaNotifyId', { personalisation });
+	await sendNotifyEmail(service, reference, 'appointedInspectorLpa', { personalisation });
 }
 
 export async function sendSoundNotifyEmail(
@@ -321,7 +321,7 @@ export async function sendSoundNotifyEmail(
 	reference: string,
 	personalisation?: Record<string, string>
 ) {
-	await sendNotifyEmail(service, reference, 'examinationOutcomeSoundId', { personalisation });
+	await sendNotifyEmail(service, reference, 'examinationOutcomeSound', { personalisation });
 }
 
 export async function sendUnSoundNotifyEmail(
@@ -329,5 +329,5 @@ export async function sendUnSoundNotifyEmail(
 	reference: string,
 	personalisation?: Record<string, string>
 ) {
-	await sendNotifyEmail(service, reference, 'examinationOutcomeUnsoundId', { personalisation });
+	await sendNotifyEmail(service, reference, 'examinationOutcomeUnsound', { personalisation });
 }

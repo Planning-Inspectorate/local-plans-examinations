@@ -100,4 +100,40 @@ describe('SaveController', () => {
 		assert.strictEqual(controller.saveToDatabase.mock.callCount(), 0);
 		assert.strictEqual(controller.fireNotifications.mock.callCount(), 0);
 	});
+
+	it('saves to the database when the subclass does not handle notifications', async () => {
+		class SaveControllerWithoutNotifications extends SaveController {
+			protected async prepareData(answers: Record<string, any>) {
+				return answers;
+			}
+
+			public saveToDatabase = mock.fn(async (_answers: SaveInput) => true);
+
+			protected async shouldSaveToSession() {
+				return false;
+			}
+		}
+		const service = { db: { case: { findUnique: mock.fn(async () => ({ id: 'someCaseId' })) } } };
+		const controller = new SaveControllerWithoutNotifications(
+			service as unknown as ManageService,
+			{ session: {} } as Request,
+			'someRef'
+		);
+
+		const result = await controller.prepareAndSave({ someField: 'a' });
+
+		assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+		assert.strictEqual(controller.saveToDatabase.mock.callCount(), 1);
+	});
+
+	it('propagates a notification failure after the database save', async () => {
+		const { controller } = createController();
+		controller.shouldSaveToSession.mock.mockImplementationOnce(async () => false);
+		controller.fireNotifications.mock.mockImplementationOnce(async () => {
+			throw new Error('Notify failed');
+		});
+
+		await assert.rejects(controller.prepareAndSave({ someField: 'a' }), { message: 'Notify failed' });
+		assert.strictEqual(controller.saveToDatabase.mock.callCount(), 1);
+	});
 });

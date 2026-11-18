@@ -12,13 +12,13 @@ import { sendExaminationNotifyEmail } from '../../../notify/notify-helper.ts';
 import { syncPortalExaminationWebsite } from '../../../util/examination-website.ts';
 
 const notificationsMap = {
-	examiningInspector1: 'appointedInspectorNotifyId',
-	examiningInspector2: 'appointedInspectorNotifyId',
-	examiningInspector3: 'appointedInspectorNotifyId',
+	examiningInspector1: 'appointedInspector',
+	examiningInspector2: 'appointedInspector',
+	examiningInspector3: 'appointedInspector',
 	isSound: {
-		unsound: 'examinationOutcomeUnsoundId',
-		sound: 'examinationOutcomeSoundId',
-		'sound-with-modifications': 'examinationOutcomeSoundId'
+		unsound: 'examinationOutcomeUnsound',
+		sound: 'examinationOutcomeSound',
+		'sound-with-modifications': 'examinationOutcomeSound'
 	}
 } as const;
 
@@ -136,8 +136,10 @@ export class ExaminationSaveController extends SaveController {
 				currentKey === 'examiningInspector2' ||
 				currentKey === 'examiningInspector3'
 			) {
-				await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorLpaNotifyId');
-				await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorNotifyId', {
+				await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorLpa', {
+					request: this.req
+				});
+				await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspector', {
 					request: this.req
 				});
 			}

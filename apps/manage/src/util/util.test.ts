@@ -3,6 +3,7 @@ import { describe, it, mock } from 'node:test';
 import {
 	compileExaminationDocumentFiles,
 	getExaminationStages,
+	getExaminingInspectorContacts,
 	sortByDateColumn,
 	sortGateway3Submissions,
 	type examinationStatusWithPause
@@ -216,5 +217,102 @@ describe('getExaminationStages', () => {
 		const service = { db: { examinationInfo: { findFirst } } } as unknown as ManageService;
 
 		await assert.rejects(() => getExaminationStages(service, CASE_ID), { message: 'db down' });
+	});
+});
+
+describe('getExaminingInspectorContacts', () => {
+	type InspectorRequest = Parameters<typeof getExaminingInspectorContacts>[1];
+	const request = { session: {} } as InspectorRequest;
+
+	function createService(emails: Record<string, string | Error> = {}) {
+		const entraClient = {
+			getUserEmailFromId: mock.fn(async (id: string) => {
+				const email = emails[id];
+				if (email instanceof Error) throw email;
+				return email ?? '';
+			})
+		};
+		const service = {
+			getEntraClient: mock.fn((_session: unknown) => entraClient),
+			logger: { warn: mock.fn() }
+		};
+
+		return { service, entraClient };
+	}
+
+	it('returns the trimmed email of each assigned examining inspector in field order', async () => {
+		const { service, entraClient } = createService({
+			'inspector-1': ' one@example.com ',
+			'inspector-3': 'three@example.com'
+		});
+
+		const result = await getExaminingInspectorContacts(service as unknown as ManageService, request, {
+			examiningInspector3: 'inspector-3',
+			examiningInspector1: 'inspector-1',
+			examiningInspector2: null,
+			status: 'not-an-inspector'
+		});
+
+		assert.deepStrictEqual(result, ['one@example.com', 'three@example.com']);
+		assert.deepStrictEqual(
+			entraClient.getUserEmailFromId.mock.calls.map(({ arguments: args }) => args[0]),
+			['inspector-1', 'inspector-3']
+		);
+		assert.strictEqual(service.getEntraClient.mock.calls[0].arguments[0], request.session);
+	});
+
+	it('ignores empty and non-string inspector ids', async () => {
+		const { service, entraClient } = createService();
+
+		const result = await getExaminingInspectorContacts(service as unknown as ManageService, request, {
+			examiningInspector1: '',
+			examiningInspector2: 123,
+			examiningInspector3: undefined
+		});
+
+		assert.deepStrictEqual(result, []);
+		assert.strictEqual(entraClient.getUserEmailFromId.mock.callCount(), 0);
+	});
+
+	it('skips inspectors whose email lookup fails or is blank and logs a warning', async () => {
+		const lookupError = new Error('User not found');
+		const { service } = createService({
+			'inspector-1': lookupError,
+			'inspector-2': '   ',
+			'inspector-3': 'three@example.com'
+		});
+
+		const result = await getExaminingInspectorContacts(service as unknown as ManageService, request, {
+			examiningInspector1: 'inspector-1',
+			examiningInspector2: 'inspector-2',
+			examiningInspector3: 'inspector-3'
+		});
+
+		assert.deepStrictEqual(result, ['three@example.com']);
+		assert.strictEqual(service.logger.warn.mock.callCount(), 1);
+		assert.deepStrictEqual(service.logger.warn.mock.calls[0].arguments, [
+			{ error: lookupError, inspectorId: 'inspector-1' },
+			'Could not look up examining inspector email in Entra'
+		]);
+	});
+
+	it('returns an empty list when there is no examination info', async () => {
+		const { service, entraClient } = createService();
+
+		const result = await getExaminingInspectorContacts(service as unknown as ManageService, request, null);
+
+		assert.deepStrictEqual(result, []);
+		assert.strictEqual(entraClient.getUserEmailFromId.mock.callCount(), 0);
+	});
+
+	it('returns an empty list when there is no Entra client', async () => {
+		const { service } = createService();
+		service.getEntraClient.mock.mockImplementation(() => null);
+
+		const result = await getExaminingInspectorContacts(service as unknown as ManageService, request, {
+			examiningInspector1: 'inspector-1'
+		});
+
+		assert.deepStrictEqual(result, []);
 	});
 });
