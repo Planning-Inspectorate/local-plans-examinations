@@ -10,6 +10,8 @@ import {
 	REQUIRED_DOCUMENT_SETS
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
+import { buildAssessorTabLocals } from '../assessor-helper.ts';
+import { resolveExaminationWebsite } from '../../../util/examination-website.ts';
 
 const { RESUBMISSION_DOCUMENTS_FIELD, RESUBMISSION_DOCUMENTS_LABEL } = COMMON_CONSTS;
 const RESUBMISSION_DOCUMENT_SET_PREFIX = 'g3-document-';
@@ -82,7 +84,14 @@ export const compileGateway3Data = async (
 		orderBy: { createdAt: 'asc' }
 	});
 
-	const examinationInfo = await db.gateway3Info.findUnique({ where: { caseId: currentData.caseId } });
+	const gateway3Info = await db.gateway3Info.findUnique({
+		where: { caseId: currentData.caseId },
+		select: { examinationWebsiteUrl: true }
+	});
+	const examinationInfo = await db.examinationInfo.findUnique({
+		where: { caseId: currentData.caseId },
+		select: { examinationWebsite: true, examinationWebsiteUrl: true }
+	});
 
 	const documentsBySetId = new Map<string, typeof documents>();
 	for (const document of documents) {
@@ -141,7 +150,8 @@ export const compileGateway3Data = async (
 		...documentsForFields(REQUIRED_DOCUMENT_SETS),
 		optionalData: documentsForFields(OPTIONAL_DOCUMENT_SETS),
 		documentFiles: filesForFields({ ...REQUIRED_DOCUMENT_SETS, ...OPTIONAL_DOCUMENT_SETS }),
-		examinationWebsite: examinationInfo?.examinationWebsiteUrl
+		// Same address as the Overview and Examination tabs: read from where the Portal submitted it
+		examinationWebsite: resolveExaminationWebsite({ examinationInfo, gateway3Info })
 	};
 
 	return { ...data, ...currentData };
@@ -214,7 +224,8 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 
 		const journey3Data = await db.gateway3Info.findUnique({
 			include: {
-				submissions: true
+				submissions: true,
+				additionalAssessors: true
 			},
 			where: { caseId: caseRecord.id }
 		});
@@ -243,6 +254,14 @@ export class Gateway3TabHandler extends OverviewPageLoadHandler {
 		journeyResponse.answers = await compileGateway3Data(db, {
 			...journey3Data
 		});
+
+		if (journeyId === COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
+			Object.assign(
+				res.locals,
+				await buildAssessorTabLocals(service, req, String(req.params.reference), 'gateway-3', journey3Data)
+			);
+		}
+
 		res.locals.journeyResponse = journeyResponse;
 		this.addVirusScanStatusToLocals(req, res, journeyId);
 

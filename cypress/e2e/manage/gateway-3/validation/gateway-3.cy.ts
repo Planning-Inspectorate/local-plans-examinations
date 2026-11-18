@@ -1,14 +1,16 @@
 import {
 	openSeededGateway3Page,
 	openSeededGateway3PageWithSubmissionDocuments,
+	removeGateway3Assessor,
 	requestGateway3DecisionWithMissingDocuments
 } from '../../../../flows/manage/gateway-3-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway3DateAnswers,
-	gateway3AssessorAnswer,
 	gateway3ProgrammeOfficerAnswer,
 	gateway3DecisionAnswer,
-	gateway3RequiredSubmissionDocuments
+	gateway3RequiredSubmissionDocuments,
+	gateway3AssessorAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 import {
 	gateway3Page,
@@ -42,14 +44,23 @@ describe('Gateway 3 validation', () => {
 	});
 
 	it('shows an error when Gateway 3 assessor name is blank', { tags: ['regression'] }, () => {
-		gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
+		removeGateway3Assessor(seededCase.planTitle);
+		gateway3Page.openAddAssessor();
 		gateway3AssessorPage.verifyLoaded();
-		gateway3AssessorPage.assessorNamePopulated(gateway3AssessorAnswer.assessor1);
-		gateway3AssessorPage.clearAssessorNameField();
+		gateway3AssessorPage.assessorNamePopulated('');
 		gateway3AssessorPage.saveAndContinue();
 
 		gateway3AssessorPage.verifyLoaded();
 		gateway3AssessorPage.verifyValidationError('Select a name');
+	});
+
+	it('shows an error when the Gateway 3 assessor has already been added', { tags: ['regression'] }, () => {
+		gateway3Page.openAddAssessor();
+		gateway3AssessorPage.verifyLoaded();
+		gateway3AssessorPage.enterAssessorName(gateway3AssessorAnswer.display);
+
+		gateway3AssessorPage.verifyLoaded();
+		gateway3AssessorPage.verifyValidationError('This assessor has already been added to Gateway 3');
 	});
 
 	it('shows errors when the programme officer details are blank', { tags: ['regression'] }, () => {

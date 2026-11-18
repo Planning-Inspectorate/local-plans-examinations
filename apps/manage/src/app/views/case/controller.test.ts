@@ -124,6 +124,7 @@ function createService(): any {
 		},
 		gateway3Info: {
 			upsert: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({ count: 1 })),
 			findUnique: mock.fn(async () => null)
 		},
 		examinationInfo: {
@@ -450,6 +451,13 @@ describe('updateCaseField', () => {
 				},
 				data: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
 			});
+			// The website is also updated wherever the Portal submitted it, as that is where Manage reads it from
+			const portalWebsiteUpdate = {
+				where: { caseId: CASE_ID, examinationWebsiteUrl: { not: null } },
+				data: { examinationWebsiteUrl: 'https://example.com' }
+			};
+			assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[1].arguments[0], portalWebsiteUpdate);
+			assert.deepEqual(service.db.gateway3Info.updateMany.mock.calls[0].arguments[0], portalWebsiteUpdate);
 		});
 	});
 
@@ -1165,7 +1173,8 @@ describe('buildGetJourneyMiddleware', () => {
 						programmeOfficerFirstName: true,
 						programmeOfficerLastName: true,
 						programmeOfficerEmail: true,
-						assessorName: true
+						assessorName: true,
+						examinationWebsiteUrl: true
 					}
 				},
 				examinationInfo: {
@@ -1174,6 +1183,7 @@ describe('buildGetJourneyMiddleware', () => {
 						examiningInspector2: true,
 						examiningInspector3: true,
 						examinationWebsite: true,
+						examinationWebsiteUrl: true,
 						qaInspector1: true,
 						qaInspector2: true,
 						qaInspector3: true
@@ -1390,6 +1400,32 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.equal(ctx.res.locals.journeyResponse.answers.examinationWebsite, 'www.lpa-example.com');
 		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	it('shows the Portal examination submission website on Gateway 3 ahead of the other saved addresses', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-3',
+			pageLoadHandler: Gateway3TabHandler
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: CASE_ID,
+			examinationWebsiteUrl: 'www.lpa-example.com',
+			submissions: [{ id: 'someId', decision: undefined, completionDate: undefined, gateway3InfoId: undefined }]
+		}));
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			examinationWebsite: 'www.manage-example.com',
+			examinationWebsiteUrl: 'www.lpa-examination-example.com'
+		}));
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.equal(ctx.res.locals.journeyResponse.answers.examinationWebsite, 'www.lpa-examination-example.com');
 	});
 
 	it('continues the Gateway 3 document page when no files have been uploaded', async () => {
@@ -1612,6 +1648,91 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.journeyResponse.answers.letterSentToMHCLGDate, letterSentToMHCLGDate);
 		assert.equal(ctx.res.locals.journeyResponse.answers.factCheckDueDate, factCheckDueDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	describe('examination website on the Examination tab', () => {
+		async function loadExaminationAnswers(
+			examinationInfo: Record<string, unknown>,
+			gateway3Info: Record<string, unknown> | null,
+			url = '/examination'
+		) {
+			const ctx = createMiddlewareContext({ url, pageLoadHandler: ExaminationTabHandler });
+			ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+				id: CASE_ID,
+				planTitle: 'Southshire Local Plan'
+			}));
+			ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+				caseId: CASE_ID,
+				...examinationInfo
+			}));
+			ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => gateway3Info);
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			return ctx.res.locals.journeyResponse.answers;
+		}
+
+		it('uses the website the LPA submitted in the Portal Gateway 3 submission instead of showing not started', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: null, examinationWebsiteUrl: null },
+				{ examinationWebsiteUrl: 'www.lpa-gateway-3.example' }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.lpa-gateway-3.example');
+		});
+
+		it('uses the Portal examination submission website ahead of the Gateway 3 one', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: null, examinationWebsiteUrl: 'www.lpa-examination.example' },
+				{ examinationWebsiteUrl: 'www.lpa-gateway-3.example' }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.lpa-examination.example');
+		});
+
+		it('reads the Portal website even when a different address is saved in Manage', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: 'www.manage.example', examinationWebsiteUrl: 'www.lpa-examination.example' },
+				{ examinationWebsiteUrl: 'www.lpa-gateway-3.example' }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.lpa-examination.example');
+		});
+
+		it('uses the website saved in Manage when the Portal has not submitted one', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: 'www.manage.example', examinationWebsiteUrl: null },
+				{ examinationWebsiteUrl: null }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.manage.example');
+		});
+
+		it('leaves the website empty when it has not been provided anywhere', async () => {
+			const answers = await loadExaminationAnswers({ examinationWebsite: null, examinationWebsiteUrl: null }, null);
+
+			assert.equal(answers.examinationWebsite, null);
+		});
+
+		it('adds the programme officer saved against Gateway 3, including the phone number', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsiteUrl: 'www.lpa-examination.example' },
+				{
+					programmeOfficerFirstName: 'Pat',
+					programmeOfficerLastName: 'Officer',
+					programmeOfficerEmail: 'pat@example.com',
+					programmeOfficerPhone: '01234 567890',
+					examinationWebsiteUrl: 'www.lpa-gateway-3.example'
+				}
+			);
+
+			assert.equal(answers.programmeOfficerFirstName, 'Pat');
+			assert.equal(answers.programmeOfficerLastName, 'Officer');
+			assert.equal(answers.programmeOfficerEmail, 'pat@example.com');
+			assert.equal(answers.programmeOfficerPhone, '01234 567890');
+			// The Gateway 3 website must not replace the examination row's own Portal answer
+			assert.equal(answers.examinationWebsiteUrl, 'www.lpa-examination.example');
+		});
 	});
 
 	it('marks Manage-page uploads as returning to Manage after confirmation', async () => {

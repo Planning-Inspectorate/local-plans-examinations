@@ -43,7 +43,7 @@ describe('createJourney (Gateway 3)', () => {
 		assert.strictEqual(journey.initialBackLink, '/');
 	});
 
-	it('creates a Required Information section with all 10 questions', () => {
+	it('creates the procedural documents section in the required order', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
 		const req = {
 			baseUrl: '/manage-local-plans',
@@ -52,11 +52,21 @@ describe('createJourney (Gateway 3)', () => {
 
 		const journey = createJourney(req, response, buildQuestions());
 
-		assert.strictEqual(journey.sections[0].name, 'Required Information');
-		assert.strictEqual(journey.sections[0].questions.length, 10);
+		assert.strictEqual(journey.sections[0].name, 'Procedural documents');
+		assert.strictEqual(journey.sections[0].segment, 'procedural-documents');
+		assert.deepStrictEqual(
+			journey.sections[0].questions.map((question) => question.fieldName),
+			[
+				'statementOfCompliance',
+				'statementOfSoundness',
+				'gateway2IssuesSummary',
+				'changesSinceConsultationStatement',
+				'consultationProposedPlanSummary'
+			]
+		);
 	});
 
-	it('creates an Optional Documents section with all 8 questions', () => {
+	it('creates the consultation documents section in the required order', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
 		const req = {
 			baseUrl: '/manage-local-plans',
@@ -65,10 +75,61 @@ describe('createJourney (Gateway 3)', () => {
 
 		const journey = createJourney(req, response, buildQuestions());
 
-		assert.strictEqual(journey.sections.length, 2);
-		assert.strictEqual(journey.sections[1].name, 'Optional Documents');
-		assert.strictEqual(journey.sections[1].segment, 'optional-documents');
-		assert.strictEqual(journey.sections[1].questions.length, 8);
+		assert.strictEqual(journey.sections.length, 3);
+		assert.strictEqual(journey.sections[1].name, 'Consultation documents');
+		assert.strictEqual(journey.sections[1].segment, 'consultation-documents');
+		assert.deepStrictEqual(
+			journey.sections[1].questions.map((question) => question.fieldName),
+			[
+				'representationsProgressSummary',
+				'copiesOfRepresentations',
+				'consultationEngagementSummary',
+				'scopingConsultationSummary',
+				'consultationContentEvidenceSummary'
+			]
+		);
+	});
+
+	it('creates the plan content, evidence and background section in the required order', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+
+		const journey = createJourney(req, response, buildQuestions());
+
+		assert.strictEqual(journey.sections[2].name, 'Plan content, evidence and background');
+		assert.strictEqual(journey.sections[2].segment, 'plan-content-evidence-and-background');
+		assert.deepStrictEqual(
+			journey.sections[2].questions.map((question) => question.fieldName),
+			[
+				'proposedLocalPlan',
+				'examinationWebsite',
+				'practicalArrangementsStatement',
+				'environmentalReport',
+				'statementOfReasonsDetermination',
+				'otherDocuments',
+				'mapOfPolicies',
+				'supplementaryPlansStatement'
+			]
+		);
+	});
+
+	it('uses the examination website caption in its rendered view model', () => {
+		const response = new JourneyResponse(JOURNEY_ID, 'case-id', {});
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+
+		const journey = createJourney(req, response, buildQuestions());
+		const section = journey.sections[2];
+		const question = section.questions.find(({ fieldName }) => fieldName === 'examinationWebsite');
+
+		assert.ok(question);
+		const viewModel = question.toViewModel({ params: {} as any, section, journey });
+		assert.strictEqual(viewModel.pageCaption, 'Plan content and evidence documents');
 	});
 
 	it('overrides back link to the overview URL for non-manage-list pages', () => {

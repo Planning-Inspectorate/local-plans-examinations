@@ -61,8 +61,7 @@ export const gateway2UploadAnswers = {
 			'vision, aims, objectives, up to 10 outcomes',
 			'spatial strategy options or spatial strategy',
 			'other plan content',
-			'The document name must describe what it is, for example "spatial strategy options 2026 draft".',
-			'Upload a file'
+			'The document name must describe what it is, for example "spatial strategy options 2026 draft".'
 		]
 	},
 	evidenceAndProgress: {
@@ -83,8 +82,7 @@ export const gateway2UploadAnswers = {
 			'site selection approach and evidence',
 			'green belt review',
 			'evidence related to the matters of soundness to be discussed',
-			'The document name must describe what it is, for example "green belt review 2026".',
-			'Upload a file'
+			'The document name must describe what it is, for example "green belt review 2026".'
 		]
 	}
 } as const satisfies Record<string, Gateway2UploadAnswer>;
@@ -127,7 +125,7 @@ export const gateway2ApplicationDocuments = {
 			addCy: 'add-evidence-on-engagement-between-plan-making-authorities-and-relevant-bodies'
 		}
 	],
-	PlanContentEvidenceBackground: [
+	planContentEvidenceBackground: [
 		{ document: 'Plan content', addCy: gateway2UploadAnswers.planContent.addCy },
 		{ document: 'Digital supporting material', addCy: 'add-digital-supporting-material' },
 		{ document: 'Evidence and progress', addCy: gateway2UploadAnswers.evidenceAndProgress.addCy },

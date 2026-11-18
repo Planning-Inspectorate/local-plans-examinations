@@ -1,5 +1,6 @@
 import { GatewayBasePage } from '../base/gateway-page.ts';
 import {
+	examinationDocuments,
 	examinationPause,
 	examinationReport,
 	soundUnsound,
@@ -13,6 +14,10 @@ export class ExaminationPage extends GatewayBasePage {
 
 	get hearingsHeadings() {
 		return cy.getByData('hearing-heading');
+	}
+
+	verifyNoSubmissionDocumentsReviewLink() {
+		this.summaryRow(examinationDocuments.row).find('a').should('not.exist');
 	}
 
 	get addHearingLink() {
@@ -158,6 +163,14 @@ export class ExaminationPage extends GatewayBasePage {
 			this.verifySummaryRowActionHref(row, new RegExp(`^/case/.+/examination/${section}/${path}$`));
 		});
 	}
+	// Both rows must be in the same summary list, with the second directly after the first
+	verifyRowOrder(firstRow: string, secondRow: string) {
+		this.summaryRow(firstRow)
+			.next('.govuk-summary-list__row')
+			.find('.govuk-summary-list__key')
+			.should('contain.text', secondRow);
+	}
+
 	verifyHearingsOrder(...hearingNumbers: number[]) {
 		this.hearingsHeadings.should('have.length', hearingNumbers.length);
 		hearingNumbers.forEach((hearingNumbers, index) => {

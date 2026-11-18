@@ -25,7 +25,7 @@ describe('Gateway 2 document upload page content', () => {
 		loadPlanDetails().then((plan) => {
 			const page = gateway2CoverLetterPage;
 			openGateway2DocumentUploadPage(plan, page);
-			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference), ['Upload a file']);
+			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference));
 		});
 	});
 
@@ -33,7 +33,7 @@ describe('Gateway 2 document upload page content', () => {
 		loadPlanDetails().then((plan) => {
 			const page = localPlanTimetablePage;
 			openGateway2DocumentUploadPage(plan, page);
-			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference), ['Upload a file']);
+			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference));
 		});
 	});
 
@@ -41,7 +41,7 @@ describe('Gateway 2 document upload page content', () => {
 		loadPlanDetails().then((plan) => {
 			const page = noticeOfIntentionToCommenceLocalPlanPage;
 			openGateway2DocumentUploadPage(plan, page);
-			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference), ['Upload a file']);
+			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference));
 		});
 	});
 
@@ -49,7 +49,7 @@ describe('Gateway 2 document upload page content', () => {
 		loadPlanDetails().then((plan) => {
 			const page = evidenceOnEngagementPage;
 			openGateway2DocumentUploadPage(plan, page);
-			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference), ['Upload a file']);
+			page.verifyPageContent(gateway2ApplicationPage.pathFor(plan.urlReference));
 		});
 	});
 

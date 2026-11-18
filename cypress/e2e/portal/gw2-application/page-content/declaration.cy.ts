@@ -10,6 +10,8 @@ describe('Declaration page content', () => {
 		portalLogin();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verifying page content for the declaration page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			portalDeclarationPage.visit(plan.urlReference);

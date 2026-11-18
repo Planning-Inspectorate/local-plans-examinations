@@ -246,3 +246,42 @@ export const DOCUMENT_LABELS: Record<string, string> = {
 		'Statement explaining changes since proposed local plan consultation, reasons for those changes and any additional consultation',
 	otherDocuments: 'Other documents'
 };
+
+// Examination submission (front office) documents, keyed by the portal question field name
+export const EXAMINATION_REQUIRED_DOCUMENT_SETS = {
+	localPlanSubmission: DOCUMENT_SET_ID.EX_LOCAL_PLAN,
+	mapOfPolicies: DOCUMENT_SET_ID.EX_MAP_OF_POLICIES,
+	gateway3CompletionStatement: DOCUMENT_SET_ID.EX_G3_COMPLETION,
+	consultationEngagementSummary: DOCUMENT_SET_ID.EX_CONSULTATION_ENGAGEMENT,
+	consultationProposedPlanSummary: DOCUMENT_SET_ID.EX_CONSULTATION_PLAN,
+	statementOfCompliance: DOCUMENT_SET_ID.EX_STATEMENT_COMPLIANCE,
+	statementOfSoundness: DOCUMENT_SET_ID.EX_STATEMENT_SOUNDNESS
+};
+export const EXAMINATION_OTHER_DOCUMENT_SETS = {
+	spatialStrategyRepresentations: DOCUMENT_SET_ID.EX_SPATIAL_STRATEGY_REPS,
+	environmentalReport: DOCUMENT_SET_ID.EX_ENVIRONMENTAL_REPORT,
+	environmentalEffectsStatement: DOCUMENT_SET_ID.EX_ENVIRONMENTAL_EFFECTS,
+	additionalEvidenceDocuments: DOCUMENT_SET_ID.EX_ADDITIONAL_EVIDENCE,
+	changesSinceGateway3Statement: DOCUMENT_SET_ID.EX_CHANGES_SINCE_G3,
+	gateway3ReportRepresentations: DOCUMENT_SET_ID.EX_G3_REPORT_REPS
+};
+
+export const EXAMINATION_DOCUMENT_LABELS: Record<string, string> = {
+	examinationWebsite: 'Examination website',
+	localPlanSubmission: 'Local plan submission for examination',
+	mapOfPolicies: 'Map of proposed local plan policies',
+	gateway3CompletionStatement: 'Gateway 3 completion statement',
+	consultationEngagementSummary:
+		'Summary of consultation and engagement activities in preparing the proposed local plan',
+	consultationProposedPlanSummary: 'Summary of consultation on proposed local plan',
+	statementOfCompliance: 'Statement of compliance',
+	statementOfSoundness: 'Statement of soundness',
+	spatialStrategyRepresentations: 'Representations on conformity with an operative spatial development strategy',
+	environmentalReport: 'Environmental report',
+	environmentalEffectsStatement:
+		'Statement demonstrating that the proposed local plan is unlikely to have significant environmental effects',
+	additionalEvidenceDocuments: 'Additional evidence documents',
+	changesSinceGateway3Statement:
+		'Statement explaining changes made since Gateway 3 assessment and details of any additional consultations',
+	gateway3ReportRepresentations: 'Representations required in the Gateway 3 report'
+};

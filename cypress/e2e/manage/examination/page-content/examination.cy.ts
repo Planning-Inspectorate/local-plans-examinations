@@ -1,11 +1,13 @@
 import {
 	openExaminationPage,
+	openSeededExaminationDocuments,
 	openSeededExaminationReport,
 	openSeededExaminationPage
 } from '../../../../flows/manage/examination-flow.ts';
 import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import {
 	actualSubmissionDate,
+	examinationDocuments,
 	examinationReport as report,
 	examinationWebsite,
 	examiningInspector1,
@@ -16,13 +18,16 @@ import {
 	examinationSubmissionDates,
 	factCheckDateReceivedFromInspector,
 	letterSentToMHCLGDate,
+	programmeOfficer,
 	QAExpectedAnswers,
 	soundUnsound,
 	seededExaminationHearing
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
+	examinationDocumentsPage,
 	examinationPage,
+	examinationProgrammeOfficerPage,
 	examinationReportManagePage as managePage,
 	examinationWebsitePage,
 	examiningInspector1Page,
@@ -67,9 +72,49 @@ describe('Examination page content', () => {
 		examiningInspector1Page.verifyLookupAnswer(examiningInspector1.display);
 	});
 
-	it('displays the Examination website content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifySectionContent('Examination website', 'examination-website', [examinationWebsite]);
+	it('displays the Programme officer row below Submission received', { tags: ['smoke', 'regression'] }, () => {
+		examinationPage.verifyRowOrder(actualSubmissionDate.row, programmeOfficer.row);
+		examinationPage.verifySummaryRowContains(
+			programmeOfficer.row,
+			programmeOfficer.firstName,
+			programmeOfficer.lastName,
+			programmeOfficer.email
+		);
+		examinationPage.summaryRowActionLink(programmeOfficer.row).should('contain.text', 'Change');
+		examinationPage.verifyExpectedActionLinkHrefs('examination', [programmeOfficer]);
 	});
+
+	it('loads the Programme officer details page with the saved answers', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(programmeOfficer.row);
+
+		examinationProgrammeOfficerPage.verifyLoaded(
+			programmeOfficer.firstName,
+			programmeOfficer.lastName,
+			programmeOfficer.email
+		);
+		examinationProgrammeOfficerPage.verifyBackLink();
+	});
+
+	it(
+		'displays the Examination website row below Programme officer without its own heading',
+		{ tags: ['smoke', 'regression'] },
+		() => {
+			examinationPage.verifyRowOrder(programmeOfficer.row, examinationWebsite.row);
+			examinationPage.verifyExpectedAnswers([examinationWebsite]);
+			examinationPage.verifyExpectedActionLinkHrefs('examination', [examinationWebsite]);
+			examinationPage.sectionHeading(examinationWebsite.row).should('not.exist');
+		}
+	);
+
+	it(
+		'displays the Documents row without a Review link before documents are submitted',
+		{ tags: ['regression'] },
+		() => {
+			examinationPage.verifyRowOrder(examinationWebsite.row, examinationDocuments.row);
+			examinationPage.verifySummaryRowContains(examinationDocuments.row, '0 document(s)');
+			examinationPage.verifyNoSubmissionDocumentsReviewLink();
+		}
+	);
 
 	it('loads the Examination website page with no answer', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examinationWebsite.row);
@@ -130,6 +175,135 @@ describe('Examination report content', () => {
 		]);
 		examinationPage.openActionLinkFor(report.row);
 		managePage.verifyDocumentsContent(report.receivedDisplay, report.fileName, report.supportingFileName);
+	});
+});
+
+describe('Examination documents content', () => {
+	beforeEach(() => cy.task('clearDb'));
+	after(() => cy.task('clearDb'));
+
+	it('displays the submitted documents under Required and Other as download links', { tags: ['regression'] }, () => {
+		openSeededExaminationDocuments({ examinationWebsiteUrl: examinationDocuments.websiteUrl });
+
+		// The Examination website row and the documents page show the same address the LPA submitted
+		examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.websiteUrl);
+		examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.websiteHref);
+		examinationPage.verifySummaryRowContains(examinationDocuments.row, '3 document(s)');
+		examinationPage.summaryRowActionLink(examinationDocuments.row).should('contain.text', 'Review');
+		examinationPage.openActionLinkFor(examinationDocuments.row);
+
+		examinationDocumentsPage.verifyLoaded();
+		examinationDocumentsPage.verifyExaminationWebsite(
+			examinationDocuments.websiteUrl,
+			examinationDocuments.websiteHref
+		);
+		examinationDocumentsPage.verifyDocuments('required', examinationDocuments.required);
+		examinationDocumentsPage.verifyDocuments('other', examinationDocuments.other);
+		examinationDocumentsPage.verifyDocumentNotProvided('required', 'Statement of soundness');
+	});
+
+	it(
+		'shows the examination website from the Portal examination submission instead of Not started',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments({ examinationWebsiteUrl: examinationDocuments.websiteUrl });
+
+			examinationPage.summaryRowValue(examinationWebsite.row).should('not.contain.text', examinationWebsite.display);
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.websiteUrl);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.websiteHref);
+
+			examinationPage.openActionLinkFor(examinationWebsite.row);
+			examinationWebsitePage.verifyLoaded(examinationDocuments.websiteUrl);
+		}
+	);
+
+	it(
+		'shows the examination website from the Portal Gateway 3 submission instead of Not started',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments({ gateway3ExaminationWebsiteUrl: examinationDocuments.gateway3WebsiteUrl });
+
+			examinationPage.summaryRowValue(examinationWebsite.row).should('not.contain.text', examinationWebsite.display);
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.gateway3WebsiteUrl);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.gateway3WebsiteHref);
+
+			examinationPage.openActionLinkFor(examinationDocuments.row);
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyExaminationWebsite(
+				examinationDocuments.gateway3WebsiteUrl,
+				examinationDocuments.gateway3WebsiteHref
+			);
+		}
+	);
+
+	it(
+		'prefers the examination submission website over the Gateway 3 submission website',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments({
+				examinationWebsiteUrl: examinationDocuments.websiteUrl,
+				gateway3ExaminationWebsiteUrl: examinationDocuments.gateway3WebsiteUrl
+			});
+
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.websiteUrl);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.websiteHref);
+		}
+	);
+
+	it(
+		'reads the examination website from the Portal submission rather than an older address saved in Manage',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments({
+				examinationWebsiteUrl: examinationDocuments.websiteUrl,
+				manageExaminationWebsite: examinationDocuments.updatedWebsiteUrl
+			});
+
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.websiteUrl);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.websiteHref);
+			examinationPage
+				.summaryRowValue(examinationWebsite.row)
+				.should('not.contain.text', examinationDocuments.updatedWebsiteUrl);
+
+			examinationPage.openActionLinkFor(examinationDocuments.row);
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyExaminationWebsite(
+				examinationDocuments.websiteUrl,
+				examinationDocuments.websiteHref
+			);
+		}
+	);
+
+	it(
+		'shows the examination website saved in Manage when the Portal has not submitted one',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments({ manageExaminationWebsite: examinationDocuments.updatedWebsiteUrl });
+
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.updatedWebsiteUrl);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.updatedWebsiteHref);
+		}
+	);
+
+	it(
+		'shows the examination website as not provided on the documents page when none was submitted',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments();
+
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.display);
+			examinationPage.openActionLinkFor(examinationDocuments.row);
+
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyDocumentNotProvided('required', examinationDocuments.websiteLabel);
+		}
+	);
+
+	it('hides the Review link while the LPA submission is still in progress', { tags: ['regression'] }, () => {
+		openSeededExaminationDocuments({ submitted: false });
+
+		examinationPage.verifySummaryRowContains(examinationDocuments.row, '3 document(s)');
+		examinationPage.verifyNoSubmissionDocumentsReviewLink();
 	});
 });
 

@@ -8,6 +8,7 @@ import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../class
 import { formatDateToString } from '../../../util/date.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { syncPortalExaminationWebsite } from '../../../util/examination-website.ts';
 
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
@@ -99,6 +100,25 @@ export class ExaminationSaveController extends SaveController {
 			previousPause = pause;
 		}
 		return true;
+	}
+
+	public async prepareAndSave(answers: Record<string, any>) {
+		if (this.req.params.question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
+			const caseId = await this.resolveCaseId();
+			const data = this.trimStringValues({
+				programmeOfficerFirstName: answers.programmeOfficerFirstName,
+				programmeOfficerLastName: answers.programmeOfficerLastName,
+				programmeOfficerEmail: answers.programmeOfficerEmail,
+				programmeOfficerPhone: answers.programmeOfficerPhone || null
+			});
+			await this.service.db.gateway3Info.upsert({
+				where: { caseId },
+				update: data,
+				create: { caseId, ...data }
+			});
+			return { dataWritten: true, writtenToDB: true };
+		}
+		return await super.prepareAndSave(answers);
 	}
 
 	protected async prepareData(answers: Record<string, any>) {
@@ -476,6 +496,10 @@ export class ExaminationSaveController extends SaveController {
 				update: { ...updateData },
 				create: { caseId: this.caseId, ...createData }
 			});
+			if ('examinationWebsite' in answers) {
+				// Manage reads the website from where the Portal submitted it, so the change is saved there too
+				await syncPortalExaminationWebsite(this.service.db, this.caseId, answers.examinationWebsite);
+			}
 			return true;
 		}
 		return false;
