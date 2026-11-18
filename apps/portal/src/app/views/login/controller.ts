@@ -31,6 +31,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 		// each submission starts clean: only a failed send below may set this again
 		delete req.session.otpDeliveryFailed;
 
+		delete req.session.otpDeliveryFailed;
+
 		if (!email || typeof email !== 'string' || email.trim().length === 0) {
 			logger.info('Email address not provided');
 			return res.render('views/login/enter-email-page.njk', {
