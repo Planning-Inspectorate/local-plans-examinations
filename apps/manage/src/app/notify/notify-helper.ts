@@ -100,11 +100,6 @@ export const sendNotifyEmail = async (
 
 	const { emailSent, failedToSend } = TemplateLogMessages[templateKey];
 
-	service.logger.debug(
-		{ templateKey, templateId, recipients, personalisation: personalisationDetails },
-		'Sending notify emails'
-	);
-
 	await Promise.allSettled(
 		recipients.map(async (email) => {
 			try {
@@ -288,7 +283,11 @@ export async function sendExaminationNotifyEmail(
 	templateKey: NotifyEmailTemplateKey,
 	params: ExaminationEmailParams = {}
 ) {
-	await getExaminationEmailHandlers(params)[templateKey]?.(service, reference);
+	try {
+		await getExaminationEmailHandlers(params)[templateKey]?.(service, reference);
+	} catch (error) {
+		service.logger.error({ error, reference, templateKey }, 'Failed to send examination notify email');
+	}
 }
 
 export async function sendAppointedInspectorNotifyEmail(
