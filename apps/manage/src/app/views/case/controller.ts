@@ -281,7 +281,7 @@ async function removeItem({
 			where: { reference },
 			data: { lpas: { disconnect: { lpaCode: currentItemId } } }
 		});
-		updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
+		await updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
 			lpa: existingLpa + ' removed'
 		});
 	}
