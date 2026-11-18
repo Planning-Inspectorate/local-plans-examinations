@@ -8,7 +8,26 @@ import {
 import type { Request } from 'express';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { createFileUploadQuestion, getRoutePlanReference } from './utils.ts';
+import { createFileUploadQuestion, getRoutePlanReference, getWorkshopWeekMonday } from './utils.ts';
+
+describe('getWorkshopWeekMonday', () => {
+	for (const [submissionDate, expected] of [
+		['2026-11-09T12:00:00.000Z', '11 November 2026'],
+		['2026-11-13T12:00:00.000Z', '15 November 2026'],
+		['2026-12-31T12:00:00.000Z', '2 January 2027']
+	]) {
+		it(`adds two calendar days to ${submissionDate} without adjusting to Monday`, () => {
+			const date = new Date(submissionDate);
+			assert.equal(getWorkshopWeekMonday(date), expected);
+			assert.equal(date.toISOString(), submissionDate);
+		});
+	}
+
+	it('returns to be confirmed when the submission date is missing', () => {
+		assert.equal(getWorkshopWeekMonday(null), 'to be confirmed');
+		assert.equal(getWorkshopWeekMonday(undefined), 'to be confirmed');
+	});
+});
 
 describe('createFileUploadQuestion', () => {
 	it('creates a file upload question with default upload settings and text', () => {

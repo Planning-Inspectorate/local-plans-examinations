@@ -20,7 +20,14 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
-        {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
+        {{ gateway2WorkshopSummary(hasWorkshop, workshopFormat, workshopVenue, workShopStartTime, workshopMeetingLink, workshopDocuments) }}
+         {% if statusTag %}
+            {{ govukTag({
+                text: statusTag.label,
+                classes: statusTag.class
+            }) }}
+            <p></p>
+        {% endif %}
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}

@@ -20,6 +20,8 @@ describe('Portal login journey', () => {
 		}
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
 		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
@@ -108,14 +110,5 @@ describe('Portal login journey', () => {
 		portalLoginEmailPage.submitEmail('unknown@example.com');
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
 		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
-	});
-
-	it.skip('requests a new code from the OTP page', { tags: ['notify'] }, () => {
-		startPortalOtpLogin();
-		portalLoginOtpPage.verifyPath();
-
-		portalLoginOtpPage.clickRequestNewCode();
-
-		portalLoginOtpPage.verifyNewCodeBanner();
 	});
 });

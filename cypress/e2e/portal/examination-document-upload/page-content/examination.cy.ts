@@ -19,19 +19,19 @@ describe('Examination document upload page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Verify the page content for the local plan submission for examination page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			examinationPage.clickAddLink(localPlanSubmissionForExaminationPage.addCy);
-			localPlanSubmissionForExaminationPage.verifyPageContent(examinationPage.pathFor(plan.urlReference), [
-				'Upload a file'
-			]);
+			localPlanSubmissionForExaminationPage.verifyPageContent(examinationPage.pathFor(plan.urlReference));
 		});
 	});
 
 	it('Verify the page content for the statement of compliance page', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			examinationPage.clickAddLink(gateway3CompletionStatementPage.addCy);
-			gateway3CompletionStatementPage.verifyPageContent(examinationPage.pathFor(plan.urlReference), ['Upload a file']);
+			gateway3CompletionStatementPage.verifyPageContent(examinationPage.pathFor(plan.urlReference));
 		});
 	});
 });

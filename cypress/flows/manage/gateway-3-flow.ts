@@ -2,6 +2,7 @@ import { gateway3ReviewDocumentsAnswer } from '../../fixtures/manage/gateway-3.t
 import type { Gateway3SubmissionDocumentsSeedOptions } from '../../tasks/gateway-3.ts';
 import {
 	gateway3Page,
+	gateway3RemoveAssessorPage,
 	gateway3DecisionPage,
 	gateway3DocumentsPage,
 	gateway3DocumentsCheckPage,
@@ -21,6 +22,17 @@ export const openSeededGateway3Page = () => {
 export const openGateway3Page = (reference: string, planTitle: string) => {
 	cy.visit(`/case/${encodeURIComponent(reference)}/gateway-3`);
 	gateway3Page.verifyLoaded(planTitle);
+};
+
+/**
+ * The seeded case already has a Gateway 3 assessor, so remove it to get back to the "Add assessor" link
+ */
+export const removeGateway3Assessor = (planTitle: string) => {
+	gateway3Page.openRemoveAssessor();
+	gateway3RemoveAssessorPage.confirmRemoval();
+
+	gateway3Page.verifyLoaded(planTitle);
+	gateway3Page.verifyNoAssessor();
 };
 
 export const issueGateway3ProceedDecision = (planTitle: string) => {

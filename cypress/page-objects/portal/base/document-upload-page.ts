@@ -82,11 +82,11 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.documentUpload.chooseFilesButton.should('be.visible');
 	}
 
-	verifyPageContent(backLinkPath: string, text: string[] = ['Drag and drop or choose files']) {
+	verifyPageContent(backLinkPath: string, text: string[] = []) {
 		this.verifyLoaded();
 		this.verifyBackLink(backLinkPath);
 		this.verifyServiceNavigation('Guidance', 'Sign out');
-		this.verifyMainContains(...text);
+		this.verifyMainContains('Upload a file', ...text);
 		this.verifyNoFileChosen();
 		this.documentUpload.verifyUploadFormVisible();
 		this.documentUpload.verifyFileFormatHintText(

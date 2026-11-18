@@ -1,51 +1,37 @@
 import { PortalPlanBasePage } from '../base/portal-plan-page.ts';
+import { gateway2ApplicationPage } from '../gw2-application/gateway-2-application-page.ts';
 
 export class PortalDeclarationPage extends PortalPlanBasePage {
 	constructor() {
-		super(/^\/manage-local-plans\/[^/]+\/gateway-2-submission\/application-declaration$/);
+		super(/^\/manage-local-plans\/[^/]+\/gateway-2\/declaration$/);
 	}
 
 	pathFor(planReference: string) {
-		return `/manage-local-plans/${planReference}/gateway-2-submission/application-declaration`;
+		return `/manage-local-plans/${planReference}/gateway-2/declaration`;
 	}
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.verifyHeading('Review declaration');
+		this.verifyHeading("Are you sure you're ready to submit?");
 	}
 
-	get confirmAndSubmitButton() {
-		return cy.getByData('confirm-and-submit');
+	get confirmSubmissionButton() {
+		return cy.getByData('confirm-submission');
 	}
 
-	get confirmInformationCheckbox() {
-		return cy.get('#declaration');
+	get noGoBackLink() {
+		return cy.getByData('no-go-back');
 	}
 
-	get privacyNoteCheckbox() {
-		return cy.get('#declaration-2');
+	verifyNoGoBackLink(urlReference: string) {
+		this.noGoBackLink
+			.should('be.visible')
+			.and('contain.text', 'No, go back')
+			.and('have.attr', 'href', gateway2ApplicationPage.pathFor(urlReference));
 	}
 
-	get confirmInformationLabel() {
-		return cy.get('label[for="declaration"]');
-	}
-
-	get privacyNoteLabel() {
-		return cy.get('label[for="declaration-2"]');
-	}
-
-	get privacyNoteLink() {
-		return cy.get(
-			'a[href="https://www.gov.uk/government/publications/planning-inspectorate-privacy-notices/customer-privacy-notice"]'
-		);
-	}
-
-	verifyPrivacyNoteLink() {
-		this.privacyNoteLink.should('be.visible').and('contain.text', 'privacy note');
-	}
-
-	verifyConfirmAndSubmitButton() {
-		this.confirmAndSubmitButton.should('be.visible');
+	verifyConfirmSubmissionButton() {
+		this.confirmSubmissionButton.should('be.visible').and('contain.text', 'Yes, confirm submission');
 	}
 }
 

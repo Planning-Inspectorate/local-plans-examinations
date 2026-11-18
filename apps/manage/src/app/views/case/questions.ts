@@ -754,7 +754,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan title?',
 		fieldName: 'planTitle',
 		url: 'plan-title',
-		title: 'Plan title',
+		title: 'Title',
 		validators: [new RequiredValidator('Enter a plan title')]
 	},
 	deleteCaseWhy: {
@@ -777,7 +777,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan band?',
 		fieldName: 'planBand',
 		url: 'plan-band',
-		title: 'Plan band',
+		title: 'Band',
 		validators: [new RequiredValidator('Select a plan band')]
 	},
 	planType: {
@@ -789,7 +789,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan type?',
 		fieldName: 'planType',
 		url: 'plan-type',
-		title: 'Plan type',
+		title: 'Type',
 		validators: [new RequiredValidator('Select a plan type')]
 	},
 	lpa: {
@@ -1056,6 +1056,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new RequiredValidator('Input QA Inspector 3')],
 		inputAttributes: { 'data-cy': 'inspector-qa-3' }
 	},
+
 	//gateway 1
 	noticeOfIntentionPublishDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -1191,6 +1192,69 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'programme-officer',
 		title: 'Programme officer'
 	},
+	examinationDocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_EXAMINATION_DOCUMENTS_VIEW,
+		title: 'Examination documents',
+		question: 'Examination documents',
+		fieldName: 'examinationDocuments',
+		url: 'examination-documents'
+	},
+	programmeOfficerDetailsExam: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerFirstName',
+				label: 'First name',
+				title: 'Programme Officer first name',
+				attributes: { 'data-cy': 'programme-officer-first-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerLastName',
+				label: 'Last name',
+				title: 'Programme Officer last name',
+				attributes: { 'data-cy': 'programme-officer-last-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerEmail',
+				label: 'Email address',
+				title: 'Programme Officer email address',
+				attributes: { 'data-cy': 'programme-officer-email' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerPhone',
+				label: 'Phone number (optional)',
+				title: 'Programme officer phone number',
+				excludeFromSummary: true,
+				attributes: { 'data-cy': 'programme-officer-phone' }
+			}
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'programmeOfficerFirstName',
+						validators: [new RequiredValidator('Input a first name')]
+					},
+					{
+						fieldName: 'programmeOfficerLastName',
+						validators: [new RequiredValidator('Input a last name')]
+					},
+					{
+						fieldName: 'programmeOfficerEmail',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
+		question: 'Programme officer details',
+		fieldName: 'programmeOfficerDetails',
+		url: 'programme-officer',
+		title: 'Programme officer'
+	},
 	//gateway 2
 	gateway2ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -1229,6 +1293,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'assessor-gateway-2',
 		title: 'Assessor',
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
@@ -1366,6 +1431,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'gateway-3-assessor-name',
 		title: 'Assessor',
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
 	},
@@ -1700,6 +1766,10 @@ Object.keys(examinationHearingQuestions).forEach((key) => {
 	questions[key].continueButtonText = 'Continue';
 });
 
+Object.keys(gateway2WorkshopQuestions).forEach((key) => {
+	questions[key].continueButtonText = 'Continue';
+});
+
 // The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
@@ -1733,6 +1803,23 @@ export async function getQuestions(
 	req: Request
 ): Promise<Record<string, ManageQuestionConfig>> {
 	await updateQuestionsWithOptions(service, req, questions);
+
+	const rawReference = req.params?.reference;
+	const reference = Array.isArray(rawReference) ? rawReference[0] : rawReference;
+
+	let lpaCount = 0;
+
+	if (reference) {
+		const currentCase = await service.db.case.findUnique({
+			where: { reference },
+			select: { _count: { select: { lpas: true } } }
+		});
+
+		lpaCount = currentCase ? currentCase._count.lpas : 0;
+	}
+
+	questions.checkLpas.title = lpaCount > 1 ? 'Planning authorities' : 'Planning authority';
+
 	return questions;
 }
 

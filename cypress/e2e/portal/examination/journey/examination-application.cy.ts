@@ -79,7 +79,7 @@ describe('Examination application page journeys', () => {
 				planDetailsPage.verifyProgressRow(
 					plan.currentStage3,
 					`Submission expected: ${plan.dates.examination}`,
-					plan.status2
+					plan.inProgress
 				);
 			});
 		}
@@ -106,12 +106,12 @@ describe('Examination application page journeys after final report issued', () =
 			loadPlanDetails().then((plan) => {
 				examinationPage.visit(plan.urlReference);
 				examinationPage.verifyLoaded();
-				examinationPage.verifyStatusTag(plan.status7);
+				examinationPage.verifyStatusTag(plan.reportIssued);
 				examinationPage.verifyExaminationReportDownloads(examinationReport.fileName, todayDisplay);
 				examinationPage.backLink.click();
 
 				planDetailsPage.verifyLoaded();
-				planDetailsPage.verifyProgressRow('Examination', `Report issued: ${todayDisplay}`, plan.status7);
+				planDetailsPage.verifyProgressRow('Examination', `Report issued: ${todayDisplay}`, plan.reportIssued);
 			});
 		}
 	);

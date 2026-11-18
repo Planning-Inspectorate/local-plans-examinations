@@ -1,0 +1,63 @@
+{% extends layoutTemplate %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block backLink %}
+	{% if backLink %}
+		<nav aria-label="Back">
+			<a href="{{ backLink }}" class="govuk-back-link" data-cy="back-link">Back</a>
+		</nav>
+	{% endif %}
+{% endblock backLink %}
+
+{% block content %}
+	<div class="govuk-grid-row">
+		<div class="govuk-grid-column-full">
+			<span class="govuk-caption-l">{{ reference }}</span>
+			<h1 class="govuk-heading-l">{{ question.question }}</h1>
+
+			{% for group in documentGroups %}
+				<div id="{{ group.id }}">
+					<h2 class="govuk-heading-m">{{ group.heading }}</h2>
+
+					{% set rows = [] %}
+
+					{% if group.showWebsite %}
+						{% if group.websiteLink %}
+							{% set _ = rows.push({
+								key: { text: group.websiteLink.label },
+								value: {
+									html: '<a href="' + (group.websiteLink.href | escape) + '" class="govuk-link" rel="noreferrer noopener" target="_blank" data-cy="examination-website-link">' + (group.websiteLink.text | escape) + '</a>'
+								}
+							}) %}
+						{% else %}
+							{% set _ = rows.push({
+								key: { text: group.websiteLabel },
+								value: { text: "Not provided" }
+							}) %}
+						{% endif %}
+					{% endif %}
+
+					{% for document in group.documents %}
+						{% if document.files.length %}
+							{% set fileLinks = [] %}
+							{% for file in document.files %}
+								{% set _ = fileLinks.push('<a class="govuk-link" href="' + (file.downloadUrl | escape) + '" download data-cy="examination-document-link">' + (file.fileName | escape) + '</a>') %}
+							{% endfor %}
+							{% set _ = rows.push({
+								key: { text: document.label },
+								value: { html: fileLinks | join("<br>") }
+							}) %}
+						{% else %}
+							{% set _ = rows.push({
+								key: { text: document.label },
+								value: { text: "Not provided" }
+							}) %}
+						{% endif %}
+					{% endfor %}
+
+					{{ govukSummaryList({ rows: rows }) }}
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+{% endblock content %}

@@ -1,6 +1,10 @@
 import { BasePage } from '../../../page-objects/base-page.ts';
 
 export class PortalPlanBasePage extends BasePage {
+	get statusTag() {
+		return cy.get('.govuk-tag');
+	}
+
 	pathFor(planReference: string): string {
 		throw new Error(`${this.constructor.name} does not define pathFor for ${planReference}`);
 	}
@@ -91,5 +95,9 @@ export class PortalPlanBasePage extends BasePage {
 				cy.get('tbody tr').eq(index).should('contain.text', document);
 			});
 		});
+	}
+
+	verifyStatusTag(status: string) {
+		this.statusTag.should('be.visible').and('contain.text', status);
 	}
 }

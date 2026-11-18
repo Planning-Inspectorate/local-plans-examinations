@@ -71,9 +71,7 @@ describe('Cross-service Manage and Portal', () => {
 			gateway2ApplicationPage.verifyLoaded();
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
 			portalDeclarationPage.verifyLoaded();
-			portalDeclarationPage.confirmInformationCheckbox.check();
-			portalDeclarationPage.privacyNoteCheckbox.check();
-			portalDeclarationPage.confirmAndSubmitButton.click();
+			portalDeclarationPage.confirmSubmissionButton.click();
 			applicationCompletePage.verifyLoaded();
 
 			cy.origin(Cypress.env('manageBaseUrl'), { args: { reference, fileName } }, ({ reference, fileName }) => {
@@ -106,9 +104,7 @@ describe('Cross-service Manage and Portal', () => {
 			);
 			gateway2ApplicationPage.submitGateway2AssessmentButton.click();
 			portalDeclarationPage.verifyLoaded();
-			portalDeclarationPage.confirmInformationCheckbox.click();
-			portalDeclarationPage.privacyNoteCheckbox.click();
-			portalDeclarationPage.confirmAndSubmitButton.click();
+			portalDeclarationPage.confirmSubmissionButton.click();
 
 			GW2UpdateFileUploadedFromFO(portalPlanReference, fileName, updatedFileName, filePath);
 		});
