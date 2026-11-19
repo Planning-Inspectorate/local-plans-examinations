@@ -119,6 +119,9 @@ export class DocumentUploadPage extends PortalPlanBasePage {
 		this.verifyLoaded();
 		this.verifyFileUploaded(originalFileName);
 		this.removeFile(originalFileName);
+		this.verifyLoaded();
+		cy.reload();
+		this.verifyLoaded();
 		this.verifyFileNotUploaded(originalFileName);
 		this.uploadAndVerifyFile(replacementFileName);
 	}

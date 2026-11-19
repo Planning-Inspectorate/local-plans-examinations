@@ -36,7 +36,7 @@ describe('Gateway 3 document upload journeys', () => {
 
 	it(
 		'Adds a map of proposed local plan policies using drag and drop, then replaces it with new document',
-		{ tags: ['regression'] },
+		{ tags: ['regression', 'environment-smoke'] },
 		() => {
 			const page = mapOfProposedLocalPlanPoliciesPage;
 			openGateway3DocumentUploadPage(planDetails, page);

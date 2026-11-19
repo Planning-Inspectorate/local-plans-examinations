@@ -1,11 +1,16 @@
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
-import { cleanupPreparedPlanDetails, preparePlanDetails } from '../../../../flows/portal/plan-flow.ts';
+import {
+	cleanupPreparedPlanDetails,
+	openGateway2ApplicationPage,
+	preparePlanDetails
+} from '../../../../flows/portal/plan-flow.ts';
 import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { openGateway2DocumentUploadPage } from '../../../../flows/portal/gateway-2-upload-flow.ts';
 import { gateway2CoverLetterPage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
+import { digitalSupportingMaterialPage } from '../../../../page-objects/portal/gw2-application/digital-supporting-material-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -55,6 +60,27 @@ describe('Gateway 2 application page journeys', () => {
 		gateway2ApplicationPage.openServiceNavigationItem('Submit development plans');
 		myPlansPage.verifyLoaded();
 	});
+
+	it(
+		'saves a HTTPS digital supporting material link, including when unchanged',
+		{ tags: ['smoke', 'environment-smoke'] },
+		() => {
+			openGateway2ApplicationPage(planDetails);
+			gateway2ApplicationPage.clickAddLink(digitalSupportingMaterialPage.addCy);
+			digitalSupportingMaterialPage.verifyLoaded();
+			digitalSupportingMaterialPage.enterAnswer(digitalSupportingMaterialPage.value);
+			gateway2ApplicationPage.verifyLoaded();
+
+			gateway2ApplicationPage.clickAddLink(digitalSupportingMaterialPage.addCy);
+			digitalSupportingMaterialPage.verifyLoaded(digitalSupportingMaterialPage.value);
+			digitalSupportingMaterialPage.saveAndContinue();
+			gateway2ApplicationPage.verifyLoaded();
+
+			cy.reload();
+			gateway2ApplicationPage.clickAddLink(digitalSupportingMaterialPage.addCy);
+			digitalSupportingMaterialPage.verifyLoaded(digitalSupportingMaterialPage.value);
+		}
+	);
 
 	it('Shows Gatway 2 status as in progress when a document is uploaded', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
