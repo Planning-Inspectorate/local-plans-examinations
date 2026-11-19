@@ -86,7 +86,7 @@ export function examinationSubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/examination/:section/:question/delete-document/:fileId',
+		'/:planReference/examination/:section/:question/delete-document/*fileId',
 		getJourneyResponseFromCase,
 		guardExaminationEdit,
 		getJourney,
