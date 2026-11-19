@@ -382,7 +382,7 @@ function registerExaminationHearingJourney(
 	);
 }
 
-function redirectAfterCyaEdit(updateCase: any) {
+export function redirectAfterCyaEdit(updateCase: any, save = buildSave) {
 	return (req: any, res: Response, next: NextFunction) => {
 		let returnToCya = shouldReturnToCya(req, req.session.editingFromCheckAnswers === true);
 		if (req.params.question) {
@@ -393,7 +393,10 @@ function redirectAfterCyaEdit(updateCase: any) {
 				returnToCya = false;
 				res.locals.redirectToExamination = true;
 			} else {
-				if (req.params.question.startsWith('examination-hearing-location-type-') && returnToCya == true) {
+				if (
+					(req.params.question.startsWith('examination-hearing-location-type-') && returnToCya == true) ||
+					(req.params.question.startsWith('gateway-2-location-type-') && returnToCya == true)
+				) {
 					returnToCya = false;
 					req.session.editingFromCheckAnswers = false;
 				}
@@ -423,7 +426,7 @@ function redirectAfterCyaEdit(updateCase: any) {
 				}
 			}
 		}
-		buildSave(updateCase, returnToCya)(req, res, next);
+		save(updateCase, returnToCya)(req, res, next);
 	};
 }
 
