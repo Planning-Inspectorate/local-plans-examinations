@@ -52,6 +52,7 @@ import {
 	sortGateway3Submissions,
 	type Gateway3SubmissionSummary
 } from '#util/gateway-3-submission.ts';
+import { formatDisplayDate } from '#util/date.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 // ---------------------------------------------------------------------------
@@ -149,17 +150,6 @@ function redirectToFileUploaderQuestion(req: Request) {
 	const planReference = getRoutePlanReference(req);
 	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
 	return `${req.baseUrl}${planPath}/gateway-3-submission/${req.params.section}/${req.params.question}`;
-}
-
-function formatDisplayDate(date: Date | null | undefined) {
-	if (!date) {
-		return undefined;
-	}
-	return date.toLocaleDateString('en-GB', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric'
-	});
 }
 
 function formatDisplayTime(date: Date) {

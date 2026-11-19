@@ -20,7 +20,7 @@ export function addLocalsConfiguration(clarityId?: string, environment = 'local'
 		];
 
 		res.locals.config = {
-			styleFile: 'style.css?v=c74e2f2c',
+			styleFile: 'style.css?v=e7688c4e',
 			cspNonce: res.locals.cspNonce,
 			environmentBanner: environment === 'training',
 			headerTitle: 'Submit development plans',
