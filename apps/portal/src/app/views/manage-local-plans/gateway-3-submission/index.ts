@@ -86,7 +86,7 @@ export function gateway3SubmissionRoutes(service: PortalService): IRouter {
 
 	// Delete documents (case-scoped)
 	router.post(
-		'/:planReference/gateway-3-submission/:section/:question/delete-document/:fileId',
+		'/:planReference/gateway-3-submission/:section/:question/delete-document/*fileId',
 		getJourneyResponseFromCase,
 		getJourney,
 		deleteGateway3DocumentForCase
