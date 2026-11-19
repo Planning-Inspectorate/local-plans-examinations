@@ -209,6 +209,12 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "portal" {
           selector       = "examinationWebsite"
           # False positive: PostParamValue:examinationWebsite can contain an off-domain examination website URL.
         }
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "Equals"
+          selector       = "examinationWebsiteUrl"
+          # False positive: the examination submission 'Confirm examination website' page posts examinationWebsiteUrl.
+        }
       }
     }
   }

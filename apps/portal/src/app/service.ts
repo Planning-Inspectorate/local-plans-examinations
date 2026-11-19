@@ -38,6 +38,7 @@ type PortalCase = {
 		submissions: {
 			decision: string | null;
 			completionDate: Date | null;
+			submittedDate: Date | null;
 		}[];
 	} | null;
 	examinationInfo: {
@@ -200,6 +201,10 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 			: examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
 				? caseRecord.examinationInfo?.soundUnsoundDate
 				: caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+	const gateway3SubmittedDate = gateway3SubmissionState.resubmissionAwaitingSubmission
+		? null
+		: (gateway3SubmissionState.latestSubmission?.submittedDate ?? caseRecord.gateway3Info?.actualDate);
 	const plan = buildPlan({
 		refNum: caseRecord.reference,
 		leadLPA: lpaNames[0] ?? '',
@@ -219,6 +224,15 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 			G2: formatDisplayDate(gateway2Date) ?? 'Not set',
 			G3: formatDisplayDate(gateway3Date) ?? 'Not set',
 			E: formatDisplayDate(examinationDate) ?? 'Not set'
+		},
+		submittedDates: {
+			G2: formatDisplayDate(caseRecord.gateway2Info?.actualDate) ?? null,
+			G3: formatDisplayDate(gateway3SubmittedDate) ?? null,
+			E: formatDisplayDate(caseRecord.examinationInfo?.submissionForExaminationDate) ?? null
+		},
+		completedDates: {
+			G2: formatDisplayDate(caseRecord.gateway2Info?.reportIssuedDate) ?? null,
+			G3: formatDisplayDate(gateway3SubmissionState.latestSubmission?.completionDate) ?? null
 		}
 	});
 

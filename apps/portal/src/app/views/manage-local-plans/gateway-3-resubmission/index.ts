@@ -71,7 +71,7 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 
 	// Delete uploaded file
 	router.post(
-		'/:planReference/gateway-3-resubmission/additional-documents/delete-document/:fileId',
+		'/:planReference/gateway-3-resubmission/additional-documents/delete-document/*fileId',
 		loadCase,
 		guardResubmission,
 		deleteDocument

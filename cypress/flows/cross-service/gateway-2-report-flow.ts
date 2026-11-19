@@ -26,6 +26,7 @@ export const verifyGateway2ReportInPortal = (reference: string, fileName: string
 
 			cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
 			cy.contains('.govuk-task-list__item', 'Gateway 2')
+				.should('contain.text', `Completed: ${sharedDate}`)
 				.find('.govuk-task-list__status')
 				.should('contain.text', 'Completed');
 			cy.contains('.govuk-task-list__item', 'Gateway 3')
