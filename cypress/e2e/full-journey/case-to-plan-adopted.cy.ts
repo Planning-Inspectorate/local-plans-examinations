@@ -41,6 +41,14 @@ import * as examinationUploads from '../../page-objects/portal/examination/exami
 import { submitExaminationApplication } from '../../flows/portal/examination-submission-flow.ts';
 import { examinationDeclarationPage } from '../../page-objects/portal/examination/declaration-page.ts';
 import { examinationSubmissionCompletePage } from '../../page-objects/portal/examination/examination-submission-complete-page.ts';
+import {
+	openExaminationPage,
+	uploadExaminationMIQDocuments,
+	uploadExaminationFinalReportDocuments
+} from '../../flows/manage/examination-flow.ts';
+import { examinationPage, examiningInspector1Page } from '../../page-objects/manage/examination/index.ts';
+import { examiningInspector1, adoptionDate } from '../../fixtures/manage/examination.ts';
+import { adoptionDatePage } from '../../page-objects/manage/examination/report-page.ts';
 
 const loadCreateCaseData = () => cy.fixture<CreateCaseData>('manage/create-case.json');
 const portal = { baseUrl: Cypress.env('portalBaseUrl') };
@@ -213,6 +221,41 @@ describe('Full journey: case creation to Plan adopted', () => {
 		});
 	});
 
-	// it('9. Manage: assigns inspector, uploads MIQs, issues final report, enters adoption date');
-	// it('10. Portal: shows Plan adopted');
+	it('9. Manage: assigns inspector, uploads MIQs, issues final report, enters adoption date', () => {
+		loadJourney().then((journey) => {
+			openExaminationPage({ reference: journey.reference, planTitle: journey.planTitle });
+			examinationPage.openActionLinkFor(examiningInspector1.row);
+
+			examiningInspector1Page.verifyLoaded();
+			examiningInspector1Page.enterLookupAnswer(examiningInspector1.display);
+
+			examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
+
+			uploadExaminationMIQDocuments();
+
+			uploadExaminationFinalReportDocuments();
+
+			examinationPage.openActionLinkFor(adoptionDate.row);
+
+			adoptionDatePage.verifyLoaded();
+			adoptionDatePage.enterDate(adoptionDate.input);
+			adoptionDatePage.saveAndContinue();
+
+			examinationPage.verifySummaryRowContains(adoptionDate.row, adoptionDate.display);
+		});
+	});
+
+	it('10. Portal: shows Plan adopted', portal, () => {
+		loadJourney().then((journey) => {
+			portalLoginForExistingCase(journey.contact.email);
+
+			myPlansPage.openPlan(journey.reference);
+			planDetailsPage.verifyLoaded();
+			planDetailsPage.verifyProgressRow(
+				'Examination',
+				`Adopted: ${journey.dates.adoptionDate.display}`,
+				'Plan adopted'
+			);
+		});
+	});
 });

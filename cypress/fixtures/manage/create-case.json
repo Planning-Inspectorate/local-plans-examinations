@@ -58,6 +58,12 @@
 			"month": "12",
 			"year": "2026",
 			"display": "6 December 2026"
+		},
+		"adoptionDate": {
+			"day": "8",
+			"month": "12",
+			"year": "2026",
+			"display": "8 December 2026"
 		}
 	}
 }
