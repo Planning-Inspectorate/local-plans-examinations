@@ -81,7 +81,8 @@ describe('examination view data', () => {
 					planTitle: 'Test plan',
 					examinationInfo: {
 						status: 'ready-to-start',
-						expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
+						// UK midnight during BST falls on the previous UTC day.
+						expectedSubmissionForExaminationDate: new Date('2026-08-31T23:00:00.000Z'),
 						statusLookup: { displayName: 'Ready to start' }
 					}
 				}

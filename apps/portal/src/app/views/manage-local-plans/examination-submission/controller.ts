@@ -1,4 +1,5 @@
 import type { PortalService } from '#service';
+import { formatDisplayDate } from '#util/date.ts';
 import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
 import { getEffectiveExaminationStatus, type ExaminationPause } from '#util/examination-pause.ts';
 import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
@@ -119,14 +120,6 @@ function getPlanDetailsUrl(req: Request) {
 
 function getExaminationSubmissionUrl(req: Request) {
 	return `${getPlanDetailsUrl(req)}/examination`;
-}
-
-function formatDisplayDate(date: Date) {
-	return date.toLocaleDateString('en-GB', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric'
-	});
 }
 
 function formatDisplayTime(date: Date) {
