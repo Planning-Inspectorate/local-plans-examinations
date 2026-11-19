@@ -9,10 +9,12 @@ import {
 	gateway3DecisionAnswer,
 	gateway3ReviewDocumentsAnswer
 } from '../../../fixtures/manage/gateway-3.ts';
+import { gateway3AssessorRemovePath } from './gateway-3-assessor-page.ts';
 
 const gateway3Rows = [
 	...Object.values(gateway3DateAnswers).map(({ row }) => row),
 	gateway3AssessorAnswer.row,
+	gateway3AssessorAnswer.appointedRow,
 	gateway3ProgrammeOfficerAnswer.row,
 	gateway3ExaminationWebsite.row,
 	gateway3ReviewDocumentsAnswer.row,
@@ -28,7 +30,8 @@ const actionLinkHrefs: Array<[string, RegExp]> = [
 		row,
 		new RegExp(`^/case/.+/gateway-3/${section}/${path}$`)
 	]),
-	[gateway3AssessorAnswer.row, new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3AssessorAnswer.path}$`)],
+	// the assessor row only has a Remove link
+	[gateway3AssessorAnswer.row, gateway3AssessorRemovePath],
 	[
 		gateway3ProgrammeOfficerAnswer.row,
 		new RegExp(`^/case/.+/gateway-3/gateway-3/${gateway3ProgrammeOfficerAnswer.path}$`)

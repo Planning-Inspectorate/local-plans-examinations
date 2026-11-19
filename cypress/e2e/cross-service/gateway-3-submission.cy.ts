@@ -8,6 +8,8 @@ import { gateway3DateAnswers, gateway3DocumentsAnswer } from '../../fixtures/man
 import { examinationWebsite } from '../../fixtures/portal/examination-website.ts';
 import type { Gateway2ReportIssuedFixture } from '../../fixtures/portal/types.ts';
 import { gateway3Page, gateway3ReviewDocumentsPage } from '../../page-objects/manage/gateway-3/index.ts';
+import { examinationPage } from '../../page-objects/manage/examination/index.ts';
+import { manageHomePage } from '../../page-objects/manage/home-page.ts';
 
 const loadPlan = () => cy.fixture<Gateway2ReportIssuedFixture>('portal/gateway-2-report-issued.json');
 const todayDisplay = new Date().toLocaleDateString('en-GB', {
@@ -34,14 +36,29 @@ describe('Cross-service Gateway 3 submission', () => {
 			uploadGateway3DocumentInPortal(plan.reference, fileName);
 
 			openGateway3Page(plan.reference, plan.title);
+			gateway3Page.verifyHeaderStatus('GW3 pending');
 			gateway3Page.verifyNoSubmissionDocumentsReviewLink();
 			submitGateway3InPortal(plan.reference);
 
 			openGateway3Page(plan.reference, plan.title);
+			gateway3Page.verifyHeaderStatus('GW3 received');
 			gateway3Page.verifySummaryRowContains(gateway3DateAnswers.gateway3ActualDate.row, todayDisplay);
+
+			// The website entered in the Portal is shown on both tabs rather than Not started
+			gateway3Page.summaryRowValue(examinationWebsite.row).should('not.contain.text', 'Not started');
+			gateway3Page.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationWebsite.value);
+			gateway3Page.openServiceNavigationItem('Examination');
+			examinationPage.verifyLoaded(plan.title);
+			examinationPage.summaryRowValue(examinationWebsite.row).should('not.contain.text', 'Not started');
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.value);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationWebsite.value);
+
+			openGateway3Page(plan.reference, plan.title);
 			openGateway3ReviewDocumentsPage();
 			gateway3ReviewDocumentsPage.verifyExaminationWebsiteLink(examinationWebsite.value, examinationWebsite.value);
 			gateway3ReviewDocumentsPage.verifyDocumentDownload('Environmental report', fileName);
+			manageHomePage.visit();
+			manageHomePage.verifyCaseStatus(plan.title, 'GW3 received');
 		});
 	});
 });

@@ -30,7 +30,7 @@ const PLAN_STATUS_CLASS_MAP: Record<string, string> = {
 	'Hearing pending': 'govuk-tag--blue',
 	'Exam in progress': 'govuk-tag--blue',
 	'Submission pending': 'govuk-tag--yellow',
-	'Submission received': 'govuk-tag-green',
+	'Submission received': 'govuk-tag--green',
 	'Report Issued': 'govuk-tag--blue',
 	QA: 'govuk-tag--blue',
 	'Fact check': 'govuk-tag--turquoise',
@@ -58,6 +58,7 @@ export function getPlanStatusClasses(statusText: string) {
 }
 
 const EXAMINATION_FIELDS = [
+	['submissionForExaminationDate', 'Submission received'],
 	...EXAMINING_INSPECTOR_FIELDS.map((field) => [field, 'Exam in progress'] as const),
 	['QADate', 'QA'],
 	['panelResponseToInspectorDate', 'Fact check'],
@@ -115,7 +116,8 @@ export function resolveCaseHeaderStatus(
 	const hasGateway2SubmissionDocuments = activeGateway2Documents.some(
 		(doc) => doc.documentSetId !== DOCUMENT_SET_ID.G2_REPORT
 	);
-	const gateway3Received = activeGateway3Documents.length > 0 && gateway3Submissions.some((s) => s.completionDate);
+	const gateway3Received =
+		activeGateway3Documents.length > 0 && gateway3Submissions.some((s) => s.submittedDate || s.completionDate);
 	const sortedSubmissions = sortGateway3Submissions(gateway3Submissions);
 	const latestSubmission = sortedSubmissions.at(-1);
 	const rejected = sortedSubmissions

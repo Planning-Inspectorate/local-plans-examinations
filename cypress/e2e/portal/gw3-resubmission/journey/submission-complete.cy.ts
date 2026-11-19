@@ -2,7 +2,10 @@ import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { portalLogin } from '../../../../flows/portal/login-flow.ts';
 import { gateway3ResubmissionSubmissionCompletePage } from '../../../../page-objects/portal/gw3-application/gateway-3-resubmission-submission-complete-page.ts';
 import { gateway3ResubmissionDeclarationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-resubmission-declaration-page.ts';
-import { openSeededResubmissionDeclarationPage } from '../../../../flows/portal/gateway-3-resubmission-flow.ts';
+import {
+	openSeededResubmissionDeclarationPage,
+	todayDisplayDate
+} from '../../../../flows/portal/gateway-3-resubmission-flow.ts';
 import { planDetailsPage } from 'cypress/page-objects/portal/plan-details/plan-details-page.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
@@ -28,7 +31,7 @@ describe('Gateway 3 resubmission application complete page journeys', () => {
 			gateway3ResubmissionSubmissionCompletePage.checkSubmissionStatusLink(plan.urlReference).click();
 
 			planDetailsPage.verifyLoaded();
-			planDetailsPage.verifyProgressRow('Gateway 3', `Submission expected: ${plan.dates.gateway3}`, 'Under review');
+			planDetailsPage.verifyProgressRow('Gateway 3', `Submitted: ${todayDisplayDate()}`, 'Under review');
 		});
 	});
 });

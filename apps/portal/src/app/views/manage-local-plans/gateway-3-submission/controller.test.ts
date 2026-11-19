@@ -1200,7 +1200,7 @@ describe('buildPostDeclarationPage', () => {
 		};
 	}
 
-	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
+	it('records a Gateway 3 submission and redirects to the submission-complete page', async () => {
 		const declarationService = buildDeclarationService();
 		const transaction = declarationService.db.$transaction;
 		const caseUpdate = declarationService.db.case.update;
@@ -1227,8 +1227,46 @@ describe('buildPostDeclarationPage', () => {
 		const gateway3InfoUpdateArgs = gateway3InfoUpdate.mock.calls[0].arguments[0];
 		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { caseId: 'case-1' });
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
+		assert.strictEqual(
+			gateway3InfoUpdateArgs.data.submissions.create.submittedDate,
+			caseUpdateArgs.data.submissionDate
+		);
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+	});
+
+	it('marks an existing open Gateway 3 submission as submitted', async () => {
+		const declarationService = buildDeclarationService();
+		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
+		const req = {
+			currentCase: {
+				id: 'case-1',
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'gateway-3-submission-1',
+							decision: null,
+							completionDate: null,
+							submittedDate: null
+						}
+					]
+				}
+			},
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const res = { redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		const caseUpdateArgs = declarationService.db.case.update.mock.calls[0].arguments[0];
+		const gateway3InfoUpdateArgs = declarationService.db.gateway3Info.update.mock.calls[0].arguments[0];
+		assert.deepStrictEqual(gateway3InfoUpdateArgs.data.submissions.update.where, {
+			id: 'gateway-3-submission-1'
+		});
+		assert.strictEqual(
+			gateway3InfoUpdateArgs.data.submissions.update.data.submittedDate,
+			caseUpdateArgs.data.submissionDate
+		);
 	});
 
 	it('commits the temporary Gateway 3 documents in the same transaction as the submission', async () => {

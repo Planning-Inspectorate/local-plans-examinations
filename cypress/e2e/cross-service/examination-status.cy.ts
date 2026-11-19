@@ -6,6 +6,7 @@ import { planDetailsPage } from '../../page-objects/portal/plan-details/plan-det
 import { assignExaminationInspectorInManage } from '../../flows/cross-service/examination-inspector-flow.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
+const todayDisplay = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Cross-service examination status', { baseUrl: Cypress.env('portalBaseUrl') }, () => {
 	beforeEach(() => {
@@ -21,11 +22,7 @@ describe('Cross-service examination status', { baseUrl: Cypress.env('portalBaseU
 		() => {
 			loadPlanDetails().then((plan) => {
 				openSeededExaminationSubmission(plan);
-				planDetailsPage.verifyProgressRow(
-					'Examination',
-					`Submission expected: ${plan.dates.examination}`,
-					plan.submitted
-				);
+				planDetailsPage.verifyProgressRow('Examination', `Submitted: ${todayDisplay}`, plan.submitted);
 
 				examinationPage.visit(plan.urlReference);
 				examinationPage.verifyLoaded();
@@ -39,11 +36,7 @@ describe('Cross-service examination status', { baseUrl: Cypress.env('portalBaseU
 				examinationPage.backLink.click();
 
 				planDetailsPage.verifyLoaded();
-				planDetailsPage.verifyProgressRow(
-					'Examination',
-					`Submission expected: ${plan.dates.examination}`,
-					plan.inExamination
-				);
+				planDetailsPage.verifyProgressRow('Examination', `Submitted: ${todayDisplay}`, plan.inExamination);
 			});
 		}
 	);

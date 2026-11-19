@@ -2,25 +2,21 @@ export const verifyGateway3CompletedInPortal = (
 	reference: string,
 	fileName: string,
 	completedDate: string,
-	gateway3TargetDate: string,
 	examinationTargetDate: string
 ) => {
 	cy.origin(
 		Cypress.env('portalBaseUrl'),
-		{ args: { reference, fileName, completedDate, gateway3TargetDate, examinationTargetDate } },
-		({ reference, fileName, completedDate, gateway3TargetDate, examinationTargetDate }) => {
+		{ args: { reference, fileName, completedDate, examinationTargetDate } },
+		({ reference, fileName, completedDate, examinationTargetDate }) => {
 			const planProgress = () => cy.get('[data-cy="plan-progress"], section[aria-labelledby="plan-progress-heading"]');
 			const progressRow = (title: string) => planProgress().contains('.govuk-task-list__item', title);
 
 			cy.visit(`/manage-local-plans/${encodeURIComponent(reference)}`);
 
 			progressRow('Gateway 3')
-				.should('contain.text', `Submission expected: ${gateway3TargetDate}`)
+				.should('contain.text', `Completed: ${completedDate}`)
 				.find('.govuk-task-list__status')
 				.should('contain.text', 'Completed');
-			progressRow('Gateway 3')
-				.should('contain.text', `Submission expected: ${gateway3TargetDate}`)
-				.and('contain.text', 'Completed');
 
 			progressRow('Examination')
 				.should('contain.text', `Submission expected: ${examinationTargetDate}`)

@@ -7,6 +7,7 @@ import { fileUploadQuestionConfigs, fileUploaderCaseSessionKeyForField, getParam
 import { Gateway3SaveController } from '../save/gateway-3-save-controller.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
+import { resolveExaminationWebsite } from '../../../util/examination-website.ts';
 
 export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -36,7 +37,10 @@ export class Gateway3SubmissionHandler extends Gateway3TabHandler {
 		await addUploadedDocumentDetailsToAnswers(service, caseRecord, req, journey3Data, journeyId);
 		const journey4Data = await db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
 		const journeyResponse = new JourneyResponse(journeyId, '', journey3Data);
-		journeyResponse.answers.examinationWebsite = journey4Data?.examinationWebsite;
+		journeyResponse.answers.examinationWebsite = resolveExaminationWebsite({
+			examinationInfo: journey4Data,
+			gateway3Info: journey3Data
+		});
 		for (let i = 0; i < submissionData.length; i++) {
 			const submissionId = i + 1;
 			journeyResponse.answers[`decision-${submissionId}`] = submissionData[i].decision;

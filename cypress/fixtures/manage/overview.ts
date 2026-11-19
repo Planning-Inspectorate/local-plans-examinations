@@ -90,7 +90,7 @@ export const assessorGateway3 = {
 	row: 'Assessor Gateway 3',
 	path: 'assessor-gateway-3',
 	heading: 'Who is the Gateway 3 assessor?',
-	field: 'assessorGateway3'
+	field: 'gateway3AssessorName'
 } as const;
 
 export const examiningInspector1 = {

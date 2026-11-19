@@ -4,7 +4,11 @@ import {
 	openSeededGateway3PageWithSubmissionDocuments
 } from '../../../../flows/manage/gateway-3-flow.ts';
 import { gateway3RequiredSubmissionDocuments } from '../../../../fixtures/manage/gateway-3.ts';
-import { gateway3Page, gateway3ReviewDocumentsPage } from '../../../../page-objects/manage/gateway-3/index.ts';
+import {
+	gateway3Page,
+	gateway3ReviewDocumentsPage,
+	gateway3AssessorQuestionPath
+} from '../../../../page-objects/manage/gateway-3/index.ts';
 
 describe('Gateway 3 page content', () => {
 	beforeEach(() => {
@@ -21,6 +25,8 @@ describe('Gateway 3 page content', () => {
 		gateway3Page.verifySectionHeading('Gateway 3');
 
 		gateway3Page.verifySectionHeading('Gateway 3 submission');
+
+		gateway3Page.verifyAddAssessorLink(gateway3AssessorQuestionPath);
 
 		gateway3Page.verifyExpectedSeededAnswers();
 
