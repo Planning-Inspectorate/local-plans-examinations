@@ -104,6 +104,28 @@ describe('checkCaseOwnership', () => {
 		assert.equal(next.mock.callCount(), 1);
 		assert.equal(service.db.case.findFirst.mock.callCount(), 1);
 	});
+
+	it('lets any contact on the case through, not just the primary email, and ignores deleted cases', async () => {
+		const service = createMockService({ id: 'case-1', reference: 'PLAN-001' });
+		const handler = checkCaseOwnership(service);
+		const req = {
+			params: { planReference: 'PLAN-001' },
+			session: { authenticatedEmail: 'second.contact@example.com' }
+		};
+		const res = createMockResponse();
+		const next = mock.fn();
+
+		await handler(req, res, next);
+
+		assert.equal(next.mock.callCount(), 1);
+		assert.deepEqual(service.db.case.findFirst.mock.calls[0].arguments[0], {
+			where: {
+				reference: 'PLAN-001',
+				deletedDate: null,
+				OR: [{ email: 'second.contact@example.com' }, { contacts: { some: { email: 'second.contact@example.com' } } }]
+			}
+		});
+	});
 });
 
 describe('exposeAuthToViews', () => {

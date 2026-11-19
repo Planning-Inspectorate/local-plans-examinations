@@ -208,7 +208,10 @@ describe('buildSubmitEmailPage', () => {
 		assert.strictEqual(req.session.email, 'test@example.com');
 		assert.strictEqual(service.db.case.findFirst.mock.callCount(), 1);
 		assert.deepStrictEqual(service.db.case.findFirst.mock.calls[0].arguments[0], {
-			where: { email: 'test@example.com', deletedDate: null },
+			where: {
+				deletedDate: null,
+				OR: [{ email: 'test@example.com' }, { contacts: { some: { email: 'test@example.com' } } }]
+			},
 			orderBy: { createdAt: 'desc' }
 		});
 		assert.strictEqual(service.db.oneTimePassword.upsert.mock.callCount(), 1);
@@ -467,7 +470,10 @@ describe('buildSubmitOtpPage', () => {
 		assert.strictEqual(req.session.authenticatedEmail, undefined);
 		assert.strictEqual(req.session.email, undefined);
 		assert.deepStrictEqual(service.db.case.findFirst.mock.calls[0].arguments[0], {
-			where: { email: 'unknown@example.com', deletedDate: null }
+			where: {
+				deletedDate: null,
+				OR: [{ email: 'unknown@example.com' }, { contacts: { some: { email: 'unknown@example.com' } } }]
+			}
 		});
 		assert.strictEqual(service.db.oneTimePassword.findUnique.mock.callCount(), 0);
 	});
