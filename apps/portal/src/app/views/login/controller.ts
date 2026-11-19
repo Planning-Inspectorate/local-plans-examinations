@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
 import { createOneTimePassword } from '../auth/one-time-password.ts';
-import { caseAccessWhere } from '../../auth/case-access.ts';
+import { canViewCase } from '../../auth/can-view-case.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
@@ -63,7 +63,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 		try {
 			const emailIsAssociatedToACase = await db.case.findFirst({
-				where: caseAccessWhere(sanitisedEmail),
+				where: canViewCase(sanitisedEmail),
 				orderBy: { createdAt: 'desc' }
 			});
 
@@ -224,7 +224,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 
 		try {
 			const emailIsAssociatedToACase = await db.case.findFirst({
-				where: caseAccessWhere(email)
+				where: canViewCase(email)
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('OTP verification attempted for an unrecognised email');
@@ -392,7 +392,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 		}
 
 		try {
-			const caseRecord = await db.case.findFirst({ where: caseAccessWhere(email) });
+			const caseRecord = await db.case.findFirst({ where: canViewCase(email) });
 			if (!caseRecord) {
 				logger.info('New code requested for unrecognised email');
 				return res.redirect(`${req.baseUrl}/enter-code`);
