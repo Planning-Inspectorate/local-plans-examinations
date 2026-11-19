@@ -229,15 +229,29 @@ describe('ExaminationSaveController', () => {
 			resetGovNotifyConfig();
 		});
 
-		function createNotifyContext(question: string, examinationInfo: Record<string, unknown> = {}) {
+		/**
+		 * @param question The question being saved
+		 * @param previous The examination values before the save
+		 * @param saved The examination values after the save (defaults to the previous values)
+		 */
+		function createNotifyContext(
+			question: string,
+			{ previous = {}, saved }: { previous?: Record<string, unknown>; saved?: Record<string, unknown> } = {}
+		) {
 			const baseService = createMockService();
-			const caseRecord = {
+			const savedExaminationInfo = saved ?? previous;
+			let databaseWritten = false;
+			const caseRecord = () => ({
 				id: 'someCaseId',
 				lpas: [{ lpaName: 'Test Council' }],
 				planType: 'local-plan',
 				contacts: [{ email: 'lpa@example.com' }],
-				examinationInfo: { hearings: [{}], planPauseHistory: [], ...examinationInfo }
-			};
+				examinationInfo: {
+					hearings: [{}],
+					planPauseHistory: [],
+					...(databaseWritten ? savedExaminationInfo : previous)
+				}
+			});
 			const sendEmail = mock.fn(async (_template: string, _email: string, _options: unknown) => ({}));
 			const entraClient = {
 				getUserEmailFromId: mock.fn(async (id: string) => `${id}@example.com`),
@@ -248,10 +262,13 @@ describe('ExaminationSaveController', () => {
 				getEntraClient: mock.fn(() => entraClient),
 				db: {
 					...baseService.db,
-					case: { ...baseService.db.case, findUnique: mock.fn(async () => caseRecord) },
+					case: { ...baseService.db.case, findUnique: mock.fn(async () => caseRecord()) },
 					examinationInfo: {
-						...baseService.db.examinationInfo,
-						findUnique: mock.fn(async (_args: unknown) => examinationInfo)
+						findUnique: mock.fn(async (_args: unknown) => (databaseWritten ? savedExaminationInfo : previous)),
+						upsert: mock.fn(async (_args: unknown) => {
+							databaseWritten = true;
+							return {};
+						})
 					}
 				},
 				notifyClient: { sendEmail },
@@ -266,66 +283,228 @@ describe('ExaminationSaveController', () => {
 		const sentEmails = (sendEmail: { mock: { calls: { arguments: unknown[] }[] } }) =>
 			sendEmail.mock.calls.map(({ arguments: args }) => args.slice(0, 2));
 
-		for (const field of ['examiningInspector1', 'examiningInspector2', 'examiningInspector3']) {
-			const question = `examining-inspector-${field.at(-1)}`;
+		describe('appointed inspector', () => {
+			for (const field of ['examiningInspector1', 'examiningInspector2', 'examiningInspector3']) {
+				const question = `examining-inspector-${field.at(-1)}`;
 
-			it(`sends the appointed inspector emails to the LPA contacts and the inspector for ${question}`, async () => {
-				const answers = { [field]: 'inspector-id' };
-				const { controller, service, sendEmail } = createNotifyContext(question, answers);
+				it(`sends the appointed inspector emails when ${question} appoints a new inspector`, async () => {
+					const answers = { [field]: 'inspector-id' };
+					const { controller, service, sendEmail } = createNotifyContext(question, { saved: answers });
 
-				const result = await controller.prepareAndSave({ ...answers });
+					const result = await controller.prepareAndSave({ ...answers });
 
-				assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
-				assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+					assert.deepStrictEqual(sentEmails(sendEmail), [
+						[templates.appointedInspectorLpa, 'lpa@example.com'],
+						[templates.appointedInspector, 'inspector-id@example.com']
+					]);
+					const lpaPersonalisation = (
+						sendEmail.mock.calls[0].arguments[2] as { personalisation: Record<string, string> }
+					).personalisation;
+					assert.strictEqual(lpaPersonalisation.lead_inspector_initial, 'J');
+					assert.strictEqual(lpaPersonalisation.lead_inspector_lastname, 'Smith');
+					assert.strictEqual(service.logger.error.mock.callCount(), 0);
+				});
+			}
+
+			it('only emails the newly appointed inspector, not the inspectors already on the case', async () => {
+				const previous = { examiningInspector1: 'inspector-1' };
+				const saved = { examiningInspector1: 'inspector-1', examiningInspector2: 'inspector-2' };
+				const { controller, sendEmail } = createNotifyContext('examining-inspector-2', { previous, saved });
+
+				await controller.prepareAndSave({ examiningInspector2: 'inspector-2' });
+
 				assert.deepStrictEqual(sentEmails(sendEmail), [
 					[templates.appointedInspectorLpa, 'lpa@example.com'],
-					[templates.appointedInspector, 'inspector-id@example.com']
+					[templates.appointedInspector, 'inspector-2@example.com']
 				]);
-				const lpaPersonalisation = (sendEmail.mock.calls[0].arguments[2] as { personalisation: Record<string, string> })
-					.personalisation;
-				assert.strictEqual(lpaPersonalisation.lead_inspector_initial, 'J');
-				assert.strictEqual(lpaPersonalisation.lead_inspector_lastname, 'Smith');
-				assert.strictEqual(service.logger.error.mock.callCount(), 0);
 			});
-		}
 
-		for (const { isSound, template } of [
-			{ isSound: 'sound', template: templates.outcomeSound },
-			{ isSound: 'sound-with-modifications', template: templates.outcomeSound },
-			{ isSound: 'unsound', template: templates.outcomeUnsound }
-		]) {
-			it(`sends the ${template} email to the LPA contacts when the outcome is ${isSound}`, async () => {
-				const { controller, service, sendEmail } = createNotifyContext('is-sound');
+			it('emails the replacement inspector when an inspector is changed', async () => {
+				const previous = { examiningInspector1: 'inspector-1', examiningInspector2: 'inspector-2' };
+				const saved = { examiningInspector1: 'inspector-3', examiningInspector2: 'inspector-2' };
+				const { controller, sendEmail } = createNotifyContext('examining-inspector-1', { previous, saved });
 
-				const result = await controller.prepareAndSave({ isSound });
+				await controller.prepareAndSave({ examiningInspector1: 'inspector-3' });
 
-				assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
-				assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
-				assert.deepStrictEqual(sentEmails(sendEmail), [[template, 'lpa@example.com']]);
-				assert.strictEqual(service.getEntraClient.mock.callCount(), 0);
+				assert.deepStrictEqual(sentEmails(sendEmail), [
+					[templates.appointedInspectorLpa, 'lpa@example.com'],
+					[templates.appointedInspector, 'inspector-3@example.com']
+				]);
 			});
-		}
 
-		for (const { name, question, answers } of [
-			{ name: 'an unrecognised outcome', question: 'is-sound', answers: { isSound: 'unknown' } },
-			{ name: 'an empty outcome', question: 'is-sound', answers: { isSound: '' } },
-			{ name: 'an examining inspector question without an inspector', question: 'examining-inspector-1', answers: {} },
-			{
-				name: 'a field without a notification',
-				question: 'examination-expected-date',
-				answers: { examinationExpectedDate: new Date('2026-02-01') }
+			for (const { name, question, previous, answers } of [
+				{
+					name: 'the same inspector is saved again',
+					question: 'examining-inspector-1',
+					previous: { examiningInspector1: 'inspector-1' },
+					answers: { examiningInspector1: 'inspector-1' }
+				},
+				{
+					name: 'the inspector is already appointed in another slot',
+					question: 'examining-inspector-2',
+					previous: { examiningInspector1: 'inspector-1' },
+					answers: { examiningInspector2: 'inspector-1' }
+				},
+				{
+					name: 'the inspector is cleared',
+					question: 'examining-inspector-1',
+					previous: { examiningInspector1: 'inspector-1' },
+					answers: { examiningInspector1: '' }
+				},
+				{
+					name: 'the question has no inspector answer',
+					question: 'examining-inspector-1',
+					previous: {},
+					answers: {}
+				},
+				{
+					name: 'an inspector field is saved by another question',
+					question: 'examination-expected-date',
+					previous: {},
+					answers: { examiningInspector1: 'inspector-1' }
+				}
+			]) {
+				it(`does not send any email when ${name}`, async () => {
+					const { controller, service, sendEmail } = createNotifyContext(question, { previous });
+
+					const result = await controller.prepareAndSave({ ...answers });
+
+					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+					assert.deepStrictEqual(sentEmails(sendEmail), []);
+				});
 			}
-		]) {
-			it(`saves without sending any email for ${name}`, async () => {
-				const { controller, service, sendEmail } = createNotifyContext(question);
+		});
 
-				const result = await controller.prepareAndSave({ ...answers });
+		describe('examination outcome', () => {
+			// "Confirm and notify" on the examination report check page saves the report issued status
+			const issueReport = { status: EXAMINATION_STATUS_ID.REPORT_ISSUED, soundUnsoundDate: mockDate };
+			const reportQuestion = 'examination-report';
 
-				assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
-				assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+			for (const isSound of ['sound', 'sound-with-modifications', 'unsound']) {
+				it(`does not send any email when the plan outcome is saved as ${isSound}`, async () => {
+					const { controller, service, sendEmail } = createNotifyContext('is-sound', {
+						previous: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
+					});
+
+					const result = await controller.prepareAndSave({ isSound });
+
+					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+					assert.deepStrictEqual(sentEmails(sendEmail), []);
+				});
+			}
+
+			for (const { isSound, template } of [
+				{ isSound: 'sound', template: templates.outcomeSound },
+				{ isSound: 'sound-with-modifications', template: templates.outcomeSound },
+				{ isSound: 'unsound', template: templates.outcomeUnsound }
+			]) {
+				it(`sends the ${template} email to the LPA contacts when the report is issued for a ${isSound} plan`, async () => {
+					const { controller, service, sendEmail } = createNotifyContext(reportQuestion, {
+						previous: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION, isSound }
+					});
+
+					const result = await controller.prepareAndSave({ ...issueReport });
+
+					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+					assert.deepStrictEqual(sentEmails(sendEmail), [[template, 'lpa@example.com']]);
+					assert.strictEqual(service.getEntraClient.mock.callCount(), 0);
+				});
+			}
+
+			for (const status of [EXAMINATION_STATUS_ID.REPORT_ISSUED, EXAMINATION_STATUS_ID.PLAN_ADOPTED]) {
+				it(`does not send the outcome email again when the examination is already ${status}`, async () => {
+					const { controller, service, sendEmail } = createNotifyContext(reportQuestion, {
+						previous: { status, isSound: 'sound' }
+					});
+
+					await controller.prepareAndSave({ ...issueReport });
+
+					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+					assert.deepStrictEqual(sentEmails(sendEmail), []);
+				});
+			}
+
+			for (const isSound of [null, '', 'unknown']) {
+				it(`logs a warning and does not send any email when the report is issued with plan outcome ${JSON.stringify(isSound)}`, async () => {
+					const { controller, service, sendEmail } = createNotifyContext(reportQuestion, {
+						previous: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION, isSound }
+					});
+
+					const result = await controller.prepareAndSave({ ...issueReport });
+
+					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+					assert.deepStrictEqual(sentEmails(sendEmail), []);
+					assert.strictEqual(service.logger.warn.mock.callCount(), 1);
+					assert.match(service.logger.warn.mock.calls[0].arguments[1], /no outcome email was sent/);
+				});
+			}
+
+			it('does not send any email for a status change other than the report being issued', async () => {
+				const { controller, sendEmail } = createNotifyContext('miqs', {
+					previous: { status: EXAMINATION_STATUS_ID.SUBMITTED, isSound: 'sound' }
+				});
+
+				await controller.prepareAndSave({ status: EXAMINATION_STATUS_ID.IN_EXAMINATION });
+
 				assert.deepStrictEqual(sentEmails(sendEmail), []);
 			});
-		}
+
+			it('does not send any email when the database save fails', async () => {
+				const { controller, service, sendEmail } = createNotifyContext(reportQuestion, {
+					previous: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION, isSound: 'sound' }
+				});
+				service.db.examinationInfo.upsert.mock.mockImplementation(async () => {
+					throw new Error('Save failed');
+				});
+
+				await assert.rejects(controller.prepareAndSave({ ...issueReport }), /Save failed/);
+				assert.deepStrictEqual(sentEmails(sendEmail), []);
+			});
+
+			it('still reports a successful save when Notify rejects the email', async () => {
+				const { controller, service, sendEmail } = createNotifyContext(reportQuestion, {
+					previous: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION, isSound: 'unsound' }
+				});
+				sendEmail.mock.mockImplementation(async () => {
+					throw new Error('Notify unavailable');
+				});
+
+				const result = await controller.prepareAndSave({ ...issueReport });
+
+				assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+				assert.strictEqual(sendEmail.mock.callCount(), 1);
+				assert.strictEqual(service.logger.error.mock.callCount(), 1);
+				assert.strictEqual(service.logger.error.mock.calls[0].arguments[0].email, 'lpa@example.com');
+			});
+
+			it('still reports a successful save when the notification config is missing', async () => {
+				delete process.env.PORTAL_URL;
+				const { controller, service, sendEmail } = createNotifyContext(reportQuestion, {
+					previous: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION, isSound: 'sound' }
+				});
+
+				const result = await controller.prepareAndSave({ ...issueReport });
+
+				assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+				assert.deepStrictEqual(sentEmails(sendEmail), []);
+				assert.strictEqual(service.logger.error.mock.calls[0].arguments[1], 'Failed to send examination notify email');
+			});
+		});
+
+		it('does not send any email for a field without a notification', async () => {
+			const { controller, service, sendEmail } = createNotifyContext('examination-expected-date');
+
+			const result = await controller.prepareAndSave({ examinationExpectedDate: new Date('2026-02-01') });
+
+			assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
+			assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
+			assert.deepStrictEqual(sentEmails(sendEmail), []);
+		});
 
 		it('does not send any email when saving the Programme officer', async () => {
 			const { controller, service, sendEmail } = createNotifyContext('programme-officer');
@@ -339,41 +518,6 @@ describe('ExaminationSaveController', () => {
 
 			assert.strictEqual(service.db.gateway3Info.upsert.mock.callCount(), 1);
 			assert.deepStrictEqual(sentEmails(sendEmail), []);
-		});
-
-		it('does not send any email when the database save fails', async () => {
-			const { controller, service, sendEmail } = createNotifyContext('is-sound');
-			service.db.examinationInfo.upsert.mock.mockImplementation(async () => {
-				throw new Error('Save failed');
-			});
-
-			await assert.rejects(controller.prepareAndSave({ isSound: 'sound' }), /Save failed/);
-			assert.deepStrictEqual(sentEmails(sendEmail), []);
-		});
-
-		it('still reports a successful save when Notify rejects the email', async () => {
-			const { controller, service, sendEmail } = createNotifyContext('is-sound');
-			sendEmail.mock.mockImplementation(async () => {
-				throw new Error('Notify unavailable');
-			});
-
-			const result = await controller.prepareAndSave({ isSound: 'unsound' });
-
-			assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
-			assert.strictEqual(sendEmail.mock.callCount(), 1);
-			assert.strictEqual(service.logger.error.mock.callCount(), 1);
-			assert.strictEqual(service.logger.error.mock.calls[0].arguments[0].email, 'lpa@example.com');
-		});
-
-		it('still reports a successful save when the notification config is missing', async () => {
-			delete process.env.PORTAL_URL;
-			const { controller, service, sendEmail } = createNotifyContext('is-sound');
-
-			const result = await controller.prepareAndSave({ isSound: 'sound' });
-
-			assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
-			assert.deepStrictEqual(sentEmails(sendEmail), []);
-			assert.strictEqual(service.logger.error.mock.calls[0].arguments[1], 'Failed to send examination notify email');
 		});
 	});
 

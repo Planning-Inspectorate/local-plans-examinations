@@ -478,6 +478,22 @@ describe('sendExaminationNotifyEmail', () => {
 		assert.strictEqual(service.logger.error.mock.callCount(), 0);
 	});
 
+	it('only sends the appointed inspector template to the given inspector ids', async () => {
+		const { service, sendEmail, entraClient } = createService();
+		entraClient.getUserEmailFromId.mock.mockImplementation(async (id: string) => ` ${id}@example.com `);
+
+		await sendExaminationNotifyEmail(service, reference, 'appointedInspector', {
+			request: examinationRequest,
+			inspectorIds: ['inspector-2']
+		});
+
+		assert.deepStrictEqual(
+			sendEmail.mock.calls.map(({ arguments: args }) => args.slice(0, 2)),
+			[[templates.appointedInspector, 'inspector-2@example.com']]
+		);
+		assert.strictEqual(service.logger.error.mock.callCount(), 0);
+	});
+
 	it('sends the appointed inspector LPA template with each inspector initial and last name', async () => {
 		const { service, sendEmail } = createService();
 

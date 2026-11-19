@@ -219,6 +219,8 @@ export async function sendGw3ResubmissionNeededNotifyEmail(service: ManageServic
 type ExaminationEmailParams = {
 	request?: Request & { session: AuthSession };
 	personalisation?: Record<string, string>;
+	/** For the appointed inspector email: only email these inspectors instead of every examining inspector */
+	inspectorIds?: string[];
 };
 
 type ExaminationEmailHandler = (service: ManageService, reference: string) => Promise<void>;
@@ -248,18 +250,20 @@ function buildInspectorPersonalisation(inspectors: InspectorName[] = []): Record
  * @param params - The parameters used to configure the examination email handlers.
  * @param params.request - The request context required by handlers that need request-specific data.
  * @param params.personalisation - Additional personalisation values to include when sending notification emails.
+ * @param params.inspectorIds - The inspectors to send the appointed inspector email to, defaulting to every examining inspector.
  * @return A partial record of notification template keys mapped to their corresponding examination email handlers.
  */
 function getExaminationEmailHandlers({
 	request,
-	personalisation = {}
+	personalisation = {},
+	inspectorIds
 }: ExaminationEmailParams): Partial<Record<NotifyEmailTemplateKey, ExaminationEmailHandler>> {
 	return {
 		appointedInspector: (service, reference) => {
 			if (!request) {
 				throw new Error('Request object is required for sending appointed inspector notify email');
 			}
-			return sendAppointedInspectorNotifyEmail(service, reference, request, personalisation);
+			return sendAppointedInspectorNotifyEmail(service, reference, request, personalisation, inspectorIds);
 		},
 
 		appointedInspectorLpa: async (service, reference) => {
@@ -294,14 +298,15 @@ export async function sendAppointedInspectorNotifyEmail(
 	service: ManageService,
 	reference: string,
 	req: Request & { session: AuthSession },
-	personalisation?: Record<string, string>
+	personalisation?: Record<string, string>,
+	inspectorIds?: string[]
 ) {
 	const caseRecord = await service.db.case.findUnique({ where: { reference }, select: { id: true } });
 	if (!caseRecord) {
 		throw new Error(`Case not found for reference '${reference}'`);
 	}
 	const examInfo = await service.db.examinationInfo.findUnique({ where: { caseId: caseRecord.id } });
-	const recipients = await getExaminingInspectorContacts(service, req, examInfo);
+	const recipients = await getExaminingInspectorContacts(service, req, examInfo, inspectorIds);
 	await sendNotifyEmail(service, reference, 'appointedInspector', {
 		recipients,
 		personalisation

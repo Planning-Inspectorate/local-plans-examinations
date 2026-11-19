@@ -261,6 +261,26 @@ describe('getExaminingInspectorContacts', () => {
 		assert.strictEqual(service.getEntraClient.mock.calls[0].arguments[0], request.session);
 	});
 
+	it('only returns the given inspectors when onlyInspectorIds is provided', async () => {
+		const { service, entraClient } = createService({
+			'inspector-1': 'one@example.com',
+			'inspector-2': 'two@example.com'
+		});
+
+		const result = await getExaminingInspectorContacts(
+			service as unknown as ManageService,
+			request,
+			{ examiningInspector1: 'inspector-1', examiningInspector2: 'inspector-2' },
+			['inspector-2', 'not-an-examining-inspector']
+		);
+
+		assert.deepStrictEqual(result, ['two@example.com']);
+		assert.deepStrictEqual(
+			entraClient.getUserEmailFromId.mock.calls.map(({ arguments: args }) => args[0]),
+			['inspector-2']
+		);
+	});
+
 	it('ignores empty and non-string inspector ids', async () => {
 		const { service, entraClient } = createService();
 
