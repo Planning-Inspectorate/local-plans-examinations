@@ -208,6 +208,20 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
           selector       = "examinationWebsite"
           # False positive: PostParamValue:examinationWebsite can contain an off-domain examination website URL.
         }
+
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "StartsWith"
+          selector       = "remoteMeetingLink-"
+          # False positive: Gateway 2 workshop remote meeting fields post an off-domain URL and have a numeric suffix.
+        }
+
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "StartsWith"
+          selector       = "hearingRemoteMeetingLink-"
+          # False positive: examination hearing remote meeting fields post an off-domain URL and have a numeric suffix.
+        }
       }
     }
 
