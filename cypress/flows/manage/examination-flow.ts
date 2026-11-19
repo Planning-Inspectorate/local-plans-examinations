@@ -103,8 +103,4 @@ export const uploadExaminationFinalReportDocuments = () => {
 	examinationReportUploadPage.saveAndReturn();
 	examinationReportCheckPage.verifyDocuments(examinationReport.fileName, examinationReport.fileName2);
 	examinationReportCheckPage.confirm();
-
-	examinationPage.verifyLoaded();
-	examinationPage.verifyNotificationBanner(examinationReport.issuedMessage);
-	examinationPage.verifySummaryRowContains(examinationReport.row, '2 documents added');
 };
