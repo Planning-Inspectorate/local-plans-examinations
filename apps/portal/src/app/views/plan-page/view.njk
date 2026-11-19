@@ -23,7 +23,7 @@
 
 {% set examinationHint = { text: dateTextE + dateE } %}
 {% if pauseStartDate %}
-  {% set examinationPauseHint %}Paused: {{ pauseStartDate }}<br>Due to restart: {{ pauseRestartDate or "Not provided" }}{% endset %}
+  {% set examinationPauseHint %}Paused: {{ pauseStartDate }}{% endset %}
   {% set examinationHint = { html: examinationPauseHint } %}
 {% endif %}
 
