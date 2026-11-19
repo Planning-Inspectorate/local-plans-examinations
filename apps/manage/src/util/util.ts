@@ -1,4 +1,7 @@
 import type { ManageService } from '#service';
+import type { AuthSession } from '#util/cached-entra-client.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../app/classes/case-field-mappings.ts';
+import type { Request } from 'express';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import {
 	EXAMINATION_OTHER_DOCUMENT_SETS,
@@ -102,6 +105,38 @@ export function sortByDateColumn(objects: { [key: string]: any }[], columnName: 
 		const bDate = typeof b[columnName] === 'string' ? new Date(b[columnName]) : b[columnName];
 		return aDate.getTime() - bDate.getTime();
 	});
+}
+
+/**
+ * Look up the emails of the examining inspectors of a case in Entra.
+ * @param onlyInspectorIds When given, only these inspectors are included (they must still be one of the case's examining inspectors)
+ */
+export async function getExaminingInspectorContacts(
+	service: ManageService,
+	req: Request & { session: AuthSession },
+	examinationInfo: Record<string, unknown> | null,
+	onlyInspectorIds?: string[]
+): Promise<string[]> {
+	const entraClient = service.getEntraClient(req.session);
+	if (!entraClient || !examinationInfo) return [];
+
+	const inspectorIds = EXAMINING_INSPECTOR_FIELDS.map((field) => examinationInfo[field]).filter(
+		(id): id is string =>
+			typeof id === 'string' && id.length > 0 && (!onlyInspectorIds || onlyInspectorIds.includes(id))
+	);
+
+	const emails = await Promise.all(
+		inspectorIds.map(async (id) => {
+			try {
+				return (await entraClient.getUserEmailFromId(id)).trim();
+			} catch (error) {
+				service.logger.warn({ error, inspectorId: id }, 'Could not look up examining inspector email in Entra');
+				return '';
+			}
+		})
+	);
+
+	return emails.filter((email) => email.length > 0);
 }
 
 export type ExaminationDocumentFile = {

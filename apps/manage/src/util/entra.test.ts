@@ -116,4 +116,36 @@ describe('entraid', () => {
 			assert.deepStrictEqual(actualResult, expectedResult);
 		});
 	});
+
+	describe('getUserName', () => {
+		function createGraphClient(user: Record<string, unknown>) {
+			const request = {
+				select: mock.fn(function (this: unknown) {
+					return this;
+				}),
+				get: mock.fn(async () => user)
+			};
+			return { client: { api: mock.fn((_path: string) => request) }, request };
+		}
+
+		it('fetches the given and family name of the user', async () => {
+			const { client, request } = createGraphClient({ givenName: 'Jane', surname: 'Smith' });
+			const entraClient = new EntraClient(client as unknown as Client);
+
+			const result = await entraClient.getUserName('user-1');
+
+			assert.deepStrictEqual(result, { givenName: 'Jane', surname: 'Smith' });
+			assert.deepStrictEqual(client.api.mock.calls[0].arguments, ['/users/user-1']);
+			assert.deepStrictEqual(request.select.mock.calls[0].arguments, [['givenName', 'surname']]);
+		});
+
+		it('returns null for names the user does not have', async () => {
+			const { client } = createGraphClient({});
+			const entraClient = new EntraClient(client as unknown as Client);
+
+			const result = await entraClient.getUserName('user-1');
+
+			assert.deepStrictEqual(result, { givenName: null, surname: null });
+		});
+	});
 });

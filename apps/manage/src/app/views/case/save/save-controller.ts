@@ -27,6 +27,7 @@ export abstract class SaveController {
 	protected abstract prepareData(answers: Record<string, any>): Promise<Record<string, any>>;
 
 	protected abstract saveToDatabase(answers: SaveInput, question?: string): Promise<boolean>;
+	protected fireNotifications?(answers: SaveInput): Promise<void>;
 
 	protected saveToSession(answers: SaveInput) {
 		this.req.session.answers = answers;
@@ -34,14 +35,19 @@ export abstract class SaveController {
 	}
 
 	protected abstract shouldSaveToSession(): Promise<boolean>;
-
 	protected async save(answers: SaveInput) {
 		if (await this.shouldSaveToSession()) {
 			return { dataWritten: this.saveToSession(answers), writtenToDB: false };
 		}
-		return { dataWritten: await this.saveToDatabase(answers), writtenToDB: true };
-	}
 
+		const dataWritten = await this.saveToDatabase(answers);
+
+		if (dataWritten) {
+			await this.fireNotifications?.(answers);
+		}
+
+		return { dataWritten, writtenToDB: true };
+	}
 	/**
 	 * Attempt to save the given answers. Depending on the question being saved, this will either save to the session or the database
 	 * @param answers The answers to save

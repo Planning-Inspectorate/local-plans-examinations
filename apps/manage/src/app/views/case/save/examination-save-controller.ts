@@ -5,14 +5,49 @@ import { parseDate } from '../../../util/date.ts';
 import type { ExaminationInput } from './save-inputs.ts';
 import { examinationPauseBaseUrls } from '../questions.ts';
 import { COMMON_CONSTS, NUM_EXAMINATION_HEARING_QUESTIONS } from '../../../classes/common-consts.ts';
+import { EXAMINING_INSPECTOR_FIELDS } from '../../../classes/case-field-mappings.ts';
 import { formatDateToString } from '../../../util/date.ts';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { sendExaminationNotifyEmail } from '../../../notify/notify-helper.ts';
 import { syncPortalExaminationWebsite } from '../../../util/examination-website.ts';
+
+type ExaminingInspectorField = (typeof EXAMINING_INSPECTOR_FIELDS)[number];
+
+const INSPECTOR_FIELD_BY_QUESTION: Record<string, ExaminingInspectorField> = {
+	[COMMON_CONSTS.EXAMINING_INSPECTOR_1_QUESTION]: 'examiningInspector1',
+	[COMMON_CONSTS.EXAMINING_INSPECTOR_2_QUESTION]: 'examiningInspector2',
+	[COMMON_CONSTS.EXAMINING_INSPECTOR_3_QUESTION]: 'examiningInspector3'
+};
+
+/** The outcome email sent to the planning authority for each plan outcome (isSound) answer */
+const OUTCOME_TEMPLATES = {
+	unsound: 'examinationOutcomeUnsound',
+	sound: 'examinationOutcomeSound',
+	'sound-with-modifications': 'examinationOutcomeSound'
+} as const;
+
+type IsSoundAnswer = keyof typeof OUTCOME_TEMPLATES;
+
+/** Statuses that mean the examination report has already been issued, so the outcome email has already been sent */
+const REPORT_ALREADY_ISSUED_STATUSES = new Set<string>([
+	EXAMINATION_STATUS_ID.REPORT_ISSUED,
+	EXAMINATION_STATUS_ID.PLAN_ADOPTED
+]);
+
+function isIsSoundAnswer(value: unknown): value is IsSoundAnswer {
+	return typeof value === 'string' && Object.hasOwn(OUTCOME_TEMPLATES, value);
+}
+
+type PreviousExaminationInfo = {
+	status: string | null;
+	isSound: string | null;
+} & Record<ExaminingInspectorField, string | null>;
 
 export class ExaminationSaveController extends SaveController {
 	private caseId: string | undefined;
 	private examinationStatus: string | undefined;
+	private previousExaminationInfo: PreviousExaminationInfo | null = null;
 	private cachedCaseDetails: {
 		id: string;
 		examinationInfo: {
@@ -102,6 +137,62 @@ export class ExaminationSaveController extends SaveController {
 		return true;
 	}
 
+	/**
+	 * Called after the answers have been written to the database. Compares the answers with the values from
+	 * before the save, so an email is only sent when something has actually changed.
+	 */
+	protected async fireNotifications(answers: ExaminationInput) {
+		await this.notifyInspectorAppointed(answers);
+		await this.notifyExaminationOutcome(answers);
+	}
+
+	/**
+	 * Sends the appointed inspector emails when an examining inspector question saves an inspector who was not
+	 * already one of the case's examining inspectors. Only the newly appointed inspector is emailed.
+	 */
+	private async notifyInspectorAppointed(answers: ExaminationInput) {
+		const field = INSPECTOR_FIELD_BY_QUESTION[String(this.req.params.question)];
+		if (!field) return;
+
+		const appointedInspector = String(answers[field] ?? '').trim();
+		if (!appointedInspector) return;
+
+		const previous = this.previousExaminationInfo;
+		const alreadyAppointed = EXAMINING_INSPECTOR_FIELDS.some(
+			(inspectorField) => previous?.[inspectorField] === appointedInspector
+		);
+		if (alreadyAppointed) return;
+
+		await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorLpa', {
+			request: this.req
+		});
+		await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspector', {
+			request: this.req,
+			inspectorIds: [appointedInspector]
+		});
+	}
+
+	/**
+	 * Sends the plan outcome email when the examination report is first issued ("Confirm and notify"),
+	 * using the plan outcome that was saved before the report was issued.
+	 */
+	private async notifyExaminationOutcome(answers: ExaminationInput) {
+		if (answers.status !== EXAMINATION_STATUS_ID.REPORT_ISSUED) return;
+
+		const previous = this.previousExaminationInfo;
+		if (previous?.status && REPORT_ALREADY_ISSUED_STATUSES.has(previous.status)) return;
+
+		const isSound = previous?.isSound;
+		if (!isIsSoundAnswer(isSound)) {
+			this.service.logger.warn(
+				{ reference: this.caseReference, isSound },
+				'Examination report issued without a recognised plan outcome, so no outcome email was sent'
+			);
+			return;
+		}
+		await sendExaminationNotifyEmail(this.service, this.caseReference, OUTCOME_TEMPLATES[isSound]);
+	}
+
 	public async prepareAndSave(answers: Record<string, any>) {
 		if (this.req.params.question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
 			const caseId = await this.resolveCaseId();
@@ -128,7 +219,11 @@ export class ExaminationSaveController extends SaveController {
 				examinationInfo: {
 					select: {
 						hearings: true,
-						status: true
+						status: true,
+						isSound: true,
+						examiningInspector1: true,
+						examiningInspector2: true,
+						examiningInspector3: true
 					}
 				}
 			},
@@ -141,6 +236,13 @@ export class ExaminationSaveController extends SaveController {
 			this.caseId = caseDetails.id;
 		}
 		this.examinationStatus = caseDetails.examinationInfo?.status;
+		this.previousExaminationInfo = {
+			status: caseDetails.examinationInfo?.status ?? null,
+			isSound: caseDetails.examinationInfo?.isSound ?? null,
+			examiningInspector1: caseDetails.examinationInfo?.examiningInspector1 ?? null,
+			examiningInspector2: caseDetails.examinationInfo?.examiningInspector2 ?? null,
+			examiningInspector3: caseDetails.examinationInfo?.examiningInspector3 ?? null
+		};
 		if (caseDetails.examinationInfo?.hearings == undefined) {
 			throw Error(`Could not find hearing data for case with reference '${this.caseReference}'`);
 		}

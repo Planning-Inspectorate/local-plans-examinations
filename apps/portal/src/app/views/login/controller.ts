@@ -11,6 +11,7 @@ const LOCAL_ONE_TIME_PASSWORD = '12345';
 export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		delete req.session.email;
+		delete req.session.otpDeliveryFailed;
 
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
@@ -25,6 +26,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 	const { logger, db } = service;
 	return async (req: Request, res: Response) => {
 		const { email } = req.body;
+
+		delete req.session.otpDeliveryFailed;
 
 		if (!email || typeof email !== 'string' || email.trim().length === 0) {
 			logger.info('Email address not provided');
