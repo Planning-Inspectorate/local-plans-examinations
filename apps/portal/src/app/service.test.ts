@@ -478,7 +478,7 @@ describe('PortalService', () => {
 			assert.deepStrictEqual(service.db.case.findMany.mock.calls[0].arguments[0], {
 				where: {
 					deletedDate: null,
-					email: 'user@example.com'
+					OR: [{ email: 'user@example.com' }, { contacts: { some: { email: 'user@example.com' } } }]
 				},
 				include: {
 					gateway1Info: {

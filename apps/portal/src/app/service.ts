@@ -17,6 +17,7 @@ import {
 	GATEWAY_3_STATUS
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { caseAccessWhere } from './auth/case-access.ts';
 
 type PortalCase = {
 	reference: string;
@@ -331,10 +332,7 @@ export class PortalService extends Service {
 
 	async getPlans(email?: string): Promise<Plan[]> {
 		const caseRecords = (await this.db.case.findMany({
-			where: {
-				deletedDate: null,
-				...(email ? { email } : {})
-			},
+			where: email ? caseAccessWhere(email) : { deletedDate: null },
 			include: planCaseInclude,
 			orderBy: {
 				createdAt: 'desc'
