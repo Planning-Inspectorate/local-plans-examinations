@@ -4,12 +4,23 @@ import type { ManageService } from '#service';
 import { resolveCaseHeaderStatus } from '../../classes/status-tag-classes.ts';
 import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { getExaminationStages } from '#util/util.ts';
+import { getPaginationDetails, getPaginationModel } from '@pins/local-plans-lib/util/pagination.ts';
+
+export const CASES_PER_PAGE = 30;
 
 export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		const { db, logger } = service;
 		try {
-			const cases = await db.case.findMany({ where: { deletedDate: null }, orderBy: { createdAt: 'desc' } });
+			const where = { deletedDate: null };
+			const totalCases = await db.case.count({ where });
+			const { currentPage, totalPages, skip, take } = getPaginationDetails(totalCases, req.query.page, CASES_PER_PAGE);
+			const cases = await db.case.findMany({
+				where,
+				orderBy: { createdAt: 'desc' },
+				skip,
+				take
+			});
 
 			const casesWithStatus = await Promise.all(
 				cases.map(async (caseRecord) => {
@@ -64,7 +75,11 @@ export function buildLandingPage(service: ManageService): AsyncRequestHandler {
 					};
 				})
 			);
-			return res.render('views/landing-page/landing-page.njk', { cases: casesWithStatus });
+			return res.render('views/landing-page/landing-page.njk', {
+				cases: casesWithStatus,
+				totalCases,
+				pagination: getPaginationModel(req, totalPages, currentPage)
+			});
 		} catch (error) {
 			logger.error({ error }, 'Unable to fetch cases');
 			return res.status(500).render('views/errors/500.njk');
