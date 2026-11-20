@@ -20,6 +20,6 @@ export async function sendAuthCodeNotification(
 		service.logger.info({ email: recipientEmail }, 'Auth code notification sent successfully');
 	} catch (error) {
 		service.logger.error({ error, email: recipientEmail }, 'Failed to send auth code notification');
-		throw new Error('Failed to send authentication code. Please try again later.', { cause: error });
+		throw error;
 	}
 }
