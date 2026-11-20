@@ -254,8 +254,10 @@ describe('Full journey: case creation to Plan adopted', () => {
 			openExaminationPage({ reference: journey.reference, planTitle: journey.planTitle });
 			examinationPage.openActionLinkFor(examiningInspector1.row);
 
-			examiningInspector1Page.verifyLoaded();
-			examiningInspector1Page.enterLookupAnswer(examiningInspector1.display);
+			examiningInspector1Page.getFirstOption().then((inspector) => {
+				examiningInspector1Page.enterLookupAnswer(inspector);
+				examinationPage.verifySummaryRowContains(examiningInspector1.row, inspector);
+			});
 
 			examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
 			examinationPage.verifyHeaderStatus('Exam in progress');
