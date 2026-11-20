@@ -257,12 +257,12 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 							? await resolveAssessorDisplayName(service, req, 'gateway-2', existing)
 							: existing;
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						assessorName: 'Gateway 2 Assessor ' + existingName + ' updated to ' + newAssessorName
+						assessorName: 'Gateway 2 Assessor updated from ' + existingName + ' to ' + newAssessorName
 					});
 				} else {
 					//add
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						assessorName: 'Gateway 2 Assessor ' + newAssessor + ' added'
+						assessorName: 'Assessor Gateway 3 ' + newAssessor + ' added'
 					});
 				}
 			} else if (req.url.includes('assessor-gateway-3')) {

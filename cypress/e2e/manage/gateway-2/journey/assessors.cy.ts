@@ -101,7 +101,7 @@ describe('Gateway 2 assessors', () => {
 		gateway2Page.verifyAssessor(1, gateway2AssessorAnswer.assessor2, todayDisplay, gateway2AssessorRemovePath);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway2AssessorAnswer.assessor2} added`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 2 assessor ${gateway2AssessorAnswer.assessor2} added`);
 	});
 
 	it('adds more assessors, each in their own rows, and removes them one at a time', { tags: ['regression'] }, () => {
@@ -192,7 +192,7 @@ describe('Gateway 2 assessors', () => {
 
 			openCaseHistory();
 			caseHistoryPage.verifyHistoryEvent(
-				`Gateway 2 assessor ${gateway2AssessorAnswer.historyLabel} updated from ${gateway2AssessorAnswer.value} to ${gateway2AssessorAnswer.updatedValue}`
+				`Gateway 2 ${gateway2AssessorAnswer.historyLabel} updated from ${gateway2AssessorAnswer.value} to ${gateway2AssessorAnswer.updatedValue}`
 			);
 		}
 	);
