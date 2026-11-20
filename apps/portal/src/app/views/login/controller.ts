@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
 import { createOneTimePassword } from '../auth/one-time-password.ts';
 import { canViewCase } from '../../auth/can-view-case.ts';
-import { NotifyError, NotifyErrorKind, NotifyErrorReason } from '@pins/local-plans-lib/govnotify/notify-error.ts';
+import { NotifyError, NotifyErrorReason } from '@pins/local-plans-lib/govnotify/notify-error.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
@@ -129,24 +129,15 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 					signInUrl
 				});
 			} catch (error) {
-				if (error instanceof NotifyError) {
-					const kind = error.kind;
-					switch (kind) {
-						default: {
-							req.session.otpDeliveryFailed = true;
-							logger.error({ error }, `Failed to send OTP email due to ${error.getReason()} error`);
-							return res.redirect(`${req.baseUrl}/enter-code`);
-						}
-						case NotifyErrorKind.BadRequestError && error.reason === NotifyErrorReason.TEAM_ONLY_KEY: {
-							logger.error({ error }, 'Failed to send OTP email due to TEAM_ONLY_KEY error');
-							return res.redirect(`${req.baseUrl}/enter-code`);
-						}
-						case NotifyErrorKind.BadRequestError && error.reason === NotifyErrorReason.TRIAL_MODE: {
-							logger.error({ error }, 'Failed to send OTP email due to TRIAL_MODE error');
-							return res.redirect(`${req.baseUrl}/enter-code`);
-						}
-					}
+				const reason = error instanceof NotifyError ? error.getReason() : undefined;
+				if (reason === NotifyErrorReason.TEAM_ONLY_KEY || reason === NotifyErrorReason.TRIAL_MODE) {
+					logger.error({ error }, `Failed to send OTP email due to ${reason} error`);
+				} else {
+					req.session.otpDeliveryFailed = true;
+					logger.error({ error }, `Failed to send OTP email due to ${reason ?? 'unexpected'} error`);
 				}
+				// Redirect so the OTP form posts to /enter-code, not back to this handler
+				return res.redirect(`${req.baseUrl}/enter-code`);
 			}
 
 			logger.info('OTP generated for user');
