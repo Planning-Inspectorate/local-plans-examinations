@@ -1,3 +1,9 @@
+import {
+	authenticateManageIfRequired,
+	authenticatePortalIfRequired,
+	isEnvironmentSmoke
+} from '../../flows/auth-flow.ts';
+
 // Manage
 import { completeCreateCaseFlow } from '../../flows/manage/create-case-flow.ts';
 import { issueGateway2Report, openGateway2Page, workshopSetUpFlow } from '../../flows/manage/gateway-2-flow.ts';
@@ -24,6 +30,12 @@ import {
 	examinationPage,
 	examiningInspector1Page
 } from '../../page-objects/manage/examination/index.ts';
+import { openManageCase } from '../../flows/manage/seeded-case-flow.ts';
+import {
+	caseOverviewPage,
+	deleteCaseReasonPage,
+	deleteCasePage
+} from '../../page-objects/manage/case-overview/index.ts';
 
 // Portal
 import { portalLoginForExistingCase } from '../../flows/portal/login-flow.ts';
@@ -69,11 +81,19 @@ const FILE_NAME = 'test-document.pdf';
 const todayDisplay = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 describe('Full journey: case creation to Plan adopted', () => {
+	beforeEach(() => {
+		if (Cypress.config('baseUrl') === Cypress.env('portalBaseUrl')) {
+			authenticatePortalIfRequired();
+		} else {
+			authenticateManageIfRequired();
+		}
+	});
+
 	after(() => cy.task('clearDb'));
 
 	it('1. Manage: creates the case', () => {
 		cy.task('clearDb');
-		cy.task('seedDb');
+		if (!isEnvironmentSmoke()) cy.task('seedDb'); // local only: real environments already have LPAs
 
 		loadCreateCaseData().then((data) => {
 			completeCreateCaseFlow(data);
@@ -308,6 +328,17 @@ describe('Full journey: case creation to Plan adopted', () => {
 				MIQcheckPage.file1,
 				MIQcheckPage.file2
 			);
+		});
+	});
+
+	it('15. Manage: deletes the case', () => {
+		loadJourney().then((journey) => {
+			openManageCase({ reference: journey.reference, planTitle: journey.planTitle });
+			caseOverviewPage.navigateToDeletePage();
+			deleteCaseReasonPage.enterDeleteReason('Full journey e2e clean-up');
+			deleteCasePage.verifyLoaded();
+			deleteCasePage.deleteCase();
+			cy.contains('[data-cy="case-reference-link"]', journey.reference).should('not.exist');
 		});
 	});
 });
