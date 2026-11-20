@@ -41,16 +41,21 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		const gateway3ResubBase = `/manage-local-plans/${encodedPlanRef}/gateway-3-resubmission`;
 		const examinationBase = `/manage-local-plans/${encodedPlanRef}/examination`;
 		const isResubmissionRequired = plan.status === STATUS.ResubmissionRequired;
+		// Once Gateway 3 has more than one submission, the resubmission page shows
+		// the editable view (resubmission required) or the read-only view
+		// (under review / complete), including all previous reports and submissions.
+		const hasGateway3Resubmission = (plan.gateway3SubmissionCount ?? 0) > 1;
+		const useGateway3ResubmissionPage = isResubmissionRequired || hasGateway3Resubmission;
 		const currentApplicationLink =
 			plan.stage === STAGE.Examination
 				? examinationBase
-				: isResubmissionRequired
+				: plan.stage === STAGE.Gateway3 && useGateway3ResubmissionPage
 					? gateway3ResubBase
 					: plan.stage === STAGE.Gateway3
 						? gateway3Base
 						: `/manage-local-plans/${encodedPlanRef}/gateway-2/declaration`;
 		const applicationLink = () => applicationBase;
-		const gateway3Link = () => (isResubmissionRequired ? gateway3ResubBase : gateway3Base);
+		const gateway3Link = () => (useGateway3ResubmissionPage ? gateway3ResubBase : gateway3Base);
 		const examinationLink = () => examinationBase;
 
 		const button =
