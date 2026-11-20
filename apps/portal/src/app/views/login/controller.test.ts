@@ -11,6 +11,20 @@ import {
 	buildSubmitEmailPage,
 	buildSubmitOtpPage
 } from './controller.ts';
+import { NotifyError, NotifyErrorReason } from '@pins/local-plans-lib/govnotify/notify-error.ts';
+
+const TEAM_ONLY_KEY_MESSAGE = "Can't send to this recipient using a team-only API key";
+const TRIAL_MODE_MESSAGE =
+	"Can't send to this recipient when service is in trial mode - see https://www.notifications.service.gov.uk/trial-mode";
+
+/** What GovNotifyClient throws when Notify rejects or fails a request. */
+function notifyError(status, error, message) {
+	return new NotifyError(status, [{ error, message }]);
+}
+
+function notifyServerError() {
+	return notifyError(500, 'Exception', 'Internal server error');
+}
 
 function createMockService(overrides = {}) {
 	return {
@@ -246,7 +260,7 @@ describe('buildSubmitEmailPage', () => {
 		service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
 		service.db.oneTimePassword.upsert.mock.mockImplementation(async () => ({}));
 		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
-			throw new Error('Notify API error');
+			throw notifyServerError();
 		});
 
 		const handler = buildSubmitEmailPage(service);
@@ -306,6 +320,135 @@ describe('buildSubmitEmailPage', () => {
 			'logs that the email was skipped'
 		);
 	});
+
+	describe('when Notify rejects the code email', () => {
+		function createFailingService(error) {
+			const service = createMockService();
+			service.db.oneTimePassword.findUnique.mock.mockImplementation(async () => null);
+			service.db.oneTimePassword.upsert.mock.mockImplementation(async () => ({}));
+			service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
+				throw error;
+			});
+			return service;
+		}
+
+		function errorLogMessages(service) {
+			return service.logger.error.mock.calls.map((call) => call.arguments[1]);
+		}
+
+		const deliveryFailures = [
+			['a Notify server error', () => notifyServerError(), NotifyErrorReason.SERVER_ERROR],
+			['a gateway timeout', () => notifyError(504, 'Exception', 'Gateway timeout'), NotifyErrorReason.TIMEOUT],
+			[
+				'a rate limit',
+				() => notifyError(429, 'RateLimitError', 'Exceeded rate limit for key type LIVE'),
+				NotifyErrorReason.RATE_LIMIT
+			],
+			[
+				'the daily send limit',
+				() => notifyError(429, 'TooManyRequestsError', 'Exceeded send limits (250) for today'),
+				NotifyErrorReason.DAILY_LIMIT
+			],
+			['a network error', () => notifyError(0, 'NetworkError', 'ECONNRESET'), NotifyErrorReason.NETWORK],
+			[
+				'a rejected API key',
+				() => notifyError(403, 'AuthError', 'Invalid token: API key not found'),
+				NotifyErrorReason.KEY_NOT_FOUND
+			],
+			[
+				'an invalid recipient',
+				() => notifyError(400, 'ValidationError', 'email_address Not a valid email address'),
+				NotifyErrorReason.INVALID_RECIPIENT
+			],
+			[
+				'missing personalisation',
+				() => notifyError(400, 'BadRequestError', 'Missing personalisation: authCode'),
+				NotifyErrorReason.MISSING_PERSONALISATION
+			],
+			[
+				'a missing template',
+				() => notifyError(400, 'BadRequestError', 'Template not found'),
+				NotifyErrorReason.TEMPLATE_NOT_FOUND
+			]
+		];
+		for (const [name, makeError, reason] of deliveryFailures) {
+			it(`flags the delivery failure and logs the reason for ${name}`, async () => {
+				const error = makeError();
+				const service = createFailingService(error);
+				const req = createMockReq({ email: 'test@example.com' });
+				const res = createMockRes();
+
+				await buildSubmitEmailPage(service)(req, res);
+
+				assertRedirect(res, '/login/enter-code');
+				assert.strictEqual(req.session.email, 'test@example.com');
+				assert.strictEqual(req.session.otpDeliveryFailed, true);
+				const otpLog = service.logger.error.mock.calls.find((call) =>
+					/^Failed to send OTP email/.test(call.arguments[1])
+				);
+				assert.ok(otpLog, 'logs the OTP delivery failure');
+				assert.strictEqual(otpLog.arguments[1], `Failed to send OTP email due to ${reason} error`);
+				assert.strictEqual(otpLog.arguments[0].error, error);
+				assert.ok(!service.logger.info.mock.calls.some((call) => call.arguments[0] === 'OTP generated for user'));
+			});
+		}
+
+		for (const [reason, message] of [
+			[NotifyErrorReason.TEAM_ONLY_KEY, TEAM_ONLY_KEY_MESSAGE],
+			[NotifyErrorReason.TRIAL_MODE, TRIAL_MODE_MESSAGE]
+		]) {
+			it(`redirects to the OTP page and logs a ${reason} rejection`, async () => {
+				const service = createFailingService(notifyError(400, 'BadRequestError', message));
+				const req = createMockReq({ email: 'test@example.com' });
+				const res = createMockRes();
+
+				await buildSubmitEmailPage(service)(req, res);
+
+				assertRedirect(res, '/login/enter-code');
+				assert.strictEqual(req.session.email, 'test@example.com');
+				assert.ok(errorLogMessages(service).includes(`Failed to send OTP email due to ${reason} error`));
+			});
+
+			it(
+				`does not flag a delivery failure for a ${reason} rejection`,
+				{
+					todo:
+						'controller.ts: `case NotifyErrorKind.BadRequestError && error.reason === ...` evaluates to a boolean, ' +
+						'so switch (kind) never matches it and the default branch sets otpDeliveryFailed'
+				},
+				async () => {
+					const service = createFailingService(notifyError(400, 'BadRequestError', message));
+					const req = createMockReq({ email: 'test@example.com' });
+					const res = createMockRes();
+
+					await buildSubmitEmailPage(service)(req, res);
+
+					assertRedirect(res, '/login/enter-code');
+					assert.strictEqual(req.session.otpDeliveryFailed, undefined);
+				}
+			);
+		}
+
+		it(
+			'flags the delivery failure when sending fails with an error that is not from Notify',
+			{
+				todo:
+					'controller.ts: errors that are not a NotifyError (e.g. "Auth code template ID is not configured") ' +
+					'are swallowed, so the user is told a code was sent'
+			},
+			async () => {
+				const service = createFailingService(new Error('Auth code template ID is not configured'));
+				const req = createMockReq({ email: 'test@example.com' });
+				const res = createMockRes();
+
+				await buildSubmitEmailPage(service)(req, res);
+
+				assertRedirect(res, '/login/enter-code');
+				assert.strictEqual(req.session.otpDeliveryFailed, true);
+				assert.ok(!service.logger.info.mock.calls.some((call) => call.arguments[0] === 'OTP generated for user'));
+			}
+		);
+	});
 });
 
 describe('sign-in journey: enter email then enter-code page', () => {
@@ -340,7 +483,7 @@ describe('sign-in journey: enter email then enter-code page', () => {
 	it('shows the delivery error when the code email fails to send', async () => {
 		const service = createService();
 		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
-			throw new Error('Notify API error');
+			throw notifyServerError();
 		});
 
 		const res = await submitEmailThenLoadCodePage(service, {});
@@ -367,7 +510,7 @@ describe('sign-in journey: enter email then enter-code page', () => {
 	it('shows no error on a successful attempt after an earlier failed one', async () => {
 		const service = createService();
 		service.notifyClient.sendAuthCode.mock.mockImplementationOnce(async () => {
-			throw new Error('Notify API error');
+			throw notifyServerError();
 		});
 		const session = {};
 
@@ -387,7 +530,7 @@ describe('sign-in journey: enter email then enter-code page', () => {
 	it('shows no error on a successful resubmit even without visiting the sign-in page', async () => {
 		const service = createService();
 		service.notifyClient.sendAuthCode.mock.mockImplementationOnce(async () => {
-			throw new Error('Notify API error');
+			throw notifyServerError();
 		});
 		const session = {};
 
@@ -396,6 +539,42 @@ describe('sign-in journey: enter email then enter-code page', () => {
 
 		assert.doesNotMatch(res.html, /could not send a code/i);
 	});
+
+	for (const [name, makeError] of [
+		['a rate limit', () => notifyError(429, 'RateLimitError', 'Exceeded rate limit')],
+		['a network error', () => notifyError(0, 'NetworkError', 'ECONNRESET')]
+	]) {
+		it(`shows the delivery error when Notify fails with ${name}`, async () => {
+			const service = createService();
+			service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
+				throw makeError();
+			});
+
+			const res = await submitEmailThenLoadCodePage(service, {});
+
+			assert.match(res.html, /We could not send a code\. Please request a new code\./);
+		});
+	}
+
+	for (const [reason, message] of [
+		['TEAM_ONLY_KEY', TEAM_ONLY_KEY_MESSAGE],
+		['TRIAL_MODE', TRIAL_MODE_MESSAGE]
+	]) {
+		it(
+			`shows no delivery error for a ${reason} rejection`,
+			{ todo: 'the TEAM_ONLY_KEY / TRIAL_MODE switch cases in controller.ts are unreachable' },
+			async () => {
+				const service = createService();
+				service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
+					throw notifyError(400, 'BadRequestError', message);
+				});
+
+				const res = await submitEmailThenLoadCodePage(service, {});
+
+				assert.doesNotMatch(res.html, /could not send a code/i);
+			}
+		);
+	}
 });
 
 describe('buildSubmitOtpPage', () => {
