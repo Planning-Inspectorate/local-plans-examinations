@@ -64,6 +64,7 @@ export const NotifyErrorReason = {
 } as const;
 
 export type NotifyErrorReason = (typeof NotifyErrorReason)[keyof typeof NotifyErrorReason];
+export type NotifyErrorKind = (typeof NotifyErrorKind)[keyof typeof NotifyErrorKind] | (string & {});
 
 export class NotifyError extends Error {
 	readonly kind: NotifyErrorKind;
