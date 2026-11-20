@@ -162,6 +162,7 @@ export interface Plan {
 	sections: State[]; // track which state each gateway is array of state e.g. [0,0,0]
 	documents: ApplicationDoc[]; // holds interfaces of each doc needed
 	gateway2ReportFiles: Gateway2ReportFile[];
+	gateway3SubmissionCount?: number; // number of Gateway 3 submission rows (including a pending resubmission placeholder)
 }
 
 function validApplicationDoc(rawApplicationDoc: unknown): rawApplicationDoc is ApplicationDoc {
