@@ -1,6 +1,6 @@
 import { NotifyClient } from 'notifications-node-client';
 import type { Logger } from 'pino';
-import { describeNotifyError } from './notify-error.ts';
+import { NotifyError } from './notify-error.ts';
 import type { GovNotifyOptions, TemplateIds, AuthCodePersonalisation, NotifyEmail } from './types.ts';
 
 type NotifyEmailListResponse = {
@@ -22,12 +22,11 @@ export class GovNotifyClient {
 
 	async sendAuthCode(email: string, personalisation: AuthCodePersonalisation, reference?: string): Promise<void> {
 		const templateId = this.#templateIds.authCode;
+
 		if (!templateId) {
-			// fail before calling Notify, so the logs name the missing setting instead of a Notify 400
-			const message = 'GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID is not set';
-			this.logger.error(`${message} - cannot send auth code email`);
-			throw new Error(`email failed to dispatch: ${message}`);
+			throw new Error('Auth code template ID is not configured');
 		}
+
 		await this.sendEmail(templateId, email, {
 			personalisation,
 			...(reference && { reference })
@@ -42,13 +41,18 @@ export class GovNotifyClient {
 			this.logger.info(`dispatching email template: ${templateId}`);
 			await this.notifyClient.sendEmail(templateId, emailAddress, options);
 		} catch (error) {
-			const { status, notifyErrors, hint } = describeNotifyError(error);
-			const message = error instanceof Error ? error.message : String(error);
-			this.logger.error({ error, templateId, status, hint }, 'failed to dispatch email');
-			if (notifyErrors) {
-				this.logger.error({ message: notifyErrors }, 'received from Notify API');
-			}
-			throw new Error(`email failed to dispatch: ${message}`, { cause: error });
+			const notifyError = NotifyError.from(error);
+			this.logger.error(
+				{
+					templateId,
+					kind: notifyError.kind,
+					status: notifyError.status,
+					reason: notifyError.reason,
+					errors: notifyError.errors
+				},
+				'failed to dispatch email'
+			);
+			throw notifyError;
 		}
 	}
 
@@ -57,11 +61,9 @@ export class GovNotifyClient {
 			this.logger.info(`fetching notification by ID: ${notificationId}`);
 			return (await this.notifyClient.getNotificationById(notificationId)) as { data: any };
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
+			const notifyError = NotifyError.from(error);
 			this.logger.error({ error, notificationId }, 'failed to fetch notification by ID');
-			throw new Error(`failed to fetch notification: ${message}`, {
-				cause: error
-			});
+			throw notifyError;
 		}
 	}
 
@@ -76,11 +78,9 @@ export class GovNotifyClient {
 
 			return response.data.notifications ?? [];
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
+			const notifyError = NotifyError.from(error);
 			this.logger.error({ error, reference }, 'failed to fetch email notifications by reference');
-			throw new Error(`failed to fetch email notifications: ${message}`, {
-				cause: error
-			});
+			throw notifyError;
 		}
 	}
 }
