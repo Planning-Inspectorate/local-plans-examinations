@@ -149,6 +149,16 @@ export const portalLoginForExistingCase = (email: string) => {
 	completePortalLogin();
 };
 
+// Signs in once and reuses the session, so long journeys stay under Portal's sign-in rate limit on Test/Training
+export const portalLoginWithSession = (email: string) => {
+	if (isEnvironmentSmoke()) {
+		authenticatePortalUserIfRequired(() => completePortalLoginByRequest(email), validatePortalLogin);
+	} else {
+		completePortalLoginByRequest(email, LOCAL_TEST_OTP);
+	}
+	myPlansPage.visit();
+};
+
 export const manageToPortalLogin = (email: string) => {
 	cy.origin(Cypress.env('portalBaseUrl'), { args: { email, otp: LOCAL_TEST_OTP } }, ({ email, otp }) => {
 		cy.visit('/login');
