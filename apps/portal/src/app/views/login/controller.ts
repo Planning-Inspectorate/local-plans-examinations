@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
 import { createOneTimePassword } from '../auth/one-time-password.ts';
+import { canViewCase } from '../../auth/can-view-case.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
@@ -11,6 +12,7 @@ const LOCAL_ONE_TIME_PASSWORD = '12345';
 export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		delete req.session.email;
+		delete req.session.otpDeliveryFailed;
 
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
@@ -25,6 +27,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 	const { logger, db } = service;
 	return async (req: Request, res: Response) => {
 		const { email } = req.body;
+		// each submission starts clean: only a failed send below may set this again
+		delete req.session.otpDeliveryFailed;
 
 		if (!email || typeof email !== 'string' || email.trim().length === 0) {
 			logger.info('Email address not provided');
@@ -59,9 +63,10 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 		try {
 			const emailIsAssociatedToACase = await db.case.findFirst({
-				where: { email: sanitisedEmail, deletedDate: null },
+				where: canViewCase(sanitisedEmail),
 				orderBy: { createdAt: 'desc' }
 			});
+
 			if (!emailIsAssociatedToACase) {
 				logger.info('Login attempt with unrecognised email');
 				delete req.session.email;
@@ -219,7 +224,7 @@ export function buildSubmitOtpPage(service: PortalService) {
 
 		try {
 			const emailIsAssociatedToACase = await db.case.findFirst({
-				where: { email, deletedDate: null }
+				where: canViewCase(email)
 			});
 			if (!emailIsAssociatedToACase) {
 				logger.info('OTP verification attempted for an unrecognised email');
@@ -387,7 +392,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 		}
 
 		try {
-			const caseRecord = await db.case.findFirst({ where: { email, deletedDate: null } });
+			const caseRecord = await db.case.findFirst({ where: canViewCase(email) });
 			if (!caseRecord) {
 				logger.info('New code requested for unrecognised email');
 				return res.redirect(`${req.baseUrl}/enter-code`);

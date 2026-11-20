@@ -1,5 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { PortalService } from '#service';
+import { canViewCase } from './can-view-case.ts';
 
 export function checkIsAuthenticated(req: Request, res: Response, next: NextFunction): void {
 	if (req.session?.isAuthenticated) {
@@ -29,7 +30,7 @@ export function checkCaseOwnership(service: PortalService): RequestHandler {
 		}
 
 		const caseRecord = await service.db.case.findFirst({
-			where: { reference: planReference, email }
+			where: { reference: planReference, ...canViewCase(email) }
 		});
 
 		if (!caseRecord) {
