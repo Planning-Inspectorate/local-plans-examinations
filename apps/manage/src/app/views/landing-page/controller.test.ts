@@ -116,8 +116,8 @@ describe('buildLandingPage', () => {
 	});
 
 	it('fetches and renders the requested page of cases', async () => {
-		const cases = [{ id: 4 }];
-		const ctx = createHarness(async () => cases, 4, '2');
+		const cases = [{ id: 31 }];
+		const ctx = createHarness(async () => cases, 31, '2');
 
 		await ctx.handler(ctx.req, ctx.res);
 
@@ -126,8 +126,8 @@ describe('buildLandingPage', () => {
 			{
 				where: { deletedDate: null },
 				orderBy: { createdAt: 'desc' },
-				skip: 3,
-				take: 3
+				skip: 30,
+				take: 30
 			}
 		]);
 
@@ -135,7 +135,7 @@ describe('buildLandingPage', () => {
 			totalCases: number;
 			pagination: unknown;
 		};
-		assert.equal(renderData.totalCases, 4);
+		assert.equal(renderData.totalCases, 31);
 		assert.deepEqual(renderData.pagination, {
 			previous: { href: '?page=1' },
 			next: null,
