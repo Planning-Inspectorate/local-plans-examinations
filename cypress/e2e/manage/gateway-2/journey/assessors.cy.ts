@@ -66,7 +66,7 @@ describe('Gateway 2 assessors', () => {
 		gateway2Page.verifyAddAssessorLink(gateway2AssessorQuestionPath);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway2AssessorAnswer.display} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 2 assessor ${gateway2AssessorAnswer.display} removed`);
 	});
 
 	it('keeps the assessor when removal is cancelled or the Back link is used', { tags: ['regression'] }, () => {
@@ -146,10 +146,10 @@ describe('Gateway 2 assessors', () => {
 		gateway2Page.verifyAssessor(1, gateway2AssessorAnswer.assessor3, todayDisplay);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway2AssessorAnswer.assessor2} added`);
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway2AssessorAnswer.assessor3} added`);
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway2AssessorAnswer.assessor2} removed`);
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway2AssessorAnswer.display} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 2 assessor ${gateway2AssessorAnswer.assessor2} added`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 2 assessor ${gateway2AssessorAnswer.assessor3} added`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 2 assessor ${gateway2AssessorAnswer.assessor2} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 2 assessor ${gateway2AssessorAnswer.display} removed`);
 	});
 
 	it(
@@ -192,7 +192,7 @@ describe('Gateway 2 assessors', () => {
 
 			openCaseHistory();
 			caseHistoryPage.verifyHistoryEvent(
-				`${gateway2AssessorAnswer.historyLabel} updated from ${gateway2AssessorAnswer.value} to ${gateway2AssessorAnswer.updatedValue}`
+				`Gateway 2 assessor ${gateway2AssessorAnswer.historyLabel} updated from ${gateway2AssessorAnswer.value} to ${gateway2AssessorAnswer.updatedValue}`
 			);
 		}
 	);
