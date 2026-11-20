@@ -51,7 +51,6 @@
     "cy:open:cross-service": "cross-env TEST_TARGET=cross-service npx cypress open",
     "cy:full-journey": "cross-env TEST_TARGET=full-journey npx cypress run --spec='cypress/e2e/full-journey/**/*'",
     "cy:open:full-journey": "cross-env TEST_TARGET=full-journey npx cypress open"
-
   },
   "dependencies": {
     "@azure/functions": "^4.17.0",

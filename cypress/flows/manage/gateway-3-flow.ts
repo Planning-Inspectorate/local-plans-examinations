@@ -51,8 +51,8 @@ export const issueGateway3ProceedDecision = (planTitle: string) => {
 	gateway3Page.verifyLoaded(planTitle);
 };
 
-// Issusing a procced decision after the first resubmission
-export const issueGateway3Submission2ProceedDesision = (planTitle: string, resubmittedFileName: string) => {
+// Issusing a proceed decision after the first resubmission
+export const issueGateway3Submission2ProceedDecision = (planTitle: string, resubmittedFileName: string) => {
 	cy.location('pathname').then((gateway3TabPath) => {
 		cy.visit(`${gateway3TabPath}/gateway-3-submission-2/${gateway3ReviewDocumentsAnswer.path}-2`);
 	});

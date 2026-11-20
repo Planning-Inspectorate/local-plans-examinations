@@ -23,6 +23,5 @@ export type CreateCaseData = {
 		gateway2Date: DisplayDateAnswer;
 		gateway3Date: DisplayDateAnswer;
 		expectedSubmissionForExaminationDate: DisplayDateAnswer;
-		adoptionDate: DisplayDateAnswer;
 	};
 };
