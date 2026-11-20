@@ -280,7 +280,7 @@ describe('Examination updates', () => {
 		);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated from inspector-1 to inspector-2');
+		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated from Inspector 1 to Inspector 2');
 	});
 
 	it(

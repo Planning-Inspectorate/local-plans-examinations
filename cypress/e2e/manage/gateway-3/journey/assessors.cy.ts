@@ -66,7 +66,7 @@ describe('Gateway 3 assessors', () => {
 		gateway3Page.verifyAddAssessorLink(gateway3AssessorQuestionPath);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.display} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 3 assessor ${gateway3AssessorAnswer.display} removed`);
 	});
 
 	it('keeps the assessor when removal is cancelled or the Back link is used', { tags: ['regression'] }, () => {
@@ -101,7 +101,7 @@ describe('Gateway 3 assessors', () => {
 		gateway3Page.verifyAssessor(1, gateway3AssessorAnswer.assessor2, todayDisplay, gateway3AssessorRemovePath);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor2} added`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 3 assessor ${gateway3AssessorAnswer.assessor2} added`);
 	});
 
 	it('adds more assessors, each in their own rows, and removes them one at a time', { tags: ['regression'] }, () => {
@@ -146,10 +146,10 @@ describe('Gateway 3 assessors', () => {
 		gateway3Page.verifyAssessor(1, gateway3AssessorAnswer.assessor3, todayDisplay);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor2} added`);
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor3} added`);
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.assessor2} removed`);
-		caseHistoryPage.verifyHistoryEvent(`Assessor ${gateway3AssessorAnswer.display} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 3 assessor ${gateway3AssessorAnswer.assessor2} added`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 3 assessor ${gateway3AssessorAnswer.assessor3} added`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 3 assessor ${gateway3AssessorAnswer.assessor2} removed`);
+		caseHistoryPage.verifyHistoryEvent(`Gateway 3 assessor ${gateway3AssessorAnswer.display} removed`);
 	});
 
 	it(
