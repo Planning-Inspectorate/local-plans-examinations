@@ -32,7 +32,7 @@ import {
 } from '../../page-objects/manage/examination/index.ts';
 
 // Portal
-import { portalLoginForExistingCase } from '../../flows/portal/login-flow.ts';
+import { portalLoginWithSession } from '../../flows/portal/login-flow.ts';
 import { submitGateway2Application } from '../../flows/portal/gateway-2-submission-flow.ts';
 import { submitGateway3Application } from '../../flows/portal/gateway-3-submission-flow.ts';
 import { submitGateway3Resubmission } from '../../flows/portal/gateway-3-resubmission-flow.ts';
@@ -108,7 +108,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('2. Portal: submits Gateway 2', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 
 			submitGateway2Application({ reference: journey.reference }, [
 				{ page: gateway2CoverLetterPage, fileNames: [gateway2SubmittedPlan.coveringLetter] },
@@ -137,7 +137,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('4. Portal: submits Gateway 3', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 
 			myPlansPage.openPlan(journey.reference);
 			planDetailsPage.verifyLoaded();
@@ -192,7 +192,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('6. Portal: resubmits Gateway 3', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 			myPlansPage.openPlan(journey.reference);
 			planDetailsPage.verifyLoaded();
 			// planDetailsPage.verifyProgressRow(
@@ -221,7 +221,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('8. Portal: submits Examination', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 
 			myPlansPage.openPlan(journey.reference);
 			planDetailsPage.verifyLoaded();
@@ -259,7 +259,6 @@ describe('Full journey: case creation to Plan adopted', () => {
 				examinationPage.verifySummaryRowContains(examiningInspector1.row, inspector);
 			});
 
-			examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
 			examinationPage.verifyHeaderStatus('Exam in progress');
 
 			setUpHearing({ date: hearingDateAndTime.date, time: hearingDateAndTime.time, type: 'hybrid', expectedDays: '4' });
@@ -268,7 +267,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('10. Portal: shows In examination', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 			portalExaminationPage.visit(journey.reference);
 			portalExaminationPage.verifyLoaded();
 			portalExaminationPage.verifyStatusTag('In examination');
@@ -286,7 +285,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('12. Portal: shows Report issued with the MIQs and final report', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 			portalExaminationPage.visit(journey.reference);
 			portalExaminationPage.verifyLoaded();
 			portalExaminationPage.verifyStatusTag('Report issued');
@@ -315,7 +314,7 @@ describe('Full journey: case creation to Plan adopted', () => {
 
 	it('14. Portal: shows Plan adopted', portal, () => {
 		loadJourney().then((journey) => {
-			portalLoginForExistingCase(journey.contact.email);
+			portalLoginWithSession(journey.contact.email);
 
 			myPlansPage.openPlan(journey.reference);
 			planDetailsPage.verifyLoaded();
