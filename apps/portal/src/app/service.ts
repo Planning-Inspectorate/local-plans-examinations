@@ -220,6 +220,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 				? 'Report issued'
 				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
+		gateway3SubmissionCount: caseRecord.gateway3Info?.submissions?.length ?? 0,
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
 			G2: formatDisplayDate(gateway2Date) ?? 'Not set',

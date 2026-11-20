@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { gateway3ResubmissionRoutes } from './index.ts';
 import { configureNunjucks } from '../../../nunjucks.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 describe('gateway3ResubmissionRoutes', () => {
 	it('returns an express router with get, post and use methods', () => {
@@ -547,5 +548,202 @@ describe('Gateway 3 resubmission submission complete page', () => {
 	it('renders the check submission status link to plan overview', () => {
 		const html = renderSubmissionComplete();
 		assert.ok(html.includes('href="/manage-local-plans/PLAN-001"'), 'expected plan overview URL');
+	});
+});
+
+describe('Gateway 3 submitted resubmission page template (under review / complete)', () => {
+	const config = {
+		styleFile: 'style.css',
+		headerTitle: 'Submit your plan for examination',
+		footerLinks: [],
+		primaryNavigationLinks: []
+	};
+
+	function renderSubmitted(overrides = {}) {
+		const nunjucks = configureNunjucks();
+		return nunjucks.render('views/manage-local-plans/gateway-3-resubmission/resubmission-submitted.njk', {
+			pageCaption: 'East Borough local plan',
+			submissionNumber: 3,
+			statusTag: StatusTag[STATUS.UnderReview],
+			reports: [
+				{
+					submissionNumber: 2,
+					issuedDate: '13 Jul 2026',
+					files: [{ fileName: 'report-2.pdf', downloadUrl: '/download/report-2' }]
+				},
+				{
+					submissionNumber: 1,
+					issuedDate: '25 Jun 2026',
+					files: [{ fileName: 'report-1.pdf', downloadUrl: '/download/report-1' }]
+				}
+			],
+			previousSubmissions: [
+				{
+					submissionNumber: 2,
+					submittedDate: '1 Jul 2026',
+					url: '/manage-local-plans/PLAN-001/gateway-3-resubmission/submission/2'
+				},
+				{
+					submissionNumber: 1,
+					submittedDate: '20 Jun 2026',
+					url: '/manage-local-plans/PLAN-001/gateway-3-resubmission/submission/1'
+				}
+			],
+			currentSubmissionDate: '20 July 2026',
+			submitter: 'lpa@example.com',
+			newDocuments: [
+				{ fileName: 'new-document-1.pdf', downloadUrl: '/download/new-1' },
+				{ fileName: 'new-document-2.pdf', downloadUrl: '/download/new-2' }
+			],
+			backLinkUrl: '/manage-local-plans/PLAN-001',
+			config,
+			...overrides
+		});
+	}
+
+	function newDocumentsSection(html: string) {
+		return html.slice(html.indexOf('data-cy="new-documents-table"'));
+	}
+
+	it('renders the h1 with submission number and plan caption', () => {
+		const html = renderSubmitted();
+		assert.ok(html.includes('Gateway 3, submission 3'), 'expected heading with submission number');
+		assert.ok(html.includes('East Borough local plan'), 'expected plan caption');
+	});
+
+	it('renders the yellow under review tag', () => {
+		const html = renderSubmitted();
+		assert.ok(
+			html.includes('<strong class="govuk-tag govuk-tag--yellow" data-cy="status-tag">Under review</strong>'),
+			'expected yellow under review tag'
+		);
+	});
+
+	it('renders the completed tag when gateway 3 is complete', () => {
+		const html = renderSubmitted({ statusTag: StatusTag[STATUS.Completed] });
+		assert.ok(html.includes('data-cy="status-tag">Completed</strong>'), 'expected completed tag');
+		assert.ok(!html.includes('Under review'), 'should not show under review');
+	});
+
+	it('renders report rows with a View report link and issued date, newest first', () => {
+		const html = renderSubmitted();
+		assert.ok(html.includes('Submission 2 report</dt>'), 'expected submission 2 report row');
+		assert.ok(html.includes('Submission 1 report</dt>'), 'expected submission 1 report row');
+		assert.ok(html.includes('href="/download/report-2"'), 'expected report download link');
+		assert.ok(html.includes('>View report</a>'), 'expected View report link text');
+		assert.ok(html.includes('(issued 13 Jul 2026)'), 'expected issued date');
+		assert.ok(
+			html.indexOf('Submission 2 report</dt>') < html.indexOf('Submission 1 report</dt>'),
+			'expected reports in descending order'
+		);
+	});
+
+	it('renders each file name when a report has more than one file', () => {
+		const html = renderSubmitted({
+			reports: [
+				{
+					submissionNumber: 1,
+					issuedDate: '25 Jun 2026',
+					files: [
+						{ fileName: 'report-1.pdf', downloadUrl: '/download/report-1' },
+						{ fileName: 'report-1-annex.pdf', downloadUrl: '/download/report-1-annex' }
+					]
+				}
+			]
+		});
+		assert.ok(html.includes('report-1.pdf'), 'expected first report file');
+		assert.ok(html.includes('report-1-annex.pdf'), 'expected second report file');
+		assert.ok(!html.includes('>View report</a>'), 'should list file names instead of View report');
+	});
+
+	it('renders previous submission rows under the reports, newest first', () => {
+		const html = renderSubmitted();
+		assert.ok(html.includes('Submission 2</dt>'), 'expected submission 2 row');
+		assert.ok(html.includes('Submission 1</dt>'), 'expected submission 1 row');
+		assert.ok(html.includes('View all documents'), 'expected View all documents link');
+		assert.ok(
+			html.includes('href="/manage-local-plans/PLAN-001/gateway-3-resubmission/submission/2"'),
+			'expected link to submission 2'
+		);
+		assert.ok(html.includes('(submitted 1 Jul 2026)'), 'expected submitted date');
+		assert.ok(
+			html.indexOf('Submission 1 report</dt>') < html.indexOf('Submission 2</dt>'),
+			'expected submissions after reports'
+		);
+		assert.ok(
+			html.indexOf('Submission 2</dt>') < html.indexOf('Submission 1</dt>'),
+			'expected submissions in descending order'
+		);
+	});
+
+	it('does not render the reports and submissions list when both are empty', () => {
+		const html = renderSubmitted({ reports: [], previousSubmissions: [] });
+		assert.ok(!html.includes('data-cy="previous-submissions-table"'), 'should not render the list');
+	});
+
+	it('renders the latest submission copy below the section break', () => {
+		const html = renderSubmitted();
+		assert.ok(
+			html.includes('Gateway 3, submission 3: 20 July 2026 by lpa@example.com'),
+			'expected latest submission copy'
+		);
+		assert.ok(
+			html.indexOf('govuk-section-break--visible') < html.indexOf('data-cy="current-submission-copy"'),
+			'expected copy after the break line'
+		);
+	});
+
+	it('renders the new or updated documents as bullet points when there is more than one', () => {
+		const html = renderSubmitted();
+		const section = newDocumentsSection(html);
+		assert.ok(html.includes('New or updated documents'), 'expected h2');
+		assert.ok(section.includes('Documents</dt>'), 'expected Documents row heading');
+		assert.ok(section.includes('govuk-list--bullet'), 'expected bullet list');
+		assert.ok(section.includes('href="/download/new-1"'), 'expected first document link');
+		assert.ok(section.includes('new-document-2.pdf'), 'expected second document');
+	});
+
+	it('renders a single document as a link without bullet points', () => {
+		const html = renderSubmitted({
+			newDocuments: [{ fileName: 'only-document.pdf', downloadUrl: '/download/only' }]
+		});
+		const section = newDocumentsSection(html);
+		assert.ok(section.includes('href="/download/only"'), 'expected document link');
+		assert.ok(!section.includes('govuk-list--bullet'), 'should not use a bullet list');
+	});
+
+	it('does not render any editing controls', () => {
+		const html = renderSubmitted();
+		assert.ok(!html.includes('data-cy="add-documents"'), 'should not render Add/Change');
+		assert.ok(!html.includes('data-cy="submit-resubmission"'), 'should not render Submit');
+		assert.ok(!html.includes('Save and come back later'), 'should not render save link');
+		assert.ok(!html.includes('Resubmission required'), 'should not render resubmission required tag');
+	});
+});
+
+describe('Gateway 3 previous submission page template - status tag', () => {
+	it('renders the status tag passed by the controller', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-resubmission/previous-submission.njk', {
+			pageCaption: 'East Borough Local Plan',
+			submissionNumber: 2,
+			reportSubmissionNumber: 2,
+			isInitialSubmission: false,
+			statusTag: StatusTag[STATUS.UnderReview],
+			reportDocuments: [],
+			previousSubmissions: [],
+			submissionDate: '1 July 2026',
+			documentSections: [],
+			resubmissionDocuments: [],
+			backLinkUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission',
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+		assert.ok(html.includes('data-cy="status-tag">Under review</strong>'), 'expected under review tag');
+		assert.ok(!html.includes('Resubmission required'), 'should not show resubmission required');
 	});
 });
