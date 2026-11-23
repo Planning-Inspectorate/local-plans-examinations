@@ -2,6 +2,21 @@ import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/que
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { frontOfficeGateway2questions } from '@pins/local-plans-lib/app/questions.ts';
 
+// Document groups that belong elsewhere on the tab and must never be listed or counted as
+// submission documents (workshop documents live in the Gateway 2 Workshop section).
+const EXCLUDED_DOCUMENT_TITLES = new Set(['workshop document']);
+
+export function getReviewableDocuments(group: any): any[] {
+	return (group?.documents ?? []).filter(
+		(document: any) =>
+			!EXCLUDED_DOCUMENT_TITLES.has(
+				String(document?.title ?? '')
+					.trim()
+					.toLowerCase()
+			)
+	);
+}
+
 export default class CustomFileReviewerQuestion extends Question {
 	constructor({ ...params }) {
 		super({
@@ -25,61 +40,59 @@ export default class CustomFileReviewerQuestion extends Question {
 	buildSummaryList(documentGroups: any[], reference: string) {
 		return documentGroups.map((group: any) => ({
 			category: group.category,
-			rows: (group.documents ?? [])
-				.filter((document: any) => document.title?.trim().toLowerCase() !== 'workshop document')
-				.map((document: any) => {
-					const files = document.files ?? [];
+			rows: getReviewableDocuments(group).map((document: any) => {
+				const files = document.files ?? [];
 
-					const fileLinksHtml =
-						files.length > 0
-							? files
-									.map((file: any) => {
-										const downloadUrl = `/case/${encodeURIComponent(reference)}/download-case-document/${encodeURIComponent(file.id)}`;
+				const fileLinksHtml =
+					files.length > 0
+						? files
+								.map((file: any) => {
+									const downloadUrl = `/case/${encodeURIComponent(reference)}/download-case-document/${encodeURIComponent(file.id)}`;
 
-										return `<a class="govuk-link" href="${downloadUrl}">${file.fileName}</a><br>`;
-									})
-									.join('')
-							: '<p class="govuk-body">Not provided</p>';
+									return `<a class="govuk-link" href="${downloadUrl}">${file.fileName}</a><br>`;
+								})
+								.join('')
+						: '<p class="govuk-body">Not provided</p>';
 
-					const questionConfig = Object.values(frontOfficeGateway2questions).find(
-						(question: any) =>
-							question.title.trim().replace(/\s+/g, ' ').toLowerCase() ===
-							document.title.trim().replace(/\s+/g, ' ').toLowerCase()
-					);
+				const questionConfig = Object.values(frontOfficeGateway2questions).find(
+					(question: any) =>
+						question.title.trim().replace(/\s+/g, ' ').toLowerCase() ===
+						document.title.trim().replace(/\s+/g, ' ').toLowerCase()
+				);
 
-					const actions = fileLinksHtml.includes('Not provided')
-						? [
-								{
-									href: questionConfig
-										? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}`
-										: '#',
-									text: 'Add',
-									visuallyHiddenText: document.title
-								}
-							]
-						: [
-								{
-									href: questionConfig
-										? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}/check`
-										: '#',
-									text: 'Manage',
-									visuallyHiddenText: document.title
-								},
-								{
-									href: questionConfig
-										? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}`
-										: '#',
-									text: 'Add',
-									visuallyHiddenText: document.title
-								}
-							];
+				const actions = fileLinksHtml.includes('Not provided')
+					? [
+							{
+								href: questionConfig
+									? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}`
+									: '#',
+								text: 'Add',
+								visuallyHiddenText: document.title
+							}
+						]
+					: [
+							{
+								href: questionConfig
+									? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}/check`
+									: '#',
+								text: 'Manage',
+								visuallyHiddenText: document.title
+							},
+							{
+								href: questionConfig
+									? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}`
+									: '#',
+								text: 'Add',
+								visuallyHiddenText: document.title
+							}
+						];
 
-					return {
-						key: { text: document.title },
-						value: { html: fileLinksHtml },
-						actions: { items: actions }
-					};
-				})
+				return {
+					key: { text: document.title },
+					value: { html: fileLinksHtml },
+					actions: { items: actions }
+				};
+			})
 		}));
 	}
 
@@ -88,7 +101,7 @@ export default class CustomFileReviewerQuestion extends Question {
 		const documentCount = groups.reduce(
 			(total, group) =>
 				total +
-				(group.documents ?? []).reduce(
+				getReviewableDocuments(group).reduce(
 					(groupTotal: number, document: any) => groupTotal + (document.files?.length ?? 0),
 					0
 				),
