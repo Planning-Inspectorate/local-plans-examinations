@@ -195,7 +195,7 @@ describe('Gateway 3 assessors', () => {
 
 			openCaseHistory();
 			caseHistoryPage.verifyHistoryEvent(
-				`${assessorGateway3.row} updated from ${gateway3AssessorAnswer.value} to ${gateway3AssessorAnswer.updatedValue}`
+				`Gateway 3 assessor updated from ${gateway3AssessorAnswer.value} to ${gateway3AssessorAnswer.updatedValue}`
 			);
 		}
 	);
