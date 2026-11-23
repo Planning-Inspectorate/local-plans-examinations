@@ -262,7 +262,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				} else {
 					//add
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						assessorName: 'Assessor Gateway 3 ' + newAssessor + ' added'
+						assessorName: 'Assessor Gateway 2 ' + newAssessor + ' added'
 					});
 				}
 			} else if (req.url.includes('assessor-gateway-3')) {
@@ -284,7 +284,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 							? await resolveAssessorDisplayName(service, req, 'gateway-3', existing)
 							: existing;
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						gateway3AssessorName: 'Gateway 3 Assessor ' + existingName + ' updated to ' + newAssessorName
+						gateway3AssessorName: 'Gateway 3 Assessor updated from ' + existingName + ' to ' + newAssessorName
 					});
 				} else {
 					//add
