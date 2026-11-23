@@ -55,6 +55,10 @@ module "app_manage" {
     ENTRA_GROUP_ID_CASE_OFFICERS  = var.apps_config.entra.group_ids.case_officers
     ENTRA_GROUP_ID_INSPECTORS     = var.apps_config.entra.group_ids.inspectors
 
+    # Analytics tracking ids (optional)
+    CLARITY_ID          = var.manage_clarity_id
+    GOOGLE_ANALYTICS_ID = var.manage_google_analytics_id
+
     # logging
     LOG_LEVEL = var.apps_config.logging.level
 

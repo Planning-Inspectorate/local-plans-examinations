@@ -12,6 +12,25 @@
 {% block head %}
 	{# setup the header tags, to link to the styles #}
     <link rel="stylesheet" href="/{{ config.styleFile }}"/>
+	{% if config.googleAnalyticsId %}
+		<!-- Google tag (gtag.js) -->
+		<script async {% if cspNonce %}nonce={{ cspNonce }}{% endif %} src="https://www.googletagmanager.com/gtag/js?id={{ config.googleAnalyticsId }}"></script>
+		<script {% if cspNonce %}nonce={{ cspNonce }}{% endif %}>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+			gtag('config', '{{ config.googleAnalyticsId }}');
+		</script>
+	{% endif %}
+	{% if config.clarityId %}
+		<script {% if cspNonce %}nonce={{ cspNonce }}{% endif %}>
+			(function(c,l,a,r,i,t,y){
+				c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+				t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+				y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+			})(window, document, "clarity", "script", "{{ config.clarityId }}");
+		</script>
+	{% endif %}
 {% endblock %}
 
 {% block pageTitle %}

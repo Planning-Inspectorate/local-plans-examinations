@@ -52,4 +52,12 @@ export class ManageService extends Service {
 	get localPlansTeamEmail(): string {
 		return this.#config.govNotify.localPlansTeamEmail;
 	}
+
+	get clarityId(): string | undefined {
+		return this.#config.clarityId;
+	}
+
+	get googleAnalyticsId(): string | undefined {
+		return this.#config.googleAnalyticsId;
+	}
 }

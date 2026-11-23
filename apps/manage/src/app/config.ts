@@ -54,6 +54,8 @@ export interface Config extends ConfigWithBlob {
 	};
 	appName: 'manage';
 	notifyCallbackEnabled: boolean;
+	clarityId?: string;
+	googleAnalyticsId?: string;
 }
 
 export type ENVIRONMENT_NAMES = Readonly<{ PROD: string; DEV: string; TEST: string; TRAINING: string }>;
@@ -186,6 +188,8 @@ export function loadConfig(): Config {
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
+		CLARITY_ID,
+		GOOGLE_ANALYTICS_ID,
 		LOCAL_PLANS_TEAM_EMAIL
 	} = process.env;
 
@@ -314,7 +318,9 @@ export function loadConfig(): Config {
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
 		appName: 'manage',
-		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
+		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true',
+		clarityId: CLARITY_ID || undefined,
+		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined
 	};
 
 	return config;
