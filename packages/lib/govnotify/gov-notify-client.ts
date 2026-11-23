@@ -33,6 +33,9 @@ export class GovNotifyClient {
 		});
 	}
 
+	/**
+	 * Send an email once. Any failure is logged with the Notify status and a hint, then thrown - no retries.
+	 */
 	async sendEmail(templateId: string, emailAddress: string, options: GovNotifyOptions): Promise<void> {
 		try {
 			this.logger.info(`dispatching email template: ${templateId}`);
