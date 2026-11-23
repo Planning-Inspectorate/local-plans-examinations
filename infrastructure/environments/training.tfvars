@@ -129,3 +129,10 @@ web_domains = {
 
 # Microsoft Clarity id for portal in this environment
 clarity_id = "xy5mqjzeku"
+
+# Google Analytics measurement id for portal in this environment
+google_analytics_id = "G-2YFLMZX5QZ"
+
+# Analytics tracking ids for manage in this environment
+manage_clarity_id          = "yy2fqdqnpy"
+manage_google_analytics_id = "G-10YVYZBVFX"

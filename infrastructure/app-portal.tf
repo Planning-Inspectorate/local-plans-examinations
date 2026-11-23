@@ -86,6 +86,9 @@ module "app_portal" {
     # Microsoft Clarity tracking id (optional)
     CLARITY_ID = var.clarity_id
 
+    # Google Analytics measurement id (optional)
+    GOOGLE_ANALYTICS_ID = var.google_analytics_id
+
     # retries
     RETRY_MAX_ATTEMPTS = "3"
     # got default retry codes
