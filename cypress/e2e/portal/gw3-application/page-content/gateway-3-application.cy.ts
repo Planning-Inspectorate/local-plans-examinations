@@ -14,34 +14,38 @@ describe('Gateway 3 application page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway3ApplicationPage.verifyBackLink(`/manage-local-plans/${plan.urlReference}`);
 			gateway3ApplicationPage.verifyCaption(plan.title);
 			gateway3ApplicationPage.verifyHeading('Gateway 3 submission');
+			gateway3ApplicationPage.verifyStatusTag(plan.readyToStart);
 			gateway3ApplicationPage.verifyMainContains(
-				'Gateway 3 is a more formal step in the development of your local plan. At this point some documents are mandatory to submit.',
-				`You have provided the expected submission date of ${plan.dates.gateway3}. The assessment usually takes between 4 and 6 weeks from submission.`,
-				'Save and come back later'
+				'Gateway 3 is the next step in the development of your local plan.',
+				`You've provided the expected submission date of ${plan.dates.gateway3}. The assessment usually takes between 4 and 6 weeks from submission.`,
+				'Some of these documents are required but you should aim to include all listed documents in your submission if possible.'
 			);
 			gateway3ApplicationPage.verifySaveAndComeBackLink(`/manage-local-plans/${plan.urlReference}`);
+			gateway3ApplicationPage.verifyCheckTheGuidanceLink();
 		});
 	});
 
-	it('Shows Required Information', { tags: ['regression'] }, () => {
-		gateway3ApplicationPage.verifyRequiredInformation();
+	it('Shows Procedural documents', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifyProceduralDocuments();
 	});
 
-	it('Shows Optional Documents', { tags: ['regression'] }, () => {
-		gateway3ApplicationPage.verifyOptionalDocuments();
+	it('Shows Consultation documents', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifyConsultationDocuments();
+	});
+
+	it('Shows Plan content, evidence and background', { tags: ['regression'] }, () => {
+		gateway3ApplicationPage.verifyPlanContentEvidenceBackgroundDocuments();
 	});
 
 	it('Shows ready to submit for Gateway 3 section', { tags: ['regression'] }, () => {
-		gateway3ApplicationPage.verifySubHeading('Ready to submit for Gateway 3');
-		gateway3ApplicationPage.verifyMainContains(
-			`Once submitted, Gateway 3 will be locked and you cannot make further changes. By submitting, you're confirming that the information you're sharing is correct to the best of your knowledge.`
-		);
 		gateway3ApplicationPage.verifySubmitGateway3Button();
 	});
 });

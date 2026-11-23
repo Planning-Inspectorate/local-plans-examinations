@@ -12,6 +12,8 @@ import { gateway3RequiredSubmissionDocuments, type Gateway3SubmissionDocument } 
 export type Gateway3SubmissionDocumentsSeedOptions = {
 	documents?: readonly Gateway3SubmissionDocument[];
 	examinationWebsiteUrl?: string;
+	/** Examination website the LPA entered later, in the Portal examination submission */
+	examinationSubmissionWebsiteUrl?: string;
 	submitted?: boolean;
 };
 
@@ -23,6 +25,7 @@ export type Gateway3SubmissionDocumentsSeedOptions = {
 export async function seedGateway3SubmissionDocuments({
 	documents = gateway3RequiredSubmissionDocuments,
 	examinationWebsiteUrl,
+	examinationSubmissionWebsiteUrl,
 	submitted = true
 }: Gateway3SubmissionDocumentsSeedOptions = {}) {
 	if (process.env.ENVIRONMENT_SMOKE === 'true') {
@@ -72,6 +75,12 @@ export async function seedGateway3SubmissionDocuments({
 					...(examinationWebsiteUrl && { examinationWebsiteUrl }),
 					...(!submitted && { actualDate: null })
 				}
+			});
+		}
+		if (examinationSubmissionWebsiteUrl) {
+			await db.examinationInfo.update({
+				where: { caseId },
+				data: { examinationWebsiteUrl: examinationSubmissionWebsiteUrl }
 			});
 		}
 		return seededCase;

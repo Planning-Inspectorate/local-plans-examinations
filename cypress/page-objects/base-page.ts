@@ -146,6 +146,18 @@ export class BasePage {
 		this.summaryRowValue(key).find('a').should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 
+	verifyFileDownload(link: Cypress.Chainable, fileName: string) {
+		link
+			.should('be.visible')
+			.invoke('attr', 'href')
+			.then((href) => cy.request({ url: String(href), encoding: 'binary' }))
+			.then(({ status, headers, body }) => {
+				expect(status).to.equal(200);
+				expect(headers['content-disposition']).to.include('attachment').and.include(fileName);
+				cy.fixture(`files/${fileName}`, 'binary').should('equal', body);
+			});
+	}
+
 	listItemRemoveLink(index = 1) {
 		return cy.getByData(`remove-list-item-${index}`);
 	}

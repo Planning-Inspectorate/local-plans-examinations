@@ -6,6 +6,8 @@ describe('Portal login email validation', () => {
 		portalLoginEmailPage.visit();
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('shows an error when no email is entered', { tags: ['regression'] }, () => {
 		portalLoginEmailPage.saveAndContinue();
 

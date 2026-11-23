@@ -1,12 +1,70 @@
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
 import {
+	compileExaminationDocumentFiles,
 	getExaminationStages,
 	sortByDateColumn,
 	sortGateway3Submissions,
 	type examinationStatusWithPause
 } from './util.ts';
 import type { ManageService } from '#service';
+import {
+	EXAMINATION_OTHER_DOCUMENT_SETS,
+	EXAMINATION_REQUIRED_DOCUMENT_SETS
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+
+describe('compileExaminationDocumentFiles', () => {
+	it("loads only this case's saved examination documents and groups their latest filenames", async () => {
+		const findMany = mock.fn(async (_query: unknown) => [
+			{
+				guid: 'plan-1',
+				documentSetId: EXAMINATION_REQUIRED_DOCUMENT_SETS.localPlanSubmission,
+				name: 'blob-1',
+				latestDocumentVersion: { originalFilename: 'plan.pdf' }
+			},
+			{
+				guid: 'plan-2',
+				documentSetId: EXAMINATION_REQUIRED_DOCUMENT_SETS.localPlanSubmission,
+				name: 'blob-2',
+				latestDocumentVersion: { originalFilename: 'supporting-plan.pdf' }
+			},
+			{
+				guid: 'report',
+				documentSetId: EXAMINATION_OTHER_DOCUMENT_SETS.environmentalReport,
+				name: 'report.pdf',
+				latestDocumentVersion: null
+			},
+			{ guid: 'unrelated', documentSetId: 'g2-report', name: 'gw2.pdf', latestDocumentVersion: null }
+		]);
+
+		const result = await compileExaminationDocumentFiles({ document: { findMany } } as any, 'case-id');
+
+		assert.deepEqual(findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-id',
+				isDeleted: false,
+				isTemp: false,
+				documentSetId: {
+					in: [...Object.values(EXAMINATION_REQUIRED_DOCUMENT_SETS), ...Object.values(EXAMINATION_OTHER_DOCUMENT_SETS)]
+				}
+			},
+			include: { latestDocumentVersion: true },
+			orderBy: { createdAt: 'asc' }
+		});
+		assert.deepEqual(result, {
+			localPlanSubmission: [
+				{ guid: 'plan-1', fileName: 'plan.pdf' },
+				{ guid: 'plan-2', fileName: 'supporting-plan.pdf' }
+			],
+			environmentalReport: [{ guid: 'report', fileName: 'report.pdf' }]
+		});
+	});
+
+	it('returns no groups when there are no saved examination documents', async () => {
+		const db = { document: { findMany: mock.fn(async () => []) } };
+		assert.deepEqual(await compileExaminationDocumentFiles(db as any, 'case-id'), {});
+	});
+});
 
 describe('test manage utilities', () => {
 	it('sortGateway3Submissions returns the correct output', () => {

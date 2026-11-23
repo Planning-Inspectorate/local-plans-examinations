@@ -16,12 +16,20 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 		return cy.getByData('save-and-come-back');
 	}
 
-	get requiredInformationTable() {
-		return cy.getByData('required-information-section');
+	get proceduralDocumentsTable() {
+		return cy.getByData('procedural-documents-section');
 	}
 
-	get optionalDocumentsTable() {
-		return cy.getByData('optional-documents-section');
+	get consultationDocumentsTable() {
+		return cy.getByData('consultation-documents-section');
+	}
+
+	get planContentEvidenceBackgroundTable() {
+		return cy.getByData('plan-content-evidence-and-background-section');
+	}
+
+	get checkTheGuidanceLink() {
+		return cy.get('.govuk-inset-text .govuk-link');
 	}
 
 	get submitGateway3Button() {
@@ -37,22 +45,59 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 		this.verifyHeading(gateway3SubmissionHeading);
 	}
 
-	verifyRequiredInformation() {
-		this.verifyDocumentSection(
-			this.requiredInformationTable,
-			'Required Information',
-			gateway3ApplicationDocuments.required
-		);
-		this.verifyMainContains('You must add these documents before you can submit.');
+	verifyCheckTheGuidanceLink() {
+		this.checkTheGuidanceLink
+			.should('be.visible')
+			.and('contain.text', 'check the guidance')
+			.and('have.attr', 'href', `/guidance`);
 	}
 
-	verifyOptionalDocuments() {
+	verifyProceduralDocuments() {
 		this.verifyDocumentSection(
-			this.optionalDocumentsTable,
-			'Optional Documents',
-			gateway3ApplicationDocuments.optional
+			this.proceduralDocumentsTable,
+			'Procedural documents',
+			gateway3ApplicationDocuments.procedural
 		);
-		this.verifyMainContains('Add the documents that are relevant to your plan.');
+		this.verifyRequiredHints(this.proceduralDocumentsTable, [
+			'Statement of compliance',
+			'Statement of soundness',
+			'Summary of consultation on proposed local plan'
+		]);
+	}
+
+	verifyConsultationDocuments() {
+		this.verifyDocumentSection(
+			this.consultationDocumentsTable,
+			'Consultation documents',
+			gateway3ApplicationDocuments.consultation
+		);
+		this.verifyRequiredHints(this.consultationDocumentsTable, [
+			'Summary of consultation and engagement activities in preparing the proposed local plan',
+			'Summary of scoping consultation',
+			'Summary of consultation on proposed local plan content and evidence'
+		]);
+	}
+
+	verifyPlanContentEvidenceBackgroundDocuments() {
+		this.verifyDocumentSection(
+			this.planContentEvidenceBackgroundTable,
+			'Plan content, evidence and background',
+			gateway3ApplicationDocuments.planContentEvidenceBackground
+		);
+		this.verifyRequiredHints(this.planContentEvidenceBackgroundTable, [
+			'Proposed local plan submission for examination',
+			'Examination website',
+			'Practical arrangements demonstrating readiness for examination',
+			'Map of proposed local plan policies'
+		]);
+	}
+
+	verifyRequiredHints(table: Cypress.Chainable, requiredDocuments: string[]) {
+		table.within(() => {
+			requiredDocuments.forEach((document) => {
+				cy.contains('tr', document).find('.govuk-hint').should('have.text', 'Required');
+			});
+		});
 	}
 
 	verifySaveAndComeBackLink(href: string) {
@@ -64,6 +109,10 @@ export class Gateway3ApplicationPage extends PortalPlanBasePage {
 
 	verifySubmitGateway3Button() {
 		this.submitGateway3Button.should('be.visible').and('contain.text', 'Submit').and('have.attr', 'type', 'submit');
+		this.readyToSubmitHeading
+			.should('be.visible')
+			.next('p.govuk-body')
+			.should('contain.text', 'You cannot make any changes after submission.');
 	}
 
 	verifySubmissionData(todayDisplay: string, submitterEmail: string) {

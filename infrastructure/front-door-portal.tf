@@ -174,6 +174,23 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "portal" {
       }
     }
 
+    override {
+      rule_group_name = "PROTOCOL-ENFORCEMENT"
+      rule {
+        # This rule is skipped because it blocks the file upload when no files are selected
+        rule_id = "920120"
+        enabled = true
+        action  = "Log"
+      }
+
+      exclusion {
+        match_variable = "RequestBodyPostArgNames"
+        operator       = "Equals"
+        selector       = "files"
+      }
+    }
+
+
     #--------------------------------------------------------------------------
     # RFI - Remote File Inclusion (931xxx)
     #--------------------------------------------------------------------------

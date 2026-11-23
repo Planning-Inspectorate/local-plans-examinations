@@ -109,3 +109,14 @@ resource "azurerm_role_assignment" "function_doc_processing_secrets_user" {
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_doc_processing.principal_id
 }
+
+resource "azapi_update_resource" "eventgrid_tls" {
+  type        = "Microsoft.EventGrid/topics@2023-12-15-preview"
+  resource_id = azurerm_eventgrid_topic.document_scan_results.id
+
+  body = jsonencode({
+    properties = {
+      minimumTlsVersionAllowed = "TLS1_2"
+    }
+  })
+}

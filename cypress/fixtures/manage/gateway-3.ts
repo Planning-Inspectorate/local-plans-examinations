@@ -53,15 +53,21 @@ export const gateway3CompletionDate = {
 	section: 'gateway-3-submission'
 } as const;
 
+// The assessor is shown under the "Assessors" sub-heading of the Gateway 3 tab
 export const gateway3AssessorAnswer = {
-	row: 'Assessor',
+	row: 'Assessor 1',
+	appointedRow: 'Assessor 1 appointed',
 	path: 'gateway-3-assessor-name',
 	heading: 'Who is the Gateway 3 assessor?',
 	assessor1: 'Assessor 1',
 	assessor2: 'Assessor 2',
+	assessor3: 'Assessor 3',
 	display: 'Assessor 1',
+	appointedDisplay: '1 September 2026',
 	inputField: 'assessorName',
-	boxListField: 'assessorName__listbox'
+	boxListField: 'assessorName__listbox',
+	value: 'Assessor 1',
+	updatedValue: 'Assessor 2'
 } as const;
 
 export const gateway3ProgrammeOfficerAnswer = {
@@ -81,7 +87,13 @@ export const gateway3ExaminationWebsite = {
 	display: 'Not started',
 	value: 'www.gateway-3-example.com',
 	href: 'https://www.gateway-3-example.com',
-	unsavedValue: 'www.unsaved-gateway-3-example.com'
+	unsavedValue: 'www.unsaved-gateway-3-example.com',
+	// Entered by the LPA in the Portal examination submission
+	examinationSubmissionValue: 'www.examination-submission-example.com',
+	examinationSubmissionHref: 'https://www.examination-submission-example.com',
+	// Saved in Manage from the Examination tab
+	changedOnExaminationValue: 'www.changed-on-examination-example.com',
+	changedOnExaminationHref: 'https://www.changed-on-examination-example.com'
 } as const;
 
 export const gateway3DocumentsAnswer = {
@@ -211,6 +223,7 @@ export const updatedGateway3ExpectedDateAnswer = {
 export const gateway3ExpectedAnswers = [
 	...Object.values(gateway3DateAnswers).map(({ row, display }) => ({ row, display })),
 	{ row: gateway3AssessorAnswer.row, display: gateway3AssessorAnswer.display },
+	{ row: gateway3AssessorAnswer.appointedRow, display: gateway3AssessorAnswer.appointedDisplay },
 	{ row: gateway3ExaminationWebsite.row, display: gateway3ExaminationWebsite.display },
 	{ row: gateway3ReviewDocumentsAnswer.row, display: gateway3ReviewDocumentsAnswer.noDocumentsDisplay }
 ];
