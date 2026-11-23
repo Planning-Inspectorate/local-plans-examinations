@@ -776,6 +776,44 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
 	});
 
+	it('shows the grey Paused tag and pause date while retaining read-only access to submitted information', async () => {
+		const plan = {
+			refNum: 'PLAN-004',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'paused',
+			examinationStatusLabel: 'Paused',
+			pause: { startDate: '15 November 2026', restartDate: null },
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
+		};
+
+		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
+
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--grey">Paused</strong>');
+		assert.equal(data.button, null);
+		assert.equal(data.hrefE, '/manage-local-plans/PLAN-004/examination');
+		assert.ok(cleanHtml(html).includes('Paused: 15 November 2026'));
+		assert.ok(!cleanHtml(html).includes('Due to restart'));
+	});
+
+	it('does not show a restart date in the pause caption', async () => {
+		const plan = {
+			refNum: 'PLAN-004',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'paused',
+			examinationStatusLabel: 'Paused',
+			pause: { startDate: '15 November 2026', restartDate: '20 November 2026' },
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
+		};
+
+		const { html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
+
+		assert.ok(cleanHtml(html).includes('Paused: 15 November 2026'));
+		assert.ok(!cleanHtml(html).includes('Due to restart'));
+		assert.ok(!cleanHtml(html).includes('20 November 2026'));
+	});
+
 	it('shows a blue Report issued tag and the BO report issue date', async () => {
 		const plan = {
 			refNum: 'PLAN-005',

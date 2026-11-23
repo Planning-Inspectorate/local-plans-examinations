@@ -130,6 +130,34 @@ describe('examination view data', () => {
 		assert.equal(fallbackStatusLocals.backLinkUrl, '/manage-local-plans/PLAN-61797');
 	});
 
+	it('shows a grey Paused tag when the latest pause is active', () => {
+		const locals: Record<string, unknown> = {};
+
+		setExaminationViewLocals(
+			{
+				params: { planReference: 'PLAN-61797' },
+				currentCase: {
+					examinationInfo: {
+						status: EXAMINATION_STATUS_ID.IN_PROGRESS,
+						statusLookup: { displayName: 'In progress' },
+						planPauseHistory: [
+							{
+								planPauseDate: new Date('2020-11-15T00:00:00.000Z'),
+								planPauseEndDate: null
+							}
+						]
+					}
+				}
+			} as unknown as Request,
+			{ locals } as unknown as Response
+		);
+
+		assert.deepEqual(locals.statusTag, {
+			label: 'Paused',
+			class: 'govuk-tag govuk-tag--grey'
+		});
+	});
+
 	it('sets view data and marks the session as editing from check answers', () => {
 		const req = {
 			params: { planReference: 'PLAN-61797' },
@@ -509,7 +537,7 @@ describe('examination route guards', () => {
 		assert.deepEqual(redirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797']);
 	});
 
-	it('allows editing while in progress and blocks editing after submission', () => {
+	it('allows editing while in progress and blocks editing after submission or during a pause', () => {
 		const guard = buildGuardExaminationEdit();
 		const next = mock.fn();
 		const editableRequest = {
@@ -526,6 +554,42 @@ describe('examination route guards', () => {
 		} as unknown as Request;
 		guard(submittedRequest, { redirect } as unknown as Response, mock.fn() as unknown as NextFunction);
 		assert.deepEqual(redirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797/examination']);
+
+		const pausedRedirect = mock.fn();
+		const pausedRequest = {
+			currentCase: {
+				examinationInfo: {
+					status: EXAMINATION_STATUS_ID.IN_PROGRESS,
+					planPauseHistory: [
+						{
+							planPauseDate: new Date('2020-11-15T00:00:00.000Z'),
+							planPauseEndDate: null
+						}
+					]
+				}
+			},
+			params: { planReference: 'PLAN-61797' }
+		} as unknown as Request;
+		guard(pausedRequest, { redirect: pausedRedirect } as unknown as Response, mock.fn() as unknown as NextFunction);
+		assert.deepEqual(pausedRedirect.mock.calls[0].arguments, ['/manage-local-plans/PLAN-61797/examination']);
+
+		const restartedNext = mock.fn();
+		const restartedRequest = {
+			currentCase: {
+				examinationInfo: {
+					status: EXAMINATION_STATUS_ID.IN_PROGRESS,
+					planPauseHistory: [
+						{
+							planPauseDate: new Date('2020-11-15T00:00:00.000Z'),
+							planPauseEndDate: new Date('2020-11-20T00:00:00.000Z')
+						}
+					]
+				}
+			},
+			params: { planReference: 'PLAN-61797' }
+		} as unknown as Request;
+		guard(restartedRequest, {} as Response, restartedNext as unknown as NextFunction);
+		assert.equal(restartedNext.mock.callCount(), 1);
 	});
 
 	it('only allows the declaration page when all required answers are present', () => {
@@ -743,6 +807,40 @@ describe('examination declaration and completion', () => {
 		);
 		assert.equal(res.locals.pageHeading, 'Examination submission');
 		assert.equal(res.locals.submissionDate, '21 October 2026');
+		assert.equal(res.locals.saveAndComeBackUrl, undefined);
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('uses the read-only view while an editable examination is paused', async () => {
+		const next = mock.fn();
+		const req = {
+			currentCase: {
+				email: 'planner@example.com',
+				examinationInfo: {
+					status: EXAMINATION_STATUS_ID.IN_PROGRESS,
+					submissionForExaminationDate: null,
+					planPauseHistory: [
+						{
+							planPauseDate: new Date('2020-11-15T00:00:00.000Z'),
+							planPauseEndDate: null
+						}
+					]
+				}
+			}
+		} as unknown as Request;
+		const res = {
+			locals: {
+				journey: { taskListTemplate: 'editable.njk' },
+				saveAndComeBackUrl: '/save'
+			}
+		} as unknown as Response;
+
+		await buildSubmittedExaminationView()(req, res, next as unknown as NextFunction);
+
+		assert.equal(
+			res.locals.journey.taskListTemplate,
+			'views/manage-local-plans/examination-submission/check-your-answers-submitted.njk'
+		);
 		assert.equal(res.locals.saveAndComeBackUrl, undefined);
 		assert.equal(next.mock.callCount(), 1);
 	});
