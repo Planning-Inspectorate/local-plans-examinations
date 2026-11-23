@@ -16,7 +16,7 @@
 
             {% if hasWorkshop %}
                 {% if workshopFormat %}
-                    {% set _ = rows.push({ key: { text: "Format" }, value: { text: formatLabels[workshopFormat] or workshopFormat } }) %}
+                    {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Format" }, value: { text: formatLabels[workshopFormat] or workshopFormat } }) %}
                 {% endif %}
 
                 {# Remote workshops have no venue. #}
@@ -25,9 +25,9 @@
                         {% set venueHtml %}
                             {% for line in venueLines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}
                         {% endset %}
-                        {% set _ = rows.push({ key: { text: "Venue" }, value: { html: venueHtml } }) %}
+                        {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Venue" }, value: { html: venueHtml } }) %}
                     {% else %}
-                        {% set _ = rows.push({ key: { text: "Venue" }, value: { text: "Not provided" } }) %}
+                        {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Venue" }, value: { text: "Not provided" } }) %}
                     {% endif %}
                 {% endif %}
 
@@ -35,14 +35,14 @@
                     {% set meetingLinkLower = workshopMeetingLink | lower %}
                     {% if meetingLinkLower.indexOf("https://") == 0 or meetingLinkLower.indexOf("http://") == 0 %}
                         {% set meetingLinkHtml %}<a href="{{ workshopMeetingLink }}" class="govuk-link" rel="noreferrer noopener" target="_blank">{{ workshopMeetingLink }}</a>{% endset %}
-                        {% set _ = rows.push({ key: { text: "Meeting link" }, value: { html: meetingLinkHtml } }) %}
+                        {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Meeting link" }, value: { html: meetingLinkHtml } }) %}
                     {% else %}
-                        {% set _ = rows.push({ key: { text: "Meeting link" }, value: { text: workshopMeetingLink } }) %}
+                        {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Meeting link" }, value: { text: workshopMeetingLink } }) %}
                     {% endif %}
                 {% endif %}
 
                 {% if workShopStartTime %}
-                    {% set _ = rows.push({ key: { text: "Start time" }, value: { text: workShopStartTime } }) %}
+                    {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Start time" }, value: { text: workShopStartTime } }) %}
                 {% endif %}
             {% endif %}
 
@@ -61,11 +61,10 @@
                         {% endfor %}
                     </ul>
                 {% endset %}
-                {% set _ = rows.push({ key: { text: "Documents" }, value: { html: documentsHtml } }) %}
+                {% set _ = rows.push({ classes: "govuk-summary-list__row--no-border", key: { text: "Documents" }, value: { html: documentsHtml } }) %}
             {% endif %}
 
             {{ govukSummaryList({
-                classes: "govuk-summary-list--no-border",
                 rows: rows
             }) }}
         </div>
