@@ -12,6 +12,13 @@ export const gateway3DocumentsPage = new DocumentUploadPage(
 	gateway3DocumentsAnswer.caption
 );
 
+export const gateway3Submission2DocumentsPage = new DocumentUploadPage(
+	gateway3ReportPath(gateway3DocumentsAnswer.path),
+	`${gateway3DocumentsAnswer.fieldName}-2`,
+	gateway3DocumentsAnswer.heading,
+	gateway3DocumentsAnswer.caption
+);
+
 class Gateway3DocumentsCheckPage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-3-report\/gateway-3-submission-(\d+)\/gateway-3-document-(\d+)\/check$/);
