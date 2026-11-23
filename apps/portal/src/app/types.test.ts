@@ -55,6 +55,15 @@ describe('validPlan', () => {
 		assert.strictEqual(validPlan(plan), false);
 	});
 
+	it('validates pause display dates', () => {
+		assert.strictEqual(validPlan({ ...mockPlan(), pause: { startDate: '15 November 2026', restartDate: null } }), true);
+		assert.strictEqual(
+			validPlan({ ...mockPlan(), pause: { startDate: '15 November 2026', restartDate: '20 November 2026' } }),
+			true
+		);
+		assert.strictEqual(validPlan({ ...mockPlan(), pause: { startDate: '', restartDate: null } }), false);
+	});
+
 	it('should return false if dates has invalid keys', () => {
 		const plan = { ...mockPlan(), dates: { X: '1 Jan', Y: '2 Feb' } };
 		assert.strictEqual(validPlan(plan), false);

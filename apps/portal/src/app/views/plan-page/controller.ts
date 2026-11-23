@@ -141,6 +141,7 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 			dateTextG2,
 			dateTextG3,
 			dateTextE,
+			pauseStartDate: plan.pause?.startDate,
 			tagG2,
 			tagG3,
 			tagE,

@@ -1,5 +1,6 @@
 import type { PortalService } from '#service';
 import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
+import { getEffectiveExaminationStatus, type ExaminationPause } from '#util/examination-pause.ts';
 import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import multer from 'multer';
 import {
@@ -47,6 +48,7 @@ type ExaminationInfoRecord = {
 	miqDocumentSharedDate: Date | null;
 	miqDocumentSharedBy?: string | null;
 	statusLookup: { displayName: string } | null;
+	planPauseHistory?: ExaminationPause[];
 };
 
 type CaseWithExaminationInfo = CaseModel & {
@@ -133,6 +135,12 @@ function formatDisplayTime(date: Date) {
 		minute: '2-digit',
 		hour12: false
 	});
+}
+
+function effectiveExaminationStatus(examinationInfo: ExaminationInfoRecord | null | undefined) {
+	return examinationInfo
+		? getEffectiveExaminationStatus(examinationInfo.status, examinationInfo.planPauseHistory)
+		: undefined;
 }
 
 function decodeFileName(fileName: string) {
@@ -283,13 +291,17 @@ export function setExaminationViewLocals(req: Request, res: Response) {
 	res.locals.requiredItemTitles = REQUIRED_EXAMINATION_ITEM_TITLES;
 
 	const examinationInfo = currentCase?.examinationInfo;
+	const examinationStatus = effectiveExaminationStatus(examinationInfo);
 	if (examinationInfo?.expectedSubmissionForExaminationDate) {
 		res.locals.targetDate = formatDisplayDate(examinationInfo.expectedSubmissionForExaminationDate);
 	}
-	if (examinationInfo && examinationInfo.status !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
+	if (examinationInfo && examinationStatus && examinationStatus !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
 		res.locals.statusTag = {
-			label: examinationInfo.statusLookup?.displayName ?? examinationInfo.status,
-			class: getExaminationStatusTagClass(examinationInfo.status) ?? 'govuk-tag govuk-tag--blue'
+			label:
+				examinationStatus === EXAMINATION_STATUS_ID.PAUSED
+					? 'Paused'
+					: (examinationInfo.statusLookup?.displayName ?? examinationStatus),
+			class: getExaminationStatusTagClass(examinationStatus) ?? 'govuk-tag govuk-tag--blue'
 		};
 	} else {
 		delete res.locals.statusTag;
@@ -309,7 +321,7 @@ export function setExaminationViewData(req: Request, res: Response, next: NextFu
 
 export function buildGuardExaminationAvailable(): RequestHandler {
 	return (req, res, next) => {
-		const status = (req as ExaminationRequest).currentCase?.examinationInfo?.status;
+		const status = effectiveExaminationStatus((req as ExaminationRequest).currentCase?.examinationInfo);
 		if (status && status !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
 			return next();
 		}
@@ -319,7 +331,7 @@ export function buildGuardExaminationAvailable(): RequestHandler {
 
 export function buildGuardExaminationEdit(): RequestHandler {
 	return (req, res, next) => {
-		const status = (req as ExaminationRequest).currentCase?.examinationInfo?.status;
+		const status = effectiveExaminationStatus((req as ExaminationRequest).currentCase?.examinationInfo);
 		if (status && EDITABLE_EXAMINATION_STATUSES.has(status)) {
 			return next();
 		}
@@ -336,7 +348,7 @@ export function buildSubmittedExaminationView(service: PortalService): RequestHa
 		const examinationInfo = request.currentCase?.examinationInfo;
 		const submissionDate = examinationInfo?.submissionForExaminationDate;
 
-		if (!examinationInfo || EDITABLE_EXAMINATION_STATUSES.has(examinationInfo.status)) {
+		if (!examinationInfo || EDITABLE_EXAMINATION_STATUSES.has(effectiveExaminationStatus(examinationInfo) ?? '')) {
 			return next();
 		}
 
@@ -434,7 +446,10 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 			where: { reference: planReference },
 			include: {
 				examinationInfo: {
-					include: { statusLookup: true }
+					include: {
+						statusLookup: true,
+						planPauseHistory: true
+					}
 				},
 				gateway3Info: {
 					select: { examinationWebsiteUrl: true }
