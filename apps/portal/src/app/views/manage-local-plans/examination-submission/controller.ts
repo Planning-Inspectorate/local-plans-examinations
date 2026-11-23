@@ -48,6 +48,9 @@ type ExaminationInfoRecord = {
 	soundUnsoundDate: Date | null;
 	miqDocumentSharedDate: Date | null;
 	miqDocumentSharedBy?: string | null;
+	examiningInspector1?: string | null;
+	examiningInspector2?: string | null;
+	examiningInspector3?: string | null;
 	statusLookup: { displayName: string } | null;
 	planPauseHistory?: ExaminationPause[];
 };
@@ -289,11 +292,23 @@ export function setExaminationViewLocals(req: Request, res: Response) {
 		res.locals.targetDate = formatDisplayDate(examinationInfo.expectedSubmissionForExaminationDate);
 	}
 	if (examinationInfo && examinationStatus && examinationStatus !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
+		const hasAssignedExaminingInspector = [
+			examinationInfo.examiningInspector1,
+			examinationInfo.examiningInspector2,
+			examinationInfo.examiningInspector3
+		].some((inspector) => typeof inspector === 'string' && inspector.trim().length > 0);
+
+		let label;
+		if (examinationStatus === EXAMINATION_STATUS_ID.PAUSED) {
+			label = 'Paused';
+		} else if (examinationInfo.status === EXAMINATION_STATUS_ID.SUBMITTED && hasAssignedExaminingInspector) {
+			label = 'In examination';
+		} else {
+			label = examinationInfo.statusLookup?.displayName ?? examinationStatus;
+		}
+
 		res.locals.statusTag = {
-			label:
-				examinationStatus === EXAMINATION_STATUS_ID.PAUSED
-					? 'Paused'
-					: (examinationInfo.statusLookup?.displayName ?? examinationStatus),
+			label: label,
 			class: getExaminationStatusTagClass(examinationStatus) ?? 'govuk-tag govuk-tag--blue'
 		};
 	} else {

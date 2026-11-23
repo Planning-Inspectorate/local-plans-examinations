@@ -189,7 +189,7 @@ describe('examination view data', () => {
 			{
 				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 				label: 'In examination',
-				className: 'govuk-tag govuk-tag--blue'
+				className: 'govuk-tag govuk-tag--yellow'
 			},
 			{
 				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
@@ -219,6 +219,31 @@ describe('examination view data', () => {
 
 			assert.deepEqual(locals.statusTag, { label, class: className });
 		}
+	});
+
+	it('shows submitted examinations with an assigned inspector as In examination in yellow', () => {
+		const locals: Record<string, unknown> = {};
+
+		setExaminationViewLocals(
+			{
+				params: { planReference: 'PLAN-61797' },
+				currentCase: {
+					examinationInfo: {
+						status: EXAMINATION_STATUS_ID.SUBMITTED,
+						statusLookup: { displayName: 'Submitted' },
+						examiningInspector1: null,
+						examiningInspector2: 'inspector-id',
+						examiningInspector3: null
+					}
+				}
+			} as unknown as Request,
+			{ locals } as unknown as Response
+		);
+
+		assert.deepEqual(locals.statusTag, {
+			label: 'In examination',
+			class: 'govuk-tag govuk-tag--yellow'
+		});
 	});
 });
 
