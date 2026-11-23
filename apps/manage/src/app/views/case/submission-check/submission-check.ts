@@ -1,6 +1,7 @@
 import { type ManageService } from '#service';
 import type { UploadedFile } from '@pins/local-plans-lib/storage/types.ts';
 import { fileUploadDownloadFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
+import type { Request } from 'express';
 
 export type SubmissionCheckData = {
 	titleHeading: string;
@@ -41,7 +42,8 @@ export abstract class SubmissionCheck {
 		originalUrl: string,
 		service: ManageService,
 		uploadedFiles: any,
-		questionTitle?: any
+		questionTitle?: any,
+		req?: Request
 	): Promise<SubmissionCheckData>;
 
 	/**

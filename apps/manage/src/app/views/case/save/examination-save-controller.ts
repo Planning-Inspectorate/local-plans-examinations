@@ -29,6 +29,12 @@ const OUTCOME_TEMPLATES = {
 
 type IsSoundAnswer = keyof typeof OUTCOME_TEMPLATES;
 
+export const PENDING_EXAMINATION_INSPECTOR_NOTIFICATION = 'pendingExaminationInspectorNotification';
+
+export type PendingExaminationInspectorNotification = {
+	inspectorIds: string[];
+};
+
 /** Statuses that mean the examination report has already been issued, so the outcome email has already been sent */
 const REPORT_ALREADY_ISSUED_STATUSES = new Set<string>([
 	EXAMINATION_STATUS_ID.REPORT_ISSUED,
@@ -139,18 +145,18 @@ export class ExaminationSaveController extends SaveController {
 
 	/**
 	 * Called after the answers have been written to the database. Compares the answers with the values from
-	 * before the save, so an email is only sent when something has actually changed.
+	 * before the save, so notification work is only triggered when something has actually changed.
 	 */
 	protected async fireNotifications(answers: ExaminationInput) {
-		await this.notifyInspectorAppointed(answers);
+		this.queueInspectorAppointment(answers);
 		await this.notifyExaminationOutcome(answers);
 	}
 
 	/**
-	 * Sends the appointed inspector emails when an examining inspector question saves an inspector who was not
-	 * already one of the case's examining inspectors. Only the newly appointed inspector is emailed.
+	 * Remembers newly appointed inspectors until the appointment is confirmed. Only the confirmation action sends
+	 * the Notify emails.
 	 */
-	private async notifyInspectorAppointed(answers: ExaminationInput) {
+	private queueInspectorAppointment(answers: ExaminationInput) {
 		const field = INSPECTOR_FIELD_BY_QUESTION[String(this.req.params.question)];
 		if (!field) return;
 
@@ -162,14 +168,15 @@ export class ExaminationSaveController extends SaveController {
 			(inspectorField) => previous?.[inspectorField] === appointedInspector
 		);
 		if (alreadyAppointed) return;
+		if (!this.req.session) return;
 
-		await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspectorLpa', {
-			request: this.req
-		});
-		await sendExaminationNotifyEmail(this.service, this.caseReference, 'appointedInspector', {
-			request: this.req,
-			inspectorIds: [appointedInspector]
-		});
+		const session = this.req.session as typeof this.req.session & {
+			[PENDING_EXAMINATION_INSPECTOR_NOTIFICATION]?: PendingExaminationInspectorNotification;
+		};
+		const inspectorIds = session[PENDING_EXAMINATION_INSPECTOR_NOTIFICATION]?.inspectorIds ?? [];
+		session[PENDING_EXAMINATION_INSPECTOR_NOTIFICATION] = {
+			inspectorIds: [...new Set([...inspectorIds, appointedInspector])]
+		};
 	}
 
 	/**

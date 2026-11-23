@@ -23,6 +23,7 @@ import {
 	issueGateway3Document,
 	redirectToFileUploaderQuestion,
 	redirectToChecks,
+	confirmExaminationInspectorAppointment,
 	preprocessQuestionProperties,
 	handleMulterFileSizeError,
 	journeyFileUploadQuestionConfigs,
@@ -650,6 +651,10 @@ function registerCaseJourney(
 	router.post(`/${path}/gateway-1/:question/check`, issueGateway1SLA(service, journeyId));
 	router.post(`/${path}/gateway-2/:question/check`, issueGateway2Document(service, journeyId));
 	router.post(`/${path}/outcome/:question/check`, issueExaminationReport(service, journeyId));
+	router.post(
+		`/${path}/inspectors/${questions.examiningInspectorAppointmentDate.url}/check`,
+		confirmExaminationInspectorAppointment(service, journeyId)
+	);
 	router.post(`/${path}/report/:question/check`, issueGateway2Report(service, journeyId));
 	router.post(`/${path}/gateway-2/gateway-2/:question/check`, issueGateway2Document(service, journeyId));
 	router.post(`/${path}/gateway-3-submission-*submissionId/:question/check`, issueGateway3Document(service));
@@ -674,6 +679,19 @@ function registerCaseJourney(
 			if (isReportCheckPageEdit(journeyId, req.params.section, req.params.question, req.query.returnTo)) {
 				// If the user is editing from the examination report submission check page, override the task list URL to return to the check page.
 				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/outcome/${questions.examinationReport.url}/check?returnTo=check`;
+			}
+			if (
+				journeyId === COMMON_CONSTS.EXAMINATION_JOURNEY_ID &&
+				(req.params.question === questions.examiningInspectorAppointmentDate.url ||
+					(req.query.returnTo === 'check' &&
+						[
+							questions.examiningInspector1.url,
+							questions.examiningInspector2.url,
+							questions.examiningInspector3.url,
+							questions.examiningInspectorAppointmentDate.url
+						].includes(String(req.params.question))))
+			) {
+				res.locals.journey.taskListUrl = `${req.baseUrl}/${path}/inspectors/${questions.examiningInspectorAppointmentDate.url}/check`;
 			}
 			buildSave(updateCase, redirectToTaskListOnSuccess && !continueToReportUpload)(req, res, next);
 		}

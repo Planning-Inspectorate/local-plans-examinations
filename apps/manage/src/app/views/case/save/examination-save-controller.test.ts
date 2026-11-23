@@ -277,7 +277,7 @@ describe('ExaminationSaveController', () => {
 			const req = { params: { question }, session: {} } as unknown as Request;
 			const controller = new ExaminationSaveController(service as unknown as ManageService, req, 'caseRef');
 
-			return { controller, service, sendEmail };
+			return { controller, service, sendEmail, req };
 		}
 
 		const sentEmails = (sendEmail: { mock: { calls: { arguments: unknown[] }[] } }) =>
@@ -287,51 +287,46 @@ describe('ExaminationSaveController', () => {
 			for (const field of ['examiningInspector1', 'examiningInspector2', 'examiningInspector3']) {
 				const question = `examining-inspector-${field.at(-1)}`;
 
-				it(`sends the appointed inspector emails when ${question} appoints a new inspector`, async () => {
+				it(`queues the appointed inspector when ${question} is saved without sending emails`, async () => {
 					const answers = { [field]: 'inspector-id' };
-					const { controller, service, sendEmail } = createNotifyContext(question, { saved: answers });
+					const { controller, service, sendEmail, req } = createNotifyContext(question, { saved: answers });
 
 					const result = await controller.prepareAndSave({ ...answers });
 
 					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
 					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
-					assert.deepStrictEqual(sentEmails(sendEmail), [
-						[templates.appointedInspectorLpa, 'lpa@example.com'],
-						[templates.appointedInspector, 'inspector-id@example.com']
-					]);
-					const lpaPersonalisation = (
-						sendEmail.mock.calls[0].arguments[2] as { personalisation: Record<string, string> }
-					).personalisation;
-					assert.strictEqual(lpaPersonalisation.lead_inspector_initial, 'J');
-					assert.strictEqual(lpaPersonalisation.lead_inspector_lastname, 'Smith');
+					assert.deepStrictEqual(sentEmails(sendEmail), []);
+					assert.deepStrictEqual((req.session as any).pendingExaminationInspectorNotification, {
+						inspectorIds: ['inspector-id']
+					});
 					assert.strictEqual(service.logger.error.mock.callCount(), 0);
 				});
 			}
 
-			it('only emails the newly appointed inspector, not the inspectors already on the case', async () => {
+			it('only queues the newly appointed inspector, not the inspectors already on the case', async () => {
 				const previous = { examiningInspector1: 'inspector-1' };
 				const saved = { examiningInspector1: 'inspector-1', examiningInspector2: 'inspector-2' };
-				const { controller, sendEmail } = createNotifyContext('examining-inspector-2', { previous, saved });
+				const { controller, sendEmail, req } = createNotifyContext('examining-inspector-2', { previous, saved });
 
 				await controller.prepareAndSave({ examiningInspector2: 'inspector-2' });
 
-				assert.deepStrictEqual(sentEmails(sendEmail), [
-					[templates.appointedInspectorLpa, 'lpa@example.com'],
-					[templates.appointedInspector, 'inspector-2@example.com']
-				]);
+				assert.deepStrictEqual(sentEmails(sendEmail), []);
+				assert.deepStrictEqual((req.session as any).pendingExaminationInspectorNotification, {
+					inspectorIds: ['inspector-2']
+				});
 			});
 
-			it('emails the replacement inspector when an inspector is changed', async () => {
+			it('queues the replacement inspector when an inspector is changed', async () => {
 				const previous = { examiningInspector1: 'inspector-1', examiningInspector2: 'inspector-2' };
 				const saved = { examiningInspector1: 'inspector-3', examiningInspector2: 'inspector-2' };
-				const { controller, sendEmail } = createNotifyContext('examining-inspector-1', { previous, saved });
+				const { controller, sendEmail, req } = createNotifyContext('examining-inspector-1', { previous, saved });
 
 				await controller.prepareAndSave({ examiningInspector1: 'inspector-3' });
 
-				assert.deepStrictEqual(sentEmails(sendEmail), [
-					[templates.appointedInspectorLpa, 'lpa@example.com'],
-					[templates.appointedInspector, 'inspector-3@example.com']
-				]);
+				assert.deepStrictEqual(sentEmails(sendEmail), []);
+				assert.deepStrictEqual((req.session as any).pendingExaminationInspectorNotification, {
+					inspectorIds: ['inspector-3']
+				});
 			});
 
 			for (const { name, question, previous, answers } of [
@@ -367,13 +362,14 @@ describe('ExaminationSaveController', () => {
 				}
 			]) {
 				it(`does not send any email when ${name}`, async () => {
-					const { controller, service, sendEmail } = createNotifyContext(question, { previous });
+					const { controller, service, sendEmail, req } = createNotifyContext(question, { previous });
 
 					const result = await controller.prepareAndSave({ ...answers });
 
 					assert.deepStrictEqual(result, { dataWritten: true, writtenToDB: true });
 					assert.strictEqual(service.db.examinationInfo.upsert.mock.callCount(), 1);
 					assert.deepStrictEqual(sentEmails(sendEmail), []);
+					assert.strictEqual((req.session as any).pendingExaminationInspectorNotification, undefined);
 				});
 			}
 		});
