@@ -100,6 +100,23 @@ class CancelHearingPage extends BasePage {
 	}
 }
 
+export type HearingVenue = { name: string; addressLine1: string; townOrCity: string; postcode: string };
+
+export class HearingVenueAddressPage extends BasePage {
+	constructor(hearingNumber = 1) {
+		super(hearingPath(`examination-hearing-venue-address-${hearingNumber}`));
+	}
+
+	enterAddress(venue: HearingVenue) {
+		this.verifyLoaded();
+		cy.getByData('examination-hearing-venue-name').clearAndWrite(venue.name);
+		cy.getByData('examination-hearing-address-line-1').clearAndWrite(venue.addressLine1);
+		cy.getByData('examination-hearing-town-or-city').clearAndWrite(venue.townOrCity);
+		cy.getByData('examination-hearing-postcode').clearAndWrite(venue.postcode);
+		this.saveAndContinue();
+	}
+}
+
 export class HearingExpectedDaysPage extends RadioQuestionPage {
 	constructor(hearingNumber = 1) {
 		super(
