@@ -906,18 +906,19 @@ describe('examination submitted view MIQ submitter', () => {
 		return { req, res, service };
 	}
 
-	it('shows the email of the BO user who shared the MIQ documents', async () => {
+	it('shows the LPA email, not the case officer email, when the MIQ documents were shared', async () => {
 		const next = mock.fn();
 		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: 'test.officer@planninginspectorate.gov.uk' });
 
 		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
 
-		assert.equal(res.locals.submissionDate, '25 October 2026');
-		assert.equal(res.locals.submitter, 'test.officer@planninginspectorate.gov.uk');
+		assert.equal(res.locals.submissionDate, '21 October 2026');
+		assert.equal(res.locals.submitter, 'planner@example.com');
+		assert.notEqual(res.locals.submitter, 'test.officer@planninginspectorate.gov.uk');
 		assert.equal(next.mock.callCount(), 1);
 	});
 
-	it('falls back to the case email, not the case officer, when the sharer was not recorded', async () => {
+	it('shows the LPA email when the sharer was not recorded', async () => {
 		const next = mock.fn();
 		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: null });
 
@@ -925,6 +926,18 @@ describe('examination submitted view MIQ submitter', () => {
 
 		assert.equal(res.locals.submitter, 'planner@example.com');
 		assert.notEqual(res.locals.submitter, 'Test Officer');
+		assert.equal(next.mock.callCount(), 1);
+	});
+
+	it('shows the submission date and time alongside the LPA email for the submission', async () => {
+		const next = mock.fn();
+		const { req, res, service } = buildMiqContext({ miqDocumentSharedBy: 'test.officer@planninginspectorate.gov.uk' });
+
+		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
+
+		assert.equal(res.locals.submissionDate, '21 October 2026');
+		assert.equal(res.locals.submissionTime, '10:30');
+		assert.equal(res.locals.submitter, 'planner@example.com');
 		assert.equal(next.mock.callCount(), 1);
 	});
 });

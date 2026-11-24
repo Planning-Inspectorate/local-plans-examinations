@@ -358,11 +358,7 @@ export function buildSubmittedExaminationView(service: PortalService): RequestHa
 		}
 		res.locals.pageTitle = 'Examination submission';
 		res.locals.pageHeading = 'Examination submission';
-		if (examinationInfo.miqDocumentSharedDate) {
-			res.locals.submissionDate = formatDisplayDate(examinationInfo.miqDocumentSharedDate);
-			res.locals.submissionTime = formatDisplayTime(examinationInfo.miqDocumentSharedDate);
-			res.locals.submitter = examinationInfo.miqDocumentSharedBy || request.currentCase?.email;
-		} else if (submissionDate) {
+		if (submissionDate) {
 			res.locals.submissionDate = formatDisplayDate(submissionDate);
 			res.locals.submissionTime = formatDisplayTime(submissionDate);
 			res.locals.submitter = request.currentCase?.email;
