@@ -3,6 +3,7 @@ import {
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
 	gateway2ReportPage,
+	gateway2SubmissionDocumentsPage,
 	gateway2WorkshopDocumentsCheckPage,
 	gateway2WorkshopDocumentsPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
@@ -13,6 +14,7 @@ import {
 } from '../../../../flows/manage/gateway-2-flow.ts';
 import { cleanupSeededManageCase, type SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
+import { gateway2SubmittedPlan } from '../../../../fixtures/portal/gateway-2-uploads.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 import {
 	gateway2DateAnswers,
@@ -87,13 +89,25 @@ describe('Gateway 2 updates', () => {
 		});
 	});
 
-	it('does not show issued workshop documents against another case', { tags: ['regression'] }, () => {
+	it('keeps issued workshop documents separate from submissions and other cases', { tags: ['regression'] }, () => {
+		cy.task('seedCase');
+		cy.task('seedGateway2SubmittedDocuments');
+		openGateway2Page(gateway2SubmittedPlan.reference, gateway2SubmittedPlan.title);
+		gateway2Page.verifySummaryRowContains('Submission documents', '3 document(s)');
 		gateway2Page.openActionLinkFor(gateway2WorkshopDocuments.row);
 		gateway2WorkshopDocumentsPage.verifyLoaded();
 		gateway2WorkshopDocumentsPage.uploadAndVerifyFile(gateway2WorkshopDocuments.fileName);
 		gateway2WorkshopDocumentsPage.saveAndReturn();
 		gateway2WorkshopDocumentsCheckPage.verifyLoaded(gateway2WorkshopDocuments.fileName);
 		gateway2WorkshopDocumentsCheckPage.issueDocuments();
+
+		gateway2Page.verifyLoaded(gateway2SubmittedPlan.title);
+		cy.reload();
+		gateway2Page.verifySummaryRowContains(gateway2WorkshopDocuments.row, gateway2WorkshopDocuments.fileName);
+		gateway2Page.verifySummaryRowContains('Submission documents', '3 document(s)');
+		gateway2Page.openActionLinkFor('Submission documents');
+		gateway2SubmissionDocumentsPage.verifyLoaded();
+		gateway2SubmissionDocumentsPage.verifyWorkshopDocumentsAbsent();
 
 		cy.task<SeededManageCase>('seedDb').then((secondCase) => {
 			openGateway2Page(secondCase.reference, secondCase.planTitle);
