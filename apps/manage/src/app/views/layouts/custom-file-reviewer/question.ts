@@ -2,8 +2,7 @@ import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/que
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { frontOfficeGateway2questions } from '@pins/local-plans-lib/app/questions.ts';
 
-// Document groups that belong elsewhere on the tab and must never be listed or counted as
-// submission documents (workshop documents live in the Gateway 2 Workshop section).
+
 const EXCLUDED_DOCUMENT_TITLES = new Set(['workshop document']);
 
 export function getReviewableDocuments(group: any): any[] {
