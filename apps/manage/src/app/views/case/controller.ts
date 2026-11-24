@@ -221,79 +221,89 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			if (req.url.includes('check-lpas')) {
-				const lpa = await db.lPA.findUnique({
-					where: { lpaCode: data.answers.lpa },
-					select: {
-						lpaName: true
+
+			switch (true) {
+				case req.url.includes('check-lpas'): {
+					const lpa = await db.lPA.findUnique({
+						where: { lpaCode: data.answers.lpa },
+						select: {
+							lpaName: true
+						}
+					});
+					const lpaName = lpa?.lpaName ?? data.answers.lpa;
+					if (action == 'edit' && req.url.includes('check-lpas')) {
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							lpa: existing + ' updated to ' + lpaName
+						});
+					} else if (action == 'add') {
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							lpa: lpaName + ' added'
+						});
 					}
-				});
-				const lpaName = lpa?.lpaName ?? data.answers.lpa;
-				if (action == 'edit' && req.url.includes('check-lpas')) {
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						lpa: existing + ' updated to ' + lpaName
-					});
-				} else if (action == 'add') {
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						lpa: lpaName + ' added'
-					});
+					break;
 				}
-			} else if (req.url.includes('assessor-gateway-2')) {
-				const newAssessor = (
-					await db.gateway2Info.findUnique({
-						where: { caseId },
-						select: { assessorName: true }
-					})
-				)?.assessorName;
-				const newAssessorName =
-					typeof newAssessor === 'string'
-						? await resolveAssessorDisplayName(service, req, 'gateway-2', newAssessor)
-						: newAssessor;
+				case req.url.includes('assessor-gateway-2'): {
+					const assessor = (
+						await db.gateway2Info.findUnique({
+							where: { caseId },
+							select: { assessorName: true }
+						})
+					)?.assessorName;
+					const assessorName =
+						typeof assessor === 'string'
+							? await resolveAssessorDisplayName(service, req, 'gateway-2', assessor)
+							: assessor;
 
-				if (existing != null) {
-					//edit
-					const existingName =
-						typeof existing === 'string'
-							? await resolveAssessorDisplayName(service, req, 'gateway-2', existing)
-							: existing;
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						assessorName: 'Gateway 2 Assessor updated from ' + existingName + ' to ' + newAssessorName
-					});
-				} else {
-					//add
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						assessorName: 'Assessor Gateway 2 ' + newAssessor + ' added'
-					});
+					if (existing != null) {
+						//edit
+						const existingName =
+							typeof existing === 'string'
+								? await resolveAssessorDisplayName(service, req, 'gateway-2', existing)
+								: existing;
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							assessorName: 'Gateway 2 Assessor updated from ' + existingName + ' to ' + assessorName
+						});
+					} else {
+						//add
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							assessorName: 'Gateway 2 Assessor ' + assessorName + ' added'
+						});
+					}
+					break;
 				}
-			} else if (req.url.includes('assessor-gateway-3')) {
-				const newAssessor = (
-					await db.gateway3Info.findUnique({
-						where: { caseId },
-						select: { assessorName: true }
-					})
-				)?.assessorName;
-				const newAssessorName =
-					typeof newAssessor === 'string'
-						? await resolveAssessorDisplayName(service, req, 'gateway-3', newAssessor)
-						: newAssessor;
+				case req.url.includes('assessor-gateway-3'): {
+					const assessor = (
+						await db.gateway3Info.findUnique({
+							where: { caseId },
+							select: { assessorName: true }
+						})
+					)?.assessorName;
+					const assessorName =
+						typeof assessor === 'string'
+							? await resolveAssessorDisplayName(service, req, 'gateway-3', assessor)
+							: assessor;
 
-				if (existing != null) {
-					//edit
-					const existingName =
-						typeof existing === 'string'
-							? await resolveAssessorDisplayName(service, req, 'gateway-3', existing)
-							: existing;
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						gateway3AssessorName: 'Gateway 3 Assessor updated from ' + existingName + ' to ' + newAssessorName
-					});
-				} else {
-					//add
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						gateway3AssessorName: 'Gateway 3 Assessor ' + newAssessor + ' added'
-					});
+					if (existing != null) {
+						//edit
+						const existingName =
+							typeof existing === 'string'
+								? await resolveAssessorDisplayName(service, req, 'gateway-3', existing)
+								: existing;
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							gateway3AssessorName: 'Gateway 3 Assessor updated from ' + existingName + ' to ' + assessorName
+						});
+					} else {
+						//add
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							gateway3AssessorName: 'Gateway 3 Assessor ' + assessorName + ' added'
+						});
+					}
+					break;
 				}
-			} else {
-				await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+				default: {
+					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+					break;
+				}
 			}
 
 			if (data.answers.assessorName) {
@@ -611,11 +621,12 @@ async function formatCaseHistoryEvent(
 		return overrideLabel;
 	}
 	const label = Object.hasOwn(caseHistoryLabels, key) ? (caseHistoryLabels[key] ?? key) : key;
-	let oldValueText = 'updated to';
+
 	if (oldValue != null && oldValue != '') {
-		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;
+		// edit
+		return `${label}  ${await formatCaseHistoryValue(service, req, key, oldValue)} updated to ${await formatCaseHistoryValue(service, req, key, newValue)}`;
 	}
-	return `${label} ${oldValueText} ${await formatCaseHistoryValue(service, req, key, newValue)}`;
+	return `${label}  ${await formatCaseHistoryValue(service, req, key, newValue)} added`; //add
 }
 
 async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
