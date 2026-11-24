@@ -351,8 +351,11 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 												userReadableId + ' email changed from ' + contactMap[key] + ' to ' + data.answers.email;
 											break;
 										case 'phone':
+											console.log('here45', contactMap);
 											acc[key] =
-												userReadableId + ' phone changed from ' + contactMap[key] + ' to ' + data.answers.phone;
+												contactMap[key] != ''
+													? userReadableId + ' phone changed from ' + contactMap[key] + ' to ' + data.answers.phone
+													: userReadableId + ' phone added ' + data.answers.phone;
 											break;
 										case 'lpaContact':
 											acc[key] = contactMap[key]
@@ -387,10 +390,10 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 							})
 						)?.lpaName;
 						const caseHistoryOverwrite: Record<string, string> = {
-							firstName: userReadableId + ' first name added ' + data.answers.firstName,
-							lastName: userReadableId + ' last name added ' + data.answers.lastName,
-							email: userReadableId + ' email added ' + data.answers.email,
-							lpaContact: userReadableId + ' LPA contact added ' + lpaName
+							firstName: userReadableId + ' first name ' + data.answers.firstName + ' added',
+							lastName: userReadableId + ' last name ' + data.answers.lastName + ' added',
+							email: userReadableId + ' email ' + data.answers.email + ' added',
+							lpaContact: userReadableId + ' LPA contact ' + lpaName + ' added'
 						};
 						if (data.answers.phone) {
 							caseHistoryOverwrite.phone = userReadableId + ' phone added ' + data.answers.phone;
@@ -462,13 +465,15 @@ async function removeItem({
 			where: { id: currentItemId },
 			select: {
 				firstName: true,
-				lastName: true
+				lastName: true,
+				displayOrder: true
 			}
 		});
-		const existingContact = contact != undefined ? contact?.firstName + contact?.lastName : 'Unknown';
+		const existingContact = contact != undefined ? contact?.firstName + ' ' + contact?.lastName : 'Unknown';
+
 		await db.contact.delete({ where: { id: currentItemId } });
-		await updateCaseHistory(service, req, db, { lpa: currentItemId }, { contact: null }, reference, currentUser, {
-			contact: existingContact + ' removed'
+		await updateCaseHistory(service, req, db, { contact: currentItemId }, { contact: null }, reference, currentUser, {
+			contact: 'Contact ' + contact?.displayOrder + ' ' + existingContact + ' removed'
 		});
 		return;
 	} else {
@@ -743,12 +748,33 @@ async function formatCaseHistoryEvent(
 		return overrideLabel;
 	}
 	const label = Object.hasOwn(caseHistoryLabels, key) ? (caseHistoryLabels[key] ?? key) : key;
-	console.log('here56', oldValue);
-	let oldValueText = 'added';
+
+	const formattedNewValue = await formatCaseHistoryValue(service, req, key, newValue);
+
 	if (oldValue != null && oldValue != '') {
-		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;
+		// edit
+		return `${label} updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to ${formattedNewValue}`;
 	}
-	return `${label} ${await formatCaseHistoryValue(service, req, key, newValue)} ${oldValueText}`;
+	const fieldsUsingUpdateWording = new Set([
+		'letterSentToMHCLGDate',
+		'letterIssueDate',
+		'factCheckDateReceivedFromInspector',
+		'factCheckDueDate',
+		'factCheckActualDate',
+		'factCheckReceivedBackFromLPADate',
+		'finalReportIssueDate',
+		'withdrawnDate',
+		'isSound',
+		'soundUnsoundDate',
+		'adoptionDate',
+		'approvedForCILDate',
+		'examinationWebsite'
+	]);
+
+	if (fieldsUsingUpdateWording.has(key)) {
+		return `${label} updated to ${formattedNewValue}`;
+	}
+	return `${label} ${formattedNewValue} added`; //add
 }
 
 async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
