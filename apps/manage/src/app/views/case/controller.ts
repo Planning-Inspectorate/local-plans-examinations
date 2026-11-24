@@ -622,11 +622,32 @@ async function formatCaseHistoryEvent(
 	}
 	const label = Object.hasOwn(caseHistoryLabels, key) ? (caseHistoryLabels[key] ?? key) : key;
 
+	const formattedNewValue = await formatCaseHistoryValue(service, req, key, newValue);
+
 	if (oldValue != null && oldValue != '') {
 		// edit
-		return `${label}  ${await formatCaseHistoryValue(service, req, key, oldValue)} updated to ${await formatCaseHistoryValue(service, req, key, newValue)}`;
+		return `${label} updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to ${formattedNewValue}`;
 	}
-	return `${label}  ${await formatCaseHistoryValue(service, req, key, newValue)} added`; //add
+	const fieldsUsingUpdateWording = new Set([
+		'letterSentToMHCLGDate',
+		'letterIssueDate',
+		'factCheckDateReceivedFromInspector',
+		'factCheckDueDate',
+		'factCheckActualDate',
+		'factCheckReceivedBackFromLPADate',
+		'finalReportIssueDate',
+		'withdrawnDate',
+		'isSound',
+		'soundUnsoundDate',
+		'adoptionDate',
+		'approvedForCILDate',
+		'examinationWebsite'
+	]);
+
+	if (fieldsUsingUpdateWording.has(key)) {
+		return `${label} updated to ${formattedNewValue}`;
+	}
+	return `${label} ${formattedNewValue} added`; //add
 }
 
 async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
