@@ -326,7 +326,9 @@ export async function sendSoundNotifyEmail(
 	reference: string,
 	personalisation?: Record<string, string>
 ) {
-	await sendNotifyEmail(service, reference, 'examinationOutcomeSound', { personalisation });
+	await sendNotifyEmail(service, reference, 'examinationOutcomeSound', {
+		personalisation: { ...personalisation, ['plan_outcome']: 'sound' }
+	});
 }
 
 export async function sendUnSoundNotifyEmail(
@@ -334,5 +336,7 @@ export async function sendUnSoundNotifyEmail(
 	reference: string,
 	personalisation?: Record<string, string>
 ) {
-	await sendNotifyEmail(service, reference, 'examinationOutcomeUnsound', { personalisation });
+	await sendNotifyEmail(service, reference, 'examinationOutcomeUnsound', {
+		personalisation: { ...personalisation, ['plan_outcome']: 'unsound' }
+	});
 }
