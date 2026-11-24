@@ -109,7 +109,12 @@ function createService(): any {
 		contact: {
 			update: mock.fn(async () => ({})),
 			delete: mock.fn(async () => ({})),
-			upsert: mock.fn(async () => ({}))
+			upsert: mock.fn(async () => ({})),
+			findUnique: mock.fn(async () => null),
+			count: mock.fn(async () => null)
+		},
+		lPA: {
+			findUnique: mock.fn(async () => null)
 		},
 		lPA: {
 			findUnique: mock.fn(async () => null)
@@ -294,7 +299,7 @@ describe('updateCaseField', () => {
 			}
 		});
 
-		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
 	});
 
 	it('disconnects an LPA and records its removal in case history', async () => {
@@ -488,7 +493,9 @@ describe('updateCaseField', () => {
 			},
 			create: {
 				firstName: 'Jane',
+				id: 'contact-1',
 				lastName: 'Smith',
+				displayOrder: 1,
 				email: 'jane@example.com',
 				phoneNumber: '01234567890',
 				lpa: {
@@ -511,6 +518,7 @@ describe('updateCaseField', () => {
 			update: {
 				firstName: 'Jane',
 				lastName: 'Smith',
+				displayOrder: 1,
 				email: 'jane@example.com',
 				phoneNumber: '01234567890',
 				lpa: {

@@ -87,7 +87,8 @@ async function createSmokeCase(dbClient: ReturnType<typeof newDatabaseClient>) {
 							lastName: 'Smoke',
 							email,
 							phoneNumber: '01234567890',
-							lpaCode: lpas[0].lpaCode
+							lpaCode: lpas[0].lpaCode,
+							displayOrder: 1
 						}
 					},
 					gateway1Info: {
