@@ -2,7 +2,6 @@ import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/que
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { frontOfficeGateway2questions } from '@pins/local-plans-lib/app/questions.ts';
 
-
 const EXCLUDED_DOCUMENT_TITLES = new Set(['workshop document']);
 
 export function getReviewableDocuments(group: any): any[] {
