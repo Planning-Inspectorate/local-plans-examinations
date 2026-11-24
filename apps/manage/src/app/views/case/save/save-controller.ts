@@ -40,8 +40,8 @@ export abstract class SaveController {
 	 * Attempt to send a message to the ODW system to signal that the case has been modified
 	 * @param answers The answers that were saved
 	 */
-	protected tryToSendMessageToTheODW(answers: Record<string, any>) {
-		new ODWServiceBusDataSender(this.service).sendUpdateMessage(
+	protected async tryToSendMessageToTheODW(answers: Record<string, any>) {
+		await new ODWServiceBusDataSender(this.service).sendUpdateMessage(
 			{ caseReference: this.caseReference },
 			'workshops' in answers,
 			'hearings' in answers
@@ -65,7 +65,7 @@ export abstract class SaveController {
 		const response = await this.save(preparedData);
 		if (response.writtenToDB) {
 			// Try to send a message to the ODW service bus
-			this.tryToSendMessageToTheODW(preparedData);
+			await this.tryToSendMessageToTheODW(preparedData);
 		}
 		return response;
 	}

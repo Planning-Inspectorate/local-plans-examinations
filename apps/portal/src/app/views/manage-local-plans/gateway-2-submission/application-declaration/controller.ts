@@ -86,7 +86,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			logger.error({ error }, `Failed to update submission date for case ${reference}`);
 			return res.status(500).send('Failed to record submission');
 		}
-		new ODWServiceBusDataSender(service).sendUpdateMessage({ caseReference: reference }, false, false);
+		await new ODWServiceBusDataSender(service).sendUpdateMessage({ caseReference: reference }, false, false);
 
 		// send email to LPA using GOV.UK Notify
 		await Promise.allSettled(
