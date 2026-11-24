@@ -361,6 +361,7 @@ describe('updateCaseField', () => {
 				id: 'contact-1'
 			},
 			data: {
+				displayOrder: undefined,
 				firstName: 'Jane',
 				lastName: 'Smith',
 				email: 'jane@example.com',
