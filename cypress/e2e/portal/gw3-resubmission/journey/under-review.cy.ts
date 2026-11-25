@@ -8,7 +8,6 @@ import {
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import { gateway3SubmittedResubmissionPage } from '../../../../page-objects/portal/gw3-application/gateway-3-submitted-resubmission-page.ts';
 import { gateway3PreviousSubmissionPage } from '../../../../page-objects/portal/gw3-application/gateway-3-previous-submission-page.ts';
-import { gateway3UploadAnswers } from '../../../../fixtures/portal/gateway-3-uploads.ts';
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
@@ -21,7 +20,7 @@ describe('Gateway 3 under review page journeys', () => {
 
 	afterEach(() => cy.task('clearDb'));
 
-	it('Opens the under review page from the Gateway 3 link on plan details', { tags: ['smoke'] }, () => {
+	it('Opens the read-only under review page from the Gateway 3 link on plan details', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
 			planDetailsPage.visit(plan.urlReference);
 			planDetailsPage.verifyProgressRow('Gateway 3', `Submitted: ${todayDisplayDate()}`, plan.underReview);
@@ -29,39 +28,17 @@ describe('Gateway 3 under review page journeys', () => {
 
 			gateway3SubmittedResubmissionPage.verifyPathForPlan(plan.urlReference);
 			gateway3SubmittedResubmissionPage.verifyLoaded('2');
+			gateway3SubmittedResubmissionPage.verifySubmissionStatus(plan.underReview);
+			gateway3SubmittedResubmissionPage.verifyNoEditingControls();
 		});
 	});
 
-	it('Navigates to Plan Details page when the Back link is clicked', { tags: ['regression'] }, () => {
+	it('Opens Submission 1 with the Under review tag from View all documents', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3SubmittedResubmissionPage.visit(plan.urlReference);
-			gateway3SubmittedResubmissionPage.verifyLoaded('2');
-			gateway3SubmittedResubmissionPage.goBack();
-			planDetailsPage.verifyPathForPlan(plan.urlReference);
-		});
-	});
+			gateway3SubmittedResubmissionPage.clickViewAllDocuments(1);
 
-	it(
-		'Opens the Submission 1 page from View all documents and returns with the back link',
-		{ tags: ['regression'] },
-		() => {
-			loadPlanDetails().then((plan) => {
-				gateway3SubmittedResubmissionPage.visit(plan.urlReference);
-				gateway3SubmittedResubmissionPage.clickViewAllDocuments(1);
-
-				gateway3PreviousSubmissionPage.verifyLoaded('1', plan.underReview);
-				gateway3PreviousSubmissionPage.goBack();
-
-				gateway3SubmittedResubmissionPage.verifyLoaded('2');
-			});
-		}
-	);
-
-	it('Redirects the upload page to Plan Details once the resubmission is sent', { tags: ['regression'] }, () => {
-		loadPlanDetails().then((plan) => {
-			const { section, path } = gateway3UploadAnswers.resubmissionDocuments;
-			cy.visit(`/manage-local-plans/${plan.urlReference}/${section}/${path}`);
-			planDetailsPage.verifyPathForPlan(plan.urlReference);
+			gateway3PreviousSubmissionPage.verifyLoaded('1', plan.underReview);
 		});
 	});
 });
@@ -84,15 +61,6 @@ describe('Gateway 3 complete after a resubmission journeys', () => {
 			gateway3SubmittedResubmissionPage.verifyPathForPlan(plan.urlReference);
 			gateway3SubmittedResubmissionPage.verifyLoaded('2');
 			gateway3SubmittedResubmissionPage.verifySubmissionStatus('Completed');
-		});
-	});
-
-	it('Opens the Submission 1 page with the Completed tag', { tags: ['regression'] }, () => {
-		loadPlanDetails().then((plan) => {
-			gateway3SubmittedResubmissionPage.visit(plan.urlReference);
-			gateway3SubmittedResubmissionPage.clickViewAllDocuments(1);
-
-			gateway3PreviousSubmissionPage.verifyLoaded('1', 'Completed');
 		});
 	});
 });

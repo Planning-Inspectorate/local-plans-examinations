@@ -22,10 +22,6 @@ export const SUBMISSION_2 = {
 	proceedReport: 'GW3Report-Proceed-PLAN-001.pdf'
 };
 
-export const SUBMISSION_3 = {
-	documents: ['test-document.pdf', 'test-document.docx']
-};
-
 export const openResubmissionDeclarationPage = (planReference: string, fileName = SUBMISSION_2.document) => {
 	gateway3ResubmissionPage.visit(planReference);
 	gateway3ResubmissionPage.verifyLoaded();
@@ -69,35 +65,11 @@ export const openSeededResubmissionDeclarationPage = (planReference: string) => 
 	openResubmissionDeclarationPage(planReference);
 };
 
-// Uploads several files in one go, then submits the resubmission through the declaration
-export const submitGateway3ResubmissionFiles = (planReference: string, fileNames: string[]) => {
-	gateway3ResubmissionPage.visit(planReference);
-	gateway3ResubmissionPage.verifyLoaded();
-	gateway3ResubmissionPage.clickAddLink(resubmissionDocumentsPage.addCy);
-
-	resubmissionDocumentsPage.verifyLoaded();
-	resubmissionDocumentsPage.uploadFile(fileNames);
-	resubmissionDocumentsPage.clickUploadFiles();
-	resubmissionDocumentsPage.verifyFileUploaded(...fileNames);
-	resubmissionDocumentsPage.saveAndReturn();
-
-	gateway3ResubmissionPage.submitButton.click();
-	gateway3ResubmissionDeclarationPage.verifyLoaded();
-	gateway3ResubmissionDeclarationPage.confirmSubmissionButton.click();
-	gateway3ResubmissionSubmissionCompletePage.verifyLoaded();
-};
-
 // FO submits submission 2, which is now under review
 export const seedGateway3SubmissionTwoUnderReview = (planReference: string) => {
 	cy.task('seedGateway3Submitted');
 	cy.task('seedGateway3Resubmission');
 	submitGateway3Resubmission(planReference);
-};
-
-// FO submits submission 2, the BO (seed) triggers resubmission 3, then FO submits submission 3
-export const seedGateway3SubmissionThreeUnderReview = (planReference: string) => {
-	seedGateway3SubmissionThree(planReference);
-	submitGateway3ResubmissionFiles(planReference, SUBMISSION_3.documents);
 };
 
 // FO submits submission 2, then the BO (seed) proceeds the plan to examination

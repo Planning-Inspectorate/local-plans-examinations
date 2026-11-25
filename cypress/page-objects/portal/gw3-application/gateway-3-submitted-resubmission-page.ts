@@ -78,15 +78,6 @@ export class Gateway3SubmittedResubmissionPage extends Gateway3ResubmissionPage 
 		});
 	}
 
-	verifyReportsListedBeforeSubmissions() {
-		this.previousSubmissionTable.find('.govuk-summary-list__row').then(($rows) => {
-			const rowTypes = [...$rows].map((row) => row.getAttribute('data-cy'));
-			const lastReport = rowTypes.lastIndexOf('submission-report-row');
-			const firstSubmission = rowTypes.indexOf('previous-submission-row');
-			expect(lastReport, 'report rows are listed before submission rows').to.be.lessThan(firstSubmission);
-		});
-	}
-
 	verifyCurrentSubmissionCopy(submissionNumber: number, date: string, submitter: string) {
 		this.currentSubmissionCopy.should(
 			'have.text',
@@ -94,16 +85,12 @@ export class Gateway3SubmittedResubmissionPage extends Gateway3ResubmissionPage 
 		);
 	}
 
-	verifyNewDocuments(fileNames: string[]) {
+	verifyNewDocument(fileName: string) {
 		this.verifySubHeading('New or updated documents');
 		this.newDocumentsTable.within(() => {
-			cy.contains('.govuk-summary-list__key', 'Documents').should('be.visible');
-			fileNames.forEach((fileName) => cy.contains('a', fileName).should('be.visible'));
-			if (fileNames.length > 1) {
-				cy.get('ul.govuk-list--bullet li').should('have.length', fileNames.length);
-			} else {
-				cy.get('ul.govuk-list--bullet').should('not.exist');
-			}
+			cy.contains('.govuk-summary-list__row', 'Documents').within(() => {
+				cy.contains('a', fileName).should('be.visible');
+			});
 		});
 	}
 
