@@ -1508,7 +1508,16 @@ describe('buildGetJourneyMiddleware', () => {
 			}));
 			ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 				caseId: CASE_ID,
-				submissions: [{ id: 'someId', decision: undefined, completionDate: undefined, gateway3InfoId: undefined }]
+				// The Portal has declared submission 1, so its committed documents count
+				submissions: [
+					{
+						id: 'someId',
+						decision: undefined,
+						completionDate: undefined,
+						submittedDate: new Date('2026-01-01'),
+						gateway3InfoId: undefined
+					}
+				]
 			}));
 			const addedDocuments = addedDocumentSetIds.map((documentSetId) => ({
 				documentSetId,
@@ -1961,11 +1970,93 @@ describe('Gateway 3 document loading', () => {
 describe('compileGateway3Data', () => {
 	const gateway3Answers = { id: 'gateway-3-info-id', caseId: CASE_ID, examinationWebsite: 'https://example.com' };
 
-	function createServiceWithDocuments(documents: unknown[]) {
+	const declaredSubmission = {
+		id: 'submission-1',
+		decision: null,
+		completionDate: null,
+		submittedDate: new Date('2026-01-01'),
+		gateway3InfoId: 'gateway-3-info-id'
+	};
+
+	function createServiceWithDocuments(
+		documents: unknown[],
+		gateway3Info: unknown = { submissions: [declaredSubmission] }
+	) {
 		const service = createService();
 		service.db.document.findMany.mock.mockImplementation(async () => documents);
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => gateway3Info);
 		return service;
 	}
+
+	const planDocument = {
+		guid: 'plan-guid',
+		documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+		name: 'plan-guid',
+		latestDocumentVersion: { originalFilename: 'plan.pdf' }
+	};
+
+	it('does not count submission 1 documents until the Portal has declared the submission', async () => {
+		const service = createServiceWithDocuments([planDocument], {
+			actualDate: null,
+			submissions: [{ ...declaredSubmission, submittedDate: null }]
+		});
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(compiledAnswers.documentFiles.proposedLocalPlan, []);
+		assert.equal(compiledAnswers.proposedLocalPlan, '');
+	});
+
+	it('does not count submission 1 documents when there is no submission row or Gateway 3 info yet', async () => {
+		const service = createServiceWithDocuments([planDocument], null);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(compiledAnswers.documentFiles.proposedLocalPlan, []);
+	});
+
+	it('counts submission 1 documents for submissions declared before submittedDate existed', async () => {
+		const service = createServiceWithDocuments([planDocument], {
+			actualDate: new Date('2026-01-01'),
+			submissions: []
+		});
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(compiledAnswers.documentFiles.proposedLocalPlan, [{ guid: 'plan-guid', fileName: 'plan.pdf' }]);
+	});
+
+	it('only lists resubmission documents once the Portal has declared that resubmission', async () => {
+		const resubmissionDocument = {
+			guid: 'resub-guid',
+			documentSetId: 'g3-document-2',
+			name: 'resub-guid',
+			isDeleted: false,
+			latestDocumentVersion: { originalFilename: 'resub.pdf' }
+		};
+		const decidedSubmission = {
+			...declaredSubmission,
+			decision: 'resubmission',
+			completionDate: new Date('2026-02-01')
+		};
+		const openResubmission = { ...declaredSubmission, id: 'submission-2', submittedDate: null };
+
+		const notDeclared = createServiceWithDocuments([], { submissions: [openResubmission, decidedSubmission] });
+		notDeclared.db.document.findMany.mock.mockImplementation(async (args: any) =>
+			args.where.documentSetId?.startsWith ? [resubmissionDocument] : []
+		);
+		const notDeclaredAnswers = await compileGateway3Data(notDeclared.db, gateway3Answers);
+		assert.equal(notDeclaredAnswers.resubmissionDocumentFiles[2], undefined);
+
+		const declared = createServiceWithDocuments([], {
+			submissions: [{ ...openResubmission, submittedDate: new Date('2026-03-01') }, decidedSubmission]
+		});
+		declared.db.document.findMany.mock.mockImplementation(async (args: any) =>
+			args.where.documentSetId?.startsWith ? [resubmissionDocument] : []
+		);
+		const declaredAnswers = await compileGateway3Data(declared.db, gateway3Answers);
+		assert.deepEqual(declaredAnswers.resubmissionDocumentFiles[2], [{ guid: 'resub-guid', fileName: 'resub.pdf' }]);
+	});
 
 	it('looks up only the submitted required and optional Gateway 3 documents for the case', async () => {
 		const service = createServiceWithDocuments([]);

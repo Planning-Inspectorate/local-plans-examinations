@@ -3,7 +3,10 @@ import {
 	openSeededGateway3Page,
 	openSeededGateway3PageWithSubmissionDocuments
 } from '../../../../flows/manage/gateway-3-flow.ts';
-import { gateway3RequiredSubmissionDocuments } from '../../../../fixtures/manage/gateway-3.ts';
+import {
+	gateway3RequiredSubmissionDocuments,
+	gateway3ReviewDocumentsAnswer
+} from '../../../../fixtures/manage/gateway-3.ts';
 import {
 	gateway3Page,
 	gateway3ReviewDocumentsPage,
@@ -34,9 +37,13 @@ describe('Gateway 3 page content', () => {
 		gateway3Page.verifyNoSubmissionDocumentsReviewLink();
 	});
 
-	it('does not show Review for uploaded documents before submission', { tags: ['regression'] }, () => {
+	it('does not count or show Review for uploaded documents before submission', { tags: ['regression'] }, () => {
 		openSeededGateway3PageWithSubmissionDocuments({ submitted: false });
 
+		gateway3Page.verifySummaryRowContains(
+			gateway3ReviewDocumentsAnswer.row,
+			gateway3ReviewDocumentsAnswer.noDocumentsDisplay
+		);
 		gateway3Page.verifyNoSubmissionDocumentsReviewLink();
 	});
 

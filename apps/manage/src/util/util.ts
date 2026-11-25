@@ -28,6 +28,21 @@ export function sortGateway3Submissions(
 	});
 }
 
+/**
+ * Whether the Portal has declared Gateway 3 submission `submissionNumber` (1-based, in sortGateway3Submissions order) as submitted.
+ * The Portal declaration page stamps the submission's submittedDate (and, for submission 1, gateway3Info.actualDate)
+ * in the same transaction that commits the LPA's temporary uploads.
+ * actualDate is only a fallback for submission 1 rows saved before submittedDate existed.
+ */
+export function isGateway3SubmissionDeclared(
+	sortedSubmissions: { submittedDate?: Date | null }[],
+	submissionNumber: number,
+	actualDate?: Date | null
+) {
+	if (sortedSubmissions[submissionNumber - 1]?.submittedDate) return true;
+	return submissionNumber === 1 && Boolean(actualDate);
+}
+
 export type examinationStatusWithPause = {
 	id: string | null;
 	submissionForExaminationDate: Date | null;

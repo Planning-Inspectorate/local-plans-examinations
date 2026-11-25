@@ -12,6 +12,7 @@ import {
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
 import { buildAssessorTabLocals } from '../assessor-helper.ts';
 import { resolveExaminationWebsite } from '../../../util/examination-website.ts';
+import { isGateway3SubmissionDeclared, sortGateway3Submissions } from '#util/util.ts';
 
 const { RESUBMISSION_DOCUMENTS_FIELD, RESUBMISSION_DOCUMENTS_LABEL } = COMMON_CONSTS;
 const RESUBMISSION_DOCUMENT_SET_PREFIX = 'g3-document-';
@@ -86,15 +87,19 @@ export const compileGateway3Data = async (
 
 	const gateway3Info = await db.gateway3Info.findUnique({
 		where: { caseId: currentData.caseId },
-		select: { examinationWebsiteUrl: true }
+		select: { examinationWebsiteUrl: true, actualDate: true, submissions: true }
 	});
+	// Documents only count towards a submission once the Portal has declared that submission as submitted
+	const sortedSubmissions = sortGateway3Submissions(gateway3Info?.submissions ?? []);
+	const isDeclared = (submissionNumber: number) =>
+		isGateway3SubmissionDeclared(sortedSubmissions, submissionNumber, gateway3Info?.actualDate);
 	const examinationInfo = await db.examinationInfo.findUnique({
 		where: { caseId: currentData.caseId },
 		select: { examinationWebsite: true, examinationWebsiteUrl: true }
 	});
 
 	const documentsBySetId = new Map<string, typeof documents>();
-	for (const document of documents) {
+	for (const document of isDeclared(1) ? documents : []) {
 		const group = documentsBySetId.get(document.documentSetId) ?? [];
 		group.push(document);
 		documentsBySetId.set(document.documentSetId, group);
@@ -133,7 +138,7 @@ export const compileGateway3Data = async (
 
 	for (const [setId, setDocuments] of resubmissionDocumentsBySetId) {
 		const submissionNumber = Number(setId.slice(RESUBMISSION_DOCUMENT_SET_PREFIX.length));
-		if (!Number.isInteger(submissionNumber) || submissionNumber < 2) continue;
+		if (!Number.isInteger(submissionNumber) || submissionNumber < 2 || !isDeclared(submissionNumber)) continue;
 
 		// Saving the BO report into the set soft-deletes the LPA uploads, so once any exist they are the LPA files.
 		// Until then every active file in the set is an LPA upload.
