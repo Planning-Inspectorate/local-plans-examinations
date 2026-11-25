@@ -66,6 +66,20 @@ describe('createJourney', () => {
 		);
 	});
 
+	it('preserves URL casing in the digital supporting material summary', () => {
+		for (const url of ['https://www.example.com/LocalPlan', 'www.example.com/LocalPlan']) {
+			const journey = createTestJourney({ digitalSupportingMaterialLink: url });
+			const question = journey.getQuestionByParams({
+				section: 'plan-content-evidence',
+				question: 'digital-supporting-material'
+			});
+			assert.ok(question);
+			const [row] = question.formatAnswerForSummary('plan-content-evidence', journey, url);
+
+			assert.strictEqual(row.value, url);
+		}
+	});
+
 	it('builds session Gateway 2 submission URLs without a plan reference', () => {
 		const response = new JourneyResponse(JOURNEY_ID, 'session', {});
 		const req = {

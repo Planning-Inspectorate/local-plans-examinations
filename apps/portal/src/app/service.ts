@@ -5,6 +5,7 @@ import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
+import { getActiveExaminationPause } from '#util/examination-pause.ts';
 import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
 import {
 	DOCUMENT_SET_ID,
@@ -49,6 +50,11 @@ type PortalCase = {
 		soundUnsoundDate: Date | null;
 		status: string;
 		statusLookup: { displayName: string } | null;
+		planPauseHistory: {
+			createdAt: Date;
+			planPauseDate: Date;
+			planPauseEndDate: Date | null;
+		}[];
 	} | null;
 	documents: {
 		guid: string;
@@ -195,11 +201,13 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 
 	const gateway2Date = caseRecord.gateway2Info?.expectedDate;
 	const gateway3Date = caseRecord.gateway3Info?.expectedDate;
-	const examinationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
+	const persistedExaminationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
+	const activePause = getActiveExaminationPause(caseRecord.examinationInfo?.planPauseHistory);
+	const examinationStatus = activePause ? EXAMINATION_STATUS_ID.PAUSED : persistedExaminationStatus;
 	const examinationDate =
-		examinationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED
+		persistedExaminationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED
 			? caseRecord.examinationInfo?.adoptionDate
-			: examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+			: persistedExaminationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
 				? caseRecord.examinationInfo?.soundUnsoundDate
 				: caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
@@ -215,10 +223,17 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 		stage: progress.stage,
 		status: progress.status,
 		examinationStatus,
-		examinationStatusLabel:
-			examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+		examinationStatusLabel: activePause
+			? 'Paused'
+			: examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
 				? 'Report issued'
 				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
+		pause: activePause
+			? {
+					startDate: formatDisplayDate(activePause.planPauseDate) as string,
+					restartDate: formatDisplayDate(activePause.planPauseEndDate) ?? null
+				}
+			: null,
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
@@ -269,6 +284,14 @@ const planCaseInclude = {
 			adoptionDate: true,
 			soundUnsoundDate: true,
 			status: true,
+			planPauseHistory: {
+				select: {
+					createdAt: true,
+					planPauseDate: true,
+					planPauseEndDate: true
+				},
+				orderBy: { createdAt: 'desc' as const }
+			},
 			statusLookup: {
 				select: { displayName: true }
 			}
@@ -312,6 +335,7 @@ const planCaseInclude = {
 
 export class PortalService extends Service {
 	readonly clarityId: string | undefined;
+	readonly googleAnalyticsId: string | undefined;
 	readonly auth: Config['auth'];
 	readonly environment: Config['environment'];
 	readonly nodeEnv: Config['NODE_ENV'];
@@ -323,6 +347,7 @@ export class PortalService extends Service {
 		this.environment = config.environment;
 		this.nodeEnv = config.NODE_ENV;
 		this.clarityId = config.clarityId;
+		this.googleAnalyticsId = config.googleAnalyticsId;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
 

@@ -58,6 +58,8 @@ export interface Config extends ConfigWithBlob {
 	};
 	appName: 'manage';
 	notifyCallbackEnabled: boolean;
+	clarityId?: string;
+	googleAnalyticsId?: string;
 }
 
 export type ENVIRONMENT_NAMES = Readonly<{ PROD: string; DEV: string; TEST: string; TRAINING: string }>;
@@ -204,6 +206,9 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID,
 		GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID,
 		GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID
+		CLARITY_ID,
+		GOOGLE_ANALYTICS_ID,
+		LOCAL_PLANS_TEAM_EMAIL
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -335,7 +340,9 @@ export function loadConfig(): Config {
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
 		appName: 'manage',
-		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
+		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true',
+		clarityId: CLARITY_ID || undefined,
+		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined
 	};
 
 	return config;

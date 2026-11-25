@@ -19,6 +19,8 @@ export type Config = ConfigWithBlob & {
 	};
 	// Microsoft Clarity tracking id (optional, set via CLARITY_ID)
 	clarityId?: string;
+	// Google Analytics measurement id (optional, set via GOOGLE_ANALYTICS_ID)
+	googleAnalyticsId?: string;
 	appName: 'portal';
 };
 
@@ -55,6 +57,7 @@ export function loadConfig(): Config {
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
 		CLARITY_ID,
+		GOOGLE_ANALYTICS_ID,
 		ENVIRONMENT,
 		OTP_BYPASS_CODE
 	} = process.env;
@@ -135,6 +138,8 @@ export function loadConfig(): Config {
 		},
 		// Microsoft Clarity id for analytics tracking (optional)
 		clarityId: CLARITY_ID || undefined,
+		// Google Analytics measurement id for analytics tracking (optional)
+		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined,
 		appName: 'portal'
 	};
 

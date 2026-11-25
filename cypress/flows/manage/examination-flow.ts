@@ -15,10 +15,23 @@ import type {
 	ExaminationReportSeedOptions,
 	ExaminationSubmissionDocumentsSeedOptions
 } from '../../tasks/examination.ts';
-import type { DateAnswer } from '../../types/date.ts';
 import { examinationPause, examinationReport, soundUnsound } from '../../fixtures/manage/examination.ts';
 import { examinationMIQCheckPage } from '../../page-objects/manage/examination/miq-document-page.ts';
 import { MIQcheckPage } from '../../fixtures/manage/examination.ts';
+import {
+	HearingDateAndTimePage,
+	HearingExpectedDaysPage,
+	RemoteOrInPersonPage,
+	HearingLocationKnownPage,
+	HearingVenueAddressPage,
+	MeetingLinkKnownPage,
+	RemoteLinkPage,
+	HearingCheckPage,
+	type HearingVenue
+} from '../../page-objects/manage/examination/hearing-page.ts';
+
+import type { TimeAnswer } from '../../page-objects/manage/gateway-2/workshop-set-up/workshop-date-and-time-page.ts';
+import type { DateAnswer } from '../../types/date.ts';
 
 export const pauseExamination = (pause: { input: DateAnswer; details: string } = examinationPause, pauseNumber = 1) => {
 	const pages = examinationPausePages(pauseNumber);
@@ -103,4 +116,50 @@ export const uploadExaminationFinalReportDocuments = () => {
 	examinationReportUploadPage.saveAndReturn();
 	examinationReportCheckPage.verifyDocuments(examinationReport.fileName, examinationReport.fileName2);
 	examinationReportCheckPage.confirm();
+};
+
+export type HearingDetails = {
+	date: DateAnswer;
+	time: TimeAnswer;
+	type: 'in-person' | 'hybrid' | 'remote';
+	expectedDays?: string; // leave this out to answer 'No'
+	venue?: HearingVenue;
+	meetingLink?: string;
+};
+
+export const setUpHearing = (hearing: HearingDetails, hearingNumber = 1) => {
+	examinationPage.addHearing();
+	new HearingDateAndTimePage(hearingNumber).enterDateAndTime(hearing.date, hearing.time);
+
+	const expectedDaysPage = new HearingExpectedDaysPage(hearingNumber);
+	if (hearing.expectedDays) {
+		expectedDaysPage.enterDays(hearing.expectedDays);
+	} else {
+		expectedDaysPage.selectAnswer('no');
+	}
+
+	new RemoteOrInPersonPage(hearingNumber).selectAnswer(hearing.type);
+
+	if (hearing.type !== 'remote') {
+		const locationKnownPage = new HearingLocationKnownPage(hearingNumber);
+		if (hearing.venue) {
+			locationKnownPage.selectAnswer('yes');
+			new HearingVenueAddressPage(hearingNumber).enterAddress(hearing.venue);
+		} else {
+			locationKnownPage.selectAnswer('no');
+		}
+	}
+
+	if (hearing.type !== 'in-person') {
+		const meetingLinkKnownPage = new MeetingLinkKnownPage(hearingNumber);
+		if (hearing.meetingLink) {
+			meetingLinkKnownPage.selectAnswer('yes');
+			new RemoteLinkPage(hearingNumber).enterAnswer(hearing.meetingLink);
+		} else {
+			meetingLinkKnownPage.selectAnswer('no');
+		}
+	}
+
+	new HearingCheckPage(hearingNumber).confirmHearing();
+	examinationPage.verifyNotificationBanner('Hearing created');
 };

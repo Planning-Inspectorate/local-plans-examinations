@@ -766,6 +766,41 @@ describe('Gateway 2 post-submission view template', () => {
 		assert.ok(!html.includes('data-cy="workshop-details-table"'));
 	});
 
+	it('renders the completed status and Gateway 2 report above aligned workshop details', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 2 submission',
+			pageHeading: 'Gateway 2 submission',
+			submissionDate: '1 September 2026',
+			statusTag: { label: 'Completed', class: 'govuk-tag--blue' },
+			gateway2ReportFiles: [{ fileName: 'gateway-2-report.pdf' }],
+			hasWorkshop: true,
+			workshopFormat: 'in-person',
+			workshopVenue: ['East Borough Civic Centre'],
+			workShopStartTime: '10:00, 12 May 2026',
+			workshopDocuments: [{ fileName: 'workshop-agenda.pdf' }],
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		const statusPosition = html.indexOf('Completed');
+		const reportPosition = html.indexOf('data-cy="gateway-2-report-section"');
+		const workshopPosition = html.indexOf('data-cy="gateway-2-workshop-section"');
+		assert.ok(statusPosition >= 0 && reportPosition > statusPosition && workshopPosition > reportPosition);
+
+		const workshopHtml = html.slice(workshopPosition);
+		assert.ok(!workshopHtml.includes('govuk-summary-list--no-border'));
+		assert.strictEqual(
+			(workshopHtml.match(/govuk-summary-list__row govuk-summary-list__row--no-border/g) ?? []).length,
+			4
+		);
+	});
+
 	it('renders section headings for Procedural, Consultation and Additional Documents', () => {
 		const nunjucks = configureNunjucks();
 		const html = nunjucks.render('views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk', {

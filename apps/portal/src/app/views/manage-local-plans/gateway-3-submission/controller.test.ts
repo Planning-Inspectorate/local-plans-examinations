@@ -87,7 +87,8 @@ describe('setGateway3ViewLocals', () => {
 		const req = {
 			currentCase: {
 				planTitle: 'Test Local Plan',
-				gateway3Info: { expectedDate: new Date('2026-06-12T00:00:00.000Z') }
+				// UK midnight during BST falls on the previous UTC day.
+				gateway3Info: { expectedDate: new Date('2026-06-11T23:00:00.000Z') }
 			},
 			params: { planReference: 'PLAN-003' }
 		} as any;
