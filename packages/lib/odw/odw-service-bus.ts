@@ -63,7 +63,9 @@ export class ODWServiceBusDataSender {
 				this.tryLogInfo(`No event messages generated, skipping sending messages to the ODW`);
 			}
 		} catch (error) {
-			this.tryLogWarning(`An error occurred while sending a message to the ODW Service Bus: ${error}`);
+			if (error instanceof Error) {
+				this.tryLogWarning(`An error occurred while sending a message to the ODW Service Bus: ${error.stack}`);
+			}
 		}
 	}
 }
