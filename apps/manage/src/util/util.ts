@@ -30,6 +30,7 @@ export function sortGateway3Submissions(
 
 export type examinationStatusWithPause = {
 	id: string | null;
+	submissionForExaminationDate: Date | null;
 	examiningInspector1: string | null;
 	examiningInspector2: string | null;
 	examiningInspector3: string | null;
@@ -48,6 +49,7 @@ export const getExaminationStages = async (service: ManageService, caseId: strin
 		where: { caseId },
 		select: {
 			id: true,
+			submissionForExaminationDate: true,
 			examiningInspector1: true,
 			examiningInspector2: true,
 			examiningInspector3: true,

@@ -118,6 +118,35 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			await removeItem({ db, reference, section, currentItemId, service, req });
 			return;
 		}
+		switch (true) {
+			case req.url.includes('check-lpas') && action === 'edit':
+				existing =
+					req.url.includes('check-lpas') && action === 'edit'
+						? (
+								await db.lPA.findUnique({
+									where: { lpaCode: currentItemId },
+									select: { lpaName: true }
+								})
+							)?.lpaName
+						: null;
+				break;
+			case req.url.includes('assessor-gateway-2'):
+				existing = (
+					await db.gateway2Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
+			case req.url.includes('assessor-gateway-3'):
+				existing = (
+					await db.gateway3Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
+		}
 
 		switch (true) {
 			case req.url.includes('check-lpas'):

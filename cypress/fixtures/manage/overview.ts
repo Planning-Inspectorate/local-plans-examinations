@@ -23,7 +23,8 @@ export const localPlanningAuthority = {
 	row: 'Planning authorities',
 	path: 'local-planning-authority',
 	lpa1Value: 'Local Planning Authority 1',
-	lpa2Value: 'Local Planning Authority 2'
+	lpa2Value: 'Local Planning Authority 2',
+	lpa3Value: 'Local Planning Authority 3'
 } as const;
 
 export const caseOfficer = {

@@ -119,6 +119,9 @@ function createService(): any {
 		lPA: {
 			findUnique: mock.fn(async () => null)
 		},
+		lPA: {
+			findUnique: mock.fn(async () => null)
+		},
 		gateway1Info: {
 			upsert: mock.fn(async () => ({})),
 			findUnique: mock.fn(async () => null)

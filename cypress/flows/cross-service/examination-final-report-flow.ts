@@ -18,6 +18,8 @@ export const verifyExaminationFinalReportDocumentsInPortal = (
 			cy.contains('[data-cy="plan-link"]', reference).click();
 			cy.location('pathname').should('eq', `/manage-local-plans/${reference}`);
 			cy.get('[data-cy="plan-progress"], section[aria-labelledby="plan-progress-heading"]')
+				.contains('.govuk-task-list__item', 'Examination')
+				.should('contain.text', `Report issued: ${sharedDate}`)
 				.contains('a', 'Examination')
 				.click();
 			cy.location('pathname').should('eq', `/manage-local-plans/${reference}/examination`);

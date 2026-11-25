@@ -3,6 +3,7 @@ export * from './gateway-2-venue-page.ts';
 export * from './gateway-2-assessor-page.ts';
 export * from './gateway-2-date-page.ts';
 export * from './gateway-2-report-page.ts';
+export * from './gateway-2-submission-documents-page.ts';
 export * from './gateway-2-workshop-documents-page.ts';
 export * from './workshop-set-up/workshop-date-and-time-page.ts';
 export * from './workshop-set-up/workshop-expected-days-page.ts';

@@ -140,4 +140,62 @@ describe('CustomFileReviewerQuestion', () => {
 
 		assert.deepEqual(viewModel.documentGroups, []);
 	});
+
+	describe('workshop documents', () => {
+		const submissionAnswer = [
+			{
+				category: 'procedural',
+				documents: [
+					{ title: 'Gateway 2 cover letter', files: [{ fileName: 'cover.pdf', id: 'cover' }] },
+					{
+						title: 'Workshop document',
+						files: [
+							{ fileName: 'workshop-1.pdf', id: 'workshop-1' },
+							{ fileName: 'workshop-2.pdf', id: 'workshop-2' }
+						]
+					}
+				]
+			}
+		];
+
+		it('should not count workshop documents as submission documents', () => {
+			const question = buildQuestion();
+			const summary = question.formatAnswerForSummary('case', buildJourney(submissionAnswer), submissionAnswer);
+
+			assert.equal(summary[0].value, '1 document(s)');
+		});
+
+		it('should keep the count in step with the rows shown on the review page', () => {
+			const question = buildQuestion();
+			const viewModel = question.toViewModel({
+				section: { name: 'Section' },
+				journey: buildJourney(submissionAnswer),
+				params: { reference: 'PLAN-570791' }
+			});
+			const summary = question.formatAnswerForSummary('case', buildJourney(submissionAnswer), submissionAnswer);
+
+			const rowTitles = viewModel.documentGroups.flatMap((group: any) => group.rows.map((row: any) => row.key.text));
+			assert.deepEqual(rowTitles, ['Gateway 2 cover letter']);
+			assert.doesNotMatch(JSON.stringify(viewModel.documentGroups), /workshop-\d\.pdf/);
+
+			const filesShown = viewModel.documentGroups
+				.flatMap((group: any) => group.rows)
+				.reduce((total: number, row: any) => total + (row.value.html.match(/govuk-link/g)?.length ?? 0), 0);
+			assert.equal(summary[0].value, `${filesShown} document(s)`);
+		});
+
+		it('should show zero documents and no Review action when only workshop documents are uploaded', () => {
+			const question = buildQuestion();
+			const answer = [
+				{
+					category: 'procedural',
+					documents: [{ title: 'Workshop document', files: [{ fileName: 'workshop-1.pdf', id: 'workshop-1' }] }]
+				}
+			];
+
+			const summary = question.formatAnswerForSummary('case', buildJourney(answer), answer);
+
+			assert.deepEqual(summary, [{ key: 'Review files', value: '0 document(s)', action: undefined }]);
+		});
+	});
 });

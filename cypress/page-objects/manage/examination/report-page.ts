@@ -17,6 +17,12 @@ export const reportIssuedDatePage = new DateQuestionPage(
 	'When was the plan confirmed as sound or unsound?'
 );
 
+export const adoptionDatePage = new DateQuestionPage(
+	new RegExp(`${outcomePath}adoption-date$`),
+	'adoptionDate',
+	'When was the plan adopted?'
+);
+
 class ExaminationReportCheckPage extends BasePage {
 	constructor() {
 		super(new RegExp(`${outcomePath}examination-report/check$`));

@@ -70,25 +70,48 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 		let hrefG2, hrefG3, hrefE;
 		hrefG2 = hrefG3 = hrefE = null;
 		tagG2 = tagG3 = tagE = 'Cannot start yet';
-		const dateTextG2 = submissionExpected;
-		const dateTextG3 = submissionExpected;
+		let dateTextG2 = submissionExpected;
+		let dateTextG3 = submissionExpected;
 		let dateTextE = submissionExpected;
+		let dateG2 = plan.dates.G2;
+		let dateG3 = plan.dates.G3;
+		let dateE = plan.dates.E;
 		switch (plan.stage) {
 			case STAGE.Gateway2:
 				hrefG2 = applicationLink();
 				tagG2 = planStatus;
+				if (plan.submittedDates.G2) {
+					dateTextG2 = 'Submitted: ';
+					dateG2 = plan.submittedDates.G2;
+				}
 				break;
 			case STAGE.Gateway3:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				tagG2 = 'Completed';
 				tagG3 = planStatus;
+				if (plan.completedDates.G2) {
+					dateTextG2 = 'Completed: ';
+					dateG2 = plan.completedDates.G2;
+				}
+				if (plan.submittedDates.G3) {
+					dateTextG3 = 'Submitted: ';
+					dateG3 = plan.submittedDates.G3;
+				}
 				break;
 			case STAGE.Examination:
 				hrefG2 = applicationLink();
 				hrefG3 = gateway3Link();
 				hrefE = examinationAvailable ? examinationLink() : null;
 				tagG2 = tagG3 = 'Completed';
+				if (plan.completedDates.G2) {
+					dateTextG2 = 'Completed: ';
+					dateG2 = plan.completedDates.G2;
+				}
+				if (plan.completedDates.G3) {
+					dateTextG3 = 'Completed: ';
+					dateG3 = plan.completedDates.G3;
+				}
 				if (plan.status === STATUS.Completed) {
 					tagE = 'Completed';
 				} else {
@@ -100,6 +123,9 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 				if (plan.examinationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED) {
 					dateTextE = 'Adopted: ';
 					tagE = examinationStatusTag(plan);
+				} else if (plan.submittedDates.E && plan.examinationStatus !== EXAMINATION_STATUS_ID.REPORT_ISSUED) {
+					dateTextE = 'Submitted: ';
+					dateE = plan.submittedDates.E;
 				}
 				break;
 		}
@@ -109,12 +135,13 @@ export function buildPlanPage(service: PortalService): AsyncRequestHandler {
 
 		const viewModel = {
 			dateG1: plan.dates.G1,
-			dateG2: plan.dates.G2,
-			dateG3: plan.dates.G3,
-			dateE: plan.dates.E,
+			dateG2,
+			dateG3,
+			dateE,
 			dateTextG2,
 			dateTextG3,
 			dateTextE,
+			pauseStartDate: plan.pause?.startDate,
 			tagG2,
 			tagG3,
 			tagE,

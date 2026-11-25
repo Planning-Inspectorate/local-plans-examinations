@@ -52,6 +52,7 @@ import {
 	sortGateway3Submissions,
 	type Gateway3SubmissionSummary
 } from '#util/gateway-3-submission.ts';
+import { formatDisplayDate } from '#util/date.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 // ---------------------------------------------------------------------------
@@ -149,17 +150,6 @@ function redirectToFileUploaderQuestion(req: Request) {
 	const planReference = getRoutePlanReference(req);
 	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
 	return `${req.baseUrl}${planPath}/gateway-3-submission/${req.params.section}/${req.params.question}`;
-}
-
-function formatDisplayDate(date: Date | null | undefined) {
-	if (!date) {
-		return undefined;
-	}
-	return date.toLocaleDateString('en-GB', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric'
-	});
 }
 
 function formatDisplayTime(date: Date) {
@@ -819,6 +809,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
 		const submissionDate = new Date();
 		const caseId = request.currentCase?.id;
+		const latestSubmission = sortGateway3Submissions(request.currentCase?.gateway3Info?.submissions ?? []).at(-1);
+		const existingOpenSubmission =
+			latestSubmission?.id && latestSubmission.decision == null && latestSubmission.completionDate == null
+				? latestSubmission
+				: null;
 
 		if (!caseId) {
 			service.logger.error(`No case loaded for Gateway 3 declaration submission ${planReference ?? ''}`);
@@ -837,7 +832,17 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				}),
 				service.db.gateway3Info.update({
 					where: { caseId },
-					data: { actualDate: submissionDate }
+					data: {
+						actualDate: submissionDate,
+						submissions: existingOpenSubmission
+							? {
+									update: {
+										where: { id: existingOpenSubmission.id },
+										data: { submittedDate: submissionDate }
+									}
+								}
+							: { create: { submittedDate: submissionDate } }
+					}
 				}),
 				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
 			]);

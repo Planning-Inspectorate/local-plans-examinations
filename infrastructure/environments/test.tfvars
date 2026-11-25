@@ -128,4 +128,7 @@ web_domains = {
 }
 
 # Microsoft Clarity id for portal in this environment
-clarity_id = "y29uvipr8v"
+clarity_id = "zims6ddvuh"
+
+# Microsoft Clarity id for manage in this environment
+manage_clarity_id = "zimrgwp4mw"

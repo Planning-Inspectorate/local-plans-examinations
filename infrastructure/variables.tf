@@ -77,6 +77,24 @@ variable "clarity_id" {
   default     = ""
 }
 
+variable "google_analytics_id" {
+  description = "Google Analytics measurement id for portal app (per-environment)"
+  type        = string
+  default     = ""
+}
+
+variable "manage_clarity_id" {
+  description = "Microsoft Clarity id for manage app (per-environment)"
+  type        = string
+  default     = ""
+}
+
+variable "manage_google_analytics_id" {
+  description = "Google Analytics measurement id for manage app (per-environment)"
+  type        = string
+  default     = ""
+}
+
 variable "documents_config" {
   description = "Config for document blob storage"
   type = object({

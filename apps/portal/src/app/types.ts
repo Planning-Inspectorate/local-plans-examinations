@@ -143,12 +143,25 @@ export interface Plan {
 	status: Status; //Status
 	examinationStatus: string;
 	examinationStatusLabel: string;
+	pause: {
+		startDate: string;
+		restartDate: string | null;
+	} | null;
 	dates: {
 		//dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: August 2026, E: September 2026"
 		G1: string;
 		G2: string;
 		G3: string;
 		E: string;
+	};
+	submittedDates: {
+		G2: string | null;
+		G3: string | null;
+		E: string | null;
+	};
+	completedDates: {
+		G2: string | null;
+		G3: string | null;
 	};
 	sections: State[]; // track which state each gateway is array of state e.g. [0,0,0]
 	documents: ApplicationDoc[]; // holds interfaces of each doc needed
@@ -186,6 +199,18 @@ function validGateway2ReportFile(rawFile: unknown): rawFile is Gateway2ReportFil
 	);
 }
 
+function validPause(rawPause: unknown): rawPause is Plan['pause'] {
+	if (rawPause === null) return true;
+	if (typeof rawPause !== 'object') return false;
+
+	const pause = rawPause as Record<string, unknown>;
+	return (
+		typeof pause.startDate === 'string' &&
+		pause.startDate.trim().length > 0 &&
+		(pause.restartDate === null || (typeof pause.restartDate === 'string' && pause.restartDate.trim().length > 0))
+	);
+}
+
 export function validPlan(rawPlan: unknown): rawPlan is Plan {
 	if (typeof rawPlan !== 'object' || rawPlan === null) return false;
 
@@ -209,6 +234,14 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		Object.values(date as Record<string, unknown>).every(
 			(value) => typeof value === 'string' && value.trim().length > 0
 		);
+	const validActualDates = (dates: any, stages: string[]) =>
+		dates !== null &&
+		typeof dates === 'object' &&
+		Object.keys(dates).every((stage) => stages.includes(stage)) &&
+		stages.every((stage) => {
+			const value = (dates as Record<string, any>)[stage];
+			return value === null || (typeof value === 'string' && value.trim().length > 0);
+		});
 
 	return (
 		typeof plan.refNum === 'string' &&
@@ -219,7 +252,10 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		validStatus(plan.status) &&
 		typeof plan.examinationStatus === 'string' &&
 		typeof plan.examinationStatusLabel === 'string' &&
+		validPause(plan.pause) &&
 		validDates(plan.dates) &&
+		validActualDates(plan.submittedDates, ['G2', 'G3', 'E']) &&
+		validActualDates(plan.completedDates, ['G2', 'G3']) &&
 		validSections(plan.sections) &&
 		Array.isArray(plan.documents) &&
 		plan.documents.length > 0 &&
@@ -251,6 +287,9 @@ export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
 	examinationStatus: 'cannot-start-yet',
 	examinationStatusLabel: 'Cannot start yet',
+	pause: null,
+	submittedDates: { G2: null, G3: null, E: null },
+	completedDates: { G2: null, G3: null },
 	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed
@@ -332,6 +371,26 @@ function transformDates(dates: unknown): { G1: string; G2: string; G3: string; E
 	return { G1: '', G2: '', G3: '', E: '' };
 }
 
+function getActualDate(dates: any, stage: string): string | null {
+	const source = dates !== null && typeof dates === 'object' ? (dates as Record<string, any>) : {};
+	return typeof source[stage] === 'string' ? source[stage] : null;
+}
+
+function transformSubmittedDates(dates: any): Plan['submittedDates'] {
+	return {
+		G2: getActualDate(dates, 'G2'),
+		G3: getActualDate(dates, 'G3'),
+		E: getActualDate(dates, 'E')
+	};
+}
+
+function transformCompletedDates(dates: any): Plan['completedDates'] {
+	return {
+		G2: getActualDate(dates, 'G2'),
+		G3: getActualDate(dates, 'G3')
+	};
+}
+
 export function buildPlan(plan: unknown): unknown {
 	if (plan !== null && typeof plan === 'object') {
 		const docs = 'documents' in plan && Array.isArray(plan.documents) ? plan.documents : [];
@@ -339,6 +398,8 @@ export function buildPlan(plan: unknown): unknown {
 		return mockPlan({
 			...plan,
 			dates,
+			submittedDates: transformSubmittedDates('submittedDates' in plan ? plan.submittedDates : undefined),
+			completedDates: transformCompletedDates('completedDates' in plan ? plan.completedDates : undefined),
 			documents: buildApplicationDocs(docs)
 		});
 	}

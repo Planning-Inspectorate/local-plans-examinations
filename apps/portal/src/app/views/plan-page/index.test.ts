@@ -299,6 +299,35 @@ describe('plan page', () => {
 		});
 	}
 
+	it('renders submitted and completed dates for the relevant gateway rows', async () => {
+		const submittedGateway2 = await renderPlan(
+			{ refNum: 'PLAN-001' },
+			{
+				refNum: 'PLAN-001',
+				stage: STAGE.Gateway2,
+				status: STATUS.UnderReview,
+				dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
+				submittedDates: { G2: '15 August 2026' }
+			}
+		);
+		assert.ok(submittedGateway2.html.includes('Submitted: 15 August 2026'));
+
+		const completedGateway3 = await renderPlan(
+			{ refNum: 'PLAN-001' },
+			{
+				refNum: 'PLAN-001',
+				stage: STAGE.Examination,
+				status: STATUS.ReadyToStart,
+				dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
+				completedDates: { G2: '2 September 2026', G3: '10 September 2026' }
+			}
+		);
+		assert.strictEqual(completedGateway3.data.dateTextG2, 'Completed: ');
+		assert.strictEqual(completedGateway3.data.dateG2, '2 September 2026');
+		assert.ok(completedGateway3.html.includes('Completed: 2 September 2026'));
+		assert.ok(completedGateway3.html.includes('Completed: 10 September 2026'));
+	});
+
 	it('should render Current status tag correctly', async () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' });
 
@@ -447,12 +476,13 @@ describe('plan page', () => {
 		}
 	});
 
-	it('should render Under review tag and the expected submission date for GW2 when status is UnderReview', async () => {
+	it('should render Under review tag and the submitted date for GW2 when status is UnderReview', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway2,
 			status: STATUS.UnderReview,
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
+			submittedDates: { G2: '15 August 2026' }
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
@@ -461,10 +491,9 @@ describe('plan page', () => {
 		assert.strictEqual(data.tagG3, 'Cannot start yet', `expected 'Cannot start yet' but got ${data.tagG3}`);
 		assert.strictEqual(data.tagE, 'Cannot start yet', `expected 'Cannot start yet' but got ${data.tagE}`);
 
-		assert.strictEqual(data.dateTextG2, 'Submission expected: ');
+		assert.strictEqual(data.dateTextG2, 'Submitted: ');
 
-		assert.ok(html.includes('Submission expected: 21 July 2026'), 'expected the expected submission date');
-		assert.ok(!html.includes('Submitted: '), 'expected no Submitted hint text');
+		assert.ok(html.includes('Submitted: 15 August 2026'), 'expected the actual submission date');
 		assert.ok(html.includes(expectedTag), 'expected html to contain yellow Under review tag');
 	});
 
@@ -520,20 +549,20 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes(cleanHtml(expectedHTML)), `expected html to contain ${expectedHTML}`);
 	});
 
-	it('should render Gateway 2 as completed with the expected date when the report is uploaded', async () => {
+	it('should render Gateway 2 with its completed date when the report is uploaded', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway3,
 			status: STATUS.ReadyToStart,
-			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 August 2026', E: '1 September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
+			completedDates: { G2: '2 September 2026' }
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 
 		assert.strictEqual(data.tagG2, 'Completed');
-		assert.strictEqual(data.dateTextG2, 'Submission expected: ');
+		assert.strictEqual(data.dateTextG2, 'Completed: ');
 		assert.ok(cleanHtml(html).includes('Gateway 2'), 'expected Gateway 2 row to render');
-		assert.ok(cleanHtml(html).includes('Submission expected: 2 September 2026'), 'expected Gateway 2 date hint');
-		assert.ok(!cleanHtml(html).includes('Completed: '), 'expected no Completed hint text');
+		assert.ok(cleanHtml(html).includes('Completed: 2 September 2026'), 'expected Gateway 2 date hint');
 	});
 
 	it('should not render the Gateway 2 report on the plan page', async () => {
@@ -576,20 +605,20 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes('Ready to start'), 'expected Gateway 3 status to be Ready to start');
 	});
 
-	it('should render Under review and the expected submission date for Gateway 3', async () => {
+	it('should render Under review and the submitted date for Gateway 3', async () => {
 		const plan = {
 			refNum: 'PLAN-001',
 			stage: STAGE.Gateway3,
 			status: STATUS.UnderReview,
-			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 October 2026', E: '1 November 2026' }
+			dates: { G1: '7 May 2026', G2: '2 September 2026', G3: '1 October 2026', E: '1 November 2026' },
+			submittedDates: { G3: '25 September 2026' }
 		};
 		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
 		const expectedTag = '<strong class="govuk-tag govuk-tag--yellow">Under review</strong>';
 
 		assert.strictEqual(data.tagG3, expectedTag);
-		assert.strictEqual(data.dateTextG3, 'Submission expected: ');
-		assert.ok(html.includes('Submission expected: 1 October 2026'));
-		assert.ok(!html.includes('Submitted: '));
+		assert.strictEqual(data.dateTextG3, 'Submitted: ');
+		assert.ok(html.includes('Submitted: 25 September 2026'));
 		assert.ok(html.includes(expectedTag));
 	});
 
@@ -709,40 +738,80 @@ describe('plan page', () => {
 		}
 	});
 
-	it('shows a yellow Submitted examination tag and the expected examination submission date', async () => {
+	it('shows a yellow Submitted examination tag and the actual examination submission date', async () => {
 		const plan = {
 			refNum: 'PLAN-003',
 			stage: STAGE.Examination,
 			status: STATUS.WithPINS,
 			examinationStatus: 'submitted',
 			examinationStatusLabel: 'Submitted',
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' },
+			submittedDates: { E: '24 October 2026' }
 		};
 
 		const { data, html } = await renderPlan({ refNum: 'PLAN-003' }, plan);
 
-		assert.equal(data.dateTextE, 'Submission expected: ');
+		assert.equal(data.dateTextE, 'Submitted: ');
 		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>');
-		assert.ok(html.includes('Submission expected: 21 October 2026'));
+		assert.ok(html.includes('Submitted: 24 October 2026'));
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>'));
 	});
 
-	it('shows an In examination tag and the expected examination submission date', async () => {
+	it('shows an In examination tag and the actual examination submission date', async () => {
 		const plan = {
 			refNum: 'PLAN-004',
 			stage: STAGE.Examination,
 			status: STATUS.WithPINS,
 			examinationStatus: 'in-examination',
 			examinationStatusLabel: 'In examination',
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' },
+			submittedDates: { E: '24 October 2026' }
+		};
+
+		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
+
+		assert.equal(data.dateTextE, 'Submitted: ');
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
+		assert.ok(html.includes('Submitted: 24 October 2026'));
+		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
+	});
+
+	it('shows the grey Paused tag and pause date while retaining read-only access to submitted information', async () => {
+		const plan = {
+			refNum: 'PLAN-004',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'paused',
+			examinationStatusLabel: 'Paused',
+			pause: { startDate: '15 November 2026', restartDate: null },
 			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
 		};
 
 		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
 
-		assert.equal(data.dateTextE, 'Submission expected: ');
-		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
-		assert.ok(html.includes('Submission expected: 21 October 2026'));
-		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--grey">Paused</strong>');
+		assert.equal(data.button, null);
+		assert.equal(data.hrefE, '/manage-local-plans/PLAN-004/examination');
+		assert.ok(cleanHtml(html).includes('Paused: 15 November 2026'));
+		assert.ok(!cleanHtml(html).includes('Due to restart'));
+	});
+
+	it('does not show a restart date in the pause caption', async () => {
+		const plan = {
+			refNum: 'PLAN-004',
+			stage: STAGE.Examination,
+			status: STATUS.WithPINS,
+			examinationStatus: 'paused',
+			examinationStatusLabel: 'Paused',
+			pause: { startDate: '15 November 2026', restartDate: '20 November 2026' },
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '21 October 2026' }
+		};
+
+		const { html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
+
+		assert.ok(cleanHtml(html).includes('Paused: 15 November 2026'));
+		assert.ok(!cleanHtml(html).includes('Due to restart'));
+		assert.ok(!cleanHtml(html).includes('20 November 2026'));
 	});
 
 	it('shows a blue Report issued tag and the BO report issue date', async () => {
@@ -752,7 +821,8 @@ describe('plan page', () => {
 			status: STATUS.WithPINS,
 			examinationStatus: 'report-issued',
 			examinationStatusLabel: 'Report issued',
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '20 October 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '20 October 2026' },
+			submittedDates: { E: '18 September 2026' }
 		};
 
 		const { data, html } = await renderPlan({ refNum: 'PLAN-005' }, plan);
@@ -760,6 +830,7 @@ describe('plan page', () => {
 		assert.equal(data.dateTextE, 'Report issued: ');
 		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">Report issued</strong>');
 		assert.ok(html.includes('Report issued: 20 October 2026'));
+		assert.ok(!html.includes('Submitted: 18 September 2026'));
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">Report issued</strong>'));
 	});
 
@@ -798,9 +869,15 @@ describe('plan page', () => {
 			status: STATUS.Completed,
 			examinationStatus: 'plan-adopted',
 			examinationStatusLabel: 'Plan adopted',
-			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }
+			dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '20 October 2026' },
+			submittedDates: { E: '18 September 2026' }
 		};
-		const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+		const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+		assert.strictEqual(data.dateTextE, 'Adopted: ');
+		assert.strictEqual(data.dateE, '20 October 2026');
+		assert.ok(html.includes('Adopted: 20 October 2026'));
+		assert.ok(!html.includes('Submitted: 18 September 2026'));
 
 		const expectedTags = [
 			'Completed',

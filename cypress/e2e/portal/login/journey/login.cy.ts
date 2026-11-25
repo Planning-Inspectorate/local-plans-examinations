@@ -31,6 +31,8 @@ describe('Portal login journey', () => {
 		startPortalOtpLogin();
 
 		portalLoginOtpPage.verifyPath();
+		portalLoginOtpPage.errorSummary.should('not.exist');
+		portalLoginOtpPage.fieldErrors.should('not.exist');
 	});
 
 	it('logs in and shows the my plans page', { tags: ['smoke', 'environment-smoke'] }, () => {

@@ -50,7 +50,8 @@ function buildCase(overrides = {}) {
 			soundUnsoundDate: null,
 			adoptionDate: null,
 			status: 'cannot-start-yet',
-			statusLookup: { displayName: 'Cannot start yet' }
+			statusLookup: { displayName: 'Cannot start yet' },
+			planPauseHistory: []
 		},
 		documents: [],
 		...overrides
@@ -478,7 +479,7 @@ describe('PortalService', () => {
 			assert.deepStrictEqual(service.db.case.findMany.mock.calls[0].arguments[0], {
 				where: {
 					deletedDate: null,
-					email: 'user@example.com'
+					OR: [{ email: 'user@example.com' }, { contacts: { some: { email: 'user@example.com' } } }]
 				},
 				include: {
 					gateway1Info: {
@@ -509,6 +510,14 @@ describe('PortalService', () => {
 							adoptionDate: true,
 							soundUnsoundDate: true,
 							status: true,
+							planPauseHistory: {
+								select: {
+									createdAt: true,
+									planPauseDate: true,
+									planPauseEndDate: true
+								},
+								orderBy: { createdAt: 'desc' }
+							},
 							statusLookup: {
 								select: { displayName: true }
 							}
@@ -692,6 +701,77 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.UnderReview);
 			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
+			assert.strictEqual(plans[0].submittedDates.G3, '1 October 2026');
+		});
+
+		it('uses the latest Gateway 3 resubmission date instead of the original submission date', async () => {
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-10-01T12:00:00.000Z'),
+						submissions: [
+							{
+								decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+								submittedDate: new Date('2026-10-01T12:00:00.000Z'),
+								completionDate: new Date('2026-10-15T12:00:00.000Z')
+							},
+							{ decision: null, completionDate: null, submittedDate: new Date('2026-10-20T12:00:00.000Z') }
+						]
+					}
+				})
+			]);
+
+			const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plan.stage, STAGE.Gateway3);
+			assert.strictEqual(plan.status, STATUS.UnderReview);
+			assert.strictEqual(plan.submittedDates.G3, '20 October 2026');
+			assert.strictEqual(plan.completedDates.G3, null);
+		});
+
+		it('maps actual submitted and completed dates for each submitted stage', async () => {
+			const service = buildService([
+				buildCase({
+					gateway2Info: {
+						expectedDate: new Date('2026-07-21T12:00:00.000Z'),
+						actualDate: new Date('2026-08-15T12:00:00.000Z'),
+						reportIssuedDate: new Date('2026-09-02T12:00:00.000Z')
+					},
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-09-05T12:00:00.000Z'),
+						frontOfficeStatus: GATEWAY_3_STATUS.COMPLETED,
+						submissions: [
+							{
+								decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+								submittedDate: new Date('2026-09-05T12:00:00.000Z'),
+								completionDate: new Date('2026-09-10T12:00:00.000Z')
+							}
+						]
+					},
+					examinationInfo: {
+						expectedSubmissionForExaminationDate: new Date('2026-09-15T12:00:00.000Z'),
+						submissionForExaminationDate: new Date('2026-09-18T12:00:00.000Z'),
+						adoptionDate: null,
+						soundUnsoundDate: null,
+						status: EXAMINATION_STATUS_ID.SUBMITTED,
+						statusLookup: { displayName: 'Submitted' }
+					}
+				})
+			]);
+
+			const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.deepStrictEqual(plan.submittedDates, {
+				G2: '15 August 2026',
+				G3: '5 September 2026',
+				E: '18 September 2026'
+			});
+			assert.deepStrictEqual(plan.completedDates, {
+				G2: '2 September 2026',
+				G3: '10 September 2026'
+			});
 		});
 
 		it('maps a stored Report issued examination status using the BO issue date', async () => {
@@ -726,6 +806,58 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].dates.E, '20 October 2026');
 		});
 
+		for (const { label, restartDate, expectedStatus, expectedPause } of [
+			{
+				label: 'without a restart date',
+				restartDate: null,
+				expectedStatus: EXAMINATION_STATUS_ID.PAUSED,
+				expectedPause: { startDate: '15 November 2020', restartDate: null }
+			},
+			{
+				label: 'until a future restart date elapses',
+				restartDate: new Date('2999-11-20T00:00:00.000Z'),
+				expectedStatus: EXAMINATION_STATUS_ID.PAUSED,
+				expectedPause: { startDate: '15 November 2020', restartDate: '20 November 2999' }
+			},
+			{
+				label: 'as its pre-pause status after the restart date has elapsed',
+				restartDate: new Date('2020-11-20T00:00:00.000Z'),
+				expectedStatus: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+				expectedPause: null
+			}
+		]) {
+			it(`maps an examination ${label}`, async () => {
+				const service = buildService([
+					buildCase({
+						examinationInfo: {
+							expectedSubmissionForExaminationDate: new Date('2026-09-15T12:00:00.000Z'),
+							submissionForExaminationDate: new Date('2026-09-18T12:00:00.000Z'),
+							soundUnsoundDate: null,
+							adoptionDate: null,
+							status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
+							statusLookup: { displayName: 'In examination' },
+							planPauseHistory: [
+								{
+									createdAt: new Date('2020-11-15T12:00:00.000Z'),
+									planPauseDate: new Date('2020-11-15T00:00:00.000Z'),
+									planPauseEndDate: restartDate
+								}
+							]
+						}
+					})
+				]);
+
+				const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+				assert.equal(plan.examinationStatus, expectedStatus);
+				assert.equal(
+					plan.examinationStatusLabel,
+					expectedStatus === EXAMINATION_STATUS_ID.PAUSED ? 'Paused' : 'In examination'
+				);
+				assert.deepEqual(plan.pause, expectedPause);
+			});
+		}
+
 		it('maps an open Gateway 3 resubmission to Resubmission required using the timetabled date', async () => {
 			const service = buildService([
 				buildCase({
@@ -748,6 +880,8 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].stage, STAGE.Gateway3);
 			assert.strictEqual(plans[0].status, STATUS.ResubmissionRequired);
 			assert.strictEqual(plans[0].dates.G3, '1 August 2026');
+			assert.strictEqual(plans[0].submittedDates.G3, null);
+			assert.strictEqual(plans[0].completedDates.G3, null);
 		});
 
 		for (const { status, adoptionDate, soundUnsoundDate, submissionDate, expectedDate } of [

@@ -246,6 +246,7 @@ export const FRONT_OFFICE_GW2_TEXT_QUESTIONS = {
 		fieldName: 'digitalSupportingMaterialLink',
 		url: 'digital-supporting-material',
 		label: 'Link',
+		capitaliseAnswer: false,
 		html: 'views/manage-local-plans/gateway-2-submission/digital-supporting-material-description.njk',
 		text: {
 			caption: 'Plan content and evidence documents',
