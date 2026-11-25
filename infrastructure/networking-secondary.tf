@@ -62,14 +62,14 @@ resource "azurerm_virtual_network_peering" "secondary_to_odw" {
   count                     = var.odw_config == null ? 0 : 1
   name                      = "${local.org}-peer-${local.secondary_resource_suffix}-to-odw-${var.environment}"
   remote_virtual_network_id = data.azurerm_virtual_network.odw[0].id
-  resource_group_name       = azurerm_virtual_network.main.resource_group_name
-  virtual_network_name      = azurerm_virtual_network.main.name
+  resource_group_name       = azurerm_virtual_network.secondary.resource_group_name
+  virtual_network_name      = azurerm_virtual_network.secondary.name
 }
 
 resource "azurerm_virtual_network_peering" "odw_to_secondary" {
   count                     = var.odw_config == null ? 0 : 1
   name                      = "${local.org}-peer-odw-to-${local.secondary_resource_suffix}-${var.environment}"
-  remote_virtual_network_id = azurerm_virtual_network.main.id
+  remote_virtual_network_id = azurerm_virtual_network.secondary.id
   resource_group_name       = var.odw_config.network_resource_group_name
   virtual_network_name      = var.odw_config.network_name
 
