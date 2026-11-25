@@ -111,6 +111,9 @@ function createService(): any {
 			delete: mock.fn(async () => ({})),
 			upsert: mock.fn(async () => ({}))
 		},
+		lPA: {
+			findUnique: mock.fn(async () => null)
+		},
 		gateway1Info: {
 			upsert: mock.fn(async () => ({})),
 			findUnique: mock.fn(async () => null)
@@ -795,7 +798,7 @@ describe('updateCaseHistory', () => {
 		assert.deepEqual(entries, [
 			{ event: 'Title updated from Old plan to New plan', username: CURRENT_USER },
 			{ event: 'First name updated from Jane to Joan', username: CURRENT_USER },
-			{ event: 'Email address updated to joan@example.com', username: CURRENT_USER }
+			{ event: 'Email address joan@example.com added', username: CURRENT_USER }
 		]);
 	});
 

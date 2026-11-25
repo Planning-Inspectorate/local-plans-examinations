@@ -34,7 +34,7 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
-import { EXAMINING_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
+import { EXAMINING_INSPECTOR_FIELDS, QA_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
 import { TimetableSaveController } from './save/timetable-save-controller.ts';
 import {
 	sendGw2AssessorAppointedNotifyEmail,
@@ -44,9 +44,10 @@ import {
 	sendGw3PassNotifyEmail,
 	sendGw3ResubmissionNeededNotifyEmail
 } from '../../../app/notify/notify-helper.ts';
+import { resolveAssessorDisplayName } from './assessor-helper.ts';
 
 import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
-type ManageListAction = 'edit' | 'remove' | undefined;
+type ManageListAction = 'add' | 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
@@ -110,10 +111,41 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		const section = getParam(req.params.section);
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
+		const caseId = await resolveCaseIdFromReference(db, reference);
+		let existing;
 
 		if (action === 'remove') {
 			await removeItem({ db, reference, section, currentItemId, service, req });
 			return;
+		}
+		switch (true) {
+			case req.url.includes('check-lpas') && action === 'edit':
+				existing =
+					req.url.includes('check-lpas') && action === 'edit'
+						? (
+								await db.lPA.findUnique({
+									where: { lpaCode: currentItemId },
+									select: { lpaName: true }
+								})
+							)?.lpaName
+						: null;
+				break;
+			case req.url.includes('assessor-gateway-2'):
+				existing = (
+					await db.gateway2Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
+			case req.url.includes('assessor-gateway-3'):
+				existing = (
+					await db.gateway3Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
 		}
 
 		let writeResponse: { dataWritten: boolean; writtenToDB: boolean };
@@ -142,7 +174,6 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				writeResponse = await new Gateway3SaveController(service, req, reference).prepareAndSave(data.answers);
 				break;
 			}
-
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
 				if (writeResponse.writtenToDB && req.params.question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
@@ -191,18 +222,88 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 
-			if ('lpa' in data.answers) {
-				if (action == 'edit') {
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						lpa: currentItemId + ' updated to ' + data.answers.lpa
+			switch (true) {
+				case req.url.includes('check-lpas'): {
+					const lpa = await db.lPA.findUnique({
+						where: { lpaCode: data.answers.lpa },
+						select: {
+							lpaName: true
+						}
 					});
-				} else if (action == 'add') {
-					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
-						lpa: data.answers.lpa + ' added'
-					});
+					const lpaName = lpa?.lpaName ?? data.answers.lpa;
+					if (action == 'edit' && req.url.includes('check-lpas')) {
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							lpa: existing + ' updated to ' + lpaName
+						});
+					} else if (action == 'add') {
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							lpa: lpaName + ' added'
+						});
+					}
+					break;
 				}
-			} else {
-				await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+				case req.url.includes('assessor-gateway-2'): {
+					const assessor = (
+						await db.gateway2Info.findUnique({
+							where: { caseId },
+							select: { assessorName: true }
+						})
+					)?.assessorName;
+					const assessorName =
+						typeof assessor === 'string'
+							? await resolveAssessorDisplayName(service, req, 'gateway-2', assessor)
+							: assessor;
+
+					if (existing != null) {
+						//edit
+						const existingName =
+							typeof existing === 'string'
+								? await resolveAssessorDisplayName(service, req, 'gateway-2', existing)
+								: existing;
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							assessorName: 'Gateway 2 Assessor updated from ' + existingName + ' to ' + assessorName
+						});
+					} else {
+						//add
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							assessorName: 'Gateway 2 Assessor ' + assessorName + ' added'
+						});
+					}
+					break;
+				}
+				case req.url.includes('assessor-gateway-3'): {
+					const assessor = (
+						await db.gateway3Info.findUnique({
+							where: { caseId },
+							select: { assessorName: true }
+						})
+					)?.assessorName;
+					const assessorName =
+						typeof assessor === 'string'
+							? await resolveAssessorDisplayName(service, req, 'gateway-3', assessor)
+							: assessor;
+
+					if (existing != null) {
+						//edit
+						const existingName =
+							typeof existing === 'string'
+								? await resolveAssessorDisplayName(service, req, 'gateway-3', existing)
+								: existing;
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							gateway3AssessorName: 'Gateway 3 Assessor updated from ' + existingName + ' to ' + assessorName
+						});
+					} else {
+						//add
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							gateway3AssessorName: 'Gateway 3 Assessor ' + assessorName + ' added'
+						});
+					}
+					break;
+				}
+				default: {
+					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+					break;
+				}
 			}
 
 			if (data.answers.assessorName) {
@@ -245,19 +346,28 @@ async function removeItem({
 	service: ManageService;
 	req: Request;
 }): Promise<void> {
+	const account = authSession.getAccount(req.session);
+	const currentUser = account?.name ?? 'Unknown';
+
 	if (section === CONTACTS_SECTION) {
 		await db.contact.delete({ where: { id: currentItemId } });
 		return;
+	} else {
+		const lpa = await db.lPA.findUnique({
+			where: { lpaCode: currentItemId },
+			select: {
+				lpaName: true
+			}
+		});
+		const existingLpa = lpa?.lpaName ?? currentItemId;
+		await db.case.update({
+			where: { reference },
+			data: { lpas: { disconnect: { lpaCode: currentItemId } } }
+		});
+		await updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
+			lpa: existingLpa + ' removed'
+		});
 	}
-	await db.case.update({
-		where: { reference },
-		data: { lpas: { disconnect: { lpaCode: currentItemId } } }
-	});
-	const account = authSession.getAccount(req.session);
-	const currentUser = account?.name ?? 'Unknown';
-	updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
-		lpa: currentItemId + ' removed'
-	});
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
@@ -511,11 +621,33 @@ async function formatCaseHistoryEvent(
 		return overrideLabel;
 	}
 	const label = Object.hasOwn(caseHistoryLabels, key) ? (caseHistoryLabels[key] ?? key) : key;
-	let oldValueText = 'updated to';
+
+	const formattedNewValue = await formatCaseHistoryValue(service, req, key, newValue);
+
 	if (oldValue != null && oldValue != '') {
-		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;
+		// edit
+		return `${label} updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to ${formattedNewValue}`;
 	}
-	return `${label} ${oldValueText} ${await formatCaseHistoryValue(service, req, key, newValue)}`;
+	const fieldsUsingUpdateWording = new Set([
+		'letterSentToMHCLGDate',
+		'letterIssueDate',
+		'factCheckDateReceivedFromInspector',
+		'factCheckDueDate',
+		'factCheckActualDate',
+		'factCheckReceivedBackFromLPADate',
+		'finalReportIssueDate',
+		'withdrawnDate',
+		'isSound',
+		'soundUnsoundDate',
+		'adoptionDate',
+		'approvedForCILDate',
+		'examinationWebsite'
+	]);
+
+	if (fieldsUsingUpdateWording.has(key)) {
+		return `${label} updated to ${formattedNewValue}`;
+	}
+	return `${label} ${formattedNewValue} added`; //add
 }
 
 async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
@@ -540,6 +672,20 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	if (typeof value === 'boolean') {
 		return value;
 	}
+
+	const qaInspectorQuestions = new Set<string>(QA_INSPECTOR_FIELDS);
+
+	const qaInspectorLabels: Record<string, string> = {
+		'inspector-1': 'Inspector 1',
+		'inspector-2': 'Inspector 2',
+		'inspector-3': 'Inspector 3',
+		'inspector-4': 'Inspector 4'
+	};
+
+	if (qaInspectorQuestions.has(question)) {
+		return qaInspectorLabels[String(value)] ?? String(value ?? '');
+	}
+
 	const entraUserQuestions = new Set(['caseOfficer', ...EXAMINING_INSPECTOR_FIELDS]);
 	if (entraUserQuestions.has(question)) {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
