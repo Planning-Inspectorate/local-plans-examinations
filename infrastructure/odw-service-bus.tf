@@ -13,6 +13,23 @@ data "azurerm_private_dns_zone" "servicebus" {
   tags = local.tags
 }
 
+resource "azurerm_private_dns_zone_virtual_network_link" "main_odw_servicebus" {
+  name                = "${local.org}-vnetlink-servicebus-${local.service_name}-${var.environment}"
+  private_dns_zone_id = data.azurerm_private_dns_zone.servicebus.id
+  virtual_network_id  = azurerm_virtual_network.main.id
+  provider            = azurerm.tooling
+  tags                = local.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "secondary_odw_servicebus" {
+  name                = "${local.org}-vnetlink-servicebus-${local.secondary_resource_suffix}-${var.environment}"
+  private_dns_zone_id = data.azurerm_private_dns_zone.servicebus.id
+  virtual_network_id  = azurerm_virtual_network.secondary.id
+  provider            = azurerm.tooling
+  tags                = local.tags
+}
+
+/*
 data "azurerm_virtual_network" "odw" {
   count               = var.odw_config == null ? 0 : 1
   name                = var.odw_config.network_name
@@ -40,6 +57,7 @@ resource "azurerm_virtual_network_peering" "odw_to_scheduling" {
 
   provider = azurerm.odw
 }
+*/
 
 # Role assignments
 resource "azurerm_role_assignment" "back_office_staging_odw_service_bus_data_sender" {
