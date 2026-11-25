@@ -80,7 +80,7 @@ describe('Gateway 2 updates', () => {
 
 		cy.location('pathname').then((uploadPath) => {
 			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.fileName);
-			gateway2ReportPage.openServiceNavigationItem('Plans Examination back office');
+			gateway2ReportPage.openServiceNavigationItem('Manage development plans');
 			manageHomePage.verifyLoaded();
 
 			gateway2ReportPage.visit(uploadPath);
