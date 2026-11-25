@@ -5,6 +5,14 @@ data "azurerm_servicebus_namespace" "odw" {
   provider            = azurerm.odw
 }
 
+data "azurerm_private_dns_zone" "servicebus" {
+  name                = "privatelink.servicebus.windows.net"
+  resource_group_name = var.tooling_config.network_rg
+  provider            = azurerm.tooling
+
+  tags = local.tags
+}
+
 data "azurerm_virtual_network" "odw" {
   count               = var.odw_config == null ? 0 : 1
   name                = var.odw_config.network_name
