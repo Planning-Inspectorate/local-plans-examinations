@@ -220,6 +220,30 @@ describe('gateway2WorkshopJourney', () => {
 		assert.equal(remoteMeetingQuestion?.shouldDisplay(hybridJourney.response), true);
 		assert.equal(remoteMeetingQuestion?.shouldDisplay(remoteJourney.response), true);
 	});
+
+	it('links the remote meeting link question back through the path the user chose', () => {
+		const baseUrl = '/case/LP-TEST-001/gateway-2/set-up-workshop/workshop';
+		const params = { section: 'workshop', question: 'gateway-2-remote-meeting-link-known-1' };
+
+		const remote = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'remote',
+			remoteMeetingLinkKnown: 'yes'
+		});
+		const hybridWithVenue = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'hybrid',
+			workshopLocationKnown: 'yes',
+			remoteMeetingLinkKnown: 'yes'
+		});
+		const hybridWithoutVenue = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'hybrid',
+			workshopLocationKnown: 'no',
+			remoteMeetingLinkKnown: 'yes'
+		});
+
+		assert.equal(remote.getBackLink({ params }), `${baseUrl}/gateway-2-location-type-1`);
+		assert.equal(hybridWithVenue.getBackLink({ params }), `${baseUrl}/gateway-2-workshop-venue-address-1`);
+		assert.equal(hybridWithoutVenue.getBackLink({ params }), `${baseUrl}/gateway-2-workshop-location-known-1`);
+	});
 });
 
 describe('gateway3Journey', () => {
