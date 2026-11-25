@@ -54,9 +54,9 @@
     "cy:full-journey:test-smoke": "cross-env TEST_TARGET=full-journey ENVIRONMENT_SMOKE=true npx cypress run --browser chrome --config chromeWebSecurity=false,experimentalModifyObstructiveThirdPartyCode=true --spec='cypress/e2e/full-journey/**/*'"
   },
   "dependencies": {
-    "@azure/functions": "^4.17.0",
+    "@azure/functions": "^4.17.1",
     "@azure/identity": "^4.14.1",
-    "@azure/msal-node": "^7.1.2",
+    "@azure/msal-node": "^7.2.2",
     "@planning-inspectorate/core": "^1.14.1",
     "@planning-inspectorate/dynamic-forms": "^3.19.1",
     "@prisma/adapter-mssql": "^7.10.1",
