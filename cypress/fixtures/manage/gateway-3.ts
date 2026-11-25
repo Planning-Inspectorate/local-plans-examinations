@@ -66,8 +66,8 @@ export const gateway3AssessorAnswer = {
 	appointedDisplay: '1 September 2026',
 	inputField: 'assessorName',
 	boxListField: 'assessorName__listbox',
-	value: 'assessor-1',
-	updatedValue: 'assessor-2'
+	value: 'Assessor 1',
+	updatedValue: 'Assessor 2'
 } as const;
 
 export const gateway3ProgrammeOfficerAnswer = {

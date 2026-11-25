@@ -51,7 +51,7 @@ export class LocalPlanningAuthoritiesBasePage extends BasePage {
 		this.removeListItem(index);
 		this.verifyHeading('Remove local planning authority');
 		this.saveAndContinue();
-		this.verifyLoaded();
+		this.verifyAfterLocalPlanningAuthoritySave();
 	}
 
 	verifyLocalPlanningAuthorityListed(lpa: SelectAnswer) {
