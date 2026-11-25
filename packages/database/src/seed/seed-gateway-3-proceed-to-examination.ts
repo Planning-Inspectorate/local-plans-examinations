@@ -10,10 +10,6 @@ import {
 
 const PLAN_REFERENCE = 'PLAN-001';
 
-// Simulates a BO user issuing a "Proceed to examination" decision on the LPA's latest
-// Gateway 3 submission in FO. Saving the BO report into the submission's document set
-// soft-deletes the LPA's uploads, matching what Manage does.
-
 export async function seedGateway3ProceedToExamination({
 	reportFileNames = ['GW3Report-Proceed.pdf']
 }: { reportFileNames?: string[] } = {}) {
