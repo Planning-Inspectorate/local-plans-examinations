@@ -6,6 +6,7 @@ import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
 import { getActiveExaminationPause } from '#util/examination-pause.ts';
+import { getExaminationStatusForDisplay } from '#util/examination-status.ts';
 import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
 import {
 	DOCUMENT_SET_ID,
@@ -50,6 +51,9 @@ type PortalCase = {
 		soundUnsoundDate: Date | null;
 		status: string;
 		statusLookup: { displayName: string } | null;
+		examiningInspector1?: string | null;
+		examiningInspector2?: string | null;
+		examiningInspector3?: string | null;
 		planPauseHistory: {
 			createdAt: Date;
 			planPauseDate: Date;
@@ -203,7 +207,12 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const gateway3Date = caseRecord.gateway3Info?.expectedDate;
 	const persistedExaminationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
 	const activePause = getActiveExaminationPause(caseRecord.examinationInfo?.planPauseHistory);
-	const examinationStatus = activePause ? EXAMINATION_STATUS_ID.PAUSED : persistedExaminationStatus;
+	const displayExaminationStatus = getExaminationStatusForDisplay(persistedExaminationStatus, [
+		caseRecord.examinationInfo?.examiningInspector1,
+		caseRecord.examinationInfo?.examiningInspector2,
+		caseRecord.examinationInfo?.examiningInspector3
+	]);
+	const examinationStatus = activePause ? EXAMINATION_STATUS_ID.PAUSED : displayExaminationStatus;
 	const examinationDate =
 		persistedExaminationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED
 			? caseRecord.examinationInfo?.adoptionDate
@@ -227,7 +236,10 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 			? 'Paused'
 			: examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
 				? 'Report issued'
-				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
+				: persistedExaminationStatus === EXAMINATION_STATUS_ID.SUBMITTED &&
+					  examinationStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
+					? 'In examination'
+					: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
 		pause: activePause
 			? {
 					startDate: formatDisplayDate(activePause.planPauseDate) as string,
@@ -284,6 +296,9 @@ const planCaseInclude = {
 			adoptionDate: true,
 			soundUnsoundDate: true,
 			status: true,
+			examiningInspector1: true,
+			examiningInspector2: true,
+			examiningInspector3: true,
 			planPauseHistory: {
 				select: {
 					createdAt: true,

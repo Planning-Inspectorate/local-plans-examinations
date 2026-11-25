@@ -10,3 +10,12 @@ export function formatDisplayDate(date: Date | null | undefined): string | undef
 		year: 'numeric'
 	});
 }
+
+export function formatDisplayTime(date: Date, timeZone: string = 'Europe/London', hour12: boolean = false): string {
+	return date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: hour12,
+		timeZone: timeZone
+	});
+}

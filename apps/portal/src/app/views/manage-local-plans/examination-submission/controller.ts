@@ -1,7 +1,8 @@
 import type { PortalService } from '#service';
-import { formatDisplayDate } from '#util/date.ts';
+import { formatDisplayDate, formatDisplayTime } from '#util/date.ts';
 import { getExaminationStatusTagClass } from '#util/examination-status-tag.ts';
 import { getEffectiveExaminationStatus, type ExaminationPause } from '#util/examination-pause.ts';
+import { getExaminationStatusForDisplay } from '#util/examination-status.ts';
 import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import multer from 'multer';
 import {
@@ -123,14 +124,6 @@ function getPlanDetailsUrl(req: Request) {
 
 function getExaminationSubmissionUrl(req: Request) {
 	return `${getPlanDetailsUrl(req)}/examination`;
-}
-
-function formatDisplayTime(date: Date) {
-	return date.toLocaleTimeString('en-GB', {
-		hour: '2-digit',
-		minute: '2-digit',
-		hour12: false
-	});
 }
 
 function effectiveExaminationStatus(examinationInfo: ExaminationInfoRecord | null | undefined) {
@@ -292,16 +285,19 @@ export function setExaminationViewLocals(req: Request, res: Response) {
 		res.locals.targetDate = formatDisplayDate(examinationInfo.expectedSubmissionForExaminationDate);
 	}
 	if (examinationInfo && examinationStatus && examinationStatus !== EXAMINATION_STATUS_ID.CANNOT_START_YET) {
-		const hasAssignedExaminingInspector = [
+		const displayStatus = getExaminationStatusForDisplay(examinationInfo.status, [
 			examinationInfo.examiningInspector1,
 			examinationInfo.examiningInspector2,
 			examinationInfo.examiningInspector3
-		].some((inspector) => typeof inspector === 'string' && inspector.trim().length > 0);
+		]);
 
 		let label;
 		if (examinationStatus === EXAMINATION_STATUS_ID.PAUSED) {
 			label = 'Paused';
-		} else if (examinationInfo.status === EXAMINATION_STATUS_ID.SUBMITTED && hasAssignedExaminingInspector) {
+		} else if (
+			examinationInfo.status === EXAMINATION_STATUS_ID.SUBMITTED &&
+			displayStatus === EXAMINATION_STATUS_ID.IN_EXAMINATION
+		) {
 			label = 'In examination';
 		} else {
 			label = examinationInfo.statusLookup?.displayName ?? examinationStatus;
@@ -379,7 +375,7 @@ export function buildSubmittedExaminationView(service: PortalService): RequestHa
 			const miqDocuments = await loadMiqDocuments(service, request.currentCase.id, planReference);
 			if (miqDocuments.length > 0) {
 				res.locals.miqDocuments = miqDocuments;
-				res.locals.miqSharedDate = formatDisplayDate(examinationInfo.miqDocumentSharedDate as Date);
+				res.locals.miqSharedDate = formatDisplayDate(examinationInfo.miqDocumentSharedDate);
 			}
 		}
 
