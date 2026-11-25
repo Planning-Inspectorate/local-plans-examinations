@@ -136,7 +136,3 @@ google_analytics_id = "G-2YFLMZX5QZ"
 # Analytics tracking ids for manage in this environment
 manage_clarity_id          = "yy2fqdqnpy"
 manage_google_analytics_id = "G-10YVYZBVFX"
-
-# ODW variables
-odw_service_bus_connection_enabled = false
-odw_subscription_id                = "6b18ba9d-2399-48b5-a834-e0f267be122d" # Reuse test, but no connections will be set up

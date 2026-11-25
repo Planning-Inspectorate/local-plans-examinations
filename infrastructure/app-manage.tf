@@ -97,7 +97,7 @@ module "app_manage" {
     SESSION_SECRET          = local.key_vault_refs["session-secret-manage"]
 
     # ODW
-    ODW_SERVICE_BUS_NAME = var.odw_service_bus_connection_enabled ? var.odw_service_bus_name : null
+    ODW_SERVICE_BUS_NAME = var.odw_config == null ? null : var.odw_config.service_bus_name
 
   }
 
@@ -135,13 +135,6 @@ resource "azurerm_role_assignment" "app_manage_staging_documents_contributor" {
   principal_id         = module.app_manage.staging_principal_id
 }
 
-## RBAC for ODW Service Bus
-resource "azurerm_role_assignment" "back_office_odw_service_bus_data_sender" {
-  count                = var.odw_service_bus_connection_enabled ? 1 : 0
-  scope                = data.azurerm_servicebus_namespace.odw[0].id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = module.app_manage.staging_principal_id
-}
 
 # sessions
 resource "random_password" "manage_session_secret" {

@@ -38,7 +38,8 @@ provider "azurerm" {
 }
 
 provider "azurerm" {
-  alias           = "odw"
-  subscription_id = var.odw_subscription_id
+  alias                           = "odw"
+  subscription_id                 = var.odw_config.subscription_id
+  resource_provider_registrations = "none"
   features {}
 }

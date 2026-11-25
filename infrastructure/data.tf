@@ -69,18 +69,3 @@ data "azurerm_virtual_network" "tooling" {
   provider = azurerm.tooling
 }
 
-
-data "azurerm_servicebus_namespace" "odw" {
-  count               = var.odw_service_bus_connection_enabled ? 1 : 0
-  name                = var.odw_service_bus_name
-  resource_group_name = "pins-rg-ingestion-odw-${var.environment}-uks"
-  provider            = azurerm.odw
-}
-
-data "azurerm_private_dns_zone" "servicebus" {
-  name                = "privatelink.servicebus.windows.net"
-  resource_group_name = var.tooling_config.network_rg
-  provider            = azurerm.tooling
-
-  tags = local.tags
-}
