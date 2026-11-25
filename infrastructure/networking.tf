@@ -58,7 +58,7 @@ resource "azurerm_virtual_network_peering" "tooling_to_local_plans" {
   provider = azurerm.tooling
 }
 
-/*
+
 # peer to ODW VNET for integration
 resource "azurerm_virtual_network_peering" "local_plans_to_odw" {
   count                     = var.odw_config == null ? 0 : 1
@@ -77,7 +77,7 @@ resource "azurerm_virtual_network_peering" "odw_to_local_plans" {
 
   provider = azurerm.odw
 }
-*/
+
 
 ## DNS Zones for Azure Services
 ## Private DNS Zones exist in the tooling subscription and are shared here
