@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
 import type { UploadedFile } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { caseRouter, syncUploadAnswer, shouldContinueToReportUpload } from './index.ts';
+import { caseRouter, syncUploadAnswer, shouldContinueToReportUpload, redirectAfterCyaEdit } from './index.ts';
 import { journeyFileUploadQuestionConfigs } from './controller.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 
@@ -16,6 +16,154 @@ describe('caseRouter', () => {
 		} finally {
 			journeyFileUploadQuestionConfigs[journeyId] = uploadConfig;
 		}
+	});
+});
+
+describe('redirectAfterCyaEdit', () => {
+	it('directs to CYA page when basic question', () => {
+		let returnToCya: boolean | undefined;
+
+		const req = {
+			params: { question: 'gateway-2-report' },
+			body: {},
+			session: {
+				editingFromCheckAnswers: true
+			}
+		} as any;
+
+		const res = { locals: {} } as any;
+		const next = () => {};
+
+		const save = (_updateCase: any, shouldReturnToCya: boolean) => {
+			returnToCya = shouldReturnToCya;
+			return (_req: any, _res: any, _next: any) => {};
+		};
+
+		redirectAfterCyaEdit(() => {}, save)(req, res, next);
+
+		assert.equal(returnToCya, true);
+	});
+
+	it('does not direct to CYA page when question is hearing-end-date or hearing-duration', () => {
+		let returnToCya: boolean | undefined;
+
+		const req = {
+			params: { question: 'examination-hearing-end-date-1' },
+			body: {},
+			session: {
+				editingFromCheckAnswers: true
+			}
+		} as any;
+
+		const res = { locals: {} } as any;
+
+		const save = (_updateCase: any, shouldReturnToCya: boolean) => {
+			returnToCya = shouldReturnToCya;
+			return (_req: any, _res: any, _next: any) => {};
+		};
+
+		redirectAfterCyaEdit(() => {}, save)(req, res, () => {});
+
+		assert.equal(returnToCya, false);
+		assert.equal(res.locals.redirectToExamination, true);
+	});
+
+	it('directs to CYA page when question answer is no', () => {
+		let returnToCya: boolean | undefined;
+
+		const req = {
+			params: { question: 'examination-hearing-remote-meeting-link-known-1' },
+			body: { answer: 'no' },
+			session: {
+				editingFromCheckAnswers: true
+			}
+		} as any;
+
+		const res = { locals: {} } as any;
+
+		const save = (_updateCase: any, shouldReturnToCya: boolean) => {
+			returnToCya = shouldReturnToCya;
+			return (_req: any, _res: any, _next: any) => {};
+		};
+
+		redirectAfterCyaEdit(() => {}, save)(req, res, () => {});
+
+		assert.equal(returnToCya, true);
+		assert.equal(req.session.editingFromCheckAnswers, true);
+	});
+
+	it('directs to next question page when question answer is yes', () => {
+		let returnToCya: boolean | undefined;
+
+		const req = {
+			params: { question: 'examination-hearing-remote-meeting-link-known-1' },
+			body: { answer: 'yes' },
+			session: {
+				editingFromCheckAnswers: true
+			}
+		} as any;
+
+		const res = { locals: {} } as any;
+
+		const save = (_updateCase: any, shouldReturnToCya: boolean) => {
+			returnToCya = shouldReturnToCya;
+			return (_req: any, _res: any, _next: any) => {};
+		};
+
+		redirectAfterCyaEdit(() => {}, save)(req, res, () => {});
+
+		assert.equal(returnToCya, false);
+		assert.equal(req.session.editingFromCheckAnswers, false);
+		assert.equal(req.session.returnToCyaAfterAnswer, true);
+	});
+
+	it('directs to CYA page when returnToCyaAfterAnswer is true', () => {
+		let returnToCya: boolean | undefined;
+
+		const req = {
+			params: { question: 'examination-hearing-remote-meeting-link-1' },
+			body: {},
+			session: {
+				editingFromCheckAnswers: false,
+				returnToCyaAfterAnswer: true
+			}
+		} as any;
+
+		const res = { locals: {} } as any;
+
+		const save = (_updateCase: any, shouldReturnToCya: boolean) => {
+			returnToCya = shouldReturnToCya;
+			return (_req: any, _res: any, _next: any) => {};
+		};
+
+		redirectAfterCyaEdit(() => {}, save)(req, res, () => {});
+
+		assert.equal(returnToCya, true);
+		assert.equal(req.session.returnToCyaAfterAnswer, false);
+		assert.equal(req.session.editingFromCheckAnswers, true);
+	});
+	it('directs to next question page when editting location type', () => {
+		let returnToCya: boolean | undefined;
+
+		const req = {
+			params: { question: 'examination-hearing-location-type-' },
+			body: {},
+			session: {
+				editingFromCheckAnswers: true
+			}
+		} as any;
+
+		const res = { locals: {} } as any;
+
+		const save = (_updateCase: any, shouldReturnToCya: boolean) => {
+			returnToCya = shouldReturnToCya;
+			return (_req: any, _res: any, _next: any) => {};
+		};
+
+		redirectAfterCyaEdit(() => {}, save)(req, res, () => {});
+
+		assert.equal(returnToCya, false);
+		assert.equal(req.session.editingFromCheckAnswers, false);
 	});
 });
 
