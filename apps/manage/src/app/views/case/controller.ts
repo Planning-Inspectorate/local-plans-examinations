@@ -319,7 +319,6 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						select: { displayOrder: true }
 					});
 
-					console.log();
 					const userReadableId = 'Contact ' + contactNum?.displayOrder;
 					if (action == 'edit' && existing) {
 						const contactMap = {
@@ -351,7 +350,6 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 												userReadableId + ' email changed from ' + contactMap[key] + ' to ' + data.answers.email;
 											break;
 										case 'phone':
-											console.log('here45', contactMap);
 											acc[key] =
 												contactMap[key] != ''
 													? userReadableId + ' phone changed from ' + contactMap[key] + ' to ' + data.answers.phone
