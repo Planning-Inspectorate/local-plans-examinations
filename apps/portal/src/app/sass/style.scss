@@ -41,6 +41,10 @@
 	table-layout: fixed;
 	border-top: 1px solid govuk.$govuk-border-colour;
 
+	&[data-cy='examination-details-table'] {
+		border-top: 0;
+	}
+
 	td:first-child,
 	th:first-child {
 		width: 40%;

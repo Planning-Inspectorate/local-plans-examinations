@@ -757,7 +757,7 @@ describe('plan page', () => {
 		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--yellow">Submitted</strong>'));
 	});
 
-	it('shows an In examination tag and the actual examination submission date', async () => {
+	it('shows a yellow In examination tag and the actual examination submission date', async () => {
 		const plan = {
 			refNum: 'PLAN-004',
 			stage: STAGE.Examination,
@@ -771,9 +771,9 @@ describe('plan page', () => {
 		const { data, html } = await renderPlan({ refNum: 'PLAN-004' }, plan);
 
 		assert.equal(data.dateTextE, 'Submitted: ');
-		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--blue">In examination</strong>');
+		assert.equal(data.tagE, '<strong class="govuk-tag govuk-tag--yellow">In examination</strong>');
 		assert.ok(html.includes('Submitted: 24 October 2026'));
-		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--blue">In examination</strong>'));
+		assert.ok(cleanHtml(html).includes('<strong class="govuk-tag govuk-tag--yellow">In examination</strong>'));
 	});
 
 	it('shows the grey Paused tag and pause date while retaining read-only access to submitted information', async () => {

@@ -103,7 +103,7 @@ export class ExaminationPage extends PortalPlanBasePage {
 		cy.getByData('submission-copy')
 			.should('be.visible')
 			.invoke('text')
-			.should('match', /^Your submission was sent on .+ at \d{2}:\d{2} by .+$/)
+			.should('match', /^Examination submission: .+ at \d{2}:\d{2} by .+$/)
 			.and('include', todayDisplay)
 			.and('include', submitterEmail);
 	}

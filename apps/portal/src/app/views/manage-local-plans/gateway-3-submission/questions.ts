@@ -97,6 +97,14 @@ const gateway3TextInputQuestions = {
 		text: {
 			caption: PLAN_CONTENT_AND_EVIDENCE_DOCUMENTS_CAPTION,
 			continueButtonText: 'Save and return'
+		},
+		formatSummaryValue: ({ answer, formattedAnswer }: { answer: unknown; formattedAnswer: string }) => {
+			if (typeof answer !== 'string' || !/^(?:https?:\/\/|www\.)/i.test(answer)) {
+				return formattedAnswer;
+			}
+
+			const href = /^www\./i.test(answer) ? `https://${formattedAnswer}` : formattedAnswer;
+			return `<a href="${href}" class="govuk-link">${formattedAnswer}</a>`;
 		}
 	}
 };

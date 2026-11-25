@@ -266,7 +266,7 @@ describe('submitted examination page', () => {
 		);
 		assert.ok(html.includes('govuk-tag govuk-tag--yellow'));
 		assert.ok(html.includes('Submitted'));
-		assert.ok(html.includes('Your submission was sent on 21 October 2026 at 11:30 by planner@example.com'));
+		assert.ok(html.includes('Examination submission: 21 October 2026 at 11:30 by planner@example.com'));
 		assert.match(html, /<h2 class="govuk-heading-m">Documents<\/h2>/);
 		assert.ok(html.includes('Local plan submission for examination'));
 		assert.ok(html.includes('govuk-list govuk-list--bullet'));

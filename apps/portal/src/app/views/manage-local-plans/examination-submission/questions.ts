@@ -75,6 +75,14 @@ const examinationWebsite = {
 	url: 'examination-website',
 	type: 'single-line-input' as const,
 	capitaliseAnswer: false,
+	formatSummaryValue: ({ answer, formattedAnswer }: { answer: unknown; formattedAnswer: string }) => {
+		if (typeof answer !== 'string' || !/^(?:https?:\/\/|www\.)/i.test(answer)) {
+			return formattedAnswer;
+		}
+
+		const href = /^www\./i.test(answer) ? `https://${formattedAnswer}` : formattedAnswer;
+		return `<a href="${href}" class="govuk-link">${formattedAnswer}</a>`;
+	},
 	validators: [new WebsiteUrlValidator()],
 	viewData: {
 		pageCaption: undefined

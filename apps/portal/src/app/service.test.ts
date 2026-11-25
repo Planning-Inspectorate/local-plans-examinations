@@ -510,6 +510,9 @@ describe('PortalService', () => {
 							adoptionDate: true,
 							soundUnsoundDate: true,
 							status: true,
+							examiningInspector1: true,
+							examiningInspector2: true,
+							examiningInspector3: true,
 							planPauseHistory: {
 								select: {
 									createdAt: true,
@@ -804,6 +807,33 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].examinationStatus, EXAMINATION_STATUS_ID.REPORT_ISSUED);
 			assert.strictEqual(plans[0].examinationStatusLabel, 'Report issued');
 			assert.strictEqual(plans[0].dates.E, '20 October 2026');
+		});
+
+		it('maps a submitted examination with an assigned inspector to In examination', async () => {
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						submissions: [
+							{ decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION, completionDate: new Date('2026-09-10') }
+						]
+					},
+					examinationInfo: {
+						status: EXAMINATION_STATUS_ID.SUBMITTED,
+						statusLookup: { displayName: 'Submitted' },
+						examiningInspector1: null,
+						examiningInspector2: 'inspector-id',
+						examiningInspector3: null,
+						submissionForExaminationDate: new Date('2026-09-18')
+					}
+				})
+			]);
+
+			const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plan.stage, STAGE.Examination);
+			assert.strictEqual(plan.examinationStatus, EXAMINATION_STATUS_ID.IN_EXAMINATION);
+			assert.strictEqual(plan.examinationStatusLabel, 'In examination');
+			assert.strictEqual(plan.submittedDates.E, '18 September 2026');
 		});
 
 		for (const { label, restartDate, expectedStatus, expectedPause } of [

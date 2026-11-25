@@ -81,8 +81,7 @@ describe('examination view data', () => {
 					planTitle: 'Test plan',
 					examinationInfo: {
 						status: 'ready-to-start',
-						// UK midnight during BST falls on the previous UTC day.
-						expectedSubmissionForExaminationDate: new Date('2026-08-31T23:00:00.000Z'),
+						expectedSubmissionForExaminationDate: new Date('2026-09-01T12:00:00.000Z'),
 						statusLookup: { displayName: 'Ready to start' }
 					}
 				}
@@ -189,7 +188,7 @@ describe('examination view data', () => {
 			{
 				status: EXAMINATION_STATUS_ID.IN_EXAMINATION,
 				label: 'In examination',
-				className: 'govuk-tag govuk-tag--blue'
+				className: 'govuk-tag govuk-tag--yellow'
 			},
 			{
 				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
@@ -219,6 +218,31 @@ describe('examination view data', () => {
 
 			assert.deepEqual(locals.statusTag, { label, class: className });
 		}
+	});
+
+	it('shows submitted examinations with an assigned inspector as In examination in yellow', () => {
+		const locals: Record<string, unknown> = {};
+
+		setExaminationViewLocals(
+			{
+				params: { planReference: 'PLAN-61797' },
+				currentCase: {
+					examinationInfo: {
+						status: EXAMINATION_STATUS_ID.SUBMITTED,
+						statusLookup: { displayName: 'Submitted' },
+						examiningInspector1: null,
+						examiningInspector2: 'inspector-id',
+						examiningInspector3: null
+					}
+				}
+			} as unknown as Request,
+			{ locals } as unknown as Response
+		);
+
+		assert.deepEqual(locals.statusTag, {
+			label: 'In examination',
+			class: 'govuk-tag govuk-tag--yellow'
+		});
 	});
 });
 
@@ -877,7 +901,7 @@ describe('examination declaration and completion', () => {
 	});
 });
 
-describe('examination submitted view MIQ submitter', () => {
+describe('examination submitted view submission metadata', () => {
 	function buildMiqContext(examinationInfo: Record<string, unknown>) {
 		const req = {
 			params: { planReference: 'PLAN-61797' },
@@ -925,6 +949,7 @@ describe('examination submitted view MIQ submitter', () => {
 
 		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
 
+		assert.equal(res.locals.submissionDate, '21 October 2026');
 		assert.equal(res.locals.submitter, 'planner@example.com');
 		assert.notEqual(res.locals.submitter, 'Test Officer');
 		assert.equal(next.mock.callCount(), 1);
@@ -937,7 +962,7 @@ describe('examination submitted view MIQ submitter', () => {
 		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
 
 		assert.equal(res.locals.submissionDate, '21 October 2026');
-		assert.equal(res.locals.submissionTime, '10:30');
+		assert.equal(res.locals.submissionTime, '11:30');
 		assert.equal(res.locals.submitter, 'planner@example.com');
 		assert.equal(next.mock.callCount(), 1);
 	});
