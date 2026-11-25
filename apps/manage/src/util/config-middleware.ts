@@ -7,7 +7,7 @@ export function addLocalsConfiguration(clarityId?: string, googleAnalyticsId?: s
 	return (req, res, next) => {
 		res.locals.config = {
 			styleFile: 'style-b3f1185f.css',
-			headerTitle: 'Manage development plans',
+			headerTitle: 'Plans Examination back office',
 			clarityId,
 			googleAnalyticsId
 		};
