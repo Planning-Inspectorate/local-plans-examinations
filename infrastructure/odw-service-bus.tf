@@ -13,6 +13,14 @@ data "azurerm_private_dns_zone" "servicebus" {
   tags = local.tags
 }
 
+/*
+data "azurerm_virtual_network" "odw" {
+  count               = var.odw_config == null ? 0 : 1
+  name                = var.odw_config.network_name
+  resource_group_name = var.odw_config.network_resource_group_name
+
+  provider = azurerm.odw
+}
 resource "azurerm_private_dns_zone_virtual_network_link" "main_odw_servicebus" {
   name                = "${local.org}-vnetlink-servicebus-${local.service_name}-${var.environment}"
   private_dns_zone_id = data.azurerm_private_dns_zone.servicebus.id
@@ -29,14 +37,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "secondary_odw_serviceb
   tags                = local.tags
 }
 
-/*
-data "azurerm_virtual_network" "odw" {
-  count               = var.odw_config == null ? 0 : 1
-  name                = var.odw_config.network_name
-  resource_group_name = var.odw_config.network_resource_group_name
-
-  provider = azurerm.odw
-}
 */
 
 # Role assignments
