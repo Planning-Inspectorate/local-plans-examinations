@@ -375,4 +375,33 @@ export class BasePage {
 			});
 		});
 	}
+
+	get pagination() {
+		return cy.get('.govuk-pagination');
+	}
+
+	get nextPageLink() {
+		return this.pagination.find('.govuk-pagination__next a');
+	}
+
+	get previousPageLink() {
+		return this.pagination.find('.govuk-pagination__prev a');
+	}
+
+	openNextPage() {
+		this.nextPageLink.should('be.visible').and('contain.text', 'Next').click();
+	}
+
+	openPreviousPage() {
+		this.previousPageLink.should('be.visible').and('contain.text', 'Previous').click();
+	}
+
+	verifyNoPreviousPageLink() {
+		this.pagination.find('.govuk-pagination__prev').should('not.exist');
+	}
+
+	verifyCurrentPage(page: number) {
+		this.verifySearch(`?page=${page}`);
+		this.pagination.find('[aria-current="page"]').should('contain.text', String(page));
+	}
 }

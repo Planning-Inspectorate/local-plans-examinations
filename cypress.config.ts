@@ -23,6 +23,7 @@ import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
 import { seedGateway3SubmissionDocuments } from './cypress/tasks/gateway-3.ts';
 import { seedExaminationInExamination } from './packages/database/src/seed/seed-examination-in-examination.ts';
 import { seedExaminationReportIssued } from './packages/database/src/seed/seed-examination-report-issued.ts';
+import { seedPaginationCases, clearPaginationCases } from './packages/database/src/seed/seed-pagination.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -117,6 +118,8 @@ export default defineConfig({
 				setDocumentVirusCheckStatus,
 				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
+				seedPaginationCases,
+				clearPaginationCases,
 				seedGateway3SubmissionDocuments,
 				seedGateway3Submitted,
 				seedExaminationReadyToStart,

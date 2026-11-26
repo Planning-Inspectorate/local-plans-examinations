@@ -9,15 +9,15 @@ import {
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
-const entraClient = { getUserDisplayName: async (id: string) => `User ${id}` };
-
 const account = { name: 'Officer1', localAccountId: 'officer-1' };
 
-function createService(cases: unknown[] = []): any {
+function createService(cases: unknown[] = [], totalCases = cases.length, authDisabled = false): any {
 	return {
+		authDisabled,
 		db: {
 			case: {
-				findMany: mock.fn(async () => cases)
+				findMany: mock.fn(async () => cases),
+				count: mock.fn(async () => totalCases)
 			},
 			gateway1Info: {
 				findUnique: mock.fn(async () => null)
@@ -35,8 +35,7 @@ function createService(cases: unknown[] = []): any {
 		},
 		logger: {
 			error: mock.fn()
-		},
-		getEntraClient: mock.fn(() => entraClient)
+		}
 	};
 }
 
@@ -49,20 +48,23 @@ function createResponse(): any {
 	return res;
 }
 
-function createRequest(): any {
+function createRequest(page?: string): any {
 	return {
 		session: {
 			account
-		}
+		},
+		query: page ? { page } : {},
+		baseUrl: '/assigned-to-me',
+		path: '/'
 	};
 }
 
-function createContext(cases: unknown[] = []) {
-	const service = createService(cases);
+function createContext(cases: unknown[] = [], totalCases = cases.length, page?: string, authDisabled = false) {
+	const service = createService(cases, totalCases, authDisabled);
 
 	return {
 		service,
-		req: createRequest(),
+		req: createRequest(page),
 		res: createResponse(),
 		handler: buildAssignedToMe(service)
 	};
@@ -131,7 +133,10 @@ describe('buildAssignedToMe', () => {
 						}
 					}
 				]
-			}
+			},
+			orderBy: { createdAt: 'desc' },
+			skip: 0,
+			take: 30
 		});
 		assert.deepEqual(ctx.res.render.mock.calls[0].arguments, [
 			'views/assigned-to-me/assigned-to-me.njk',
@@ -140,18 +145,20 @@ describe('buildAssignedToMe', () => {
 				cases: [
 					{
 						id: 1,
-						caseOfficer: 'User officer-1',
+						caseOfficer: 'officer-1',
 						headerStatusText: 'Awaiting SLA',
 						headerStatusClasses: 'govuk-tag--yellow'
 					},
 					{
 						id: 2,
-						caseOfficer: 'User officer-2',
+						caseOfficer: 'officer-2',
 						headerStatusText: 'Awaiting SLA',
 						headerStatusClasses: 'govuk-tag--yellow'
 					}
 				],
-				caseOfficerText: 'Officer1'
+				caseOfficerText: 'Officer1',
+				totalCases: 2,
+				pagination: { previous: null, next: null, items: [] }
 			}
 		]);
 		assert.equal(ctx.res.status.mock.callCount(), 0);
@@ -201,20 +208,66 @@ describe('buildAssignedToMe', () => {
 			cases: [
 				{
 					id: 1,
-					caseOfficer: 'User officer-1',
+					caseOfficer: 'officer-1',
 					headerStatusText: 'Awaiting SLA',
 					headerStatusClasses: 'govuk-tag--yellow'
 				},
 				{
 					id: 2,
-					caseOfficer: 'User officer-2',
+					caseOfficer: 'officer-2',
 					headerStatusText: 'Awaiting SLA',
 					headerStatusClasses: 'govuk-tag--yellow',
 					qaInspector1: 'Officer1'
 				}
 			],
-			caseOfficerText: 'Officer1'
+			caseOfficerText: 'Officer1',
+			totalCases: 2,
+			pagination: { previous: null, next: null, items: [] }
 		});
+	});
+
+	it('fetches and renders the requested page of assigned cases', async () => {
+		const ctx = createContext([{ id: 31, caseOfficer: 'officer-1' }], 31, '2');
+
+		await ctx.handler(ctx.req, ctx.res);
+
+		const where = ctx.service.db.case.findMany.mock.calls[0].arguments[0].where;
+		assert.deepEqual(ctx.service.db.case.count.mock.calls[0].arguments[0], { where });
+		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
+			where,
+			orderBy: { createdAt: 'desc' },
+			skip: 30,
+			take: 30
+		});
+
+		const renderData = ctx.res.render.mock.calls[0].arguments[1];
+		assert.equal(renderData.totalCases, 31);
+		assert.deepEqual(renderData.pagination, {
+			previous: { href: '/assigned-to-me?page=1' },
+			next: null,
+			items: [
+				{ number: 1, href: '/assigned-to-me?page=1', current: false },
+				{ number: 2, href: '/assigned-to-me?page=2', current: true }
+			]
+		});
+	});
+
+	it('does not check the current user when authentication is disabled', async () => {
+		const ctx = createContext([], 0, undefined, true);
+		ctx.req.session = {};
+
+		await ctx.handler(ctx.req, ctx.res);
+
+		assert.deepEqual(ctx.service.db.case.count.mock.calls[0].arguments[0], {
+			where: { deletedDate: null }
+		});
+		assert.deepEqual(ctx.service.db.case.findMany.mock.calls[0].arguments[0], {
+			where: { deletedDate: null },
+			orderBy: { createdAt: 'desc' },
+			skip: 0,
+			take: 30
+		});
+		assert.equal(ctx.res.status.mock.callCount(), 0);
 	});
 
 	it('renders the Gateway 3 status for an assigned case', async () => {

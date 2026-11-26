@@ -1,5 +1,6 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
@@ -7,7 +8,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-half">
       {% if cases and cases.length > 0 %}
-        <h1 class="govuk-heading-l" data-cy="page-title">All cases ({{ cases.length }})</h1>
+        <h1 class="govuk-heading-l" data-cy="page-title">All cases ({{ totalCases }})</h1>
       {% else %}
         <h1 class="govuk-heading-l " data-cy="page-title">All cases</h1>
       {% endif %}
@@ -65,6 +66,10 @@
                 },
           rows: rows
         }) }}
+
+        {% if pagination and pagination.items.length > 0 %}
+          {{ govukPagination(pagination) }}
+        {% endif %}
       </div>
     </div>
   {% endif %}

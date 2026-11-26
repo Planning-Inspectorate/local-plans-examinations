@@ -1,11 +1,14 @@
 {% extends "views/layouts/main.njk" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-half">
-      <h1 class="govuk-heading-l" data-cy="page-title">Assigned to {{ caseOfficerText }} ({{ cases.length }})</h1>
+      <h1 class="govuk-heading-l" data-cy="page-title">
+        {% if caseOfficerText %}Assigned to {{ caseOfficerText }}{% else %}Assigned cases{% endif %} ({{ totalCases }})
+      </h1>
     </div>
   </div>
   {{ govukButton({
@@ -60,6 +63,10 @@
                 },
           rows: rows
         }) }}
+
+        {% if pagination and pagination.items.length > 0 %}
+          {{ govukPagination(pagination) }}
+        {% endif %}
       </div>
     </div>
   {% endif %}
