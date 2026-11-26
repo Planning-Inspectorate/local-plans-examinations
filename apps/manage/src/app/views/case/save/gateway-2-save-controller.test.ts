@@ -1,8 +1,9 @@
 import { Gateway2SaveController } from './gateway-2-save-controller.ts';
 import { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 type MockServiceType = {
 	db: {
@@ -89,6 +90,13 @@ mock.timers.enable({
 });
 
 describe('test Gateway2SaveController', () => {
+	let mockSendServiceBusMessage: ReturnType<typeof mock.method<ODWServiceBusDataSender, 'sendUpdateMessage'>>;
+	beforeEach(() => {
+		mockSendServiceBusMessage = mock.method(ODWServiceBusDataSender.prototype, 'sendUpdateMessage', async () => {});
+	});
+	afterEach(() => {
+		mock.restoreAll();
+	});
 	it('rejects when a case could not be found', async () => {
 		const mockService = createMockService();
 		const question = '';
@@ -100,6 +108,7 @@ describe('test Gateway2SaveController', () => {
 		const answers = {};
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await assert.rejects(gateway2Controller.prepareAndSave(answers));
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 	it('rejects when there are no workshops', async () => {
 		const mockService = createMockService();
@@ -125,6 +134,7 @@ describe('test Gateway2SaveController', () => {
 		req.params.question = question;
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await assert.rejects(gateway2Controller.prepareAndSave(answers));
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 	it('rejects when the current workshop id could not be found', async () => {
 		const mockService = createMockService();
@@ -157,6 +167,7 @@ describe('test Gateway2SaveController', () => {
 		req.params.question = question;
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await assert.rejects(gateway2Controller.prepareAndSave(answers));
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 	it('can save a non-workshop field with an assessor question to the database', async () => {
 		const mockService = createMockService();
@@ -177,6 +188,7 @@ describe('test Gateway2SaveController', () => {
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await gateway2Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 1);
 	});
 	it('can save the workshop field to the session with no existing session data', async () => {
 		const workshopId = 1;
@@ -227,6 +239,7 @@ describe('test Gateway2SaveController', () => {
 			}
 		};
 		assert.deepEqual(req.session, expectedSession);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 	it('can save the workshop field to the session with existing session data', async () => {
 		const workshopId = 1;
@@ -323,6 +336,7 @@ describe('test Gateway2SaveController', () => {
 			}
 		};
 		assert.deepEqual(req.session, expectedSession);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 	it('clears an optional workshop end time when it is removed', async () => {
 		const workshopId = 1;
@@ -352,6 +366,7 @@ describe('test Gateway2SaveController', () => {
 		await new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef').prepareAndSave(answers);
 
 		assert.equal(req.session.answers.workshops[0].workshopEndTime, undefined);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 
 	it('clears venue details when a hybrid workshop is changed to remote and submitted', async () => {
@@ -411,6 +426,7 @@ describe('test Gateway2SaveController', () => {
 			assert.deepEqual(savedWorkshop[field], value, field);
 		});
 		assert.deepEqual(req.session.answers.workshops[0], expectedWorkshop);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 1);
 	});
 
 	it('removes venue details when the address is no longer known', async () => {
@@ -446,6 +462,7 @@ describe('test Gateway2SaveController', () => {
 			workshopLocationType: 'in-person',
 			workshopLocationKnown: 'no'
 		});
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 
 	it('removes remote meeting details when a workshop is changed to in-person', async () => {
@@ -476,6 +493,7 @@ describe('test Gateway2SaveController', () => {
 			id: 'someWorkshop',
 			workshopLocationType: 'in-person'
 		});
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 
 	it('removes conditional answers when they are no longer applicable', async () => {
@@ -509,6 +527,7 @@ describe('test Gateway2SaveController', () => {
 			workshopExpectedDaysKnown: 'no',
 			remoteMeetingLinkKnown: 'no'
 		});
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 	it('can save the workshop field to the database', async () => {
 		const workshopId = 1;
@@ -620,6 +639,7 @@ describe('test Gateway2SaveController', () => {
 		const gateway2Controller = new Gateway2SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await gateway2Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway2Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 1);
 	});
 	it('Can delete a workshop and save to the database', async () => {
 		const mockService = createMockService();

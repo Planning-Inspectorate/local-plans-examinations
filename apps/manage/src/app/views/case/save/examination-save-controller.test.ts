@@ -1,10 +1,12 @@
 import { ExaminationSaveController } from './examination-save-controller.ts';
+import { SaveController } from './save-controller.ts';
 import type { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { PlanPauseHistory } from '@pins/local-plans-database/src/client/client.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 function createMockService(examinationStatus?: string) {
 	return {
@@ -89,6 +91,13 @@ class ExamSaveControllerWrapper extends ExaminationSaveController {
 }
 
 describe('ExaminationSaveController', () => {
+	let mockSendServiceBusMessage: ReturnType<typeof mock.method<ODWServiceBusDataSender, 'sendUpdateMessage'>>;
+	beforeEach(() => {
+		mockSendServiceBusMessage = mock.method(ODWServiceBusDataSender.prototype, 'sendUpdateMessage', async () => {});
+	});
+	afterEach(() => {
+		mock.restoreAll();
+	});
 	it('saves trimmed Programme officer details on Gateway 3 without changing examination fields', async () => {
 		const service = createMockService();
 		const req = { params: { question: 'programme-officer' } } as unknown as Request;
@@ -1531,5 +1540,27 @@ describe('ExaminationSaveController', () => {
 		);
 		await examinationController.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.examinationInfo.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+	});
+	it('attempts to send a message to the ODW service bus if the question is programme-officer', async () => {
+		const service = createMockService();
+		const req = { params: { question: 'programme-officer' } } as unknown as Request;
+		const controller = new ExaminationSaveController(service as unknown as ManageService, req, 'caseRef');
+		await controller.prepareAndSave({});
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 1);
+	});
+	it('calls the parent prepareAndSave when the question is not programme-officer', async () => {
+		const service = createMockService();
+		const req = {
+			params: {},
+			session: {}
+		} as Request;
+		const answers = {
+			someField: 'a',
+			anotherField: 'b'
+		};
+		const mockParentPrepareAndSave = mock.method(SaveController.prototype, 'prepareAndSave', async () => {});
+		const mockSaveController = new ExaminationSaveController(service as unknown as ManageService, req, 'caseRef');
+		await mockSaveController.prepareAndSave(answers);
+		assert.deepEqual(mockParentPrepareAndSave.mock.calls.length, 1);
 	});
 });

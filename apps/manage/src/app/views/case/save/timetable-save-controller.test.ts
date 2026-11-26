@@ -1,10 +1,15 @@
 import { TimetableSaveController } from './timetable-save-controller.ts';
+import { Gateway1SaveController } from './gateway-1-save-controller.ts';
+import { Gateway2SaveController } from './gateway-2-save-controller.ts';
+import { Gateway3SaveController } from './gateway-3-save-controller.ts';
+import { ExaminationSaveController } from './examination-save-controller.ts';
 import { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { questions } from '../questions.ts';
 import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 type MockServiceType = {
 	db: {
@@ -116,6 +121,13 @@ function createController(mockService: MockServiceType, question: string) {
 
 describe('test TimetableSaveController', () => {
 	const timetableGateway3CompletionDateUrl = questions.timetableGateway3CompletionDate.url;
+	let mockSendServiceBusMessage: ReturnType<typeof mock.method<ODWServiceBusDataSender, 'sendUpdateMessage'>>;
+	beforeEach(() => {
+		mockSendServiceBusMessage = mock.method(ODWServiceBusDataSender.prototype, 'sendUpdateMessage', async () => {});
+	});
+	afterEach(() => {
+		mock.restoreAll();
+	});
 
 	it('saves a gateway 1 question to Gateway1Info', async () => {
 		const mockService = createMockService();
@@ -313,5 +325,59 @@ describe('test TimetableSaveController', () => {
 			/Case not found/
 		);
 		assert.equal(mockService.db.gateway3Submission.updateMany.mock.callCount(), 0);
+	});
+	it('prepareAndSave delegates to Gateway1SaveController when the question is a gateway1 timetable question', async () => {
+		const question = 'notice-of-intention-publish-date';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		const mockPrepareAndSave = mock.method(Gateway1SaveController.prototype, 'prepareAndSave', async () => {});
+		await controller.prepareAndSave({});
+		assert.equal(mockPrepareAndSave.mock.calls.length, 1);
+	});
+	it('prepareAndSave delegates to Gateway2SaveController when the question is a gateway2 timetable question', async () => {
+		const question = 'gateway-2-expected-date';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		const mockPrepareAndSave = mock.method(Gateway2SaveController.prototype, 'prepareAndSave', async () => {});
+		await controller.prepareAndSave({});
+		assert.equal(mockPrepareAndSave.mock.calls.length, 1);
+	});
+	it('prepareAndSave delegates to Gateway3SaveController when the question is a gateway3 timetable question', async () => {
+		const question = 'gateway-3-expected-date';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		const mockPrepareAndSave = mock.method(Gateway3SaveController.prototype, 'prepareAndSave', async () => {});
+		await controller.prepareAndSave({});
+		assert.equal(mockPrepareAndSave.mock.calls.length, 1);
+	});
+	it('sends a service bus message when saving answers for the timetable-gateway-3-completion-date question', async () => {
+		const question = 'timetable-gateway-3-completion-date';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		await controller.prepareAndSave({});
+		assert.equal(mockSendServiceBusMessage.mock.calls.length, 1);
+	});
+	it('prepareAndSave delegates to ExaminationSaveController when the question is a examination timetable question', async () => {
+		const question = 'examination-expected-submission-date';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		const mockPrepareAndSave = mock.method(ExaminationSaveController.prototype, 'prepareAndSave', async () => {});
+		await controller.prepareAndSave({});
+		assert.equal(mockPrepareAndSave.mock.calls.length, 1);
+	});
+	it('prepareAndSave delegates to ExaminationSaveController when the question is an examination pause question', async () => {
+		const question = 'examination-pause-start-date-1';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		const mockPrepareAndSave = mock.method(ExaminationSaveController.prototype, 'prepareAndSave', async () => {});
+		await controller.prepareAndSave({});
+		assert.equal(mockPrepareAndSave.mock.calls.length, 1);
+	});
+	it('does not send a service bus message when data was not saved to the database', async () => {
+		const question = 'some-unmatched-question';
+		const mockService = createMockService();
+		const controller = createController(mockService, question);
+		await controller.prepareAndSave({});
+		assert.equal(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 });
