@@ -23,16 +23,25 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+run_stage() {
+  local stage="$1" result=0
+  shift
+  echo "Starting $stage"
+  "$@" || result=$?
+  echo "$stage exit status: $result"
+  return "$result"
+}
+
 node performance/scripts/settings.ts
 node performance/scripts/data.ts seed
-env -u ELECTRON_RUN_AS_NODE node node_modules/cypress/bin/cypress run --browser chrome \
+run_stage "Cypress authentication" env -u ELECTRON_RUN_AS_NODE node node_modules/cypress/bin/cypress run --browser chrome \
   --config-file performance/auth.config.ts \
   --config chromeWebSecurity=false,experimentalModifyObstructiveThirdPartyCode=true
 
-"$jmeter" -n -t performance/local-plans.jmx \
+run_stage "JMeter load test" "$jmeter" -n -t performance/local-plans.jmx \
   -q performance/jmeter.properties -q "$PERFORMANCE_PRIVATE_DIR/jmeter.properties" \
   -l "$PERFORMANCE_RESULTS_DIR/raw.jtl" -j "$PERFORMANCE_RESULTS_DIR/jmeter.log"
-"$jmeter" -g "$PERFORMANCE_RESULTS_DIR/raw.jtl" -o "$PERFORMANCE_RESULTS_DIR/html" \
+run_stage "JMeter report generation" "$jmeter" -g "$PERFORMANCE_RESULTS_DIR/raw.jtl" -o "$PERFORMANCE_RESULTS_DIR/html" \
   -q performance/jmeter.properties -q "$PERFORMANCE_PRIVATE_DIR/jmeter.properties" \
   -j "$PERFORMANCE_RESULTS_DIR/report.log"
-node performance/scripts/results.ts
+run_stage "Performance thresholds" node performance/scripts/results.ts
