@@ -9,17 +9,14 @@ const SUBMISSION_1_COMPLETION_DATE = new Date('2026-10-01T12:00:00.000Z');
 // Submission 1 data comes from seedGateway3Resubmission
 export const SUBMISSION_1 = {
 	date: '1 October 2026',
-	shortDate: '1 Oct 2026',
 	time: SUBMISSION_1_COMPLETION_DATE.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
 	reportDate: '15 October 2026',
-	shortReportDate: '15 Oct 2026',
 	reports: ['GW3Report-PLAN-001.pdf', 'GW3Report-Addendum-PLAN-001.pdf']
 };
 
 export const SUBMISSION_2 = {
 	document: 'test-document.pdf',
-	report: 'GW3Report-Submission-2.pdf',
-	proceedReport: 'GW3Report-Proceed-PLAN-001.pdf'
+	report: 'GW3Report-Submission-2.pdf'
 };
 
 export const openResubmissionDeclarationPage = (planReference: string, fileName = SUBMISSION_2.document) => {
@@ -37,10 +34,6 @@ export const openResubmissionDeclarationPage = (planReference: string, fileName 
 
 export const todayDisplayDate = () =>
 	new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-// Short month format used in the report and submission rows of the under review page
-export const todayShortDisplayDate = () =>
-	new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export const submitGateway3Resubmission = (planReference: string, fileName = SUBMISSION_2.document) => {
 	openResubmissionDeclarationPage(planReference, fileName);
@@ -63,17 +56,4 @@ export const openSeededResubmissionDeclarationPage = (planReference: string) => 
 	cy.task('seedGateway3Submitted');
 	cy.task('seedGateway3Resubmission');
 	openResubmissionDeclarationPage(planReference);
-};
-
-// FO submits submission 2, which is now under review
-export const seedGateway3SubmissionTwoUnderReview = (planReference: string) => {
-	cy.task('seedGateway3Submitted');
-	cy.task('seedGateway3Resubmission');
-	submitGateway3Resubmission(planReference);
-};
-
-// FO submits submission 2, then the BO (seed) proceeds the plan to examination
-export const seedGateway3CompleteAfterResubmission = (planReference: string) => {
-	seedGateway3SubmissionTwoUnderReview(planReference);
-	cy.task('seedGateway3ProceedToExamination', { reportFileNames: [SUBMISSION_2.proceedReport] });
 };

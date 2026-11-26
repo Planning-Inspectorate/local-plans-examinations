@@ -21,6 +21,12 @@ export class Gateway3PreviousSubmissionPage extends Gateway3ResubmissionPage {
 		cy.visit(this.pathFor(planReference, submissionNumber));
 	}
 
+	verifyNoEditingControls() {
+		cy.getByData('add-documents').should('not.exist');
+		this.submitButton.should('not.exist');
+		this.saveAndComeBackLink.should('not.exist');
+	}
+
 	verifyLoaded(submissionNumber?: string, status = 'Resubmission required') {
 		this.verifyPath();
 		this.verifyHeading(submissionNumber ? `Gateway 3; submission ${submissionNumber}` : 'Gateway 3; submission');

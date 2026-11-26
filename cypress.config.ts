@@ -11,7 +11,6 @@ import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway
 import { seedUpdateGateway2Workshop } from './packages/database/src/seed/seed-update-gateway-2-workshop.ts';
 import { seedExaminationReadyToStart } from './packages/database/src/seed/seed-examination-ready-to-start.ts';
 import { seedGateway3TriggerResubmission } from './packages/database/src/seed/seed-gateway-3-trigger-resubmission.ts';
-import { seedGateway3ProceedToExamination } from './packages/database/src/seed/seed-gateway-3-proceed-to-examination.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
 import {
@@ -123,7 +122,6 @@ export default defineConfig({
 				seedExaminationInExamination,
 				seedExaminationReportIssued,
 				seedGateway3TriggerResubmission,
-				seedGateway3ProceedToExamination,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
 					return seedUpdateGateway2Workshop({ reference, workshopData });
 				},

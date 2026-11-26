@@ -25,8 +25,11 @@ describe('Gateway 3 submission 2 previous submission journeys', () => {
 			gateway3ResubmissionPage.clickPreviousSubmission(1);
 
 			gateway3PreviousSubmissionPage.verifyLoaded('1');
+			gateway3PreviousSubmissionPage.verifyNoEditingControls();
 			gateway3PreviousSubmissionPage.verifyPath(gateway3PreviousSubmissionPage.pathFor(plan.urlReference, 1));
 			gateway3PreviousSubmissionPage.goBack();
+
+			//add navigate forward
 
 			gateway3ResubmissionPage.verifyLoaded('2');
 			gateway3ResubmissionPage.verifyPathForPlan(plan.urlReference);
@@ -49,9 +52,11 @@ describe('Gateway 3 submission 3 previous submission journeys', () => {
 			gateway3ResubmissionPage.clickPreviousSubmission(2);
 
 			gateway3PreviousSubmissionPage.verifyLoaded('2');
+			gateway3PreviousSubmissionPage.verifyNoEditingControls();
 			gateway3PreviousSubmissionPage.clickPreviousSubmission(1);
 
 			gateway3PreviousSubmissionPage.verifyLoaded('1');
+			gateway3PreviousSubmissionPage.verifyNoEditingControls();
 			gateway3PreviousSubmissionPage.verifyPath(gateway3PreviousSubmissionPage.pathFor(plan.urlReference, 1));
 		});
 	});
