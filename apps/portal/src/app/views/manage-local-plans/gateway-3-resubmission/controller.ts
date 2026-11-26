@@ -516,7 +516,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			service.logger.error({ error }, `Failed to complete resubmission for case ${planReference ?? ''}`);
 			return res.status(500).send('Failed to record submission');
 		}
-		new ODWServiceBusDataSender(service).sendUpdateMessage({ caseId: caseId }, false, false);
+		new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission-complete`);
 	};

@@ -68,4 +68,26 @@ export class ODWServiceBusDataSender {
 			}
 		}
 	}
+	/**
+	 * Safely attempt to send a message to the service bus without awaiting a response
+	 * @param caseIdOrCaseReference
+	 * @param workshopsUpdated
+	 * @param hearingsUpdated
+	 * @returns
+	 */
+	public sendUpdateMessageSafe(
+		caseIdOrCaseReference: CaseIdOrCaseReference,
+		workshopsUpdated: boolean,
+		hearingsUpdated: boolean
+	) {
+		this.sendUpdateMessage(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated).catch((error) => {
+			if (error instanceof Error) {
+				this.tryLogWarning(
+					`An error occurred when attempting to send a message to the ODW Service Bus: ${error.stack}`
+				);
+			} else {
+				this.tryLogWarning(`An error occurred when attempting to send a message to the ODW Service Bus: ${error}`);
+			}
+		});
+	}
 }

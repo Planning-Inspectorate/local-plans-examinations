@@ -270,7 +270,7 @@ async function saveGateway3AnswersToDatabase(service: PortalService, req: Reques
 			'Failed to save Gateway 3 answers to the database'
 		);
 	}
-	new ODWServiceBusDataSender(service).sendUpdateMessage({ caseId: caseId }, false, false);
+	new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 }
 
 async function markGateway3InProgress(service: PortalService, req: Request) {
@@ -294,7 +294,7 @@ async function markGateway3InProgress(service: PortalService, req: Request) {
 			'Failed to set Gateway 3 status to IN_PROGRESS'
 		);
 	}
-	new ODWServiceBusDataSender(service).sendUpdateMessage({ caseId: caseId }, false, false);
+	new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 }
 
 /** Determine whether a saved answer value represents a non-empty answer. */
@@ -853,7 +853,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);
 			return res.status(500).send('Failed to record submission');
 		}
-		new ODWServiceBusDataSender(service).sendUpdateMessage({ caseId: caseId }, false, false);
+		new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);
 	};
