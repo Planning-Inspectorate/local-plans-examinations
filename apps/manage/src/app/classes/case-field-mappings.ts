@@ -4,6 +4,12 @@ import { COMMON_CONSTS } from './common-consts.ts';
 export type CaseRelation =
 	typeof COMMON_CONSTS.GATEWAY_2_INFO | typeof COMMON_CONSTS.GATEWAY_3_INFO | typeof COMMON_CONSTS.EXAMINATION_INFO;
 
+export const QA_INSPECTOR_FIELDS = [
+	'qaInspector1',
+	'qaInspector2',
+	'qaInspector3'
+] as const satisfies readonly (keyof CaseOverviewInput)[];
+
 export const EXAMINING_INSPECTOR_FIELDS = [
 	'examiningInspector1',
 	'examiningInspector2',

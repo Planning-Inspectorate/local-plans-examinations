@@ -141,6 +141,7 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		const reference = getParam(req.params.reference);
 		const urls = getAssessorUrls(reference, gateway);
 		const draft = getAssessorDraft(req, reference, gateway);
+		const displayText = gateway.includes('2') ? 'Gateway 2' : 'Gateway 3';
 		if (!draft) {
 			return res.redirect(urls.questionUrl);
 		}
@@ -160,7 +161,7 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		clearAssessorDraft(req, reference, gateway);
 
 		await updateCaseHistory(service, req, service.db, { assessorName: null }, {}, reference, getCurrentUser(req), {
-			assessorName: `Assessor ${assessorDisplayName} added`
+			assessorName: `${displayText} assessor ${assessorDisplayName} added`
 		});
 		pushAlertToSession(req, 'success', 'Assessor added');
 
@@ -203,6 +204,7 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		const urls = getAssessorUrls(reference, gateway);
 		const caseRecord = res.locals.assessorCase as AssessorCase;
 		const assessor = await findAssessor(req, res);
+		const displayText = gateway.includes('2') ? 'Gateway 2' : 'Gateway 3';
 		// When the first assessor is removed the next assessor takes its place (and its key), so only remove
 		// the assessor if it is still the one the user was asked to confirm
 		if (!assessor || String(req.body?.assessor ?? '') !== assessor.assessorName) {
@@ -216,7 +218,7 @@ export function registerAssessorJourney(router: IRouter, service: ManageService,
 		}
 
 		await updateCaseHistory(service, req, service.db, { assessorName: null }, {}, reference, getCurrentUser(req), {
-			assessorName: `Assessor ${assessorDisplayName} removed`
+			assessorName: `${displayText} assessor ${assessorDisplayName} removed`
 		});
 
 		res.redirect(urls.tabUrl);

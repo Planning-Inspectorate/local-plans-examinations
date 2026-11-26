@@ -8,6 +8,7 @@ import { Gateway2TabHandler } from './gateway-2-tab-handler.ts';
 import { Gateway3TabHandler } from './gateway-3-tab-handler.ts';
 import { Gateway3SubmissionHandler } from './gateway-3-submission-handler.ts';
 import { ExaminationTabHandler } from './examination-tab-handler.ts';
+import CustomFileReviewerQuestion from '../../layouts/custom-file-reviewer/question.ts';
 
 function buildContext(journeyId: string, reference: string, session = {}) {
 	return {
@@ -67,6 +68,79 @@ describe('Gateway 2 document sessions', () => {
 			}
 		});
 	}
+});
+
+describe('Gateway 2 workshop documents', () => {
+	const coverLetter = { id: 'cover-1', fileName: 'cover.pdf', virusCheckStatus: 'scanned' };
+	const workshopFiles = [
+		{ id: 'workshop-1', fileName: 'workshop-1.pdf', virusCheckStatus: 'scanned' },
+		{ id: 'workshop-2', fileName: 'workshop-2.pdf', virusCheckStatus: 'scanned' }
+	];
+
+	const submissionDocumentsQuestion = () => {
+		const question = new CustomFileReviewerQuestion({
+			title: 'Submission documents',
+			question: 'Submission documents',
+			fieldName: 'gateway2Documents'
+		});
+		question.getAction = () => ({ href: '/review', text: 'Change', visuallyHiddenText: 'Submission documents' });
+		return question;
+	};
+
+	async function loadGateway2Tab(withWorkshopDocuments: boolean) {
+		const loadFiles = mock.method(DocumentUtil, 'loadUploadedDocuments', async (_service, caseId, documentSetId) => {
+			if (caseId !== 'PLAN-123456') return [];
+			if (documentSetId === 'covering-letter') return [coverLetter];
+			if (documentSetId === 'gateway-2-workshop-documents' && withWorkshopDocuments) return workshopFiles;
+			return [];
+		});
+		try {
+			const context = buildContext('gateway-2', 'PLAN-123456', {});
+			await new Gateway2TabHandler().handle(context);
+			return context;
+		} finally {
+			loadFiles.mock.restore();
+		}
+	}
+
+	it('shows uploaded workshop documents in the Workshop documents row', async () => {
+		const context = await loadGateway2Tab(true);
+
+		assert.deepEqual(context.res.locals.journeyResponse.answers.gateway2WorkshopDocuments, workshopFiles);
+		assert.deepEqual(
+			context.req.session.fileUploader?.['PLAN-123456:gateway2WorkshopDocuments']?.uploadedFiles,
+			workshopFiles
+		);
+	});
+
+	it('does not add workshop documents to the Submission documents list', async () => {
+		const context = await loadGateway2Tab(true);
+		const submissionDocuments = context.res.locals.journeyResponse.answers.gateway2Documents;
+		const documents = submissionDocuments.flatMap((group: any) => group.documents);
+
+		assert.equal(
+			documents.some((document: any) => document.title === 'Workshop document'),
+			false
+		);
+		assert.equal(
+			documents.some((document: any) => document.files.some((file: any) => file.id.startsWith('workshop-'))),
+			false
+		);
+	});
+
+	it('leaves the Submission documents count unchanged when workshop documents are uploaded', async () => {
+		const question = submissionDocumentsQuestion();
+		const countFor = (context: PageLoadContext) => {
+			const answer = context.res.locals.journeyResponse.answers.gateway2Documents;
+			return question.formatAnswerForSummary('gateway-2', {}, answer)[0].value;
+		};
+
+		const withoutWorkshop = countFor(await loadGateway2Tab(false));
+		const withWorkshop = countFor(await loadGateway2Tab(true));
+
+		assert.equal(withoutWorkshop, '1 document(s)');
+		assert.equal(withWorkshop, withoutWorkshop);
+	});
 });
 
 describe('Case pause banners', () => {
