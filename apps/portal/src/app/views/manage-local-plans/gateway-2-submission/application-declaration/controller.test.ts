@@ -4,7 +4,10 @@ import type { Request, Response } from 'express';
 import { buildGetDeclarationPage, buildPostDeclarationPage } from './controller.ts';
 import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
 import type { PortalService } from '#service';
-import { SUBMISSION_FAILURE_VIEW_PATH } from '../../../static/error/submission-failure.ts';
+import {
+	SUBMISSION_FAILURE_VIEW_PATH,
+	type SubmissionFailureViewData
+} from '../../../static/error/submission-failure.ts';
 import { configureNunjucks } from '../../../../nunjucks.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
@@ -235,14 +238,14 @@ describe('buildPostDeclarationPage - submission failures', () => {
 			body: { declaration: ['informationTrue', 'privacyNotice'] }
 		} as unknown as Request;
 
-		const renderCalls: Array<[string, Record<string, unknown>]> = [];
+		const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
 		const redirectCalls: string[] = [];
 		const statusCalls: number[] = [];
 
 		const res = {
 			locals: {},
-			render(view: string, model?: Record<string, unknown>) {
-				renderCalls.push([view, model ?? {}]);
+			render(view: string, model: SubmissionFailureViewData) {
+				renderCalls.push([view, model]);
 				return this;
 			},
 			redirect(url: string) {
@@ -261,7 +264,7 @@ describe('buildPostDeclarationPage - submission failures', () => {
 		return { req, res, renderCalls, redirectCalls, statusCalls };
 	}
 
-	function assertSubmissionFailurePage(renderCalls: Array<[string, Record<string, unknown>]>, statusCalls: number[]) {
+	function assertSubmissionFailurePage(renderCalls: Array<[string, SubmissionFailureViewData]>, statusCalls: number[]) {
 		assert.deepEqual(statusCalls, [500]);
 		assert.equal(renderCalls.length, 1);
 		assert.equal(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);

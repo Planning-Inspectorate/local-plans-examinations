@@ -21,7 +21,7 @@ import {
 	buildSaveDataToCase
 } from './controller.ts';
 import type { PortalService } from '#service';
-import { SUBMISSION_FAILURE_VIEW_PATH } from '../../static/error/submission-failure.ts';
+import { SUBMISSION_FAILURE_VIEW_PATH, type SubmissionFailureViewData } from '../../static/error/submission-failure.ts';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
@@ -1214,7 +1214,7 @@ describe('buildPostDeclarationPage', () => {
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
 		let redirectUrl = '';
-		const res = { locals: {}, redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+		const res = { locals: {}, redirect: (url: string) => (redirectUrl = url) } as Response;
 
 		await handler(req, res, () => {});
 
@@ -1255,7 +1255,7 @@ describe('buildPostDeclarationPage', () => {
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
 
-		const renderCalls: Array<[string, Record<string, unknown>]> = [];
+		const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
 		const statusCalls: number[] = [];
 		let redirectUrl = '';
 		const res = {
@@ -1265,8 +1265,8 @@ describe('buildPostDeclarationPage', () => {
 				statusCalls.push(code);
 				return this;
 			},
-			render(view: string, model?: Record<string, unknown>) {
-				renderCalls.push([view, model ?? {}]);
+			render(view: string, model: SubmissionFailureViewData) {
+				renderCalls.push([view, model]);
 				return this;
 			}
 		} as unknown as Response;
@@ -1294,7 +1294,7 @@ describe('buildPostDeclarationPage', () => {
 		const handler = buildPostDeclarationPage(service);
 		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
 
-		const renderCalls: Array<[string, Record<string, unknown>]> = [];
+		const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
 		const statusCalls: number[] = [];
 		const res = {
 			redirect: () => {},
@@ -1302,8 +1302,8 @@ describe('buildPostDeclarationPage', () => {
 				statusCalls.push(code);
 				return this;
 			},
-			render(view: string, model?: Record<string, unknown>) {
-				renderCalls.push([view, model ?? {}]);
+			render(view: string, model: SubmissionFailureViewData) {
+				renderCalls.push([view, model]);
 				return this;
 			}
 		} as unknown as Response;
@@ -1391,7 +1391,7 @@ describe('buildPostDeclarationPage', () => {
 		const renderCall = calls.find((call) => call.method === 'render');
 		assert.strictEqual(renderCall?.args[0], SUBMISSION_FAILURE_VIEW_PATH);
 		assert.strictEqual(
-			(renderCall?.args[1] as Record<string, unknown>).planOverviewUrl,
+			(renderCall?.args[1] as SubmissionFailureViewData).planOverviewUrl,
 			'/manage-local-plans/PLAN-001'
 		);
 		assert.strictEqual(declarationService.db.$transaction.mock.callCount(), 0);

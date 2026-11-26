@@ -5,13 +5,14 @@ import {
 	buildSubmissionFailureHandler,
 	renderSubmissionFailurePage,
 	SUBMISSION_FAILURE_PAGE_TITLE,
-	SUBMISSION_FAILURE_VIEW_PATH
+	SUBMISSION_FAILURE_VIEW_PATH,
+	type SubmissionFailureViewData
 } from './submission-failure.ts';
 import { submissionFailurePage } from './controller.ts';
 import type { PortalService } from '#service';
 
 function createRes() {
-	const renderCalls: Array<[string, Record<string, unknown>]> = [];
+	const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
 	const statusCalls: number[] = [];
 
 	const res = {
@@ -20,8 +21,8 @@ function createRes() {
 			statusCalls.push(code);
 			return this;
 		},
-		render(view: string, model?: Record<string, unknown>) {
-			renderCalls.push([view, model ?? {}]);
+		render(view: string, model: SubmissionFailureViewData) {
+			renderCalls.push([view, model]);
 			return this;
 		}
 	} as unknown as Response;

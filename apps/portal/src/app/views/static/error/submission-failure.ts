@@ -10,6 +10,12 @@ export interface SubmissionFailureOptions {
 	planReference?: string | null;
 }
 
+export interface SubmissionFailureViewData {
+	pageTitle: string;
+	pageHeading: string;
+	planOverviewUrl: string;
+}
+
 /**
  * Renders the shared 'failed submission' error page.
  *
@@ -19,14 +25,15 @@ export interface SubmissionFailureOptions {
  */
 export function renderSubmissionFailurePage(res: Response, { planReference }: SubmissionFailureOptions = {}) {
 	const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
-
-	return res.status(500).render(SUBMISSION_FAILURE_VIEW_PATH, {
+	const viewData: SubmissionFailureViewData = {
 		pageTitle: SUBMISSION_FAILURE_PAGE_TITLE,
 		pageHeading: SUBMISSION_FAILURE_PAGE_TITLE,
 		planOverviewUrl: encodedPlanReference
 			? `/manage-local-plans/${encodedPlanReference}`
 			: '/manage-local-plans/your-plans'
-	});
+	};
+
+	return res.status(500).render(SUBMISSION_FAILURE_VIEW_PATH, viewData);
 }
 
 /**
