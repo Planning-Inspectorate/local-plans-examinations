@@ -16,7 +16,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@planning-inspectorate/data-model": "github:Planning-Inspectorate/data-model",
+    "@planning-inspectorate/data-model": "github:Planning-Inspectorate/data-model#2.59.0",
     "@prisma/adapter-mssql": "*",
     "@prisma/client": "*"
   },
