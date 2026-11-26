@@ -41,7 +41,7 @@ export abstract class SaveController {
 	 * @param answers The answers that were saved
 	 */
 	protected async tryToSendMessageToTheODW(answers: Record<string, any>) {
-		await new ODWServiceBusDataSender(this.service).sendUpdateMessage(
+		new ODWServiceBusDataSender(this.service).sendUpdateMessage(
 			{ caseReference: this.caseReference },
 			'workshops' in answers,
 			'hearings' in answers
