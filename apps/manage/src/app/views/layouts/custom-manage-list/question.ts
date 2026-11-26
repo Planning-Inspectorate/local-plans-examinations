@@ -140,7 +140,6 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	 * Format the answers to each of the manage list questions
 	 */
 	#formatItemAnswers(answer: { id: string; [k: string]: string }): { question: string; answer: string }[] {
-		console.log('here3');
 		if (this.section.questions.length === 0) {
 			return [];
 		}
