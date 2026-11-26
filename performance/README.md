@@ -6,115 +6,74 @@ It is intended to collect early performance evidence. It is not a full productio
 
 ## What It Runs
 
-The pipeline confirms the Portal home page is reachable before JMeter starts. That check is a prerequisite, not a load-test scenario.
+The JMeter plan currently runs one Manage journey:
 
-The JMeter plan currently runs one simple request:
+- All cases
+- Case Overview, Gateway 2, Gateway 3 and Examination tabs
+- Open the plan title form, save a change and load the Overview again to check it persisted
 
-- Portal home page
-
-This is deliberately light first coverage. It hits a real deployed route and proves the Portal can serve a DB-backed page under a small amount of repeated traffic.
-
-Manage performance coverage is not included yet. Manage uses the normal MSAL/session/group guard flow, so it needs a signed-off machine-auth or browser-auth approach before it can be tested against deployed environments without bypassing authentication.
+This is deliberately light first coverage. It hits real deployed routes and proves Manage can serve DB-backed pages and save a representative update under repeated traffic. Portal and file transfers are not included yet.
 
 ## Load Model
 
 The pipeline exposes these values:
 
-- `threads`
+- `manageUsers`
 - `rampSeconds`
-- `durationSeconds`
+- `durationSeconds` (hold time after ramp-up)
 - `requestPauseMs`
+- `readMs` and `saveMs` (p95 limits)
 
 Defaults are deliberately small:
 
-- 5 threads
-- 30 second ramp-up
-- 300 second duration
-- 1000ms pause between requests
+- 5 users
+- 120 second ramp-up
+- 600 second hold
+- 10000ms pause between user actions
 
 These are starter assumptions only. They should be replaced with agreed NFRs when available.
 
 ## Auth
 
-The deployed Portal is protected by Easy Auth.
+Manage uses the existing environment-smoke Microsoft sign-in flow through Cypress. Each user signs in before the load starts, then JMeter uses their session cookies for HTTP requests. This measures server responses, not browser rendering.
 
-In the pipeline, Azure DevOps authenticates with Azure, requests an Entra access token for the Portal app registration, and JMeter sends it as:
-
-```text
-Authorization: Bearer <token>
-```
-
-The pipeline uses `PORTAL_APP_REGISTRATION_ID` from the `pipeline_secrets` variable group as the token resource.
+The pipeline uses the existing smoke service-account credentials from the `pipeline_secrets` variable group. Login cookies stay private and are removed on exit.
 
 ## Data
 
-The suite does not seed or clean up data.
+The suite seeds one disposable case per user and deletes only its own cases and title-change history afterwards, including after failures. It never clears the shared database or reseeds reference data.
+
+Forced termination or agent loss can leave records behind; the results directory's run ID identifies them for manual cleanup.
 
 ## Running Locally
 
-Install JMeter, start Portal on `8080`, then run:
+Install Java and JMeter, start Manage with authentication and Notify disabled against an initialized `local-plans-performance` database, then run:
 
 ```bash
-npm run perf:local
+SQL_CONNECTION_STRING='<local performance database connection>' MANAGE_BASE_URL=http://localhost:18090 npm run perf:local
 ```
 
-The local script uses one thread and a five second duration so it is quick when changing the JMeter plan. The defaults are in `performance/scripts/run-local.sh`.
-
-You can also run JMeter directly:
-
-```bash
-jmeter -n \
-  -t performance/local-plans.jmx \
-  -l performance/results/local-plans-baseline.jtl \
-  -e \
-  -o performance/results/html-local \
-  -JportalProtocol=http \
-  -JportalHost=localhost \
-  -JportalPort=8080 \
-  -JportalAccessToken=local \
-  -Jthreads=1 \
-  -JrampSeconds=1 \
-  -JdurationSeconds=5 \
-  -JrequestPauseMs=100
-```
+The local script uses one user and a 30 second duration so it is quick when changing the JMeter plan. The defaults are in `performance/scripts/run-local.sh`. Local runs verify the wiring; use Test for performance evidence.
 
 ## Running Against Test
 
-Install JMeter, sign in with Azure CLI, get a Portal access token, then run:
-
-```bash
-export PORTAL_ACCESS_TOKEN="$(az account get-access-token \
-  --resource "<portal app registration id>" \
-  --query accessToken \
-  -o tsv)"
-
-jmeter -n \
-  -t performance/local-plans.jmx \
-  -l performance/results/local-plans-baseline.jtl \
-  -e \
-  -o performance/results/html \
-  -JportalProtocol=https \
-  -JportalHost=local-plans-portal-test.planninginspectorate.gov.uk \
-  -JportalAccessToken="$PORTAL_ACCESS_TOKEN" \
-  -Jthreads=5 \
-  -JrampSeconds=30 \
-  -JdurationSeconds=300 \
-  -JrequestPauseMs=1000
-```
+Run [performance.yml](../.azure/pipelines/performance.yml) in Azure DevOps with the desired load parameters. Test must already be deployed and seeded with reference data, and the agent needs access to its database. Avoid deployments or overlapping load tests during a run.
 
 ## Pipeline
 
-`.azure/pipelines/performance.yml` is manual only and targets Test.
+`.azure/pipelines/performance.yml` targets Test and can be run manually. Scheduled runs use the defaults on main at **07:00 and 19:00 UTC**.
 
 It:
 
 - downloads Java 17 for JMeter
 - downloads Apache JMeter 5.6.3
 - authenticates to Azure
-- gets a Portal Entra access token
-- checks Portal availability
+- gets the Test database connection and seeds disposable cases
+- prepares independent Manage sessions using the existing smoke authentication
 - runs `performance/local-plans.jmx`
 - publishes the JTL and HTML report
-- fails if any JMeter sample/assertion fails
+- fails if any JMeter sample/assertion fails, an operation has too few samples or its p95 exceeds the chosen limit
 
-Response-time guardrails should be added later once we have baseline results or formal NFRs.
+Open `<run ID>/html/index.html` in the `performance-results` artifact for the full load period, including ramp-up. Raw results, logs, workload settings, case references and a pass/fail summary are saved alongside it.
+
+Each operation needs at least 20 samples on Test. The starting p95 limits are **2 seconds for reads and 3 seconds for saves**; these are provisional, not agreed service targets.

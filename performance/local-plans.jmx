@@ -1,79 +1,389 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
-    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Local Plans baseline" enabled="true">
-      <stringProp name="TestPlan.comments">Small Portal baseline JMeter plan for deployed non-production Local Plans environments.</stringProp>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Manage browsing and title updates" enabled="true">
       <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
-      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments">
         <collectionProp name="Arguments.arguments"/>
       </elementProp>
     </TestPlan>
     <hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Baseline users">
-        <stringProp name="ThreadGroup.num_threads">${__P(threads,5)}</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">${__P(rampSeconds,30)}</stringProp>
+      <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="HTTP 200" enabled="true">
+        <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+        <intProp name="Assertion.test_type">8</intProp>
+        <collectionProp name="Asserion.test_strings">
+          <stringProp name="0">200</stringProp>
+        </collectionProp>
+        <stringProp name="Assertion.custom_message">HTTP 200</stringProp>
+      </ResponseAssertion>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="manage" enabled="true">
+        <stringProp name="ThreadGroup.num_threads">${__P(manageUsers,5)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(rampSeconds,120)}</stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">${__P(durationSeconds,300)}</stringProp>
-        <stringProp name="ThreadGroup.delay"></stringProp>
-        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+        <stringProp name="ThreadGroup.duration">${__P(totalSeconds,720)}</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
           <stringProp name="LoopController.loops">-1</stringProp>
           <boolProp name="LoopController.continue_forever">true</boolProp>
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Common headers" enabled="true">
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Import authenticated session once" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="filename">${__P(scriptDir)}/load-session.groovy</stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Iteration" enabled="true">
+          <stringProp name="CounterConfig.start">1</stringProp>
+          <stringProp name="CounterConfig.incr">1</stringProp>
+          <stringProp name="CounterConfig.name">iteration</stringProp>
+          <boolProp name="CounterConfig.per_user">true</boolProp>
+        </CounterConfig>
+        <hashTree/>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="One case per session" enabled="true">
+          <stringProp name="filename">${__P(privateDir)}/manage-${__threadNum}.csv</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="variableNames">reference</stringProp>
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <boolProp name="stopThread">true</boolProp>
+          <boolProp name="ignoreFirstLine">false</boolProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP defaults" enabled="true">
+          <stringProp name="HTTPSampler.domain">${__P(manageHost,localhost)}</stringProp>
+          <stringProp name="HTTPSampler.port">${__P(managePort,)}</stringProp>
+          <stringProp name="HTTPSampler.protocol">${__P(manageProtocol,https)}</stringProp>
+          <stringProp name="HTTPSampler.connect_timeout">5000</stringProp>
+          <stringProp name="HTTPSampler.response_timeout">30000</stringProp>
+        </ConfigTestElement>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Request headers" enabled="true">
           <collectionProp name="HeaderManager.headers">
-            <elementProp name="" elementType="Header">
-              <stringProp name="Header.name">Accept</stringProp>
-              <stringProp name="Header.value">text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</stringProp>
-            </elementProp>
-            <elementProp name="" elementType="Header">
+            <elementProp name="User-Agent" elementType="Header">
               <stringProp name="Header.name">User-Agent</stringProp>
-              <stringProp name="Header.value">local-plans-jmeter</stringProp>
+              <stringProp name="Header.value">local-plans-performance</stringProp>
             </elementProp>
           </collectionProp>
         </HeaderManager>
         <hashTree/>
-        <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Pace requests" enabled="true">
-          <stringProp name="ConstantTimer.delay">${__P(requestPauseMs,1000)}</stringProp>
+        <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="Independent session" enabled="true">
+          <collectionProp name="CookieManager.cookies"/>
+          <boolProp name="CookieManager.clearEachIteration">false</boolProp>
+          <stringProp name="CookieManager.policy">standard</stringProp>
+        </CookieManager>
+        <hashTree/>
+        <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Pause between user actions" enabled="true">
+          <stringProp name="ConstantTimer.delay">${__P(requestPauseMs,10000)}</stringProp>
         </ConstantTimer>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Portal home page">
-          <stringProp name="HTTPSampler.domain">${__P(portalHost,)}</stringProp>
-          <stringProp name="HTTPSampler.port">${__P(portalPort,)}</stringProp>
-          <stringProp name="HTTPSampler.protocol">${__P(portalProtocol,https)}</stringProp>
-          <stringProp name="HTTPSampler.path">/</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <stringProp name="HTTPSampler.method">GET</stringProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
-            <collectionProp name="Arguments.arguments"/>
-          </elementProp>
-        </HTTPSamplerProxy>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Page responses" enabled="true"/>
         <hashTree>
-          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Portal auth header" enabled="true">
-            <collectionProp name="HeaderManager.headers">
-              <elementProp name="" elementType="Header">
-                <stringProp name="Header.name">Authorization</stringProp>
-                <stringProp name="Header.value">Bearer ${__P(portalAccessToken,)}</stringProp>
-              </elementProp>
-            </collectionProp>
-          </HeaderManager>
+          <HtmlExtractor guiclass="TestBeanGUI" testclass="HtmlExtractor" testname="Extract case reference" enabled="true">
+            <stringProp name="HtmlExtractor.refname">caseReference</stringProp>
+            <stringProp name="HtmlExtractor.expr">.govuk-caption-l</stringProp>
+            <stringProp name="HtmlExtractor.attribute"/>
+            <stringProp name="HtmlExtractor.match_number">1</stringProp>
+            <stringProp name="HtmlExtractor.default"/>
+            <boolProp name="HtmlExtractor.default_empty_value">true</boolProp>
+          </HtmlExtractor>
           <hashTree/>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Portal home page loads" enabled="true">
-            <collectionProp name="Asserion.test_strings">
-              <stringProp name="2576797">Sign-in</stringProp>
-            </collectionProp>
-            <stringProp name="Assertion.custom_message">Portal login page did not load.</stringProp>
+          <HtmlExtractor guiclass="TestBeanGUI" testclass="HtmlExtractor" testname="Extract section" enabled="true">
+            <stringProp name="HtmlExtractor.refname">section</stringProp>
+            <stringProp name="HtmlExtractor.expr">h2</stringProp>
+            <stringProp name="HtmlExtractor.attribute"/>
+            <stringProp name="HtmlExtractor.match_number">1</stringProp>
+            <stringProp name="HtmlExtractor.default"/>
+            <boolProp name="HtmlExtractor.default_empty_value">true</boolProp>
+          </HtmlExtractor>
+          <hashTree/>
+          <HtmlExtractor guiclass="TestBeanGUI" testclass="HtmlExtractor" testname="Extract heading" enabled="true">
+            <stringProp name="HtmlExtractor.refname">heading</stringProp>
+            <stringProp name="HtmlExtractor.expr">h1</stringProp>
+            <stringProp name="HtmlExtractor.attribute"/>
+            <stringProp name="HtmlExtractor.match_number">1</stringProp>
+            <stringProp name="HtmlExtractor.default"/>
+            <boolProp name="HtmlExtractor.default_empty_value">true</boolProp>
+          </HtmlExtractor>
+          <hashTree/>
+          <HtmlExtractor guiclass="TestBeanGUI" testclass="HtmlExtractor" testname="Extract csrf" enabled="true">
+            <stringProp name="HtmlExtractor.refname">csrf</stringProp>
+            <stringProp name="HtmlExtractor.expr">input[name=_csrf]</stringProp>
+            <stringProp name="HtmlExtractor.attribute">value</stringProp>
+            <stringProp name="HtmlExtractor.match_number">1</stringProp>
+            <stringProp name="HtmlExtractor.default"/>
+            <boolProp name="HtmlExtractor.default_empty_value">true</boolProp>
+          </HtmlExtractor>
+          <hashTree/>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="No validation errors" enabled="true">
             <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
-            <boolProp name="Assertion.assume_success">false</boolProp>
-            <intProp name="Assertion.test_type">2</intProp>
+            <intProp name="Assertion.test_type">6</intProp>
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="0">class=[&quot;&apos;][^&quot;&apos;]*govuk-error-summary</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">No validation errors</stringProp>
           </ResponseAssertion>
           <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: All cases" enabled="true">
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected page heading" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">heading</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">All cases</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Overview" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/overview</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case reference" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">caseReference</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">${reference}</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case tab" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">section</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Overview</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected case tab</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Gateway 2" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/gateway-2</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case reference" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">caseReference</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">${reference}</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case tab" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">section</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Gateway 2</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected case tab</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Gateway 3" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/gateway-3</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case reference" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">caseReference</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">${reference}</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case tab" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">section</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Gateway 3</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected case tab</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Examination" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/examination</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case reference" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">caseReference</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">${reference}</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case tab" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">section</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Examination</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected case tab</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Title form" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/overview/case-details/plan-title</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected page heading" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">heading</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">What is the plan title?</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Save title" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/overview/case-details/plan-title</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="_csrf" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.name">_csrf</stringProp>
+                  <stringProp name="Argument.value">${csrf}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                </elementProp>
+                <elementProp name="planTitle" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.name">planTitle</stringProp>
+                  <stringProp name="Argument.value">Performance ${reference} edit ${iteration}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected page heading" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">heading</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Performance ${reference} edit ${iteration}</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Manage: Verify title" enabled="true">
+            <stringProp name="HTTPSampler.path">/case/${reference}/overview</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected page heading" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">heading</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Performance ${reference} edit ${iteration}</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected page heading</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expected case tab" enabled="true">
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.scope">variable</stringProp>
+              <stringProp name="Scope.variable">section</stringProp>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">Overview</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.custom_message">Expected case tab</stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
         </hashTree>
       </hashTree>
     </hashTree>
