@@ -70,6 +70,17 @@ export const ENVIRONMENT_NAME: ENVIRONMENT_NAMES = Object.freeze({
 	PROD: 'prod'
 });
 
+export function getAuthRateLimitMax(env = process.env): number {
+	const defaultMax = env.NODE_ENV === 'production' ? 600 : 1000;
+	if (env.ENVIRONMENT !== ENVIRONMENT_NAME.TEST || !env.AUTH_RATE_LIMIT_MAX) return defaultMax;
+
+	const max = Number(env.AUTH_RATE_LIMIT_MAX);
+	if (!Number.isSafeInteger(max) || max < 1) {
+		throw new Error('AUTH_RATE_LIMIT_MAX must be a positive integer');
+	}
+	return max;
+}
+
 // cache the config
 let config: Config | undefined;
 
@@ -256,7 +267,7 @@ export function loadConfig(): Config {
 			signoutUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/logout',
 			rateLimit: {
 				windowMs: 15 * 60 * 1000,
-				max: isProduction ? 600 : 1000,
+				max: getAuthRateLimitMax(),
 				message: 'Too many requests, please try again later',
 				standardHeaders: true,
 				legacyHeaders: false

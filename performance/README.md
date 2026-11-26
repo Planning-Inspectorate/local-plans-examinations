@@ -59,6 +59,8 @@ The local script uses one user and a 30 second duration so it is quick when chan
 
 Run [performance.yml](../.azure/pipelines/performance.yml) in Azure DevOps with the desired load parameters. Test must already be deployed and seeded with reference data, and the agent needs access to its database. Avoid deployments or overlapping load tests during a run.
 
+Manage's Test configuration sets `AUTH_RATE_LIMIT_MAX=10000` per IP over 15 minutes so the load users can share an agent without hitting the normal 600-request cap.
+
 ## Pipeline
 
 `.azure/pipelines/performance.yml` targets Test and can be run manually. Scheduled runs use the defaults on main at **07:00 and 19:00 UTC**.
