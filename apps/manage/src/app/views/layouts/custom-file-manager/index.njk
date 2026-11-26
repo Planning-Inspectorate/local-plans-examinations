@@ -41,11 +41,17 @@
         classes: "govuk-button--secondary"
       }) }}
 
+      {% if question.title.includes('Gateway 2 report documents') %}
+        {% set dateColText =  "Date" %}
+      {% else %}
+        {% set dateColText =  "Received" %}
+      {% endif %}
+
       {{ govukTable({
         attributes: { "data-cy": "examination-report-documents" },
         head: [
           { text: "Document" },
-          { text: "Received" },
+          { text: dateColText },
           { text: "Actions" }
         ],
         rows: dataRows

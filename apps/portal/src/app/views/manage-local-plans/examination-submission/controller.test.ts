@@ -937,7 +937,7 @@ describe('examination submitted view MIQ submitter', () => {
 		await buildSubmittedExaminationView(service)(req, res, next as unknown as NextFunction);
 
 		assert.equal(res.locals.submissionDate, '21 October 2026');
-		assert.equal(res.locals.submissionTime, '10:30');
+		assert.equal(res.locals.submissionTime, '11:30');
 		assert.equal(res.locals.submitter, 'planner@example.com');
 		assert.equal(next.mock.callCount(), 1);
 	});

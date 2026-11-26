@@ -328,6 +328,17 @@ export function createGateway2WorkshopJourney(req: Request, response: JourneyRes
 
 export function createGateway2Journey(req: Request, response: JourneyResponse, questions: Record<string, any>) {
 	const gateway2Url = req.baseUrl + '/gateway-2';
+
+	//Hide the report upload and management
+	questions.gateway2Report.taskList = false;
+	questions.gateway2ReportManage.taskList = false;
+
+	// View link override
+	questions.reportIssuedDate.actionLink = {
+		href: `${gateway2Url}/report/${questions.gateway2ReportManage.url}`,
+		text: 'View'
+	};
+
 	const gateway2DocumntUrl = req.baseUrl + '/gateway-2/gateway-2/gateway2Documents';
 	const backUrl = COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))
 		? gateway2DocumntUrl
@@ -346,7 +357,11 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		sections: [
 			gateway2Section,
 			new Section('Workshop', 'workshop').addQuestion(questions.gateway2WorkshopDocuments),
-			new Section('Report', 'report').addQuestion(questions.gateway2Report).addQuestion(questions.reportPublishedDate)
+			new Section('Gateway 2 report', 'report')
+				.addQuestion(questions.gateway2ReportManage)
+				.addQuestion(questions.gateway2Report)
+				.addQuestion(questions.reportIssuedDate)
+				.addQuestion(questions.reportPublishedDate)
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
