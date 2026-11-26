@@ -20,8 +20,6 @@ describe('Cross-service Gateway 2 report', () => {
 	after(() => cy.task('clearDb'));
 
 	it('shares issued Gateway 2 reports but hides unconfirmed replacements', { tags: ['regression'] }, () => {
-		openGateway2Page(CASE_REFERENCE, PLAN_TITLE);
-
 		manageToPortalLogin(FOURTH_TEST_EMAIL);
 
 		openGateway2Page(CASE_REFERENCE, PLAN_TITLE);

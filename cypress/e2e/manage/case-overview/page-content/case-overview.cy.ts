@@ -1,6 +1,7 @@
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
+import { verifyPagination } from '../../../../flows/manage/pagination-flow.ts';
 
 const seededCaseStatus = 'GW2 pending';
 
@@ -16,6 +17,12 @@ describe('Case overview', () => {
 		manageHomePage.verifyHeading('All cases');
 		manageHomePage.verifyCreateCaseLink('Create a case');
 		manageHomePage.verifyNoCasesMessage('No cases have been created yet.');
+	});
+
+	it('navigates through case pages with Next and Previous links', { tags: ['regression'] }, () => {
+		cy.task('seedPaginationCases');
+		manageHomePage.visit();
+		verifyPagination(manageHomePage);
 	});
 
 	it('should display a list of cases', { tags: ['smoke'] }, () => {

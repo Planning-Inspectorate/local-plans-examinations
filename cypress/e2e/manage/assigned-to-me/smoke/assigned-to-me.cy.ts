@@ -2,6 +2,7 @@ import { authenticateManageIfRequired, skipUnlessEnvironmentSmoke } from '../../
 import { assignedToMePage } from '../../../../page-objects/manage/assigned-to-me-page.ts';
 import { caseOverviewPage } from '../../../../page-objects/manage/case-overview/index.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
+import { verifyPagination } from '../../../../flows/manage/pagination-flow.ts';
 
 type AssignedToMeSeedResult = {
 	assignedCase: {
@@ -27,6 +28,7 @@ describe('Assigned to me', () => {
 
 	afterEach(() => {
 		seededReferences.forEach((reference) => cy.task('softDeleteCaseByReference', reference));
+		cy.task('clearPaginationCases');
 	});
 
 	it('shows a case assigned to the authorised user', { tags: ['environment-smoke'] }, () => {
@@ -46,5 +48,14 @@ describe('Assigned to me', () => {
 
 			caseOverviewPage.verifyLoaded(assignedCase.planTitle);
 		});
+	});
+
+	it('pages through assigned cases with Next and Previous', { tags: ['environment-smoke'] }, () => {
+		cy.task('seedPaginationCases');
+		authenticateManageIfRequired();
+		assignedToMePage.visit();
+		assignedToMePage.verifyLoaded();
+		verifyPagination(assignedToMePage);
+		cy.task('clearPaginationCases');
 	});
 });
