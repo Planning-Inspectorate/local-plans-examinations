@@ -52,7 +52,8 @@ export class ExaminationReportSubmissionCheck extends SubmissionCheckWithDate {
 				uploadedFiles,
 				`/case/${caseReference}/download-case-document`,
 				`/case/${caseReference}/${journeyId}/${section}/${questions.examinationReport.url}`,
-				'returnTo=check'
+				'returnTo=check',
+				'examination report'
 			)
 		];
 		return {

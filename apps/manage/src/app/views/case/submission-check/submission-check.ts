@@ -61,7 +61,8 @@ export abstract class SubmissionCheck {
 		uploadedFiles: UploadedFile[],
 		documentDownloadBaseUrl: string,
 		documentChangeBaseUrl: string,
-		query?: string
+		query?: string,
+		label?: string
 	) {
 		const answersToReview: { name: string; value: string; url: string }[] = [];
 		let documentCounter = 1;
@@ -73,7 +74,7 @@ export abstract class SubmissionCheck {
 			const queryString = query ? `?${query}` : '';
 			const changeUrl = `${documentChangeBaseUrl}${queryString}`;
 			answersToReview.push({
-				name: `Document ${documentCounter}`,
+				name: ` ${label} ${documentCounter}`,
 				value: fileUploadDownloadFormat(file, downloadUrl),
 				url: changeUrl
 			});

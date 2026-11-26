@@ -29,7 +29,8 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 			...this.formatDocuments(
 				uploadedFiles,
 				`/case/${caseReference}/download-case-document`,
-				`/case/${caseReference}/${journeyId}/${section}/${questions.gateway2Report.url}`
+				`/case/${caseReference}/${journeyId}/${section}/${questions.gateway2Report.url}`,
+				'Gateway 2 report'
 			)
 		];
 		return {
