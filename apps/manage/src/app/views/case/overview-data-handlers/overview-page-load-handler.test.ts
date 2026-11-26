@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import type { PageLoadContext } from './overview-page-load-handler.ts';
 import { OverviewTabHandler } from './overview-tab-handler.ts';
 import { Gateway1TabHandler } from './gateway-1-tab-handler.ts';
@@ -7,47 +8,153 @@ import { Gateway2TabHandler } from './gateway-2-tab-handler.ts';
 import { Gateway3TabHandler } from './gateway-3-tab-handler.ts';
 import { Gateway3SubmissionHandler } from './gateway-3-submission-handler.ts';
 import { ExaminationTabHandler } from './examination-tab-handler.ts';
+import CustomFileReviewerQuestion from '../../layouts/custom-file-reviewer/question.ts';
+
+function buildContext(journeyId: string, reference: string, session = {}) {
+	return {
+		req: { method: 'GET', params: { reference }, query: {}, url: `/${journeyId}`, session },
+		res: { locals: {}, redirect: () => {} },
+		next: () => {},
+		journeyId,
+		reference,
+		caseRecord: { id: reference, planTitle: reference },
+		service: {
+			authDisabled: true,
+			db: {
+				case: { findUnique: async () => ({ lpas: [], contacts: [] }) },
+				gateway1Info: { findUnique: async () => ({}) },
+				gateway2Info: { findUnique: async () => ({ workshops: [] }) },
+				gateway3Info: { findUnique: async () => ({ submissions: [{ id: 'submission-1', createdAt: new Date(0) }] }) },
+				examinationInfo: {
+					findUnique: async () => ({
+						hearings: [],
+						planPauseHistory: reference === 'PLAN-123456' ? [{ planPauseDate: new Date(0) }] : []
+					})
+				},
+				documentSet: {
+					findMany: async ({ where }: { where: { folderName: { in: string[] } } }) =>
+						where.folderName.in.map((folderName) => ({ id: folderName, folderName }))
+				},
+				document: { findMany: async () => [] }
+			}
+		}
+	} as unknown as PageLoadContext;
+}
+
+describe('Gateway 2 document sessions', () => {
+	for (const previousReference of ['PLAN-123456', 'PLAN-654321']) {
+		it(`loads submitted documents after Gateway 1 on ${previousReference} without losing its uploads`, async () => {
+			const signedSla = { id: 'sla-1', fileName: 'signed-sla.pdf', virusCheckStatus: 'scanned' };
+			const coveringLetter = { id: 'cover-1', fileName: 'cover.pdf', virusCheckStatus: 'scanned' };
+			const loadFiles = mock.method(DocumentUtil, 'loadUploadedDocuments', async (_service, caseId, documentSetId) => {
+				if (caseId === previousReference && documentSetId === 'signed-sla') return [signedSla];
+				return caseId === 'PLAN-123456' && documentSetId === 'covering-letter' ? [coveringLetter] : [];
+			});
+			try {
+				const session = {};
+				const gateway1 = buildContext('gateway-1', previousReference, session);
+				await new Gateway1TabHandler().handle(gateway1);
+				const gateway2 = buildContext('gateway-2', 'PLAN-123456', session);
+				await new Gateway2TabHandler().handle(gateway2);
+
+				assert.deepEqual(gateway2.req.session.fileUploader?.['PLAN-123456:gateway2CoverLetter']?.uploadedFiles, [
+					coveringLetter
+				]);
+				assert.deepEqual(gateway2.req.session.fileUploader?.[`${previousReference}:signedSla`]?.uploadedFiles, [
+					signedSla
+				]);
+			} finally {
+				loadFiles.mock.restore();
+			}
+		});
+	}
+});
+
+describe('Gateway 2 workshop documents', () => {
+	const coverLetter = { id: 'cover-1', fileName: 'cover.pdf', virusCheckStatus: 'scanned' };
+	const workshopFiles = [
+		{ id: 'workshop-1', fileName: 'workshop-1.pdf', virusCheckStatus: 'scanned' },
+		{ id: 'workshop-2', fileName: 'workshop-2.pdf', virusCheckStatus: 'scanned' }
+	];
+
+	const submissionDocumentsQuestion = () => {
+		const question = new CustomFileReviewerQuestion({
+			title: 'Submission documents',
+			question: 'Submission documents',
+			fieldName: 'gateway2Documents'
+		});
+		question.getAction = () => ({ href: '/review', text: 'Change', visuallyHiddenText: 'Submission documents' });
+		return question;
+	};
+
+	async function loadGateway2Tab(withWorkshopDocuments: boolean) {
+		const loadFiles = mock.method(DocumentUtil, 'loadUploadedDocuments', async (_service, caseId, documentSetId) => {
+			if (caseId !== 'PLAN-123456') return [];
+			if (documentSetId === 'covering-letter') return [coverLetter];
+			if (documentSetId === 'gateway-2-workshop-documents' && withWorkshopDocuments) return workshopFiles;
+			return [];
+		});
+		try {
+			const context = buildContext('gateway-2', 'PLAN-123456', {});
+			await new Gateway2TabHandler().handle(context);
+			return context;
+		} finally {
+			loadFiles.mock.restore();
+		}
+	}
+
+	it('shows uploaded workshop documents in the Workshop documents row', async () => {
+		const context = await loadGateway2Tab(true);
+
+		assert.deepEqual(context.res.locals.journeyResponse.answers.gateway2WorkshopDocuments, workshopFiles);
+		assert.deepEqual(
+			context.req.session.fileUploader?.['PLAN-123456:gateway2WorkshopDocuments']?.uploadedFiles,
+			workshopFiles
+		);
+	});
+
+	it('does not add workshop documents to the Submission documents list', async () => {
+		const context = await loadGateway2Tab(true);
+		const submissionDocuments = context.res.locals.journeyResponse.answers.gateway2Documents;
+		const documents = submissionDocuments.flatMap((group: any) => group.documents);
+
+		assert.equal(
+			documents.some((document: any) => document.title === 'Workshop document'),
+			false
+		);
+		assert.equal(
+			documents.some((document: any) => document.files.some((file: any) => file.id.startsWith('workshop-'))),
+			false
+		);
+	});
+
+	it('leaves the Submission documents count unchanged when workshop documents are uploaded', async () => {
+		const question = submissionDocumentsQuestion();
+		const countFor = (context: PageLoadContext) => {
+			const answer = context.res.locals.journeyResponse.answers.gateway2Documents;
+			return question.formatAnswerForSummary('gateway-2', {}, answer)[0].value;
+		};
+
+		const withoutWorkshop = countFor(await loadGateway2Tab(false));
+		const withWorkshop = countFor(await loadGateway2Tab(true));
+
+		assert.equal(withoutWorkshop, '1 document(s)');
+		assert.equal(withWorkshop, withoutWorkshop);
+	});
+});
 
 describe('Case pause banners', () => {
 	for (const [journeyId, Handler] of [
-		['overview', OverviewTabHandler],
+		['edit-case-overview', OverviewTabHandler],
 		['gateway-1', Gateway1TabHandler],
 		['gateway-2', Gateway2TabHandler],
 		['gateway-3', Gateway3TabHandler],
-		['gateway-3-submission', Gateway3SubmissionHandler],
+		['gateway-3-report', Gateway3SubmissionHandler],
 		['examination', ExaminationTabHandler]
 	] as const) {
 		it(`shows the ${journeyId} banner on first load without leaking it to another case`, async () => {
 			const session = {};
-			const makeContext = (reference: string) =>
-				({
-					req: { method: 'GET', params: { reference }, query: {}, url: `/${journeyId}`, session },
-					res: { locals: {}, redirect: () => {} },
-					next: () => {},
-					journeyId,
-					reference,
-					caseRecord: { id: reference, planTitle: reference },
-					service: {
-						authDisabled: true,
-						db: {
-							case: { findUnique: async () => ({ lpas: [], contacts: [] }) },
-							gateway1Info: { findUnique: async () => ({}) },
-							gateway2Info: { findUnique: async () => ({ workshops: [] }) },
-							gateway3Info: { findUnique: async () => ({ submissions: [] }) },
-							examinationInfo: {
-								findUnique: async () => ({
-									hearings: [],
-									planPauseHistory: reference === 'PLAN-123456' ? [{ planPauseDate: new Date(0) }] : []
-								})
-							},
-							documentSet: {
-								findMany: async ({ where }: { where: { folderName: { in: string[] } } }) =>
-									where.folderName.in.map((folderName) => ({ id: folderName, folderName }))
-							},
-							document: { findMany: async () => [] }
-						}
-					}
-				}) as unknown as PageLoadContext;
+			const makeContext = (reference: string) => buildContext(journeyId, reference, session);
 			const handler = new Handler();
 			const paused = makeContext('PLAN-123456');
 			await handler.handle(paused);
@@ -66,6 +173,65 @@ describe('Case pause banners', () => {
 			await handler.handle(unpaused);
 			assert.equal(unpaused.res.locals.alerts, undefined);
 			assert.equal(unpaused.req.session.alerts, undefined);
+		});
+	}
+});
+
+describe('Manage virus scan banners', () => {
+	for (const [journeyId, Handler, folder] of [
+		['gateway-1', Gateway1TabHandler, 'signed-sla'],
+		['gateway-2', Gateway2TabHandler, 'gateway-2-report'],
+		['gateway-2', Gateway2TabHandler, 'gateway-2-workshop-documents'],
+		['gateway-3', Gateway3TabHandler, 'gateway-3-document-1'],
+		['gateway-3-report', Gateway3SubmissionHandler, 'gateway-3-document-1'],
+		['examination', ExaminationTabHandler, 'examination-report']
+	] as const) {
+		it(`loads ${folder} scan states in ${journeyId} and clears them after completion`, async () => {
+			let status = 'affected';
+			const loadFiles = mock.method(DocumentUtil, 'loadUploadedDocuments', async (_service, caseId, documentSetId) =>
+				caseId === 'PLAN-123456' && documentSetId === folder
+					? [
+							{
+								id: 'pending',
+								fileName: 'pending.pdf',
+								virusCheckStatus: status === 'affected' ? 'not_scanned' : status
+							},
+							{ id: 'infected', fileName: 'infected.pdf', virusCheckStatus: status }
+						]
+					: []
+			);
+			try {
+				const handler = new Handler();
+				const session = {};
+				for (const [reference, scanStatus] of [
+					['PLAN-123456', 'affected'],
+					['PLAN-654321', 'affected'],
+					['PLAN-123456', 'scanned']
+				]) {
+					status = scanStatus;
+					const context = buildContext(journeyId, reference, session);
+					if (journeyId === 'gateway-3-report') {
+						context.req.params.question = 'gateway-3-document-1';
+						context.req.url += '/gateway-3-document-1/check';
+					}
+					await handler.handle(context);
+					const mixed = reference === 'PLAN-123456' && status === 'affected';
+					assert.equal(context.res.locals.virusScanInProgress, mixed);
+					assert.deepEqual(
+						context.res.locals.virusErrorSummary,
+						mixed
+							? [
+									{
+										text: 'infected.pdf contains a virus. Remove the file and upload a different version.',
+										href: '#uploaded-file-infected'
+									}
+								]
+							: undefined
+					);
+				}
+			} finally {
+				loadFiles.mock.restore();
+			}
 		});
 	}
 });

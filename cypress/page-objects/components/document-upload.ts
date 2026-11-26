@@ -66,7 +66,7 @@ export class DocumentUpload {
 	}
 
 	verifyFileFormatHintText(text: string) {
-		this.hintText.should('have.text', text);
+		this.hintText.invoke('text').then((hint) => expect(hint.trim()).to.equal(text));
 	}
 
 	verifySaveAndReturnButton() {

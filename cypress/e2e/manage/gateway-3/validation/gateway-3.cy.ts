@@ -1,9 +1,16 @@
-import { openSeededGateway3Page } from '../../../../flows/manage/gateway-3-flow.ts';
+import {
+	openSeededGateway3Page,
+	openSeededGateway3PageWithSubmissionDocuments,
+	removeGateway3Assessor,
+	requestGateway3DecisionWithMissingDocuments
+} from '../../../../flows/manage/gateway-3-flow.ts';
+import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	gateway3DateAnswers,
-	gateway3AssessorAnswer,
 	gateway3ProgrammeOfficerAnswer,
-	gateway3DecisionAnswer
+	gateway3DecisionAnswer,
+	gateway3RequiredSubmissionDocuments,
+	gateway3AssessorAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 import {
 	gateway3Page,
@@ -11,8 +18,11 @@ import {
 	gateway3AssessorPage,
 	gateway3ProgrammeOfficerPage,
 	gateway3DecisionPage,
-	gateway3DocumentsPage
+	gateway3DocumentsPage,
+	gateway3ReviewDocumentsPage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
+
+const requiredDocumentLabels = gateway3RequiredSubmissionDocuments.map(({ label }) => label);
 
 describe('Gateway 3 validation', () => {
 	beforeEach(() => {
@@ -34,14 +44,23 @@ describe('Gateway 3 validation', () => {
 	});
 
 	it('shows an error when Gateway 3 assessor name is blank', { tags: ['regression'] }, () => {
-		gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
+		removeGateway3Assessor(seededCase.planTitle);
+		gateway3Page.openAddAssessor();
 		gateway3AssessorPage.verifyLoaded();
-		gateway3AssessorPage.assessorNamePopulated(gateway3AssessorAnswer.assessor1);
-		gateway3AssessorPage.clearAssessorNameField();
+		gateway3AssessorPage.assessorNamePopulated('');
 		gateway3AssessorPage.saveAndContinue();
 
 		gateway3AssessorPage.verifyLoaded();
 		gateway3AssessorPage.verifyValidationError('Select a name');
+	});
+
+	it('shows an error when the Gateway 3 assessor has already been added', { tags: ['regression'] }, () => {
+		gateway3Page.openAddAssessor();
+		gateway3AssessorPage.verifyLoaded();
+		gateway3AssessorPage.enterAssessorName(gateway3AssessorAnswer.display);
+
+		gateway3AssessorPage.verifyLoaded();
+		gateway3AssessorPage.verifyValidationError('This assessor has already been added to Gateway 3');
 	});
 
 	it('shows errors when the programme officer details are blank', { tags: ['regression'] }, () => {
@@ -75,5 +94,67 @@ describe('Gateway 3 validation', () => {
 		gateway3DocumentsPage.verifyLoaded();
 		gateway3DocumentsPage.verifyValidationError('Please upload your Gateway 3 report');
 		gateway3DocumentsPage.verifyErrorTitle();
+	});
+
+	it(
+		'shows an error for each missing required document when Issue decision is selected',
+		{ tags: ['regression'] },
+		() => {
+			requestGateway3DecisionWithMissingDocuments();
+
+			gateway3ReviewDocumentsPage.verifyMissingDocumentErrors(...requiredDocumentLabels);
+		}
+	);
+
+	it('keeps the missing document errors when Issue decision is selected again', { tags: ['regression'] }, () => {
+		requestGateway3DecisionWithMissingDocuments();
+
+		gateway3ReviewDocumentsPage.issueDecision();
+
+		gateway3ReviewDocumentsPage.verifyLoaded();
+		gateway3ReviewDocumentsPage.verifyMissingDocumentErrors(...requiredDocumentLabels);
+	});
+
+	it('links each missing document error to its document row', { tags: ['regression'] }, () => {
+		const lastRequiredDocumentLabel = requiredDocumentLabels[requiredDocumentLabels.length - 1];
+		requestGateway3DecisionWithMissingDocuments();
+
+		requiredDocumentLabels.forEach((documentLabel) => {
+			gateway3ReviewDocumentsPage.verifyMissingDocumentErrorLinksToRow(documentLabel);
+		});
+		gateway3ReviewDocumentsPage.followMissingDocumentErrorLink(lastRequiredDocumentLabel);
+	});
+
+	it('clears the missing document errors when the review documents page is reloaded', { tags: ['regression'] }, () => {
+		requestGateway3DecisionWithMissingDocuments();
+		gateway3ReviewDocumentsPage.verifyMissingDocumentErrors(...requiredDocumentLabels);
+
+		cy.reload();
+
+		gateway3ReviewDocumentsPage.verifyLoaded();
+		gateway3ReviewDocumentsPage.verifyNoMissingDocumentErrors();
+	});
+});
+
+describe('Gateway 3 submission documents validation', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+	});
+
+	after(() => cy.task('clearDb'));
+
+	it('only shows errors for the required documents that are still missing', { tags: ['regression'] }, () => {
+		const [missingProposedLocalPlan, missingMapOfPolicies, ...addedDocuments] = gateway3RequiredSubmissionDocuments;
+		openSeededGateway3PageWithSubmissionDocuments({ documents: addedDocuments });
+
+		requestGateway3DecisionWithMissingDocuments();
+
+		gateway3ReviewDocumentsPage.verifyMissingDocumentErrors(missingProposedLocalPlan.label, missingMapOfPolicies.label);
+		gateway3ReviewDocumentsPage.verifyNoMissingDocumentErrorFor(...addedDocuments.map(({ label }) => label));
+		gateway3ReviewDocumentsPage.verifyDocumentNotAdded(missingProposedLocalPlan.label);
+		gateway3ReviewDocumentsPage.verifyDocumentNotAdded(missingMapOfPolicies.label);
+		addedDocuments.forEach(({ label, fileName }) => {
+			gateway3ReviewDocumentsPage.verifyDocumentAdded(label, fileName);
+		});
 	});
 });

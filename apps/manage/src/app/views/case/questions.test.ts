@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { questions } from './questions.ts';
+import type { Request } from 'express';
+import type { ManageService } from '#service';
+import { getQuestions, questions } from './questions.ts';
 import { validationResult } from 'express-validator';
 
 async function validate(key: string, body: Record<string, unknown>) {
@@ -12,6 +14,31 @@ async function validate(key: string, body: Record<string, unknown>) {
 	}
 	return validationResult(req).mapped();
 }
+
+describe('Overview planning authority label', () => {
+	for (const [lpaCount, title] of [
+		[1, 'Planning authority'],
+		[2, 'Planning authorities']
+	] as const) {
+		it(`uses ${title} for ${lpaCount} linked authorities`, async (t) => {
+			const originalTitle = questions.checkLpas.title;
+			const originalOptions = questions.lpa.options;
+			t.after(() => {
+				questions.checkLpas.title = originalTitle;
+				questions.lpa.options = originalOptions;
+			});
+			const service = {
+				authDisabled: true,
+				db: { case: { findUnique: async () => ({ _count: { lpas: lpaCount } }) } }
+			} as unknown as ManageService;
+			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
+
+			const result = await getQuestions(service, req);
+
+			assert.equal(result.checkLpas.title, title);
+		});
+	}
+});
 
 describe('Gateway 2 workshop question summaries', () => {
 	function formatWorkshopDate(workshopDate: string, workshopEndTime: string | null = null) {
@@ -104,9 +131,18 @@ describe('Examination hearing questions', () => {
 
 	for (const [answer, days, valid] of [
 		['yes', '3', true],
+		['yes', '12', true],
+		['yes', ' 4 ', true],
 		['yes', '', false],
 		['yes', '   ', false],
+		['yes', undefined, false],
+		['yes', 'abc', false],
+		['yes', '3 days', false],
+		['yes', '2.5', false],
+		['yes', '-1', false],
+		['yes', '1e3', false],
 		['no', '', true],
+		['no', 'abc', true],
 		['', '', false]
 	] as const) {
 		it(`${valid ? 'accepts' : 'rejects'} expected days ${JSON.stringify({ answer, days })}`, async () => {
@@ -116,10 +152,88 @@ describe('Examination hearing questions', () => {
 			});
 			assert.equal(Object.keys(errors).length === 0, valid);
 			if (answer === 'yes' && !valid) {
-				assert.equal(errors['hearingExpectedDaysKnown-2'].msg, 'Enter the expected number of days');
+				assert.equal(errors['hearingExpectedDaysKnown-2'].msg, 'Expected number of days must be a whole number');
 			}
 		});
 	}
+
+	it('asks for the expected days in a narrow numeric box with a Days suffix', () => {
+		for (const hearingId of [1, 2]) {
+			const yesOption = questions[`examinationHearingExpectedDays-${hearingId}`].options.find(
+				(option: { value: string }) => option.value === 'yes'
+			);
+			assert.deepEqual(yesOption.conditional, {
+				label: 'Number of days',
+				type: 'bold-number',
+				suffix: 'Days',
+				fieldName: 'hearingExpectedDays'
+			});
+		}
+	});
+
+	function hearingJourney(hearing: Record<string, unknown>) {
+		return {
+			getCurrentQuestionUrl: () => '/change',
+			response: {
+				answers: {
+					hearings: [{ createdDate: new Date('2026-01-01'), ...hearing }]
+				}
+			}
+		};
+	}
+
+	for (const [known, expected] of [
+		['yes', 'Yes'],
+		['no', 'No']
+	] as const) {
+		it(`shows the expected-days answer "${known}" as "${expected}" on check your answers`, () => {
+			const rows = questions['examinationHearingExpectedDays-1'].formatAnswerForSummary(
+				'hearing',
+				hearingJourney({ hearingExpectedDaysKnown: known, hearingExpectedDays: known === 'yes' ? '3' : null })
+			);
+			assert.equal(rows[0].value, expected);
+			if (known === 'yes') {
+				assert.deepEqual(
+					rows.map(({ key, value }) => ({ key, value })),
+					[
+						{ key: 'Do you know the expected number of days?', value: 'Yes' },
+						{ key: 'Estimated number of days', value: '3' }
+					]
+				);
+			} else {
+				assert.equal(rows.length, 1);
+			}
+		});
+	}
+
+	for (const [locationType, expected] of [
+		['in-person', 'In-person'],
+		['hybrid', 'Hybrid'],
+		['remote', 'Remote']
+	] as const) {
+		it(`shows the hearing location type "${locationType}" as "${expected}" on check your answers`, () => {
+			const rows = questions['examinationHearingLocationType-1'].formatAnswerForSummary(
+				'hearing',
+				hearingJourney({ hearingLocationType: locationType })
+			);
+			assert.deepEqual(
+				rows.map(({ key, value }) => ({ key, value })),
+				[{ key: 'Is the hearing in-person, hybrid or remote?', value: expected }]
+			);
+		});
+	}
+
+	it('falls back to the saved value when it does not match an option', () => {
+		const journey = hearingJourney({ hearingExpectedDaysKnown: 'unknown', hearingLocationType: 'outdoors' });
+		assert.equal(
+			questions['examinationHearingExpectedDays-1'].formatAnswerForSummary('hearing', journey)[0].value,
+			'unknown'
+		);
+		assert.equal(
+			questions['examinationHearingLocationType-1'].formatAnswerForSummary('hearing', journey)[0].value,
+			'outdoors'
+		);
+	});
 
 	it('formats hearing date, time and expected-days summary labels', () => {
 		const journey = {
@@ -207,4 +321,40 @@ describe('Examination pause questions', () => {
 			assert.equal(errors[field].msg, message);
 		});
 	}
+});
+
+describe('Delete case reason question', () => {
+	async function validateDeleteReason(deleteCaseWhy: unknown) {
+		const question = questions.deleteCaseWhy;
+		const request = { body: { deleteCaseWhy } };
+		for (const validator of question.validators) {
+			const chains = [validator.validate(question)].flat();
+			for (const chain of chains) await chain.run(request);
+		}
+		return validationResult(request).mapped();
+	}
+
+	it('is served from the delete case reason URL', () => {
+		const question = questions.deleteCaseWhy;
+
+		assert.equal(question.url, 'delete-case-reason');
+		assert.equal(question.fieldName, 'deleteCaseWhy');
+		assert.equal(question.title, 'Reason for deletion');
+		assert.equal(question.question, 'Why are you deleting this case?');
+		assert.deepEqual(question.viewData, { continueButtonText: 'Continue' });
+	});
+
+	for (const deleteCaseWhy of ['', undefined]) {
+		it(`rejects a missing reason (${JSON.stringify(deleteCaseWhy)})`, async () => {
+			const errors = await validateDeleteReason(deleteCaseWhy);
+
+			assert.equal(errors.deleteCaseWhy.msg, 'Enter a reason for deleting this case');
+		});
+	}
+
+	it('accepts a reason', async () => {
+		const errors = await validateDeleteReason('Created in error');
+
+		assert.deepEqual(Object.keys(errors), []);
+	});
 });

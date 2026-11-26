@@ -1,8 +1,9 @@
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import { buildLandingPage } from './controller.ts';
 import type { ManageService } from '#service';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 
 function createHarness(findManyImpl: () => Promise<unknown>) {
 	let findManyCallCount = 0;
@@ -26,6 +27,7 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 
 	const renderCalls: Array<[string, unknown?]> = [];
 	const statusCalls: number[] = [];
+	const findDocuments = mock.fn(async (_query: unknown) => []);
 
 	const resObj = {
 		render(view: string, model?: unknown) {
@@ -44,7 +46,7 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 			gateway1Info: { findUnique: async () => null },
 			gateway2Info: { findUnique: async () => null },
 			gateway3Info: { findUnique: async () => null },
-			document: { findMany: async () => [] },
+			document: { findMany: findDocuments },
 			examinationInfo: { findFirst: async () => null }
 		},
 		logger: { error: loggerError }
@@ -55,6 +57,7 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 		req: {} as Request,
 		res: resObj as unknown as Response,
 		getFindManyCallCount: () => findManyCallCount,
+		findDocuments,
 		errorCalls,
 		renderCalls,
 		statusCalls
@@ -62,6 +65,19 @@ function createHarness(findManyImpl: () => Promise<unknown>) {
 }
 
 describe('buildLandingPage', () => {
+	it('excludes draft and deleted documents from the All cases statuses', async () => {
+		const ctx = createHarness(async () => [{ id: 'case-1' }]);
+
+		await ctx.handler(ctx.req, ctx.res);
+
+		assert.deepEqual(
+			ctx.findDocuments.mock.calls.map(({ arguments: [query] }) => query),
+			[gateway2SetIds, gateway3SetIds].map((documentSetIds) => ({
+				where: { caseId: 'case-1', documentSetId: { in: documentSetIds }, isDeleted: false, isTemp: false }
+			}))
+		);
+	});
+
 	it('renders landing page with cases when fetch succeeds', async () => {
 		const cases = [
 			{

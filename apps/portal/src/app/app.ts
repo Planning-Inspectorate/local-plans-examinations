@@ -7,14 +7,19 @@ import type { PortalService } from '#service';
 import type { HelmetCspDirectives } from '@planning-inspectorate/core/middleware';
 import cookieParser from 'cookie-parser';
 
-const CLARITY_CSP_SOURCES = ['https://*.clarity.ms', 'https://c.bing.com'];
+const ANALYTICS_CSP_SOURCES = ['https://*.clarity.ms', 'https://c.bing.com'];
 
 const portalCspDirectives: HelmetCspDirectives = {
-	scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals?.cspNonce}'`, ...CLARITY_CSP_SOURCES],
-	defaultSrc: ["'self'", ...CLARITY_CSP_SOURCES],
-	connectSrc: ["'self'", ...CLARITY_CSP_SOURCES],
+	scriptSrc: [
+		"'self'",
+		(req, res) => `'nonce-${res.locals?.cspNonce}'`,
+		...ANALYTICS_CSP_SOURCES,
+		'https://www.googletagmanager.com'
+	],
+	defaultSrc: ["'self'", ...ANALYTICS_CSP_SOURCES],
+	connectSrc: ["'self'", ...ANALYTICS_CSP_SOURCES, 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
 	fontSrc: ["'self'"],
-	imgSrc: ["'self'", ...CLARITY_CSP_SOURCES],
+	imgSrc: ["'self'", ...ANALYTICS_CSP_SOURCES, 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
 	styleSrc: ["'self'"]
 };
 
@@ -28,8 +33,11 @@ export function createApp(service: PortalService): Express {
 		service,
 		configureNunjucks,
 		router,
-		middlewares: [cookieParser(), addLocalsConfiguration(service.clarityId, service.environment)],
-		cspDirectives: service.clarityId ? portalCspDirectives : undefined,
+		middlewares: [
+			cookieParser(),
+			addLocalsConfiguration(service.clarityId, service.environment, service.googleAnalyticsId)
+		],
+		cspDirectives: service.clarityId || service.googleAnalyticsId ? portalCspDirectives : undefined,
 		// skip CSRF checks for document uploads
 		// lusca csrf middleware is added after multer for these routes
 		multiPartFormRoutes: [/\/upload-documents$/]

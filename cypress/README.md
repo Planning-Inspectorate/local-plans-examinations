@@ -197,6 +197,10 @@ Use the folders by intent:
 - `fixtures`: reusable test data
 - `support`: Cypress commands and global setup
 
+Local Portal tests use `portalLogin()` to seed the existing six fixture cases and sign in through real email/OTP HTTP requests before opening My plans. The seed runs directly in the Cypress task process instead of starting npm/Node seed commands for each test. Each test still gets its own authenticated session; database resets are unchanged.
+
+Login journey, OTP content, OTP validation and the full sign-in-to-submission journey continue to use the UI helpers `startPortalOtpLogin()` and `completePortalLogin()`. Their full seed retains the different-owner cases used by the My plans isolation check. Deployed environment-smoke login is unchanged.
+
 ### File uploads (Azurite)
 
 Portal document upload screens store files in Azure Blob Storage. Locally this is emulated with Azurite from Docker Compose.
@@ -221,6 +225,16 @@ It runs on PRs and main when relevant files change, including:
 
 Older PR runs are cancelled when a new commit is pushed.
 
+PR selection follows the app folders and the service folders under `cypress` (for example, `e2e/manage`, `page-objects/manage`, `fixtures/manage` and `flows/manage`):
+
+- Manage changes run Manage and cross-service checks.
+- Portal changes run Portal and cross-service checks.
+- Cross-service test/helper changes run cross-service checks only.
+- Shared Cypress files, packages/database, dependencies and E2E pipeline configuration run all three suites.
+- Markdown-only changes do not run E2E checks on PRs.
+
+Main, merge-queue, scheduled and manual runs keep full coverage for the pipeline's configured targets. Files moved between service folders select both the old and new services.
+
 The pipeline uses `.azure/pipelines/steps/run-local-e2e.yml` as the shared runner for Manage, Portal and cross-service E2E. The runner is given a target and then:
 
 - detects whether that target needs to run
@@ -239,7 +253,7 @@ The accessibility specs live under the existing Manage and Portal Cypress folder
 
 The PR/main E2E pipeline also runs the small cross-service suite through the same runner. Cross-service starts both Manage and Portal against the same database and checks service-level behaviour across the app boundary.
 
-Tests are split across two shards so the E2E feedback comes back quicker.
+Manage and Portal tests are split across three shards so the E2E feedback comes back quicker. Accessibility checks run once on shard 1; cross-service tests run in their own job.
 
 The dedicated cross-service E2E pipeline also runs `cypress/e2e/cross-service/**/*`. This is for scheduled/manual service-level checks, not for repeating the full Manage and Portal UI suites.
 

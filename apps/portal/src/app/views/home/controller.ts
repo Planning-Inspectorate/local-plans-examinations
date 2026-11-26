@@ -1,40 +1,20 @@
-import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 
-/**
- * Example home page controller
- */
-export function buildHomePage(service: PortalService): AsyncRequestHandler {
-	const { db, logger } = service;
-	return async (req, res) => {
-		let connected = false;
-		try {
-			// Check if the database is connected
-			await db.$queryRaw`SELECT 1`;
-			connected = true;
-		} catch (error) {
-			logger.error({ error }, 'Database connection failed');
-		}
-
-		req.session.visits = (req.session.visits || 0) + 1;
-
-		const viewModel = {
-			connected,
-			visitCount: req.session.visits
-		};
-
-		logger.info({ viewModel }, 'home page');
-		return res.render('views/home/view.njk', {
-			pageTitle: 'This is the home page',
-			...viewModel
-		});
-	};
-}
+const guidanceLinks = {
+	proceduralGuide:
+		'https://www.gov.uk/guidance/procedural-guide-for-examinations-and-gateways-under-the-town-and-country-planning-local-planning-england-regulations-2026',
+	createOrUpdate: 'https://www.gov.uk/government/collections/create-or-update-a-local-plan-using-the-new-system',
+	gateway2: 'https://www.gov.uk/guidance/gateway-2-assessment-for-local-plans-what-you-need-to-do',
+	gateway3: 'https://www.gov.uk/guidance/gateway-3-for-local-plans-what-you-need-to-do',
+	regulations: 'https://www.legislation.gov.uk/uksi/2026/186/contents/made',
+	localPlanProcess: 'https://www.gov.uk/guidance/30-month-local-plan-process-an-overview'
+};
 
 export function buildGuidancePage(): AsyncRequestHandler {
 	return async (req, res) => {
 		return res.render('views/home/guidance.njk', {
-			pageTitle: 'Guidance page'
+			pageTitle: 'Guidance page',
+			guidanceLinks
 		});
 	};
 }

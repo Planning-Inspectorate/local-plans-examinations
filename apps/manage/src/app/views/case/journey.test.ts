@@ -10,10 +10,15 @@ import {
 	createExaminationJourney,
 	createExaminationHearingJourney,
 	createExaminationPauseJourney,
-	createGateway3Journey
+	createGateway3Journey,
+	createDeleteCaseJourney,
+	createTimetableJourney,
+	createGateway2AssessorJourney,
+	createGateway3AssessorJourney
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
+import { configureNunjucks } from '../../nunjucks.ts';
 
 function createOverviewJourneyForTest(overrideRequest?: Record<string, any>) {
 	const params = overrideRequest
@@ -55,10 +60,16 @@ function createGateway2WorkshopJourneyForTest(workshop: Record<string, unknown>)
 	);
 }
 
-function createGateway3JourneyForTest() {
+function createGateway3JourneyForTest(
+	submissions:
+		| {
+				completionDate: Date | null;
+		  }
+		| {}[] = [{}]
+) {
 	return createGateway3Journey(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
-		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions: [{}] }),
+		new JourneyResponse(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID, '', { submissions }),
 		questions
 	);
 }
@@ -67,6 +78,14 @@ function createExaminationJourneyForTest(answers = {}, query = {}, session = {})
 	return createExaminationJourney(
 		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, query, session } as unknown as Request,
 		new JourneyResponse(COMMON_CONSTS.EXAMINATION_JOURNEY_ID, '', answers),
+		questions
+	);
+}
+
+function createTimetableJourneyForTest(answers = {}, query = {}, session = {}) {
+	return createTimetableJourney(
+		{ baseUrl: '/case/LP-TEST-001', params: { planReference: 'LP-TEST-001' }, query, session } as unknown as Request,
+		new JourneyResponse(COMMON_CONSTS.TIMETABLE_JOURNEY_ID, '', answers),
 		questions
 	);
 }
@@ -201,6 +220,30 @@ describe('gateway2WorkshopJourney', () => {
 		assert.equal(remoteMeetingQuestion?.shouldDisplay(hybridJourney.response), true);
 		assert.equal(remoteMeetingQuestion?.shouldDisplay(remoteJourney.response), true);
 	});
+
+	it('links the remote meeting link question back through the path the user chose', () => {
+		const baseUrl = '/case/LP-TEST-001/gateway-2/set-up-workshop/workshop';
+		const params = { section: 'workshop', question: 'gateway-2-remote-meeting-link-known-1' };
+
+		const remote = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'remote',
+			remoteMeetingLinkKnown: 'yes'
+		});
+		const hybridWithVenue = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'hybrid',
+			workshopLocationKnown: 'yes',
+			remoteMeetingLinkKnown: 'yes'
+		});
+		const hybridWithoutVenue = createGateway2WorkshopJourneyForTest({
+			workshopLocationType: 'hybrid',
+			workshopLocationKnown: 'no',
+			remoteMeetingLinkKnown: 'yes'
+		});
+
+		assert.equal(remote.getBackLink({ params }), `${baseUrl}/gateway-2-location-type-1`);
+		assert.equal(hybridWithVenue.getBackLink({ params }), `${baseUrl}/gateway-2-workshop-venue-address-1`);
+		assert.equal(hybridWithoutVenue.getBackLink({ params }), `${baseUrl}/gateway-2-workshop-location-known-1`);
+	});
 });
 
 describe('gateway3Journey', () => {
@@ -222,6 +265,31 @@ describe('gateway3Journey', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/gateway-3');
 		});
+	});
+
+	it('shows the Gateway 3 submission section when there are no submissions yet', () => {
+		const journey = createGateway3JourneyForTest([]);
+		const submissionSections = journey.sections.filter((section) => section.segment.startsWith('gateway-3-submission'));
+
+		assert.equal(submissionSections.length, 1);
+		assert.equal(submissionSections[0].name, 'Gateway 3 submission');
+		assert.equal(submissionSections[0].segment, 'gateway-3-submission-1');
+		assert.deepEqual(
+			submissionSections[0].questions.map((question) => question.fieldName),
+			['gateway3DocumentSubmission-1', 'decision-1']
+		);
+	});
+
+	it('shows one numbered section per submission when there are several', () => {
+		const journey = createGateway3JourneyForTest([
+			{ completionDate: new Date('2026-01-01') },
+			{ completionDate: null }
+		]);
+		const segments = journey.sections
+			.map((section) => section.segment)
+			.filter((segment) => segment.startsWith('gateway-3-submission'));
+
+		assert.deepEqual(segments, ['gateway-3-submission-1', 'gateway-3-submission-2']);
 	});
 });
 
@@ -296,6 +364,53 @@ describe('createExaminationJourney', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
+	});
+});
+
+describe('createTimetableJourney', () => {
+	it('shows the latest pause start and restart dates below the final report issue date in Fact Check', () => {
+		const journey = createTimetableJourneyForTest({
+			planPauseHistory: [
+				{
+					createdAt: new Date('2026-02-01'),
+					planPauseDate: new Date('2026-02-05'),
+					planPauseEndDate: new Date('2026-02-10')
+				},
+				{
+					createdAt: new Date('2026-01-01'),
+					planPauseDate: new Date('2026-01-05'),
+					planPauseEndDate: new Date('2026-01-10')
+				}
+			]
+		});
+		const factCheckQuestions = journey.sections[6].questions;
+
+		assert.deepEqual(
+			factCheckQuestions.slice(5, 7).map((question) => question.fieldName),
+			['planPauseDate-2', 'planPauseEndDate-2']
+		);
+		assert.equal(journey.response.answers['planPauseDate-2'].getTime(), new Date('2026-02-05').getTime());
+	});
+
+	it('shows only the latest pause start date if the examination has not restarted', () => {
+		const journey = createTimetableJourneyForTest({
+			planPauseHistory: [
+				{
+					createdAt: new Date('2026-01-01'),
+					planPauseDate: new Date('2026-01-05'),
+					planPauseEndDate: new Date('2026-01-10')
+				},
+				{
+					createdAt: new Date('2026-02-01'),
+					planPauseDate: new Date('2026-02-05'),
+					planPauseEndDate: null
+				}
+			]
+		});
+		const factCheckQuestions = journey.sections[6].questions;
+
+		assert.equal(factCheckQuestions[5]?.fieldName, 'planPauseDate-2');
+		assert.equal(factCheckQuestions[6]?.fieldName, 'withdrawnDate');
 	});
 });
 
@@ -381,4 +496,220 @@ describe('createExaminationPauseJourney', () => {
 			});
 		}
 	}
+});
+
+describe('createDeleteCaseJourney', () => {
+	function createDeleteCaseJourneyForTest(session: Record<string, unknown> = {}) {
+		return createDeleteCaseJourney(
+			{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.DELETE_CASE_JOURNEY_ID, '', {}),
+			questions
+		);
+	}
+
+	it('asks for the delete reason in the delete-case section', () => {
+		const journey = createDeleteCaseJourneyForTest();
+		const [deleteCaseSection] = journey.sections;
+
+		assert.equal(journey.journeyId, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
+		assert.equal(journey.sections.length, 1);
+		assert.equal(deleteCaseSection.segment, COMMON_CONSTS.DELETE_CASE_SECTION);
+		assert.deepEqual(
+			deleteCaseSection.questions.map((question) => question.fieldName),
+			['deleteCaseWhy']
+		);
+	});
+
+	it('builds delete case URLs without repeating the delete-case segment', () => {
+		const journey = createDeleteCaseJourneyForTest();
+
+		assert.equal(journey.baseUrl, '/case/LP-TEST-001');
+		assert.equal(journey.taskListUrl, '/case/LP-TEST-001/delete-case/check');
+		assert.equal(journey.taskListTemplate, 'views/layouts/delete-case-check.njk');
+		assert.equal(
+			journey.getCurrentQuestionUrl(COMMON_CONSTS.DELETE_CASE_SECTION, COMMON_CONSTS.DELETE_CASE_REASON),
+			'/case/LP-TEST-001/delete-case/delete-case-reason'
+		);
+	});
+
+	it('links the reason page back to the case overview', () => {
+		const journey = createDeleteCaseJourneyForTest();
+
+		assert.equal(journey.initialBackLink, '/case/LP-TEST-001/overview');
+	});
+
+	it('renders Continue and a Cancel link returning to Overview', () => {
+		const journey = createDeleteCaseJourneyForTest();
+		const viewModel = questions.deleteCaseWhy.toViewModel({
+			params: { section: COMMON_CONSTS.DELETE_CASE_SECTION, question: COMMON_CONSTS.DELETE_CASE_REASON },
+			section: journey.sections[0],
+			journey
+		});
+		const html = configureNunjucks().render('components/single-line-input/index.njk', {
+			...viewModel,
+			config: { headerTitle: 'Manage', footerLinks: [] }
+		});
+		assert.equal(viewModel.continueButtonText, 'Continue');
+		assert.ok(html.includes('Why are you deleting this case?'));
+		const cancelLink = html.match(/<a\b[^>]*data-cy="button-cancel"[^>]*>Cancel<\/a>/)?.[0];
+		assert.ok(cancelLink);
+		assert.match(cancelLink, /class="govuk-link"/);
+		assert.match(cancelLink, /href="\/case\/LP-TEST-001\/overview"/);
+	});
+
+	it('marks the delete case journey as the current journey', () => {
+		const session: Record<string, unknown> = {};
+
+		createDeleteCaseJourneyForTest(session);
+
+		assert.equal(session.currentJourney, COMMON_CONSTS.DELETE_CASE_JOURNEY_ID);
+	});
+});
+
+describe('assessor journeys', () => {
+	const assessorJourneys = [
+		{
+			gateway: 'gateway-2',
+			createJourney: createGateway2AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway2AssessorsName.fieldName,
+			questionUrl: 'assessor-gateway-2'
+		},
+		{
+			gateway: 'gateway-3',
+			createJourney: createGateway3AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway3AssessorsName.fieldName,
+			questionUrl: 'gateway-3-assessor-name'
+		}
+	];
+
+	for (const { gateway, createJourney, journeyId, fieldName, questionUrl } of assessorJourneys) {
+		const createJourneyForTest = (session: Record<string, unknown> = {}) =>
+			createJourney(
+				{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+				new JourneyResponse(journeyId, '', {}),
+				questions
+			);
+
+		it(`only asks who the assessor is for ${gateway}`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.journeyId, journeyId);
+			assert.equal(journey.sections.length, 1);
+			assert.equal(journey.sections[0].segment, 'assessors');
+			assert.deepEqual(
+				journey.sections[0].questions.map((question) => question.fieldName),
+				[fieldName]
+			);
+		});
+
+		it(`sends the ${gateway} assessor question on to the confirm page`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.baseUrl, `/case/LP-TEST-001/${gateway}/assessor`);
+			assert.equal(journey.taskListUrl, `/case/LP-TEST-001/${gateway}/assessor/check`);
+			assert.equal(
+				journey.getCurrentQuestionUrl('assessors', questionUrl),
+				`/case/LP-TEST-001/${gateway}/assessor/assessors/${questionUrl}`
+			);
+		});
+
+		it(`links the ${gateway} assessor question back to the ${gateway} tab`, () => {
+			const journey = createJourneyForTest();
+
+			const backLink = journey.getBackLink({ params: { section: 'assessors', question: questionUrl } });
+
+			assert.equal(backLink, `/case/LP-TEST-001/${gateway}`);
+		});
+
+		it(`marks the ${gateway} assessor journey as the current journey`, () => {
+			const session: Record<string, unknown> = {};
+
+			createJourneyForTest(session);
+
+			assert.equal(session.currentJourney, journeyId);
+		});
+	}
+
+	it('uses a Continue button on the assessor questions', () => {
+		const assessorQuestions = questions as Record<string, any>;
+
+		assert.equal(assessorQuestions.gateway2AssessorsName.viewData?.continueButtonText, 'Continue');
+		assert.equal(assessorQuestions.gateway3AssessorsName.viewData?.continueButtonText, 'Continue');
+	});
+});
+
+describe('assessor journeys', () => {
+	const assessorJourneys = [
+		{
+			gateway: 'gateway-2',
+			createJourney: createGateway2AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_2_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway2AssessorsName.fieldName,
+			questionUrl: 'assessor-gateway-2'
+		},
+		{
+			gateway: 'gateway-3',
+			createJourney: createGateway3AssessorJourney,
+			journeyId: COMMON_CONSTS.GATEWAY_3_ASSESSOR_JOURNEY_ID,
+			fieldName: questions.gateway3AssessorsName.fieldName,
+			questionUrl: 'gateway-3-assessor-name'
+		}
+	];
+
+	for (const { gateway, createJourney, journeyId, fieldName, questionUrl } of assessorJourneys) {
+		const createJourneyForTest = (session: Record<string, unknown> = {}) =>
+			createJourney(
+				{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' }, session } as unknown as Request,
+				new JourneyResponse(journeyId, '', {}),
+				questions
+			);
+
+		it(`only asks who the assessor is for ${gateway}`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.journeyId, journeyId);
+			assert.equal(journey.sections.length, 1);
+			assert.equal(journey.sections[0].segment, 'assessors');
+			assert.deepEqual(
+				journey.sections[0].questions.map((question) => question.fieldName),
+				[fieldName]
+			);
+		});
+
+		it(`sends the ${gateway} assessor question on to the confirm page`, () => {
+			const journey = createJourneyForTest();
+
+			assert.equal(journey.baseUrl, `/case/LP-TEST-001/${gateway}/assessor`);
+			assert.equal(journey.taskListUrl, `/case/LP-TEST-001/${gateway}/assessor/check`);
+			assert.equal(
+				journey.getCurrentQuestionUrl('assessors', questionUrl),
+				`/case/LP-TEST-001/${gateway}/assessor/assessors/${questionUrl}`
+			);
+		});
+
+		it(`links the ${gateway} assessor question back to the ${gateway} tab`, () => {
+			const journey = createJourneyForTest();
+
+			const backLink = journey.getBackLink({ params: { section: 'assessors', question: questionUrl } });
+
+			assert.equal(backLink, `/case/LP-TEST-001/${gateway}`);
+		});
+
+		it(`marks the ${gateway} assessor journey as the current journey`, () => {
+			const session: Record<string, unknown> = {};
+
+			createJourneyForTest(session);
+
+			assert.equal(session.currentJourney, journeyId);
+		});
+	}
+
+	it('uses a Continue button on the assessor questions', () => {
+		const assessorQuestions = questions as Record<string, any>;
+
+		assert.equal(assessorQuestions.gateway2AssessorsName.viewData?.continueButtonText, 'Continue');
+		assert.equal(assessorQuestions.gateway3AssessorsName.viewData?.continueButtonText, 'Continue');
+	});
 });

@@ -3,6 +3,9 @@ import type { PortalService } from '#service';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { sendAuthCodeNotification } from '../auth/send-code.ts';
+import { createOneTimePassword } from '../auth/one-time-password.ts';
+import { canViewCase } from '../../auth/can-view-case.ts';
+import { NotifyError, NotifyErrorReason } from '@pins/local-plans-lib/govnotify/notify-error.ts';
 
 const MAX_ATTEMPTS = 3;
 const LOCAL_ONE_TIME_PASSWORD = '12345';
@@ -10,12 +13,12 @@ const LOCAL_ONE_TIME_PASSWORD = '12345';
 export function buildEnterEmailPage(viewData = {}): AsyncRequestHandler {
 	return async (req: Request, res: Response) => {
 		delete req.session.email;
+		delete req.session.otpDeliveryFailed;
 
 		return res.render('views/login/enter-email-page.njk', {
 			pageTitle: 'Sign-in',
 			pageHeading: 'Sign-in',
 			emailQuestionText: 'What is your email address?',
-			backLinkUrl: `/`,
 			...viewData
 		});
 	};
@@ -25,6 +28,8 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 	const { logger, db } = service;
 	return async (req: Request, res: Response) => {
 		const { email } = req.body;
+		// each submission starts clean: only a failed send below may set this again
+		delete req.session.otpDeliveryFailed;
 
 		if (!email || typeof email !== 'string' || email.trim().length === 0) {
 			logger.info('Email address not provided');
@@ -32,7 +37,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageTitle: 'Sign-in',
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
-				backLinkUrl: `/`,
+
 				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
 				errorSummaryTitle: 'There is a problem',
 				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
@@ -50,7 +55,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageTitle: 'Sign-in',
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
-				backLinkUrl: `/`,
+
 				errors: { email: { msg: 'Enter an email address in the correct format, like name@example.com' } },
 				errorSummaryTitle: 'There is a problem',
 				errorSummary: [{ text: 'Enter an email address in the correct format, like name@example.com', href: '#email' }]
@@ -59,13 +64,22 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 		try {
 			const emailIsAssociatedToACase = await db.case.findFirst({
-				where: { email: sanitisedEmail, deletedDate: null },
+				where: canViewCase(sanitisedEmail),
 				orderBy: { createdAt: 'desc' }
 			});
+
 			if (!emailIsAssociatedToACase) {
 				logger.info('Login attempt with unrecognised email');
-				req.session.email = sanitisedEmail;
-				return res.redirect(`${req.baseUrl}/enter-code`);
+				delete req.session.email;
+				return res.render('views/login/enter-email-page.njk', {
+					pageTitle: 'Sign-in',
+					pageHeading: 'Sign-in',
+					emailQuestionText: 'What is your email address?',
+
+					errors: { email: { msg: 'Enter an email address linked to a case on this service' } },
+					errorSummaryTitle: 'There is a problem',
+					errorSummary: [{ text: 'We did not recognise that email address', href: '#email' }]
+				});
 			}
 
 			const otpRecord = await db.oneTimePassword.findUnique({
@@ -88,16 +102,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				});
 			}
 
-			// generate OTP
-			const OTP_LENGTH = 8;
-			const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-			const bytes = new Uint8Array(OTP_LENGTH);
-			crypto.getRandomValues(bytes);
-			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
-
-			const SALT_ROUNDS = 10;
-			const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
-			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+			const { otp, hashedOtp, expiresAt } = await createOneTimePassword();
 
 			// create a new OTP record
 			if (
@@ -116,15 +121,24 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 
 			const signInUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}/enter-code`;
 
-			// Send OTP email - don't block the redirect if it fails
-			sendAuthCodeNotification(service, sanitisedEmail, {
-				authCode: otp,
-				expiryMinutes: '20',
-				caseReference: emailIsAssociatedToACase.reference,
-				signInUrl
-			}).catch(() => {
-				logger.error('Failed to send OTP email');
-			});
+			try {
+				await sendAuthCodeNotification(service, sanitisedEmail, {
+					authCode: otp,
+					expiryMinutes: '20',
+					caseReference: emailIsAssociatedToACase.reference,
+					signInUrl
+				});
+			} catch (error) {
+				const reason = error instanceof NotifyError ? error.getReason() : undefined;
+				if (reason === NotifyErrorReason.TEAM_ONLY_KEY || reason === NotifyErrorReason.TRIAL_MODE) {
+					logger.error({ error }, `Failed to send OTP email due to ${reason} error`);
+				} else {
+					req.session.otpDeliveryFailed = true;
+					logger.error({ error }, `Failed to send OTP email due to ${reason ?? 'unexpected'} error`);
+				}
+				// Redirect so the OTP form posts to /enter-code, not back to this handler
+				return res.redirect(`${req.baseUrl}/enter-code`);
+			}
 
 			logger.info('OTP generated for user');
 
@@ -136,7 +150,7 @@ export function buildSubmitEmailPage(service: PortalService): AsyncRequestHandle
 				pageTitle: 'Sign-in',
 				pageHeading: 'Sign-in',
 				emailQuestionText: 'What is your email address?',
-				backLinkUrl: `/`,
+
 				errors: { email: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not sign you in',
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#email' }]
@@ -160,12 +174,25 @@ export function buildEnterOtpPage(viewData = {}): AsyncRequestHandler {
 		const showNewCodeMessage = req.session.showNewCodeMessage || false;
 		delete req.session.showNewCodeMessage;
 
+		const otpDeliveryFailed = req.session.otpDeliveryFailed || false;
+		delete req.session.otpDeliveryFailed;
+		const deliveryError = 'We could not send a code. Please request a new code.';
+		const deliveryErrorData = otpDeliveryFailed
+			? {
+					errors: { otp: { msg: deliveryError } },
+					errorSummaryTitle: 'There is a problem',
+					errorSummary: [{ text: deliveryError, href: '#otp' }]
+				}
+			: {};
+
 		return res.render('views/login/enter-otp.njk', {
 			pageTitle: 'Enter your one-time password',
 			pageHeading: 'Enter your one-time password',
 			backLinkUrl: `${req.baseUrl}`,
 			userEmail: req.session.email,
 			showNewCodeMessage,
+			otpDeliveryFailed,
+			...deliveryErrorData,
 			...viewData
 		});
 	};
@@ -201,16 +228,25 @@ export function buildSubmitOtpPage(service: PortalService) {
 			});
 		}
 
-		if (isOneTimePasswordBypass(service, req, otp)) {
-			req.session.isAuthenticated = true;
-			req.session.authenticatedEmail = email;
-			delete req.session.email;
-
-			logger.info('OTP bypass verification success');
-			return res.redirect('/manage-local-plans/your-plans');
-		}
-
 		try {
+			const emailIsAssociatedToACase = await db.case.findFirst({
+				where: canViewCase(email)
+			});
+			if (!emailIsAssociatedToACase) {
+				logger.info('OTP verification attempted for an unrecognised email');
+				delete req.session.email;
+				return res.redirect(`${req.baseUrl}/no-access`);
+			}
+
+			if (isOneTimePasswordBypass(service, req, otp)) {
+				req.session.isAuthenticated = true;
+				req.session.authenticatedEmail = email;
+				delete req.session.email;
+
+				logger.info('OTP bypass verification success');
+				return res.redirect('/manage-local-plans/your-plans');
+			}
+
 			const otpRecord = await db.oneTimePassword.findUnique({
 				where: { email }
 			});
@@ -362,7 +398,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 		}
 
 		try {
-			const caseRecord = await db.case.findFirst({ where: { email, deletedDate: null } });
+			const caseRecord = await db.case.findFirst({ where: canViewCase(email) });
 			if (!caseRecord) {
 				logger.info('New code requested for unrecognised email');
 				return res.redirect(`${req.baseUrl}/enter-code`);
@@ -373,16 +409,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 				where: { email }
 			});
 
-			// Generate a new OTP
-			const OTP_LENGTH = 8;
-			const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-			const bytes = new Uint8Array(OTP_LENGTH);
-			crypto.getRandomValues(bytes);
-			const otp = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
-
-			const SALT_ROUNDS = 10;
-			const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
-			const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+			const { otp, hashedOtp, expiresAt } = await createOneTimePassword();
 
 			// Create a new OTP record
 			await db.oneTimePassword.create({
@@ -416,6 +443,7 @@ export function buildRequestNewCode(service: PortalService): AsyncRequestHandler
 				errors: { otp: { msg: 'Something went wrong. Please try again later.' } },
 				errorSummaryTitle: 'We could not send a new code',
 				errorSummary: [{ text: 'Something went wrong. Please try again later.', href: '#otp' }],
+				otpDeliveryFailed: true,
 				backLinkUrl: `${req.baseUrl}`,
 				userEmail: email
 			});

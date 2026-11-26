@@ -37,14 +37,32 @@ import {
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway2InfoModel } from '@pins/local-plans-database/src/client/models/Gateway2Info.ts';
 import type { Gateway2WorkshopModel } from '@pins/local-plans-database/src/client/models/Gateway2Workshop.ts';
-import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { DOCUMENT_SET_ID, gateway2SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { buildGateway2ReportFilesViewModel } from '../../plan-page/gateway-2-report.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
+
+type Gateway2WorkshopSummary = Pick<
+	Gateway2WorkshopModel,
+	| 'createdDate'
+	| 'workshopDate'
+	| 'workshopTime'
+	| 'workshopEndTime'
+	| 'workshopVenueName'
+	| 'workshopAddressLine'
+	| 'workshopAddressLine2'
+	| 'workshopTownOrCity'
+	| 'workshopPostcode'
+	| 'workshopLocationType'
+	| 'remoteMeetingLinkKnown'
+	| 'remoteMeetingLink'
+>;
 
 type Gateway2SummaryDocument = {
 	guid: string;
 	name: string;
 	documentSetId: string;
 	createdAt: Date;
+	isTemp: boolean;
 	latestDocumentVersion: {
 		originalFilename: string | null;
 		fileName: string | null;
@@ -54,9 +72,8 @@ type Gateway2SummaryDocument = {
 };
 
 type Gateway2InfoWithWorkshops = Gateway2InfoModel & {
-	workshops?: Gateway2WorkshopModel[];
+	workshops?: Gateway2WorkshopSummary[];
 };
-
 type Gateway2InfoWithLegacyWorkshopFields = {
 	workshopVenue?: string | null;
 	workshopDate?: Date | string | null;
@@ -67,7 +84,7 @@ type CaseWithGateway2Info = CaseModel & {
 	documents?: Gateway2SummaryDocument[];
 };
 import { getRoutePlanReference } from './utils.ts';
-import { setVirusScanViewLocals } from '../utils.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import { downloadGateway2Document } from './download.ts';
 import lusca from 'lusca';
 
@@ -89,7 +106,7 @@ type Gateway2FileUploadQuestion = FileUploaderQuestionProps & {
 };
 
 // Ordered list for loading each persisted upload when the case page opens.
-const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
+export const gateway2FileUploadQuestionConfigs = Object.values(GW2QUESTIONS) as Gateway2FileUploadQuestion[];
 // URL list for the file uploader middleware to recognise upload pages.
 const gateway2FileUploadQuestionUrls = gateway2FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url);
 // Fast lookup for POST routes such as `/local-plan-timetable/upload-documents`.
@@ -223,6 +240,20 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				gateway2Info: {
 					include: {
 						workshops: {
+							select: {
+								createdDate: true,
+								workshopDate: true,
+								workshopTime: true,
+								workshopEndTime: true,
+								workshopVenueName: true,
+								workshopAddressLine: true,
+								workshopAddressLine2: true,
+								workshopTownOrCity: true,
+								workshopPostcode: true,
+								workshopLocationType: true,
+								remoteMeetingLinkKnown: true,
+								remoteMeetingLink: true
+							},
 							orderBy: { createdDate: 'desc' }
 						}
 					}
@@ -230,7 +261,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				documents: {
 					where: {
 						documentSetId: {
-							in: [DOCUMENT_SET_ID.G2_REPORT, DOCUMENT_SET_ID.G2_WORKSHOP_DOCUMENTS]
+							in: gateway2SetIds
 						},
 						isDeleted: false
 					},
@@ -240,6 +271,7 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 						name: true,
 						documentSetId: true,
 						createdAt: true,
+						isTemp: true,
 						latestDocumentVersion: {
 							select: {
 								originalFilename: true,
@@ -273,7 +305,9 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 				);
 			}
 
-			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
+			const uploadedFiles = await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId, {
+				includeTemp: true
+			});
 			setFileUploaderUploadedFiles(
 				request,
 				fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName),
@@ -284,6 +318,14 @@ function buildGetJourneyResponseFromCase(service: PortalService): RequestHandler
 			} else {
 				delete answers[questionConfig.fieldName];
 			}
+		}
+
+		// Load digital supporting material link from the database.
+		const digitalSupportingMaterialLink = currentCase.gateway2Info?.digitalSupportingMaterialLink;
+		if (digitalSupportingMaterialLink) {
+			answers['digitalSupportingMaterialLink'] = digitalSupportingMaterialLink;
+		} else {
+			delete answers['digitalSupportingMaterialLink'];
 		}
 
 		res.locals.journeyResponse = new JourneyResponse(JOURNEY_ID, currentCase.id, {
@@ -299,6 +341,28 @@ export function setGateway2CheckAnswersViewData(req: Request, res: Response, nex
 	next();
 }
 
+function setGateway2StatusTag(currentCase: CaseWithGateway2Info | undefined) {
+	if (!currentCase) {
+		return '';
+	}
+
+	const gateway2Info = currentCase.gateway2Info;
+
+	if (gateway2Info?.reportIssuedDate) {
+		return StatusTag[STATUS.Completed];
+	}
+
+	if (currentCase.submissionDate) {
+		return StatusTag[STATUS.UnderReview];
+	}
+
+	if (currentCase.documents?.length) {
+		return StatusTag[STATUS.InProgress];
+	}
+
+	return StatusTag[STATUS.ReadyToStart];
+}
+
 export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	const request = req as Gateway2Request;
 	const planReference = getRoutePlanReference(req);
@@ -307,6 +371,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 	res.locals.pageTitle = 'Gateway 2 submission';
 	res.locals.pageHeading = 'Gateway 2 submission';
 	res.locals.pageCaption = currentCase?.planTitle;
+	res.locals.statusTag = setGateway2StatusTag(currentCase);
 
 	if (planReference) {
 		const encodedPlanReference = encodeURIComponent(planReference);
@@ -321,7 +386,7 @@ export function setGateway2CheckAnswersViewLocals(req: Request, res: Response) {
 		planReference,
 		gateway2Info?.reportIssuedDate
 			? documents.flatMap((document) => {
-					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT) {
+					if (document.documentSetId !== DOCUMENT_SET_ID.G2_REPORT || document.isTemp) {
 						return [];
 					}
 
@@ -420,35 +485,17 @@ function toDate(value: Date | string): Date {
 	return value instanceof Date ? value : new Date(value);
 }
 
-function getLatestWorkshop(workshops: Gateway2WorkshopModel[] | undefined): Gateway2WorkshopModel | undefined {
+function getLatestWorkshop(workshops: Gateway2WorkshopSummary[] | undefined): Gateway2WorkshopSummary | undefined {
 	return workshops?.toSorted((a, b) => toDate(b.createdDate).getTime() - toDate(a.createdDate).getTime())[0];
-}
-
-function formatWorkshopTimeRange(workshop: Gateway2WorkshopModel): string | undefined {
-	if (workshop.workshopTime && workshop.workshopEndTime) {
-		return `${workshop.workshopTime} to ${workshop.workshopEndTime}`;
-	}
-
-	return workshop.workshopTime ?? workshop.workshopEndTime ?? undefined;
-}
-
-function formatWorkshopDateAndTime(workshop: Gateway2WorkshopModel): string | undefined {
-	const workshopDate = workshop.workshopDate ? formatDisplayDate(toDate(workshop.workshopDate)) : undefined;
-	const workshopTime = formatWorkshopTimeRange(workshop);
-
-	if (workshopDate && workshopTime) {
-		return `${workshopDate} at ${workshopTime}`;
-	}
-
-	return workshopDate ?? workshopTime;
 }
 
 function isNonEmptyString(value: string | null | undefined): value is string {
 	return typeof value === 'string' && value.trim() !== '';
 }
 
-function formatWorkshopVenue(workshop: Gateway2WorkshopModel): string | undefined {
-	const addressParts = [
+// Returns the venue as address lines so the view can show one line per row.
+function formatWorkshopVenue(workshop: Gateway2WorkshopSummary): string[] | undefined {
+	const addressLines = [
 		workshop.workshopVenueName,
 		workshop.workshopAddressLine,
 		workshop.workshopAddressLine2,
@@ -456,22 +503,97 @@ function formatWorkshopVenue(workshop: Gateway2WorkshopModel): string | undefine
 		workshop.workshopPostcode
 	].filter(isNonEmptyString);
 
-	return addressParts.length ? addressParts.join(', ') : undefined;
+	return addressLines.length ? addressLines : undefined;
+}
+
+const MIDDAY = Date.UTC(2000, 0, 1, 12);
+const MIDNIGHT = Date.UTC(2000, 0, 1, 0);
+const TIME_PATTERN = /^(\d{1,2}):(\d{2})$/;
+
+const HOUR_ONLY: Intl.DateTimeFormatOptions = {
+	hour: 'numeric',
+	hourCycle: 'h12',
+	timeZone: 'UTC'
+};
+
+const HOUR_MINUTE: Intl.DateTimeFormatOptions = {
+	...HOUR_ONLY,
+	minute: '2-digit'
+};
+
+function parseTime(time: string): Date | null {
+	const match = TIME_PATTERN.exec(time.trim());
+	if (!match) {
+		return null;
+	}
+
+	const hour = Number(match[1]);
+	const minute = Number(match[2]);
+
+	if (hour > 23 || minute > 59) {
+		return null;
+	}
+
+	return new Date(Date.UTC(2000, 0, 1, hour, minute));
+}
+
+export function formatWorkshopTime(time: string): string {
+	const date = parseTime(time);
+	if (!date) {
+		return time;
+	}
+
+	const timestamp = date.getTime();
+	if (timestamp === MIDDAY) {
+		return 'midday';
+	}
+
+	if (timestamp === MIDNIGHT) {
+		return 'midnight';
+	}
+
+	const options = date.getUTCMinutes() === 0 ? HOUR_ONLY : HOUR_MINUTE;
+
+	return date.toLocaleTimeString('en-US', options).replace(/\s/g, '').toLowerCase();
+}
+
+function formatWorkshopStartTime(time: string | null | undefined, date: Date | string | null | undefined) {
+	const displayDate = date ? formatDisplayDate(toDate(date)) : undefined;
+	const displayTime = isNonEmptyString(time) ? formatWorkshopTime(time) : undefined;
+	const parts = [displayTime, displayDate].filter(Boolean);
+
+	return parts.length ? parts.join(', ') : undefined;
+}
+
+function formatWorkshopMeetingLink(workshop: Gateway2WorkshopSummary): string | undefined {
+	if (workshop.workshopLocationType === 'in-person' || workshop.remoteMeetingLinkKnown === 'no') {
+		return undefined;
+	}
+
+	return isNonEmptyString(workshop.remoteMeetingLink) ? workshop.remoteMeetingLink : undefined;
 }
 
 function setGateway2WorkshopViewLocals(res: Response, gateway2Info: Gateway2InfoWithWorkshops | null | undefined) {
 	const latestWorkshop = getLatestWorkshop(gateway2Info?.workshops);
 	if (latestWorkshop) {
+		res.locals.hasWorkshop = true;
+		res.locals.workshopFormat = latestWorkshop.workshopLocationType ?? undefined;
 		res.locals.workshopVenue = formatWorkshopVenue(latestWorkshop);
-		res.locals.workshopDateAndTime = formatWorkshopDateAndTime(latestWorkshop);
+		res.locals.workShopStartTime = formatWorkshopStartTime(latestWorkshop.workshopTime, latestWorkshop.workshopDate);
+		res.locals.workshopMeetingLink = formatWorkshopMeetingLink(latestWorkshop);
 		return;
 	}
 
+	// Older cases store a single venue string and date-time on gateway2Info.
 	const legacyWorkshopInfo = gateway2Info as (Gateway2InfoModel & Gateway2InfoWithLegacyWorkshopFields) | undefined;
+	const legacyDate = legacyWorkshopInfo?.workshopDate ? toDate(legacyWorkshopInfo.workshopDate) : undefined;
+	res.locals.workshopFormat = undefined;
 	res.locals.workshopVenue = legacyWorkshopInfo?.workshopVenue || undefined;
-	res.locals.workshopDateAndTime = legacyWorkshopInfo?.workshopDate
-		? `${formatDisplayDate(toDate(legacyWorkshopInfo.workshopDate))} at ${formatDisplayTime(toDate(legacyWorkshopInfo.workshopDate))}`
+	res.locals.workShopStartTime = legacyDate
+		? formatWorkshopStartTime(formatDisplayTime(legacyDate), legacyDate)
 		: undefined;
+	res.locals.workshopMeetingLink = undefined;
+	res.locals.hasWorkshop = Boolean(res.locals.workshopVenue || res.locals.workShopStartTime);
 }
 
 const SUBMITTED_TEMPLATE = 'views/manage-local-plans/gateway-2-submission/check-your-answers-submitted.njk';
@@ -500,12 +622,20 @@ export function buildSubmittedGateway2View(): RequestHandler {
 	};
 }
 
-// Saves case-scoped answers into the session.
-function buildSaveDataToCase(): SaveDataFn {
+// Saves case-scoped answers into the session and persists text fields to the database.
+function buildSaveDataToCase(service: PortalService): SaveDataFn {
 	const saveDataToCaseSession = buildSaveDataToSession({ reqParam: 'planReference' });
 
 	return async (params: SaveParams) => {
 		await saveDataToCaseSession(params);
+		const digitalSupportingMaterialLink = params.data.answers?.digitalSupportingMaterialLink;
+		if (typeof digitalSupportingMaterialLink !== 'string') {
+			return;
+		}
+		await service.db.gateway2Info.update({
+			where: { caseId: params.referenceId },
+			data: { digitalSupportingMaterialLink }
+		});
 	};
 }
 
@@ -698,7 +828,7 @@ export function buildGateway2Middleware(service: PortalService) {
 	);
 	const getJourneyResponseFromCase = asyncHandler(buildGetJourneyResponseFromCase(service));
 	const saveToDatabase = asyncHandler(buildSaveController(service));
-	const saveDataToCase = buildSaveDataToCase();
+	const saveDataToCase = buildSaveDataToCase(service);
 	const fileUploaderStorage = () => service.createFileStorage(JOURNEY_ID);
 	const uploadGateway2Document = buildFileUploadRouteHandler(
 		new Map(
@@ -752,7 +882,7 @@ export function buildGateway2Middleware(service: PortalService) {
 						};
 					},
 					onFilesChange: async ({ req, uploadedFiles }) => {
-						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles);
+						await DocumentUtil.saveDocuments(service, req, questionConfig.url, uploadedFiles, true);
 						syncGateway2UploadAnswer(req, questionConfig.fieldName, uploadedFiles);
 						logGateway2Uploaded(service, req, questionConfig, uploadedFiles);
 					},
@@ -765,6 +895,7 @@ export function buildGateway2Middleware(service: PortalService) {
 			])
 		)
 	);
+
 	const deleteGateway2Document = buildFileUploadRouteHandler(
 		new Map(
 			gateway2FileUploadQuestionConfigs.map((questionConfig) => [

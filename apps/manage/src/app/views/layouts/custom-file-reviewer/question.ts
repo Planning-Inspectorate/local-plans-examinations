@@ -1,4 +1,19 @@
 import { Question } from '@planning-inspectorate/dynamic-forms/src/questions/question.js';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { frontOfficeGateway2questions } from '@pins/local-plans-lib/app/questions.ts';
+
+const EXCLUDED_DOCUMENT_TITLES = new Set(['workshop document']);
+
+export function getReviewableDocuments(group: any): any[] {
+	return (group?.documents ?? []).filter(
+		(document: any) =>
+			!EXCLUDED_DOCUMENT_TITLES.has(
+				String(document?.title ?? '')
+					.trim()
+					.toLowerCase()
+			)
+	);
+}
 
 export default class CustomFileReviewerQuestion extends Question {
 	constructor({ ...params }) {
@@ -13,11 +28,70 @@ export default class CustomFileReviewerQuestion extends Question {
 
 	toViewModel(options: any) {
 		const viewModel = super.toViewModel(options);
-
+		const reference = options.params.reference;
 		return {
 			...viewModel,
-			documentGroups: Array.isArray(viewModel.answer) ? viewModel.answer : []
+			documentGroups: this.buildSummaryList(Array.isArray(viewModel.answer) ? viewModel.answer : [], reference)
 		};
+	}
+
+	buildSummaryList(documentGroups: any[], reference: string) {
+		return documentGroups.map((group: any) => ({
+			category: group.category,
+			rows: getReviewableDocuments(group).map((document: any) => {
+				const files = document.files ?? [];
+
+				const fileLinksHtml =
+					files.length > 0
+						? files
+								.map((file: any) => {
+									const downloadUrl = `/case/${encodeURIComponent(reference)}/download-case-document/${encodeURIComponent(file.id)}`;
+
+									return `<a class="govuk-link" href="${downloadUrl}">${file.fileName}</a><br>`;
+								})
+								.join('')
+						: '<p class="govuk-body">Not provided</p>';
+
+				const questionConfig = Object.values(frontOfficeGateway2questions).find(
+					(question: any) =>
+						question.title.trim().replace(/\s+/g, ' ').toLowerCase() ===
+						document.title.trim().replace(/\s+/g, ' ').toLowerCase()
+				);
+
+				const actions = fileLinksHtml.includes('Not provided')
+					? [
+							{
+								href: questionConfig
+									? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}`
+									: '#',
+								text: 'Add',
+								visuallyHiddenText: document.title
+							}
+						]
+					: [
+							{
+								href: questionConfig
+									? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}/check`
+									: '#',
+								text: 'Manage',
+								visuallyHiddenText: document.title
+							},
+							{
+								href: questionConfig
+									? `/case/${encodeURIComponent(reference)}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/gateway-2/${questionConfig.url}`
+									: '#',
+								text: 'Add',
+								visuallyHiddenText: document.title
+							}
+						];
+
+				return {
+					key: { text: document.title },
+					value: { html: fileLinksHtml },
+					actions: { items: actions }
+				};
+			})
+		}));
 	}
 
 	formatAnswerForSummary(sectionSegment: string, journey: any, answer: unknown) {
@@ -25,7 +99,7 @@ export default class CustomFileReviewerQuestion extends Question {
 		const documentCount = groups.reduce(
 			(total, group) =>
 				total +
-				(group.documents ?? []).reduce(
+				getReviewableDocuments(group).reduce(
 					(groupTotal: number, document: any) => groupTotal + (document.files?.length ?? 0),
 					0
 				),

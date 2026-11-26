@@ -1,6 +1,10 @@
-import { caseOverviewPage, caseOverviewQAInspector3Page } from '../../../../page-objects/manage/case-overview/index.ts';
+import {
+	caseOverviewPage,
+	caseOverviewQAInspector3Page,
+	deleteCaseReasonPage
+} from '../../../../page-objects/manage/case-overview/index.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
-import { seededCaseNotes } from '../../../../fixtures/manage/overview.ts';
+import { deleteCaseReason, seededCaseNotes } from '../../../../fixtures/manage/overview.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 
 const planTitle = seededCase.planTitle;
@@ -43,5 +47,13 @@ describe('Case overview validation', () => {
 		caseOverviewQAInspector3Page.verifyLoaded();
 		caseOverviewQAInspector3Page.clearLookupAnswer();
 		caseOverviewQAInspector3Page.submitAndVerifyValidationErrors('Input QA Inspector 3');
+	});
+
+	it('does not continue to the delete check page without a reason', { tags: ['regression'] }, () => {
+		caseOverviewPage.navigateToDeletePage();
+
+		deleteCaseReasonPage.verifyLoaded();
+		deleteCaseReasonPage.submitAndVerifyValidationErrors(deleteCaseReason.requiredMessage);
+		deleteCaseReasonPage.verifyLoaded();
 	});
 });

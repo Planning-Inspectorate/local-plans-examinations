@@ -32,7 +32,8 @@ async function run() {
 				deletedDate: null,
 				email: authEmail,
 				planTitle: assignedPlanTitle,
-				planType: PLAN_TYPE_ID.LOCAL_PLAN
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
+				examinationInfo: { upsert: { create: {}, update: {} } }
 			},
 			create: {
 				caseOfficer: authUserId,
@@ -40,6 +41,7 @@ async function run() {
 				planTitle: assignedPlanTitle,
 				planType: PLAN_TYPE_ID.LOCAL_PLAN,
 				reference: assignedReference,
+				examinationInfo: { create: {} },
 				caseHistories: {
 					create: {
 						event: `Case created for plan ${assignedPlanTitle}`,
@@ -56,14 +58,16 @@ async function run() {
 				deletedDate: null,
 				email: 'unassigned-cypress@test.com',
 				planTitle: unassignedPlanTitle,
-				planType: PLAN_TYPE_ID.LOCAL_PLAN
+				planType: PLAN_TYPE_ID.LOCAL_PLAN,
+				examinationInfo: { upsert: { create: {}, update: {} } }
 			},
 			create: {
 				caseOfficer: 'unassigned-cypress-user',
 				email: 'unassigned-cypress@test.com',
 				planTitle: unassignedPlanTitle,
 				planType: PLAN_TYPE_ID.LOCAL_PLAN,
-				reference: unassignedReference
+				reference: unassignedReference,
+				examinationInfo: { create: {} }
 			}
 		});
 

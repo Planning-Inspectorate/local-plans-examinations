@@ -10,7 +10,10 @@ import {
 	gateway2Page,
 	cancelWorkshopPage,
 	workshopCYAPage,
-	workshopLocationPage
+	workshopLocationPage,
+	workshopRemoteLinkPage,
+	workshopRemoteLinkKnownPage,
+	workshopAddressKnownPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 
@@ -65,6 +68,11 @@ describe('Gateway 2 workshops', () => {
 		workshopLocationPage.verifyLoaded(seededGateway2Workshop.workshopLocationType);
 		workshopLocationPage.selectAnswer('remote');
 
+		workshopRemoteLinkKnownPage.verifyLoaded(seededGateway2Workshop.remoteMeetingLinkKnown);
+		workshopRemoteLinkKnownPage.selectAnswer('yes');
+		workshopRemoteLinkPage.venueRemoteLinkField.should('have.value', seededWorkshopMeetingLink.input);
+		workshopRemoteLinkPage.enterRemoteLink(seededWorkshopMeetingLink.input);
+
 		workshopCYAPage.verifyLoaded();
 		workshopCYAPage.verifyRemoteWorkshopDetails(seededWorkshopMeetingLink.display);
 		workshopCYAPage.submitWorkshop();
@@ -73,5 +81,24 @@ describe('Gateway 2 workshops', () => {
 		cy.reload();
 		gateway2Page.verifyWorkshopOrder(1);
 		gateway2Page.verifyRemoteWorkshopDetails(1, seededGateway2Workshop.remoteMeetingLink);
+	});
+
+	it('redirects to new path after using back link to change the location type', { tags: ['regression'] }, () => {
+		gateway2Page.openWorkshop(1);
+		workshopCYAPage.verifyLoaded();
+		workshopCYAPage.openChangeLinkFor(workshopSetUp.workshopAddressKnown.row);
+		workshopAddressKnownPage.goBack();
+
+		workshopLocationPage.verifyLoaded(seededGateway2Workshop.workshopLocationType);
+		workshopLocationPage.selectAnswer('remote');
+
+		workshopRemoteLinkKnownPage.verifyLoaded();
+		workshopRemoteLinkKnownPage.selectAnswer('yes');
+
+		workshopRemoteLinkPage.verifyLoaded();
+		workshopRemoteLinkPage.enterRemoteLink(seededWorkshopMeetingLink.input);
+
+		workshopCYAPage.verifyLoaded();
+		workshopCYAPage.verifyRemoteWorkshopDetails(seededWorkshopMeetingLink.display);
 	});
 });

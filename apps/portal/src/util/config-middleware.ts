@@ -3,7 +3,7 @@ import type { Handler } from 'express';
 /**
  * Add configuration values to locals.
  */
-export function addLocalsConfiguration(clarityId?: string, environment = 'local'): Handler {
+export function addLocalsConfiguration(clarityId?: string, environment = 'local', googleAnalyticsId?: string): Handler {
 	return (req, res, next) => {
 		const path = req.path;
 		const cookieConsent = req.cookies?.cookie_consent;
@@ -20,7 +20,7 @@ export function addLocalsConfiguration(clarityId?: string, environment = 'local'
 		];
 
 		res.locals.config = {
-			styleFile: 'style.css?v=44395b43',
+			styleFile: 'style.css?v=e7688c4e',
 			cspNonce: res.locals.cspNonce,
 			environmentBanner: environment === 'training',
 			headerTitle: 'Submit development plans',
@@ -47,7 +47,8 @@ export function addLocalsConfiguration(clarityId?: string, environment = 'local'
 				link.current = link.href === path;
 				return link;
 			}),
-			clarityId: cookieConsent === 'accept' ? clarityId : undefined
+			clarityId: cookieConsent === 'accept' ? clarityId : undefined,
+			googleAnalyticsId: cookieConsent === 'accept' ? googleAnalyticsId : undefined
 		};
 
 		if (cookieConsent === 'accept' || cookieConsent === 'reject') {

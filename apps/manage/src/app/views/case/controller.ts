@@ -1,6 +1,6 @@
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { ManageService } from '#service';
-import { type SaveDataFn, type Question } from '@planning-inspectorate/dynamic-forms';
+import { type SaveDataFn, type Question, clearDataFromSession } from '@planning-inspectorate/dynamic-forms';
 import type { Request, Response, NextFunction } from 'express';
 import type { PrismaClient } from '@pins/local-plans-database/src/client/client.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
@@ -23,15 +23,31 @@ import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { OverviewSaveController } from './save/overview-save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
 import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
-import { Gateway3SaveController } from './save/gateway-3-save-controller.ts';
+import { Gateway3SaveController, saveGateway3Submissions } from './save/gateway-3-save-controller.ts';
 import { ExaminationSaveController } from './save/examination-save-controller.ts';
 import { formatDateToString } from '../../util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { checkSoundUnsoundManuallySet } from '../../util/util.ts';
 import { pushAlertToSession } from '../../util/alert.ts';
+import { EXAMINING_INSPECTOR_FIELDS, QA_INSPECTOR_FIELDS } from '../../classes/case-field-mappings.ts';
+import { TimetableSaveController } from './save/timetable-save-controller.ts';
+import {
+	sendGw2AssessorAppointedNotifyEmail,
+	sendWorkshopDocsUploadedNotifyEmail,
+	sendWorkshopReportUploadedNotifyEmail,
+	sendGw3AssessorAppointedNotifyEmail,
+	sendGw3PassNotifyEmail,
+	sendGw3ResubmissionNeededNotifyEmail
+} from '../../../app/notify/notify-helper.ts';
+import { resolveAssessorDisplayName } from './assessor-helper.ts';
 
-type ManageListAction = 'edit' | 'remove' | undefined;
+import type CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
+type ManageListAction = 'add' | 'edit' | 'remove' | undefined;
 
 /** the name of the contacts section. */
 const CONTACTS_SECTION = 'contacts';
@@ -95,10 +111,41 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		const section = getParam(req.params.section);
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
+		const caseId = await resolveCaseIdFromReference(db, reference);
+		let existing;
 
 		if (action === 'remove') {
-			await removeItem({ db, reference, section, currentItemId });
+			await removeItem({ db, reference, section, currentItemId, service, req });
 			return;
+		}
+		switch (true) {
+			case req.url.includes('check-lpas') && action === 'edit':
+				existing =
+					req.url.includes('check-lpas') && action === 'edit'
+						? (
+								await db.lPA.findUnique({
+									where: { lpaCode: currentItemId },
+									select: { lpaName: true }
+								})
+							)?.lpaName
+						: null;
+				break;
+			case req.url.includes('assessor-gateway-2'):
+				existing = (
+					await db.gateway2Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
+			case req.url.includes('assessor-gateway-3'):
+				existing = (
+					await db.gateway3Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
 		}
 
 		let writeResponse: { dataWritten: boolean; writtenToDB: boolean };
@@ -129,6 +176,9 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			}
 			case COMMON_CONSTS.EXAMINATION_JOURNEY_ID: {
 				writeResponse = await new ExaminationSaveController(service, req, reference).prepareAndSave(data.answers);
+				if (writeResponse.writtenToDB && req.params.question === COMMON_CONSTS.PROGRAMME_OFFICER_QUESTION) {
+					pushAlertToSession(req, 'success', 'Changes saved');
+				}
 				break;
 			}
 			case COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID: {
@@ -156,6 +206,10 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 				}
 				break;
 			}
+			case COMMON_CONSTS.TIMETABLE_JOURNEY_ID: {
+				writeResponse = await new TimetableSaveController(service, req, reference).prepareAndSave(data.answers);
+				break;
+			}
 			default: {
 				logger.info(`url - ${req.url} not found`);
 				return res.status(404).render('views/errors/404.njk');
@@ -168,7 +222,97 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
 
-			await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+			switch (true) {
+				case req.url.includes('check-lpas'): {
+					const lpa = await db.lPA.findUnique({
+						where: { lpaCode: data.answers.lpa },
+						select: {
+							lpaName: true
+						}
+					});
+					const lpaName = lpa?.lpaName ?? data.answers.lpa;
+					if (action == 'edit' && req.url.includes('check-lpas')) {
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							lpa: existing + ' updated to ' + lpaName
+						});
+					} else if (action == 'add') {
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							lpa: lpaName + ' added'
+						});
+					}
+					break;
+				}
+				case req.url.includes('assessor-gateway-2'): {
+					const assessor = (
+						await db.gateway2Info.findUnique({
+							where: { caseId },
+							select: { assessorName: true }
+						})
+					)?.assessorName;
+					const assessorName =
+						typeof assessor === 'string'
+							? await resolveAssessorDisplayName(service, req, 'gateway-2', assessor)
+							: assessor;
+
+					if (existing != null) {
+						//edit
+						const existingName =
+							typeof existing === 'string'
+								? await resolveAssessorDisplayName(service, req, 'gateway-2', existing)
+								: existing;
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							assessorName: 'Gateway 2 Assessor updated from ' + existingName + ' to ' + assessorName
+						});
+					} else {
+						//add
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							assessorName: 'Gateway 2 Assessor ' + assessorName + ' added'
+						});
+					}
+					break;
+				}
+				case req.url.includes('assessor-gateway-3'): {
+					const assessor = (
+						await db.gateway3Info.findUnique({
+							where: { caseId },
+							select: { assessorName: true }
+						})
+					)?.assessorName;
+					const assessorName =
+						typeof assessor === 'string'
+							? await resolveAssessorDisplayName(service, req, 'gateway-3', assessor)
+							: assessor;
+
+					if (existing != null) {
+						//edit
+						const existingName =
+							typeof existing === 'string'
+								? await resolveAssessorDisplayName(service, req, 'gateway-3', existing)
+								: existing;
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							gateway3AssessorName: 'Gateway 3 Assessor updated from ' + existingName + ' to ' + assessorName
+						});
+					} else {
+						//add
+						await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser, {
+							gateway3AssessorName: 'Gateway 3 Assessor ' + assessorName + ' added'
+						});
+					}
+					break;
+				}
+				default: {
+					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
+					break;
+				}
+			}
+
+			if (data.answers.assessorName) {
+				if (firstSegmentUrl === COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
+					await sendGw3AssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
+				} else if (firstSegmentUrl === COMMON_CONSTS.GATEWAY_2_JOURNEY_ID) {
+					await sendGw2AssessorAppointedNotifyEmail(service, req, reference, data.answers.assessorName);
+				}
+			}
 		}
 	};
 }
@@ -191,21 +335,39 @@ async function removeItem({
 	db,
 	reference,
 	section,
-	currentItemId
+	currentItemId,
+	service,
+	req
 }: {
 	db: ManageService['db'];
 	reference: string;
 	section: string;
 	currentItemId: string;
+	service: ManageService;
+	req: Request;
 }): Promise<void> {
+	const account = authSession.getAccount(req.session);
+	const currentUser = account?.name ?? 'Unknown';
+
 	if (section === CONTACTS_SECTION) {
 		await db.contact.delete({ where: { id: currentItemId } });
 		return;
+	} else {
+		const lpa = await db.lPA.findUnique({
+			where: { lpaCode: currentItemId },
+			select: {
+				lpaName: true
+			}
+		});
+		const existingLpa = lpa?.lpaName ?? currentItemId;
+		await db.case.update({
+			where: { reference },
+			data: { lpas: { disconnect: { lpaCode: currentItemId } } }
+		});
+		await updateCaseHistory(service, req, db, { lpa: currentItemId }, { lpa: null }, reference, currentUser, {
+			lpa: existingLpa + ' removed'
+		});
 	}
-	await db.case.update({
-		where: { reference },
-		data: { lpas: { disconnect: { lpaCode: currentItemId } } }
-	});
 }
 
 /** Normalises a route param that may be a string, string array, or undefined. */
@@ -256,14 +418,18 @@ export function buildGetJourneyMiddleware(
 		const gateway2Documents = await db.document.findMany({
 			where: {
 				caseId: caseRecord.id,
-				documentSetId: { in: gateway2SetIds }
+				documentSetId: { in: gateway2SetIds },
+				isDeleted: false,
+				isTemp: false
 			}
 		});
 
 		const gateway3Documents = await db.document.findMany({
 			where: {
 				caseId: caseRecord.id,
-				documentSetId: { in: gateway3SetIds }
+				documentSetId: { in: gateway3SetIds },
+				isDeleted: false,
+				isTemp: false
 			}
 		});
 
@@ -304,7 +470,9 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			questionUrl,
 			req.originalUrl,
 			service,
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ?? []
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
+				[],
+			questionConfig.title
 		);
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
@@ -349,7 +517,7 @@ function createNavigationParameters(path: string, reference: string, currentSect
 	const baseUrl = `/case/${encodeURIComponent(reference)}`; //replace?
 	const items = [
 		{ text: 'Overview', href: `${baseUrl}/${COMMON_CONSTS.OVERVIEW}` },
-		{ text: 'Timetable', href: '#' },
+		{ text: 'Timetable', href: `${baseUrl}/${COMMON_CONSTS.TIMETABLE_JOURNEY_ID}` },
 		{ text: 'Gateway 1', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}` },
 		{ text: 'Gateway 2', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}` },
 		{ text: 'Gateway 3', href: `${baseUrl}/${COMMON_CONSTS.GATEWAY_3_JOURNEY_ID}` },
@@ -378,7 +546,7 @@ function getFirstSegmentOfUrl(url: string): string {
 export async function updateCaseHistory(
 	service: ManageService,
 	req: Request,
-	db: PrismaClient,
+	db: Pick<PrismaClient, 'case'>,
 	previousValues: Record<string, any>,
 	newValues: Record<string, any>,
 	reference: string,
@@ -400,6 +568,47 @@ export async function updateCaseHistory(
 	});
 }
 
+type ExaminationStatusDatabase = Pick<PrismaClient, 'examinationInfo'>;
+
+const examinationAvailableStatuses = new Set<string>([
+	EXAMINATION_STATUS_ID.READY_TO_START,
+	EXAMINATION_STATUS_ID.IN_PROGRESS,
+	EXAMINATION_STATUS_ID.SUBMITTED,
+	EXAMINATION_STATUS_ID.IN_EXAMINATION,
+	EXAMINATION_STATUS_ID.PAUSED,
+	EXAMINATION_STATUS_ID.REPORT_ISSUED,
+	EXAMINATION_STATUS_ID.PLAN_ADOPTED
+]);
+
+async function ensureExaminationIsReady(db: ExaminationStatusDatabase, caseId: string) {
+	const result = await db.examinationInfo.updateMany({
+		where: {
+			caseId,
+			status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+		},
+		data: {
+			status: EXAMINATION_STATUS_ID.READY_TO_START
+		}
+	});
+	if (result.count === 1) {
+		return true;
+	}
+	if (result.count !== 0) {
+		throw Error(`Expected to update one examination record for case '${caseId}', but updated ${result.count}`);
+	}
+	const examinationInfo = await db.examinationInfo.findUnique({
+		where: { caseId },
+		select: { status: true }
+	});
+	if (!examinationInfo) {
+		throw Error(`Could not find examination information for case '${caseId}'`);
+	}
+	if (!examinationAvailableStatuses.has(examinationInfo.status)) {
+		throw Error(`Could not make examination available for case '${caseId}'`);
+	}
+	return false;
+}
+
 async function formatCaseHistoryEvent(
 	service: ManageService,
 	req: Request,
@@ -411,12 +620,34 @@ async function formatCaseHistoryEvent(
 	if (overrideLabel) {
 		return overrideLabel;
 	}
-	const label = key in caseHistoryLabels ? caseHistoryLabels[key] : key;
-	let oldValueText = 'updated to';
+	const label = Object.hasOwn(caseHistoryLabels, key) ? (caseHistoryLabels[key] ?? key) : key;
+
+	const formattedNewValue = await formatCaseHistoryValue(service, req, key, newValue);
+
 	if (oldValue != null && oldValue != '') {
-		oldValueText = `updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to`;
+		// edit
+		return `${label} updated from ${await formatCaseHistoryValue(service, req, key, oldValue)} to ${formattedNewValue}`;
 	}
-	return `${label} ${oldValueText} ${await formatCaseHistoryValue(service, req, key, newValue)}`;
+	const fieldsUsingUpdateWording = new Set([
+		'letterSentToMHCLGDate',
+		'letterIssueDate',
+		'factCheckDateReceivedFromInspector',
+		'factCheckDueDate',
+		'factCheckActualDate',
+		'factCheckReceivedBackFromLPADate',
+		'finalReportIssueDate',
+		'withdrawnDate',
+		'isSound',
+		'soundUnsoundDate',
+		'adoptionDate',
+		'approvedForCILDate',
+		'examinationWebsite'
+	]);
+
+	if (fieldsUsingUpdateWording.has(key)) {
+		return `${label} updated to ${formattedNewValue}`;
+	}
+	return `${label} ${formattedNewValue} added`; //add
 }
 
 async function formatCaseHistoryValue(service: ManageService, req: Request, question: string, value: unknown) {
@@ -441,12 +672,21 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	if (typeof value === 'boolean') {
 		return value;
 	}
-	const entraUserQuestions = new Set([
-		'caseOfficer',
-		'examiningInspector1',
-		'examiningInspector2',
-		'examiningInspector3'
-	]);
+
+	const qaInspectorQuestions = new Set<string>(QA_INSPECTOR_FIELDS);
+
+	const qaInspectorLabels: Record<string, string> = {
+		'inspector-1': 'Inspector 1',
+		'inspector-2': 'Inspector 2',
+		'inspector-3': 'Inspector 3',
+		'inspector-4': 'Inspector 4'
+	};
+
+	if (qaInspectorQuestions.has(question)) {
+		return qaInspectorLabels[String(value)] ?? String(value ?? '');
+	}
+
+	const entraUserQuestions = new Set(['caseOfficer', ...EXAMINING_INSPECTOR_FIELDS]);
 	if (entraUserQuestions.has(question)) {
 		const entraClient = service.getEntraClient(req.session as authSession.SessionWithAuth);
 		if (entraClient) {
@@ -460,31 +700,35 @@ async function formatCaseHistoryValue(service: ManageService, req: Request, ques
 	return `${value ?? ''}`;
 }
 
-export function getDeleteCase(service: ManageService): AsyncRequestHandler {
-	return async (req, res) => {
+type AsyncFunction = (req: Request, res: Response, next: NextFunction) => Promise<any>;
+export function getDeleteCase(service: ManageService): AsyncFunction {
+	return async (req, res, next: NextFunction) => {
 		const reference = getParam(req.params.reference);
 		const currentCase = await service.db.case.findUnique({
 			where: { reference },
 			include: { lpas: true }
 		});
 
-		if (!currentCase) {
+		if (!currentCase || currentCase.deletedDate) {
 			return res.status(404).render('views/errors/404.njk');
 		}
 
+		const NOT_PROVIDED = 'Not provided';
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}`;
-
-		const rows = [
-			[{ text: 'Case reference' }, { text: currentCase.reference }],
-			[{ text: 'Plan title' }, { text: currentCase.planTitle }],
-			[{ text: 'Plan type' }, { text: getOptionText('planType', currentCase.planType) }],
-			[{ text: 'LPA' }, { text: currentCase.lpas.map((lpa) => getOptionText('lpa', lpa.lpaCode)).join(', ') }],
-			[{ text: 'Case officer' }, { text: getOptionText('caseOfficer', currentCase.caseOfficer) }]
+		res.locals.caseDetailsRows = [
+			{ key: { text: 'Reference' }, value: { text: currentCase.reference } },
+			{ key: { text: 'Title' }, value: { text: currentCase.planTitle || NOT_PROVIDED } },
+			{ key: { text: 'Type' }, value: { text: getOptionText('planType', currentCase.planType) || NOT_PROVIDED } },
+			{
+				key: { text: 'Planning authority' },
+				value: { text: currentCase.lpas.map((lpa) => getOptionText('lpa', lpa.lpaCode)).join(', ') || NOT_PROVIDED }
+			},
+			{
+				key: { text: 'Case officer' },
+				value: { text: getOptionText('caseOfficer', currentCase.caseOfficer) || NOT_PROVIDED }
+			}
 		];
-
-		res.render('views/layouts/delete-case.njk', {
-			rows
-		});
+		next();
 	};
 }
 
@@ -497,6 +741,69 @@ export function getDeleteWorkshop(): AsyncRequestHandler {
 		}
 		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/gateway-2`;
 		res.render('views/layouts/delete-workshop.njk', { reference: reference, workshopIndex: workshopToDelete });
+	};
+}
+
+/**
+ * Read the delete reason the delete-case journey saved to the session
+ * @returns the trimmed reason, or undefined if it is missing or blank
+ */
+export function getDeleteReason(locals: Record<string, unknown>): string | undefined {
+	const journeyResponse = locals.journeyResponse;
+	if (!journeyResponse || typeof journeyResponse !== 'object' || !('answers' in journeyResponse)) {
+		return undefined;
+	}
+	const { answers } = journeyResponse;
+	if (!answers || typeof answers !== 'object' || !('deleteCaseWhy' in answers)) {
+		return undefined;
+	}
+	const reason = answers.deleteCaseWhy;
+	return typeof reason === 'string' && reason.trim() !== '' ? reason.trim() : undefined;
+}
+
+/**
+ * For deleting a hearing
+ * @param service
+ * @returns Redirects back to the examination tab
+ */
+export function postDeleteHearing(service: ManageService): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the hearing number from the url');
+		}
+		const returnUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		new ExaminationSaveController(service, req, reference).deleteHearing(hearingToDelete);
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				hearings: null // Will be overridden by overrideLabels
+			},
+			{},
+			reference,
+			currentUser,
+			{
+				hearings: 'Hearing cancelled'
+			}
+		);
+		return res.redirect(returnUrl);
+	};
+}
+
+export function getDeleteHearing(): AsyncRequestHandler {
+	return async (req, res) => {
+		const reference = getParam(req.params.reference);
+		const hearingToDelete = parseInt(String(req.url.split('-').at(-1)));
+		if (isNaN(hearingToDelete)) {
+			throw Error('Could not extract the workshop number from the url');
+		}
+		res.locals.baseUrl = `/case/${encodeURIComponent(reference)}/examination`;
+		res.render('views/layouts/delete-hearing.njk', { reference: reference, hearingIndex: hearingToDelete });
 	};
 }
 
@@ -541,22 +848,36 @@ export function postMarkAsDeleteCase(service: ManageService): AsyncRequestHandle
 			where: { reference }
 		});
 
+		const deleteReason = getDeleteReason(res.locals);
+		if (!deleteReason) {
+			return res.redirect(`/case/${encodeURIComponent(reference)}/delete-case`);
+		}
+
 		if (!currentCase) {
 			return res.status(404).render('views/errors/404.njk');
 		}
 
-		await markAsDeleteCase({
-			db: service.db,
-			id: currentCase.id
-		});
+		await markAsDeleteCase({ db: service.db, id: currentCase.id, deleteReason });
+
+		clearDataFromSession({ req, journeyId: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID });
+		delete req.session.currentJourney;
+		req.session.alertMessage = `Case ${reference} deleted`;
+		req.session.alertMessageStatus = 'success';
 
 		return res.redirect('/');
 	};
 }
 
-async function markAsDeleteCase({ db, id }: { db: ManageService['db']; id: string }): Promise<void> {
-	await db.case.update({ where: { id: id }, data: { deletedDate: new Date() } });
-	return;
+async function markAsDeleteCase({
+	db,
+	id,
+	deleteReason
+}: {
+	db: ManageService['db'];
+	id: string;
+	deleteReason: string;
+}): Promise<void> {
+	await db.case.update({ where: { id }, data: { deletedDate: new Date(), deleteReason } });
 }
 
 function getOptionText(question: 'planType' | 'lpa' | 'caseOfficer', value: string | null) {
@@ -622,7 +943,8 @@ export function downloadDocument(service: ManageService): AsyncRequestHandler {
 			throw Error(`Missing a documentId from the download-case-document endpoint`);
 		}
 		// Todo add error handling for if the file is not found
-		await DocumentUtil.downloadDocumentToResponse(service, documentId, res);
+		// LPA resubmission documents are soft-deleted once the BO report is saved to the same document set
+		await DocumentUtil.downloadDocumentToResponse(service, documentId, res, { includeDeleted: true });
 	};
 }
 
@@ -663,6 +985,8 @@ export function issueGateway2Report(service: ManageService, journeyId: string): 
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Gateway 2 report issued');
+
+			await sendWorkshopReportUploadedNotifyEmail(service, req, caseReference);
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'important', 'Gateway 2 report already issued');
@@ -685,14 +1009,13 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		});
 		const returnToManage = req.session.examinationReportReturnToManage === true;
 		delete req.session.examinationReportReturnToManage;
-		if (existingExaminationDetails?.soundUnsoundDate && (req.query.returnTo !== 'check' || returnToManage)) {
+		if (existingExaminationDetails?.soundUnsoundDate && returnToManage) {
 			const manuallySetInFirstSubmission = await checkSoundUnsoundManuallySet(service, caseId);
 			const reportIssuedDate = manuallySetInFirstSubmission ? existingExaminationDetails.soundUnsoundDate : new Date();
-			if (!manuallySetInFirstSubmission) {
-				await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-					soundUnsoundDate: reportIssuedDate
-				});
-			}
+			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+				status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+				...(!manuallySetInFirstSubmission && { soundUnsoundDate: reportIssuedDate })
+			});
 			await updateCaseHistory(service, req, service.db, { examinationReport: null }, {}, caseReference, currentUser, {
 				examinationReport: `Examination report document added; report issued on ${await formatCaseHistoryValue(service, req, '', reportIssuedDate)}`
 			});
@@ -706,11 +1029,10 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		}
 
 		const reportIssuedDate = existingExaminationDetails?.soundUnsoundDate ?? new Date();
-		if (!existingExaminationDetails?.soundUnsoundDate) {
-			await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
-				soundUnsoundDate: reportIssuedDate
-			});
-		}
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED,
+			...(!existingExaminationDetails?.soundUnsoundDate && { soundUnsoundDate: reportIssuedDate })
+		});
 		await updateCaseHistory(
 			service,
 			req,
@@ -770,12 +1092,89 @@ export function issueGateway2WorkshopDocuments(service: ManageService, journeyId
 			);
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Workshop document(s) uploaded');
+
+			await sendWorkshopDocsUploadedNotifyEmail(service, req, caseReference);
 		} else {
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'important', 'Gateway 2 workshopDocuments already issued');
 		}
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${journeyId}`);
 		return;
+	};
+}
+
+export function issueMiqs(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
+		const existingExaminationDetails = await service.db.examinationInfo.findUnique({
+			select: {
+				miqDocumentSharedDate: true
+			},
+			where: {
+				caseId: caseId
+			}
+		});
+		if (existingExaminationDetails?.miqDocumentSharedDate) {
+			pushAlertToSession(req, 'important', 'MIQ documents already shared');
+			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+			return;
+		}
+		const uploadedFiles =
+			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'miqs')]?.uploadedFiles ?? [];
+		const account = authSession.getAccount(req.session);
+		const currentUser = account?.name ?? 'Unknown';
+		const sentDate = new Date();
+		await new ExaminationSaveController(service, req, caseReference).prepareAndSave({
+			miqDocumentSharedDate: sentDate,
+			miqDocumentSharedBy: account?.username,
+			status: EXAMINATION_STATUS_ID.IN_EXAMINATION
+		});
+		await updateCaseHistory(
+			service,
+			req,
+			service.db,
+			{
+				miqs: null // Will be overridden by overrideLabels
+			},
+			{},
+			caseReference,
+			currentUser,
+			{
+				miqs: `MIQs notification sent on ${await formatCaseHistoryValue(service, req, '', sentDate)}`
+			}
+		);
+		// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+		pushAlertToSession(
+			req,
+			'success',
+			`${uploadedFiles.length} MIQ document${uploadedFiles.length === 1 ? '' : 's'} uploaded`
+		);
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+		return;
+	};
+}
+
+export function issueGateway2Document(_service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res): Promise<void> => {
+		const caseReference = getParam(req.params.reference);
+		const questionUrl = getParam(req.params.question);
+
+		if (!COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(questionUrl)) {
+			res.sendStatus(404);
+			return;
+		}
+
+		const questionConfig = fileUploadQuestionsByUrl.get(questionUrl);
+
+		if (!questionConfig) {
+			res.sendStatus(404);
+			return;
+		}
+
+		res.redirect(
+			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/gateway-2/gateway2Documents`
+		);
 	};
 }
 
@@ -831,7 +1230,8 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
 		const gateway3Info = await service.db.gateway3Info.findUnique({
 			select: {
-				submissions: true
+				submissions: true,
+				assessorName: true
 				//completionDate: true
 			},
 			where: {
@@ -848,10 +1248,9 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			throw Error('Could not find a submission');
 		}
 		if (!submission?.completionDate) {
-			// Try to update the reportIssuedDate
 			const completionDate = new Date();
-			submission.completionDate = new Date();
-			if (submission.decision == '2') {
+			submission.completionDate = completionDate;
+			if (submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
 				// If a submission was rejected by the inspector, then add a new gw3 submission details block
 				existingSubmissions.push({
 					id: crypto.randomUUID(),
@@ -862,29 +1261,46 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 			}
 			const account = authSession.getAccount(req.session);
 			const currentUser = account?.name ?? 'Unknown';
-			req.params.question = COMMON_CONSTS.GATEWAY_3_REPORT_ISSUED_DATE_QUESTION;
-			await new Gateway3SaveController(service, req, caseReference).prepareAndSave({
-				submissions: existingSubmissions
-			});
-			await updateCaseHistory(
-				service,
-				req,
-				service.db,
-				{
-					gateway3Documents: null // Will be overridden by overrideLabels
-				},
-				{},
-				caseReference,
-				currentUser,
-				{
-					gateway3Documents: `Gateway 3 decision issued on ${await formatCaseHistoryValue(service, req, '', completionDate)}`
+			const caseHistoryLabel = `Gateway 3 decision issued on ${await formatCaseHistoryValue(service, req, '', completionDate)}`;
+			await service.db.$transaction(async (transaction) => {
+				await saveGateway3Submissions(transaction, caseId, existingSubmissions);
+				if (submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION) {
+					await ensureExaminationIsReady(transaction, caseId);
 				}
-			);
+				await updateCaseHistory(
+					service,
+					req,
+					transaction,
+					{
+						gateway3Documents: null // Will be overridden by overrideLabels
+					},
+					{},
+					caseReference,
+					currentUser,
+					{
+						gateway3Documents: caseHistoryLabel
+					}
+				);
+			});
 			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
 			pushAlertToSession(req, 'success', 'Gateway 3 decision issued');
+
+			if (submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION) {
+				await sendGw3PassNotifyEmail(service, req, caseReference);
+			} else if (submission.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED) {
+				await sendGw3ResubmissionNeededNotifyEmail(service, req, caseReference);
+			}
 		} else {
-			// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
-			pushAlertToSession(req, 'important', 'Gateway 3 decision already issued');
+			const examinationStatusUpdated =
+				submission.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
+					? await service.db.$transaction((transaction) => ensureExaminationIsReady(transaction, caseId))
+					: false;
+			if (examinationStatusUpdated) {
+				pushAlertToSession(req, 'success', 'Gateway 3 decision already issued. Examination is ready to start');
+			} else {
+				// Alert message is saved as a session variable and inserted into the view by buildGetJourneyMiddleware
+				pushAlertToSession(req, 'important', 'Gateway 3 decision already issued');
+			}
 		}
 		res.redirect(
 			`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(COMMON_CONSTS.GATEWAY_3_JOURNEY_ID)}`
@@ -904,6 +1320,9 @@ export function redirectToFileUploaderQuestion(req: Request) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	if (req.params.question == COMMON_CONSTS.GATEWAY_2_WORKSHOP_DOCUMENTS_QUESTION) {
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
+	}
+	if (COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
 	const journey = req.url.split(String(req.params.section))[0];
@@ -1018,6 +1437,25 @@ export function preprocessQuestionProperties(
 				delete questions['gateway2WorkshopDocuments'].actionLink;
 			}
 		}
+		if (journeyId == COMMON_CONSTS.EXAMINATION_JOURNEY_ID) {
+			const caseDetails = await service.db.case.findUnique({
+				include: {
+					examinationInfo: true
+				},
+				where: {
+					reference
+				}
+			});
+			const miqComplete = !!caseDetails?.examinationInfo?.miqDocumentSharedDate;
+			if (miqComplete) {
+				questions['miqs'].actionLink = {
+					href: `/case/${reference}/examination/hearings/miqs/check`,
+					text: 'View'
+				};
+			} else {
+				delete questions['miqs'].actionLink;
+			}
+		}
 		if (journeyId == COMMON_CONSTS.GATEWAY_3_JOURNEY_ID) {
 			const decisionMap = {
 				'1': 'Proceed to examination',
@@ -1041,19 +1479,44 @@ export function preprocessQuestionProperties(
 			if (!submissionDetails) {
 				throw new Error(`No submission details found for case reference '${reference}'`);
 			}
-			const submissionDetailsSorted = sortGateway3Submissions(submissionDetails);
+			const submissionDetailsSorted: {
+				decision: string | null;
+				completionDate: Date | null;
+				submittedDate?: Date | null;
+			}[] = sortGateway3Submissions(submissionDetails);
+			if (submissionDetailsSorted.length === 0) {
+				// No submission rows yet: show submission 1 as not started. The row is created when a decision is saved.
+				submissionDetailsSorted.push({ decision: null, completionDate: null, submittedDate: null });
+			}
 			// todo update this to account for multiple gw3 submission questions
 			for (let i = 0; i < submissionDetailsSorted.length; i++) {
 				const submissionId = i + 1;
 				const submission = submissionDetailsSorted[i];
-				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3DocumentsCheck = `gateway3DocumentsCheck-${submissionId}`;
 				const gateway3Decision = `gateway3Decision-${submissionId}`;
-				const decisionValue = submissionDetailsSorted[i].decision;
-				const completionDate = submissionDetailsSorted[i].completionDate;
+				const decisionValue = submission.decision;
+				const completionDate = submission.completionDate;
+				const gateway3Documents = `gateway3Documents-${submissionId}`;
+				const gateway3Complete = !!completionDate;
+
+				(questions[gateway3DocumentsCheck] as CustomDocumentsQuestion).setActionLink(
+					String(submissionId),
+					reference,
+					_res.locals.journeyResponse.answers
+				);
+
+				questions[gateway3DocumentsCheck].changeActionText = 'Review';
+				const submissionReceived =
+					!!submission.submittedDate ||
+					!!submission.completionDate ||
+					(submissionId === 1 && !!caseDetails.gateway3Info?.actualDate);
+				(questions[gateway3DocumentsCheck] as any).config.actionButtonVisibleInSummary =
+					submissionReceived && !!questions[gateway3DocumentsCheck].actionLink?.text;
+
 				questions[gateway3Documents].changeActionText = 'View';
-				const gateway3Complete = !!submission.completionDate;
 				(questions[gateway3Documents] as any).config.actionButtonVisibleInSummary = gateway3Complete;
 				questions[gateway3Documents].editable = !gateway3Complete;
+
 				if (gateway3Complete) {
 					if (!decisionValue) {
 						throw Error('Decision was null but should be filled in if gateway3CompletionDate is set');
@@ -1062,31 +1525,35 @@ export function preprocessQuestionProperties(
 						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-document-${submissionId}/check`,
 						text: 'View'
 					};
-					const decisionText = decisionValue ? decisionMap[decisionValue as keyof typeof decisionMap] : null;
-					const formattedCompletionDate = completionDate
-						? new Intl.DateTimeFormat('en-GB', {
-								day: 'numeric',
-								month: 'long',
-								timeZone: 'Europe/London',
-								year: 'numeric'
-							}).format(completionDate)
-						: null;
+					const decisionText = decisionMap[decisionValue as keyof typeof decisionMap] ?? null;
+					const formattedCompletionDate = new Intl.DateTimeFormat('en-GB', {
+						day: 'numeric',
+						month: 'long',
+						timeZone: 'Europe/London',
+						year: 'numeric'
+					}).format(completionDate);
 					questions[gateway3Decision].formatSummaryValue = () =>
 						decisionText ? `${decisionText}\nIssued on ${formattedCompletionDate}` : 'Not started';
 				} else {
-					// Reset for different journey
-					delete questions[gateway3Decision].actionLink;
+					questions[gateway3Decision].actionLink = {
+						href: `/case/${reference}/${COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID}/gateway-3-submission-${submissionId}/gateway-3-decision-${submissionId}`,
+						text: 'Add'
+					};
 					questions[gateway3Decision].formatSummaryValue = () => 'Not started';
 				}
 			}
 		}
 		if (journeyId == 'examination') {
-			// Format the Start date answer into a human-readable date
+			// Format the date answers into a human-readable date
 			const hearingAnswers = _res.locals.journeyResponse.answers.hearings ?? [];
 			for (let i = 0; i < hearingAnswers.length; i++) {
 				hearingAnswers[i].hearingDate =
 					hearingAnswers[i].hearingDate && typeof hearingAnswers[i].hearingDate != 'string'
 						? formatDateToString(hearingAnswers[i].hearingDate)
+						: null;
+				hearingAnswers[i].hearingEndDate =
+					hearingAnswers[i].hearingEndDate && typeof hearingAnswers[i].hearingEndDate != 'string'
+						? formatDateToString(hearingAnswers[i].hearingEndDate)
 						: null;
 			}
 		}

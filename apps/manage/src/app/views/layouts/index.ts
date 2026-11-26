@@ -1,12 +1,16 @@
 import CustomMultiFieldInputQuestion from './custom-multi-field-input/question.ts';
 import CustomManageListQuestion from './custom-manage-list/question.ts';
+import CustomHearingDatesQuestion from './custom-hearing-dates/question.ts';
 import {
 	CUSTOM_COMPONENT_CLASSES as CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES,
 	CUSTOM_COMPONENTS as CUSTOM_DYNAMIC_FORM_COMPONENTS
 } from '@pins/local-plans-lib/forms/custom-components/index.ts';
 import CustomFileReviewerQuestion from './custom-file-reviewer/question.ts';
 import CustomNoteQuestion from './custom-note-input/question.ts';
+import CustomDocumentsQuestion from './custom-documents-viewer/question.ts';
+import CustomExaminationDocumentsQuestion from './custom-examination-documents-viewer/question.ts';
 import CustomFileManagerQuestion from './custom-file-manager/question.ts';
+import CustomWorkshopDatesQuestion from './custom-workshop-dates/question.ts';
 
 /**
  * Typed wrapper around Object.freeze() to preserve inference for object literals.
@@ -20,8 +24,12 @@ export const CUSTOM_COMPONENTS = Object.freeze({
 	CUSTOM_MULTI_FIELD_INPUT: 'custom-multi-field-input',
 	CUSTOM_MANAGE_LIST: 'custom-manage-list',
 	CUSTOM_FILE_REVIEWER: 'custom-file-reviewer',
+	CUSTOM_DOCUMENTS_VIEW: 'custom-documents-viewer',
+	CUSTOM_EXAMINATION_DOCUMENTS_VIEW: 'custom-examination-documents-viewer',
 	CUSTOM_NOTE_INPUT: 'custom-note-input',
 	CUSTOM_FILE_MANAGER: 'custom-file-manager',
+	CUSTOM_WORKSHOP_DATES: 'custom-workshop-dates',
+	CUSTOM_HEARING_DATES: 'custom-hearing-dates',
 	...CUSTOM_DYNAMIC_FORM_COMPONENTS
 });
 
@@ -31,5 +39,9 @@ export const CUSTOM_COMPONENT_CLASSES = freeze({
 	[CUSTOM_COMPONENTS.CUSTOM_FILE_REVIEWER]: CustomFileReviewerQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_NOTE_INPUT]: CustomNoteQuestion,
 	[CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER]: CustomFileManagerQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES]: CustomWorkshopDatesQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES]: CustomHearingDatesQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW]: CustomDocumentsQuestion,
+	[CUSTOM_COMPONENTS.CUSTOM_EXAMINATION_DOCUMENTS_VIEW]: CustomExaminationDocumentsQuestion,
 	...CUSTOM_DYNAMIC_FORM_COMPONENT_CLASSES
 });

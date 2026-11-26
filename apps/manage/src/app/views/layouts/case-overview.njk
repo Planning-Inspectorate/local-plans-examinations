@@ -23,10 +23,22 @@
 {% block pageContent %}
   {% if alerts %}
     {% for alert in alerts %}
-      {% if alert.text != 'Hearing created' %}
-        {{ govukNotificationBanner(alert) }}
-      {% endif %}
+      {{ govukNotificationBanner(alert) }}
     {% endfor %}
+  {% endif %}
+  {% if virusErrorSummary and virusErrorSummary.length %}
+      {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: virusErrorSummary,
+          attributes: { "data-cy": "virus-detected-banner" }
+      }) }}
+  {% endif %}
+  {% if virusScanInProgress %}
+      {{ govukNotificationBanner({
+          titleText: "Important",
+          html: '<p class="govuk-notification-banner__heading">Virus scan in progress</p><p class="govuk-body">Refresh the page to see if the scan has finished</p>',
+          attributes: { "data-cy": "virus-scan-in-progress-banner" }
+      }) }}
   {% endif %}
   <span class="govuk-caption-l">{{ reference }}</span>
   <h1 class="govuk-heading-l">{{ planTitle }}</h1>
@@ -42,13 +54,6 @@
   },
   classes: "govuk-!-margin-top-6"
 }) }}
-{% if alerts %}
-  {% for alert in alerts %}
-    {% if alert.text == 'Hearing created' %}
-      {{ govukNotificationBanner(alert) }}
-    {% endif %}
-  {% endfor %}
-{% endif %}
 
 {% if currentSection == "case-history" %}
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--invisible">
@@ -68,10 +73,10 @@
   {{ govukTable({
     head: [
       {
-        text: "Date"
+        text: "Timestamp"
       },
       {
-        text: "Event"
+        text: "Activity"
       },
       {
         text: "User"
@@ -90,6 +95,7 @@
               {% for section in summaryListData.sections %}
                   {% set formattedRows = [] %}
                   {% set caseNote = null %}
+                  {% set miqsRow = [] %}
                   {% for row in section.list.rows %}
                     {% if row %}
                       {% if "Case notes" in row.key.text %} {# Dynamic forms does not allow html in the key, so handle the case notes separately#}
@@ -111,12 +117,19 @@
                         {% endif %}
                       {% endif %}
                       {% if formattedRow %}
-                        {% set _ = formattedRows.push(formattedRow) %}
+                        {% if section.heading == 'Hearings' and row.key.text == 'MIQs' %}
+                          {% set _ = miqsRow.push(formattedRow) %}
+                        {% else %}
+                          {% set _ = formattedRows.push(formattedRow) %}
+                        {% endif %}
                       {% endif %}
                     {% endif %}
                   {% endfor %}
+
                   <h2 class="govuk-heading-l">{{ section.heading }}</h2>
+
                   {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
+
                   {% if section.heading == 'Workshop'%}
                     {% if section.list.rows.length %}
                       {{ govukSummaryList({
@@ -124,22 +137,60 @@
                         })
                       }}
                     {% endif %}
+
                     {{ workshopDetails(journeyResponse.answers, reference) }}
                     <a href="/case/{{ reference }}/gateway-2/set-up-workshop/workshop/gateway-2-workshop-date-and-time-{{ (journeyResponse.answers.workshops | length) + 1 }}" class="govuk-link" data-cy="set-up-workshop">Set up workshop</a>
                     <p></p>
                   {% elif section.heading == 'Pause examination' %}
                       {{ pauseDetails(journeyResponse.answers, reference) }}
-                  {% elif section.heading == 'Hearings'%} 
-                    <h2 class="govuk-heading-l">Hearings</h2>
+                  {% elif section.heading == 'Hearings'%}
                     {{ hearingDetails(journeyResponse.answers, reference) }}
                     <a href="/case/{{ reference }}/examination/set-up-hearing/hearing/examination-hearing-date-and-time-{{ (journeyResponse.answers.hearings | length) + 1 }}" class="govuk-link" data-cy="add-hearing">Add hearing</a>
                     <p></p>
+                    {% if miqsRow.length %}
+                      {{ govukSummaryList({ rows: miqsRow }) }}
+                    {% endif %}
                   {% else %}
                     {% if section.list.rows.length %}
                       {{ govukSummaryList({
-                            rows: formattedRows
+                            rows: formattedRows,
+                            attributes: { "data-cy": "overview-details" } if section.heading == 'Overview' else {}
                         })
                       }}
+                    {% endif %}
+                    {% if assessorLink and (section.heading == 'Gateway 2' or section.heading == 'Gateway 3') %}
+                      <section data-cy="assessors-section">
+                        <h2 class="govuk-heading-l govuk-!-margin-bottom-5">Assessors</h2>
+                        {% if assessors and assessors.length %}
+                          {% set assessorRows = [] %}
+                          {% for assessor in assessors %}
+                            {% set _ = assessorRows.push({
+                              key: { text: 'Assessor ' + assessor.number },
+                              value: { text: assessor.name },
+                              actions: {
+                                items: [{
+                                  href: assessor.removeLink,
+                                  text: 'Remove',
+                                  visuallyHiddenText: 'assessor ' + assessor.number,
+                                  attributes: { 'data-cy': 'remove-assessor-' + assessor.number }
+                                }]
+                              }
+                            }) %}
+                            {% set _ = assessorRows.push({
+                              key: { text: 'Assessor ' + assessor.number + ' appointed' },
+                              value: { text: assessor.appointedDate }
+                            }) %}
+                          {% endfor %}
+                          {{ govukSummaryList({
+                                rows: assessorRows,
+                                attributes: { 'data-cy': 'assessors-list' }
+                            })
+                          }}
+                        {% endif %}
+                        <p class="govuk-body">
+                          <a href="{{ assessorLink }}" class="govuk-link" data-cy="add-assessor">Add assessor</a>
+                        </p>
+                      </section>
                     {% endif %}
                   {% endif %}
               {% endfor %}

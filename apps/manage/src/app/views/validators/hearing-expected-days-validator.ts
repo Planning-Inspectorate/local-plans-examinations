@@ -7,8 +7,8 @@ export default class HearingExpectedDaysValidator extends RequiredValidator {
 			.bail()
 			.custom((answer, { req }) => {
 				const days = req.body[`${question.fieldName}_hearingExpectedDays`];
-				return answer !== 'yes' || (typeof days === 'string' && days.trim().length > 0);
+				return answer !== 'yes' || /^\d+$/.test(String(days ?? '').trim());
 			})
-			.withMessage('Enter the expected number of days');
+			.withMessage('Expected number of days must be a whole number');
 	}
 }

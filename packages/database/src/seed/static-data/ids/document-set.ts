@@ -42,6 +42,21 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'g3-changes-stmt',
 	G3_OTHER_DOCUMENTS: 'g3-other-documents',
 
+	// Examination portal documents
+	EX_LOCAL_PLAN: 'ex-local-plan',
+	EX_MAP_OF_POLICIES: 'ex-map-policies',
+	EX_G3_COMPLETION: 'ex-g3-completion',
+	EX_CONSULTATION_ENGAGEMENT: 'ex-cons-engagement',
+	EX_CONSULTATION_PLAN: 'ex-cons-plan',
+	EX_SPATIAL_STRATEGY_REPS: 'ex-spatial-reps',
+	EX_STATEMENT_COMPLIANCE: 'ex-compliance',
+	EX_STATEMENT_SOUNDNESS: 'ex-soundness',
+	EX_ENVIRONMENTAL_REPORT: 'ex-env-report',
+	EX_ENVIRONMENTAL_EFFECTS: 'ex-env-effects',
+	EX_ADDITIONAL_EVIDENCE: 'ex-add-evidence',
+	EX_CHANGES_SINCE_G3: 'ex-changes-g3',
+	EX_G3_REPORT_REPS: 'ex-g3-report-reps',
+
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'g2-notice-intent',
 	G2_SCOPING_CONSULATATION_DOCS: 'g2-scoping-cons',
@@ -49,10 +64,17 @@ export const DOCUMENT_SET_ID: Record<string, string> = {
 	G2_G1_SELF_ASSESSMENT: 'g2-g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'g2-cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'g2-sum-of-cons',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'g2-subsequent-work',
+	G2_EVIDENCE_ON_ENGAGEMENT: 'engagement-evidence',
+
+	// Plan content, evidence and background
+	G2_PLAN_CONTENT: 'g2-plan-content',
+	G2_EVIDENCE_AND_PROGRESS: 'g2-evidence-progress',
+	G2_LATEST_POLICIES_MAP: 'g2-policies-map',
 
 	// Other
-	EXAMINATION_REPORT: 'exam-report'
+	EXAMINATION_REPORT: 'exam-report',
+	// Others
+	EXAMINATION_MIQS: 'ex-miqs'
 };
 export const DOCUMENT_SET_FOLDER_NAME = {
 	// Procedural
@@ -87,6 +109,21 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G3_CHANGES_SINCE_CONSULTATION_STATEMENT: 'changes-since-consultation-statement',
 	G3_OTHER_DOCUMENTS: 'other-documents',
 
+	// Examination portal documents
+	EX_LOCAL_PLAN: 'examination-local-plan-submission',
+	EX_MAP_OF_POLICIES: 'examination-map-of-proposed-local-plan-policies',
+	EX_G3_COMPLETION: 'examination-gateway-3-completion-statement',
+	EX_CONSULTATION_ENGAGEMENT: 'examination-consultation-engagement-activities',
+	EX_CONSULTATION_PLAN: 'examination-consultation-on-proposed-local-plan',
+	EX_SPATIAL_STRATEGY_REPS: 'examination-spatial-development-strategy-representations',
+	EX_STATEMENT_COMPLIANCE: 'examination-statement-of-compliance',
+	EX_STATEMENT_SOUNDNESS: 'examination-statement-of-soundness',
+	EX_ENVIRONMENTAL_REPORT: 'examination-environmental-report',
+	EX_ENVIRONMENTAL_EFFECTS: 'examination-unlikely-significant-environmental-effects',
+	EX_ADDITIONAL_EVIDENCE: 'examination-additional-evidence-documents',
+	EX_CHANGES_SINCE_G3: 'examination-changes-since-gateway-3',
+	EX_G3_REPORT_REPS: 'examination-gateway-3-report-representations',
+
 	// Consultantion
 	G2_NOTICE_OF_INTENTION: 'notice-of-intent',
 	G2_SCOPING_CONSULATATION_DOCS: 'scoping-cons',
@@ -94,10 +131,17 @@ export const DOCUMENT_SET_FOLDER_NAME = {
 	G2_G1_SELF_ASSESSMENT: 'g1-self-assess',
 	G2_CONSULTATION_ON_PROPOSED: 'cons-of-proposed',
 	G2_SUMMARY_OF_CONSULTATION: 'summary-of-consultation',
-	G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN: 'subsequent-work-towards-a-draft-plan',
+	G2_EVIDENCE_ON_ENGAGEMENT: 'evidence-on-engagement',
+
+	// Plan content, evidence and background
+	G2_PLAN_CONTENT: 'plan-content',
+	G2_EVIDENCE_AND_PROGRESS: 'evidence-and-progress',
+	G2_LATEST_POLICIES_MAP: 'latest-policies-map',
 
 	// Other
-	EXAMINATION_REPORT: 'examination-report'
+	EXAMINATION_REPORT: 'examination-report',
+	// Others
+	EXAMINATION_MIQS: 'miqs'
 };
 export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_COVER_LETTER,
@@ -113,7 +157,10 @@ export const gateway2SetIds = [
 	DOCUMENT_SET_ID.G2_G1_SELF_ASSESSMENT,
 	DOCUMENT_SET_ID.G2_CONSULTATION_ON_PROPOSED,
 	DOCUMENT_SET_ID.G2_SUMMARY_OF_CONSULTATION,
-	DOCUMENT_SET_ID.G2_SUBSEQUENT_WORK_TOWARDS_DRAFT_PLAN
+	DOCUMENT_SET_ID.G2_EVIDENCE_ON_ENGAGEMENT,
+	DOCUMENT_SET_ID.G2_PLAN_CONTENT,
+	DOCUMENT_SET_ID.G2_EVIDENCE_AND_PROGRESS,
+	DOCUMENT_SET_ID.G2_LATEST_POLICIES_MAP
 ];
 export const gateway3SetIds = [
 	DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
@@ -135,3 +182,106 @@ export const gateway3SetIds = [
 	DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS,
 	...Object.values(GATEWAY_3_DOCUMENT_SET_IDS)
 ];
+
+export const examinationSetIds = [
+	DOCUMENT_SET_ID.EX_LOCAL_PLAN,
+	DOCUMENT_SET_ID.EX_MAP_OF_POLICIES,
+	DOCUMENT_SET_ID.EX_G3_COMPLETION,
+	DOCUMENT_SET_ID.EX_CONSULTATION_ENGAGEMENT,
+	DOCUMENT_SET_ID.EX_CONSULTATION_PLAN,
+	DOCUMENT_SET_ID.EX_SPATIAL_STRATEGY_REPS,
+	DOCUMENT_SET_ID.EX_STATEMENT_COMPLIANCE,
+	DOCUMENT_SET_ID.EX_STATEMENT_SOUNDNESS,
+	DOCUMENT_SET_ID.EX_ENVIRONMENTAL_REPORT,
+	DOCUMENT_SET_ID.EX_ENVIRONMENTAL_EFFECTS,
+	DOCUMENT_SET_ID.EX_ADDITIONAL_EVIDENCE,
+	DOCUMENT_SET_ID.EX_CHANGES_SINCE_G3,
+	DOCUMENT_SET_ID.EX_G3_REPORT_REPS
+];
+
+export const REQUIRED_DOCUMENT_SETS = {
+	proposedLocalPlan: DOCUMENT_SET_ID.G3_PROPOSED_LOCAL_PLAN,
+	mapOfPolicies: DOCUMENT_SET_ID.G3_MAP_OF_POLICIES,
+	statementOfCompliance: DOCUMENT_SET_ID.G3_STATEMENT_OF_COMPLIANCE,
+	statementOfSoundness: DOCUMENT_SET_ID.G3_STATEMENT_OF_SOUNDNESS,
+	consultationEngagementSummary: DOCUMENT_SET_ID.G3_CONSULTATION_ENGAGEMENT_SUMMARY,
+	scopingConsultationSummary: DOCUMENT_SET_ID.G3_SCOPING_CONSULTATION_SUMMARY,
+	consultationContentEvidenceSummary: DOCUMENT_SET_ID.G3_CONSULTATION_CONTENT_EVIDENCE_SUMMARY,
+	consultationProposedPlanSummary: DOCUMENT_SET_ID.G3_CONSULTATION_PROPOSED_PLAN_SUMMARY,
+	practicalArrangementsStatement: DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT
+};
+export const OPTIONAL_DOCUMENT_SETS = {
+	copiesOfRepresentations: DOCUMENT_SET_ID.G3_COPIES_OF_REPRESENTATIONS,
+	supplementaryPlansStatement: DOCUMENT_SET_ID.G3_SUPPLEMENTARY_PLANS_STATEMENT,
+	environmentalReport: DOCUMENT_SET_ID.G3_ENVIRONMENTAL_REPORT,
+	statementOfReasonsDetermination: DOCUMENT_SET_ID.G3_STATEMENT_OF_REASONS_DETERMINATION,
+	representationsProgressSummary: DOCUMENT_SET_ID.G3_REPRESENTATIONS_PROGRESS_SUMMARY,
+	gateway2IssuesSummary: DOCUMENT_SET_ID.G3_GATEWAY_2_ISSUES_SUMMARY,
+	changesSinceConsultationStatement: DOCUMENT_SET_ID.G3_CHANGES_SINCE_CONSULTATION_STATEMENT,
+	otherDocuments: DOCUMENT_SET_ID.G3_OTHER_DOCUMENTS
+};
+
+export const DOCUMENT_LABELS: Record<string, string> = {
+	examinationWebsite: 'Examination website',
+	proposedLocalPlan: 'Proposed local plan intended for submission for examination',
+	mapOfPolicies: 'Map of proposed local plan policies',
+	statementOfCompliance: 'Statement of compliance',
+	statementOfSoundness: 'Statement of soundness',
+	consultationEngagementSummary:
+		'Summary of consultation and engagement activities undertaken in preparing the proposed local plan',
+	scopingConsultationSummary: 'Summary of scoping consultation',
+	consultationContentEvidenceSummary: 'Summary of consultation on proposed local plan content and evidence',
+	consultationProposedPlanSummary: 'Summary of consultation on proposed local plan',
+	evidenceOnEngagement: 'Evidence on engagement between plan making authorities and relevant bodies',
+	practicalArrangementsStatement: 'Statement setting out practical arrangements',
+	copiesOfRepresentations: 'Copies of representations',
+	supplementaryPlansStatement: 'Supplementary plans statement',
+	environmentalReport: 'Environmental report',
+	statementOfReasonsDetermination:
+		'Statement of reasons for a determination that the proposed local plan is unlikely to have significant environmental effects',
+	representationsProgressSummary:
+		'Summary of representations relating to progress towards meeting prescribed requirements and the LPA response',
+	gateway2IssuesSummary: 'Summary of how Gateway 2 assessor issues have been addressed',
+	changesSinceConsultationStatement:
+		'Statement explaining changes since proposed local plan consultation, reasons for those changes and any additional consultation',
+	otherDocuments: 'Other documents'
+};
+
+// Examination submission (front office) documents, keyed by the portal question field name
+export const EXAMINATION_REQUIRED_DOCUMENT_SETS = {
+	localPlanSubmission: DOCUMENT_SET_ID.EX_LOCAL_PLAN,
+	mapOfPolicies: DOCUMENT_SET_ID.EX_MAP_OF_POLICIES,
+	gateway3CompletionStatement: DOCUMENT_SET_ID.EX_G3_COMPLETION,
+	consultationEngagementSummary: DOCUMENT_SET_ID.EX_CONSULTATION_ENGAGEMENT,
+	consultationProposedPlanSummary: DOCUMENT_SET_ID.EX_CONSULTATION_PLAN,
+	statementOfCompliance: DOCUMENT_SET_ID.EX_STATEMENT_COMPLIANCE,
+	statementOfSoundness: DOCUMENT_SET_ID.EX_STATEMENT_SOUNDNESS
+};
+export const EXAMINATION_OTHER_DOCUMENT_SETS = {
+	spatialStrategyRepresentations: DOCUMENT_SET_ID.EX_SPATIAL_STRATEGY_REPS,
+	environmentalReport: DOCUMENT_SET_ID.EX_ENVIRONMENTAL_REPORT,
+	environmentalEffectsStatement: DOCUMENT_SET_ID.EX_ENVIRONMENTAL_EFFECTS,
+	additionalEvidenceDocuments: DOCUMENT_SET_ID.EX_ADDITIONAL_EVIDENCE,
+	changesSinceGateway3Statement: DOCUMENT_SET_ID.EX_CHANGES_SINCE_G3,
+	gateway3ReportRepresentations: DOCUMENT_SET_ID.EX_G3_REPORT_REPS
+};
+
+export const EXAMINATION_DOCUMENT_LABELS: Record<string, string> = {
+	examinationWebsite: 'Examination website',
+	localPlanSubmission: 'Local plan submission for examination',
+	mapOfPolicies: 'Map of proposed local plan policies',
+	gateway3CompletionStatement: 'Gateway 3 completion statement',
+	consultationEngagementSummary:
+		'Summary of consultation and engagement activities in preparing the proposed local plan',
+	consultationProposedPlanSummary: 'Summary of consultation on proposed local plan',
+	statementOfCompliance: 'Statement of compliance',
+	statementOfSoundness: 'Statement of soundness',
+	spatialStrategyRepresentations: 'Representations on conformity with an operative spatial development strategy',
+	environmentalReport: 'Environmental report',
+	environmentalEffectsStatement:
+		'Statement demonstrating that the proposed local plan is unlikely to have significant environmental effects',
+	additionalEvidenceDocuments: 'Additional evidence documents',
+	changesSinceGateway3Statement:
+		'Statement explaining changes made since Gateway 3 assessment and details of any additional consultations',
+	gateway3ReportRepresentations: 'Representations required in the Gateway 3 report'
+};

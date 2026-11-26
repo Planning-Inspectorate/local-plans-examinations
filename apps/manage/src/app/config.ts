@@ -39,11 +39,23 @@ export interface Config extends ConfigWithBlob {
 			authCode?: string;
 			gw2Submission?: string;
 			createCase?: string;
+			gw2AssessorUpdatedAssessor?: string;
+			gw2AssessorUpdatedLpa?: string;
+			gw2WorkshopInspector?: string;
+			gw2WorkshopLpa?: string;
+			gw2WorkshopAgenda?: string;
+			gw2ReportUploaded?: string;
+			gw3AssessorUpdatedAssessor?: string;
+			gw3AssessorUpdatedLpa?: string;
+			gw3Pass?: string;
+			gw3ResubmissionRequired?: string;
 		};
 		localPlansTeamEmail: string;
 	};
 	appName: 'manage';
 	notifyCallbackEnabled: boolean;
+	clarityId?: string;
+	googleAnalyticsId?: string;
 }
 
 export type ENVIRONMENT_NAMES = Readonly<{ PROD: string; DEV: string; TEST: string; TRAINING: string }>;
@@ -60,6 +72,71 @@ export const ENVIRONMENT_NAME: ENVIRONMENT_NAMES = Object.freeze({
 
 // cache the config
 let config: Config | undefined;
+
+export type GovNotifyConfig = Config['govNotify'];
+
+let govNotifyConfig: GovNotifyConfig | undefined;
+
+export function loadGovNotifyConfig(): GovNotifyConfig {
+	if (govNotifyConfig) return govNotifyConfig;
+
+	try {
+		loadConfig();
+	} catch {
+		/*ignore errors */
+	}
+
+	const {
+		GOV_NOTIFY_DISABLED,
+		GOV_NOTIFY_API_KEY,
+		GOV_NOTIFY_WEBHOOK_TOKEN,
+		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID,
+		GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_PASS_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID,
+		LOCAL_PLANS_TEAM_EMAIL
+	} = process.env;
+
+	const disabled = GOV_NOTIFY_DISABLED === 'true';
+	if (!disabled) {
+		for (const [k, v] of Object.entries({ GOV_NOTIFY_API_KEY, GOV_NOTIFY_WEBHOOK_TOKEN })) {
+			if (!v) throw new Error(`${k} must be a non-empty string`);
+		}
+	}
+
+	govNotifyConfig = {
+		disabled: GOV_NOTIFY_DISABLED === 'true',
+		apiKey: GOV_NOTIFY_API_KEY || '',
+		webHookToken: GOV_NOTIFY_WEBHOOK_TOKEN || '',
+		templateIds: {
+			authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || '',
+			gw2Submission: GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID || '',
+			createCase: GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID || '',
+			gw2AssessorUpdatedAssessor: GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
+			gw2AssessorUpdatedLpa: GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
+			gw2WorkshopInspector: GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID || '',
+			gw2WorkshopLpa: GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID || '',
+			gw2WorkshopAgenda: GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID || '',
+			gw2ReportUploaded: GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID || '',
+			gw3AssessorUpdatedAssessor: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
+			gw3AssessorUpdatedLpa: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
+			gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
+			gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || ''
+		},
+		localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
+	};
+
+	return govNotifyConfig;
+}
 
 /**
  * Load configuration from the environment
@@ -97,10 +174,22 @@ export function loadConfig(): Config {
 		GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID,
 		GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID,
 		GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID,
+		GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_PASS_TEMPLATE_ID,
+		GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID,
 		FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED,
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
+		CLARITY_ID,
+		GOOGLE_ANALYTICS_ID,
 		LOCAL_PLANS_TEAM_EMAIL
 	} = process.env;
 
@@ -214,12 +303,24 @@ export function loadConfig(): Config {
 			templateIds: {
 				authCode: GOV_NOTIFY_AUTH_CODE_TEMPLATE_ID || '',
 				gw2Submission: GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID || '',
-				createCase: GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID || ''
+				createCase: GOV_NOTIFY_CREATE_CASE_TEMPLATE_ID || '',
+				gw2AssessorUpdatedAssessor: GOV_NOTIFY_GW2_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
+				gw2AssessorUpdatedLpa: GOV_NOTIFY_GW2_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
+				gw2WorkshopInspector: GOV_NOTIFY_GW2_WORKSHOP_INSPECTOR_TEMPLATE_ID || '',
+				gw2WorkshopLpa: GOV_NOTIFY_GW2_WORKSHOP_LPA_TEMPLATE_ID || '',
+				gw2WorkshopAgenda: GOV_NOTIFY_GW2_WORKSHOP_AGENDA_TEMPLATE_ID || '',
+				gw2ReportUploaded: GOV_NOTIFY_GW2_REPORT_UPLOADED_TEMPLATE_ID || '',
+				gw3AssessorUpdatedAssessor: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
+				gw3AssessorUpdatedLpa: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
+				gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
+				gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || ''
 			},
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
 		appName: 'manage',
-		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true'
+		notifyCallbackEnabled: FEATURE_FLAG_NOTIFY_CALLBACK_ENABLED === 'true',
+		clarityId: CLARITY_ID || undefined,
+		googleAnalyticsId: GOOGLE_ANALYTICS_ID || undefined
 	};
 
 	return config;

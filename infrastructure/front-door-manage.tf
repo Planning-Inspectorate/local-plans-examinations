@@ -163,6 +163,22 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
     }
 
     override {
+      rule_group_name = "PROTOCOL-ENFORCEMENT"
+      rule {
+        # This rule is skipped because it blocks the file upload when no files are selected
+        rule_id = "920120"
+        enabled = true
+        action  = "Log"
+      }
+
+      exclusion {
+        match_variable = "RequestBodyPostArgNames"
+        operator       = "Equals"
+        selector       = "files"
+      }
+    }
+
+    override {
       rule_group_name = "General"
       rule {
         action  = "Log"
@@ -191,6 +207,20 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "manage" {
           operator       = "Equals"
           selector       = "examinationWebsite"
           # False positive: PostParamValue:examinationWebsite can contain an off-domain examination website URL.
+        }
+
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "StartsWith"
+          selector       = "remoteMeetingLink-"
+          # False positive: Gateway 2 workshop remote meeting fields post an off-domain URL and have a numeric suffix.
+        }
+
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "StartsWith"
+          selector       = "hearingRemoteMeetingLink-"
+          # False positive: examination hearing remote meeting fields post an off-domain URL and have a numeric suffix.
         }
       }
     }

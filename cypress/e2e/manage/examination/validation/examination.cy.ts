@@ -8,6 +8,7 @@ import {
 	examiningInspector2,
 	factCheckDateReceivedFromInspector,
 	hearingDateAndTime,
+	programmeOfficer,
 	seededRestartedExamination,
 	soundUnsound
 } from '../../../../fixtures/manage/examination.ts';
@@ -17,6 +18,7 @@ import {
 	examiningInspector2Page,
 	examinationPage,
 	examinationPausePages,
+	examinationProgrammeOfficerPage,
 	factCheckDateReceivedFromInspectorPage,
 	examinationReportUploadPage as uploadPage,
 	soundUnsoundPage
@@ -46,7 +48,18 @@ describe('Examination validation', () => {
 		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
 		hearingExpectedDaysPage.selectAnswer('yes');
 		hearingExpectedDaysPage.verifyLoaded('yes');
-		hearingExpectedDaysPage.verifyValidationError('Enter the expected number of days');
+		hearingExpectedDaysPage.verifyValidationError('Expected number of days must be a whole number');
+	});
+
+	it('only accepts a whole number of hearing days', { tags: ['regression'] }, () => {
+		examinationPage.addHearing();
+		hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
+		hearingExpectedDaysPage.verifyDaysField();
+		for (const days of ['abc', '2.5', '-1']) {
+			hearingExpectedDaysPage.enterDays(days);
+			hearingExpectedDaysPage.verifyLoaded('yes');
+			hearingExpectedDaysPage.verifyValidationError('Expected number of days must be a whole number');
+		}
 	});
 
 	it('shows an error when an Examination date is blank', { tags: ['regression'] }, () => {
@@ -69,6 +82,26 @@ describe('Examination validation', () => {
 
 		examiningInspector2Page.verifyLoaded();
 		examiningInspector2Page.verifyValidationError('Input Examining Inspector 2');
+	});
+
+	it('shows errors when the Programme officer required details are blank', { tags: ['regression'] }, () => {
+		examinationPage.openActionLinkFor(programmeOfficer.row);
+		examinationProgrammeOfficerPage.verifyLoaded(
+			programmeOfficer.firstName,
+			programmeOfficer.lastName,
+			programmeOfficer.email
+		);
+		examinationProgrammeOfficerPage.programmeOfficerFirstNameInput.clear();
+		examinationProgrammeOfficerPage.programmeOfficerLastNameInput.clear();
+		examinationProgrammeOfficerPage.programmeOfficerEmailInput.clear();
+		examinationProgrammeOfficerPage.saveAndContinue();
+
+		examinationProgrammeOfficerPage.verifyLoaded();
+		examinationProgrammeOfficerPage.verifyValidationErrors(
+			'Input a first name',
+			'Input a last name',
+			'Input an email address'
+		);
 	});
 
 	it('shows an error when the Examination website is blank', { tags: ['regression'] }, () => {

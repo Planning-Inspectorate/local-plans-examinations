@@ -1,5 +1,5 @@
 export const planTitle = {
-	row: 'Plan title',
+	row: 'Title',
 	path: 'plan-title',
 	value: 'Cypress Test Plan',
 	display: 'Cypress Test Plan',
@@ -12,7 +12,7 @@ export const seededCaseNotes = [
 ] as const;
 
 export const planType = {
-	row: 'Plan type',
+	row: 'Type',
 	path: 'plan-type',
 	display: 'Local plan',
 	updatedValue: 'other',
@@ -23,7 +23,8 @@ export const localPlanningAuthority = {
 	row: 'Planning authorities',
 	path: 'local-planning-authority',
 	lpa1Value: 'Local Planning Authority 1',
-	lpa2Value: 'Local Planning Authority 2'
+	lpa2Value: 'Local Planning Authority 2',
+	lpa3Value: 'Local Planning Authority 3'
 } as const;
 
 export const caseOfficer = {
@@ -33,7 +34,7 @@ export const caseOfficer = {
 } as const;
 
 export const planBand = {
-	row: 'Plan band',
+	row: 'Band',
 	path: 'plan-band',
 	heading: 'What is the plan band?',
 	display: 'Not started'
@@ -90,7 +91,7 @@ export const assessorGateway3 = {
 	row: 'Assessor Gateway 3',
 	path: 'assessor-gateway-3',
 	heading: 'Who is the Gateway 3 assessor?',
-	field: 'assessorGateway3'
+	field: 'gateway3AssessorName'
 } as const;
 
 export const examiningInspector1 = {
@@ -137,18 +138,33 @@ export const qaInspector3 = {
 	field: 'qaInspector3'
 } as const;
 
+export const deleteCaseReason = {
+	row: 'Reason for deletion',
+	path: 'delete-case-reason',
+	heading: 'Why are you deleting this case?',
+	field: 'deleteCaseWhy',
+	value: 'Created in error',
+	updatedValue: 'Duplicate case',
+	requiredMessage: 'Enter a reason for deleting this case'
+} as const;
+
+export const deleteCaseConfirmation = {
+	heading: 'Are you sure you want to delete this case?',
+	body: 'This will mark the case as deleted. It will no longer appear in the system, but it will still be available for audit purposes.',
+	caseDetailsHeading: 'Case details',
+	successMessage: /Case PLAN-\d+ deleted/
+} as const;
+
 export const overviewExpectedAnswers = [
 	{ row: planTitle.row, display: planTitle.display },
 	{ row: planType.row, display: planType.display },
 	{ row: caseOfficer.row, display: caseOfficer.display },
 	{ row: planBand.row, display: planBand.display }
 ];
+export const overviewDetailsRows = [planTitle, planType, planBand, localPlanningAuthority, caseOfficer];
+
 export const overviewSummaryRows = [
-	{ row: planTitle.row },
-	{ row: planType.row },
-	{ row: caseOfficer.row },
-	{ row: planBand.row },
-	{ row: localPlanningAuthority.row },
+	...overviewDetailsRows,
 	{ row: contactDetails.row },
 	{ row: programmeOfficer.row },
 	{ row: examinationWebsite.row },

@@ -6,6 +6,7 @@ export interface CaseOverviewInput extends SaveInput {
 	planBand?: string;
 	caseOfficer?: string;
 	lpa?: string;
+	checkLpas?: { id?: string; lpa: string }[];
 	lpaCode?: string;
 	lpaContact?: string;
 	firstName?: string;
@@ -80,6 +81,7 @@ export interface Gateway2Input extends SaveInput {
 }
 
 export interface ExaminationInput extends SaveInput {
+	status?: string;
 	expectedSubmissionForExaminationDate?: Date;
 	submissionForExaminationDate?: Date;
 	examiningInspector1?: string;
@@ -103,6 +105,8 @@ export interface ExaminationInput extends SaveInput {
 	withdrawnDate?: Date;
 	isSound?: string;
 	soundUnsoundDate?: Date;
+	miqDocumentSharedDate?: Date;
+	miqDocumentSharedBy?: string;
 	adoptionDate?: Date;
 	approvedForCILDate?: Date;
 	hearingExpectedDays?: string;
@@ -149,6 +153,9 @@ export interface Gateway3Input extends SaveInput {
 		id: string;
 		decision: string | null;
 		completionDate: Date | null;
+		submittedDate?: Date | null;
 		gateway3InfoId: string | null;
 	}[];
 }
+
+export type TimetableInput = Gateway1Input | Gateway2Input | Gateway3Input | ExaminationInput;

@@ -21,17 +21,18 @@ const REQUIRED_DOCUMENT_SET_IDS = [
 	DOCUMENT_SET_ID.G3_PRACTICAL_ARRANGEMENTS_STATEMENT
 ];
 
-export async function seedGateway3DeclarationDocuments() {
+export async function seedGateway3DeclarationDocuments(reference: string | null = PLAN_REFERENCE) {
+	const planReference = reference ?? PLAN_REFERENCE;
 	const dbClient = newDatabaseClient(loadConfig().db);
 
 	try {
 		const currentCase = await dbClient.case.findUnique({
-			where: { reference: PLAN_REFERENCE },
+			where: { reference: planReference },
 			select: { id: true }
 		});
 
 		if (!currentCase) {
-			throw new Error(`Case ${PLAN_REFERENCE} must be seeded before its Gateway 3 documents`);
+			throw new Error(`Case ${planReference} must be seeded before its Gateway 3 documents`);
 		}
 
 		for (const documentSetId of REQUIRED_DOCUMENT_SET_IDS) {

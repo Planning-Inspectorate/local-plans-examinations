@@ -55,6 +55,17 @@ describe('Create a case - Local Planning Authorities', () => {
 			localPlanningAuthoritiesPage.changeLocalPlanningAuthority(updatedLpa, 2);
 			localPlanningAuthoritiesPage.verifyLocalPlanningAuthorityListed(updatedLpa);
 
+			localPlanningAuthoritiesPage.removeListItem(2);
+			localPlanningAuthoritiesPage.verifyHeading('Remove local planning authority');
+			cy.get('[data-cy="button-back"]')
+				.should('have.length', 1)
+				.and('be.visible')
+				.and('contain.text', 'Cancel')
+				.click();
+			localPlanningAuthoritiesPage.verifyLoaded();
+			localPlanningAuthoritiesPage.verifyLocalPlanningAuthorityListed(firstLpa);
+			localPlanningAuthoritiesPage.verifyLocalPlanningAuthorityListed(updatedLpa);
+
 			localPlanningAuthoritiesPage.removeLocalPlanningAuthority(2);
 			localPlanningAuthoritiesPage.verifyLocalPlanningAuthorityListed(firstLpa);
 			localPlanningAuthoritiesPage.verifyLocalPlanningAuthorityNotListed(updatedLpa);

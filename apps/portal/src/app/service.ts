@@ -5,14 +5,20 @@ import { STATUS, STAGE, buildPlan, validPlan } from './types.ts';
 import type { Plan } from './types.ts';
 import { Service } from '@pins/local-plans-lib/app/service.ts';
 import { formatDisplayDate } from '#util/date.ts';
+import { getActiveExaminationPause } from '#util/examination-pause.ts';
 import { getGateway3SubmissionState } from '#util/gateway-3-submission.ts';
 import {
 	DOCUMENT_SET_ID,
 	gateway2SetIds,
 	gateway3SetIds
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
-import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID,
+	GATEWAY_3_STATUS
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import type { Gateway3Status } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { canViewCase } from './auth/can-view-case.ts';
 
 type PortalCase = {
 	reference: string;
@@ -34,11 +40,21 @@ type PortalCase = {
 		submissions: {
 			decision: string | null;
 			completionDate: Date | null;
+			submittedDate: Date | null;
 		}[];
 	} | null;
 	examinationInfo: {
 		expectedSubmissionForExaminationDate: Date | null;
 		submissionForExaminationDate: Date | null;
+		adoptionDate: Date | null;
+		soundUnsoundDate: Date | null;
+		status: string;
+		statusLookup: { displayName: string } | null;
+		planPauseHistory: {
+			createdAt: Date;
+			planPauseDate: Date;
+			planPauseEndDate: Date | null;
+		}[];
 	} | null;
 	documents: {
 		guid: string;
@@ -46,6 +62,7 @@ type PortalCase = {
 		documentSetId: string;
 		createdAt: Date;
 		isDeleted: boolean;
+		isTemp: boolean;
 		latestDocumentVersion: {
 			originalFilename: string | null;
 			fileName: string | null;
@@ -64,6 +81,7 @@ function getGateway2ReportUploadedDate(caseRecord: PortalCase): Date | null {
 		(document) =>
 			isGateway2ReportDocument(document) &&
 			!document.isDeleted &&
+			!document.isTemp &&
 			document.latestDocumentVersion &&
 			!document.latestDocumentVersion.isDeleted
 	);
@@ -92,7 +110,7 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 
 	return caseRecord.documents.flatMap((document) => {
 		const version = document.latestDocumentVersion;
-		if (!isGateway2ReportDocument(document) || document.isDeleted || !version || version.isDeleted) {
+		if (!isGateway2ReportDocument(document) || document.isDeleted || document.isTemp || !version || version.isDeleted) {
 			return [];
 		}
 
@@ -109,7 +127,17 @@ function getGateway2ReportFiles(caseRecord: PortalCase): Plan['gateway2ReportFil
 export function derivePlanProgress(caseRecord: PortalCase): Pick<Plan, 'stage' | 'status'> {
 	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
 
-	if (gateway3SubmissionState.latestSubmission?.completionDate) {
+	// Gateway 3 is only complete when the BO has reviewed and issued a
+	// non-resubmission decision.  A submission that has a completionDate but
+	// no decision (or a RESUBMISSION_REQUIRED decision) means the LPA has
+	// submitted / been asked to resubmit — the case stays at Gateway 3.
+	const latestDecision = gateway3SubmissionState.latestSubmission?.decision;
+	const isGateway3Decided =
+		gateway3SubmissionState.latestSubmission?.completionDate &&
+		latestDecision &&
+		latestDecision !== GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED;
+
+	if (isGateway3Decided) {
 		return {
 			stage: STAGE.Examination,
 			status: STATUS.ReadyToStart
@@ -170,31 +198,57 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 	const lpaNames = caseRecord.lpas.map((lpa) => lpa.lpaName || lpa.lpaCode);
 	const progress = derivePlanProgress(caseRecord);
 	const gateway1Date = caseRecord.gateway1Info?.completedGateway1Date ?? caseRecord.gateway1Info?.expectedGateway1Date;
-	const gateway2Date = hasIssuedGateway2Report(caseRecord)
-		? caseRecord.gateway2Info?.reportIssuedDate
-		: (caseRecord.gateway2Info?.actualDate ?? caseRecord.gateway2Info?.expectedDate);
-	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
-	const gateway3Date = gateway3SubmissionState.resubmissionAwaitingSubmission
-		? (caseRecord.gateway3Info?.actualDate ?? caseRecord.gateway3Info?.expectedDate)
-		: (gateway3SubmissionState.latestSubmission?.completionDate ??
-			caseRecord.gateway3Info?.actualDate ??
-			caseRecord.gateway3Info?.expectedDate);
+
+	const gateway2Date = caseRecord.gateway2Info?.expectedDate;
+	const gateway3Date = caseRecord.gateway3Info?.expectedDate;
+	const persistedExaminationStatus = caseRecord.examinationInfo?.status ?? EXAMINATION_STATUS_ID.CANNOT_START_YET;
+	const activePause = getActiveExaminationPause(caseRecord.examinationInfo?.planPauseHistory);
+	const examinationStatus = activePause ? EXAMINATION_STATUS_ID.PAUSED : persistedExaminationStatus;
 	const examinationDate =
-		caseRecord.examinationInfo?.submissionForExaminationDate ??
-		caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
+		persistedExaminationStatus === EXAMINATION_STATUS_ID.PLAN_ADOPTED
+			? caseRecord.examinationInfo?.adoptionDate
+			: persistedExaminationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+				? caseRecord.examinationInfo?.soundUnsoundDate
+				: caseRecord.examinationInfo?.expectedSubmissionForExaminationDate;
+	const gateway3SubmissionState = getGateway3SubmissionState(caseRecord.gateway3Info);
+	const gateway3SubmittedDate = gateway3SubmissionState.resubmissionAwaitingSubmission
+		? null
+		: (gateway3SubmissionState.latestSubmission?.submittedDate ?? caseRecord.gateway3Info?.actualDate);
 	const plan = buildPlan({
 		refNum: caseRecord.reference,
 		leadLPA: lpaNames[0] ?? '',
 		linkedLPA: lpaNames.slice(1).join(', '),
 		title: caseRecord.planTitle,
+		lpaNames,
 		stage: progress.stage,
 		status: progress.status,
+		examinationStatus,
+		examinationStatusLabel: activePause
+			? 'Paused'
+			: examinationStatus === EXAMINATION_STATUS_ID.REPORT_ISSUED
+				? 'Report issued'
+				: (caseRecord.examinationInfo?.statusLookup?.displayName ?? 'Cannot start yet'),
+		pause: activePause
+			? {
+					startDate: formatDisplayDate(activePause.planPauseDate) as string,
+					restartDate: formatDisplayDate(activePause.planPauseEndDate) ?? null
+				}
+			: null,
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
 			G2: formatDisplayDate(gateway2Date) ?? 'Not set',
 			G3: formatDisplayDate(gateway3Date) ?? 'Not set',
 			E: formatDisplayDate(examinationDate) ?? 'Not set'
+		},
+		submittedDates: {
+			G2: formatDisplayDate(caseRecord.gateway2Info?.actualDate) ?? null,
+			G3: formatDisplayDate(gateway3SubmittedDate) ?? null,
+			E: formatDisplayDate(caseRecord.examinationInfo?.submissionForExaminationDate) ?? null
+		},
+		completedDates: {
+			G2: formatDisplayDate(caseRecord.gateway2Info?.reportIssuedDate) ?? null,
+			G3: formatDisplayDate(gateway3SubmissionState.latestSubmission?.completionDate) ?? null
 		}
 	});
 
@@ -226,10 +280,28 @@ const planCaseInclude = {
 	examinationInfo: {
 		select: {
 			expectedSubmissionForExaminationDate: true,
-			submissionForExaminationDate: true
+			submissionForExaminationDate: true,
+			adoptionDate: true,
+			soundUnsoundDate: true,
+			status: true,
+			planPauseHistory: {
+				select: {
+					createdAt: true,
+					planPauseDate: true,
+					planPauseEndDate: true
+				},
+				orderBy: { createdAt: 'desc' as const }
+			},
+			statusLookup: {
+				select: { displayName: true }
+			}
 		}
 	},
 	lpas: {
+		select: {
+			lpaCode: true,
+			lpaName: true
+		},
 		orderBy: {
 			lpaName: 'asc' as const
 		}
@@ -248,6 +320,7 @@ const planCaseInclude = {
 			documentSetId: true,
 			createdAt: true,
 			isDeleted: true,
+			isTemp: true,
 			latestDocumentVersion: {
 				select: {
 					originalFilename: true,
@@ -262,6 +335,7 @@ const planCaseInclude = {
 
 export class PortalService extends Service {
 	readonly clarityId: string | undefined;
+	readonly googleAnalyticsId: string | undefined;
 	readonly auth: Config['auth'];
 	readonly environment: Config['environment'];
 	readonly nodeEnv: Config['NODE_ENV'];
@@ -273,6 +347,7 @@ export class PortalService extends Service {
 		this.environment = config.environment;
 		this.nodeEnv = config.NODE_ENV;
 		this.clarityId = config.clarityId;
+		this.googleAnalyticsId = config.googleAnalyticsId;
 		this.notifyClient = initGovNotify(config.govNotify, this.logger);
 	}
 
@@ -282,10 +357,7 @@ export class PortalService extends Service {
 
 	async getPlans(email?: string): Promise<Plan[]> {
 		const caseRecords = (await this.db.case.findMany({
-			where: {
-				deletedDate: null,
-				...(email ? { email } : {})
-			},
+			where: email ? canViewCase(email) : { deletedDate: null },
 			include: planCaseInclude,
 			orderBy: {
 				createdAt: 'desc'

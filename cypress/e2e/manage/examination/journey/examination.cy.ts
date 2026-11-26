@@ -1,5 +1,6 @@
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
 import {
+	openSeededExaminationDocuments,
 	openSeededExaminationPage,
 	pauseExamination,
 	restartExamination
@@ -10,6 +11,7 @@ import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
 	actualSubmissionDate,
 	examiningInspector1,
+	examinationDocuments,
 	examinationWebsite,
 	examinationPause,
 	factCheckActualDate,
@@ -19,18 +21,22 @@ import {
 	finalReportIssueDate,
 	hearingDateAndTime,
 	letterSentToMHCLGDate,
+	programmeOfficer,
 	QADateAnswers,
 	QAInspectorsAnswers,
 	soundUnsoundDate,
 	seededExaminationInProgress,
 	seededPausedExamination,
 	seededExaminationHearing,
-	soundUnsound
+	soundUnsound,
+	MIQcheckPage
 } from '../../../../fixtures/manage/examination.ts';
 import {
 	actualSubmissionDatePage,
+	examinationDocumentsPage,
 	examinationPage,
 	examinationPausePages,
+	examinationProgrammeOfficerPage,
 	examiningInspector1Page,
 	examinationWebsitePage,
 	factCheckActualDatePage,
@@ -43,9 +49,23 @@ import {
 	QADatePage,
 	QAPanelResponseDatePage,
 	soundUnsoundDatePage,
-	soundUnsoundPage
+	soundUnsoundPage,
+	examinationMIQCheckPage,
+	examinationMIQUploadPage
 } from '../../../../page-objects/manage/examination/index.ts';
-import { hearingDateAndTimePage, hearingCheckPage } from '../../../../page-objects/manage/examination/hearing-page.ts';
+import {
+	HearingDateAndTimePage,
+	hearingDateAndTimePage,
+	hearingCheckPage,
+	HearingCheckPage,
+	cancelHearingPage,
+	HearingExpectedDaysPage,
+	hearingExpectedDaysPage,
+	HearingLocationKnownPage,
+	RemoteOrInPersonPage,
+	MeetingLinkKnownPage,
+	RemoteLinkPage
+} from '../../../../page-objects/manage/examination/hearing-page.ts';
 
 const factCheckUpdates = [
 	{ answer: factCheckDateReceivedFromInspector, page: factCheckDateReceivedFromInspectorPage },
@@ -125,6 +145,79 @@ describe('Examination updates', () => {
 		examinationPage.verifySummaryRowContains(examiningInspector1.row, examiningInspector1.display);
 	});
 
+	it('saves the Programme officer details and shows them on the Examination tab', { tags: ['regression'] }, () => {
+		const { updated } = programmeOfficer;
+		examinationPage.openActionLinkFor(programmeOfficer.row);
+
+		examinationProgrammeOfficerPage.verifyLoaded(
+			programmeOfficer.firstName,
+			programmeOfficer.lastName,
+			programmeOfficer.email
+		);
+		examinationProgrammeOfficerPage.enterProgrammeOfficerDetails(
+			updated.firstName,
+			updated.lastName,
+			updated.email,
+			updated.phone
+		);
+
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.verifyNotificationBanner(programmeOfficer.savedMessage);
+		examinationPage.verifySummaryRowContains(programmeOfficer.row, updated.firstName, updated.lastName, updated.email);
+		// The phone number is saved but not shown in the row
+		examinationPage.summaryRowValue(programmeOfficer.row).should('not.contain.text', updated.phone);
+		examinationPage.summaryRowActionLink(programmeOfficer.row).should('contain.text', 'Change');
+
+		cy.reload();
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.openActionLinkFor(programmeOfficer.row);
+		examinationProgrammeOfficerPage.verifyLoaded(updated.firstName, updated.lastName, updated.email, updated.phone);
+	});
+
+	it(
+		'returns to Examination from the Programme officer page back link without saving',
+		{ tags: ['regression'] },
+		() => {
+			examinationPage.openActionLinkFor(programmeOfficer.row);
+			examinationProgrammeOfficerPage.verifyLoaded(
+				programmeOfficer.firstName,
+				programmeOfficer.lastName,
+				programmeOfficer.email
+			);
+			examinationProgrammeOfficerPage.programmeOfficerFirstNameInput.clearAndWrite(programmeOfficer.updated.firstName);
+			examinationProgrammeOfficerPage.goBack();
+
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifyNotificationBannerAbsent(programmeOfficer.savedMessage);
+			examinationPage.verifySummaryRowContains(programmeOfficer.row, programmeOfficer.firstName);
+			examinationPage
+				.summaryRowValue(programmeOfficer.row)
+				.should('not.contain.text', programmeOfficer.updated.firstName);
+		}
+	);
+
+	it(
+		'returns to Examination from the Programme officer page Cancel link without saving',
+		{ tags: ['regression'] },
+		() => {
+			examinationPage.openActionLinkFor(programmeOfficer.row);
+			examinationProgrammeOfficerPage.verifyLoaded(
+				programmeOfficer.firstName,
+				programmeOfficer.lastName,
+				programmeOfficer.email
+			);
+			examinationProgrammeOfficerPage.programmeOfficerFirstNameInput.clearAndWrite(programmeOfficer.updated.firstName);
+			examinationProgrammeOfficerPage.cancelChanges();
+
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifyNotificationBannerAbsent(programmeOfficer.savedMessage);
+			examinationPage.verifySummaryRowContains(programmeOfficer.row, programmeOfficer.firstName);
+			examinationPage
+				.summaryRowValue(programmeOfficer.row)
+				.should('not.contain.text', programmeOfficer.updated.firstName);
+		}
+	);
+
 	it('updates the Examination website and records case history', { tags: ['regression'] }, () => {
 		examinationPage.openActionLinkFor(examinationWebsite.row);
 
@@ -187,7 +280,7 @@ describe('Examination updates', () => {
 		);
 
 		openCaseHistory();
-		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated from inspector-1 to inspector-2');
+		caseHistoryPage.verifyHistoryEvent('QA Inspector 1 updated from Inspector 1 to Inspector 2');
 	});
 
 	it(
@@ -222,6 +315,111 @@ describe('Examination updates', () => {
 	it('returns to Examination from an Important Dates page back link', { tags: ['regression'] }, () => {
 		returnFromDatePage(soundUnsoundDate, soundUnsoundDatePage);
 	});
+
+	it('uploads MIQ documents and records case history', { tags: ['regression'] }, () => {
+		const today = new Date();
+		const todayDisplay = today.toLocaleDateString('en-GB', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+			timeZone: 'GMT'
+		});
+		examinationPage.openActionLinkFor(MIQcheckPage.row);
+
+		examinationMIQUploadPage.verifyLoaded();
+		examinationMIQUploadPage.uploadAndVerifyFile(MIQcheckPage.file1);
+		examinationMIQUploadPage.uploadAndVerifyFile(MIQcheckPage.file2);
+		examinationMIQUploadPage.saveAndReturn();
+
+		examinationMIQCheckPage.verifyLoaded();
+		examinationMIQCheckPage.verifyDocuments(MIQcheckPage.file1, MIQcheckPage.file2);
+		examinationMIQCheckPage.confirm();
+
+		examinationPage.verifyNotificationBanner('2 MIQ documents uploaded');
+		examinationPage.verifySummaryRowContains(MIQcheckPage.row, MIQcheckPage.file1, MIQcheckPage.file2);
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(`MIQs notification sent on ${todayDisplay}`);
+	});
+});
+
+describe('Examination documents', () => {
+	beforeEach(() => cy.task('clearDb'));
+	after(() => cy.task('clearDb'));
+
+	it('returns to Examination from the Examination documents page back link', { tags: ['regression'] }, () => {
+		openSeededExaminationDocuments();
+		examinationPage.openActionLinkFor(examinationDocuments.row);
+
+		examinationDocumentsPage.verifyLoaded();
+		examinationDocumentsPage.goBack();
+
+		examinationPage.verifyLoaded(seededCase.planTitle);
+		examinationPage.verifySummaryRowContains(examinationDocuments.row, '3 document(s)');
+	});
+
+	it(
+		'shows the Examination website changed in Manage on the Examination documents page',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments({ examinationWebsiteUrl: examinationDocuments.websiteUrl });
+
+			// Before the change both screens show the address the LPA submitted in the Portal
+			examinationPage.openActionLinkFor(examinationDocuments.row);
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyExaminationWebsite(
+				examinationDocuments.websiteUrl,
+				examinationDocuments.websiteHref
+			);
+			examinationDocumentsPage.goBack();
+			examinationPage.verifyLoaded(seededCase.planTitle);
+
+			examinationPage.openActionLinkFor(examinationWebsite.row);
+			examinationWebsitePage.verifyLoaded(examinationDocuments.websiteUrl);
+			examinationWebsitePage.enterAnswer(examinationDocuments.updatedWebsiteUrl);
+
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationDocuments.updatedWebsiteUrl);
+			examinationPage.verifySummaryRowValueLinkHref(examinationWebsite.row, examinationDocuments.updatedWebsiteHref);
+
+			// The change is saved where the Portal submitted the website, so Review pulls the new address
+			examinationPage.openActionLinkFor(examinationDocuments.row);
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyExaminationWebsite(
+				examinationDocuments.updatedWebsiteUrl,
+				examinationDocuments.updatedWebsiteHref
+			);
+			examinationDocumentsPage.documentGroup('required').should('not.contain.text', examinationDocuments.websiteUrl);
+
+			// A fresh load of the documents page still reads the saved address from the database
+			cy.reload();
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyExaminationWebsite(
+				examinationDocuments.updatedWebsiteUrl,
+				examinationDocuments.updatedWebsiteHref
+			);
+		}
+	);
+
+	it(
+		'shows an Examination website first added in Manage on the Examination documents page',
+		{ tags: ['regression'] },
+		() => {
+			openSeededExaminationDocuments();
+			examinationPage.verifySummaryRowContains(examinationWebsite.row, examinationWebsite.display);
+
+			examinationPage.openActionLinkFor(examinationWebsite.row);
+			examinationWebsitePage.verifyLoaded('');
+			examinationWebsitePage.enterAnswer(examinationDocuments.updatedWebsiteUrl);
+			examinationPage.verifyLoaded(seededCase.planTitle);
+
+			examinationPage.openActionLinkFor(examinationDocuments.row);
+			examinationDocumentsPage.verifyLoaded();
+			examinationDocumentsPage.verifyExaminationWebsite(
+				examinationDocuments.updatedWebsiteUrl,
+				examinationDocuments.updatedWebsiteHref
+			);
+		}
+	);
 });
 
 describe('Examination statuses', () => {
@@ -353,4 +551,84 @@ describe('Hearing updates', () => {
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent('remote hearing set up');
 	});
+
+	it('cancels a hearing and records the cancellation in case history', { tags: ['regression'] }, () => {
+		examinationPage.cancelHearing('1');
+
+		cancelHearingPage.verifyLoaded();
+		cancelHearingPage.confirmCancelHearing();
+
+		examinationPage.verifyHearingCancelled('1', 'hearing 1 remote meeting link');
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent('Hearing cancelled');
+	});
+
+	it('creates a second hearing and records it in case history', { tags: ['regression'] }, () => {
+		const dateAndTimePage2 = new HearingDateAndTimePage(2);
+		const expectedDaysPage2 = new HearingExpectedDaysPage(2);
+		const remoteOrInPersonPage2 = new RemoteOrInPersonPage(2);
+		const meetingLinkKnownPage2 = new MeetingLinkKnownPage(2);
+		const remoteLinkPage2 = new RemoteLinkPage(2);
+		const hearingCYAPage2 = new HearingCheckPage(2);
+
+		examinationPage.addHearing();
+
+		dateAndTimePage2.verifyLoaded();
+		dateAndTimePage2.enterDateAndTime(hearingDateAndTime.updatedDate, hearingDateAndTime.updatedTime);
+		expectedDaysPage2.verifyLoaded();
+		expectedDaysPage2.selectAnswer('no');
+		remoteOrInPersonPage2.verifyLoaded();
+		remoteOrInPersonPage2.selectAnswer('remote');
+		meetingLinkKnownPage2.verifyLoaded();
+		meetingLinkKnownPage2.selectAnswer('yes');
+		remoteLinkPage2.verifyLoaded();
+		remoteLinkPage2.enterAnswer('hearing 2 remote meeting link');
+
+		hearingCYAPage2.verifyLoaded();
+		hearingCYAPage2.confirmHearing();
+
+		examinationPage.verifyNotificationBanner('Hearing created');
+		examinationPage.verifyMainContains('Hearing 2 details');
+		cy.getByData('hearing-details-2').within(() => {
+			examinationPage.verifySummaryRowContains('Start date', hearingDateAndTime.updatedDisplay);
+			examinationPage.verifySummaryRowContains('Time', '11:45');
+			examinationPage.verifySummaryRowContains('Remote meeting link', 'hearing 2 remote meeting link');
+		});
+		examinationPage.verifyHearingsOrder(1, 2);
+	});
+});
+
+describe('Hearing set up', () => {
+	beforeEach(() => {
+		cy.task('clearDb');
+		openSeededExaminationPage();
+	});
+	after(() => cy.task('clearDb'));
+
+	it(
+		'sets up a hybrid hearing with expected days and shows the banner above the plan title',
+		{ tags: ['regression'] },
+		() => {
+			const remoteOrInPersonPage = new RemoteOrInPersonPage();
+			const locationKnownPage = new HearingLocationKnownPage();
+			const meetingLinkKnownPage = new MeetingLinkKnownPage();
+
+			examinationPage.addHearing();
+			hearingDateAndTimePage.enterDateAndTime(hearingDateAndTime.date, hearingDateAndTime.time);
+			hearingExpectedDaysPage.verifyDaysField();
+			hearingExpectedDaysPage.enterDays('3');
+			remoteOrInPersonPage.selectAnswer('hybrid');
+			locationKnownPage.selectAnswer('no');
+			meetingLinkKnownPage.selectAnswer('no');
+
+			hearingCheckPage.verifyNoLpaNotification();
+			hearingCheckPage.verifySummaryRowContains('Do you know the expected number of days?', 'Yes');
+			hearingCheckPage.verifySummaryRowContains('Estimated number of days', '3');
+			hearingCheckPage.verifySummaryRowContains('Is the hearing in-person, hybrid or remote?', 'Hybrid');
+			hearingCheckPage.confirmHearing();
+
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifyNotificationBannerAbovePlanTitle('Hearing created');
+		}
+	);
 });

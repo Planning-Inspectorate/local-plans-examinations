@@ -25,6 +25,7 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 						//{ qaInspector2: caseOfficer },
 						//{ qaInspector3: caseOfficerText },
 						{ gateway2Info: { assessorName: caseOfficer } },
+						{ gateway2Info: { additionalAssessors: { some: { assessorName: caseOfficer } } } },
 						//{gateway3Info: 							****to be implemented****
 						//	{assessorName: caseOfficer}			****to be implemented****
 						//},
@@ -74,13 +75,17 @@ export function buildAssignedToMe(service: ManageService): AsyncRequestHandler {
 					const gateway2Documents = await db.document.findMany({
 						where: {
 							caseId: c.id,
-							documentSetId: { in: gateway2SetIds }
+							documentSetId: { in: gateway2SetIds },
+							isDeleted: false,
+							isTemp: false
 						}
 					});
 					const gateway3Documents = await db.document.findMany({
 						where: {
 							caseId: c.id,
-							documentSetId: { in: gateway3SetIds }
+							documentSetId: { in: gateway3SetIds },
+							isDeleted: false,
+							isTemp: false
 						}
 					});
 

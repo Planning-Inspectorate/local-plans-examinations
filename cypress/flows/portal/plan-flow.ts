@@ -4,7 +4,7 @@ import { planDetailsPage } from '../../page-objects/portal/plan-details/plan-det
 import { gateway2ApplicationPage } from '../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import { gateway3ApplicationPage } from '../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { isEnvironmentSmoke } from '../auth-flow.ts';
-
+import { examinationPage } from '../../page-objects/portal/examination/examination-application-page.ts';
 const smokeCaseReferenceKey = 'portalSmokeCaseReference';
 
 export const preparePlanDetails = () => {
@@ -45,4 +45,12 @@ export const openGateway3ApplicationPage = (plan: Pick<PlanDetailsFixture, 'refe
 	planDetailsPage.verifyLoaded();
 	planDetailsPage.gateway3Link.click();
 	gateway3ApplicationPage.verifyLoaded();
+};
+
+export const openExaminationApplicationPage = (plan: Pick<PlanDetailsFixture, 'reference'>) => {
+	myPlansPage.verifyLoaded();
+	myPlansPage.openPlan(plan.reference);
+	planDetailsPage.verifyLoaded();
+	planDetailsPage.examinationLink.click();
+	examinationPage.verifyLoaded();
 };

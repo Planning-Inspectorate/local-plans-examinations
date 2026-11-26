@@ -46,12 +46,9 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 
 	router.post('/gateway-2-submission', getJourneyResponse, getJourney, validateGateway2Submission, saveToDatabase);
 
-	router.use(
-		'/:planReference/gateway-2-submission/application-declaration',
-		createApplicationDeclarationRoutes(service)
-	);
+	router.use('/:planReference/gateway-2/declaration', createApplicationDeclarationRoutes(service));
 
-	router.use('/:planReference/gateway-2-submission/application-complete', createApplicationCompleteRoutes());
+	router.use('/:planReference/gateway-2/confirmation', createApplicationCompleteRoutes(service));
 
 	router.get(
 		'/:planReference/gateway-2-submission',
@@ -83,7 +80,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/:planReference/gateway-2-submission/:section/:question/delete-document/:fileId',
+		'/:planReference/gateway-2-submission/:section/:question/delete-document/*fileId',
 		getJourneyResponseFromCase,
 		getJourney,
 		deleteGateway2DocumentForCase
@@ -101,7 +98,7 @@ export function gateway2SubmissionRoutes(service: PortalService): IRouter {
 	);
 
 	router.post(
-		'/gateway-2-submission/:section/:question/delete-document/:fileId',
+		'/gateway-2-submission/:section/:question/delete-document/*fileId',
 		getJourneyResponse,
 		getJourney,
 		deleteGateway2Document

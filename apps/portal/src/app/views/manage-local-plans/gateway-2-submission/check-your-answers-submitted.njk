@@ -1,4 +1,5 @@
 {% extends "views/layouts/main.njk" %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 {% from "views/components/gateway-2-report-summary.njk" import gateway2ReportSummary %}
 {% from "views/components/gateway-2-workshop-summary.njk" import gateway2WorkshopSummary %}
 
@@ -20,10 +21,17 @@
 {% block pageContent %}
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds pins-app-grid-column--80">
-        {{ gateway2WorkshopSummary(workshopVenue, workshopDateAndTime, workshopDocuments) }}
+        {% if statusTag %}
+            {{ govukTag({
+                text: statusTag.label,
+                classes: statusTag.class
+            }) }}
+            <p></p>
+        {% endif %}
         {% if gateway2ReportFiles and gateway2ReportFiles.length %}
             {{ gateway2ReportSummary(gateway2ReportFiles) }}
         {% endif %}
+        {{ gateway2WorkshopSummary(hasWorkshop, workshopFormat, workshopVenue, workShopStartTime, workshopMeetingLink, workshopDocuments) }}
 
         <p class="govuk-body" data-cy="submission-copy">Your application was submitted on {{ submissionDate }}{% if submissionTime %} at {{ submissionTime }}{% endif %}{% if submitter %} by {{ submitter }}{% endif %}</p>
 
@@ -31,6 +39,9 @@
             {% if section.list.rows.length %}
                 <div class="govuk-!-margin-bottom-8" data-cy="{{ section.heading | lower | replace(' ', '-') }}-section">
                     <h2 class="govuk-heading-m" id="{{ section.heading | lower | replace(' ', '-') }}">{{ section.heading }}</h2>
+                    {% if section.heading == 'Plan content, evidence and background' %}
+                        <p class="govuk-body">You should include any available documents that will form part of your local plan and show progress towards completion. You can also include a link to any digital materials that are published publicly online. You should also include your latest policies map. These can all be in draft form.</p>
+                    {% endif %}
                     <table class="govuk-table" data-cy="{{ section.heading | lower | replace(' ', '-') }}-table">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">

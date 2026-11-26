@@ -261,10 +261,10 @@ describe('file uploader delete controller', () => {
 			onFilesChange,
 			question: buildQuestionConfig()
 		});
-		const fileToDelete = buildUploadedFile({ id: 'file-to-delete' });
+		const fileToDelete = buildUploadedFile({ id: 'documents/case-1/file-to-delete.pdf' });
 		const fileToKeep = buildUploadedFile({ id: 'file-to-keep' });
 		const req = buildRequest({
-			params: { caseId: 'case-1', fileId: 'file-to-delete' },
+			params: { caseId: 'case-1', fileId: ['documents', 'case-1', 'file-to-delete.pdf'] },
 			session: {
 				fileUploader: {
 					documents: {
@@ -286,7 +286,7 @@ describe('file uploader delete controller', () => {
 				req,
 				sessionKey: 'documents',
 				fieldName: 'documents',
-				fileId: 'file-to-delete',
+				fileId: fileToDelete.id,
 				uploadedFiles: [fileToKeep]
 			}
 		]);

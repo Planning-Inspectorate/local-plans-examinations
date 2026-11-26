@@ -23,48 +23,7 @@
             {{ group.category | capitalize }} documents
           </h2>
 
-          {% set rows = [] %}
-
-          {% for document in group.documents %}
-            {% if document.files.length %}
-              {% set fileLinks = [] %}
-              {% set viewActions = [] %}
-
-              {% for file in document.files %}
-                {% set documentGuid = file.metadata.documentGuid if file.metadata else file.id %}
-                {% set downloadUrl = "/case/" + (reference | urlencode) + "/download-case-document/" + (documentGuid | urlencode) %}
-                {% set fileName = file.fileName | escape %}
-
-                {% set _ = fileLinks.push(
-                  '<a class="govuk-link" href="' + downloadUrl + '">' + fileName + '</a>'
-                ) %}
-
-                {% set _ = viewActions.push({
-                  href: downloadUrl,
-                  text: "View",
-                  visuallyHiddenText: file.fileName
-                }) %}
-              {% endfor %}
-
-              {% set _ = rows.push({
-                key: { text: document.title },
-                value: {
-                  html: fileLinks | join("<br>")
-                },
-                actions: {
-                  classes: "pins-custom-file-reviewer-actions",
-                  items: viewActions
-                }
-              }) %}
-            {% else %}
-              {% set _ = rows.push({
-                key: { text: document.title },
-                value: { text: "Not provided" }
-              }) %}
-            {% endif %}
-          {% endfor %}
-
-          {{ govukSummaryList({ rows: rows }) }}
+          {{ govukSummaryList({ rows: group.rows }) }}
         {% endfor %}
       </div>
   </div>

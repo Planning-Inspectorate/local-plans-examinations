@@ -6,6 +6,7 @@ const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-detail
 
 describe('Gateway 2 application page content', () => {
 	beforeEach(() => {
+		cy.task('clearDb');
 		portalLogin();
 		loadPlanDetails().then((plan) => {
 			gateway2ApplicationPage.visit(plan.urlReference);
@@ -13,18 +14,22 @@ describe('Gateway 2 application page content', () => {
 		});
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('Shows plan title, page header, inset text and copy text', { tags: ['regression'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway2ApplicationPage.verifyServiceNavigation('Guidance', 'Sign out');
 			gateway2ApplicationPage.verifyBackLink(`/manage-local-plans/${plan.urlReference}`);
 			gateway2ApplicationPage.verifyCaption(plan.title);
 			gateway2ApplicationPage.verifyHeading('Gateway 2 submission');
+			gateway2ApplicationPage.verifyStatusTag(plan.readyToStart);
 			gateway2ApplicationPage.verifyMainContains(
-				`Your target submission date is ${plan.dates.gateway2}. A Gateway 2 assessment usually takes about 6 weeks.`,
-				'Save and come back later',
-				'Add the documents that are relevant to your plan.'
+				'Gateway 2 is the next step in the development of your local plan.',
+				`You've provided the expected submission date of ${plan.dates.gateway2}. The assessment usually takes between 4 and 6 weeks from submission.`,
+				'For more infomation on Gateway 2 documents'
 			);
 			gateway2ApplicationPage.verifySaveAndComeBackLink(`/manage-local-plans/${plan.urlReference}`);
+			gateway2ApplicationPage.verifyCheckTheGuidanceLink();
 		});
 	});
 
@@ -36,8 +41,8 @@ describe('Gateway 2 application page content', () => {
 		gateway2ApplicationPage.verifyConsultationDocuments();
 	});
 
-	it('Shows Additional Documents', { tags: ['regression'] }, () => {
-		gateway2ApplicationPage.verifyAdditionalDocuments();
+	it('Shows Plan content, evidence and background documents', { tags: ['regression'] }, () => {
+		gateway2ApplicationPage.verifyPlanContentEvidenceBackgroundDocuments();
 	});
 
 	it('Shows Submit for Gateway 2 assessment', { tags: ['regression'] }, () => {

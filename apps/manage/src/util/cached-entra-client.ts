@@ -73,4 +73,9 @@ export class CachedEntraClient {
 		this.#userCache.set(userId, user);
 		return user;
 	}
+
+	async getUserEmailFromId(userId: string): Promise<string> {
+		const email = await this.#client.getUserEmailFromId(userId);
+		return email;
+	}
 }

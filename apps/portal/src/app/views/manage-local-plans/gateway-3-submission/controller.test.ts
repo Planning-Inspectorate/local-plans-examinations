@@ -4,6 +4,7 @@ import {
 	buildGetJourneyResponseFromCase,
 	buildGateway3CheckAnswersList,
 	buildGateway3Middleware,
+	buildGateway3ReportFilesViewData,
 	buildSubmittedGateway3View,
 	buildGuardDeclarationPage,
 	buildGetDeclarationPage,
@@ -24,6 +25,9 @@ import { SUBMISSION_FAILURE_VIEW_PATH } from '../../static/error/submission-fail
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
+import { createJourney, JOURNEY_ID } from './journey.ts';
+import { createGateway3Questions } from './questions.ts';
 
 function buildMockDocumentSets() {
 	const folderNames = [
@@ -84,7 +88,8 @@ describe('setGateway3ViewLocals', () => {
 		const req = {
 			currentCase: {
 				planTitle: 'Test Local Plan',
-				gateway3Info: { expectedDate: new Date('2026-06-12T00:00:00.000Z') }
+				// UK midnight during BST falls on the previous UTC day.
+				gateway3Info: { expectedDate: new Date('2026-06-11T23:00:00.000Z') }
 			},
 			params: { planReference: 'PLAN-003' }
 		} as any;
@@ -232,10 +237,17 @@ describe('buildGetJourneyResponseFromCase', () => {
 		assert.strictEqual(called, true);
 		assert.strictEqual((req as any).currentCase, currentCase);
 		assert.ok(res.locals.journeyResponse);
-		assert.deepStrictEqual(service.db.case.findUnique.mock.calls[0].arguments[0], {
-			where: { reference: 'PLAN-001' },
-			include: { gateway3Info: { include: { submissions: true } } }
+		assert.deepStrictEqual(service.db.case.findUnique.mock.calls[0].arguments[0].where, {
+			reference: 'PLAN-001'
 		});
+		assert.ok(
+			service.db.case.findUnique.mock.calls[0].arguments[0].include.gateway3Info,
+			'expected gateway3Info to be included'
+		);
+		assert.ok(
+			service.db.case.findUnique.mock.calls[0].arguments[0].include.documents,
+			'expected documents to be included'
+		);
 	});
 
 	it('renders 404 when the plan reference is missing', async () => {
@@ -289,7 +301,8 @@ describe('buildSubmittedGateway3View', () => {
 			currentCase: {
 				email: 'user@example.com',
 				gateway3Info: { actualDate }
-			}
+			},
+			params: { planReference: 'PLAN-001' }
 		} as any;
 		const locals: Record<string, unknown> = {
 			journey: { taskListTemplate: 'original-template.njk' },
@@ -387,7 +400,8 @@ describe('buildSubmittedGateway3View', () => {
 						{ decision: null, completionDate: null }
 					]
 				}
-			}
+			},
+			params: { planReference: 'PLAN-001' }
 		} as any;
 		const locals: Record<string, unknown> = {
 			journey: { taskListTemplate: 'original-template.njk' },
@@ -406,6 +420,320 @@ describe('buildSubmittedGateway3View', () => {
 	});
 });
 
+describe('buildGateway3ReportFilesViewData', () => {
+	it('returns report files when the latest submission has a proceed-to-examination decision', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: [
+					{
+						decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+						completionDate: new Date('2026-10-15T12:00:00.000Z')
+					}
+				]
+			},
+			documents: [
+				{
+					guid: 'doc-guid-1',
+					name: 'gw3-report.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'Gateway 3 Report.pdf',
+						fileName: 'gw3-report.pdf',
+						dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+						isDeleted: false
+					}
+				}
+			]
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result.length, 1);
+		assert.strictEqual(result[0].fileName, 'Gateway 3 Report.pdf');
+		assert.strictEqual(
+			result[0].href,
+			'/manage-local-plans/PLAN-001/gateway-3-submission/download-document/doc-guid-1'
+		);
+		assert.strictEqual(result[0].sharedDate, '15 October 2026');
+	});
+
+	it('returns empty array when there is no proceed-to-examination decision', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: [
+					{
+						decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+						completionDate: new Date('2026-10-15T12:00:00.000Z')
+					}
+				]
+			},
+			documents: [
+				{
+					guid: 'doc-guid-1',
+					name: 'gw3-report.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'Gateway 3 Report.pdf',
+						fileName: 'gw3-report.pdf',
+						dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+						isDeleted: false
+					}
+				}
+			]
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result.length, 0);
+	});
+
+	it('returns empty array when there are no submissions', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: []
+			},
+			documents: []
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result.length, 0);
+	});
+
+	it('returns empty array when currentCase is undefined', () => {
+		const result = buildGateway3ReportFilesViewData(undefined, 'PLAN-001');
+
+		assert.strictEqual(result.length, 0);
+	});
+
+	it('excludes documents with deleted latest version', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: [
+					{
+						decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+						completionDate: new Date('2026-10-15T12:00:00.000Z')
+					}
+				]
+			},
+			documents: [
+				{
+					guid: 'doc-guid-1',
+					name: 'gw3-report.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'Gateway 3 Report.pdf',
+						fileName: 'gw3-report.pdf',
+						dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+						isDeleted: true
+					}
+				}
+			]
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result.length, 0);
+	});
+
+	it('handles multiple report documents', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: [
+					{
+						decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+						completionDate: new Date('2026-10-15T12:00:00.000Z')
+					}
+				]
+			},
+			documents: [
+				{
+					guid: 'doc-guid-1',
+					name: 'report1.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'Report Part 1.pdf',
+						fileName: 'report1.pdf',
+						dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+						isDeleted: false
+					}
+				},
+				{
+					guid: 'doc-guid-2',
+					name: 'report2.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'Report Part 2.pdf',
+						fileName: 'report2.pdf',
+						dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+						isDeleted: false
+					}
+				}
+			]
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result.length, 2);
+		assert.strictEqual(result[0].fileName, 'Report Part 1.pdf');
+		assert.strictEqual(result[1].fileName, 'Report Part 2.pdf');
+	});
+
+	it('uses the correct document set for the second submission', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: [
+					{
+						decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+						completionDate: new Date('2026-10-01T12:00:00.000Z')
+					},
+					{
+						decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+						completionDate: new Date('2026-10-20T12:00:00.000Z')
+					}
+				]
+			},
+			documents: [
+				{
+					guid: 'doc-guid-1',
+					name: 'first-report.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'First Report.pdf',
+						fileName: 'first-report.pdf',
+						dateCreated: new Date('2026-10-01T12:00:00.000Z'),
+						isDeleted: false
+					}
+				},
+				{
+					guid: 'doc-guid-2',
+					name: 'second-report.pdf',
+					documentSetId: 'g3-document-2',
+					latestDocumentVersion: {
+						originalFilename: 'Second Report.pdf',
+						fileName: 'second-report.pdf',
+						dateCreated: new Date('2026-10-20T12:00:00.000Z'),
+						isDeleted: false
+					}
+				}
+			]
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result.length, 1);
+		assert.strictEqual(result[0].fileName, 'Second Report.pdf');
+		assert.strictEqual(
+			result[0].href,
+			'/manage-local-plans/PLAN-001/gateway-3-submission/download-document/doc-guid-2'
+		);
+	});
+
+	it('decodes URI-encoded filenames', () => {
+		const currentCase = {
+			gateway3Info: {
+				submissions: [
+					{
+						decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+						completionDate: new Date('2026-10-15T12:00:00.000Z')
+					}
+				]
+			},
+			documents: [
+				{
+					guid: 'doc-guid-1',
+					name: 'report.pdf',
+					documentSetId: 'g3-document-1',
+					latestDocumentVersion: {
+						originalFilename: 'Gateway%203%20Report.pdf',
+						fileName: 'report.pdf',
+						dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+						isDeleted: false
+					}
+				}
+			]
+		} as any;
+
+		const result = buildGateway3ReportFilesViewData(currentCase, 'PLAN-001');
+
+		assert.strictEqual(result[0].fileName, 'Gateway 3 Report.pdf');
+	});
+});
+
+describe('buildSubmittedGateway3View gateway 3 report', () => {
+	it('sets gateway3ReportFiles in locals when there are report documents', () => {
+		const middleware = buildSubmittedGateway3View();
+		const req = {
+			currentCase: {
+				email: 'user@example.com',
+				gateway3Info: {
+					actualDate: new Date('2026-10-01T12:30:00.000Z'),
+					submissions: [
+						{
+							decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+							completionDate: new Date('2026-10-15T12:00:00.000Z')
+						}
+					]
+				},
+				documents: [
+					{
+						guid: 'report-guid',
+						name: 'gw3-report.pdf',
+						documentSetId: 'g3-document-1',
+						latestDocumentVersion: {
+							originalFilename: 'Gateway 3 Report.pdf',
+							fileName: 'gw3-report.pdf',
+							dateCreated: new Date('2026-10-15T12:00:00.000Z'),
+							isDeleted: false
+						}
+					}
+				]
+			},
+			params: { planReference: 'PLAN-001' }
+		} as any;
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' },
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001'
+		};
+		const res = { locals } as any;
+
+		middleware(req, res, () => {});
+
+		const reportFiles = locals.gateway3ReportFiles as Array<{ fileName: string; href: string; sharedDate: string }>;
+		assert.strictEqual(reportFiles.length, 1);
+		assert.strictEqual(reportFiles[0].fileName, 'Gateway 3 Report.pdf');
+		assert.strictEqual(
+			reportFiles[0].href,
+			'/manage-local-plans/PLAN-001/gateway-3-submission/download-document/report-guid'
+		);
+		assert.strictEqual(reportFiles[0].sharedDate, '15 October 2026');
+	});
+
+	it('sets empty gateway3ReportFiles when no report documents exist', () => {
+		const middleware = buildSubmittedGateway3View();
+		const req = {
+			currentCase: {
+				email: 'user@example.com',
+				gateway3Info: {
+					actualDate: new Date('2026-10-01T12:30:00.000Z')
+				}
+			},
+			params: { planReference: 'PLAN-001' }
+		} as any;
+		const locals: Record<string, unknown> = {
+			journey: { taskListTemplate: 'original-template.njk' },
+			saveAndComeBackUrl: '/manage-local-plans/PLAN-001'
+		};
+		const res = { locals } as any;
+
+		middleware(req, res, () => {});
+
+		const reportFiles = locals.gateway3ReportFiles as unknown[];
+		assert.ok(Array.isArray(reportFiles), 'expected gateway3ReportFiles to be an array');
+		assert.strictEqual(reportFiles.length, 0);
+	});
+});
+
 describe('buildGateway3CheckAnswersList', () => {
 	it('returns a request handler', () => {
 		const handler = buildGateway3CheckAnswersList();
@@ -414,6 +742,32 @@ describe('buildGateway3CheckAnswersList', () => {
 });
 
 describe('buildValidateGateway3Submission', () => {
+	async function validateMissingAnswers(answers: Record<string, unknown>) {
+		const handler = buildValidateGateway3Submission();
+		let statusCode: number | undefined;
+		const req = {
+			baseUrl: '/manage-local-plans',
+			params: { planReference: 'PLAN-001' },
+			session: {}
+		} as unknown as Request;
+		const journeyResponse = new JourneyResponse(JOURNEY_ID, 'case-id', answers);
+		const res = {
+			status(code: number) {
+				statusCode = code;
+				return res;
+			},
+			render: () => {},
+			locals: {
+				journey: createJourney(req, journeyResponse, createGateway3Questions('PLAN-001')),
+				journeyResponse
+			}
+		} as unknown as Response;
+
+		await handler(req, res, (() => {}) as NextFunction);
+
+		return { statusCode, locals: res.locals };
+	}
+
 	it('calls next when all required answers are present', () => {
 		const handler = buildValidateGateway3Submission();
 		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
@@ -446,41 +800,34 @@ describe('buildValidateGateway3Submission', () => {
 	});
 
 	it('renders the check your answers page with an error when required answers are missing', async () => {
-		const handler = buildValidateGateway3Submission();
-		const req = { params: { planReference: 'PLAN-001' }, session: {} } as unknown as Request;
-		let statusCode: number | undefined;
-		const res = {
-			status(code: number) {
-				statusCode = code;
-				return res;
-			},
-			render: () => {},
-			locals: {
-				journey: {
-					sections: [
-						{
-							name: 'Required Information',
-							segment: 'required-information',
-							getStatus: () => 'in-progress',
-							questions: []
-						}
-					],
-					isComplete: () => false,
-					taskListTemplate: 'views/layouts/main.njk',
-					journeyTitle: 'Gateway 3 submission'
-				},
-				journeyResponse: { answers: {} }
-			}
-		} as unknown as Response;
-		const next = () => {};
-
-		await handler(req, res, next as NextFunction);
+		const { statusCode, locals } = await validateMissingAnswers({});
 
 		assert.strictEqual(statusCode, 400);
-		assert.strictEqual(res.locals.errors?.submit?.text, 'Add all required documents before submitting');
-		assert.deepStrictEqual(res.locals.errorSummary, [
-			{ text: 'Add all required documents before submitting', href: '#required-information' }
+		assert.strictEqual(locals.errors?.submit?.text, 'Add all required documents before submitting');
+		assert.deepStrictEqual(locals.errorSummary, [
+			{ text: 'Add all required documents before submitting', href: '#procedural-documents' }
 		]);
+	});
+
+	it('links the error to the first section with a missing required answer', async () => {
+		const { locals: consultationLocals } = await validateMissingAnswers({
+			statementOfCompliance: [{}],
+			statementOfSoundness: [{}],
+			consultationProposedPlanSummary: [{}]
+		});
+
+		assert.strictEqual(consultationLocals.errorSummary?.[0]?.href, '#consultation-documents');
+
+		const { locals: planContentLocals } = await validateMissingAnswers({
+			statementOfCompliance: [{}],
+			statementOfSoundness: [{}],
+			consultationProposedPlanSummary: [{}],
+			consultationEngagementSummary: [{}],
+			scopingConsultationSummary: [{}],
+			consultationContentEvidenceSummary: [{}]
+		});
+
+		assert.strictEqual(planContentLocals.errorSummary?.[0]?.href, '#plan-content-evidence-and-background');
 	});
 });
 
@@ -530,7 +877,11 @@ describe('handleMulterFileSizeError', () => {
 	it('redirects with error when multer file size limit is exceeded', () => {
 		const err = new multer.MulterError('LIMIT_FILE_SIZE');
 		const req = {
-			params: { planReference: 'PLAN-001', section: 'required-information', question: 'proposed-local-plan' },
+			params: {
+				planReference: 'PLAN-001',
+				section: 'plan-content-evidence-and-background',
+				question: 'proposed-local-plan'
+			},
 			baseUrl: '/manage-local-plans',
 			session: {}
 		} as unknown as Request;
@@ -832,20 +1183,31 @@ describe('buildGetDeclarationPage', () => {
 });
 
 describe('buildPostDeclarationPage', () => {
-	it('updates the case submission date, Gateway 3 actual date and redirects to the submission-complete page', async () => {
-		const caseUpdate = mock.fn(async () => ({}));
-		const gateway3InfoUpdate = mock.fn(async () => ({}));
-		const transaction = mock.fn(async (updates: unknown[]) => Promise.all(updates));
-		const service = {
+	function buildDeclarationService() {
+		return {
 			db: {
-				$transaction: transaction,
-				case: { update: caseUpdate },
-				gateway3Info: { update: gateway3InfoUpdate }
+				$transaction: mock.fn(async (updates: unknown[]) => Promise.all(updates)),
+				case: { update: mock.fn(async () => ({})) },
+				gateway3Info: { update: mock.fn(async () => ({})) },
+				documentSet: {
+					findMany: mock.fn(async ({ where }: { where: { folderName: { in: string[] } } }) =>
+						where.folderName.in.map((folderName) => ({ id: `ds-${folderName}`, folderName }))
+					)
+				},
+				document: { updateMany: mock.fn(async () => ({ count: 0 })) }
 			},
 			logger: {
 				error: mock.fn()
 			}
-		} as unknown as PortalService;
+		};
+	}
+
+	it('records a Gateway 3 submission and redirects to the submission-complete page', async () => {
+		const declarationService = buildDeclarationService();
+		const transaction = declarationService.db.$transaction;
+		const caseUpdate = declarationService.db.case.update;
+		const gateway3InfoUpdate = declarationService.db.gateway3Info.update;
+		const service = declarationService as unknown as PortalService;
 		const handler = buildPostDeclarationPage(service);
 		const req = {
 			currentCase: { id: 'case-1' },
@@ -867,6 +1229,10 @@ describe('buildPostDeclarationPage', () => {
 		const gateway3InfoUpdateArgs = gateway3InfoUpdate.mock.calls[0].arguments[0];
 		assert.deepStrictEqual(gateway3InfoUpdateArgs.where, { caseId: 'case-1' });
 		assert.strictEqual(gateway3InfoUpdateArgs.data.actualDate, caseUpdateArgs.data.submissionDate);
+		assert.strictEqual(
+			gateway3InfoUpdateArgs.data.submissions.create.submittedDate,
+			caseUpdateArgs.data.submissionDate
+		);
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
 		assert.strictEqual(res.locals.submissionCompleted, true);
@@ -947,6 +1313,89 @@ describe('buildPostDeclarationPage', () => {
 		assert.deepStrictEqual(statusCalls, [500]);
 		assert.strictEqual(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);
 		assert.strictEqual(renderCalls[0][1].planOverviewUrl, '/manage-local-plans/PLAN-001');
+	});
+
+	it('marks an existing open Gateway 3 submission as submitted', async () => {
+		const declarationService = buildDeclarationService();
+		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
+		const req = {
+			currentCase: {
+				id: 'case-1',
+				gateway3Info: {
+					submissions: [
+						{
+							id: 'gateway-3-submission-1',
+							decision: null,
+							completionDate: null,
+							submittedDate: null
+						}
+					]
+				}
+			},
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const res = { locals: {}, redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		const caseUpdateArgs = declarationService.db.case.update.mock.calls[0].arguments[0];
+		const gateway3InfoUpdateArgs = declarationService.db.gateway3Info.update.mock.calls[0].arguments[0];
+		assert.deepStrictEqual(gateway3InfoUpdateArgs.data.submissions.update.where, {
+			id: 'gateway-3-submission-1'
+		});
+		assert.strictEqual(
+			gateway3InfoUpdateArgs.data.submissions.update.data.submittedDate,
+			caseUpdateArgs.data.submissionDate
+		);
+	});
+
+	it('commits the temporary Gateway 3 documents in the same transaction as the submission', async () => {
+		const declarationService = buildDeclarationService();
+		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const res = { locals: {}, redirect: () => {} } as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		const { db } = declarationService;
+		const folderNames = db.documentSet.findMany.mock.calls[0].arguments[0].where.folderName.in;
+		assert.ok(folderNames.length > 0);
+		assert.strictEqual(db.$transaction.mock.calls[0].arguments[0].length, 3);
+		assert.deepStrictEqual(db.document.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: 'case-1',
+				documentSetId: { in: folderNames.map((folderName: string) => `ds-${folderName}`) },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: { isTemp: false }
+		});
+	});
+
+	it('renders the submission failure page without submitting when the document set lookup fails', async () => {
+		const declarationService = buildDeclarationService();
+		declarationService.db.documentSet.findMany.mock.mockImplementation(async () => []);
+		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+		const { res, calls } = buildMockResponse();
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(calls.find((c) => c.method === 'status')?.args[0], 500);
+		const renderCall = calls.find((call) => call.method === 'render');
+		assert.strictEqual(renderCall?.args[0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.strictEqual(
+			(renderCall?.args[1] as Record<string, unknown>).planOverviewUrl,
+			'/manage-local-plans/PLAN-001'
+		);
+		assert.strictEqual(declarationService.db.$transaction.mock.callCount(), 0);
+		assert.strictEqual(declarationService.logger.error.mock.callCount(), 1);
 	});
 });
 

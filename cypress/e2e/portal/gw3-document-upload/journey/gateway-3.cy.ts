@@ -36,7 +36,7 @@ describe('Gateway 3 document upload journeys', () => {
 
 	it(
 		'Adds a map of proposed local plan policies using drag and drop, then replaces it with new document',
-		{ tags: ['regression'] },
+		{ tags: ['regression', 'environment-smoke'] },
 		() => {
 			const page = mapOfProposedLocalPlanPoliciesPage;
 			openGateway3DocumentUploadPage(planDetails, page);
@@ -54,8 +54,8 @@ describe('Gateway 3 document upload journeys', () => {
 			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx']);
 			page.saveAndVerifyDocumentRow(
 				gateway3ApplicationPage,
-				() => gateway3ApplicationPage.requiredInformationTable,
-				'Statement of Compliance',
+				() => gateway3ApplicationPage.proceduralDocumentsTable,
+				'Statement of compliance',
 				'test-document.pdf',
 				'test-document.docx'
 			);
@@ -71,8 +71,8 @@ describe('Gateway 3 document upload journeys', () => {
 			page.uploadAndVerifyFile('test-document.docx');
 			page.saveAndVerifyDownloadLink(
 				gateway3ApplicationPage,
-				() => gateway3ApplicationPage.requiredInformationTable,
-				'Statement of Compliance',
+				() => gateway3ApplicationPage.proceduralDocumentsTable,
+				'Statement of compliance',
 				'test-document.docx'
 			);
 		}
@@ -98,7 +98,7 @@ describe('Gateway 3 document upload journeys', () => {
 			page.uploadAndVerifyFiles(['test-document.pdf', 'test-document.docx']);
 			page.saveAndVerifyDocumentRow(
 				gateway3ApplicationPage,
-				() => gateway3ApplicationPage.optionalDocumentsTable,
+				() => gateway3ApplicationPage.planContentEvidenceBackgroundTable,
 				'Environmental report',
 				'test-document.pdf',
 				'test-document.docx'
@@ -112,7 +112,7 @@ describe('Gateway 3 document upload journeys', () => {
 		page.uploadAndVerifyFile('test-document.pdf');
 		page.saveAndVerifyDownloadLink(
 			gateway3ApplicationPage,
-			() => gateway3ApplicationPage.optionalDocumentsTable,
+			() => gateway3ApplicationPage.planContentEvidenceBackgroundTable,
 			'Environmental report',
 			'test-document.pdf'
 		);

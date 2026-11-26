@@ -1,13 +1,12 @@
 import { applicationCompletePage } from '../../../../page-objects/portal/gw2-application/application-complete-page.ts';
-import { portalLogin, TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
+import { startPortalOtpLogin, completePortalLogin, TEST_EMAIL } from '../../../../flows/portal/login-flow.ts';
 import { planDetailsPage } from '../../../../page-objects/portal/plan-details/plan-details-page.ts';
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
-import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 import { gateway2ApplicationPage } from '../../../../page-objects/portal/gw2-application/gateway-2-application-page.ts';
 import {
 	localPlanTimetablePage,
 	gateway2CoverLetterPage
-} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+} from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
 import { gateway2SubmittedPlan } from '../../../../fixtures/portal/gateway-2-uploads.ts';
 
@@ -17,7 +16,9 @@ const todayDisplay = today.toLocaleDateString('en-GB', { day: 'numeric', month: 
 
 describe('Application complete page journeys', () => {
 	beforeEach(() => {
-		portalLogin();
+		cy.setCookie('cookie_consent', 'accept');
+		startPortalOtpLogin();
+		completePortalLogin();
 	});
 
 	after(() => cy.task('clearDb'));
@@ -42,17 +43,22 @@ describe('Application complete page journeys', () => {
 					{ page: localPlanTimetablePage, fileNames: gateway2SubmittedPlan.timetableFiles }
 				]);
 
+				const workshopDate = new Date(today);
+				workshopDate.setDate(workshopDate.getDate() + 2);
+				const workshopDateDisplay = workshopDate.toLocaleDateString('en-GB', {
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric'
+				});
+				applicationCompletePage.verifyMainContains(`in the week beginning ${workshopDateDisplay}`);
+
 				applicationCompletePage.returnToYourPlanLink(plan.urlReference).click();
 				planDetailsPage.verifyLoaded();
-				planDetailsPage.verifyProgressRow('Gateway 2 - advisory check', `Submitted: ${todayDisplay}`, 'Under review');
-				planDetailsPage.goBack();
-				myPlansPage.verifyLoaded();
-				myPlansPage.verifyTableRows(myPlansPage.myPlansTable, [
-					[plan.reference, plan.leadLpa, plan.title, plan.currentStage, plan.status3]
-				]);
+				planDetailsPage.verifyProgressRow('Gateway 2', `Submitted: ${todayDisplay}`, plan.underReview);
 
 				gateway2ApplicationPage.visit(plan.urlReference);
 				gateway2ApplicationPage.verifySubmittedApplication(todayDisplay, TEST_EMAIL);
+				gateway2ApplicationPage.verifyStatusTag(plan.underReview);
 			});
 		}
 	);

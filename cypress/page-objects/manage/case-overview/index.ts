@@ -10,3 +10,4 @@ export * from './programme-officer-page.ts';
 export * from './select-local-planning-authority-page.ts';
 export * from './smart-lookup-pages.ts';
 export * from './delete-case-page.ts';
+export * from './delete-case-reason-page.ts';

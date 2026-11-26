@@ -5,7 +5,11 @@ import {
 } from '../../../../flows/manage/examination-flow.ts';
 import type { SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import type { ExaminationReportSeedOptions } from '../../../../tasks/examination.ts';
-import { examinationReport as report, soundUnsound } from '../../../../fixtures/manage/examination.ts';
+import {
+	examinationReport as report,
+	soundUnsound,
+	soundUnsoundDate
+} from '../../../../fixtures/manage/examination.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/case-history-page.ts';
 import {
 	examinationPage,
@@ -13,7 +17,8 @@ import {
 	examinationReportManagePage as managePage,
 	examinationReportRemovePage as removePage,
 	examinationReportUploadPage as uploadPage,
-	soundUnsoundPage
+	soundUnsoundPage,
+	soundUnsoundDatePage
 } from '../../../../page-objects/manage/examination/index.ts';
 
 describe('Examination report journeys', () => {
@@ -55,6 +60,29 @@ describe('Examination report journeys', () => {
 		examinationPage.openServiceNavigationItem('Case History');
 		caseHistoryPage.verifyLoaded();
 		caseHistoryPage.verifyHistoryEvent('Examination report issued on');
+	});
+
+	it('issues the first report after its issue date was entered manually', { tags: ['regression'] }, () => {
+		openReport();
+		examinationPage.openActionLinkFor(soundUnsound.row);
+		soundUnsoundPage.selectAnswer(soundUnsound.value);
+		examinationPage.openActionLinkFor(soundUnsoundDate.row);
+		soundUnsoundDatePage.enterDate(soundUnsoundDate.input);
+
+		examinationPage.openActionLinkFor(report.row);
+		soundUnsoundPage.verifyLoaded(soundUnsound.value);
+		soundUnsoundPage.saveAndContinue();
+		uploadPage.uploadAndVerifyFile(report.fileName);
+		uploadPage.saveAndReturn();
+		checkPage.verifyAnswers(soundUnsound.display, soundUnsoundDate.display, report.fileName);
+		checkPage.confirm();
+
+		examinationPage.verifyReportIssued(soundUnsound.display);
+		cy.reload();
+		examinationPage.verifyReportDetails(1, soundUnsound.display, soundUnsoundDate.display);
+		examinationPage.openServiceNavigationItem('Case History');
+		caseHistoryPage.verifyLoaded();
+		caseHistoryPage.verifyHistoryEvent(`Examination report issued on ${soundUnsoundDate.display}`);
 	});
 
 	it('keeps report answers when changing the CYA outcome, date and documents', { tags: ['regression'] }, () => {

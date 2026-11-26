@@ -29,6 +29,15 @@ export class SmartLookupPage extends BasePage {
 		this.saveAndContinue();
 	}
 
+	getFirstOption(): Cypress.Chainable<string> {
+		return cy
+			.get(`#${this.fieldId}-select option`)
+			.not('[value=""]')
+			.first()
+			.invoke('text')
+			.then((text) => text.trim());
+	}
+
 	verifyLookupAnswer(answer: string) {
 		this.smartLookupInput.should('have.value', answer);
 	}

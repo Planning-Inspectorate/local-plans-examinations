@@ -3,7 +3,7 @@ import { cleanupPreparedPlanDetails, preparePlanDetails } from '../../../../flow
 import type { PlanDetailsFixture } from '../../../../fixtures/portal/types.ts';
 import { gateway3ApplicationPage } from '../../../../page-objects/portal/gw3-application/gateway-3-application-page.ts';
 import { examinationWebsitePage } from '../../../../page-objects/portal/gw3-application/examination-website-page.ts';
-import { examinationWebsite } from '../../../../fixtures/portal/examination.ts';
+import { examinationWebsite } from '../../../../fixtures/portal/examination-website.ts';
 
 describe('Gateway 3 examination website journeys', () => {
 	let planDetails: PlanDetailsFixture;
@@ -28,13 +28,13 @@ describe('Gateway 3 examination website journeys', () => {
 		examinationWebsitePage.verifyLoaded();
 		examinationWebsitePage.enterAnswer(examinationWebsite.value);
 		gateway3ApplicationPage.verifyLoaded();
-		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.requiredInformationTable, [
+		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.planContentEvidenceBackgroundTable, [
 			{ document: examinationWebsite.row, status: examinationWebsite.value, addCy: examinationWebsite.addCy }
 		]);
 		gateway3ApplicationPage.clickAddLink(examinationWebsite.addCy);
 		examinationWebsitePage.verifyLoaded(examinationWebsite.value);
 		examinationWebsitePage.enterAnswer(examinationWebsite.updatedValue);
-		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.requiredInformationTable, [
+		gateway3ApplicationPage.verifyDocTableRows(gateway3ApplicationPage.planContentEvidenceBackgroundTable, [
 			{ document: examinationWebsite.row, status: examinationWebsite.updatedValue, addCy: examinationWebsite.addCy }
 		]);
 	});

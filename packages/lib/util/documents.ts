@@ -232,14 +232,15 @@ export class DocumentUtil {
 	public static async loadUploadedDocuments(
 		service: Service,
 		caseId: string,
-		documentSetId: string
+		documentSetId: string,
+		{ includeTemp = false }: { includeTemp?: boolean } = {}
 	): Promise<UploadedFile[]> {
 		const documents = (await service.db.document.findMany({
 			where: {
 				caseId,
 				documentSetId,
 				isDeleted: false,
-				isTemp: false
+				...(includeTemp ? {} : { isTemp: false })
 			},
 			include: {
 				latestDocumentVersion: true
@@ -251,7 +252,11 @@ export class DocumentUtil {
 		return documents.map(this.mapDocumentToUploadedFile).filter((file): file is UploadedFile => Boolean(file));
 	}
 
-	public static async getLatestDocumentBlobDetails(service: Service, documentId: string) {
+	public static async getLatestDocumentBlobDetails(
+		service: Service,
+		documentId: string,
+		{ includeDeleted = false }: { includeDeleted?: boolean } = {}
+	) {
 		const latestDocument = await service.db.document.findFirst({
 			select: {
 				latestDocumentVersion: {
@@ -264,7 +269,7 @@ export class DocumentUtil {
 			},
 			where: {
 				guid: documentId,
-				isDeleted: false
+				...(includeDeleted ? {} : { isDeleted: false })
 			}
 		});
 		if (!latestDocument || !latestDocument.latestDocumentVersion) {
@@ -551,11 +556,30 @@ export class DocumentUtil {
 		}
 	}
 
-	public static async downloadDocumentToResponse(service: Service, documentId: string, res: Response) {
-		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId);
+	public static async downloadDocumentToResponse(
+		service: Service,
+		documentId: string,
+		res: Response,
+		options: { includeDeleted?: boolean } = {}
+	) {
+		const blobDetails = await this.getLatestDocumentBlobDetails(service, documentId, options);
 		const blobPath = blobDetails.blobPath;
 		const fileName = blobDetails.fileName;
 		const blobStorageUtil = service.createFileStorage(undefined, blobDetails.containerName);
 		await blobStorageUtil.downloadToExpressResponse(blobPath, fileName, res);
+	}
+
+	public static commitTempDocuments(service: Service, caseId: string, documentSetIds: string[]) {
+		return service.db.document.updateMany({
+			where: {
+				caseId,
+				documentSetId: { in: documentSetIds },
+				isTemp: true,
+				isDeleted: false
+			},
+			data: {
+				isTemp: false
+			}
+		});
 	}
 }

@@ -1,11 +1,12 @@
 import { JourneyResponse } from '@planning-inspectorate/dynamic-forms';
 import { OverviewPageLoadHandler, type PageLoadContext } from './overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-page-helper.ts';
-import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
-import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { formatValue } from '../../../util/util.ts';
-import { sortByDateColumn } from '#util/util.ts';
+import { compileExaminationDocumentFiles, sortByDateColumn } from '#util/util.ts';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
+import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
+import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
+import { resolveExaminationWebsite } from '../../../util/examination-website.ts';
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -15,6 +16,16 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 		const journey4Data = await db.examinationInfo.findUnique({
 			where: { caseId: caseRecord.id },
 			include: { planPauseHistory: true, hearings: true }
+		});
+		const gateway3Info = await db.gateway3Info.findUnique({
+			where: { caseId: caseRecord.id },
+			select: {
+				programmeOfficerFirstName: true,
+				programmeOfficerLastName: true,
+				programmeOfficerEmail: true,
+				programmeOfficerPhone: true,
+				examinationWebsiteUrl: true
+			}
 		});
 		if (!journey4Data) {
 			throw Error(`Could not fetch exam data for case '${caseRecord.id}'`);
@@ -29,6 +40,21 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			COMMON_CONSTS.EXAMINATION_JOURNEY_ID
 		);
 		const journeyResponse = new JourneyResponse(journeyId, '', journey4Data);
+		if (gateway3Info) {
+			// Only the programme officer is copied across: the Gateway 3 website must not overwrite the examination row's own
+			Object.assign(journeyResponse.answers, {
+				programmeOfficerFirstName: gateway3Info.programmeOfficerFirstName,
+				programmeOfficerLastName: gateway3Info.programmeOfficerLastName,
+				programmeOfficerEmail: gateway3Info.programmeOfficerEmail,
+				programmeOfficerPhone: gateway3Info.programmeOfficerPhone
+			});
+		}
+
+		journeyResponse.answers.examinationWebsite = resolveExaminationWebsite({
+			examinationInfo: journey4Data,
+			gateway3Info
+		});
+		journeyResponse.answers.examinationDocumentFiles = await compileExaminationDocumentFiles(db, caseRecord.id);
 		journeyResponse.answers.isSound = isSound;
 		const sortedPauseData = sortByDateColumn(
 			journey4Data?.planPauseHistory ? journey4Data?.planPauseHistory : [],
@@ -67,6 +93,21 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 				return;
 			}
 		}
+		this.addVirusScanStatusToLocals(req, res, journeyId);
+
+		if (
+			req.method === 'POST' &&
+			req.params.question === COMMON_CONSTS.MIQS_QUESTION &&
+			req.originalUrl.endsWith(req.params.question)
+		) {
+			const uploadedMiqs =
+				req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, 'miqs')]?.uploadedFiles ?? [];
+			if (uploadedMiqs.length > 0) {
+				res.redirect(303, 'miqs/check');
+				return;
+			}
+		}
+
 		if (next) next();
 	}
 }

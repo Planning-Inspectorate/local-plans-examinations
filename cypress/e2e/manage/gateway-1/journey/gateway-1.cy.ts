@@ -17,9 +17,13 @@ import {
 import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 
 describe('Gateway 1 updates', () => {
+	let caseReference: string;
+
 	beforeEach(() => {
 		cy.task('clearDb');
-		openSeededGateway1Page();
+		openSeededGateway1Page().then(({ reference }) => {
+			caseReference = reference;
+		});
 		cy.task('clearDownloads');
 	});
 	afterEach(cleanupSeededManageCase);
@@ -47,7 +51,7 @@ describe('Gateway 1 updates', () => {
 		gateway1Page.verifySummaryRowContains(gateway1DsaAnswer.row, gateway1DsaAnswer.updatedDisplay);
 	});
 
-	it('uploads 2 signed SLA documents and removes one', () => {
+	it('uploads signed SLA documents, removes one and enables download after scanning', () => {
 		gateway1Page.openActionLinkFor(signedSLA.row);
 		gateway1SignedSLAPage.verifyLoaded();
 
@@ -63,7 +67,16 @@ describe('Gateway 1 updates', () => {
 		gateway1SignedSLACheckPage.issueNotification();
 
 		gateway1Page.verifyLoaded(seededCase.planTitle);
-		gateway1Page.verifySummaryRowContainsFileLink(signedSLA.row, signedSLA.updatedFileName);
+		gateway1Page.verifySignedSlaAwaitingScan(signedSLA.updatedFileName);
+
+		cy.task('setDocumentVirusCheckStatus', {
+			reference: caseReference,
+			fileName: signedSLA.updatedFileName,
+			status: 'scanned'
+		});
+		cy.reload();
+		gateway1Page.verifyLoaded(seededCase.planTitle);
+		gateway1Page.verifySignedSlaScanned(signedSLA.updatedFileName);
 	});
 
 	it('returns to Gateway 1 from Gateway 1 answer page back links', () => {

@@ -1,3 +1,5 @@
+import { portalLoginEmailPage } from '../page-objects/portal/login/email-page.ts';
+
 const microsoftLoginOrigin = 'https://login.microsoftonline.com';
 
 export function skipUnlessEnvironmentSmoke(context: Mocha.Context) {
@@ -17,7 +19,10 @@ export function authenticateManageIfRequired() {
 }
 
 export function authenticatePortalIfRequired() {
-	authenticateWithMicrosoftIfRequired('portal', '/.auth/login/aad?post_login_redirect_uri=/');
+	authenticateWithMicrosoftIfRequired('portal', '/.auth/login/aad?post_login_redirect_uri=/login', {
+		afterMicrosoftLogin: verifyPortalLogin,
+		validate: validatePortalSession
+	});
 }
 
 export function authenticatePortalUserIfRequired(completeLogin: () => void, validateLogin: () => void) {
@@ -68,6 +73,19 @@ function authenticateWithMicrosoftIfRequired(
 function verifyManageLogin() {
 	cy.visit('/');
 	cy.get('h1').should('contain.text', 'All cases');
+}
+
+function verifyPortalLogin() {
+	portalLoginEmailPage.verifyLoaded();
+	portalLoginEmailPage.verifyHeading('Sign-in');
+	portalLoginEmailPage.emailInput.should('be.visible');
+}
+
+function validatePortalSession() {
+	cy.request({ url: '/login', followRedirect: false, failOnStatusCode: false }).then((response) => {
+		const reference = response.headers['x-azure-ref'] ?? 'not provided';
+		expect(response.status, `Portal login access; Front Door reference: ${reference}`).to.eq(200);
+	});
 }
 
 function completeMicrosoftLogin(username: string, password: string, loginUrl: string) {

@@ -7,6 +7,7 @@ import { getOverviewData } from './overview-page-helper.ts';
 import { OverviewSaveController } from '../save/overview-save-controller.ts';
 import * as authSession from '@planning-inspectorate/core/auth';
 import { consumeAlertsFromSession } from '../../../util/alert.ts';
+import { resolveExaminationWebsite } from '../../../util/examination-website.ts';
 
 type OverviewData = NonNullable<Awaited<ReturnType<typeof getOverviewData>>>;
 
@@ -21,7 +22,10 @@ export function mapOverviewDataToAnswers(overviewData: OverviewData): Record<str
 		examiningInspector1: overviewData.examinationInfo?.examiningInspector1,
 		examiningInspector2: overviewData.examinationInfo?.examiningInspector2,
 		examiningInspector3: overviewData.examinationInfo?.examiningInspector3,
-		examinationWebsite: overviewData.examinationInfo?.examinationWebsite,
+		examinationWebsite: resolveExaminationWebsite({
+			examinationInfo: overviewData.examinationInfo,
+			gateway3Info: overviewData.gateway3Info
+		}),
 		qaInspector1: overviewData.examinationInfo?.qaInspector1,
 		qaInspector2: overviewData.examinationInfo?.qaInspector2,
 		qaInspector3: overviewData.examinationInfo?.qaInspector3,
@@ -53,10 +57,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 
 		await loadCaseOfficerOptions(service, req, questions);
 		await loadInspectorOptions(service, req, questions);
-		const lpaOptions = await loadLpaOptions(service);
-		if (lpaOptions.length > 0) {
-			questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
-		}
+		questions.lpa.options = await loadLpaOptions(service, true);
 
 		const journeyResponse = new JourneyResponse(journeyId, '', mapOverviewDataToAnswers(overviewData));
 		res.locals.journeyResponse = journeyResponse;
@@ -119,7 +120,7 @@ export class OverviewTabHandler extends OverviewPageLoadHandler {
 				delete req.session.errorSummary;
 			}
 		}
-
+		this.addVirusScanStatusToLocals(req, res, journeyId);
 		if (next) next();
 	}
 }

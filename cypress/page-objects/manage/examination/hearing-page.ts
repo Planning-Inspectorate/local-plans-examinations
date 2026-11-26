@@ -1,24 +1,31 @@
 import { DateQuestionPage } from '../base/date-question-page.ts';
 import { RadioQuestionPage } from '../base/radio-question-page.ts';
+import { SingleLineInputPage } from '../base/single-line-input-page.ts';
 import { GatewayBasePage } from '../base/gateway-page.ts';
+import { BasePage } from '../../../page-objects/base-page.ts';
 import type { TimeAnswer } from '../gateway-2/workshop-set-up/workshop-date-and-time-page.ts';
 import type { DateAnswer } from '../../../types/date.ts';
 
-class HearingDateAndTimePage extends DateQuestionPage {
-	constructor() {
+const hearingPath = (path: string) => RegExp(`^/case/.+/examination/set-up-hearing/hearing/${path}$`);
+const cyaPath = (path: string) => RegExp(`^/case/.+/examination/set-up-hearing/${path}$`);
+
+export class HearingDateAndTimePage extends DateQuestionPage {
+	private readonly timeFieldName: string;
+
+	constructor(hearingNumber = 1) {
 		super(
-			/^\/case\/.+\/examination\/set-up-hearing\/hearing\/examination-hearing-date-and-time-1$/,
-			'hearingDate-1',
+			hearingPath(`examination-hearing-date-and-time-${hearingNumber}`),
+			`hearingDate-${hearingNumber}`,
 			'Hearing date and time'
 		);
+		this.timeFieldName = `hearingTime-${hearingNumber}`;
 	}
-
 	get hourField() {
-		return cy.get('[name="hearingTime-1_hour"]');
+		return cy.get(`[name="${this.timeFieldName}_hour"]`);
 	}
 
 	get minuteField() {
-		return cy.get('[name="hearingTime-1_minute"]');
+		return cy.get(`[name="${this.timeFieldName}_minute"]`);
 	}
 
 	enterDateAndTime(date: DateAnswer, time: TimeAnswer) {
@@ -40,9 +47,9 @@ class HearingDateAndTimePage extends DateQuestionPage {
 	}
 }
 
-class HearingCheckPage extends GatewayBasePage {
-	constructor() {
-		super(/^\/case\/.+\/examination\/set-up-hearing\/check-your-answers-1$/);
+export class HearingCheckPage extends GatewayBasePage {
+	constructor(hearingNumber = 1) {
+		super(cyaPath(`check-your-answers-${hearingNumber}`));
 	}
 
 	get confirmButton() {
@@ -59,16 +66,149 @@ class HearingCheckPage extends GatewayBasePage {
 		this.verifyLoaded();
 		this.confirmButton.should('contain.text', 'Confirm and save').click();
 	}
+
+	verifyNoLpaNotification() {
+		this.verifyLoaded();
+		this.mainContent.should('not.contain.text', 'send a notification to the LPA');
+		cy.getByData('preview-email-to-lpa').should('not.exist');
+	}
 }
 
+class CancelHearingPage extends BasePage {
+	constructor() {
+		super(/^\/case\/.+\/examination\/set-up-hearing\/delete-1$/);
+	}
+	get cancelHearingBtn() {
+		return cy.getByData('cancelHearingBtn');
+	}
+
+	get doNotCancelBtn() {
+		return cy.getByData('doNotCancelBtn');
+	}
+
+	confirmCancelHearing() {
+		this.verifyLoaded();
+		this.cancelHearingBtn.should('be.visible').and('contain.text', 'Cancel hearing').click();
+	}
+
+	verifyLoaded() {
+		super.verifyLoaded();
+		this.cancelHearingBtn.should('be.visible').and('contain.text', 'Cancel hearing');
+		this.doNotCancelBtn.should('be.visible').and('contain.text', 'Do not cancel');
+		super.verifyHeading('Are you sure you want to cancel the hearing?');
+		super.verifyMainContains('This will remove all hearing details including date, time, venue, and estimates.');
+	}
+}
+
+export type HearingVenue = { name: string; addressLine1: string; townOrCity: string; postcode: string };
+
+export class HearingVenueAddressPage extends BasePage {
+	constructor(hearingNumber = 1) {
+		super(hearingPath(`examination-hearing-venue-address-${hearingNumber}`));
+	}
+
+	enterAddress(venue: HearingVenue) {
+		this.verifyLoaded();
+		cy.getByData('examination-hearing-venue-name').clearAndWrite(venue.name);
+		cy.getByData('examination-hearing-address-line-1').clearAndWrite(venue.addressLine1);
+		cy.getByData('examination-hearing-town-or-city').clearAndWrite(venue.townOrCity);
+		cy.getByData('examination-hearing-postcode').clearAndWrite(venue.postcode);
+		this.saveAndContinue();
+	}
+}
+
+export class HearingExpectedDaysPage extends RadioQuestionPage {
+	constructor(hearingNumber = 1) {
+		super(
+			hearingPath(`examination-hearing-expected-days-${hearingNumber}`),
+			`hearingExpectedDaysKnown-${hearingNumber}`,
+			'Do you know the expected number of days to carry out the hearing?',
+			[
+				{ value: 'yes', text: 'Yes' },
+				{ value: 'no', text: 'No' }
+			]
+		);
+	}
+
+	get daysField() {
+		return cy.get(`[name="${this.fieldName}_hearingExpectedDays"]`);
+	}
+
+	verifyDaysField() {
+		this.verifyLoaded();
+		this.answerOption('yes').check({ force: true });
+		cy.get(`label[for="${this.fieldName}_hearingExpectedDays"]`)
+			.should('be.visible')
+			.and('contain.text', 'Number of days');
+		this.daysField
+			.should('be.visible')
+			.and('have.class', 'govuk-input--width-5')
+			.and('have.attr', 'inputmode', 'numeric');
+		this.daysField.siblings('.govuk-input__suffix').should('be.visible').and('contain.text', 'Days');
+	}
+
+	enterDays(days: string) {
+		this.verifyLoaded();
+		this.answerOption('yes').check({ force: true });
+		this.daysField.clearAndWrite(days);
+		this.saveAndContinue();
+	}
+}
+
+export class HearingLocationKnownPage extends RadioQuestionPage {
+	constructor(hearingNumber = 1) {
+		super(
+			hearingPath(`examination-hearing-location-known-${hearingNumber}`),
+			`hearingLocationKnown-${hearingNumber}`,
+			'Does the hearing have a venue address?',
+			[
+				{ value: 'yes', text: 'Yes' },
+				{ value: 'no', text: 'No' }
+			]
+		);
+	}
+}
+
+export class RemoteOrInPersonPage extends RadioQuestionPage {
+	constructor(hearingNumber = 1) {
+		super(
+			hearingPath(`examination-hearing-location-type-${hearingNumber}`),
+			`hearingLocationType-${hearingNumber}`,
+			'Is the hearing in-person, hybrid or remote?',
+			[
+				{ value: 'in-person', text: 'In-person' },
+				{ value: 'hybrid', text: 'Hybrid' },
+				{ value: 'remote', text: 'Remote' }
+			]
+		);
+	}
+}
+
+export class RemoteLinkPage extends SingleLineInputPage {
+	constructor(hearingNumber = 1) {
+		super(
+			hearingPath(`examination-hearing-remote-meeting-link-${hearingNumber}`),
+			`hearingRemoteMeetingLink-${hearingNumber}`,
+			'What is the remote meeting link?'
+		);
+	}
+}
+
+export class MeetingLinkKnownPage extends RadioQuestionPage {
+	constructor(hearingNumber = 1) {
+		super(
+			hearingPath(`examination-hearing-remote-meeting-link-known-${hearingNumber}`),
+			`hearingRemoteMeetingLinkKnown-${hearingNumber}`,
+			'Do you have a remote meeting link?',
+			[
+				{ value: 'yes', text: 'Yes' },
+				{ value: 'no', text: 'No' }
+			]
+		);
+	}
+}
+
+export const cancelHearingPage = new CancelHearingPage();
 export const hearingDateAndTimePage = new HearingDateAndTimePage();
 export const hearingCheckPage = new HearingCheckPage();
-export const hearingExpectedDaysPage = new RadioQuestionPage(
-	/^\/case\/.+\/examination\/set-up-hearing\/hearing\/examination-hearing-expected-days-1$/,
-	'hearingExpectedDaysKnown-1',
-	'Do you know the expected number of days to carry out the hearing?',
-	[
-		{ value: 'yes', text: 'Yes' },
-		{ value: 'no', text: 'No' }
-	]
-);
+export const hearingExpectedDaysPage = new HearingExpectedDaysPage();

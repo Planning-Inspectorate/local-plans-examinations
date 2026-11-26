@@ -7,12 +7,19 @@ import { loadConfig as loadDatabaseConfig } from '../../packages/database/src/co
 import {
 	DOCUMENT_SET_ID,
 	DOCUMENT_SOURCE_SYSTEM_ID,
+	EXAMINATION_STATUS_ID,
 	GATEWAY_3_DECISION_ID,
 	VIRUS_CHECK_STATUS_ID
 } from '../../packages/database/src/seed/static-data/ids/index.ts';
 import { loadConfig } from '../../apps/manage/src/app/config.ts';
 import { BlobFileStorageAdapter } from '../../packages/lib/storage/blob-storage.ts';
-import { examinationReport, soundUnsound } from '../fixtures/manage/examination.ts';
+import {
+	examinationReport,
+	examinationSubmissionDocuments,
+	soundUnsound,
+	type ExaminationSubmissionDocument
+} from '../fixtures/manage/examination.ts';
+import { seedExaminationReportIssued } from '../../packages/database/src/seed/seed-examination-report-issued.ts';
 
 export type ExaminationReportSeedOptions = {
 	state?: 'empty' | 'awaiting-confirmation' | 'issued';
@@ -108,6 +115,61 @@ export async function seedExaminationReport({
 	}
 }
 
+const PLAN_REFERENCE = 'PLAN-001';
+
+export async function seedExaminationReportIssuedDocuments({
+	fileNames = [examinationReport.fileName]
+}: Pick<ExaminationReportSeedOptions, 'fileNames'> = {}) {
+	const storage = reportStorage();
+	const issued = await seedExaminationReportIssued();
+	const db = newDatabaseClient(loadDatabaseConfig().db);
+	try {
+		const { id: caseId } = await db.case.findUniqueOrThrow({ where: { reference: PLAN_REFERENCE } });
+
+		for (const fileName of fileNames) {
+			const buffer = await readFile(path.resolve('cypress/fixtures/files', fileName));
+			const file = await storage.upload(
+				{
+					originalname: fileName,
+					mimetype: fileName.endsWith('.pdf')
+						? 'application/pdf'
+						: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+					size: buffer.length,
+					buffer
+				},
+				{ folderPath: `${caseId}/${examinationReport.path}`, metadata: { caseId } }
+			);
+			const guid = randomUUID();
+			await db.document.create({
+				data: {
+					guid,
+					name: file.id,
+					caseId,
+					documentSetId: DOCUMENT_SET_ID.EXAMINATION_REPORT,
+					versions: {
+						create: {
+							version: 1,
+							originalFilename: file.fileName,
+							fileName: file.fileName,
+							mime: file.mimeType,
+							size: file.size,
+							blobStorageContainer: file.containerName,
+							blobStoragePath: file.path,
+							sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.BACK_OFFICE,
+							virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED
+						}
+					}
+				}
+			});
+			await db.document.update({ where: { guid }, data: { latestVersionId: 1 } });
+		}
+
+		return issued;
+	} finally {
+		await db.$disconnect();
+	}
+}
+
 export async function clearExaminationReportFiles(reference: string) {
 	const storage = reportStorage();
 	const db = newDatabaseClient(loadDatabaseConfig().db);
@@ -125,6 +187,89 @@ export async function clearExaminationReportFiles(reference: string) {
 			}
 		}
 		return null;
+	} finally {
+		await db.$disconnect();
+	}
+}
+
+export type ExaminationSubmissionDocumentsSeedOptions = {
+	documents?: readonly ExaminationSubmissionDocument[];
+	/** Examination website the LPA entered in the Portal examination submission */
+	examinationWebsiteUrl?: string;
+	/** Examination website the LPA entered earlier, in the Portal Gateway 3 submission */
+	gateway3ExaminationWebsiteUrl?: string;
+	/** Examination website saved in Manage, which is only shown when the Portal has not submitted one */
+	manageExaminationWebsite?: string;
+	submitted?: boolean;
+};
+
+/**
+ * Seeds a manage case with the examination documents the LPA added in the front office.
+ * Pass submitted: false to leave the submission in progress, so the documents are not yet reviewable.
+ * Each website option seeds one column only, so a test can prove which one Manage reads.
+ */
+export async function seedExaminationSubmissionDocuments({
+	documents = examinationSubmissionDocuments,
+	examinationWebsiteUrl,
+	gateway3ExaminationWebsiteUrl,
+	manageExaminationWebsite,
+	submitted = true
+}: ExaminationSubmissionDocumentsSeedOptions = {}) {
+	if (process.env.ENVIRONMENT_SMOKE === 'true') {
+		throw new Error('Examination submission document seeds are only for the isolated regression database');
+	}
+	const seededCase = await seedCy();
+	const db = newDatabaseClient(loadDatabaseConfig().db);
+	try {
+		const { id: caseId } = await db.case.findUniqueOrThrow({
+			where: { reference: seededCase.reference },
+			select: { id: true }
+		});
+
+		// Content checks need document metadata; file transfers remain covered by the portal upload journeys.
+		for (const { documentSetKey, fileName } of documents) {
+			const documentSetId = DOCUMENT_SET_ID[documentSetKey];
+			if (!documentSetId) {
+				throw new Error(`Unknown examination document set "${documentSetKey}"`);
+			}
+			const guid = randomUUID();
+			await db.document.create({
+				data: {
+					guid,
+					name: guid,
+					caseId,
+					documentSetId,
+					versions: {
+						create: {
+							version: 1,
+							originalFilename: fileName,
+							fileName,
+							mime: 'application/pdf',
+							size: 1,
+							sourceSystem: DOCUMENT_SOURCE_SYSTEM_ID.FRONT_OFFICE,
+							virusCheckStatus: VIRUS_CHECK_STATUS_ID.SCANNED
+						}
+					}
+				}
+			});
+			await db.document.update({ where: { guid }, data: { latestVersionId: 1 } });
+		}
+
+		await db.examinationInfo.update({
+			where: { caseId },
+			data: {
+				status: submitted ? EXAMINATION_STATUS_ID.SUBMITTED : EXAMINATION_STATUS_ID.IN_PROGRESS,
+				...(examinationWebsiteUrl && { examinationWebsiteUrl }),
+				...(manageExaminationWebsite && { examinationWebsite: manageExaminationWebsite })
+			}
+		});
+		if (gateway3ExaminationWebsiteUrl) {
+			await db.gateway3Info.update({
+				where: { caseId },
+				data: { examinationWebsiteUrl: gateway3ExaminationWebsiteUrl }
+			});
+		}
+		return seededCase;
 	} finally {
 		await db.$disconnect();
 	}

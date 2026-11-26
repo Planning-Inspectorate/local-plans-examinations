@@ -174,6 +174,23 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "portal" {
       }
     }
 
+    override {
+      rule_group_name = "PROTOCOL-ENFORCEMENT"
+      rule {
+        # This rule is skipped because it blocks the file upload when no files are selected
+        rule_id = "920120"
+        enabled = true
+        action  = "Log"
+      }
+
+      exclusion {
+        match_variable = "RequestBodyPostArgNames"
+        operator       = "Equals"
+        selector       = "files"
+      }
+    }
+
+
     #--------------------------------------------------------------------------
     # RFI - Remote File Inclusion (931xxx)
     #--------------------------------------------------------------------------
@@ -191,6 +208,18 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "portal" {
           operator       = "Equals"
           selector       = "examinationWebsite"
           # False positive: PostParamValue:examinationWebsite can contain an off-domain examination website URL.
+        }
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "Equals"
+          selector       = "examinationWebsiteUrl"
+          # False positive: the examination submission 'Confirm examination website' page posts examinationWebsiteUrl.
+        }
+        exclusion {
+          match_variable = "RequestBodyPostArgNames"
+          operator       = "Equals"
+          selector       = "digitalSupportingMaterialLink"
+          # False positive: the Gateway 2 'Digital supporting material' page posts an off-domain URL.
         }
       }
     }

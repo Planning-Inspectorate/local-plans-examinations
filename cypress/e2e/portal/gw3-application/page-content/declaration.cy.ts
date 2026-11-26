@@ -6,7 +6,7 @@ import { openSeededGateway3DeclarationPage } from '../../../../flows/portal/gate
 
 const loadPlanDetails = () => cy.fixture<PlanDetailsFixture>('portal/plan-details.json');
 
-describe('Gateway 3 Submission page journeys', () => {
+describe('Gateway 3 Submission Declaration page content', () => {
 	beforeEach(() => {
 		cy.task('clearDb');
 		portalLogin();
@@ -19,7 +19,7 @@ describe('Gateway 3 Submission page journeys', () => {
 		cy.task('clearDb');
 	});
 
-	it('Verifying page content for the gateway 3 submission page', { tags: ['smoke'] }, () => {
+	it('Verifying page content for the gateway 3 declaration page', { tags: ['smoke'] }, () => {
 		loadPlanDetails().then((plan) => {
 			gateway3DeclarationPage.verifyLoaded();
 			gateway3DeclarationPage.verifyServiceNavigation('Guidance', 'Sign out');

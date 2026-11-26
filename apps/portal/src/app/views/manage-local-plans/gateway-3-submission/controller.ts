@@ -7,6 +7,7 @@ import {
 	buildList,
 	buildSave,
 	buildSaveDataToSession,
+	type Journey,
 	JourneyResponse,
 	question,
 	type SaveDataFn,
@@ -21,7 +22,8 @@ import {
 	CHECK_ANSWERS_REDIRECTS,
 	createGateway3Questions,
 	GW3_FILE_UPLOAD_QUESTIONS,
-	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS
+	GW3_REQUIRED_FILE_UPLOAD_QUESTIONS,
+	REQUIRED_GATEWAY_3_ITEM_TITLES
 } from './questions.ts';
 import {
 	getDocumentSetIdsByFolderName,
@@ -41,14 +43,18 @@ import {
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
 import type { CaseModel } from '@pins/local-plans-database/src/client/models/Case.ts';
 import type { Gateway3InfoModel } from '@pins/local-plans-database/src/client/models/Gateway3Info.ts';
-import { GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { GATEWAY_3_STATUS, GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import lusca from 'lusca';
 import { STATUS, StatusTag } from '../../../types.ts';
-import { setVirusScanViewLocals } from '../utils.ts';
+import { setVirusScanViewLocals } from '@pins/local-plans-lib/forms/custom-components/file-uploader/virus-scan.ts';
 import {
 	isGateway3ResubmissionAwaitingSubmission,
+	sortGateway3Submissions,
 	type Gateway3SubmissionSummary
 } from '#util/gateway-3-submission.ts';
+import { formatDisplayDate } from '#util/date.ts';
+import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,7 +64,22 @@ type Gateway3InfoWithSubmissions = Gateway3InfoModel & {
 	submissions?: Gateway3SubmissionSummary[] | null;
 };
 
-type CaseWithGateway3Info = CaseModel & { gateway3Info?: Gateway3InfoWithSubmissions | null };
+type Gateway3ReportDocument = {
+	guid: string;
+	name: string;
+	documentSetId: string;
+	latestDocumentVersion: {
+		originalFilename: string | null;
+		fileName: string | null;
+		dateCreated: Date | null;
+		isDeleted: boolean;
+	} | null;
+};
+
+type CaseWithGateway3Info = CaseModel & {
+	gateway3Info?: Gateway3InfoWithSubmissions | null;
+	documents?: Gateway3ReportDocument[];
+};
 
 type Gateway3Session = Request['session'] &
 	FileUploaderSession & {
@@ -130,17 +151,6 @@ function redirectToFileUploaderQuestion(req: Request) {
 	const planReference = getRoutePlanReference(req);
 	const planPath = planReference ? `/${encodeURIComponent(planReference)}` : '';
 	return `${req.baseUrl}${planPath}/gateway-3-submission/${req.params.section}/${req.params.question}`;
-}
-
-function formatDisplayDate(date: Date | null | undefined) {
-	if (!date) {
-		return undefined;
-	}
-	return date.toLocaleDateString('en-GB', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric'
-	});
 }
 
 function formatDisplayTime(date: Date) {
@@ -382,15 +392,68 @@ export function buildSubmittedGateway3View(): RequestHandler {
 		res.locals.submitter = request.currentCase?.email;
 		delete res.locals.saveAndComeBackUrl;
 
+		// Build gateway 3 report file view data
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
+		res.locals.gateway3ReportFiles = buildGateway3ReportFilesViewData(request.currentCase, encodedPlanReference);
+
 		return next();
 	};
+}
+
+export function buildGateway3ReportFilesViewData(
+	currentCase: CaseWithGateway3Info | undefined,
+	encodedPlanReference: string | undefined
+) {
+	const submissions = sortGateway3Submissions(currentCase?.gateway3Info?.submissions ?? []);
+	const documents = currentCase?.documents ?? [];
+
+	// Find the latest completed submission that has a "proceed to examination" decision
+	const completedSubmissionIndex = submissions.findIndex(
+		(sub) => sub.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION && sub.completionDate
+	);
+
+	if (completedSubmissionIndex === -1) {
+		return [];
+	}
+
+	const submissionNumber = completedSubmissionIndex + 1;
+	const documentSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
+	if (!documentSetId) {
+		return [];
+	}
+
+	const reportDocs = documents.filter(
+		(doc) => doc.documentSetId === documentSetId && doc.latestDocumentVersion && !doc.latestDocumentVersion.isDeleted
+	);
+
+	return reportDocs.map((doc) => {
+		const version = doc.latestDocumentVersion;
+		const rawFileName = version?.originalFilename ?? version?.fileName ?? doc.name;
+		let fileName: string;
+		try {
+			fileName = decodeURIComponent(rawFileName);
+		} catch {
+			fileName = rawFileName;
+		}
+
+		return {
+			fileName,
+			href:
+				encodedPlanReference && doc.guid
+					? `/manage-local-plans/${encodedPlanReference}/gateway-3-submission/download-document/${encodeURIComponent(doc.guid)}`
+					: undefined,
+			sharedDate: formatDisplayDate(version?.dateCreated)
+		};
+	});
 }
 
 export function buildGateway3CheckAnswersList(): RequestHandler {
 	return (req, res, next) => {
 		const request = req as Gateway3Request;
 		return buildList({
-			pageCaption: request.currentCase?.planTitle
+			pageCaption: request.currentCase?.planTitle,
+			requiredItemTitles: REQUIRED_GATEWAY_3_ITEM_TITLES
 		})(req, res, next);
 	};
 }
@@ -565,7 +628,28 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 
 		const currentCase = await service.db.case.findUnique({
 			where: { reference: routePlanReference },
-			include: { gateway3Info: { include: { submissions: true } } }
+			include: {
+				gateway3Info: { include: { submissions: true } },
+				documents: {
+					where: {
+						isDeleted: false,
+						documentSetId: { startsWith: 'g3-document-' }
+					},
+					select: {
+						guid: true,
+						name: true,
+						documentSetId: true,
+						latestDocumentVersion: {
+							select: {
+								originalFilename: true,
+								fileName: true,
+								dateCreated: true,
+								isDeleted: true
+							}
+						}
+					}
+				}
+			}
 		});
 
 		if (!currentCase) {
@@ -573,7 +657,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 		}
 
 		const request = req as Gateway3Request;
-		request.currentCase = currentCase;
+		request.currentCase = currentCase as CaseWithGateway3Info;
 		const answers = getCaseScopedSessionAnswers(req, routePlanReference);
 		const documentSetIdsByFolderName = await getDocumentSetIdsByFolderName(
 			service,
@@ -622,6 +706,13 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 
 const GATEWAY_3_SUBMIT_ERROR = 'Add all required documents before submitting';
 
+const REQUIRED_GATEWAY_3_FIELD_NAMES = [
+	'examinationWebsite',
+	...gateway3RequiredFileUploadQuestionConfigs.map((question) => question.fieldName)
+];
+
+const REQUIRED_GATEWAY_3_FIELD_NAME_SET = new Set(REQUIRED_GATEWAY_3_FIELD_NAMES);
+
 function hasRequiredQuestionAnswer(answers: Record<string, unknown>, fieldName: string) {
 	const answer = answers[fieldName];
 	if (Array.isArray(answer)) {
@@ -634,11 +725,19 @@ function hasRequiredQuestionAnswer(answers: Record<string, unknown>, fieldName: 
 }
 
 function hasAllRequiredAnswers(answers: Record<string, unknown>) {
-	const requiredFieldNames = [
-		'examinationWebsite',
-		...gateway3RequiredFileUploadQuestionConfigs.map((q) => q.fieldName)
-	];
-	return requiredFieldNames.every((fieldName) => hasRequiredQuestionAnswer(answers, fieldName));
+	return REQUIRED_GATEWAY_3_FIELD_NAMES.every((fieldName) => hasRequiredQuestionAnswer(answers, fieldName));
+}
+
+function getFirstIncompleteRequiredSection(answers: Record<string, unknown>, journey: Journey | undefined) {
+	const section = journey?.sections.find((section) =>
+		section.questions.some(
+			(question) =>
+				REQUIRED_GATEWAY_3_FIELD_NAME_SET.has(question.fieldName) &&
+				!hasRequiredQuestionAnswer(answers, question.fieldName)
+		)
+	);
+
+	return section?.segment ?? 'ready-to-submit';
 }
 
 export function buildValidateGateway3Submission(): RequestHandler {
@@ -659,7 +758,7 @@ export function buildValidateGateway3Submission(): RequestHandler {
 		res.locals.errorSummary = [
 			{
 				text: GATEWAY_3_SUBMIT_ERROR,
-				href: '#required-information'
+				href: `#${getFirstIncompleteRequiredSection(answers, res.locals.journey as Journey | undefined)}`
 			}
 		];
 
@@ -711,6 +810,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : undefined;
 		const submissionDate = new Date();
 		const caseId = request.currentCase?.id;
+		const latestSubmission = sortGateway3Submissions(request.currentCase?.gateway3Info?.submissions ?? []).at(-1);
+		const existingOpenSubmission =
+			latestSubmission?.id && latestSubmission.decision == null && latestSubmission.completionDate == null
+				? latestSubmission
+				: null;
 
 		if (!caseId) {
 			service.logger.error(`No case loaded for Gateway 3 declaration submission ${planReference ?? ''}`);
@@ -718,6 +822,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		}
 
 		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(
+				service,
+				gateway3FileUploadQuestionConfigs.map((questionConfig) => questionConfig.url)
+			);
 			await service.db.$transaction([
 				service.db.case.update({
 					where: { id: caseId },
@@ -725,8 +833,19 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 				}),
 				service.db.gateway3Info.update({
 					where: { caseId },
-					data: { actualDate: submissionDate }
-				})
+					data: {
+						actualDate: submissionDate,
+						submissions: existingOpenSubmission
+							? {
+									update: {
+										where: { id: existingOpenSubmission.id },
+										data: { submittedDate: submissionDate }
+									}
+								}
+							: { create: { submittedDate: submissionDate } }
+					}
+				}),
+				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);

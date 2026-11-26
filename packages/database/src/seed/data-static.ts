@@ -6,6 +6,7 @@ import {
 	DOCUMENT_SET,
 	DOCUMENT_SOURCE_SYSTEMS,
 	DSA_CHECKED_VALUES,
+	EXAMINATION_STATUSES,
 	GATEWAYS,
 	GATEWAY_3_DECISIONS,
 	Gateway3FrontOfficeStatuses,
@@ -57,6 +58,10 @@ export async function seedStaticData(dbClient: PrismaClient) {
 
 	for (const input of Gateway3FrontOfficeStatuses) {
 		await upsertReferenceData({ delegate: dbClient.gateway3FrontOfficeStatus, input });
+	}
+
+	for (const input of EXAMINATION_STATUSES) {
+		await upsertReferenceData({ delegate: dbClient.examinationStatus, input });
 	}
 
 	for (const input of AUTHORITY_STATUSES) {

@@ -1,4 +1,4 @@
-import { describe, it, mock } from 'node:test';
+import { after, before, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import {
@@ -14,19 +14,38 @@ import {
 	issueGateway3Document,
 	issueGateway2WorkshopDocuments,
 	issueExaminationReport,
+	issueMiqs,
 	fileUploaderCaseSessionKeyForField,
 	redirectToFileUploaderQuestion,
 	redirectToChecks,
-	buildRemoveDocumentConfirmMiddleware
+	buildRemoveDocumentConfirmMiddleware,
+	getDeleteReason
 } from './controller.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { OverviewTabHandler } from './overview-data-handlers/overview-tab-handler.ts';
 import { Gateway1TabHandler } from './overview-data-handlers/gateway-1-tab-handler.ts';
 import { Gateway2TabHandler } from './overview-data-handlers/gateway-2-tab-handler.ts';
-import { Gateway3TabHandler } from './overview-data-handlers/gateway-3-tab-handler.ts';
+import {
+	compileGateway3Data,
+	Gateway3TabHandler,
+	getMissingRequiredDocuments
+} from './overview-data-handlers/gateway-3-tab-handler.ts';
 import { ExaminationTabHandler } from './overview-data-handlers/examination-tab-handler.ts';
 import type { OverviewPageLoadHandler } from './overview-data-handlers/overview-page-load-handler.ts';
 import { addUploadedDocumentDetailsToAnswers } from './overview-data-handlers/overview-page-helper.ts';
+import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { gateway2SetIds, gateway3SetIds } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { questions } from './questions.ts';
+import {
+	EXAMINATION_STATUS_ID,
+	GATEWAY_3_DECISION_ID
+} from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
+import {
+	OPTIONAL_DOCUMENT_SETS,
+	REQUIRED_DOCUMENT_SETS
+} from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
+import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -44,19 +63,25 @@ const MOCK_DOCUMENT_SETS = [
 	{ id: '9', folderName: 'g1-self-assess' },
 	{ id: '10', folderName: 'cons-of-proposed' },
 	{ id: '11', folderName: 'summary-of-consultation' },
-	{ id: '12', folderName: 'subsequent-work-towards-a-draft-plan' },
+	{ id: '12', folderName: 'evidence-on-engagement' },
 	{ id: '13', folderName: 'gateway-2-report' },
 	{ id: '14', folderName: 'signed-sla' },
 	{ id: '15', folderName: 'gateway-3-document' },
+	{ id: '16', folderName: 'plan-content' },
+	{ id: '17', folderName: 'evidence-and-progress' },
+	{ id: '18', folderName: 'latest-policies-map' },
 	{ id: '16', folderName: 'gateway-3-document-1' },
 	{ id: '17', folderName: 'gateway-2-workshop-documents' },
-	{ id: '18', folderName: 'examination-report' }
+	{ id: '18', folderName: 'examination-report' },
+	{ id: '19', folderName: 'miqs' }
 ];
+
+process.env.GOV_NOTIFY_DISABLED = 'true';
 
 function createService(): any {
 	const db: any = {
 		case: {
-			update: mock.fn(async () => ({})),
+			update: mock.fn(async () => ({ id: CASE_ID })),
 			findUnique: mock.fn(async () => ({
 				id: CASE_ID,
 				gateway2Info: {
@@ -86,6 +111,9 @@ function createService(): any {
 			delete: mock.fn(async () => ({})),
 			upsert: mock.fn(async () => ({}))
 		},
+		lPA: {
+			findUnique: mock.fn(async () => null)
+		},
 		gateway1Info: {
 			upsert: mock.fn(async () => ({})),
 			findUnique: mock.fn(async () => null)
@@ -96,10 +124,12 @@ function createService(): any {
 		},
 		gateway3Info: {
 			upsert: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({ count: 1 })),
 			findUnique: mock.fn(async () => null)
 		},
 		examinationInfo: {
 			upsert: mock.fn(async () => ({})),
+			updateMany: mock.fn(async () => ({ count: 1 })),
 			findUnique: mock.fn(async () => null),
 			findFirst: mock.fn(async () => null)
 		},
@@ -124,7 +154,8 @@ function createService(): any {
 		db,
 		logger: {
 			info: mock.fn(),
-			error: mock.fn()
+			error: mock.fn(),
+			warn: mock.fn()
 		},
 		getEntraClient: mock.fn(() => null)
 	};
@@ -183,6 +214,66 @@ async function save(handler: ReturnType<typeof updateCaseField>, context: Return
 }
 
 describe('updateCaseField', () => {
+	it('does not write the form-only LPA list when continuing without changes', async () => {
+		const service = createService();
+		const context = createSaveContext({
+			params: { section: 'case-details', question: 'check-lpas' },
+			body: {
+				checkLpas: [
+					{ id: 'lpa-1', lpa: 'lpa-1' },
+					{ id: 'lpa-2', lpa: 'lpa-2' }
+				]
+			}
+		});
+
+		await save(updateCaseField(service), context);
+
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+	});
+
+	it('ignores the LPA list while saving an ordinary case field', async () => {
+		const service = createService();
+		const context = createSaveContext({
+			params: { section: 'case-details', question: 'plan-title' },
+			body: { planTitle: 'Updated plan', checkLpas: [{ id: 'lpa-1', lpa: 'lpa-1' }] }
+		});
+
+		await save(updateCaseField(service), context);
+
+		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
+			where: { reference: REFERENCE },
+			data: { planTitle: 'Updated plan' }
+		});
+	});
+
+	it('preserves the individual LPA edit while ignoring the form-only list', async () => {
+		const service = createService();
+		const context = createSaveContext({
+			params: {
+				section: 'case-details',
+				question: 'select-lpa',
+				manageListAction: 'edit',
+				manageListItemId: 'lpa-2'
+			},
+			body: { lpa: 'lpa-3', checkLpas: [{ id: 'lpa-2', lpa: 'lpa-2' }] }
+		});
+
+		await save(updateCaseField(service), context);
+
+		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
+			where: { reference: REFERENCE },
+			data: {
+				lpas: {
+					connectOrCreate: {
+						where: { lpaCode: 'lpa-3' },
+						create: { lpaCode: 'lpa-3', lpaName: 'Local Planning Authority 3' }
+					},
+					disconnect: [{ lpaCode: 'lpa-2' }]
+				}
+			}
+		});
+	});
+
 	it('removes a contact from the contacts section', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
@@ -206,7 +297,7 @@ describe('updateCaseField', () => {
 		assert.equal(service.db.case.update.mock.callCount(), 0);
 	});
 
-	it('disconnects an LPA when removing from a non-contact section', async () => {
+	it('disconnects an LPA and records its removal in case history', async () => {
 		const service = createService();
 		const handler = updateCaseField(service);
 		const context = createSaveContext({
@@ -219,7 +310,7 @@ describe('updateCaseField', () => {
 
 		await save(handler, context);
 
-		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 2);
 		assert.deepEqual(service.db.case.update.mock.calls[0].arguments[0], {
 			where: {
 				reference: REFERENCE
@@ -232,6 +323,9 @@ describe('updateCaseField', () => {
 				}
 			}
 		});
+
+		const caseHistory = service.db.case.update.mock.calls[1].arguments[0];
+		assert.deepEqual(caseHistory.data.caseHistories.create[0].event, 'E60000001 removed');
 
 		assert.equal(service.db.contact.delete.mock.callCount(), 0);
 	});
@@ -350,6 +444,20 @@ describe('updateCaseField', () => {
 			assert.equal(args.data.examinationInfo.upsert.create.examiningInspector1, 'Insp One');
 			assert.equal(args.data.examinationInfo.upsert.create.qaInspector1, 'QA One');
 			assert.ok(args.data.examinationInfo.upsert.create.examiningInspectorAppointmentDate instanceof Date);
+			assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
+				where: {
+					caseId: CASE_ID,
+					status: EXAMINATION_STATUS_ID.SUBMITTED
+				},
+				data: { status: EXAMINATION_STATUS_ID.IN_EXAMINATION }
+			});
+			// The website is also updated wherever the Portal submitted it, as that is where Manage reads it from
+			const portalWebsiteUpdate = {
+				where: { caseId: CASE_ID, examinationWebsiteUrl: { not: null } },
+				data: { examinationWebsiteUrl: 'https://example.com' }
+			};
+			assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[1].arguments[0], portalWebsiteUpdate);
+			assert.deepEqual(service.db.gateway3Info.updateMany.mock.calls[0].arguments[0], portalWebsiteUpdate);
 		});
 	});
 
@@ -672,6 +780,88 @@ describe('updateCaseHistory', () => {
 	const context = createSaveContext({
 		url: '/case'
 	});
+
+	it('uses question and multi-field titles for case history labels', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service,
+			context.req,
+			service.db,
+			{ planTitle: 'Old plan', firstName: 'Jane', email: null },
+			{ planTitle: 'New plan', firstName: 'Joan', email: 'joan@example.com' },
+			REFERENCE,
+			CURRENT_USER
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		assert.deepEqual(entries, [
+			{ event: 'Title updated from Old plan to New plan', username: CURRENT_USER },
+			{ event: 'First name updated from Jane to Joan', username: CURRENT_USER },
+			{ event: 'Email address joan@example.com added', username: CURRENT_USER }
+		]);
+	});
+
+	it('uses a defined label for every configured question and multi-field input', async () => {
+		const service = createService();
+
+		const questionList = Object.values(questions);
+		const inputFields = questionList
+			.filter((question) => question instanceof CUSTOM_COMPONENT_CLASSES[CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT])
+			.flatMap((question) => question.inputFields);
+		const configuredFields = [...questionList, ...inputFields];
+		const fieldNames = new Set(
+			configuredFields.map((question) => question.fieldName).filter((fieldName) => !!fieldName)
+		);
+		const previousValues = Object.fromEntries([...fieldNames].map((fieldName) => [fieldName, 'old value']));
+		const newValues = Object.fromEntries([...fieldNames].map((fieldName) => [fieldName, 'new value']));
+
+		await updateCaseHistory(service, context.req, service.db, previousValues, newValues, REFERENCE, CURRENT_USER);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		for (const [index, fieldName] of [...fieldNames].entries()) {
+			const label = entries[index].event.split(' updated from ')[0];
+			const question = configuredFields.findLast((question) => question.fieldName === fieldName);
+			assert.equal(label, question?.title ?? fieldName, `Incorrect label for ${fieldName}`);
+			assert.notEqual(label, 'undefined', `Missing label for ${fieldName}`);
+		}
+	});
+
+	it('falls back to the field name when no question title provided', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service,
+			context.req,
+			service.db,
+			{ exampleFieldName: 'old value' },
+			{ exampleFieldName: 'new value' },
+			REFERENCE,
+			CURRENT_USER
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		assert.equal(entries[0].event, 'exampleFieldName updated from old value to new value');
+	});
+
+	it('uses an override event when provided', async () => {
+		const service = createService();
+
+		await updateCaseHistory(
+			service,
+			context.req,
+			service.db,
+			{ firstName: 'Jane' },
+			{ firstName: 'Joan' },
+			REFERENCE,
+			CURRENT_USER,
+			{ firstName: 'Contact updated' }
+		);
+
+		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
+		assert.equal(entries[0].event, 'Contact updated');
+	});
+
 	it('uses readable copy for Examination letter date updates', async () => {
 		const db = {
 			case: {
@@ -851,6 +1041,23 @@ describe('buildGetJourneyMiddleware', () => {
 		};
 	}
 
+	it('excludes draft and deleted documents from the case header status', async () => {
+		const ctx = createMiddlewareContext({
+			pageLoadHandler: class {
+				handle = mock.fn(async () => {});
+			}
+		});
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.deepEqual(
+			ctx.service.db.document.findMany.mock.calls.map(({ arguments: [query] }) => query),
+			[gateway2SetIds, gateway3SetIds].map((documentSetIds) => ({
+				where: { caseId: CASE_ID, documentSetId: { in: documentSetIds }, isDeleted: false, isTemp: false }
+			}))
+		);
+	});
+
 	it('renders 404 when the case title cannot be found', async () => {
 		const ctx = createMiddlewareContext();
 
@@ -966,7 +1173,8 @@ describe('buildGetJourneyMiddleware', () => {
 						programmeOfficerFirstName: true,
 						programmeOfficerLastName: true,
 						programmeOfficerEmail: true,
-						assessorName: true
+						assessorName: true,
+						examinationWebsiteUrl: true
 					}
 				},
 				examinationInfo: {
@@ -975,6 +1183,7 @@ describe('buildGetJourneyMiddleware', () => {
 						examiningInspector2: true,
 						examiningInspector3: true,
 						examinationWebsite: true,
+						examinationWebsiteUrl: true,
 						qaInspector1: true,
 						qaInspector2: true,
 						qaInspector3: true
@@ -1169,6 +1378,56 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
+	it('uses the examination website the LPA submitted for Gateway 3', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-3',
+			pageLoadHandler: Gateway3TabHandler
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: CASE_ID,
+			examinationWebsiteUrl: 'www.lpa-example.com',
+			submissions: [{ id: 'someId', decision: undefined, completionDate: undefined, gateway3InfoId: undefined }]
+		}));
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ examinationWebsite: null }));
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.equal(ctx.res.locals.journeyResponse.answers.examinationWebsite, 'www.lpa-example.com');
+		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	it('shows the Portal examination submission website on Gateway 3 ahead of the other saved addresses', async () => {
+		const ctx = createMiddlewareContext({
+			url: '/gateway-3',
+			pageLoadHandler: Gateway3TabHandler
+		});
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+			id: CASE_ID,
+			planTitle: 'Southshire Local Plan'
+		}));
+		ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			caseId: CASE_ID,
+			examinationWebsiteUrl: 'www.lpa-example.com',
+			submissions: [{ id: 'someId', decision: undefined, completionDate: undefined, gateway3InfoId: undefined }]
+		}));
+		ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			examinationWebsite: 'www.manage-example.com',
+			examinationWebsiteUrl: 'www.lpa-examination-example.com'
+		}));
+		ctx.service.db.documentSet.findMany.mock.mockImplementation(async () => MOCK_DOCUMENT_SETS);
+
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+		assert.equal(ctx.res.locals.journeyResponse.answers.examinationWebsite, 'www.lpa-examination-example.com');
+	});
+
 	it('continues the Gateway 3 document page when no files have been uploaded', async () => {
 		const ctx = createMiddlewareContext({
 			url: '/gateway-3/gateway-3-submission/gateway-3-document',
@@ -1207,6 +1466,152 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 1);
 	});
 
+	describe('Gateway 3 submission documents', () => {
+		const SUBMISSION_SECTION = 'gateway-3-submission-1';
+		const reviewDocumentsUrl = `/case/${REFERENCE}/gateway-3/${SUBMISSION_SECTION}/gateway-3-review-documents-1`;
+		const allRequiredDocumentSetIds = Object.values(REQUIRED_DOCUMENT_SETS);
+		const missingDocumentErrors = [
+			{
+				text: 'Proposed local plan intended for submission for examination document is required.',
+				href: '#document-proposed-local-plan-intended-for-submission-for-examination'
+			},
+			{
+				text: 'Map of proposed local plan policies document is required.',
+				href: '#document-map-of-proposed-local-plan-policies'
+			}
+		];
+
+		function createGateway3PageContext({
+			question,
+			addedDocumentSetIds = [],
+			session = {}
+		}: {
+			question: string;
+			addedDocumentSetIds?: string[];
+			session?: Record<string, unknown>;
+		}) {
+			const ctx = createMiddlewareContext({
+				url: `/gateway-3/${SUBMISSION_SECTION}/${question}`,
+				pageLoadHandler: Gateway3TabHandler
+			});
+			Object.assign(ctx.req, {
+				method: 'GET',
+				params: { reference: REFERENCE, section: SUBMISSION_SECTION, question },
+				originalUrl: `/case/${REFERENCE}/gateway-3/${SUBMISSION_SECTION}/${question}`,
+				session: { fileUploader: null, ...session }
+			});
+			ctx.res.redirect = mock.fn();
+
+			ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+				id: CASE_ID,
+				planTitle: 'Southshire Local Plan'
+			}));
+			ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+				caseId: CASE_ID,
+				submissions: [{ id: 'someId', decision: undefined, completionDate: undefined, gateway3InfoId: undefined }]
+			}));
+			const addedDocuments = addedDocumentSetIds.map((documentSetId) => ({
+				documentSetId,
+				name: `${documentSetId}-guid`,
+				latestDocumentVersion: { originalFilename: `${documentSetId}.pdf` }
+			}));
+			// Only compileGateway3Data asks for the latest version of a set of documents
+			ctx.service.db.document.findMany.mock.mockImplementation(async (args: any) =>
+				args?.where?.documentSetId?.in && args?.include?.latestDocumentVersion ? addedDocuments : []
+			);
+
+			return ctx;
+		}
+
+		it('redirects a decision request to review documents with an error for each missing document', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-decision-1',
+				addedDocumentSetIds: allRequiredDocumentSetIds.filter(
+					(documentSetId) =>
+						documentSetId !== REQUIRED_DOCUMENT_SETS.proposedLocalPlan &&
+						documentSetId !== REQUIRED_DOCUMENT_SETS.mapOfPolicies
+				)
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.deepEqual(ctx.req.session.gateway3DocumentErrors, missingDocumentErrors);
+			assert.equal(ctx.res.redirect.mock.callCount(), 1);
+			assert.equal(ctx.res.redirect.mock.calls[0].arguments[0], reviewDocumentsUrl);
+			assert.equal(ctx.next.mock.callCount(), 0);
+		});
+
+		it('lists every required document as missing when none have been added', async () => {
+			const ctx = createGateway3PageContext({ question: 'gateway-3-decision-1' });
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.equal(ctx.req.session.gateway3DocumentErrors.length, allRequiredDocumentSetIds.length);
+			assert.deepEqual(ctx.req.session.gateway3DocumentErrors.at(-1), {
+				text: 'Statement setting out practical arrangements document is required.',
+				href: '#document-statement-setting-out-practical-arrangements'
+			});
+			assert.equal(ctx.res.redirect.mock.calls[0].arguments[0], reviewDocumentsUrl);
+		});
+
+		it('redirects a decision request to the Gateway 3 decision when every required document is added', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-decision-1',
+				addedDocumentSetIds: allRequiredDocumentSetIds
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.equal(ctx.req.session.gateway3DocumentErrors, undefined);
+			assert.equal(ctx.res.redirect.mock.callCount(), 1);
+			assert.equal(
+				ctx.res.redirect.mock.calls[0].arguments[0],
+				`/case/${REFERENCE}/gateway-3-report/${SUBMISSION_SECTION}/gateway-3-decision-1`
+			);
+			assert.equal(ctx.next.mock.callCount(), 0);
+		});
+
+		it('shows the missing document errors once on the review documents page', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-review-documents-1',
+				session: { gateway3DocumentErrors: missingDocumentErrors }
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.deepEqual(ctx.res.locals.errorSummary, missingDocumentErrors);
+			assert.equal(ctx.req.session.gateway3DocumentErrors, undefined);
+			assert.equal(ctx.next.mock.callCount(), 1);
+		});
+
+		it('keeps the missing document errors when a different Gateway 3 page loads', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-assessor-name',
+				session: { gateway3DocumentErrors: missingDocumentErrors }
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			assert.equal(ctx.res.locals.errorSummary, undefined);
+			assert.deepEqual(ctx.req.session.gateway3DocumentErrors, missingDocumentErrors);
+			assert.equal(ctx.next.mock.callCount(), 1);
+		});
+
+		it('adds the submission document names to the Gateway 3 answers', async () => {
+			const ctx = createGateway3PageContext({
+				question: 'gateway-3-review-documents-1',
+				addedDocumentSetIds: [REQUIRED_DOCUMENT_SETS.proposedLocalPlan, OPTIONAL_DOCUMENT_SETS.otherDocuments]
+			});
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			const { answers } = ctx.res.locals.journeyResponse;
+			assert.equal(answers.proposedLocalPlan, `${REQUIRED_DOCUMENT_SETS.proposedLocalPlan}.pdf`);
+			assert.equal(answers.mapOfPolicies, '');
+			assert.equal(answers.optionalData.otherDocuments, `${OPTIONAL_DOCUMENT_SETS.otherDocuments}.pdf`);
+		});
+	});
+
 	it('loads examination journey data', async () => {
 		const ctx = createMiddlewareContext({
 			url: '/examination',
@@ -1243,6 +1648,91 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.res.locals.journeyResponse.answers.letterSentToMHCLGDate, letterSentToMHCLGDate);
 		assert.equal(ctx.res.locals.journeyResponse.answers.factCheckDueDate, factCheckDueDate);
 		assert.equal(ctx.next.mock.callCount(), 1);
+	});
+
+	describe('examination website on the Examination tab', () => {
+		async function loadExaminationAnswers(
+			examinationInfo: Record<string, unknown>,
+			gateway3Info: Record<string, unknown> | null,
+			url = '/examination'
+		) {
+			const ctx = createMiddlewareContext({ url, pageLoadHandler: ExaminationTabHandler });
+			ctx.service.db.case.findUnique.mock.mockImplementation(async () => ({
+				id: CASE_ID,
+				planTitle: 'Southshire Local Plan'
+			}));
+			ctx.service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+				caseId: CASE_ID,
+				...examinationInfo
+			}));
+			ctx.service.db.gateway3Info.findUnique.mock.mockImplementation(async () => gateway3Info);
+
+			await ctx.handler(ctx.req, ctx.res, ctx.next);
+
+			return ctx.res.locals.journeyResponse.answers;
+		}
+
+		it('uses the website the LPA submitted in the Portal Gateway 3 submission instead of showing not started', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: null, examinationWebsiteUrl: null },
+				{ examinationWebsiteUrl: 'www.lpa-gateway-3.example' }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.lpa-gateway-3.example');
+		});
+
+		it('uses the Portal examination submission website ahead of the Gateway 3 one', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: null, examinationWebsiteUrl: 'www.lpa-examination.example' },
+				{ examinationWebsiteUrl: 'www.lpa-gateway-3.example' }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.lpa-examination.example');
+		});
+
+		it('reads the Portal website even when a different address is saved in Manage', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: 'www.manage.example', examinationWebsiteUrl: 'www.lpa-examination.example' },
+				{ examinationWebsiteUrl: 'www.lpa-gateway-3.example' }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.lpa-examination.example');
+		});
+
+		it('uses the website saved in Manage when the Portal has not submitted one', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsite: 'www.manage.example', examinationWebsiteUrl: null },
+				{ examinationWebsiteUrl: null }
+			);
+
+			assert.equal(answers.examinationWebsite, 'www.manage.example');
+		});
+
+		it('leaves the website empty when it has not been provided anywhere', async () => {
+			const answers = await loadExaminationAnswers({ examinationWebsite: null, examinationWebsiteUrl: null }, null);
+
+			assert.equal(answers.examinationWebsite, null);
+		});
+
+		it('adds the programme officer saved against Gateway 3, including the phone number', async () => {
+			const answers = await loadExaminationAnswers(
+				{ examinationWebsiteUrl: 'www.lpa-examination.example' },
+				{
+					programmeOfficerFirstName: 'Pat',
+					programmeOfficerLastName: 'Officer',
+					programmeOfficerEmail: 'pat@example.com',
+					programmeOfficerPhone: '01234 567890',
+					examinationWebsiteUrl: 'www.lpa-gateway-3.example'
+				}
+			);
+
+			assert.equal(answers.programmeOfficerFirstName, 'Pat');
+			assert.equal(answers.programmeOfficerLastName, 'Officer');
+			assert.equal(answers.programmeOfficerEmail, 'pat@example.com');
+			assert.equal(answers.programmeOfficerPhone, '01234 567890');
+			// The Gateway 3 website must not replace the examination row's own Portal answer
+			assert.equal(answers.examinationWebsiteUrl, 'www.lpa-examination.example');
+		});
 	});
 
 	it('marks Manage-page uploads as returning to Manage after confirmation', async () => {
@@ -1462,76 +1952,170 @@ describe('Gateway 3 document loading', () => {
 			await addUploadedDocumentDetailsToAnswers(service, { id: CASE_ID }, req, answers, 'gateway-3-report');
 
 			const fieldName = question.replace('gateway-3-document-', 'gateway3Documents-');
-			assert.deepEqual(answers[fieldName], [temporary ? draftFile : savedFile]);
+			assert.deepEqual(answers[fieldName], temporary ? [draftFile] : [savedFile]);
 			assert.deepEqual(req.session.fileUploader?.[`${REFERENCE}:${fieldName}`].uploadedFiles, answers[fieldName]);
 		});
 	}
 });
 
-describe('DeleteCase', () => {
-	(it('renders delete-case.njk when getDeleteCase is called', async () => {
+describe('compileGateway3Data', () => {
+	const gateway3Answers = { id: 'gateway-3-info-id', caseId: CASE_ID, examinationWebsite: 'https://example.com' };
+
+	function createServiceWithDocuments(documents: unknown[]) {
 		const service = createService();
-		const currentCase = {
-			reference: 'PLAN-123456',
-			planTitle: 'Southshire Local Plan',
-			planType: 'Local Plan',
-			lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-			caseOfficer: 'John Doe'
-		};
-		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-		const render = mock.fn();
-		const status = mock.fn(() => ({ render }));
-		const res = {
-			locals: {},
-			render,
-			status
-		} as unknown as Response;
-		const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
+		service.db.document.findMany.mock.mockImplementation(async () => documents);
+		return service;
+	}
 
-		await getDeleteCase(service)(req, res);
+	it('looks up only the submitted required and optional Gateway 3 documents for the case', async () => {
+		const service = createServiceWithDocuments([]);
 
-		assert.equal(render.mock.calls[0].arguments[0], 'views/layouts/delete-case.njk');
-	}),
-		it('sets deletedDate when delete is confirmed', async () => {
-			const service = createService();
-			const currentCase = {
-				reference: 'PLAN-123456',
-				planTitle: 'Southshire Local Plan',
-				planType: 'Local Plan',
-				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-				caseOfficer: 'John Doe'
-			};
-			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-			const redirect = mock.fn();
-			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
+		await compileGateway3Data(service.db, gateway3Answers);
 
-			await postMarkAsDeleteCase(service)(req, res);
+		assert.deepEqual(service.db.document.findMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: CASE_ID,
+				isDeleted: false,
+				isTemp: false,
+				documentSetId: {
+					in: [...Object.values(REQUIRED_DOCUMENT_SETS), ...Object.values(OPTIONAL_DOCUMENT_SETS)]
+				}
+			},
+			include: { latestDocumentVersion: true }
+		});
+	});
 
-			assert.equal(service.db.case.update.mock.callCount(), 1);
+	it('joins the file names for each document set into its answer field', async () => {
+		const service = createServiceWithDocuments([
+			{
+				documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+				name: 'plan-guid',
+				latestDocumentVersion: { originalFilename: 'plan.pdf' }
+			},
+			{
+				documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+				name: 'appendix-guid',
+				latestDocumentVersion: { originalFilename: 'plan-appendix.pdf' }
+			},
+			{
+				documentSetId: OPTIONAL_DOCUMENT_SETS.environmentalReport,
+				name: 'environmental-guid',
+				latestDocumentVersion: { originalFilename: 'environmental-report.pdf' }
+			}
+		]);
 
-			const args = service.db.case.update.mock.calls[0].arguments[0] as any;
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
 
-			assert.ok(args.data.deletedDate instanceof Date);
-		}),
-		it('redirects to all cases when delete is confirmed', async () => {
-			const service = createService();
-			const currentCase = {
-				reference: 'PLAN-123456',
-				planTitle: 'Southshire Local Plan',
-				planType: 'Local Plan',
-				lpas: [{ lpaCode: 'E60000001' }, { lpaCode: 'E60000002' }],
-				caseOfficer: 'John Doe'
-			};
-			service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
-			const redirect = mock.fn();
-			const res = { redirect } as unknown as Response;
-			const req = { params: { reference: 'PLAN-123456' } } as unknown as Request;
+		assert.equal(compiledAnswers.proposedLocalPlan, 'plan.pdf, plan-appendix.pdf');
+		assert.equal(compiledAnswers.mapOfPolicies, '');
+		assert.equal(compiledAnswers.optionalData.environmentalReport, 'environmental-report.pdf');
+		assert.equal(compiledAnswers.optionalData.otherDocuments, '');
+	});
 
-			await postMarkAsDeleteCase(service)(req, res);
+	it('uses the document name when there is no latest version', async () => {
+		const service = createServiceWithDocuments([
+			{ documentSetId: REQUIRED_DOCUMENT_SETS.statementOfSoundness, name: 'soundness.pdf', latestDocumentVersion: null }
+		]);
 
-			assert.equal(redirect.mock.calls[0].arguments[0], '/');
-		}));
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.equal(compiledAnswers.statementOfSoundness, 'soundness.pdf');
+	});
+
+	it('keeps each document guid and file name so the files can be downloaded', async () => {
+		const service = createServiceWithDocuments([
+			{
+				guid: 'plan-guid',
+				documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+				name: 'plan-guid',
+				latestDocumentVersion: { originalFilename: 'plan.pdf' }
+			},
+			{
+				guid: 'appendix-guid',
+				documentSetId: REQUIRED_DOCUMENT_SETS.proposedLocalPlan,
+				name: 'appendix-guid',
+				latestDocumentVersion: { originalFilename: 'plan-appendix.pdf' }
+			},
+			{
+				guid: 'environmental-guid',
+				documentSetId: OPTIONAL_DOCUMENT_SETS.environmentalReport,
+				name: 'environmental-guid',
+				latestDocumentVersion: { originalFilename: 'environmental-report.pdf' }
+			}
+		]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(compiledAnswers.documentFiles.proposedLocalPlan, [
+			{ guid: 'plan-guid', fileName: 'plan.pdf' },
+			{ guid: 'appendix-guid', fileName: 'plan-appendix.pdf' }
+		]);
+		assert.deepEqual(compiledAnswers.documentFiles.environmentalReport, [
+			{ guid: 'environmental-guid', fileName: 'environmental-report.pdf' }
+		]);
+	});
+
+	it('lists every required and optional document set in the document files, empty when nothing is added', async () => {
+		const service = createServiceWithDocuments([]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(Object.keys(compiledAnswers.documentFiles), [
+			...Object.keys(REQUIRED_DOCUMENT_SETS),
+			...Object.keys(OPTIONAL_DOCUMENT_SETS)
+		]);
+		assert.ok(
+			Object.values(compiledAnswers.documentFiles).every((files) => Array.isArray(files) && files.length === 0)
+		);
+	});
+
+	it('uses the document name as the file name when there is no latest version', async () => {
+		const service = createServiceWithDocuments([
+			{
+				guid: 'soundness-guid',
+				documentSetId: REQUIRED_DOCUMENT_SETS.statementOfSoundness,
+				name: 'soundness.pdf',
+				latestDocumentVersion: null
+			}
+		]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.deepEqual(compiledAnswers.documentFiles.statementOfSoundness, [
+			{ guid: 'soundness-guid', fileName: 'soundness.pdf' }
+		]);
+	});
+
+	it('keeps the existing Gateway 3 answers', async () => {
+		const service = createServiceWithDocuments([]);
+
+		const compiledAnswers: Record<string, any> = await compileGateway3Data(service.db, gateway3Answers);
+
+		assert.equal(compiledAnswers.id, gateway3Answers.id);
+		assert.equal(compiledAnswers.caseId, CASE_ID);
+		assert.equal(compiledAnswers.examinationWebsite, gateway3Answers.examinationWebsite);
+	});
+});
+
+describe('getMissingRequiredDocuments', () => {
+	const requiredDocumentFields = Object.keys(REQUIRED_DOCUMENT_SETS);
+	const allRequiredDocumentsAdded = Object.fromEntries(requiredDocumentFields.map((field) => [field, `${field}.pdf`]));
+
+	it('returns nothing when every required document has been added', () => {
+		assert.deepEqual(getMissingRequiredDocuments(allRequiredDocumentsAdded as any), []);
+	});
+
+	it('returns each required document that has not been added, in display order', () => {
+		const answers = { ...allRequiredDocumentsAdded, mapOfPolicies: '', practicalArrangementsStatement: '' };
+
+		assert.deepEqual(getMissingRequiredDocuments(answers as any), ['mapOfPolicies', 'practicalArrangementsStatement']);
+	});
+
+	it('ignores optional documents', () => {
+		const answers = { ...allRequiredDocumentsAdded, optionalData: { otherDocuments: '' } };
+
+		assert.deepEqual(getMissingRequiredDocuments(answers as any), []);
+	});
 });
 
 describe('downloadDocument', () => {
@@ -1545,7 +2129,7 @@ describe('downloadDocument', () => {
 		};
 		const res = {};
 		await downloadDocument(service)(req as unknown as Request, res as Response);
-		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res]);
+		assert.deepEqual(mockDownload.mock.calls[0].arguments, [service, 'some-document', res, { includeDeleted: true }]);
 	});
 	it('rejects when the documentId is not found in the request', async () => {
 		const service = createService();
@@ -1630,6 +2214,34 @@ describe('redirectToChecks', () => {
 });
 
 describe('issueExaminationReport', () => {
+	it('issues the first report when its issue date was entered before uploading', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			soundUnsoundDate: new Date('2026-10-19T12:00:00.000Z')
+		}));
+		const req = {
+			params: { reference: REFERENCE },
+			query: {},
+			session: { authEnabled: false }
+		} as unknown as Request;
+		const redirect = mock.fn();
+
+		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
+
+		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
+		assert.equal(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate, undefined);
+		assert.equal(req.session.alerts[0].text, 'Final report and supporting documents saved and notification sent');
+		assert.equal(
+			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
+			'Examination report issued on 19 October 2026'
+		);
+	});
+
 	it('finishes the initial report journey after its date is changed', async () => {
 		const service = createService();
 		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
@@ -1645,6 +2257,10 @@ describe('issueExaminationReport', () => {
 		await issueExaminationReport(service, 'examination')(req, { redirect } as unknown as Response, mock.fn());
 
 		assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		const expectedMessage = {
 			type: 'success',
 			text: 'Final report and supporting documents saved and notification sent',
@@ -1676,6 +2292,10 @@ describe('issueExaminationReport', () => {
 		const savedDate = service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.soundUnsoundDate;
 		assert.ok(savedDate instanceof Date);
 		assert.ok(savedDate.getTime() >= beforeConfirm.getTime());
+		assert.equal(
+			service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update.status,
+			EXAMINATION_STATUS_ID.REPORT_ISSUED
+		);
 		assert.equal((req.session as any).examinationReportReturnToManage, undefined);
 	});
 
@@ -1696,7 +2316,10 @@ describe('issueExaminationReport', () => {
 
 		await issueExaminationReport(service, 'examination')(req, res, mock.fn());
 
-		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.upsert.mock.calls[0].arguments[0].update, {
+			status: EXAMINATION_STATUS_ID.REPORT_ISSUED
+		});
 		assert.equal(
 			redirect.mock.calls[0].arguments[0],
 			`/case/${REFERENCE}/examination/outcome/examination-report-manage`
@@ -1723,7 +2346,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:signedSla`]: {
 						uploadedFiles: [
 							{
-								dateCreated: new Date(2025, 0, 1)
+								fileName: 'someFile.txt',
+								dateCreated: new Date(2025, 0, 1),
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -1745,11 +2372,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
-						url: 'sla-received-date',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/sla-received-date',
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/signed-sla',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -1760,12 +2393,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'signed-sla',
 				section: 'gateway-1',
 				submitButtonText: 'Confirm and issue notification',
-				titleHeading: 'Check signed SLA and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: new Date(2025, 0, 1)
-					}
-				]
+				titleHeading: 'Check signed SLA and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -1780,7 +2408,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:signedSla`]: {
 						uploadedFiles: [
 							{
-								dateCreated: new Date(2025, 0, 1)
+								fileName: 'someFile.txt',
+								dateCreated: new Date(2025, 0, 1),
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -1802,11 +2434,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
-						url: 'sla-received-date',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/sla-received-date',
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-1/signed-sla',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -1817,12 +2455,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'signed-sla',
 				section: 'gateway-1',
 				submitButtonText: 'Confirm and issue notification',
-				titleHeading: 'Check signed SLA and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: new Date(2025, 0, 1)
-					}
-				]
+				titleHeading: 'Check signed SLA and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -1837,7 +2470,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:gateway2Report`]: {
 						uploadedFiles: [
 							{
-								dateCreated: dateCreated
+								fileName: 'someFile.txt',
+								dateCreated: dateCreated,
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -1858,11 +2495,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
 						url: undefined,
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-2/gateway-2-report',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -1873,12 +2516,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
-				titleHeading: 'Check Gateway 2 report details and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: dateCreated
-					}
-				]
+				titleHeading: 'Check Gateway 2 report details and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -1893,7 +2531,11 @@ describe('buildCheckReportMiddleware', () => {
 					[`${caseReference}:gateway2Report`]: {
 						uploadedFiles: [
 							{
-								dateCreated: dateCreated
+								fileName: 'someFile.txt',
+								dateCreated: dateCreated,
+								metadata: {
+									documentGuid: 'someDocumentGuid'
+								}
 							}
 						]
 					}
@@ -1914,11 +2556,17 @@ describe('buildCheckReportMiddleware', () => {
 		const expected_call_args = [
 			'views/layouts/submit-documents-check-your-answers',
 			{
-				additionalFields: [
+				answersToReview: [
 					{
 						name: 'Date uploaded',
 						url: undefined,
 						value: '1 January 2026'
+					},
+					{
+						name: 'Document 1',
+						url: '/case/some-case-reference/some-journey-id/gateway-2/gateway-2-report',
+						value:
+							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
 					}
 				],
 				backLink: 'url-to-redirect-do',
@@ -1929,12 +2577,7 @@ describe('buildCheckReportMiddleware', () => {
 				question: 'gateway-2-report',
 				section: 'gateway-2',
 				submitButtonText: 'Issue report',
-				titleHeading: 'Check Gateway 2 report details and issue notification',
-				uploadedFiles: [
-					{
-						dateCreated: dateCreated
-					}
-				]
+				titleHeading: 'Check Gateway 2 report details and issue notification'
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
@@ -1962,6 +2605,26 @@ describe('buildCheckReportMiddleware', () => {
 describe('preprocessQuestionProperties', () => {
 	const caseReference = 'some-case-reference';
 	const journeyId = 'gateway-3';
+	const reviewDocumentsHref = `/case/${caseReference}/gateway-3/gateway-3-submission-1/gateway-3-review-documents-1`;
+
+	const createDocumentsCheckQuestion = (submissionId = 1) =>
+		new CustomDocumentsQuestion({
+			title: 'Documents',
+			question: 'Gateway 3 Documents',
+			fieldName: `gateway3DocumentSubmission-${submissionId}`,
+			url: `gateway-3-review-documents-${submissionId}`
+		});
+
+	const assertDocumentsCheckQuestionPrepared = (
+		documentsCheckQuestion: any,
+		expectedActionText: string,
+		expectedVisible: boolean
+	) => {
+		assert.deepEqual(documentsCheckQuestion.actionLink, { href: reviewDocumentsHref, text: expectedActionText });
+		assert.equal(documentsCheckQuestion.changeActionText, 'Review');
+		assert.equal(documentsCheckQuestion.config.actionButtonVisibleInSummary, expectedVisible);
+	};
+
 	it('removes the completed workshop document link for an incomplete Gateway 2 case', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -1998,7 +2661,7 @@ describe('preprocessQuestionProperties', () => {
 		assert.equal(next.mock.callCount(), 1);
 	});
 
-	it('can preprocess gateway3 when the documents have not been submitted', async () => {
+	it('hides Review when documents have been uploaded but not submitted', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
 			gateway3Info: {
@@ -2007,13 +2670,22 @@ describe('preprocessQuestionProperties', () => {
 						id: 'someId',
 						decision: undefined,
 						completionDate: undefined,
+						submittedDate: null,
 						gateway3InfoId: undefined
 					}
 				]
 			}
 		}));
 		const res = {
-			render: mock.fn(() => {})
+			render: mock.fn(() => {}),
+			locals: {
+				journeyResponse: {
+					answers: {
+						proposedLocalPlan: 'plan.pdf',
+						documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] }
+					}
+				}
+			}
 		};
 		const req = {
 			session: {},
@@ -2031,8 +2703,10 @@ describe('preprocessQuestionProperties', () => {
 			},
 			'gateway3Documents-1': {
 				config: {}
-			}
+			},
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
 		};
+
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
 				changeActionText: 'View',
@@ -2042,15 +2716,54 @@ describe('preprocessQuestionProperties', () => {
 				}
 			}
 		};
+
 		const myNextFunction = mock.fn(() => {});
 		const handler = preprocessQuestionProperties(service, journeyId, questions);
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
 		assert.equal(myNextFunction.mock.callCount(), 1);
 		const actualDecisionQuestion = questions['gateway3Decision-1'];
+		const actualDocumentsCheckQuestion = questions['gateway3DocumentsCheck-1'];
 		delete questions['gateway3Decision-1'];
+		delete questions['gateway3DocumentsCheck-1'];
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
+		assertDocumentsCheckQuestionPrepared(actualDocumentsCheckQuestion, 'Review', false);
+		const [documentsRow] = actualDocumentsCheckQuestion.formatAnswerForSummary('gateway-3-submission-1', {
+			response: res.locals.journeyResponse
+		});
+		assert.equal(documentsRow.action, undefined);
 	});
+
+	it('prepares submission 1 as not started when there are no submission rows yet', async () => {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => ({
+			gateway3Info: { actualDate: null, submissions: [] }
+		}));
+		const res = { locals: { journeyResponse: { answers: {} } } };
+		const req = { session: {}, params: { reference: caseReference } };
+		const questions: Record<string, any> = {
+			'gateway3Decision-1': {},
+			'gateway3Documents-1': { config: {} },
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
+		};
+
+		const next = mock.fn(() => {});
+		await preprocessQuestionProperties(service, journeyId, questions)(
+			req as unknown as Request,
+			res as unknown as Response,
+			next
+		);
+
+		assert.equal(next.mock.callCount(), 1);
+		assert.deepEqual(questions['gateway3Decision-1'].actionLink, {
+			href: `/case/${caseReference}/gateway-3-report/gateway-3-submission-1/gateway-3-decision-1`,
+			text: 'Add'
+		});
+		assert.equal(questions['gateway3Decision-1'].formatSummaryValue(), 'Not started');
+		assert.equal(questions['gateway3Documents-1'].editable, true);
+		assert.equal(questions['gateway3DocumentsCheck-1'].config.actionButtonVisibleInSummary, false);
+	});
+
 	it('can preprocess gateway3 when the documents have submitted', async () => {
 		const service = createService();
 		service.db.case.findUnique.mock.mockImplementation(async () => ({
@@ -2060,13 +2773,22 @@ describe('preprocessQuestionProperties', () => {
 						id: 'someId',
 						decision: '1',
 						completionDate: new Date(2026, 0, 1),
+						submittedDate: new Date(2025, 11, 1),
 						gateway3InfoId: undefined
 					}
 				]
 			}
 		}));
 		const res = {
-			render: mock.fn(() => {})
+			render: mock.fn(() => {}),
+			locals: {
+				journeyResponse: {
+					answers: {
+						proposedLocalPlan: 'plan.pdf',
+						documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] }
+					}
+				}
+			}
 		};
 		const req = {
 			session: {},
@@ -2079,10 +2801,13 @@ describe('preprocessQuestionProperties', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		const questions: Record<string, any> = {
-			'gateway3Decision-1': {},
+			'gateway3Decision-1': {
+				formatSummaryValue: 'aValueThatShouldBeOverridden'
+			},
 			'gateway3Documents-1': {
 				config: {}
-			}
+			},
+			'gateway3DocumentsCheck-1': createDocumentsCheckQuestion()
 		};
 		const expectedModifiedQuestions: Record<string, any> = {
 			'gateway3Documents-1': {
@@ -2093,30 +2818,76 @@ describe('preprocessQuestionProperties', () => {
 				}
 			}
 		};
+
 		const myNextFunction = mock.fn(() => {});
 		const handler = preprocessQuestionProperties(service, journeyId, questions);
 		await handler(req as unknown as Request, res as unknown as Response, myNextFunction);
 		assert.equal(myNextFunction.mock.callCount(), 1);
 		const actualDecisionQuestion = questions['gateway3Decision-1'];
+		const actualDocumentsCheckQuestion = questions['gateway3DocumentsCheck-1'];
 		delete questions['gateway3Decision-1'];
+		delete questions['gateway3DocumentsCheck-1'];
 		assert.deepEqual(questions, expectedModifiedQuestions);
 		assert.equal(typeof actualDecisionQuestion.formatSummaryValue, 'function');
+		assertDocumentsCheckQuestionPrepared(actualDocumentsCheckQuestion, 'Review', true);
 		assert.deepEqual(actualDecisionQuestion.actionLink, {
 			href: `/case/some-case-reference/gateway-3-report/gateway-3-submission-1/gateway-3-document-1/check`,
 			text: 'View'
 		});
 	});
+
+	it('uses the initial receipt date without revealing an unsubmitted resubmission', async () => {
+		for (const submittedDate of [null, new Date(2026, 0, 2)]) {
+			const service = createService();
+			service.db.case.findUnique.mock.mockImplementation(async () => ({
+				gateway3Info: {
+					actualDate: new Date(2025, 11, 1),
+					submissions: [
+						{ decision: '2', completionDate: new Date(2026, 0, 1), submittedDate: null },
+						{ decision: null, completionDate: null, submittedDate }
+					]
+				}
+			}));
+			const questions: Record<string, any> = {};
+			for (const submissionId of [1, 2]) {
+				questions[`gateway3DocumentsCheck-${submissionId}`] = createDocumentsCheckQuestion(submissionId);
+				questions[`gateway3Documents-${submissionId}`] = { config: {} };
+				questions[`gateway3Decision-${submissionId}`] = {};
+			}
+			const res = {
+				locals: {
+					journeyResponse: {
+						answers: {
+							proposedLocalPlan: 'plan.pdf',
+							documentFiles: { proposedLocalPlan: [{ guid: 'plan-guid', fileName: 'plan.pdf' }] },
+							resubmissionDocumentFiles: { 2: [{ guid: 'guid', fileName: 'new.pdf' }] }
+						}
+					}
+				}
+			};
+
+			await preprocessQuestionProperties(service, journeyId, questions)(
+				{ params: { reference: caseReference } } as Request,
+				res as unknown as Response,
+				mock.fn()
+			);
+
+			assert.equal(questions['gateway3DocumentsCheck-1'].config.actionButtonVisibleInSummary, true);
+			assert.equal(questions['gateway3DocumentsCheck-2'].config.actionButtonVisibleInSummary, !!submittedDate);
+		}
+	});
 });
+
 describe('issueGateway3Document', () => {
 	const caseReference = 'some-case-reference';
-	it('issue document when created date is not already set', async () => {
+	it('sets the examination status to ready to start when issuing a proceed to examination decision', async () => {
 		const service = createService();
 		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
 			completionDate: undefined,
 			submissions: [
 				{
 					id: 'someId',
-					decision: undefined,
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
 					completionDate: undefined,
 					gateway3InfoId: undefined
 				}
@@ -2137,7 +2908,214 @@ describe('issueGateway3Document', () => {
 			originalUrl: 'url-to-redirect-do/some-postfix'
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.deepEqual(service.db.examinationInfo.updateMany.mock.calls[0].arguments[0], {
+			where: {
+				caseId: CASE_ID,
+				status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+			},
+			data: {
+				status: EXAMINATION_STATUS_ID.READY_TO_START
+			}
+		});
+	});
+	it('does not change the examination status when issuing a resubmission required decision', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				planReference: caseReference,
+				question: 'some-brand-new-question',
+				section: 'some-new-section'
+			},
+			originalUrl: 'url-to-redirect-do/some-postfix'
+		};
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 1);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+	});
+	it('fails the issue transaction when no examination record can be made ready', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => null);
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Could not find examination information/
+		);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+		assert.equal(req.session.alerts, undefined);
+	});
+	it('fails the issue transaction when more than one examination record is updated', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 2 }));
+		const handler = issueGateway3Document(service);
+		const req = {
+			session: {},
+			params: { reference: caseReference, question: 'gateway-3-document-1' }
+		};
+		const res = { redirect: mock.fn() };
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Expected to update one examination record.*updated 2/
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+	it('fails the issue transaction when the existing examination status is not available', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			status: EXAMINATION_STATUS_ID.CANNOT_START_YET
+		}));
+		const handler = issueGateway3Document(service);
+		const req = {
+			session: {},
+			params: { reference: caseReference, question: 'gateway-3-document-1' }
+		};
+		const res = { redirect: mock.fn() };
+
+		await assert.rejects(
+			handler(req as unknown as Request, res as unknown as Response),
+			/Could not make examination available/
+		);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.equal(res.redirect.mock.callCount(), 0);
+	});
+	it('continues issuing when the examination is already ready to start', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: undefined,
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		service.db.examinationInfo.updateMany.mock.mockImplementation(async () => ({ count: 0 }));
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			status: EXAMINATION_STATUS_ID.READY_TO_START
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.examinationInfo.findUnique.mock.callCount(), 1);
+		assert.equal(service.db.case.update.mock.callCount(), 1);
+		assert.deepEqual(req.session.alerts[0], {
+			type: 'success',
+			text: 'Gateway 3 decision issued',
+			html: undefined
+		});
+	});
+	it('repairs the examination status when a proceed decision was previously issued', async () => {
+		const service = createService();
+		service.db.gateway3Info.findUnique.mock.mockImplementation(async () => ({
+			submissions: [
+				{
+					id: 'someId',
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: new Date(2026, 1, 1),
+					gateway3InfoId: undefined
+				}
+			]
+		}));
+		const handler = issueGateway3Document(service);
+		const res = {
+			redirect: mock.fn(() => {})
+		};
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: 'gateway-3-document-1'
+			}
+		};
+
+		await handler(req as unknown as Request, res as unknown as Response);
+		assert.equal(service.db.$transaction.mock.callCount(), 1);
+		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 1);
+		assert.deepEqual(req.session.alerts[0], {
+			type: 'success',
+			text: 'Gateway 3 decision already issued. Examination is ready to start',
+			html: undefined
+		});
 	});
 	it('issue document when created date is already set', async () => {
 		const service = createService();
@@ -2167,6 +3145,7 @@ describe('issueGateway3Document', () => {
 		};
 		await handler(req as unknown as Request, res as unknown as Response);
 		assert.equal(service.db.gateway3Info.upsert.mock.callCount(), 0);
+		assert.equal(service.db.examinationInfo.updateMany.mock.callCount(), 0);
 	});
 });
 
@@ -2227,5 +3206,288 @@ describe('issueGateway2WorkshopDocuments', () => {
 		assert.deepEqual(req.session.alerts[0], expectedMessage);
 		assert.equal(service.db.gateway2Info.upsert.mock.callCount(), 0);
 		assert.equal(service.db.case.update.mock.callCount(), 0);
+	});
+});
+
+describe('DeleteCase', () => {
+	const deletableCase = {
+		id: CASE_ID,
+		reference: REFERENCE,
+		planTitle: 'Southshire Local Plan',
+		planType: 'local-plan',
+		lpas: [{ lpaCode: 'lpa-1' }, { lpaCode: 'lpa-2' }],
+		caseOfficer: 'officer-1',
+		deletedDate: null
+	};
+
+	// Other tests reload the shared question options (case officers come from Entra), so pin the ones the rows use
+	let originalOptions: { caseOfficer: unknown; lpa: unknown };
+	before(() => {
+		originalOptions = { caseOfficer: questions.caseOfficer.options, lpa: questions.lpa.options };
+		questions.caseOfficer.options = [{ value: 'officer-1', text: 'Case Officer 1' }];
+		questions.lpa.options = [
+			{ value: 'lpa-1', text: 'Local Planning Authority 1' },
+			{ value: 'lpa-2', text: 'Local Planning Authority 2' }
+		];
+	});
+	after(() => {
+		questions.caseOfficer.options = originalOptions.caseOfficer;
+		questions.lpa.options = originalOptions.lpa;
+	});
+
+	const DELETE_REASON = 'Created in error';
+
+	function createDeleteCaseService(currentCase: Record<string, unknown> | null = deletableCase) {
+		const service = createService();
+		service.db.case.findUnique.mock.mockImplementation(async () => currentCase);
+		return service;
+	}
+
+	function createDeleteCaseResponse(locals: Record<string, unknown> = {}) {
+		const render = mock.fn();
+		const status = mock.fn(() => ({ render }));
+		const redirect = mock.fn();
+		const res = { locals, render, status, redirect } as unknown as Response;
+		return { res, render, status, redirect };
+	}
+
+	function createDeleteCaseRequest() {
+		const session: Record<string, any> = {
+			currentJourney: COMMON_CONSTS.DELETE_CASE_JOURNEY_ID,
+			forms: { [COMMON_CONSTS.DELETE_CASE_JOURNEY_ID]: { deleteCaseWhy: DELETE_REASON } }
+		};
+		const req = { params: { reference: REFERENCE }, session } as unknown as Request;
+		return { req, session };
+	}
+
+	function createJourneyLocals(deleteCaseWhy: unknown = DELETE_REASON) {
+		return { journeyResponse: { answers: { deleteCaseWhy } } };
+	}
+
+	function caseDetailsRowValue(res: Response, key: string) {
+		const row = res.locals.caseDetailsRows.find(
+			(caseDetailsRow: { key: { text: string } }) => caseDetailsRow.key.text === key
+		);
+		return row?.value.text;
+	}
+
+	describe('getDeleteCase', () => {
+		it('sets the case details rows and continues to the check page', async () => {
+			const service = createDeleteCaseService();
+			const { res, render } = createDeleteCaseResponse();
+			const { req } = createDeleteCaseRequest();
+			const next = mock.fn();
+
+			await getDeleteCase(service)(req, res, next);
+
+			assert.equal(next.mock.callCount(), 1);
+			assert.equal(render.mock.callCount(), 0);
+			assert.equal(res.locals.baseUrl, `/case/${REFERENCE}`);
+			assert.deepEqual(res.locals.caseDetailsRows, [
+				{ key: { text: 'Reference' }, value: { text: REFERENCE } },
+				{ key: { text: 'Title' }, value: { text: 'Southshire Local Plan' } },
+				{ key: { text: 'Type' }, value: { text: 'Local plan' } },
+				{
+					key: { text: 'Planning authority' },
+					value: { text: 'Local Planning Authority 1, Local Planning Authority 2' }
+				},
+				{ key: { text: 'Case officer' }, value: { text: 'Case Officer 1' } }
+			]);
+		});
+
+		it('shows Not provided for case details that are missing', async () => {
+			const service = createDeleteCaseService({
+				...deletableCase,
+				planTitle: '',
+				planType: '',
+				lpas: [],
+				caseOfficer: null
+			});
+			const { res } = createDeleteCaseResponse();
+			const { req } = createDeleteCaseRequest();
+			const next = mock.fn();
+
+			await getDeleteCase(service)(req, res, next);
+
+			for (const key of ['Title', 'Type', 'Planning authority', 'Case officer']) {
+				assert.equal(caseDetailsRowValue(res, key), 'Not provided', `${key} should be Not provided`);
+			}
+		});
+
+		for (const { name, currentCase } of [
+			{ name: 'does not exist', currentCase: null },
+			{ name: 'is already deleted', currentCase: { ...deletableCase, deletedDate: new Date('2026-10-01') } }
+		]) {
+			it(`returns 404 when the case ${name}`, async () => {
+				const service = createDeleteCaseService(currentCase);
+				const { res, render, status } = createDeleteCaseResponse();
+				const { req } = createDeleteCaseRequest();
+				const next = mock.fn();
+
+				await getDeleteCase(service)(req, res, next);
+
+				assert.equal(status.mock.calls[0].arguments[0], 404);
+				assert.equal(render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+				assert.equal(next.mock.callCount(), 0);
+			});
+		}
+	});
+
+	describe('postMarkAsDeleteCase', () => {
+		it('soft deletes the case and saves the delete reason', async () => {
+			const service = createDeleteCaseService();
+			const { res } = createDeleteCaseResponse(createJourneyLocals());
+			const { req } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(service.db.case.update.mock.callCount(), 1);
+			const updateArguments = service.db.case.update.mock.calls[0].arguments[0];
+			assert.deepEqual(updateArguments.where, { id: CASE_ID });
+			assert.ok(updateArguments.data.deletedDate instanceof Date);
+			assert.equal(updateArguments.data.deleteReason, DELETE_REASON);
+		});
+
+		it('trims the delete reason before saving it', async () => {
+			const service = createDeleteCaseService();
+			const { res } = createDeleteCaseResponse(createJourneyLocals(`  ${DELETE_REASON}  `));
+			const { req } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(service.db.case.update.mock.calls[0].arguments[0].data.deleteReason, DELETE_REASON);
+		});
+
+		it('clears the journey, sets a success message and redirects to all cases', async () => {
+			const service = createDeleteCaseService();
+			const { res, redirect } = createDeleteCaseResponse(createJourneyLocals());
+			const { req, session } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(redirect.mock.calls[0].arguments[0], '/');
+			assert.equal(session.alertMessage, `Case ${REFERENCE} deleted`);
+			assert.equal(session.alertMessageStatus, 'success');
+			assert.equal(session.currentJourney, undefined);
+		});
+
+		for (const { name, locals } of [
+			{ name: 'there is no journey response', locals: {} },
+			{ name: 'the reason is blank', locals: createJourneyLocals('   ') },
+			{ name: 'the reason is not a string', locals: createJourneyLocals(42) }
+		]) {
+			it(`sends the user back to the reason page when ${name}`, async () => {
+				const service = createDeleteCaseService();
+				const { res, redirect } = createDeleteCaseResponse(locals);
+				const { req } = createDeleteCaseRequest();
+
+				await postMarkAsDeleteCase(service)(req, res);
+
+				assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/delete-case`);
+				assert.equal(service.db.case.update.mock.callCount(), 0);
+			});
+		}
+
+		it('returns 404 and does not update when the case does not exist', async () => {
+			const service = createDeleteCaseService(null);
+			const { res, render, status } = createDeleteCaseResponse(createJourneyLocals());
+			const { req } = createDeleteCaseRequest();
+
+			await postMarkAsDeleteCase(service)(req, res);
+
+			assert.equal(status.mock.calls[0].arguments[0], 404);
+			assert.equal(render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+			assert.equal(service.db.case.update.mock.callCount(), 0);
+		});
+	});
+
+	describe('getDeleteReason', () => {
+		it('returns the trimmed reason', () => {
+			assert.equal(getDeleteReason(createJourneyLocals(`  ${DELETE_REASON}  `)), DELETE_REASON);
+		});
+
+		it('returns undefined when the journey response is missing', () => {
+			assert.equal(getDeleteReason({}), undefined);
+		});
+
+		it('returns undefined when the answers are missing', () => {
+			assert.equal(getDeleteReason({ journeyResponse: {} }), undefined);
+		});
+
+		it('returns undefined when the reason is blank or not a string', () => {
+			assert.equal(getDeleteReason(createJourneyLocals('   ')), undefined);
+			assert.equal(getDeleteReason(createJourneyLocals(42)), undefined);
+		});
+	});
+});
+
+describe('issueMiqs', () => {
+	function createMiqRequest(session: Record<string, unknown> = {}): any {
+		return {
+			session: {
+				fileUploader: { [`${REFERENCE}:miqs`]: { uploadedFiles: [{ name: 'miqs.pdf' }] } },
+				...session
+			},
+			params: { reference: REFERENCE, question: 'miqs' }
+		};
+	}
+
+	it('records the share date and the signed-in user email', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ miqDocumentSharedDate: null }));
+		const req = createMiqRequest({
+			account: { name: 'Test Officer', username: 'test.officer@planninginspectorate.gov.uk' }
+		});
+		const res = { redirect: mock.fn() };
+
+		await issueMiqs(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		const { update, create } = service.db.examinationInfo.upsert.mock.calls[0].arguments[0];
+		assert.ok(update.miqDocumentSharedDate instanceof Date);
+		assert.equal(update.miqDocumentSharedBy, 'test.officer@planninginspectorate.gov.uk');
+		assert.equal(create.miqDocumentSharedBy, 'test.officer@planninginspectorate.gov.uk');
+		assert.match(
+			service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create[0].event,
+			/^MIQs notification sent on /
+		);
+		assert.deepEqual(req.session.alerts[0], { type: 'success', text: '1 MIQ document uploaded', html: undefined });
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/examination`]);
+	});
+
+	it('still shares when there is no signed-in account', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({ miqDocumentSharedDate: null }));
+		const req = createMiqRequest();
+		const res = { redirect: mock.fn() };
+
+		await issueMiqs(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 1);
+		const { update } = service.db.examinationInfo.upsert.mock.calls[0].arguments[0];
+		assert.ok(update.miqDocumentSharedDate instanceof Date);
+		assert.equal(update.miqDocumentSharedBy, undefined);
+	});
+
+	it('does not overwrite who shared the MIQ documents once shared', async () => {
+		const service = createService();
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			miqDocumentSharedDate: new Date('2026-01-01T00:00:00.000Z')
+		}));
+		const req = createMiqRequest({
+			account: { name: 'Other Officer', username: 'other.officer@planninginspectorate.gov.uk' }
+		});
+		const res = { redirect: mock.fn() };
+
+		await issueMiqs(service, 'examination')(req as Request, res as unknown as Response);
+
+		assert.equal(service.db.examinationInfo.upsert.mock.callCount(), 0);
+		assert.equal(service.db.case.update.mock.callCount(), 0);
+		assert.deepEqual(req.session.alerts[0], {
+			type: 'important',
+			text: 'MIQ documents already shared',
+			html: undefined
+		});
+		assert.deepEqual(res.redirect.mock.calls[0].arguments, [`/case/${REFERENCE}/examination`]);
 	});
 });

@@ -54,6 +54,14 @@ export class BasePage {
 		return cy.get('.govuk-notification-banner');
 	}
 
+	get virusScanInProgressBanner() {
+		return cy.getByData('virus-scan-in-progress-banner');
+	}
+
+	get virusDetectedBanner() {
+		return cy.getByData('virus-detected-banner');
+	}
+
 	get saveAndContinueButton() {
 		return cy.getByData('button-save-and-continue');
 	}
@@ -63,7 +71,7 @@ export class BasePage {
 	}
 
 	get cancelButton() {
-		return cy.getByData('button-back');
+		return cy.getByData('button-cancel');
 	}
 
 	get addListItemButton() {
@@ -138,6 +146,18 @@ export class BasePage {
 		this.summaryRowValue(key).find('a').should('be.visible').should('have.attr', 'href').and(assertion, href);
 	}
 
+	verifyFileDownload(link: Cypress.Chainable, fileName: string) {
+		link
+			.should('be.visible')
+			.invoke('attr', 'href')
+			.then((href) => cy.request({ url: String(href), encoding: 'binary' }))
+			.then(({ status, headers, body }) => {
+				expect(status).to.equal(200);
+				expect(headers['content-disposition']).to.include('attachment').and.include(fileName);
+				cy.fixture(`files/${fileName}`, 'binary').should('equal', body);
+			});
+	}
+
 	listItemRemoveLink(index = 1) {
 		return cy.getByData(`remove-list-item-${index}`);
 	}
@@ -160,6 +180,19 @@ export class BasePage {
 
 	verifyNotificationBanner(message: string) {
 		this.notificationBanner.should('be.visible').and('contain.text', message);
+	}
+
+	verifyVirusScanInProgressBanner() {
+		this.virusScanInProgressBanner
+			.should('be.visible')
+			.and('contain.text', 'Virus scan in progress')
+			.and('contain.text', 'Refresh the page to see if the scan has finished');
+	}
+
+	verifyVirusDetectedBanner(fileName: string) {
+		this.virusDetectedBanner
+			.should('be.visible')
+			.and('contain.text', `${fileName} contains a virus. Remove the file and upload a different version.`);
 	}
 
 	verifyNotificationBannerAbsent(message: string) {
@@ -197,7 +230,12 @@ export class BasePage {
 	}
 
 	cancelChanges() {
-		this.cancelButton.should('be.visible').click();
+		this.cancelButton
+			.should('be.visible')
+			.and('match', 'a.govuk-link[href]')
+			.and('not.have.attr', 'href', '')
+			.and('not.have.class', 'govuk-button')
+			.click();
 	}
 
 	addListItem() {

@@ -1,4 +1,5 @@
 export { AUTHORITY_STATUSES } from './authority-status.ts';
+export { EXAMINATION_STATUSES } from './examination-status.ts';
 export { GATEWAYS } from './gateway.ts';
 export { GATEWAY_3_DECISIONS } from './gateway-3-decision.ts';
 export { Gateway3FrontOfficeStatuses } from './gateway-3-status.ts';

@@ -59,16 +59,17 @@ export const completePortalLogin = () => {
 	portalLoginOtpPage.saveAndContinue();
 };
 
-export const portalLogin = (email?: string) => {
+export const portalLogin = (email?: string, { singleLpa = false } = {}) => {
 	if (isEnvironmentSmoke()) {
 		authenticatePortalUserIfRequired(completePortalLoginByRequest, validatePortalLogin);
 		myPlansPage.visit();
 		return;
 	}
 
-	cy.setCookie('cookie_consent', 'accept');
-	startPortalOtpLogin(email);
-	completePortalLogin();
+	const loginEmail = email ?? TEST_EMAIL;
+	cy.task('seedCase', { singleLpa });
+	completePortalLoginByRequest(loginEmail, LOCAL_TEST_OTP);
+	myPlansPage.visit();
 };
 
 const getPortalLoginEmail = () => {
@@ -91,9 +92,7 @@ const validatePortalLogin = () => {
 	});
 };
 
-const completePortalLoginByRequest = () => {
-	const email = getRequiredCypressEnv('authUsername');
-	const otp = getPortalSmokeOtp();
+const completePortalLoginByRequest = (email = getRequiredCypressEnv('authUsername'), otp = getPortalSmokeOtp()) => {
 	const baseUrl = String(Cypress.config('baseUrl'));
 	const loginUrl = `${baseUrl}/login`;
 	const otpUrl = `${baseUrl}/login/enter-code`;
@@ -150,16 +149,27 @@ export const portalLoginForExistingCase = (email: string) => {
 	completePortalLogin();
 };
 
+// Signs in once and reuses the session, so long journeys stay under Portal's sign-in rate limit on Test/Training
+export const portalLoginWithSession = (email: string) => {
+	if (isEnvironmentSmoke()) {
+		authenticatePortalUserIfRequired(() => completePortalLoginByRequest(email), validatePortalLogin);
+	} else {
+		completePortalLoginByRequest(email, LOCAL_TEST_OTP);
+	}
+	myPlansPage.visit();
+};
+
 export const manageToPortalLogin = (email: string) => {
-	cy.origin(Cypress.env('portalBaseUrl'), { args: { email } }, ({ email }) => {
+	cy.origin(Cypress.env('portalBaseUrl'), { args: { email, otp: LOCAL_TEST_OTP } }, ({ email, otp }) => {
 		cy.visit('/login');
 		cy.setCookie('cookie_consent', 'accept');
 		cy.get('[data-cy="email"]').clear().type(email);
 		cy.get('[data-cy="button-save-and-continue"]').click();
-	});
+		cy.location('pathname').should('eq', '/login/enter-code');
 
-	cy.origin(Cypress.env('portalBaseUrl'), { args: { otp: LOCAL_TEST_OTP } }, ({ otp }) => {
 		cy.get('[data-cy="otp"]').clear().type(otp);
 		cy.get('[data-cy="button-save-and-continue"]').click();
+		cy.location('pathname').should('eq', '/manage-local-plans/your-plans');
+		cy.contains('h1', 'My plans').should('be.visible');
 	});
 };

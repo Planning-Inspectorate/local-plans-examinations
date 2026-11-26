@@ -1,4 +1,5 @@
 export { AUTHORITY_STATUS_ID } from './authority-status.ts';
+export { EXAMINATION_STATUS_ID } from './examination-status.ts';
 export { PLAN_BAND_ID, PLAN_TYPE_ID, DSA_CHECKED_ID, GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from './case.ts';
 export type { Gateway3Status } from './case.ts';
 export { GATEWAY_ID, GATEWAY_NAME } from './gateway.ts';
@@ -6,6 +7,7 @@ export { DOCUMENT_CATEGORY_ID } from './document-category.ts';
 export {
 	DOCUMENT_SET_ID,
 	DOCUMENT_SET_FOLDER_NAME,
+	examinationSetIds,
 	NUM_GW2_WORKSHOP_QUESTIONS,
 	NUM_GW3_SUBMISSIONS_QUESTIONS
 } from './document-set.ts';

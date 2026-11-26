@@ -9,6 +9,7 @@ import { createPlanPageRoutes } from './views/plan-page/index.ts';
 import { gateway2SubmissionRoutes } from './views/manage-local-plans/gateway-2-submission/index.ts';
 import { gateway3SubmissionRoutes } from './views/manage-local-plans/gateway-3-submission/index.ts';
 import { gateway3ResubmissionRoutes } from './views/manage-local-plans/gateway-3-resubmission/index.ts';
+import { examinationSubmissionRoutes } from './views/manage-local-plans/examination-submission/index.ts';
 import { createMonitoringRoutes } from '@planning-inspectorate/core/controllers';
 import type { PortalService } from '#service';
 import type { IRouter } from 'express';
@@ -49,16 +50,19 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use('/manage-local-plans', gateway2SubmissionRoutes(service));
 	router.use('/manage-local-plans', gateway3SubmissionRoutes(service));
 	router.use('/manage-local-plans', gateway3ResubmissionRoutes(service));
+	router.use('/manage-local-plans', examinationSubmissionRoutes(service));
 	// Keep this after the submission routes so ownership and case-loading errors
-	// are covered too. Gateway 3 resubmission uses the same declaration endpoint.
+	// are covered too.
 	router.use(
 		[
-			'/manage-local-plans/:planReference/gateway-2-submission/application-declaration',
-			'/manage-local-plans/:planReference/gateway-3-submission/declaration'
+			'/manage-local-plans/:planReference/gateway-2/declaration',
+			'/manage-local-plans/:planReference/gateway-3-submission/declaration',
+			'/manage-local-plans/:planReference/gateway-3-resubmission/declaration',
+			'/manage-local-plans/:planReference/examination/declaration'
 		],
 		buildSubmissionFailureHandler(service)
 	);
-	router.use('/', createHomeRoutes(service));
+	router.use('/', createHomeRoutes());
 	router.use('/', createCookiesRoutes());
 	router.use('/error', createErrorRoutes(service));
 

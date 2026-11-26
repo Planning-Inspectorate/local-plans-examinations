@@ -4,14 +4,25 @@ import { plugin as cypressGrepPlugin } from '@cypress/grep/plugin';
 import { exec } from 'node:child_process';
 import { waitForNotifyEmailByReference, waitForNotifyEmailsByReference } from './cypress/tasks/notify.ts';
 import { seedCy } from './packages/database/src/seed/seed-cy.ts';
+import { seedPortalCases } from './packages/database/src/seed/seed-otp.ts';
 import { seedGateway3DeclarationDocuments } from './packages/database/src/seed/seed-gateway-3-declaration.ts';
+import { seedExaminationDeclarationDocuments } from './packages/database/src/seed/seed-examination-declaration.ts';
 import { seedGateway3Submitted } from './packages/database/src/seed/seed-gateway-3-submitted.ts';
 import { seedUpdateGateway2Workshop } from './packages/database/src/seed/seed-update-gateway-2-workshop.ts';
+import { seedExaminationReadyToStart } from './packages/database/src/seed/seed-examination-ready-to-start.ts';
 import { seedGateway3TriggerResubmission } from './packages/database/src/seed/seed-gateway-3-trigger-resubmission.ts';
 import { existsSync, rmSync, mkdirSync } from 'fs';
 import { setDocumentVirusCheckStatus } from './packages/database/src/seed/set-virus-check-status.ts';
-import { clearExaminationReportFiles, seedExaminationReport } from './cypress/tasks/examination.ts';
+import {
+	clearExaminationReportFiles,
+	seedExaminationReport,
+	seedExaminationReportIssuedDocuments,
+	seedExaminationSubmissionDocuments
+} from './cypress/tasks/examination.ts';
 import { seedGateway2SubmittedDocuments } from './cypress/tasks/gateway-2.ts';
+import { seedGateway3SubmissionDocuments } from './cypress/tasks/gateway-3.ts';
+import { seedExaminationInExamination } from './packages/database/src/seed/seed-examination-in-examination.ts';
+import { seedExaminationReportIssued } from './packages/database/src/seed/seed-examination-report-issued.ts';
 
 // prettier-ignore
 try { loadEnvFile(); } catch {/* ignore errors*/}
@@ -19,11 +30,13 @@ try { loadEnvFile(); } catch {/* ignore errors*/}
 const target = process.env.TEST_TARGET || 'portal';
 const baseUrls: Record<string, string> = {
 	'cross-service': process.env.MANAGE_BASE_URL || 'http://localhost:8090',
+	'full-journey': process.env.MANAGE_BASE_URL || 'http://localhost:8090',
 	manage: process.env.MANAGE_BASE_URL || 'http://localhost:8090',
 	portal: process.env.PORTAL_BASE_URL || 'http://localhost:8080'
 };
 const specPatterns: Record<string, string> = {
 	'cross-service': 'cypress/e2e/cross-service/**/*',
+	'full-journey': 'cypress/e2e/full-journey/**/*',
 	manage: 'cypress/e2e/manage/**/*',
 	portal: 'cypress/e2e/portal/**/*'
 };
@@ -98,11 +111,18 @@ export default defineConfig({
 				},
 				seedDb: seedCy,
 				seedExaminationReport,
+				seedExaminationReportIssuedDocuments,
+				seedExaminationSubmissionDocuments,
 				clearExaminationReportFiles,
 				setDocumentVirusCheckStatus,
 				seedGateway2SubmittedDocuments,
 				seedGateway3DeclarationDocuments,
+				seedGateway3SubmissionDocuments,
 				seedGateway3Submitted,
+				seedExaminationReadyToStart,
+				seedExaminationDeclarationDocuments,
+				seedExaminationInExamination,
+				seedExaminationReportIssued,
 				seedGateway3TriggerResubmission,
 				seedUpdateGateway2Workshop: async ({ reference, workshopData }) => {
 					return seedUpdateGateway2Workshop({ reference, workshopData });
@@ -111,9 +131,8 @@ export default defineConfig({
 					await runCommand('node packages/database/src/seed/seed-prod.ts');
 					return null;
 				},
-				seedCase: async () => {
-					await runCommand('npm run db-seed');
-					await runCommand('node --experimental-strip-types packages/database/src/seed/seed-otp.ts --case-only');
+				seedCase: async (options?: { singleLpa?: boolean }) => {
+					await seedPortalCases({ caseOnly: true, singleLpa: options?.singleLpa });
 					return null;
 				},
 				seedAssignedToMeCase: async () => {

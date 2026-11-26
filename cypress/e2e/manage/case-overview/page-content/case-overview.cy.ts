@@ -23,6 +23,13 @@ describe('Case overview', () => {
 
 		manageHomePage.visit();
 		manageHomePage.verifyHeading('All cases (1)');
+		manageHomePage.verifyTableHeaders(manageHomePage.casesTable, [
+			'Reference',
+			'Title',
+			'Type',
+			'Case officer',
+			'Status'
+		]);
 		manageHomePage.verifyCaseStatus(seededCase.planTitle, seededCaseStatus);
 	});
 

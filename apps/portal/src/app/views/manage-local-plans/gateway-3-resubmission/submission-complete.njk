@@ -1,0 +1,24 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block pageHeading %}{% endblock %}
+
+{% block pageContent %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        {{ govukPanel({
+            titleText: "Gateway 3 submission complete"
+        }) }}
+
+        <p class="govuk-body" data-cy="confirmation-email-copy">We've sent you a confirmation email.</p>
+
+        <h2 class="govuk-heading-m" data-cy="what-happens-next-heading">What happens next</h2>
+
+        <ul class="govuk-list govuk-list--bullet" data-cy="what-happens-next-list">
+            <li>Your case officer will assign an assessor to your case</li>
+            <li>The assessor will review your submission and let you know if any additional information is required</li>
+            <li>At any point you can <a href="{{ planOverviewUrl }}" class="govuk-link" data-cy="check-submission-status">check your submission status</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

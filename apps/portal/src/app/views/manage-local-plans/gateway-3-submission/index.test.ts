@@ -25,6 +25,7 @@ describe('Gateway 3 check answers page', () => {
 			targetDate: '1 August 2026',
 			saveAndComeBackUrl: '/manage-local-plans/PLAN-001',
 			statusTag,
+			requiredItemTitles: ['Statement of compliance'],
 			summaryListData: { sections },
 			config: {
 				styleFile: 'style.css',
@@ -35,13 +36,13 @@ describe('Gateway 3 check answers page', () => {
 		});
 	}
 
-	function buildSection(heading: string) {
+	function buildSection(heading: string, rowTitle = 'Supporting material') {
 		return {
 			heading,
 			list: {
 				rows: [
 					{
-						key: { text: 'Other documents' },
+						key: { text: rowTitle },
 						value: { text: 'Not added' },
 						actions: {
 							items: [{ href: '#', text: 'Add' }]
@@ -74,15 +75,22 @@ describe('Gateway 3 check answers page', () => {
 	function buildSubmittedSections() {
 		return [
 			{
-				heading: 'Required Information',
+				heading: 'Procedural documents',
 				list: {
 					rows: [
 						{
-							key: { text: 'Proposed local plan' },
+							key: { text: 'Statement of compliance' },
 							value: { html: '<a class="govuk-link" href="/documents/proposed-plan">proposed-plan.pdf</a>' }
-						},
+						}
+					]
+				}
+			},
+			{
+				heading: 'Consultation documents',
+				list: {
+					rows: [
 						{
-							key: { text: 'Map of policies' },
+							key: { text: 'Representations' },
 							value: {
 								html: '<ul class="govuk-list govuk-list--bullet"><li><a class="govuk-link" href="/documents/map-1">map-1.pdf</a></li><li><a class="govuk-link" href="/documents/map-2">map-2.pdf</a></li></ul>'
 							}
@@ -91,11 +99,11 @@ describe('Gateway 3 check answers page', () => {
 				}
 			},
 			{
-				heading: 'Optional Documents',
+				heading: 'Plan content, evidence and background',
 				list: {
 					rows: [
 						{
-							key: { text: 'Other documents' },
+							key: { text: 'Supporting material' },
 							value: { html: '<a class="govuk-link" href="/documents/other">other.pdf</a>' }
 						}
 					]
@@ -108,10 +116,7 @@ describe('Gateway 3 check answers page', () => {
 		const html = renderCheckAnswers([]);
 
 		assert.ok(html.includes('Ready to submit for Gateway 3'), 'expected submit heading');
-		assert.ok(
-			html.includes('Once submitted, Gateway 3 will be locked and you cannot make further changes.'),
-			'expected submit copy'
-		);
+		assert.ok(html.includes('You cannot make any changes after submission.'), 'expected submit copy');
 		assert.ok(html.includes('data-cy="submit-gateway-3"'), 'expected submit button data-cy');
 	});
 
@@ -164,26 +169,36 @@ describe('Gateway 3 check answers page', () => {
 		assert.ok(html.includes('govuk-tag--yellow'));
 	});
 
-	it('renders the Optional Documents section with copy and an Add action', () => {
-		const html = renderCheckAnswers([buildSection('Optional Documents')]);
+	it('renders the three document sections with status and action columns', () => {
+		const html = renderCheckAnswers([
+			buildSection('Procedural documents'),
+			buildSection('Consultation documents'),
+			buildSection('Plan content, evidence and background')
+		]);
 
-		assert.ok(html.includes('Optional Documents'), 'expected Optional Documents heading');
-		assert.ok(
-			html.includes('Add the documents that are relevant to your plan.'),
-			'expected optional documents guidance copy'
-		);
-		assert.ok(html.includes('data-cy="optional-documents-section"'), 'expected section data-cy attribute');
+		assert.ok(html.includes('data-cy="procedural-documents-section"'));
+		assert.ok(html.includes('data-cy="consultation-documents-section"'));
+		assert.ok(html.includes('data-cy="plan-content-evidence-and-background-section"'));
 		assert.ok(html.includes('Not added'), 'expected Not added status');
 		assert.ok(html.includes('Add'), 'expected Add action link');
 	});
 
-	it('does not render the optional documents copy for other sections', () => {
-		const html = renderCheckAnswers([buildSection('Required Information')]);
+	it('renders Required hint text only for required items', () => {
+		const html = renderCheckAnswers([
+			buildSection('Procedural documents', 'Statement of compliance'),
+			buildSection('Plan content, evidence and background', 'Supporting material')
+		]);
 
-		assert.ok(
-			!html.includes('Add the documents that are relevant to your plan.'),
-			'expected no optional documents guidance copy'
-		);
+		assert.strictEqual((html.match(/>Required<\/div>/g) ?? []).length, 1);
+	});
+
+	it('renders the updated Gateway 3 inset copy and guidance link', () => {
+		const html = renderCheckAnswers([]);
+
+		assert.ok(html.includes('Gateway 3 is the next step in the development of your local plan.'));
+		assert.ok(html.includes("You've provided the expected submission date of 1 August 2026."));
+		assert.ok(html.includes('Some of these documents are required but you should aim to include all listed documents'));
+		assert.match(html, /<a href="\/guidance" class="govuk-link">check the guidance<\/a>/);
 	});
 
 	it('renders the submitted view with read-only document tables', () => {
@@ -195,9 +210,10 @@ describe('Gateway 3 check answers page', () => {
 			html.includes('Your submission was sent on 1 October 2026 at 12:30 by user@example.com'),
 			'expected submitted copy'
 		);
-		assert.ok(html.includes('Required information'), 'expected Required information heading');
-		assert.ok(html.includes('Optional documents'), 'expected Optional documents heading');
-		assert.ok(html.includes('Proposed local plan'), 'expected document name in the first column');
+		assert.ok(html.includes('Procedural documents'), 'expected Procedural documents heading');
+		assert.ok(html.includes('Consultation documents'), 'expected Consultation documents heading');
+		assert.ok(html.includes('Plan content, evidence and background'), 'expected plan content heading');
+		assert.ok(html.includes('Statement of compliance'), 'expected document name in the first column');
 		assert.ok(html.includes('proposed-plan.pdf'), 'expected uploaded document link in the second column');
 		assert.ok(html.includes('govuk-list govuk-list--bullet'), 'expected bullet list for multiple documents');
 		assert.ok(html.includes('map-1.pdf'), 'expected first document in bullet list');
@@ -206,6 +222,71 @@ describe('Gateway 3 check answers page', () => {
 		assert.ok(!html.includes('data-cy="submit-gateway-3"'), 'expected no submit button');
 		assert.ok(!html.includes('Ready to submit for Gateway 3'), 'expected no resubmission section');
 		assert.doesNotMatch(html, />\s*(Add|Change|Submit)\s*</, 'expected no add, change or submit actions');
+	});
+
+	it('renders the Gateway 3 report summary on the submitted view when report files are present', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 3 submission',
+			pageHeading: 'Gateway 3 submission',
+			pageCaption: 'Test Local Plan',
+			submissionDate: '1 October 2026',
+			submissionTime: '12:30',
+			submitter: 'user@example.com',
+			gateway3ReportFiles: [
+				{
+					fileName: 'Gateway 3 Report.pdf',
+					href: '/manage-local-plans/PLAN-001/gateway-3-submission/download-document/report-guid',
+					sharedDate: '15 October 2026'
+				}
+			],
+			summaryListData: { sections: buildSubmittedSections() },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('data-cy="gateway-3-report-section"'), 'expected gateway-3-report-section data-cy');
+		assert.ok(html.includes('Gateway 3 report'), 'expected Gateway 3 report label in summary list');
+		assert.ok(html.includes('Gateway 3 Report.pdf'), 'expected report filename');
+		assert.ok(html.includes('shared on 15 October 2026'), 'expected shared date');
+		assert.ok(
+			html.includes('/manage-local-plans/PLAN-001/gateway-3-submission/download-document/report-guid'),
+			'expected download link'
+		);
+	});
+
+	it('renders multiple Gateway 3 report files as bullet points', () => {
+		const nunjucks = configureNunjucks();
+		const html = nunjucks.render('views/manage-local-plans/gateway-3-submission/check-your-answers-submitted.njk', {
+			pageTitle: 'Gateway 3 submission',
+			pageHeading: 'Gateway 3 submission',
+			gateway3ReportFiles: [
+				{ fileName: 'report-1.pdf', href: '#1', sharedDate: '15 October 2026' },
+				{ fileName: 'report-2.pdf', href: '#2', sharedDate: '15 October 2026' }
+			],
+			summaryListData: { sections: [] },
+			config: {
+				styleFile: 'style.css',
+				headerTitle: 'Submit your plan for examination',
+				footerLinks: [],
+				primaryNavigationLinks: []
+			}
+		});
+
+		assert.ok(html.includes('govuk-list--bullet'), 'expected bullet list for multiple reports');
+		assert.ok(html.includes('report-1.pdf'), 'expected first report doc');
+		assert.ok(html.includes('report-2.pdf'), 'expected second report doc');
+	});
+
+	it('does not render Gateway 3 report section when no report files exist', () => {
+		const html = renderSubmittedCheckAnswers(buildSubmittedSections());
+
+		assert.ok(!html.includes('data-cy="gateway-3-report-section"'), 'expected no gateway-3-report-section');
+		assert.ok(!html.includes('Gateway 3 report'), 'expected no Gateway 3 report label');
 	});
 });
 
@@ -286,11 +367,7 @@ describe('Gateway 3 submission complete page', () => {
 	it('renders the confirmation email copy', () => {
 		const html = renderSubmissionComplete();
 		assert.ok(html.includes('data-cy="confirmation-email-copy"'), 'expected confirmation email copy data-cy');
-		assert.ok(
-			html.includes('We have sent you a confirmation email.') ||
-				html.includes('We have sent you a confirmation email.'),
-			'expected confirmation email text'
-		);
+		assert.ok(html.includes("We've sent you a confirmation email."), 'expected confirmation email text');
 	});
 
 	it('renders the what happens next heading and list', () => {
@@ -318,10 +395,9 @@ describe('Gateway 3 submission complete page', () => {
 		assert.ok(html.includes('/manage-local-plans/PLAN-001'), 'expected plan overview URL');
 	});
 
-	it('renders the get in touch link', () => {
+	it('does not render the get in touch link', () => {
 		const html = renderSubmissionComplete();
-		assert.ok(html.includes('data-cy="get-in-touch"'), 'expected get-in-touch data-cy');
-		assert.ok(html.includes('If you need to adjust your submission,'), 'expected get in touch copy');
-		assert.ok(html.includes('get in touch'), 'expected get in touch link text');
+		assert.ok(!html.includes('data-cy="get-in-touch"'), 'expected no get-in-touch data-cy');
+		assert.ok(!html.includes('If you need to adjust your submission,'), 'expected no get in touch copy');
 	});
 });

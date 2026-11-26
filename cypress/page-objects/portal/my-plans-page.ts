@@ -24,6 +24,16 @@ export class MyPlansPage extends PortalPlanBasePage {
 		this.verifyHeading(myPlansHeading);
 	}
 
+	verifyPlanDetailsRow(planReference: string, planTitle: string, planType: string) {
+		this.myPlansTable
+			.contains('tbody tr', planReference)
+			.find('th, td')
+			.then((tableCells) => {
+				const cellTexts = [...tableCells].map((tableCell) => tableCell.textContent?.trim());
+				expect(cellTexts).to.deep.equal([planReference, planTitle, planType]);
+			});
+	}
+
 	verifyYourPlanLink(refNumber: string) {
 		return cy
 			.contains('[data-cy="plan-link"]', refNumber)

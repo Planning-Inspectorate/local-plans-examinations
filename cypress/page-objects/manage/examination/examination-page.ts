@@ -1,5 +1,6 @@
 import { GatewayBasePage } from '../base/gateway-page.ts';
 import {
+	examinationDocuments,
 	examinationPause,
 	examinationReport,
 	soundUnsound,
@@ -11,8 +12,20 @@ export class ExaminationPage extends GatewayBasePage {
 		super(/^\/case\/.+\/examination$/);
 	}
 
+	get hearingsHeadings() {
+		return cy.getByData('hearing-heading');
+	}
+
+	verifyNoSubmissionDocumentsReviewLink() {
+		this.summaryRow(examinationDocuments.row).find('a').should('not.exist');
+	}
+
 	get addHearingLink() {
 		return cy.getByData('add-hearing');
+	}
+
+	cancelHearingLink(hearingNumber: string) {
+		return cy.getByData(`cancelHearing${hearingNumber}`);
 	}
 
 	get pauseLink() {
@@ -76,6 +89,32 @@ export class ExaminationPage extends GatewayBasePage {
 		this.addHearingLink.should('be.visible').and('have.text', 'Add hearing').click();
 	}
 
+	cancelHearing(hearingNumber: string) {
+		this.verifyLoaded();
+		this.cancelHearingLink(hearingNumber)
+			.should('be.visible')
+			.and('have.text', `Cancel hearing ${hearingNumber}`)
+			.click();
+	}
+
+	verifyNotificationBannerAbovePlanTitle(message: string) {
+		this.notificationBanner
+			.filter(`:contains("${message}")`)
+			.should('have.length', 1)
+			.then(($banner) => {
+				this.pageHeading.then(($planTitle) => {
+					const position = $banner[0].compareDocumentPosition($planTitle[0]);
+					expect(position & Node.DOCUMENT_POSITION_FOLLOWING, 'plan title follows the banner').to.be.greaterThan(0);
+				});
+			});
+	}
+
+	verifyHearingCancelled(hearingNumber: string, remoteLink: string) {
+		this.verifyLoaded();
+		this.cancelHearingLink(hearingNumber).should('not.exist');
+		this.mainContent.should('not.contain.text', remoteLink);
+	}
+
 	verifyReportIssued(outcome: string) {
 		this.verifyLoaded();
 		this.verifyNotificationBanner(examinationReport.issuedMessage);
@@ -122,6 +161,20 @@ export class ExaminationPage extends GatewayBasePage {
 	verifyExpectedActionLinkHrefs(section: string, rows: Array<{ row: string; path: string }>) {
 		rows.forEach(({ row, path }) => {
 			this.verifySummaryRowActionHref(row, new RegExp(`^/case/.+/examination/${section}/${path}$`));
+		});
+	}
+	// Both rows must be in the same summary list, with the second directly after the first
+	verifyRowOrder(firstRow: string, secondRow: string) {
+		this.summaryRow(firstRow)
+			.next('.govuk-summary-list__row')
+			.find('.govuk-summary-list__key')
+			.should('contain.text', secondRow);
+	}
+
+	verifyHearingsOrder(...hearingNumbers: number[]) {
+		this.hearingsHeadings.should('have.length', hearingNumbers.length);
+		hearingNumbers.forEach((hearingNumbers, index) => {
+			this.hearingsHeadings.eq(index).should('have.text', `Hearing ${hearingNumbers} details`);
 		});
 	}
 }

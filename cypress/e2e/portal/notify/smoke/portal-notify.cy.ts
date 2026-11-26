@@ -2,7 +2,7 @@ import { getRequiredCypressEnv, skipUnlessEnvironmentSmoke } from '../../../../f
 import { submitGateway2Application } from '../../../../flows/portal/gateway-2-submission-flow.ts';
 import { completePortalLogin, startPortalOtpLogin } from '../../../../flows/portal/login-flow.ts';
 import { cleanupPreparedPlanDetails } from '../../../../flows/portal/plan-flow.ts';
-import { gateway2CoverLetterPage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads.page.ts';
+import { gateway2CoverLetterPage } from '../../../../page-objects/portal/gw2-application/gateway-2-uploads-page.ts';
 import { myPlansPage } from '../../../../page-objects/portal/my-plans-page.ts';
 
 describe('Portal Notify smoke', () => {

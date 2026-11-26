@@ -10,6 +10,10 @@ To update the schema, follow these steps:
 2. Run `npm run db-migrate-dev` in the root package, this will prompt for a migration name (this can include spaces, they'll be replaced with underscores)
 3. Commit the schema + migration script
 
+## Local Database Reset
+
+Run `npm run db-reset-lcl` from the repository root to reset and seed the local database, then install the local-only virus-check trigger. The trigger is deliberately kept outside the Prisma migrations directory so it is not deployed to hosted environments.
+
 ## Comments
 
 Prisma schemas support comments, please add them to any models and fields/columns to explain the purpose and any important context. Comments that are only relevant in the context of the schema should start with `//`, comments that are relevant to users of the model should use `///`. Comments with `///` will end up in the generated type definitions, which is useful for users of the models. See https://www.prisma.io/docs/concepts/components/prisma-schema#comments.

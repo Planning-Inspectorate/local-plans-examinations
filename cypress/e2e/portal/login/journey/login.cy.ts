@@ -20,6 +20,8 @@ describe('Portal login journey', () => {
 		}
 	});
 
+	after(() => cy.task('clearDb'));
+
 	it('shows page not found when accessing the OTP page directly without a session', { tags: ['regression'] }, () => {
 		cy.visit('/login/enter-code', { failOnStatusCode: false });
 		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
@@ -29,6 +31,8 @@ describe('Portal login journey', () => {
 		startPortalOtpLogin();
 
 		portalLoginOtpPage.verifyPath();
+		portalLoginOtpPage.errorSummary.should('not.exist');
+		portalLoginOtpPage.fieldErrors.should('not.exist');
 	});
 
 	it('logs in and shows the my plans page', { tags: ['smoke', 'environment-smoke'] }, () => {
@@ -91,12 +95,22 @@ describe('Portal login journey', () => {
 		});
 	});
 
-	it.skip('requests a new code from the OTP page', { tags: ['notify'] }, () => {
+	it('unrecognised email cannot access the OTP page', { tags: ['regression'] }, () => {
+		portalLoginEmailPage.visit();
+		portalLoginEmailPage.submitEmail('unknown@example.com');
+		portalLoginEmailPage.verifyPath();
+
+		cy.visit('/login/enter-code', { failOnStatusCode: false });
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
+	});
+
+	it('switching to an unrecognised email clears the previous session', { tags: ['regression'] }, () => {
 		startPortalOtpLogin();
-		portalLoginOtpPage.verifyPath();
+		portalLoginOtpPage.verifyLoaded();
+		portalLoginOtpPage.goBack();
 
-		portalLoginOtpPage.clickRequestNewCode();
-
-		portalLoginOtpPage.verifyNewCodeBanner();
+		portalLoginEmailPage.submitEmail('unknown@example.com');
+		cy.visit('/login/enter-code', { failOnStatusCode: false });
+		portalLoginOtpPage.verifyPageNotFound('/login/enter-code');
 	});
 });

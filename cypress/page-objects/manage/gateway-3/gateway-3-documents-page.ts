@@ -12,6 +12,13 @@ export const gateway3DocumentsPage = new DocumentUploadPage(
 	gateway3DocumentsAnswer.caption
 );
 
+export const gateway3Submission2DocumentsPage = new DocumentUploadPage(
+	gateway3ReportPath(gateway3DocumentsAnswer.path),
+	`${gateway3DocumentsAnswer.fieldName}-2`,
+	gateway3DocumentsAnswer.heading,
+	gateway3DocumentsAnswer.caption
+);
+
 class Gateway3DocumentsCheckPage extends BasePage {
 	constructor() {
 		super(/^\/case\/.+\/gateway-3-report\/gateway-3-submission-(\d+)\/gateway-3-document-(\d+)\/check$/);
@@ -25,13 +32,13 @@ class Gateway3DocumentsCheckPage extends BasePage {
 		return cy.contains('button', 'Issue decision');
 	}
 
-	verifyLoaded(fileNames: string[] = []) {
+	verifyLoaded(fileNames: string[] = [], outcome = 'Resubmission required') {
 		super.verifyLoaded();
 		this.verifyHeading('Check gateway 3 decision and report details');
 		this.issueDecisionButton.should('be.visible');
 		this.previewDropDown.should('be.visible');
 		this.verifyChangeLinks();
-		this.verifySummaryRowContains('Outcome', 'Resubmission required');
+		this.verifySummaryRowContains('Outcome', outcome);
 
 		fileNames.forEach((fileName, index) => {
 			this.verifySummaryRowContains(`Document ${index + 1}`, fileName);

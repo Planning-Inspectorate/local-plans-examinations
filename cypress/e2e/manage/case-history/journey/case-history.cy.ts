@@ -1,6 +1,11 @@
 import { completeCreateCaseFlow } from '../../../../flows/manage/create-case-flow.ts';
-import { caseOverviewPage, caseOverviewPlanTypePage } from '../../../../page-objects/manage/case-overview/index.ts';
+import {
+	caseOverviewPage,
+	caseOverviewPlanTypePage,
+	caseOverviewLocalPlanningAuthoritiesPage
+} from '../../../../page-objects/manage/case-overview/index.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
+import { planType, localPlanningAuthority } from '../../../../fixtures/manage/overview.ts';
 import {
 	caseCreatedPage,
 	checkYourAnswersPage,
@@ -28,6 +33,8 @@ const openCaseHistory = () => {
 	caseOverviewPage.openServiceNavigationItem('Case History');
 	caseHistoryPage.verifyLoaded();
 };
+
+const lpa3 = { value: localPlanningAuthority.lpa3Value };
 
 describe('Case history', () => {
 	beforeEach(() => {
@@ -58,15 +65,15 @@ describe('Case history', () => {
 
 		openSeededManageCase();
 
-		caseOverviewPage.openActionLinkFor('Plan type');
+		caseOverviewPage.openActionLinkFor(planType.row);
 		caseOverviewPlanTypePage.verifyLoaded();
 		caseOverviewPlanTypePage.selectPlanType(planTypeSelectionValue);
-		caseOverviewPage.verifySummaryRowContains('Plan type', planTypeSelectionName);
+		caseOverviewPage.verifySummaryRowContains(planType.row, planTypeSelectionName);
 
 		openCaseHistory();
 
 		caseHistoryPage.verifyHistoryEvent(
-			`Plan type updated from ${originalPlanTypeName} to ${planTypeSelectionValue}`,
+			`Type updated from ${originalPlanTypeName} to ${planTypeSelectionValue}`,
 			expectedHistoryUser()
 		);
 	});
@@ -105,5 +112,37 @@ describe('Case history', () => {
 
 		openCaseHistory();
 		caseHistoryPage.verifyHistoryEvent('Expected updated from', expectedHistoryUser());
+	});
+
+	it('shows case history after new LPA is added', { tags: ['regression'] }, () => {
+		openSeededManageCase();
+		caseOverviewPage.openActionLinkFor(localPlanningAuthority.row);
+		caseOverviewLocalPlanningAuthoritiesPage.verifyLoaded();
+		caseOverviewLocalPlanningAuthoritiesPage.addLocalPlanningAuthority(lpa3);
+
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(`${localPlanningAuthority.lpa3Value} added`);
+	});
+
+	it('shows case history after LPA is updated', { tags: ['regression'] }, () => {
+		openSeededManageCase();
+		caseOverviewPage.openActionLinkFor(localPlanningAuthority.row);
+		caseOverviewLocalPlanningAuthoritiesPage.verifyLoaded();
+		caseOverviewLocalPlanningAuthoritiesPage.changeLocalPlanningAuthority(lpa3);
+
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(
+			`${localPlanningAuthority.lpa1Value} updated to ${localPlanningAuthority.lpa3Value}`
+		);
+	});
+
+	it('shows case history after LPA is removed', { tags: ['regression'] }, () => {
+		openSeededManageCase();
+		caseOverviewPage.openActionLinkFor(localPlanningAuthority.row);
+		caseOverviewLocalPlanningAuthoritiesPage.verifyLoaded();
+		caseOverviewLocalPlanningAuthoritiesPage.removeLocalPlanningAuthority();
+
+		openCaseHistory();
+		caseHistoryPage.verifyHistoryEvent(`${localPlanningAuthority.lpa1Value} removed`);
 	});
 });

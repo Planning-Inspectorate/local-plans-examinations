@@ -1,9 +1,9 @@
 import {
 	gateway2Page,
-	gateway2AssessorPage,
 	gateway2ActualDatePage,
 	gateway2ExpectedDatePage,
 	gateway2ReportPage,
+	gateway2SubmissionDocumentsPage,
 	gateway2WorkshopDocumentsCheckPage,
 	gateway2WorkshopDocumentsPage
 } from '../../../../page-objects/manage/gateway-2/index.ts';
@@ -14,9 +14,9 @@ import {
 } from '../../../../flows/manage/gateway-2-flow.ts';
 import { cleanupSeededManageCase, type SeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
+import { gateway2SubmittedPlan } from '../../../../fixtures/portal/gateway-2-uploads.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
 import {
-	gateway2AssessorAnswer,
 	gateway2DateAnswers,
 	gateway2Report,
 	gateway2WorkshopDocuments,
@@ -44,32 +44,21 @@ describe('Gateway 2 updates', () => {
 		);
 	});
 
-	it('updates the Gateway 2 assessor name answer', { tags: ['regression'] }, () => {
-		gateway2Page.openActionLinkFor(gateway2AssessorAnswer.row);
-
-		gateway2AssessorPage.verifyLoaded();
-		gateway2AssessorPage.assessorNamePopulated(gateway2AssessorAnswer.assessor1);
-		gateway2AssessorPage.enterAssessorName(gateway2AssessorAnswer.assessor2);
-
-		gateway2Page.verifyLoaded(seededCase.planTitle);
-		gateway2Page.verifySummaryRowContains(gateway2AssessorAnswer.row, gateway2AssessorAnswer.assessor2);
-	});
-
 	it(
-		'keeps the issued Gateway 2 report when a replacement is removed',
+		'shows the issued Gateway 2 report when re-entering the upload page and keeps it after leaving',
 		{ tags: ['regression', 'environment-smoke'] },
 		() => {
 			issueGateway2Report(seededCase.planTitle);
 
 			gateway2Page.openActionLinkFor(gateway2Report.row);
-			gateway2ReportPage.verifyLoaded();
-			gateway2ReportPage.uploadAndVerifyFile(gateway2Report.updatedFileName);
-			gateway2ReportPage.removeFile(gateway2Report.updatedFileName);
-			gateway2ReportPage.verifyFileNotUploaded(gateway2Report.updatedFileName);
+			cy.reload();
+			gateway2ReportPage.verifyFileUploaded(gateway2Report.fileName);
 			gateway2ReportPage.goBack();
 
 			gateway2Page.verifyLoaded(seededCase.planTitle);
 			gateway2Page.verifySummaryRowContains(gateway2Report.row, gateway2Report.fileName);
+			gateway2Page.openActionLinkFor(gateway2Report.row);
+			gateway2ReportPage.verifyFileUploaded(gateway2Report.fileName);
 		}
 	);
 
@@ -100,13 +89,25 @@ describe('Gateway 2 updates', () => {
 		});
 	});
 
-	it('does not show issued workshop documents against another case', { tags: ['regression'] }, () => {
+	it('keeps issued workshop documents separate from submissions and other cases', { tags: ['regression'] }, () => {
+		cy.task('seedCase');
+		cy.task('seedGateway2SubmittedDocuments');
+		openGateway2Page(gateway2SubmittedPlan.reference, gateway2SubmittedPlan.title);
+		gateway2Page.verifySummaryRowContains('Submission documents', '3 document(s)');
 		gateway2Page.openActionLinkFor(gateway2WorkshopDocuments.row);
 		gateway2WorkshopDocumentsPage.verifyLoaded();
 		gateway2WorkshopDocumentsPage.uploadAndVerifyFile(gateway2WorkshopDocuments.fileName);
 		gateway2WorkshopDocumentsPage.saveAndReturn();
 		gateway2WorkshopDocumentsCheckPage.verifyLoaded(gateway2WorkshopDocuments.fileName);
 		gateway2WorkshopDocumentsCheckPage.issueDocuments();
+
+		gateway2Page.verifyLoaded(gateway2SubmittedPlan.title);
+		cy.reload();
+		gateway2Page.verifySummaryRowContains(gateway2WorkshopDocuments.row, gateway2WorkshopDocuments.fileName);
+		gateway2Page.verifySummaryRowContains('Submission documents', '3 document(s)');
+		gateway2Page.openActionLinkFor('Submission documents');
+		gateway2SubmissionDocumentsPage.verifyLoaded();
+		gateway2SubmissionDocumentsPage.verifyWorkshopDocumentsAbsent();
 
 		cy.task<SeededManageCase>('seedDb').then((secondCase) => {
 			openGateway2Page(secondCase.reference, secondCase.planTitle);

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/case.ts';
 import type { DocumentModel, Gateway3SubmissionModel } from '@pins/local-plans-database/src/client/models.ts';
+import type { examinationStatusWithPause } from '../../util/util.ts';
 import {
 	type ExaminationStage,
 	getPlanStatusClasses,
@@ -26,6 +27,7 @@ const makeSubmission = (overrides: Partial<Gateway3SubmissionModel> = {}): Gatew
 	id: 'submission-1',
 	decision: null,
 	completionDate: null,
+	submittedDate: null,
 	gateway3InfoId: 'gateway-3-info-1',
 	...overrides
 });
@@ -35,6 +37,7 @@ describe('getPlanStatusClasses', () => {
 		assert.equal(getPlanStatusClasses('Awaiting SLA'), 'govuk-tag--yellow');
 		assert.equal(getPlanStatusClasses('GW2 received'), 'govuk-tag--turquoise');
 		assert.equal(getPlanStatusClasses('Completed'), 'govuk-tag--green');
+		assert.equal(getPlanStatusClasses('Submission received'), 'govuk-tag--green');
 	});
 
 	it('falls back to turquoise for unknown statuses', () => {
@@ -54,7 +57,15 @@ describe('resolveCaseHeaderStatus', () => {
 		assert.equal(result.headerStatusText, 'GW3 pending');
 	});
 
-	it('returns GW3 received when Gateway 3 documents have been submitted', () => {
+	it('returns GW3 received when the LPA submits Gateway 3 documents', () => {
+		const result = resolveCaseHeaderStatus([], [makeDocument()], null, null, [
+			makeSubmission({ submittedDate: new Date('2026-01-02T00:00:00.000Z') })
+		]);
+
+		assert.equal(result.headerStatusText, 'GW3 received');
+	});
+
+	it('continues to recognise completed legacy Gateway 3 submissions as received', () => {
 		const result = resolveCaseHeaderStatus([], [makeDocument()], null, null, [
 			makeSubmission({ completionDate: new Date('2026-01-02T00:00:00.000Z') })
 		]);
@@ -101,6 +112,27 @@ describe('resolveCaseHeaderStatus', () => {
 		]);
 
 		assert.equal(result.headerStatusText, 'Submission pending');
+	});
+
+	it('returns Submission received after the LPA submits for Examination', () => {
+		const result = resolveCaseHeaderStatus(
+			[],
+			[],
+			null,
+			null,
+			[
+				makeSubmission({
+					decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION,
+					completionDate: new Date('2026-01-02T00:00:00.000Z')
+				})
+			],
+			{ submissionForExaminationDate: new Date('2026-01-03T00:00:00.000Z') } as examinationStatusWithPause
+		);
+
+		assert.deepEqual(result, {
+			headerStatusText: 'Submission received',
+			headerStatusClasses: 'govuk-tag--green'
+		});
 	});
 
 	it('returns Awaiting SLA when no SLA has been received', () => {
@@ -548,6 +580,7 @@ describe('resolveCaseHeaderStatus', () => {
 		const DATE = '2026-01-01';
 		const pastDate = new Date(Date.now() - 60_000);
 		const examinationStatus: ExaminationStage = {
+			submissionForExaminationDate: new Date(DATE),
 			examiningInspector1: 'Alice'
 		};
 		const resolvedCaseHeaderStatus = resolveCaseHeaderStatus(
@@ -813,7 +846,7 @@ describe('resolveCaseHeaderStatus', () => {
 
 		assert.deepEqual(resolvedCaseHeaderStatus, {
 			headerStatusText: 'Plan adopted',
-			headerStatusClasses: 'govuk-tag--green'
+			headerStatusClasses: 'govuk-tag--purple'
 		});
 	});
 
@@ -1007,6 +1040,7 @@ describe('resolveExaminationStage', () => {
 
 		it('returns null when every field is null', () => {
 			const status: ExaminationStage = {
+				submissionForExaminationDate: null,
 				examiningInspector1: null,
 				QADate: null,
 				qaInspector1: null,
@@ -1027,6 +1061,7 @@ describe('resolveExaminationStage', () => {
 
 	describe('single field set', () => {
 		const cases: [keyof ExaminationStage, string | Date, string | null][] = [
+			['submissionForExaminationDate', DATE, 'Submission received'],
 			['examiningInspector1', 'inspector-1', 'Exam in progress'],
 			['examiningInspector2', 'inspector-2', 'Exam in progress'],
 			['examiningInspector3', 'inspector-3', 'Exam in progress'],

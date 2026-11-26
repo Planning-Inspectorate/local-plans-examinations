@@ -2,6 +2,7 @@ import { SubmissionCheck, type SubmissionCheckData } from './submission-check.ts
 import { type ManageService } from '#service';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { sortGateway3Submissions } from '#util/util.ts';
+import { questions } from '../questions.ts';
 
 export class Gateway3SubmissionCheck extends SubmissionCheck {
 	public async generateDataForPage(
@@ -43,9 +44,21 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 				`Undefined decision number found for gateway3Info.decision value '${currentSubmission?.decision}' in Gateway3SubmissionCheck`
 			);
 		}
+		const answersToReview = [
+			{
+				name: 'Outcome',
+				value: decisionText,
+				url: `/case/${caseReference}/${journeyId}/${section}/gateway-3-decision-${submissionId}`
+			},
+			...this.formatDocuments(
+				uploadedFiles,
+				`/case/${caseReference}/download-case-document`,
+				`/case/${caseReference}/${journeyId}/${section}/${questions[`gateway3Documents-${submissionId}`].url}`
+			)
+		];
 		return {
 			titleHeading: 'Check gateway 3 decision and report details',
-			uploadedFiles: uploadedFiles,
+			answersToReview: answersToReview,
 			caseReference: caseReference,
 			journeyId: journeyId,
 			section: section,
@@ -53,14 +66,7 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 			backLink: `${this.generateBaseUrl(originalUrl)}/gateway-3`,
 			notificationPreviewTemplate: 'gateway-3-document' + (complete ? '-complete' : ''),
 			submitButtonText: 'Issue decision',
-			notificationTextLPA: undefined,
-			additionalFields: [
-				{
-					name: 'Outcome',
-					value: decisionText,
-					url: `gateway-3-decision-${submissionId}`
-				}
-			]
+			notificationTextLPA: undefined
 		};
 	}
 }

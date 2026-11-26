@@ -1,4 +1,6 @@
 //stage constants: which stage of the plan the case is in
+import type { PlanType } from '@pins/local-plans-database/src/client/client.ts';
+
 export const STAGE = {
 	Gateway1: 0,
 	Gateway2: 1,
@@ -86,9 +88,9 @@ export const docTitleLabel: Record<DocTitle, string> = {
 	7: 'Consultation summary for proposed local plan content and evidence documents',
 	8: 'Notice of intention to commence local plan preparation',
 	9: 'Scoping consultation documents',
-	10: 'Consultation summary of feedback to scoping consultation',
+	10: 'Summary of scoping consultation feedback',
 	11: 'Gateway 1 Self assessment of readiness',
-	12: 'Consultation on proposed local plan content and evidence documents',
+	12: 'Consultation on proposed local plan content and evidence',
 	13: 'Summary of consultation responses',
 
 	14: 'Accept declaration and submit' //Submit
@@ -132,17 +134,34 @@ export interface Gateway2ReportFile {
 export interface Plan {
 	//BIG ? on name
 	refNum: string; //Reference Number
-	leadLPA: string; //Lead Local Planning Authority
-	linkedLPA: string; //Linked Local Planning Authority
+	lpaNames: string[];
+	leadLPA: string;
+	linkedLPA: string;
 	title: string; //Plan Title
 	stage: Stage; //Current Stage
+	type: PlanType;
 	status: Status; //Status
+	examinationStatus: string;
+	examinationStatusLabel: string;
+	pause: {
+		startDate: string;
+		restartDate: string | null;
+	} | null;
 	dates: {
 		//dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: August 2026, E: September 2026"
 		G1: string;
 		G2: string;
 		G3: string;
 		E: string;
+	};
+	submittedDates: {
+		G2: string | null;
+		G3: string | null;
+		E: string | null;
+	};
+	completedDates: {
+		G2: string | null;
+		G3: string | null;
 	};
 	sections: State[]; // track which state each gateway is array of state e.g. [0,0,0]
 	documents: ApplicationDoc[]; // holds interfaces of each doc needed
@@ -180,6 +199,18 @@ function validGateway2ReportFile(rawFile: unknown): rawFile is Gateway2ReportFil
 	);
 }
 
+function validPause(rawPause: unknown): rawPause is Plan['pause'] {
+	if (rawPause === null) return true;
+	if (typeof rawPause !== 'object') return false;
+
+	const pause = rawPause as Record<string, unknown>;
+	return (
+		typeof pause.startDate === 'string' &&
+		pause.startDate.trim().length > 0 &&
+		(pause.restartDate === null || (typeof pause.restartDate === 'string' && pause.restartDate.trim().length > 0))
+	);
+}
+
 export function validPlan(rawPlan: unknown): rawPlan is Plan {
 	if (typeof rawPlan !== 'object' || rawPlan === null) return false;
 
@@ -203,6 +234,14 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		Object.values(date as Record<string, unknown>).every(
 			(value) => typeof value === 'string' && value.trim().length > 0
 		);
+	const validActualDates = (dates: any, stages: string[]) =>
+		dates !== null &&
+		typeof dates === 'object' &&
+		Object.keys(dates).every((stage) => stages.includes(stage)) &&
+		stages.every((stage) => {
+			const value = (dates as Record<string, any>)[stage];
+			return value === null || (typeof value === 'string' && value.trim().length > 0);
+		});
 
 	return (
 		typeof plan.refNum === 'string' &&
@@ -211,7 +250,12 @@ export function validPlan(rawPlan: unknown): rawPlan is Plan {
 		typeof plan.title === 'string' &&
 		validStage(plan.stage) &&
 		validStatus(plan.status) &&
+		typeof plan.examinationStatus === 'string' &&
+		typeof plan.examinationStatusLabel === 'string' &&
+		validPause(plan.pause) &&
 		validDates(plan.dates) &&
+		validActualDates(plan.submittedDates, ['G2', 'G3', 'E']) &&
+		validActualDates(plan.completedDates, ['G2', 'G3']) &&
 		validSections(plan.sections) &&
 		Array.isArray(plan.documents) &&
 		plan.documents.length > 0 &&
@@ -234,11 +278,18 @@ export const mockApplicationDoc = (overrides: Partial<ApplicationDoc> = {}): App
 
 export const mockPlan = (overrides: Partial<Plan> = {}): Plan => ({
 	refNum: 'PLAN-001', //Reference Number
+	lpaNames: [],
 	leadLPA: 'Southampton City Council', //Lead Local Planning Authority
 	linkedLPA: 'Romsey Town Council', //Linked Local Planning Authority
 	title: 'East Borough Local Plan', //Plan Title
+	type: { id: 'local-plan', displayName: 'Local Plan', displayOrder: 1 },
 	stage: 1, //Current Stage (G1, G2, G3, E), mapped, valid 0->3, (3/6/2026)
 	status: 0, //Status of current stage (used for tags), mapped, valid 0->5, (3/6/2026)
+	examinationStatus: 'cannot-start-yet',
+	examinationStatusLabel: 'Cannot start yet',
+	pause: null,
+	submittedDates: { G2: null, G3: null, E: null },
+	completedDates: { G2: null, G3: null },
 	dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' }, //dates of gateways as obj  e.g. "G1: 7 May 2026, G2: 21 July 2026, G3: 1 August 2026, E: 1 September 2026"
 	sections: [0, 0, 0], // track which state each gateway is array of state e.g. [0,0,0]
 	documents: buildBlankApplicationDocs(), // holds interfaces of each doc needed
@@ -320,6 +371,26 @@ function transformDates(dates: unknown): { G1: string; G2: string; G3: string; E
 	return { G1: '', G2: '', G3: '', E: '' };
 }
 
+function getActualDate(dates: any, stage: string): string | null {
+	const source = dates !== null && typeof dates === 'object' ? (dates as Record<string, any>) : {};
+	return typeof source[stage] === 'string' ? source[stage] : null;
+}
+
+function transformSubmittedDates(dates: any): Plan['submittedDates'] {
+	return {
+		G2: getActualDate(dates, 'G2'),
+		G3: getActualDate(dates, 'G3'),
+		E: getActualDate(dates, 'E')
+	};
+}
+
+function transformCompletedDates(dates: any): Plan['completedDates'] {
+	return {
+		G2: getActualDate(dates, 'G2'),
+		G3: getActualDate(dates, 'G3')
+	};
+}
+
 export function buildPlan(plan: unknown): unknown {
 	if (plan !== null && typeof plan === 'object') {
 		const docs = 'documents' in plan && Array.isArray(plan.documents) ? plan.documents : [];
@@ -327,6 +398,8 @@ export function buildPlan(plan: unknown): unknown {
 		return mockPlan({
 			...plan,
 			dates,
+			submittedDates: transformSubmittedDates('submittedDates' in plan ? plan.submittedDates : undefined),
+			completedDates: transformCompletedDates('completedDates' in plan ? plan.completedDates : undefined),
 			documents: buildApplicationDocs(docs)
 		});
 	}
@@ -428,60 +501,3 @@ export function buildTestPlans(): unknown[] {
 	];
 	return buildPlans(testData);
 }
-
-export const testPlan: unknown[] = [
-	{
-		refNum: 'PLAN-001',
-		leadLPA: 'Southampton',
-		linkedLPA: 'Romsey Town Council',
-		title: 'East plan',
-		stage: 1,
-		status: 0,
-		dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
-		sections: [0, 0, 0],
-		documents: [
-			{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-		]
-	},
-	{
-		refNum: 'PLAN-123456',
-		leadLPA: 'Test LPA',
-		linkedLPA: 'Test Council',
-		title: 'Test plan',
-		stage: 1,
-		status: 0,
-		dates: { G1: '7 May 2026', G2: '21 July 2026', G3: '1 August 2026', E: '1 September 2026' },
-		sections: [0, 0, 0],
-		documents: [
-			{ title: 0, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 1, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 2, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 3, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 4, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 5, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 6, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 7, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 8, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 9, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 10, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 11, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 12, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 13, type: 0, file: null, state: 0, dateCompleted: null },
-			{ title: 14, type: 0, file: null, state: 0, dateCompleted: null }
-		]
-	}
-];

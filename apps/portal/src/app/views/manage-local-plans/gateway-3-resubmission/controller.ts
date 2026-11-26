@@ -13,6 +13,7 @@ import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { sortGateway3Submissions, type Gateway3SubmissionSummary } from '#util/gateway-3-submission.ts';
+import { renderSubmissionFailurePage } from '../../static/error/submission-failure.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -286,15 +287,21 @@ export function buildGuardResubmissionPage(): RequestHandler {
 		const request = req as ResubmissionRequest;
 		const currentCase = request.currentCase as Record<string, unknown> | undefined;
 		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
-		const submissions = (gateway3Info?.submissions ?? []) as { decision: string | null; completionDate: Date | null }[];
+		const submissions = (gateway3Info?.submissions ?? []) as {
+			decision: string | null;
+			completionDate: Date | null;
+			submittedDate: Date | null;
+		}[];
 		const latestSubmission = submissions.at(-1);
 
 		// The BO may pre-create an empty submission after issuing a resubmission decision.
-		// Allow access when the latest completed (or only) submission has the resubmission decision.
+		// Allow access when the latest completed (or only) submission has the resubmission decision
+		// AND the LPA has not already submitted (submittedDate is still null).
 		const hasResubmissionDecision =
 			latestSubmission?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED ||
 			(submissions.length > 1 &&
 				!latestSubmission?.completionDate &&
+				!latestSubmission?.submittedDate &&
 				!latestSubmission?.decision &&
 				submissions.at(-2)?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED);
 
@@ -321,6 +328,7 @@ export function buildGetResubmissionPage(): RequestHandler {
 		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
 		const submissions = (gateway3Info?.submissions ?? []) as {
 			completionDate: Date | null;
+			submittedDate: Date | null;
 			decision: string | null;
 		}[];
 		const documents = (currentCase?.documents ?? []) as {
@@ -338,7 +346,10 @@ export function buildGetResubmissionPage(): RequestHandler {
 		// The current submission we are collecting new documents for
 		const latestSubmission = submissions.at(-1);
 		const latestIsCurrentResubmissionPlaceholder = Boolean(
-			latestSubmission && !latestSubmission.completionDate && !latestSubmission.decision
+			latestSubmission &&
+			!latestSubmission.completionDate &&
+			!latestSubmission.submittedDate &&
+			!latestSubmission.decision
 		);
 
 		const completedSubmissions = latestIsCurrentResubmissionPlaceholder ? submissions.slice(0, -1) : submissions;
@@ -362,7 +373,7 @@ export function buildGetResubmissionPage(): RequestHandler {
 		}));
 		const previousSubmissions = completedSubmissions.map((sub, index) => ({
 			number: index + 1,
-			submittedDate: formatDisplayDate(sub.completionDate),
+			submittedDate: formatDisplayDate(sub.submittedDate ?? sub.completionDate),
 			url: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission/${index + 1}`
 		}));
 
@@ -426,9 +437,104 @@ export function buildPostResubmission(): RequestHandler {
 			return buildGetResubmissionPage()(req, res, () => {});
 		}
 
-		return res.redirect(
-			`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/declaration?from=resubmission`
-		);
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/declaration`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET declaration page
+// ---------------------------------------------------------------------------
+
+const DECLARATION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/declaration.njk';
+
+export function buildGetDeclarationPage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		const resubmissionUrl = `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission`;
+
+		return res.render(DECLARATION_VIEW_PATH, {
+			pageTitle: "Are you sure you're ready to submit?",
+			pageHeading: "Are you sure you're ready to submit?",
+			backLinkUrl: resubmissionUrl,
+			goBackUrl: resubmissionUrl
+		});
+	};
+}
+
+// ---------------------------------------------------------------------------
+// POST declaration — completes the current submission
+// ---------------------------------------------------------------------------
+
+const SUBMISSION_COMPLETE_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/submission-complete.njk';
+
+export function buildPostDeclarationPage(service: PortalService): RequestHandler {
+	return async (req, res) => {
+		const request = req as ResubmissionRequest;
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		const currentCase = request.currentCase as Record<string, unknown>;
+		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
+		const submissions = (gateway3Info?.submissions ?? []) as {
+			id: string;
+			completionDate: Date | null;
+			submittedDate: Date | null;
+			decision: string | null;
+		}[];
+
+		// Find the current placeholder submission (last, with no completionDate/submittedDate)
+		const currentSubmission = submissions.at(-1);
+		if (!currentSubmission || currentSubmission.completionDate || currentSubmission.submittedDate) {
+			service.logger.error(`No pending submission found for resubmission declaration ${planReference ?? ''}`);
+			return renderSubmissionFailurePage(res, { planReference });
+		}
+
+		const caseId = currentCase?.id as string | undefined;
+		if (!caseId) {
+			service.logger.error(`No case loaded for resubmission declaration ${planReference ?? ''}`);
+			return renderSubmissionFailurePage(res, { planReference });
+		}
+
+		const submittedDate = new Date();
+
+		try {
+			const documentSetIds = await DocumentUtil.getDocumentSetIdsByFolderName(service, [
+				getResubmissionDocumentSetFolderName(req)
+			]);
+			await service.db.$transaction([
+				service.db.gateway3Submission.update({
+					where: { id: currentSubmission.id },
+					data: { submittedDate }
+				}),
+				service.db.gateway3Info.update({
+					where: { caseId },
+					data: { actualDate: submittedDate }
+				}),
+				DocumentUtil.commitTempDocuments(service, caseId, [...documentSetIds.values()])
+			]);
+		} catch (error) {
+			service.logger.error({ error }, `Failed to complete resubmission for case ${planReference ?? ''}`);
+			return renderSubmissionFailurePage(res, { planReference });
+		}
+
+		res.locals.submissionCompleted = true;
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission-complete`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET submission complete page
+// ---------------------------------------------------------------------------
+
+export function buildGetSubmissionCompletePage(): RequestHandler {
+	return (req, res) => {
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+
+		return res.render(SUBMISSION_COMPLETE_VIEW_PATH, {
+			pageTitle: 'Gateway 3 submission complete',
+			planOverviewUrl: `/manage-local-plans/${encodedPlanReference}`
+		});
 	};
 }
 
@@ -464,6 +570,7 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
 		const submissions = (gateway3Info?.submissions ?? []) as {
 			completionDate: Date | null;
+			submittedDate: Date | null;
 			decision: string | null;
 		}[];
 		const documents = (currentCase?.documents ?? []) as CaseDocument[];
@@ -477,14 +584,15 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 
 		// The submission at this index (0-based)
 		const submission = submissions[submissionNumber - 1];
-		// Only allow viewing completed submissions (not the current placeholder)
-		if (!submission.completionDate && !submission.decision) {
+		// Only allow viewing completed/submitted submissions (not a blank placeholder)
+		if (!submission.completionDate && !submission.submittedDate && !submission.decision) {
 			return renderNotFound(res);
 		}
 
 		const isInitialSubmission = submissionNumber === 1;
-		const submissionDate = formatDisplayDate(submission.completionDate);
-		const submissionTime = formatDisplayTime(submission.completionDate);
+		const effectiveDate = submission.submittedDate ?? submission.completionDate;
+		const submissionDate = formatDisplayDate(effectiveDate);
+		const submissionTime = formatDisplayTime(effectiveDate);
 
 		// The BO stores the report for submission N in G3_DOCUMENT_N (gateway-3-document-N in manage)
 		const reportSubmissionNumber = submissionNumber;
@@ -499,10 +607,10 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 		// Only show completed submissions that came BEFORE the one being viewed.
 		const previousSubmissions = submissions
 			.slice(0, submissionNumber - 1)
-			.filter((sub) => sub.completionDate || sub.decision)
+			.filter((sub) => sub.completionDate || sub.submittedDate || sub.decision)
 			.map((sub, index) => ({
 				number: index + 1,
-				submittedDate: formatDisplayDate(sub.completionDate),
+				submittedDate: formatDisplayDate(sub.submittedDate ?? sub.completionDate),
 				url: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission/${index + 1}`
 			}));
 
@@ -642,6 +750,9 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 	const postResubmission = buildPostResubmission();
 	const getUploadPage = buildGetUploadDocumentsPage();
 	const postUploadPage = buildPostUploadDocumentsPage();
+	const getDeclarationPage = buildGetDeclarationPage();
+	const postDeclarationPage = asyncHandler(buildPostDeclarationPage(service));
+	const getSubmissionCompletePage = buildGetSubmissionCompletePage();
 
 	const fileUploaderStorage = () => service.createFileStorage('gateway3-resubmission');
 
@@ -674,7 +785,7 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 		},
 		onFilesChange: async ({ req, uploadedFiles }) => {
 			const folderName = getResubmissionDocumentSetFolderName(req);
-			await DocumentUtil.saveDocuments(service, req, folderName, uploadedFiles);
+			await DocumentUtil.saveDocuments(service, req, folderName, uploadedFiles, true);
 		}
 	});
 
@@ -736,6 +847,9 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 		postResubmission,
 		getUploadPage,
 		postUploadPage,
+		getDeclarationPage,
+		postDeclarationPage,
+		getSubmissionCompletePage,
 		getPreviousSubmissionPage,
 		downloadDocument,
 		upload,

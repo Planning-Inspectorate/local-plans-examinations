@@ -1,37 +1,37 @@
 import {
 	gateway3Page,
-	gateway3AssessorPage,
 	gateway3ProgrammeOfficerPage,
 	gateway3ActualDatePage,
 	gateway3ExpectedDatePage,
 	gateway3ExaminationWebsitePage,
 	gateway3DecisionPage,
 	gateway3DocumentsPage,
-	gateway3DocumentsCheckPage
+	gateway3DocumentsCheckPage,
+	gateway3ReviewDocumentsPage
 } from '../../../../page-objects/manage/gateway-3/index.ts';
 import { caseHistoryPage } from '../../../../page-objects/manage/case-history/index.ts';
-import { examinationPage } from '../../../../page-objects/manage/examination/index.ts';
-import { openSeededGateway3Page } from '../../../../flows/manage/gateway-3-flow.ts';
+import { examinationPage, examinationWebsitePage } from '../../../../page-objects/manage/examination/index.ts';
+import {
+	openGateway3Page,
+	openGateway3ReviewDocumentsPage,
+	openSeededGateway3Page,
+	openSeededGateway3PageWithSubmissionDocuments
+} from '../../../../flows/manage/gateway-3-flow.ts';
 import { seededCase } from '../../../../fixtures/manage/case.ts';
 import {
-	gateway3AssessorAnswer,
+	gateway3AdditionalSubmissionDocuments,
 	gateway3DateAnswers,
 	gateway3DecisionAnswer,
 	gateway3ExaminationWebsite,
+	gateway3ExaminationWebsiteDocumentLabel,
+	gateway3OptionalSubmissionDocumentLabels,
 	gateway3ProgrammeOfficerAnswer,
+	gateway3RequiredSubmissionDocuments,
 	updatedGateway3ExpectedDateAnswer,
 	gateway3DocumentsAnswer
 } from '../../../../fixtures/manage/gateway-3.ts';
 import { cleanupSeededManageCase } from '../../../../flows/manage/seeded-case-flow.ts';
 import { manageHomePage } from '../../../../page-objects/manage/home-page.ts';
-
-const today = new Date();
-const todayDisplay = today.toLocaleDateString('en-GB', {
-	day: 'numeric',
-	month: 'long',
-	year: 'numeric',
-	timeZone: 'GMT'
-});
 
 const openCaseHistory = () => {
 	gateway3Page.openServiceNavigationItem('Case History');
@@ -62,21 +62,6 @@ describe('Gateway 3 updates', () => {
 		openCaseHistory();
 		// Known gap: Gateway 3 fields aren't in caseHistoryLabels; asserting only the prefix since raw Date.toString() is timezone dependent
 		caseHistoryPage.verifyHistoryEvent('Expected updated from');
-	});
-
-	it('updates the Gateway 3 assessor name answer', { tags: ['regression'] }, () => {
-		gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
-
-		gateway3AssessorPage.verifyLoaded();
-		gateway3AssessorPage.assessorNamePopulated(gateway3AssessorAnswer.assessor1);
-		gateway3AssessorPage.enterAssessorName(gateway3AssessorAnswer.assessor2);
-
-		gateway3Page.verifyLoaded(seededCase.planTitle);
-		gateway3Page.verifySummaryRowContains(gateway3AssessorAnswer.row, gateway3AssessorAnswer.assessor2);
-
-		gateway3Page.openServiceNavigationItem('Case History');
-		caseHistoryPage.verifyLoaded();
-		caseHistoryPage.verifyHistoryEvent('Assessor updated from assessor-1 to assessor-2');
 	});
 
 	it('updates the programme officer details answer and records case history', { tags: ['regression'] }, () => {
@@ -139,20 +124,6 @@ describe('Gateway 3 updates', () => {
 		gateway3Page.verifySummaryRowContains(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.display);
 	});
 
-	it(
-		'auto-fills the assessor date of appointment when the assessor name is saved and records case history',
-		{ tags: ['regression'] },
-		() => {
-			gateway3Page.openActionLinkFor(gateway3AssessorAnswer.row);
-
-			gateway3AssessorPage.verifyLoaded();
-			gateway3AssessorPage.enterAssessorName(gateway3AssessorAnswer.assessor2);
-
-			gateway3Page.verifyLoaded(seededCase.planTitle);
-			gateway3Page.verifySummaryRowContains(gateway3DateAnswers.gateway3AssessorDateAppointment.row, todayDisplay);
-		}
-	);
-
 	it('returns to Gateway 3 from Gateway 3 answer page back links', { tags: ['regression'] }, () => {
 		gateway3Page.openActionLinkFor(gateway3DateAnswers.gateway3ActualDate.row);
 		gateway3ActualDatePage.verifyLoaded(gateway3DateAnswers.gateway3ActualDate.input);
@@ -170,8 +141,175 @@ describe('Gateway 3 updates', () => {
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
 	});
+});
+
+describe('Gateway 3 submission documents', () => {
+	const requiredDocumentCount = gateway3RequiredSubmissionDocuments.length;
+
+	beforeEach(() => {
+		cy.task('clearDb');
+	});
+
+	after(() => cy.task('clearDb'));
+
+	it(
+		'opens the review documents page from the Gateway 3 tab and lists the submitted documents',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments().then(({ reference }) => {
+				openGateway3ReviewDocumentsPage();
+
+				gateway3ReviewDocumentsPage.verifyLoaded(reference);
+				gateway3ReviewDocumentsPage.verifyNoMissingDocumentErrors();
+				gateway3RequiredSubmissionDocuments.forEach(({ label, fileName }) => {
+					gateway3ReviewDocumentsPage.verifyDocumentAdded(label, fileName);
+				});
+				gateway3ReviewDocumentsPage.verifyDocumentNotAdded(gateway3ExaminationWebsiteDocumentLabel);
+				gateway3OptionalSubmissionDocumentLabels.forEach((documentLabel) => {
+					gateway3ReviewDocumentsPage.verifyDocumentNotAdded(documentLabel);
+				});
+			});
+		}
+	);
+
+	it('links each submitted filename and View action to its download', { tags: ['regression'] }, () => {
+		const documents = [...gateway3RequiredSubmissionDocuments, ...gateway3AdditionalSubmissionDocuments];
+		const fileNamesByLabel = new Map<string, string[]>();
+		documents.forEach(({ label, fileName }) => {
+			fileNamesByLabel.set(label, [...(fileNamesByLabel.get(label) ?? []), fileName]);
+		});
+		const labelsWithFiles = [...fileNamesByLabel.keys()];
+
+		openSeededGateway3PageWithSubmissionDocuments({ documents });
+		openGateway3ReviewDocumentsPage();
+
+		fileNamesByLabel.forEach((fileNames, label) => {
+			gateway3ReviewDocumentsPage.verifyDocumentDownloadLinks(label, ...fileNames);
+		});
+		gateway3ReviewDocumentsPage.verifyNoDocumentViewLink(gateway3ExaminationWebsiteDocumentLabel);
+		gateway3OptionalSubmissionDocumentLabels
+			.filter((documentLabel) => !labelsWithFiles.includes(documentLabel))
+			.forEach((documentLabel) => {
+				gateway3ReviewDocumentsPage.verifyNoDocumentViewLink(documentLabel);
+			});
+	});
+
+	it(
+		'links to the examination website the LPA submitted on the review documents page',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({ examinationWebsiteUrl: gateway3ExaminationWebsite.value });
+			openGateway3ReviewDocumentsPage();
+
+			gateway3ReviewDocumentsPage.verifyExaminationWebsiteLink(
+				gateway3ExaminationWebsite.value,
+				gateway3ExaminationWebsite.href
+			);
+		}
+	);
+
+	it('shows the examination website changed in Manage on the review documents page', { tags: ['regression'] }, () => {
+		openSeededGateway3PageWithSubmissionDocuments({
+			examinationWebsiteUrl: gateway3ExaminationWebsite.unsavedValue
+		}).then(({ planTitle }) => {
+			gateway3Page.openActionLinkFor(gateway3ExaminationWebsite.row);
+			gateway3ExaminationWebsitePage.verifyLoaded(gateway3ExaminationWebsite.unsavedValue);
+			gateway3ExaminationWebsitePage.enterAnswer(gateway3ExaminationWebsite.value);
+			gateway3Page.verifyLoaded(planTitle);
+			gateway3Page.verifySummaryRowValueLinkHref(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.href);
+
+			openGateway3ReviewDocumentsPage();
+
+			gateway3ReviewDocumentsPage.verifyExaminationWebsiteLink(
+				gateway3ExaminationWebsite.value,
+				gateway3ExaminationWebsite.href
+			);
+		});
+	});
+
+	it(
+		'shows the examination website the LPA submitted on the Gateway 3 tab instead of Not started',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({ examinationWebsiteUrl: gateway3ExaminationWebsite.value });
+
+			gateway3Page
+				.summaryRowValue(gateway3ExaminationWebsite.row)
+				.should('not.contain.text', gateway3ExaminationWebsite.display);
+			gateway3Page.verifySummaryRowContains(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.value);
+			gateway3Page.verifySummaryRowValueLinkHref(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.href);
+
+			// The Examination tab reads the same address
+			gateway3Page.openServiceNavigationItem('Examination');
+			examinationPage.verifyLoaded(seededCase.planTitle);
+			examinationPage.verifySummaryRowContains(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.value);
+			examinationPage.verifySummaryRowValueLinkHref(gateway3ExaminationWebsite.row, gateway3ExaminationWebsite.href);
+		}
+	);
+
+	it(
+		'shows the examination website from the Portal examination submission on the Gateway 3 tab',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({
+				examinationSubmissionWebsiteUrl: gateway3ExaminationWebsite.examinationSubmissionValue
+			});
+
+			gateway3Page.verifySummaryRowContains(
+				gateway3ExaminationWebsite.row,
+				gateway3ExaminationWebsite.examinationSubmissionValue
+			);
+			gateway3Page.verifySummaryRowValueLinkHref(
+				gateway3ExaminationWebsite.row,
+				gateway3ExaminationWebsite.examinationSubmissionHref
+			);
+		}
+	);
+
+	it(
+		'shows the examination website changed on the Examination tab on Gateway 3 and its review documents page',
+		{ tags: ['regression'] },
+		() => {
+			openSeededGateway3PageWithSubmissionDocuments({
+				examinationWebsiteUrl: gateway3ExaminationWebsite.value
+			}).then(({ reference, planTitle }) => {
+				gateway3Page.openServiceNavigationItem('Examination');
+				examinationPage.verifyLoaded(planTitle);
+				examinationPage.openActionLinkFor(gateway3ExaminationWebsite.row);
+				examinationWebsitePage.verifyLoaded(gateway3ExaminationWebsite.value);
+				examinationWebsitePage.enterAnswer(gateway3ExaminationWebsite.changedOnExaminationValue);
+				examinationPage.verifyLoaded(planTitle);
+
+				openGateway3Page(reference, planTitle);
+				gateway3Page.verifySummaryRowContains(
+					gateway3ExaminationWebsite.row,
+					gateway3ExaminationWebsite.changedOnExaminationValue
+				);
+				gateway3Page.verifySummaryRowValueLinkHref(
+					gateway3ExaminationWebsite.row,
+					gateway3ExaminationWebsite.changedOnExaminationHref
+				);
+
+				openGateway3ReviewDocumentsPage();
+				gateway3ReviewDocumentsPage.verifyExaminationWebsiteLink(
+					gateway3ExaminationWebsite.changedOnExaminationValue,
+					gateway3ExaminationWebsite.changedOnExaminationHref
+				);
+			});
+		}
+	);
+
+	it('opens the Gateway 3 decision when every required document has been added', { tags: ['regression'] }, () => {
+		openSeededGateway3PageWithSubmissionDocuments();
+		openGateway3ReviewDocumentsPage();
+
+		gateway3ReviewDocumentsPage.issueDecision();
+
+		gateway3DecisionPage.verifyLoaded();
+	});
 
 	it('selects a gateway 3 resubmission decision and verifies new submission row', { tags: ['regression'] }, () => {
+		openSeededGateway3PageWithSubmissionDocuments();
 		gateway3Page.openActionLinkFor(gateway3DecisionAnswer.row);
 
 		gateway3DecisionPage.verifyLoaded();
@@ -186,7 +324,8 @@ describe('Gateway 3 updates', () => {
 		gateway3DocumentsCheckPage.issueDecision();
 
 		gateway3Page.verifyLoaded(seededCase.planTitle);
-		gateway3Page.verifyGateway3SubmissionIssued();
+		gateway3Page.verifyGateway3SubmissionIssued('Resubmission required');
+		gateway3Page.verifySubmissionDocumentsReviewLink(requiredDocumentCount);
 		gateway3Page.verifySubHeading('Gateway 3 submission 2');
 		gateway3Page.verifyHeaderStatus('GW3 pending');
 

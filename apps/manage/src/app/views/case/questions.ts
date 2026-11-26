@@ -18,7 +18,6 @@ import {
 	TOTAL_FILE_UPLOAD_LIMIT,
 	MAX_NO_OF_FILES_TO_UPLOAD
 } from '@pins/local-plans-lib/forms/custom-components/file-uploader/index.ts';
-import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 import {
 	MIME_TYPE_MAP,
 	formatByteCountIntoHumanReadableMemoryUnit,
@@ -44,10 +43,12 @@ import { sortByDateColumn } from '#util/util.ts';
 import {
 	GATEWAY_SUBMISSION_FILE_UPLOAD_LIMIT_BYTES,
 	GATEWAY_2_WORKSHOP_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
-	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES
+	SIGNED_SLA_FILE_UPLOAD_LIMIT_BYTES,
+	COMMON_CONSTS
 } from '../../classes/common-consts.ts';
 import { formatDateToString, parseDate } from '../../../app/util/date.ts';
-import { COMMON_CONSTS } from '../../classes/common-consts.ts';
+import { FRONT_OFFICE_GW2_QUESTIONS } from '@pins/local-plans-lib/app/questions.ts';
+import { fileUploadCountFormat } from '@pins/local-plans-lib/forms/custom-components/file-uploader/question.ts';
 
 type ManageQuestionConfig = BaseQuestionProps & Record<string, any>;
 
@@ -116,6 +117,38 @@ const GATEWAY_2_WORKSHOP_DOCUMENTS_ALLOWED_EXTENSIONS = [
 	'tiff'
 ];
 
+const MIQ_DOCUMENTS_ALLOWED_EXTENSIONS = [
+	'pdf',
+	'doc',
+	'docx',
+	'ppt',
+	'pptx',
+	'xls',
+	'xlsx',
+	'msg',
+	'jpg',
+	'jpeg',
+	'png',
+	'tif',
+	'tiff'
+];
+
+const MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES = 250 * 1000 * 1000; // 250MB
+
+const gw2QuestionsWithContinue = Object.fromEntries(
+	//front office has save and return not continue
+	Object.entries(FRONT_OFFICE_GW2_QUESTIONS).map(([key, question]) => [
+		key,
+		{
+			...question,
+			text: {
+				...question.text,
+				continueButtonText: 'Continue'
+			}
+		}
+	])
+);
+
 // The base question config that are part of a gateway3 submission
 const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 	gateway3Documents: {
@@ -145,6 +178,13 @@ const gateway3BaseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('gateway3Documents', 'Please upload your Gateway 3 report')],
 		formatSummaryValue: fileUploadCountFormat
+	},
+	gateway3DocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_DOCUMENTS_VIEW,
+		title: 'Documents',
+		question: 'Gateway 3 documents',
+		fieldName: 'gateway3DocumentSubmission',
+		url: 'gateway-3-review-documents'
 	},
 	gateway3Decision: {
 		type: COMPONENT_TYPES.RADIO,
@@ -521,8 +561,9 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 				value: 'yes',
 				text: 'Yes',
 				conditional: {
-					question: 'Expected number of days to carry out the hearing',
-					type: 'number',
+					label: 'Number of days',
+					type: 'bold-number',
+					suffix: 'Days',
 					fieldName: 'hearingExpectedDays'
 				}
 			},
@@ -621,6 +662,23 @@ const examinationHearingBaseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-hearing-remote-meeting-link',
 		title: 'Remote meeting link',
 		validators: [new RequiredValidator('Input a remote meeting link')]
+	},
+	examinationHearingDuration: {
+		type: 'number',
+		question: 'How many days did the hearing actually take?',
+		fieldName: 'hearingDuration',
+		url: 'examination-hearing-duration',
+		title: 'Examination hearing duration',
+		validators: [new RequiredValidator('Input hearing duration')]
+	},
+	examinationHearingEndDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'What is the hearing end date?',
+		fieldName: 'hearingEndDate',
+		url: 'examination-hearing-end-date',
+		title: 'Examination hearing end date',
+		validators: [new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'examination-hearing-end-date' }
 	}
 };
 
@@ -696,8 +754,18 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan title?',
 		fieldName: 'planTitle',
 		url: 'plan-title',
-		title: 'Plan title',
+		title: 'Title',
 		validators: [new RequiredValidator('Enter a plan title')]
+	},
+	deleteCaseWhy: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Why are you deleting this case?',
+		fieldName: 'deleteCaseWhy',
+		inputAttributes: { 'data-cy': 'delete-case-reason' },
+		url: COMMON_CONSTS.DELETE_CASE_REASON,
+		title: 'Reason for deletion',
+		viewData: { continueButtonText: 'Continue' },
+		validators: [new RequiredValidator('Enter a reason for deleting this case')]
 	},
 	planBand: {
 		type: COMPONENT_TYPES.RADIO,
@@ -709,7 +777,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan band?',
 		fieldName: 'planBand',
 		url: 'plan-band',
-		title: 'Plan band',
+		title: 'Band',
 		validators: [new RequiredValidator('Select a plan band')]
 	},
 	planType: {
@@ -721,7 +789,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'What is the plan type?',
 		fieldName: 'planType',
 		url: 'plan-type',
-		title: 'Plan type',
+		title: 'Type',
 		validators: [new RequiredValidator('Select a plan type')]
 	},
 	lpa: {
@@ -776,30 +844,35 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'firstName',
 				label: 'First name',
+				title: 'First name',
 				attributes: { 'data-cy': 'contact-first-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'lastName',
 				label: 'Last name',
+				title: 'Last name',
 				attributes: { 'data-cy': 'contact-last-name' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'email',
 				label: 'Email address',
+				title: 'Email address',
 				attributes: { 'data-cy': 'contact-email' }
 			},
 			{
 				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
 				fieldName: 'phone',
 				label: 'Phone number (optional)',
+				title: 'Phone number',
 				attributes: { 'data-cy': 'contact-phone' }
 			},
 			{
 				type: COMPONENT_TYPES.RADIO,
 				fieldName: 'lpaContact',
 				legend: 'Select the organisation for this contact',
+				title: 'Planning authority',
 				options: []
 			}
 		],
@@ -983,6 +1056,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		validators: [new RequiredValidator('Input QA Inspector 3')],
 		inputAttributes: { 'data-cy': 'inspector-qa-3' }
 	},
+
 	//gateway 1
 	noticeOfIntentionPublishDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -1118,6 +1192,69 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'programme-officer',
 		title: 'Programme officer'
 	},
+	examinationDocumentsCheck: {
+		type: CUSTOM_COMPONENTS.CUSTOM_EXAMINATION_DOCUMENTS_VIEW,
+		title: 'Examination documents',
+		question: 'Examination documents',
+		fieldName: 'examinationDocuments',
+		url: 'examination-documents'
+	},
+	programmeOfficerDetailsExam: {
+		type: CUSTOM_COMPONENTS.CUSTOM_MULTI_FIELD_INPUT,
+		inputFields: [
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerFirstName',
+				label: 'First name',
+				title: 'Programme Officer first name',
+				attributes: { 'data-cy': 'programme-officer-first-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerLastName',
+				label: 'Last name',
+				title: 'Programme Officer last name',
+				attributes: { 'data-cy': 'programme-officer-last-name' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerEmail',
+				label: 'Email address',
+				title: 'Programme Officer email address',
+				attributes: { 'data-cy': 'programme-officer-email' }
+			},
+			{
+				type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+				fieldName: 'programmeOfficerPhone',
+				label: 'Phone number (optional)',
+				title: 'Programme officer phone number',
+				excludeFromSummary: true,
+				attributes: { 'data-cy': 'programme-officer-phone' }
+			}
+		],
+		validators: [
+			new MultiFieldInputValidator({
+				fields: [
+					{
+						fieldName: 'programmeOfficerFirstName',
+						validators: [new RequiredValidator('Input a first name')]
+					},
+					{
+						fieldName: 'programmeOfficerLastName',
+						validators: [new RequiredValidator('Input a last name')]
+					},
+					{
+						fieldName: 'programmeOfficerEmail',
+						validators: [new RequiredValidator('Input an email address')]
+					}
+				]
+			})
+		],
+		question: 'Programme officer details',
+		fieldName: 'programmeOfficerDetails',
+		url: 'programme-officer',
+		title: 'Programme officer'
+	},
 	//gateway 2
 	gateway2ExpectedDate: {
 		type: COMPONENT_TYPES.DATE,
@@ -1156,6 +1293,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'assessor-gateway-2',
 		title: 'Assessor',
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-2-assessor' }
 	},
@@ -1202,6 +1340,13 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		]
 	},
 	...gateway2WorkshopQuestions,
+	gateway2WorkshopDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_WORKSHOP_DATES,
+		title: 'Workshop dates',
+		question: 'Workshop dates',
+		fieldName: 'workshops',
+		url: 'gateway-2-workshop-dates'
+	},
 	reportIssuedDate: {
 		type: COMPONENT_TYPES.DATE,
 		question: 'When was the report issued?',
@@ -1286,6 +1431,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		fieldName: 'assessorName',
 		url: 'gateway-3-assessor-name',
 		title: 'Assessor',
+		viewData: { continueButtonText: 'Continue' },
 		validators: [new RequiredValidator('Select a name')],
 		inputAttributes: { 'data-cy': 'gateway-3-assessor' }
 	},
@@ -1535,8 +1681,44 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		url: 'examination-report-manage',
 		viewData: { uploadQuestionUrl: 'examination-report' }
 	},
+	hearingDates: {
+		type: CUSTOM_COMPONENTS.CUSTOM_HEARING_DATES,
+		title: 'Hearing dates',
+		question: 'Hearing dates',
+		fieldName: 'hearings',
+		url: 'examination-hearing-dates'
+	},
+	miqs: {
+		type: CUSTOM_COMPONENTS.FILE_UPLOADER,
+		title: 'MIQs',
+		question: 'Upload MIQ documents',
+		fieldName: 'miqs',
+		url: 'miqs',
+		allowedFileExtensions: MIQ_DOCUMENTS_ALLOWED_EXTENSIONS,
+		allowedMimeTypes: Object.keys(MIME_TYPE_MAP)
+			.filter((key) => MIQ_DOCUMENTS_ALLOWED_EXTENSIONS.includes(key))
+			.map((key) => MIME_TYPE_MAP[key])
+			.flat(),
+		maxFileSizeBytes: MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES,
+		maxFileSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES),
+		maxFilesPerUpload: MAX_NO_OF_FILES_TO_UPLOAD,
+		maxTotalUploadSizeBytes: TOTAL_FILE_UPLOAD_LIMIT,
+		maxTotalUploadSizeLabel: formatByteCountIntoHumanReadableMemoryUnit(TOTAL_FILE_UPLOAD_LIMIT),
+		multiple: true,
+		text: {
+			caption: 'MIQs',
+			introduction: 'Upload files',
+			fileRequirementsText: `Each file must be a ${formatFileExtensionsIntoHumanReadableList(MIQ_DOCUMENTS_ALLOWED_EXTENSIONS)} and smaller than ${formatByteCountIntoHumanReadableMemoryUnit(MIQ_DOCUMENTS_FILE_UPLOAD_LIMIT_BYTES)}.`,
+			chooseFilesButtonText: 'Choose files',
+			dropInstructionText: 'or drop files',
+			continueButtonText: 'Continue',
+			totalUploadSizeText: 'The total size of your uploaded files must be smaller than 1GB.'
+		},
+		validators: [new FileUploadRequiredValidator('miqs', 'Choose a file to upload')]
+	},
 	...examinationPauseQuestions,
-	...gateway3Questions
+	...gateway3Questions,
+	...gw2QuestionsWithContinue
 };
 
 // Some questions require copies in order to be used in different conditions.
@@ -1545,6 +1727,20 @@ for (const key of ['isSound', 'soundUnsoundDate', 'adoptionDate', 'approvedForCI
 	caseQuestions[`${key}Outcome`] = { ...caseQuestions[key] };
 }
 caseQuestions.isSoundNavigation = { ...caseQuestions.isSound };
+
+caseQuestions.timetableGateway3ExpectedDate = {
+	...caseQuestions.gateway3ExpectedDate,
+	fieldName: 'gateway3ExpectedDate'
+};
+caseQuestions.timetableGateway3ActualDate = {
+	...caseQuestions.gateway3ActualDate,
+	fieldName: 'gateway3ActualDate'
+};
+caseQuestions.timetableGateway3CompletionDate = {
+	...gateway3BaseQuestions.gateway3CompletionDate,
+	fieldName: 'gateway3CompletionDate',
+	url: 'timetable-gateway-3-completion-date'
+};
 
 export const fileUploadQuestionProperties = Object.fromEntries(
 	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
@@ -1570,9 +1766,21 @@ Object.keys(examinationHearingQuestions).forEach((key) => {
 	questions[key].continueButtonText = 'Continue';
 });
 
+Object.keys(gateway2WorkshopQuestions).forEach((key) => {
+	questions[key].continueButtonText = 'Continue';
+});
+
 // The plan outcome / is sound question appears before the file upload so it's row must be hidden.
 questions.isSoundNavigation.taskList = false;
 questions.examinationReportManage.taskList = false;
+
+// Only editable once a submission has proceeded to examination (i.e. a date is present)
+const timetableGateway3CompletionDate = questions.timetableGateway3CompletionDate;
+const defaultGetAction = timetableGateway3CompletionDate.getAction;
+timetableGateway3CompletionDate.getAction = function (sectionSegment: string, journey: any, answer: unknown) {
+	if (!answer) return undefined;
+	return defaultGetAction.call(this, sectionSegment, journey, answer);
+};
 
 questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: string, journey: any, answer: string) {
 	// Prepend https:// to the answer if it doesn't already start with http:// or https://
@@ -1587,11 +1795,7 @@ questions.examinationWebsite.formatAnswerForSummary = function (sectionSegment: 
 export async function updateQuestionsWithOptions(service: ManageService, req: Request, questions: Record<string, any>) {
 	await loadCaseOfficerOptions(service, req, questions);
 	await loadInspectorOptions(service, req, questions);
-
-	const lpaOptions = await loadLpaOptions(service);
-	if (lpaOptions.length > 0) {
-		questions.lpa.options = [{ value: '', text: '' }, ...lpaOptions];
-	}
+	questions.lpa.options = await loadLpaOptions(service, true);
 }
 
 export async function getQuestions(
@@ -1599,6 +1803,23 @@ export async function getQuestions(
 	req: Request
 ): Promise<Record<string, ManageQuestionConfig>> {
 	await updateQuestionsWithOptions(service, req, questions);
+
+	const rawReference = req.params?.reference;
+	const reference = Array.isArray(rawReference) ? rawReference[0] : rawReference;
+
+	let lpaCount = 0;
+
+	if (reference) {
+		const currentCase = await service.db.case.findUnique({
+			where: { reference },
+			select: { _count: { select: { lpas: true } } }
+		});
+
+		lpaCount = currentCase ? currentCase._count.lpas : 0;
+	}
+
+	questions.checkLpas.title = lpaCount > 1 ? 'Planning authorities' : 'Planning authority';
+
 	return questions;
 }
 
@@ -1730,7 +1951,9 @@ Object.entries(questions)
 			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const expectedDaysKnown = {
 				key: this.title,
-				value: hearingDetails.hearingExpectedDaysKnown,
+				value:
+					this.options.find((option: { value: string }) => option.value === hearingDetails.hearingExpectedDaysKnown)
+						?.text ?? hearingDetails.hearingExpectedDaysKnown,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 
@@ -1758,7 +1981,9 @@ Object.entries(questions)
 			const hearingDetails = sortByDateColumn(answersFull.hearings, 'createdDate')[hearingId - 1];
 			const locationType = {
 				key: this.title,
-				value: hearingDetails.hearingLocationType,
+				value:
+					this.options.find((option: { value: string }) => option.value === hearingDetails.hearingLocationType)?.text ??
+					hearingDetails.hearingLocationType,
 				action: this.getAction(sectionSegment, journey, answer)
 			};
 

@@ -16,7 +16,8 @@ export const seededExaminationHearing = {
 	hearingTime: '10:30',
 	hearingExpectedDaysKnown: 'no',
 	hearingLocationType: 'remote',
-	hearingRemoteMeetingLinkKnown: 'no'
+	hearingRemoteMeetingLinkKnown: 'yes',
+	hearingRemoteMeetingLink: 'hearing 1 remote meeting link'
 };
 
 // seed-cy.ts sets expectedSubmissionDate to `now` at seed time
@@ -66,6 +67,7 @@ export const examinationReport = {
 	row: 'Examination report',
 	path: 'examination-report',
 	fileName: 'test-document.pdf',
+	fileName2: 'test-document.docx',
 	supportingFileName: 'test-document.docx',
 	receivedDate: '2026-10-01T12:00:00.000Z',
 	receivedDisplay: '1 Oct 2026',
@@ -310,7 +312,8 @@ export const soundUnsoundDate = {
 export const adoptionDate = {
 	row: 'Adoption date',
 	path: 'adoption-date',
-	display: '8 December 2026'
+	display: '8 December 2026',
+	input: { day: '8', month: '12', year: '2026' }
 };
 
 export const approvedForCILDate = {
@@ -377,3 +380,75 @@ export const seededRestartedExamination = {
 		}
 	}
 } satisfies SeedCyOptions;
+
+export const MIQcheckPage = {
+	row: 'MIQs',
+	path: 'miqs',
+	heading: 'Check MIQ documents and send notification',
+	fieldname: 'issue-document-notification',
+	file1: 'test-document.pdf',
+	file2: 'test-document.xlsx'
+};
+
+// seed-cy.ts seeds the programme officer on gateway3Info, so the Examination row starts populated
+export const programmeOfficer = {
+	row: 'Programme officer',
+	heading: 'Programme officer details',
+	path: 'programme-officer',
+	firstName: 'Albert',
+	lastName: 'Einstien',
+	email: 'gateway3.officer@test.com',
+	updated: {
+		firstName: 'Updated',
+		lastName: 'Officer',
+		email: 'updated.officer@test.com',
+		phone: '01234 567890'
+	},
+	savedMessage: 'Changes saved'
+} as const;
+
+export type ExaminationSubmissionDocument = {
+	label: string;
+	documentSetKey: string;
+	fileName: string;
+};
+
+export const examinationDocuments = {
+	row: 'Examination documents',
+	heading: 'Examination documents',
+	path: 'examination-documents',
+	websiteLabel: 'Examination website',
+	websiteUrl: 'www.examination-example.com',
+	websiteHref: 'https://www.examination-example.com',
+	// Entered by the LPA in the Portal Gateway 3 submission
+	gateway3WebsiteUrl: 'www.gateway-3-submission-example.com',
+	gateway3WebsiteHref: 'https://www.gateway-3-submission-example.com',
+	// Saved in Manage
+	updatedWebsiteUrl: 'www.changed-in-manage-example.com',
+	updatedWebsiteHref: 'https://www.changed-in-manage-example.com',
+	required: [
+		{
+			label: 'Local plan submission for examination',
+			documentSetKey: 'EX_LOCAL_PLAN',
+			fileName: 'local-plan-submission.pdf'
+		},
+		{
+			label: 'Map of proposed local plan policies',
+			documentSetKey: 'EX_MAP_OF_POLICIES',
+			fileName: 'map-of-policies.pdf'
+		}
+	],
+	other: [
+		{
+			label: 'Environmental report',
+			documentSetKey: 'EX_ENVIRONMENTAL_REPORT',
+			fileName: 'environmental-report.pdf'
+		}
+	]
+} as const satisfies {
+	required: readonly ExaminationSubmissionDocument[];
+	other: readonly ExaminationSubmissionDocument[];
+	[key: string]: unknown;
+};
+
+export const examinationSubmissionDocuments = [...examinationDocuments.required, ...examinationDocuments.other];

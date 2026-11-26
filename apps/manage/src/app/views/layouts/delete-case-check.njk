@@ -1,0 +1,41 @@
+{% extends "views/layouts/main.njk" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageTitle %}Are you sure you want to delete this case?{% endblock %}
+
+{% block backLink %}
+  <nav aria-label="Back">
+    {{ govukBackLink({ href: baseUrl + "/delete-case/delete-case-reason", attributes: { "data-cy": "back-link" } }) }}
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Are you sure you want to delete this case?</h1>
+  <p class="govuk-body">This will mark the case as deleted. It will no longer appear in the system, but it will still be available for audit purposes.</p>
+
+  <h2 class="govuk-heading-m">Case details</h2>
+
+  {% set rows = caseDetailsRows %}
+  {% for section in summaryListData.sections %}
+    {% set rows = rows.concat(section.list.rows) %}
+  {% endfor %}
+  {{ govukSummaryList({ rows: rows, attributes: { "data-cy": "delete-case-details" } }) }}
+
+  {% if journeyComplete %}
+    <form method="POST">
+      {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: "Yes, delete this case",
+          classes: "govuk-button--warning",
+          attributes: { "data-cy": "confirm-delete-button" }
+        }) }}
+        <a class="govuk-link" href="{{ baseUrl }}/overview" data-cy="cancel-delete">Cancel</a>
+      </div>
+    </form>
+  {% else %}
+    <a class="govuk-link" href="{{ baseUrl }}/delete-case/delete-case-reason">Add a reason for deleting this case</a>
+  {% endif %}
+{% endblock %}

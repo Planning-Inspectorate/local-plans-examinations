@@ -112,6 +112,20 @@ describe('FileUploaderQuestion', () => {
 			'<ul class="govuk-list--bullet li"><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">beach.jpg</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-2">bridge.jpg</a></li><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-3">bullfrog.jpg</a></li></ul>'
 		);
 	});
+	it('formats multiple uploaded files as a bullet list of links when valueDisplayFormat is set to items with virus scan details', () => {
+		const question = buildQuestion({ formatSummaryValue: fileUploadBulletListFormat });
+
+		const [row] = question.formatAnswerForSummary('section', buildJourney(), [
+			{ id: 'file-1', fileName: 'beach.jpg', virusCheckStatus: 'scanned' },
+			{ id: 'file-2', fileName: 'bridge.jpg', virusCheckStatus: 'not_scanned' },
+			{ id: 'file-3', fileName: 'bullfrog.jpg', virusCheckStatus: 'affected' }
+		]);
+
+		assert.equal(
+			row.value,
+			'<ul class="govuk-list--bullet li"><li><a class="govuk-link" href="/case/PLAN-123456/download-case-document/file-1">beach.jpg</a></li><li><a class="govuk-link" >bridge.jpg</a> <strong class="govuk-tag govuk-tag--yellow">Virus scanning</strong></li><li><p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span>bullfrog.jpg contains a virus. Remove the file and upload a different version.</p><a class="govuk-link" >bullfrog.jpg</a> <strong class="govuk-tag govuk-tag--red">Virus detected</strong></li></ul>'
+		);
+	});
 	it('formats multiple uploaded files as a count of the files when valueDisplayFormat is set to count', () => {
 		const question = buildQuestion({ formatSummaryValue: fileUploadCountFormat });
 

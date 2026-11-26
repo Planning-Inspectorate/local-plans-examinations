@@ -3,6 +3,7 @@
 import { mockLogger } from '@planning-inspectorate/core/testing';
 import assert from 'node:assert';
 import { describe, it, mock } from 'node:test';
+import { NotifyError, NotifyErrorReason } from '@pins/local-plans-lib/govnotify/notify-error.ts';
 import { sendAuthCodeNotification } from './send-code.ts';
 
 function createMockService(overrides = {}) {
@@ -54,7 +55,20 @@ describe('sendAuthCodeNotification', () => {
 		assert.strictEqual(logArgs[0].email, 'user@example.com');
 	});
 
-	it('should throw with user-friendly message when sendAuthCode fails', async () => {
+	it('should leave out the reference when there is no case reference', async () => {
+		const service = createMockService();
+
+		await sendAuthCodeNotification(service, 'user@example.com', {
+			authCode: 'XYZABCDE',
+			expiryMinutes: '15',
+			caseReference: '',
+			signInUrl: 'https://portal.example.com/login/enter-code'
+		});
+
+		assert.strictEqual(service.notifyClient.sendAuthCode.mock.calls[0].arguments[2], undefined);
+	});
+
+	it('should log and rethrow the original error when sendAuthCode fails', async () => {
 		const originalError = new Error('Notify API down');
 		const service = createMockService();
 		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
@@ -67,15 +81,38 @@ describe('sendAuthCodeNotification', () => {
 					authCode: 'ABCDEFGH',
 					expiryMinutes: '20'
 				}),
-			(err) => {
-				assert.match(err.message, /failed to send authentication code/i);
-				assert.strictEqual(err.cause, originalError);
-				return true;
-			}
+			(err) => err === originalError
 		);
 
 		assert.strictEqual(service.logger.error.mock.callCount(), 1);
-		const logArgs = service.logger.error.mock.calls[0].arguments;
-		assert.strictEqual(logArgs[0].email, 'test@example.com');
+		const [details, message] = service.logger.error.mock.calls[0].arguments;
+		assert.strictEqual(details.email, 'test@example.com');
+		assert.strictEqual(details.error, originalError);
+		assert.strictEqual(message, 'Failed to send auth code notification');
+	});
+
+	it('should rethrow a NotifyError unchanged so callers can act on its reason', async () => {
+		const notifyError = new NotifyError(400, [
+			{ error: 'BadRequestError', message: "Can't send to this recipient using a team-only API key" }
+		]);
+		const service = createMockService();
+		service.notifyClient.sendAuthCode.mock.mockImplementation(async () => {
+			throw notifyError;
+		});
+
+		await assert.rejects(
+			() =>
+				sendAuthCodeNotification(service, 'test@example.com', {
+					authCode: 'ABCDEFGH',
+					expiryMinutes: '20',
+					caseReference: 'PLAN-123456'
+				}),
+			(err) => {
+				assert.strictEqual(err, notifyError);
+				assert.ok(err instanceof NotifyError);
+				assert.strictEqual(err.reason, NotifyErrorReason.TEAM_ONLY_KEY);
+				return true;
+			}
+		);
 	});
 });

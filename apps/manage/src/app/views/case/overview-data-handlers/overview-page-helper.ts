@@ -27,7 +27,8 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 					programmeOfficerFirstName: true,
 					programmeOfficerLastName: true,
 					programmeOfficerEmail: true,
-					assessorName: true
+					assessorName: true,
+					examinationWebsiteUrl: true
 				}
 			},
 			caseHistories: {
@@ -39,6 +40,7 @@ export async function getOverviewData(db: PrismaClient, reference: string) {
 					examiningInspector2: true,
 					examiningInspector3: true,
 					examinationWebsite: true,
+					examinationWebsiteUrl: true,
 					qaInspector1: true,
 					qaInspector2: true,
 					qaInspector3: true
@@ -72,7 +74,8 @@ async function addUploadedDocumentDetailsToAnswers(
 	let relevantFileUploadQuestionConfigs = journeyFileUploadQuestionConfigs[overrideJourneyId];
 	if (overrideJourneyId == 'gateway-3') {
 		// Filter down the available file upload questions for gateway 3 to only include "active" submissions, since there are many "hidden" questions to allow multiple gw3 submissions
-		const lastSubmissionId = answers.submissions.length;
+		// Submission 1 is always available, even before its row has been created
+		const lastSubmissionId = Math.max(1, answers.submissions?.length ?? 0);
 		relevantFileUploadQuestionConfigs = relevantFileUploadQuestionConfigs.filter((elem: any) =>
 			Number(elem.fieldName.replace('gateway3Documents-', ''))
 				? Number(elem.fieldName.replace('gateway3Documents-', '')) <= lastSubmissionId
@@ -117,7 +120,14 @@ async function addUploadedDocumentDetailsToAnswers(
 		const uploadedFiles = isUploadPages
 			? await DocumentUtil.loadTempUploadedDocuments(service, currentCase.id, documentSetId)
 			: await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId);
-		if (isUploadPages && questionConfig.url === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION) {
+		if (
+			isUploadPages &&
+			!gateway3SubmissionNumber &&
+			(journeyFileUploadQuestionConfigs[overrideJourneyId].some((config: any) => config.url === questionConfig.url) ||
+				journeyFileUploadQuestionConfigs[overrideJourneyId].some((config: any) =>
+					config.url.startsWith(questionConfig.fieldName)
+				))
+		) {
 			uploadedFiles.unshift(...(await DocumentUtil.loadUploadedDocuments(service, currentCase.id, documentSetId)));
 		}
 

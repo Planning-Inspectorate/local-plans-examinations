@@ -16,26 +16,27 @@ export function createJourney(req: Request, response: JourneyResponse, questions
 	const journey = new Journey({
 		journeyId: JOURNEY_ID,
 		sections: [
-			new Section('Required Information', 'required-information')
-				.addQuestion(questions.examinationWebsite)
-				.addQuestion(questions.proposedLocalPlan)
-				.addQuestion(questions.mapOfPolicies)
+			new Section('Procedural documents', 'procedural-documents')
 				.addQuestion(questions.statementOfCompliance)
 				.addQuestion(questions.statementOfSoundness)
-				.addQuestion(questions.consultationEngagementSummary)
-				.addQuestion(questions.scopingConsultationSummary)
-				.addQuestion(questions.consultationContentEvidenceSummary)
-				.addQuestion(questions.consultationProposedPlanSummary)
-				.addQuestion(questions.practicalArrangementsStatement),
-			new Section('Optional Documents', 'optional-documents')
-				.addQuestion(questions.copiesOfRepresentations)
-				.addQuestion(questions.supplementaryPlansStatement)
-				.addQuestion(questions.environmentalReport)
-				.addQuestion(questions.statementOfReasonsDetermination)
-				.addQuestion(questions.representationsProgressSummary)
 				.addQuestion(questions.gateway2IssuesSummary)
 				.addQuestion(questions.changesSinceConsultationStatement)
+				.addQuestion(questions.consultationProposedPlanSummary),
+			new Section('Consultation documents', 'consultation-documents')
+				.addQuestion(questions.representationsProgressSummary)
+				.addQuestion(questions.copiesOfRepresentations)
+				.addQuestion(questions.consultationEngagementSummary)
+				.addQuestion(questions.scopingConsultationSummary)
+				.addQuestion(questions.consultationContentEvidenceSummary),
+			new Section('Plan content, evidence and background', 'plan-content-evidence-and-background')
+				.addQuestion(questions.proposedLocalPlan)
+				.addQuestion(questions.examinationWebsite)
+				.addQuestion(questions.practicalArrangementsStatement)
+				.addQuestion(questions.environmentalReport)
+				.addQuestion(questions.statementOfReasonsDetermination)
 				.addQuestion(questions.otherDocuments)
+				.addQuestion(questions.mapOfPolicies)
+				.addQuestion(questions.supplementaryPlansStatement)
 		],
 		taskListUrl: '',
 		journeyTemplate: 'views/layouts/forms-question.njk',

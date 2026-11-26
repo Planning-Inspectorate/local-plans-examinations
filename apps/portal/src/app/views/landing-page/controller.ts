@@ -1,6 +1,6 @@
 import type { PortalService } from '#service';
 import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
-import { StageLabel, StatusTag, validPlan } from '../../types.ts';
+import { validPlan } from '../../types.ts';
 import type { Plan } from '../../types.ts';
 
 export function buildLandingPage(service: PortalService): AsyncRequestHandler {
@@ -8,50 +8,35 @@ export function buildLandingPage(service: PortalService): AsyncRequestHandler {
 	return async (req, res) => {
 		const rawPlans: unknown[] = await service.getPlans(req.session.authenticatedEmail);
 
-		let mappedPlans;
-		let pageCaption;
-		let noPlansFlag = false;
-
-		//check for if no plans
 		if (!rawPlans.length) {
 			logger.warn('No plans found');
-			noPlansFlag = true;
-		} else {
-			//validates plans, raises error if invalid
-			const validPlans: Plan[] = [];
-			for (const rawplan of rawPlans) {
-				if (validPlan(rawplan)) {
-					validPlans.push(rawplan);
-				} else {
-					const planRef =
-						typeof rawplan === 'object' && rawplan !== null && 'refNum' in rawplan ? rawplan.refNum : 'Invalid ref';
-					logger.warn({ planRef }, 'Invalid plan');
-				}
-			}
-
-			pageCaption = validPlans[0]?.leadLPA;
-
-			//maps tags to their classes and the text
-			mappedPlans = validPlans.map((plan) => [
-				{
-					html: `<a class="govuk-link" data-cy="plan-link" href="/manage-local-plans/${encodeURIComponent(plan.refNum)}">${plan.refNum}</a>`
-				},
-				{ text: plan.leadLPA },
-				{ text: plan.title },
-				{ text: StageLabel[plan.stage] },
-				{
-					html: (() => {
-						const s = StatusTag[plan.status];
-						return `<strong class="${s.class}">${s.label}</strong>`;
-					})()
-				}
-			]);
 		}
+
+		const validPlans: Plan[] = rawPlans.reduce((acc: Plan[], rawplan) => {
+			if (validPlan(rawplan)) {
+				acc.push(rawplan);
+			} else {
+				const planRef =
+					typeof rawplan === 'object' && rawplan !== null && 'refNum' in rawplan ? rawplan.refNum : 'Invalid ref';
+				logger.warn({ planRef }, 'Invalid plan');
+			}
+			return acc;
+		}, []);
+
+		const mappedPlans = validPlans.map((plan) => [
+			{
+				html: `<a class="govuk-link" data-cy="plan-link" href="/manage-local-plans/${encodeURIComponent(plan.refNum)}">${plan.refNum}</a>`
+			},
+			{ text: plan.title },
+			{ text: plan.type.displayName }
+		]);
+
+		const pageCaption = validPlans[0]?.leadLPA;
 
 		//content
 		const viewModel = {
 			plans: mappedPlans,
-			noPlansFlag
+			noPlansFlag: validPlans.length === 0
 		};
 
 		//headings
