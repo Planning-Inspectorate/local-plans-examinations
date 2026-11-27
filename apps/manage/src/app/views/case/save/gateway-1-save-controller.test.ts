@@ -1,8 +1,9 @@
 import { Gateway1SaveController } from './gateway-1-save-controller.ts';
 import { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 type MockServiceType = {
 	db: {
@@ -89,6 +90,13 @@ mock.timers.enable({
 });
 
 describe('test Gateway1SaveController', () => {
+	let mockSendServiceBusMessage: ReturnType<typeof mock.method<ODWServiceBusDataSender, 'sendUpdateMessage'>>;
+	beforeEach(() => {
+		mockSendServiceBusMessage = mock.method(ODWServiceBusDataSender.prototype, 'sendUpdateMessage', async () => {});
+	});
+	afterEach(() => {
+		mock.restoreAll();
+	});
 	it('can save when the question is signed-sla', async () => {
 		const mockService = createMockService();
 		const question = 'signed-sla';
@@ -134,5 +142,6 @@ describe('test Gateway1SaveController', () => {
 		const gateway1Controller = new Gateway1SaveController(mockService as unknown as ManageService, req, 'caseRef');
 		await gateway1Controller.prepareAndSave(answers);
 		assert.deepEqual(mockService.db.gateway1Info.upsert.mock.calls[0].arguments.at(0), expectedQuery);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 1);
 	});
 });

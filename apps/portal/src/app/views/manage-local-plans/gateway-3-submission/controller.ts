@@ -54,6 +54,7 @@ import {
 } from '#util/gateway-3-submission.ts';
 import { formatDisplayDate } from '#util/date.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -269,6 +270,7 @@ async function saveGateway3AnswersToDatabase(service: PortalService, req: Reques
 			'Failed to save Gateway 3 answers to the database'
 		);
 	}
+	new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 }
 
 async function markGateway3InProgress(service: PortalService, req: Request) {
@@ -292,6 +294,7 @@ async function markGateway3InProgress(service: PortalService, req: Request) {
 			'Failed to set Gateway 3 status to IN_PROGRESS'
 		);
 	}
+	new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 }
 
 /** Determine whether a saved answer value represents a non-empty answer. */
@@ -850,6 +853,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);
 			return res.status(500).send('Failed to record submission');
 		}
+		new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);
 	};

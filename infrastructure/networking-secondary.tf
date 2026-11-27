@@ -57,6 +57,25 @@ resource "azurerm_virtual_network_peering" "secondary_tooling_to_local_plans" {
   provider = azurerm.tooling
 }
 
+# peer to ODW VNET for integration
+resource "azurerm_virtual_network_peering" "secondary_to_odw" {
+  count                     = var.odw_config == null ? 0 : 1
+  name                      = "${local.org}-peer-${local.secondary_resource_suffix}-to-odw-${var.environment}"
+  remote_virtual_network_id = data.azurerm_virtual_network.odw[0].id
+  resource_group_name       = azurerm_virtual_network.secondary.resource_group_name
+  virtual_network_name      = azurerm_virtual_network.secondary.name
+}
+
+resource "azurerm_virtual_network_peering" "odw_to_secondary" {
+  count                     = var.odw_config == null ? 0 : 1
+  name                      = "${local.org}-peer-odw-to-${local.secondary_resource_suffix}-${var.environment}"
+  remote_virtual_network_id = azurerm_virtual_network.secondary.id
+  resource_group_name       = var.odw_config.network_resource_group_name
+  virtual_network_name      = var.odw_config.network_name
+
+  provider = azurerm.odw
+}
+
 ## DNS Zones for Azure Services
 ## Private DNS Zones exist in the tooling subscription and are shared here
 resource "azurerm_private_dns_zone_virtual_network_link" "secondary_database" {
@@ -65,4 +84,13 @@ resource "azurerm_private_dns_zone_virtual_network_link" "secondary_database" {
   virtual_network_id  = azurerm_virtual_network.secondary.id
 
   provider = azurerm.tooling
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "secondary_servicebus" {
+  name                = "${local.org}-vnetlink-servicebus-${local.secondary_resource_suffix}-${var.environment}"
+  private_dns_zone_id = data.azurerm_private_dns_zone.servicebus.id
+  virtual_network_id  = azurerm_virtual_network.secondary.id
+  provider            = azurerm.tooling
+
+  tags = local.tags
 }

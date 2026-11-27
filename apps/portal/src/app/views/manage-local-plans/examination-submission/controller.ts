@@ -38,6 +38,7 @@ import {
 	EXAMINATION_REQUIRED_FILE_UPLOAD_QUESTIONS,
 	REQUIRED_EXAMINATION_ITEM_TITLES
 } from './questions.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 type ExaminationInfoRecord = {
 	status: string;
@@ -243,6 +244,7 @@ export async function markExaminationInProgress(service: PortalService, caseId: 
 		where: { caseId },
 		data: { status: EXAMINATION_STATUS_ID.IN_PROGRESS }
 	});
+	new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 }
 
 export function buildSaveDataToCase(service: PortalService): SaveDataFn {
@@ -265,6 +267,7 @@ export function buildSaveDataToCase(service: PortalService): SaveDataFn {
 				status: EXAMINATION_STATUS_ID.IN_PROGRESS
 			}
 		});
+		new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: params.referenceId }, false, false);
 	};
 }
 
@@ -465,6 +468,7 @@ export function buildGetJourneyResponseFromCase(service: PortalService): Request
 					examinationWebsiteUrl: gateway3ExaminationWebsiteUrl
 				}
 			});
+			new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: currentCase.id }, false, false);
 		}
 		const examinationWebsiteUrl =
 			savedExaminationWebsiteUrl ?? gateway3ExaminationWebsiteUrl ?? currentCase.examinationInfo?.examinationWebsite;
@@ -599,6 +603,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			service.logger.error({ error }, `Failed to record examination submission for case ${planReference ?? ''}`);
 			return res.status(500).send('Failed to record submission');
 		}
+		new ODWServiceBusDataSender(service).sendUpdateMessageSafe({ caseId: caseId }, false, false);
 
 		return res.redirect(`${getExaminationSubmissionUrl(req)}/submission-complete`);
 	};

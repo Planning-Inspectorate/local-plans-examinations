@@ -1,8 +1,9 @@
 import { SaveController } from './save-controller.ts';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { SaveInput } from './save-inputs.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 type MockServiceType = {
 	db: {
@@ -100,7 +101,26 @@ class MockSaveController extends SaveController {
 	}
 }
 
+class MockSaveControllerWithDataSavedToTheDatabase extends MockSaveController {
+	protected async shouldSaveToSession() {
+		return false;
+	}
+}
+
+class MockSaveControllerWithNoDataSavedToTheDatabase extends MockSaveController {
+	protected async saveToDatabase(answers: SaveInput, question?: string) {
+		return false;
+	}
+}
+
 describe('test SaveController', () => {
+	let mockSendServiceBusMessage: ReturnType<typeof mock.method<ODWServiceBusDataSender, 'sendUpdateMessage'>>;
+	beforeEach(() => {
+		mockSendServiceBusMessage = mock.method(ODWServiceBusDataSender.prototype, 'sendUpdateMessage', async () => {});
+	});
+	afterEach(() => {
+		mock.restoreAll();
+	});
 	it('resolveCaseId rejects when no case can be found', async () => {
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => undefined);
@@ -124,5 +144,35 @@ describe('test SaveController', () => {
 		const mockSaveController = new MockSaveController(mockService as any, req, 'someRef');
 		mockSaveController.saveToSessionProxy(answers);
 		assert.deepEqual(req.session, { answers: answers });
+	});
+	it('attempts to send a message to the ODW service bus if data was written to the database', async () => {
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => undefined);
+		const req = {
+			params: {},
+			session: {}
+		} as Request;
+		const answers = {
+			someField: 'a',
+			anotherField: 'b'
+		};
+		const mockSaveController = new MockSaveControllerWithDataSavedToTheDatabase(mockService as any, req, 'someRef');
+		await mockSaveController.prepareAndSave(answers);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 1);
+	});
+	it('does not attempt to send a message to the ODW service bus if no data was written to the database', async () => {
+		const mockService = createMockService();
+		mockService.db.case.findUnique = mock.fn(async () => undefined);
+		const req = {
+			params: {},
+			session: {}
+		} as Request;
+		const answers = {
+			someField: 'a',
+			anotherField: 'b'
+		};
+		const mockSaveController = new MockSaveControllerWithNoDataSavedToTheDatabase(mockService as any, req, 'someRef');
+		await mockSaveController.prepareAndSave(answers);
+		assert.deepEqual(mockSendServiceBusMessage.mock.calls.length, 0);
 	});
 });

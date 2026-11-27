@@ -1,9 +1,12 @@
 import { Gateway3SaveController, saveGateway3Submissions } from './gateway-3-save-controller.ts';
+import { ExaminationSaveController } from './examination-save-controller.ts';
+import { SaveController } from './save-controller.ts';
 import { ManageService } from '#service';
 import type { Request } from 'express';
-import { describe, it, type Mock, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, type Mock, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { NUM_GW3_SUBMISSIONS_QUESTIONS } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { ODWServiceBusDataSender } from '@pins/local-plans-lib/odw/odw-service-bus.ts';
 
 type MockServiceType = {
 	db: {
@@ -92,6 +95,13 @@ mock.timers.enable({
 });
 
 describe('test Gateway2SaveController', () => {
+	let mockSendServiceBusMessage: ReturnType<typeof mock.method<ODWServiceBusDataSender, 'sendUpdateMessage'>>;
+	beforeEach(() => {
+		mockSendServiceBusMessage = mock.method(ODWServiceBusDataSender.prototype, 'sendUpdateMessage', async () => {});
+	});
+	afterEach(() => {
+		mock.restoreAll();
+	});
 	it('rejects when a case could not be found', async () => {
 		const mockService = createMockService();
 		mockService.db.case.findUnique = mock.fn(async () => undefined);
@@ -286,5 +296,21 @@ describe('saveGateway3Submissions', () => {
 			/Max number of submissions has been exceeded/
 		);
 		assert.equal(upsert.mock.callCount(), 0);
+	});
+	it('calls ExaminationSaveController.prepareAndSave when the question is examination-website', async () => {
+		const service = createMockService();
+		const req = { params: { question: 'examination-website' } } as unknown as Request;
+		const mockExamPrepareAndSave = mock.method(ExaminationSaveController.prototype, 'prepareAndSave', async () => {});
+		const controller = new Gateway3SaveController(service as unknown as ManageService, req, 'caseRef');
+		await controller.prepareAndSave({});
+		assert.deepEqual(mockExamPrepareAndSave.mock.calls.length, 1);
+	});
+	it('calls the parent prepareAndSave when the question is not examination-website', async () => {
+		const service = createMockService();
+		const req = { params: {} } as unknown as Request;
+		const mockParentPrepareAndSave = mock.method(SaveController.prototype, 'prepareAndSave', async () => {});
+		const mockSaveController = new Gateway3SaveController(service as unknown as ManageService, req, 'caseRef');
+		await mockSaveController.prepareAndSave({});
+		assert.deepEqual(mockParentPrepareAndSave.mock.calls.length, 1);
 	});
 });

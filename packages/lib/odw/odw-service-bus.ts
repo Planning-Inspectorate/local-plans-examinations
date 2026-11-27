@@ -1,0 +1,93 @@
+import { ServiceBusUtil } from '../util/service-bus-util.ts';
+import { ODWDataMapper } from './odw-data-mapper.ts';
+import type { Service } from '../app/service.ts';
+import type { CaseIdOrCaseReference } from '../util/types.ts';
+import type { Logger } from 'pino';
+
+export const PLAN_CASE_SB_TOPIC = 'plans-case';
+export const PLAN_EVENT_SB_TOPIC = 'plans-event';
+const ACTION_MESSAGE =
+	'Attempted to ACTION, but the serviceBusUtil was not initialised because the odwServiceBusName was missing from the config';
+
+export class ODWServiceBusDataSender {
+	#dataMapper: ODWDataMapper;
+	#service: Service;
+	#serviceBusUtil: ServiceBusUtil | null = null;
+
+	constructor(service: Service) {
+		this.#service = service;
+		const serviceBusName = service.odw?.odwServiceBusName;
+		if (serviceBusName) {
+			this.#serviceBusUtil = new ServiceBusUtil(`${serviceBusName}.servicebus.windows.net`);
+		}
+		this.#dataMapper = new ODWDataMapper(this.#service);
+	}
+
+	private tryLogWarning(message: string) {
+		const logger: Logger | null = this.#service?.logger;
+		if (logger?.warn) {
+			logger.warn(message);
+		}
+	}
+
+	private tryLogInfo(message: string) {
+		const logger: Logger | null = this.#service?.logger;
+		if (logger?.info) {
+			logger.info(message);
+		}
+	}
+	async sendUpdateMessage(
+		caseIdOrCaseReference: CaseIdOrCaseReference,
+		workshopsUpdated: boolean,
+		hearingsUpdated: boolean
+	) {
+		if (!this.#serviceBusUtil) {
+			this.tryLogWarning(ACTION_MESSAGE.replace('ACTION', 'send a case update message to the ODW'));
+			return;
+		}
+		try {
+			const detailString = caseIdOrCaseReference.caseReference
+				? `reference '${caseIdOrCaseReference.caseReference}'`
+				: `caseId '${caseIdOrCaseReference.caseId}'`;
+			this.tryLogInfo(
+				`Sending a message to the '${PLAN_CASE_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
+			);
+			const dataToSend = await this.#dataMapper.mapData(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated);
+			await this.#serviceBusUtil.sendMessage(PLAN_CASE_SB_TOPIC, [dataToSend.case]);
+			if (dataToSend.events.length > 0) {
+				this.tryLogInfo(
+					`Sending a message to the '${PLAN_EVENT_SB_TOPIC}' topic in the ODW service bus for case with ${detailString}`
+				);
+				await this.#serviceBusUtil.sendMessage(PLAN_EVENT_SB_TOPIC, dataToSend.events);
+			} else {
+				this.tryLogInfo(`No event messages generated, skipping sending messages to the ODW`);
+			}
+		} catch (error) {
+			if (error instanceof Error) {
+				this.tryLogWarning(`An error occurred while sending a message to the ODW Service Bus: ${error.stack}`);
+			}
+		}
+	}
+	/**
+	 * Safely attempt to send a message to the service bus without awaiting a response
+	 * @param caseIdOrCaseReference
+	 * @param workshopsUpdated
+	 * @param hearingsUpdated
+	 * @returns
+	 */
+	public sendUpdateMessageSafe(
+		caseIdOrCaseReference: CaseIdOrCaseReference,
+		workshopsUpdated: boolean,
+		hearingsUpdated: boolean
+	) {
+		this.sendUpdateMessage(caseIdOrCaseReference, workshopsUpdated, hearingsUpdated).catch((error) => {
+			if (error instanceof Error) {
+				this.tryLogWarning(
+					`An error occurred when attempting to send a message to the ODW Service Bus: ${error.stack}`
+				);
+			} else {
+				this.tryLogWarning(`An error occurred when attempting to send a message to the ODW Service Bus: ${error}`);
+			}
+		});
+	}
+}

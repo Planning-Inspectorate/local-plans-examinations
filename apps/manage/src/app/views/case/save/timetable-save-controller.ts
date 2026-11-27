@@ -58,17 +58,42 @@ export class TimetableSaveController extends SaveController {
 		return this.trimStringValues(answers as TimetableInput);
 	}
 
-	protected async saveToDatabase(answers: TimetableInput) {
+	public async prepareAndSave(answers: Record<string, any>) {
 		const question = String(this.req.params.question);
 
 		if (timetableGateway1Questions.has(question)) {
 			const controller = new Gateway1SaveController(this.service, this.req, this.caseReference);
-			await controller.prepareAndSave(answers);
+			return await controller.prepareAndSave(answers);
 		}
 		if (timetableGateway2Questions.has(question)) {
 			const controller = new Gateway2SaveController(this.service, this.req, this.caseReference);
-			await controller.prepareAndSave(answers);
+			return await controller.prepareAndSave(answers);
 		}
+		const writtenToDB = await this.saveToDatabase(answers);
+		if (writtenToDB) {
+			await this.tryToSendMessageToTheODW(answers);
+			return { dataWritten: true, writtenToDB: true };
+		}
+		if (timetableGateway3Questions.has(question)) {
+			const controller = new Gateway3SaveController(this.service, this.req, this.caseReference);
+			const { gateway3ExpectedDate, gateway3ActualDate, ...rest } = answers as Record<string, any>;
+			const gateway3Answers = { ...rest };
+			if ('gateway3ExpectedDate' in answers) gateway3Answers.expectedDate = gateway3ExpectedDate;
+			if ('gateway3ActualDate' in answers) gateway3Answers.actualDate = gateway3ActualDate;
+			return await controller.prepareAndSave(gateway3Answers);
+		}
+		const pauseMatch = timetablePauseQuestionPattern.exec(question);
+
+		if (timetableExaminationQuestions.has(question) || pauseMatch) {
+			const controller = new ExaminationSaveController(this.service, this.req, this.caseReference);
+			return await controller.prepareAndSave(answers);
+		}
+		return { dataWritten: false, writtenToDB: false };
+	}
+
+	protected async saveToDatabase(answers: TimetableInput) {
+		const question = String(this.req.params.question);
+
 		if (question === 'timetable-gateway-3-completion-date') {
 			const caseId = await this.resolveCaseId();
 			await this.service.db.gateway3Submission.updateMany({
@@ -77,21 +102,6 @@ export class TimetableSaveController extends SaveController {
 			});
 			return true;
 		}
-		if (timetableGateway3Questions.has(question)) {
-			const controller = new Gateway3SaveController(this.service, this.req, this.caseReference);
-			const { gateway3ExpectedDate, gateway3ActualDate, ...rest } = answers as Record<string, any>;
-			const gateway3Answers = { ...rest };
-			if ('gateway3ExpectedDate' in answers) gateway3Answers.expectedDate = gateway3ExpectedDate;
-			if ('gateway3ActualDate' in answers) gateway3Answers.actualDate = gateway3ActualDate;
-			await controller.prepareAndSave(gateway3Answers);
-		}
-		const pauseMatch = timetablePauseQuestionPattern.exec(question);
-
-		if (timetableExaminationQuestions.has(question) || pauseMatch) {
-			const controller = new ExaminationSaveController(this.service, this.req, this.caseReference);
-			await controller.prepareAndSave(answers);
-		}
-
 		return false;
 	}
 }

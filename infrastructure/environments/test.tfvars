@@ -132,3 +132,12 @@ clarity_id = "zims6ddvuh"
 
 # Microsoft Clarity id for manage in this environment
 manage_clarity_id = "zimrgwp4mw"
+
+# ODW variables
+odw_config = {
+  network_resource_group_name = "pins-rg-network-odw-test-uks"
+  network_name                = "vnet-odw-test-uks"
+  subscription_id             = "6b18ba9d-2399-48b5-a834-e0f267be122d"
+  resource_group_name         = "pins-rg-ingestion-odw-test-uks"
+  service_bus_name            = "pins-sb-odw-test-uks-hk2zun"
+}

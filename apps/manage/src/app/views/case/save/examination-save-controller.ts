@@ -116,6 +116,7 @@ export class ExaminationSaveController extends SaveController {
 				update: data,
 				create: { caseId, ...data }
 			});
+			await this.tryToSendMessageToTheODW(answers);
 			return { dataWritten: true, writtenToDB: true };
 		}
 		return await super.prepareAndSave(answers);

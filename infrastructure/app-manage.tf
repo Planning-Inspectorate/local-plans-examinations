@@ -96,6 +96,9 @@ module "app_manage" {
     REDIS_CONNECTION_STRING = local.key_vault_refs["redis-connection-string"]
     SESSION_SECRET          = local.key_vault_refs["session-secret-manage"]
 
+    # ODW
+    ODW_SERVICE_BUS_NAME = var.odw_config == null ? null : var.odw_config.service_bus_name
+
   }
 
   providers = {
@@ -131,6 +134,7 @@ resource "azurerm_role_assignment" "app_manage_staging_documents_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = module.app_manage.staging_principal_id
 }
+
 
 # sessions
 resource "random_password" "manage_session_secret" {
