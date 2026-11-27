@@ -4,6 +4,8 @@ This file tracks what the Cypress tests cover from a user's point of view. It is
 
 Update this file when Cypress tests are added, removed, renamed or materially changed. If a feature is intentionally covered by unit tests, service tests or manual testing instead of Cypress, record that explicitly.
 
+Performance testing is tracked in [performance/README.md](../performance/README.md). Its Cypress spec only prepares independent Manage sessions for JMeter; it is not additional functional journey or environment-smoke coverage.
+
 Coverage levels:
 
 - Smoke: checks the page or journey is basically reachable

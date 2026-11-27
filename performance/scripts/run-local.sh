@@ -1,28 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-results_dir="performance/results"
-jtl_file="$results_dir/local-plans-baseline.jtl"
-html_dir="$results_dir/html-local"
+export PERFORMANCE_LOCAL=true
+export MANAGE_BASE_URL="${MANAGE_BASE_URL:-http://localhost:8090}"
+export PERFORMANCE_MANAGE_USERS="${PERFORMANCE_MANAGE_USERS:-1}"
+export PERFORMANCE_RAMP_SECONDS="${PERFORMANCE_RAMP_SECONDS:-1}"
+export PERFORMANCE_DURATION_SECONDS="${PERFORMANCE_DURATION_SECONDS:-30}"
+export PERFORMANCE_REQUEST_PAUSE_MS="${PERFORMANCE_REQUEST_PAUSE_MS:-1000}"
 
-mkdir -p "$results_dir"
-rm -rf "$jtl_file" "$html_dir"
-
-jmeter -n \
-  -t performance/local-plans.jmx \
-  -l "$jtl_file" \
-  -e \
-  -o "$html_dir" \
-  -JportalProtocol=http \
-  -JportalHost=localhost \
-  -JportalPort=8080 \
-  -JportalAccessToken=local \
-  -Jthreads=1 \
-  -JrampSeconds=1 \
-  -JdurationSeconds=5 \
-  -JrequestPauseMs=100
-
-if grep -q ',false,' "$jtl_file"; then
-  echo "One or more JMeter samples failed. See $jtl_file and $html_dir/index.html."
-  exit 1
-fi
+exec bash performance/scripts/run.sh

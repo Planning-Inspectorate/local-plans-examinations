@@ -8,6 +8,8 @@ import { assertEnvironmentSmokeDatabase } from './environment-smoke-safety.ts';
 import type { Prisma } from '../client/client.ts';
 
 export type SeedCyOptions = {
+	caseData?: Prisma.CaseCreateInput;
+	seedReferenceData?: boolean;
 	workshops?: Prisma.Gateway2WorkshopCreateWithoutGateway2InfoInput[];
 	gateway3Submission?: Prisma.Gateway3SubmissionCreateManyGateway3InfoInput;
 	examination?: Prisma.ExaminationInfoCreateWithoutCaseInput;
@@ -53,10 +55,10 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 		}
 	];
 	try {
-		await seedStaticData(dbClient);
+		if (options?.seedReferenceData !== false) await seedStaticData(dbClient);
 
 		const seededCase = await dbClient.case.create({
-			data: {
+			data: options?.caseData ?? {
 				reference: `PLAN-${Date.now()}`,
 				email: 'cypress@test.com',
 				caseOfficer: 'officer-1',

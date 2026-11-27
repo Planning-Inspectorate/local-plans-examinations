@@ -18,7 +18,7 @@ export function isTestDatabaseConnectionString(connectionString: string) {
 	);
 }
 
-function parseSqlConnectionString(connectionString: string) {
+export function parseSqlConnectionString(connectionString: string) {
 	const values = new Map<string, string>();
 
 	for (const part of connectionString.split(';')) {
