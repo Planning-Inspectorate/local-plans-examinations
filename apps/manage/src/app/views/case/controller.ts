@@ -397,10 +397,11 @@ export function buildGetJourneyMiddleware(
 
 		const caseRecord = await db.case.findUnique({
 			where: { reference },
-			select: { id: true, planTitle: true }
+			select: { id: true, planTitle: true, deletedDate: true }
 		});
 
 		if (!caseRecord) return res.status(404).render('views/errors/404.njk');
+		if (caseRecord.deletedDate) return res.status(404).render('views/errors/404.njk');
 
 		res.locals.planTitle = caseRecord.planTitle;
 		res.locals.reference = reference;

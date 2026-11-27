@@ -1072,7 +1072,8 @@ describe('buildGetJourneyMiddleware', () => {
 			},
 			select: {
 				id: true,
-				planTitle: true
+				planTitle: true,
+				deletedDate: true
 			}
 		});
 
@@ -1085,6 +1086,23 @@ describe('buildGetJourneyMiddleware', () => {
 		assert.equal(ctx.next.mock.callCount(), 0);
 	});
 
+	it('renders a 404 when the case has been deleted', async () => {
+		const ctx = createMiddlewareContext();
+
+		ctx.service.db.case.findUnique.mock.mockImplementation(async () => {
+			return {
+				deletedDate: new Date(2026, 0, 1)
+			};
+		});
+		await ctx.handler(ctx.req, ctx.res, ctx.next);
+		assert.equal(ctx.res.status.mock.callCount(), 1);
+		assert.equal(ctx.res.status.mock.calls[0].arguments[0], 404);
+
+		assert.equal(ctx.res.render.mock.callCount(), 1);
+		assert.equal(ctx.res.render.mock.calls[0].arguments[0], 'views/errors/404.njk');
+
+		assert.equal(ctx.next.mock.callCount(), 0);
+	});
 	it('loads overview journey data and maps list answers', async () => {
 		const ctx = createMiddlewareContext({
 			url: '/overview'
@@ -1148,7 +1166,7 @@ describe('buildGetJourneyMiddleware', () => {
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[0].arguments[0], {
 			where: { reference: 'PLAN-123456' },
-			select: { id: true, planTitle: true }
+			select: { id: true, planTitle: true, deletedDate: true }
 		});
 
 		assert.deepEqual(ctx.service.db.case.findUnique.mock.calls[1].arguments[0], {
