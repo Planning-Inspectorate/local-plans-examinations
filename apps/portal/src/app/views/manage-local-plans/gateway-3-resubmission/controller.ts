@@ -13,6 +13,7 @@ import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { sortGateway3Submissions, type Gateway3SubmissionSummary } from '#util/gateway-3-submission.ts';
+import { renderSubmissionFailurePage } from '../../static/error/submission-failure.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -485,13 +486,13 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const currentSubmission = submissions.at(-1);
 		if (!currentSubmission || currentSubmission.completionDate || currentSubmission.submittedDate) {
 			service.logger.error(`No pending submission found for resubmission declaration ${planReference ?? ''}`);
-			return res.status(500).send('No pending submission found');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
 		const caseId = currentCase?.id as string | undefined;
 		if (!caseId) {
 			service.logger.error(`No case loaded for resubmission declaration ${planReference ?? ''}`);
-			return res.status(500).send('No case found');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
 		const submittedDate = new Date();
@@ -513,9 +514,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to complete resubmission for case ${planReference ?? ''}`);
-			return res.status(500).send('Failed to record submission');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
+		res.locals.submissionCompleted = true;
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/submission-complete`);
 	};
 }

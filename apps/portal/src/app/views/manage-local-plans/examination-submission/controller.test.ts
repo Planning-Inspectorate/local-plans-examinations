@@ -32,6 +32,7 @@ import {
 	EXAMINATION_FILE_UPLOAD_QUESTIONS,
 	EXAMINATION_REQUIRED_FILE_UPLOAD_QUESTIONS
 } from './questions.ts';
+import { SUBMISSION_FAILURE_VIEW_PATH } from '../../static/error/submission-failure.ts';
 
 const documentSets = Object.values(EXAMINATION_FILE_UPLOAD_QUESTIONS).map((question, index) => ({
 	id: `document-set-${index}`,
@@ -645,12 +646,9 @@ describe('examination declaration and completion', () => {
 			currentCase: { id: 'case-id' },
 			params: { planReference: 'PLAN-61797' }
 		} as unknown as Request;
+		const res = { locals: {}, redirect } as unknown as Response;
 
-		await buildPostDeclarationPage(service)(
-			req,
-			{ redirect } as unknown as Response,
-			mock.fn() as unknown as NextFunction
-		);
+		await buildPostDeclarationPage(service)(req, res, mock.fn() as unknown as NextFunction);
 
 		const update = service.db.examinationInfo.update.mock.calls[0].arguments[0];
 		assert.deepEqual(update.where, { caseId: 'case-id' });
@@ -659,6 +657,7 @@ describe('examination declaration and completion', () => {
 		assert.deepEqual(redirect.mock.calls[0].arguments, [
 			'/manage-local-plans/PLAN-61797/examination/submission-complete'
 		]);
+		assert.equal(res.locals.submissionCompleted, true);
 	});
 
 	it('commits the temporary examination documents in the same transaction as the submission', async () => {
@@ -670,7 +669,7 @@ describe('examination declaration and completion', () => {
 
 		await buildPostDeclarationPage(service)(
 			req,
-			{ redirect: mock.fn() } as unknown as Response,
+			{ locals: {}, redirect: mock.fn() } as unknown as Response,
 			mock.fn() as unknown as NextFunction
 		);
 
@@ -692,13 +691,14 @@ describe('examination declaration and completion', () => {
 		});
 	});
 
-	it('returns an error without submitting when the document set lookup fails', async () => {
+	it('renders the submission failure page without submitting when the document set lookup fails', async () => {
 		const service = buildService(null);
 		service.db.documentSet.findMany.mock.mockImplementation(async () => []);
-		const send = mock.fn();
+		const render = mock.fn();
 		const res = {
+			locals: {},
 			status: mock.fn(() => res),
-			send
+			render
 		} as unknown as Response;
 
 		await buildPostDeclarationPage(service)(
@@ -708,17 +708,19 @@ describe('examination declaration and completion', () => {
 		);
 
 		assert.deepEqual((res.status as any).mock.calls[0].arguments, [500]);
-		assert.deepEqual(send.mock.calls[0].arguments, ['Failed to record submission']);
+		assert.equal(render.mock.calls[0].arguments[0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.equal(render.mock.calls[0].arguments[1].planOverviewUrl, '/manage-local-plans/PLAN-61797');
 		assert.equal(service.db.$transaction.mock.callCount(), 0);
 		assert.equal(service.logger.error.mock.callCount(), 1);
 	});
 
-	it('returns an error without changing status when the case is unavailable', async () => {
+	it('renders the submission failure page without changing status when the case is unavailable', async () => {
 		const service = buildService(null);
-		const send = mock.fn();
+		const render = mock.fn();
 		const res = {
+			locals: {},
 			status: mock.fn(() => res),
-			send
+			render
 		} as unknown as Response;
 
 		await buildPostDeclarationPage(service)(
@@ -728,7 +730,8 @@ describe('examination declaration and completion', () => {
 		);
 
 		assert.deepEqual((res.status as any).mock.calls[0].arguments, [500]);
-		assert.deepEqual(send.mock.calls[0].arguments, ['No case found']);
+		assert.equal(render.mock.calls[0].arguments[0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.equal(render.mock.calls[0].arguments[1].planOverviewUrl, '/manage-local-plans/PLAN-61797');
 		assert.equal(service.db.examinationInfo.update.mock.callCount(), 0);
 	});
 

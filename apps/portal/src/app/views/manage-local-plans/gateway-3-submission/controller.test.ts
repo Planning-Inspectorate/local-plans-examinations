@@ -21,6 +21,7 @@ import {
 	buildSaveDataToCase
 } from './controller.ts';
 import type { PortalService } from '#service';
+import { SUBMISSION_FAILURE_VIEW_PATH, type SubmissionFailureViewData } from '../../static/error/submission-failure.ts';
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { GATEWAY_3_DECISION_ID, GATEWAY_3_STATUS } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
@@ -1213,7 +1214,7 @@ describe('buildPostDeclarationPage', () => {
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
 		let redirectUrl = '';
-		const res = { redirect: (url: string) => (redirectUrl = url) } as unknown as Response;
+		const res = { locals: {}, redirect: (url: string) => (redirectUrl = url) } as Response;
 
 		await handler(req, res, () => {});
 
@@ -1234,6 +1235,84 @@ describe('buildPostDeclarationPage', () => {
 		);
 
 		assert.strictEqual(redirectUrl, '/manage-local-plans/PLAN-001/gateway-3-submission/submission-complete');
+		assert.strictEqual(res.locals.submissionCompleted, true);
+	});
+
+	it('renders the failed submission page when the submission cannot be recorded', async () => {
+		const service = {
+			db: {
+				$transaction: mock.fn(async () => {
+					throw new Error('database unavailable');
+				}),
+				case: { update: mock.fn(async () => ({})) },
+				gateway3Info: { update: mock.fn(async () => ({})) }
+			},
+			logger: { error: mock.fn() }
+		} as unknown as PortalService;
+		const handler = buildPostDeclarationPage(service);
+		const req = {
+			currentCase: { id: 'case-1' },
+			params: { planReference: 'PLAN-001' }
+		} as unknown as Request;
+
+		const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
+		const statusCalls: number[] = [];
+		let redirectUrl = '';
+		const res = {
+			locals: {},
+			redirect: (url: string) => (redirectUrl = url),
+			status(code: number) {
+				statusCalls.push(code);
+				return this;
+			},
+			render(view: string, model: SubmissionFailureViewData) {
+				renderCalls.push([view, model]);
+				return this;
+			}
+		} as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.strictEqual(redirectUrl, '');
+		assert.deepStrictEqual(statusCalls, [500]);
+		assert.strictEqual(renderCalls.length, 1);
+		assert.strictEqual(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.strictEqual(renderCalls[0][1].pageHeading, 'Sorry, there is a problem with the service');
+		assert.strictEqual(renderCalls[0][1].planOverviewUrl, '/manage-local-plans/PLAN-001');
+		assert.strictEqual(res.locals.submissionCompleted, undefined);
+	});
+
+	it('renders the failed submission page when the case could not be loaded', async () => {
+		const service = {
+			db: {
+				$transaction: mock.fn(async () => []),
+				case: { update: mock.fn(async () => ({})) },
+				gateway3Info: { update: mock.fn(async () => ({})) }
+			},
+			logger: { error: mock.fn() }
+		} as unknown as PortalService;
+		const handler = buildPostDeclarationPage(service);
+		const req = { params: { planReference: 'PLAN-001' } } as unknown as Request;
+
+		const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
+		const statusCalls: number[] = [];
+		const res = {
+			redirect: () => {},
+			status(code: number) {
+				statusCalls.push(code);
+				return this;
+			},
+			render(view: string, model: SubmissionFailureViewData) {
+				renderCalls.push([view, model]);
+				return this;
+			}
+		} as unknown as Response;
+
+		await handler(req, res, () => {});
+
+		assert.deepStrictEqual(statusCalls, [500]);
+		assert.strictEqual(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.strictEqual(renderCalls[0][1].planOverviewUrl, '/manage-local-plans/PLAN-001');
 	});
 
 	it('marks an existing open Gateway 3 submission as submitted', async () => {
@@ -1255,7 +1334,7 @@ describe('buildPostDeclarationPage', () => {
 			},
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
-		const res = { redirect: () => {} } as unknown as Response;
+		const res = { locals: {}, redirect: () => {} } as unknown as Response;
 
 		await handler(req, res, () => {});
 
@@ -1277,7 +1356,7 @@ describe('buildPostDeclarationPage', () => {
 			currentCase: { id: 'case-1' },
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
-		const res = { redirect: () => {} } as unknown as Response;
+		const res = { locals: {}, redirect: () => {} } as unknown as Response;
 
 		await handler(req, res, () => {});
 
@@ -1296,7 +1375,7 @@ describe('buildPostDeclarationPage', () => {
 		});
 	});
 
-	it('returns 500 without submitting when the document set lookup fails', async () => {
+	it('renders the submission failure page without submitting when the document set lookup fails', async () => {
 		const declarationService = buildDeclarationService();
 		declarationService.db.documentSet.findMany.mock.mockImplementation(async () => []);
 		const handler = buildPostDeclarationPage(declarationService as unknown as PortalService);
@@ -1304,14 +1383,17 @@ describe('buildPostDeclarationPage', () => {
 			currentCase: { id: 'case-1' },
 			params: { planReference: 'PLAN-001' }
 		} as unknown as Request;
-		const sent: unknown[] = [];
 		const { res, calls } = buildMockResponse();
-		(res as unknown as Record<string, unknown>).send = (body: unknown) => sent.push(body);
 
 		await handler(req, res, () => {});
 
 		assert.strictEqual(calls.find((c) => c.method === 'status')?.args[0], 500);
-		assert.deepStrictEqual(sent, ['Failed to record submission']);
+		const renderCall = calls.find((call) => call.method === 'render');
+		assert.strictEqual(renderCall?.args[0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.strictEqual(
+			(renderCall?.args[1] as SubmissionFailureViewData).planOverviewUrl,
+			'/manage-local-plans/PLAN-001'
+		);
 		assert.strictEqual(declarationService.db.$transaction.mock.callCount(), 0);
 		assert.strictEqual(declarationService.logger.error.mock.callCount(), 1);
 	});

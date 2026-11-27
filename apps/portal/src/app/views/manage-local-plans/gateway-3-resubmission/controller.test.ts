@@ -17,6 +17,7 @@ import {
 } from './controller.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { SUBMISSION_FAILURE_VIEW_PATH } from '../../static/error/submission-failure.ts';
 
 function buildMockResponse() {
 	const calls: { method: string; args: unknown[] }[] = [];
@@ -881,6 +882,7 @@ describe('buildPostDeclarationPage', () => {
 		const redirectCall = calls.find((c) => c.method === 'redirect');
 		assert.ok(redirectCall);
 		assert.ok((redirectCall.args[0] as string).includes('submission-complete'));
+		assert.strictEqual(res.locals.submissionCompleted, true);
 	});
 
 	it('commits only the current resubmission document set in the same transaction', async () => {
@@ -906,24 +908,25 @@ describe('buildPostDeclarationPage', () => {
 		});
 	});
 
-	it('returns 500 without submitting when the document set lookup fails', async () => {
+	it('renders the submission failure page without submitting when the document set lookup fails', async () => {
 		const mockService = buildDeclarationService();
 		mockService.db.documentSet.findMany.mock.mockImplementation(async () => []);
 		const handler = buildPostDeclarationPage(mockService as unknown as Parameters<typeof buildPostDeclarationPage>[0]);
 		const { res, calls } = buildMockResponse();
-		(res as unknown as Record<string, unknown>).send = (body: string) => {
-			calls.push({ method: 'send', args: [body] });
-		};
-
 		await handler(buildPendingResubmissionRequest(), res, () => {});
 
 		assert.strictEqual(calls.find((c) => c.method === 'status')?.args[0], 500);
-		assert.deepStrictEqual(calls.find((c) => c.method === 'send')?.args, ['Failed to record submission']);
+		const renderCall = calls.find((call) => call.method === 'render');
+		assert.strictEqual(renderCall?.args[0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.strictEqual(
+			(renderCall?.args[1] as Record<string, unknown>).planOverviewUrl,
+			'/manage-local-plans/PLAN-001'
+		);
 		assert.strictEqual(mockService.db.$transaction.mock.callCount(), 0);
 		assert.strictEqual(mockService.logger.error.mock.callCount(), 1);
 	});
 
-	it('returns 500 when no pending submission exists', async () => {
+	it('renders the submission failure page when no pending submission exists', async () => {
 		const mockService = {
 			db: {
 				$transaction: mock.fn(),
@@ -949,17 +952,14 @@ describe('buildPostDeclarationPage', () => {
 			}
 		} as unknown as Request;
 		const { res, calls } = buildMockResponse();
-		(res as unknown as Record<string, unknown>).send = (body: string) => {
-			calls.push({ method: 'send', args: [body] });
-		};
-
 		await handler(req, res, () => {});
 
 		const statusCall = calls.find((c) => c.method === 'status');
 		assert.strictEqual(statusCall?.args[0], 500);
+		assert.strictEqual(calls.find((call) => call.method === 'render')?.args[0], SUBMISSION_FAILURE_VIEW_PATH);
 	});
 
-	it('returns 500 when no caseId is available', async () => {
+	it('renders the submission failure page when no caseId is available', async () => {
 		const mockService = {
 			db: {
 				$transaction: mock.fn(),
@@ -978,14 +978,11 @@ describe('buildPostDeclarationPage', () => {
 			}
 		} as unknown as Request;
 		const { res, calls } = buildMockResponse();
-		(res as unknown as Record<string, unknown>).send = (body: string) => {
-			calls.push({ method: 'send', args: [body] });
-		};
-
 		await handler(req, res, () => {});
 
 		const statusCall = calls.find((c) => c.method === 'status');
 		assert.strictEqual(statusCall?.args[0], 500);
+		assert.strictEqual(calls.find((call) => call.method === 'render')?.args[0], SUBMISSION_FAILURE_VIEW_PATH);
 	});
 });
 

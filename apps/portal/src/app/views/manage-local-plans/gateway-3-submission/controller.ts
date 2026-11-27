@@ -31,6 +31,7 @@ import {
 	saveGateway3Documents
 } from './documents.ts';
 import { downloadGateway3Document } from './download.ts';
+import { renderSubmissionFailurePage } from '../../static/error/submission-failure.ts';
 import { asyncHandler } from '@planning-inspectorate/core/util';
 import {
 	createFileUploaderDeleteController,
@@ -817,7 +818,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 
 		if (!caseId) {
 			service.logger.error(`No case loaded for Gateway 3 declaration submission ${planReference ?? ''}`);
-			return res.status(500).send('No case found');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
 		try {
@@ -848,9 +849,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to update Gateway 3 submission date for case ${planReference ?? ''}`);
-			return res.status(500).send('Failed to record submission');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
+		res.locals.submissionCompleted = true;
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}/gateway-3-submission/submission-complete`);
 	};
 }

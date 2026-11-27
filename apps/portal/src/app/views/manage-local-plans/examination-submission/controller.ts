@@ -38,6 +38,7 @@ import {
 	EXAMINATION_REQUIRED_FILE_UPLOAD_QUESTIONS,
 	REQUIRED_EXAMINATION_ITEM_TITLES
 } from './questions.ts';
+import { renderSubmissionFailurePage } from '../../static/error/submission-failure.ts';
 
 type ExaminationInfoRecord = {
 	status: string;
@@ -576,7 +577,7 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 		const caseId = request.currentCase?.id;
 		if (!caseId) {
 			service.logger.error(`No case loaded for examination declaration submission ${planReference ?? ''}`);
-			return res.status(500).send('No case found');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
 		const submissionDate = new Date();
@@ -597,9 +598,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			]);
 		} catch (error) {
 			service.logger.error({ error }, `Failed to record examination submission for case ${planReference ?? ''}`);
-			return res.status(500).send('Failed to record submission');
+			return renderSubmissionFailurePage(res, { planReference });
 		}
 
+		res.locals.submissionCompleted = true;
 		return res.redirect(`${getExaminationSubmissionUrl(req)}/submission-complete`);
 	};
 }

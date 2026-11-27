@@ -4,6 +4,10 @@ import type { Request, Response } from 'express';
 import { buildGetDeclarationPage, buildPostDeclarationPage } from './controller.ts';
 import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
 import type { PortalService } from '#service';
+import {
+	SUBMISSION_FAILURE_VIEW_PATH,
+	type SubmissionFailureViewData
+} from '../../../static/error/submission-failure.ts';
 import { configureNunjucks } from '../../../../nunjucks.ts';
 
 const VIEW_PATH = 'views/manage-local-plans/gateway-2-submission/application-declaration/application-declaration.njk';
@@ -23,6 +27,7 @@ function createReq(overrides: { params?: Record<string, string>; body?: Record<s
 	const redirectCalls: string[] = [];
 
 	const res = {
+		locals: {},
 		render(view: string, model?: unknown) {
 			renderCalls.push([view, model]);
 			return this;
@@ -149,6 +154,7 @@ describe('buildPostDeclarationPage', () => {
 		assert.equal(redirectCalls.length, 1);
 		assert.equal(redirectCalls[0], '/manage-local-plans/PLAN-123456/gateway-2/confirmation');
 		assert.equal(renderCalls.length, 0);
+		assert.equal(res.locals.submissionCompleted, true);
 
 		assert.equal(service.sendCalls.length, 1);
 		assert.equal(service.sendCalls[0].templateId, process.env.GOV_NOTIFY_GW2_SUBMISSION_TEMPLATE_ID);
@@ -194,12 +200,12 @@ describe('buildPostDeclarationPage', () => {
 		});
 	});
 
-	it('returns 500 without submitting or emailing when the document set lookup fails', async () => {
+	it('renders the submission failure page without submitting or emailing when the document set lookup fails', async () => {
 		const service = createMockService();
 		const db = service.db as any;
 		db.documentSet.findMany.mock.mockImplementation(async () => []);
 		const handler = buildPostDeclarationPage(service);
-		const { req, res, redirectCalls } = createReq();
+		const { req, res, redirectCalls, renderCalls } = createReq();
 		const statusCalls: number[] = [];
 		const sendCalls: unknown[] = [];
 		res.status = ((code: number) => {
@@ -214,10 +220,93 @@ describe('buildPostDeclarationPage', () => {
 		await handler(req, res);
 
 		assert.deepEqual(statusCalls, [500]);
-		assert.deepEqual(sendCalls, ['Failed to record submission']);
+		assert.deepEqual(sendCalls, []);
+		assert.equal(renderCalls.length, 1);
+		assert.equal(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.equal((renderCalls[0][1] as Record<string, unknown>).planOverviewUrl, '/manage-local-plans/PLAN-123456');
 		assert.equal(redirectCalls.length, 0);
 		assert.equal(db.$transaction.mock.callCount(), 0);
 		assert.equal(service.sendCalls.length, 0);
 		assert.equal(service.errorCalls.length, 1);
+	});
+});
+
+describe('buildPostDeclarationPage - submission failures', () => {
+	function createFailureReq() {
+		const req = {
+			params: { planReference: 'PLAN-123456' },
+			body: { declaration: ['informationTrue', 'privacyNotice'] }
+		} as unknown as Request;
+
+		const renderCalls: Array<[string, SubmissionFailureViewData]> = [];
+		const redirectCalls: string[] = [];
+		const statusCalls: number[] = [];
+
+		const res = {
+			locals: {},
+			render(view: string, model: SubmissionFailureViewData) {
+				renderCalls.push([view, model]);
+				return this;
+			},
+			redirect(url: string) {
+				redirectCalls.push(url);
+				return this;
+			},
+			status(code: number) {
+				statusCalls.push(code);
+				return this;
+			},
+			send() {
+				return this;
+			}
+		} as unknown as Response;
+
+		return { req, res, renderCalls, redirectCalls, statusCalls };
+	}
+
+	function assertSubmissionFailurePage(renderCalls: Array<[string, SubmissionFailureViewData]>, statusCalls: number[]) {
+		assert.deepEqual(statusCalls, [500]);
+		assert.equal(renderCalls.length, 1);
+		assert.equal(renderCalls[0][0], SUBMISSION_FAILURE_VIEW_PATH);
+		assert.equal(renderCalls[0][1].pageHeading, 'Sorry, there is a problem with the service');
+		assert.equal(renderCalls[0][1].planOverviewUrl, '/manage-local-plans/PLAN-123456');
+	}
+
+	it('renders the failed submission page when the case lookup fails', async () => {
+		const service = createMockService();
+		service.db.case.findUnique = async () => {
+			throw new Error('database unavailable');
+		};
+		const { req, res, renderCalls, redirectCalls, statusCalls } = createFailureReq();
+
+		await buildPostDeclarationPage(service)(req, res, () => {});
+
+		assert.equal(redirectCalls.length, 0);
+		assertSubmissionFailurePage(renderCalls, statusCalls);
+	});
+
+	it('renders the failed submission page when no case is found', async () => {
+		const service = createMockService();
+		service.db.case.findUnique = async () => null;
+		const { req, res, renderCalls, redirectCalls, statusCalls } = createFailureReq();
+
+		await buildPostDeclarationPage(service)(req, res, () => {});
+
+		assert.equal(redirectCalls.length, 0);
+		assertSubmissionFailurePage(renderCalls, statusCalls);
+	});
+
+	it('renders the failed submission page when recording the submission fails', async () => {
+		const service = createMockService();
+		service.db.$transaction = async () => {
+			throw new Error('database unavailable');
+		};
+		const { req, res, renderCalls, redirectCalls, statusCalls } = createFailureReq();
+
+		await buildPostDeclarationPage(service)(req, res, () => {});
+
+		assert.equal(redirectCalls.length, 0);
+		assertSubmissionFailurePage(renderCalls, statusCalls);
+		assert.equal(res.locals.submissionCompleted, undefined);
 	});
 });

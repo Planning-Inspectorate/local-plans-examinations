@@ -3,6 +3,7 @@ import type { AsyncRequestHandler } from '@planning-inspectorate/core/util';
 import type { PortalService } from '#service';
 import { getRoutePlanReference, getWorkshopWeekMonday } from '../utils.ts';
 import { loadConfig } from '../../../../config.ts';
+import { renderSubmissionFailurePage } from '../../../static/error/submission-failure.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { gateway2FileUploadQuestionConfigs } from '../controller.ts';
 
@@ -56,11 +57,11 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			});
 		} catch (error) {
 			logger.error({ error }, `Failed to retrieve case ${reference}`);
-			return res.status(500).send('Failed to retrieve case');
+			return renderSubmissionFailurePage(res, { planReference: reference });
 		}
 		if (!caseRecord) {
 			logger.error(`No case found for reference ${reference}`);
-			return res.status(500).send('No case found');
+			return renderSubmissionFailurePage(res, { planReference: reference });
 		}
 
 		// Record the submission date on the case and gateway2Info, and release the LPA's documents to manage
@@ -83,8 +84,10 @@ export function buildPostDeclarationPage(service: PortalService): RequestHandler
 			]);
 		} catch (error) {
 			logger.error({ error }, `Failed to update submission date for case ${reference}`);
-			return res.status(500).send('Failed to record submission');
+			return renderSubmissionFailurePage(res, { planReference: reference });
 		}
+
+		res.locals.submissionCompleted = true;
 
 		// send email to LPA using GOV.UK Notify
 		await Promise.allSettled(

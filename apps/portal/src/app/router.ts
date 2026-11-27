@@ -1,6 +1,7 @@
 import { Router as createRouter } from 'express';
 import { cacheNoCacheMiddleware } from '@planning-inspectorate/core/middleware';
 import { createErrorRoutes } from './views/static/error/index.ts';
+import { buildSubmissionFailureHandler } from './views/static/error/submission-failure.ts';
 import { createCookiesRoutes } from './views/static/cookies/index.ts';
 import { createHomeRoutes } from './views/home/index.ts';
 import { createLandingPageRoutes } from './views/landing-page/index.ts';
@@ -50,6 +51,17 @@ export function buildRouter(service: PortalService): IRouter {
 	router.use('/manage-local-plans', gateway3SubmissionRoutes(service));
 	router.use('/manage-local-plans', gateway3ResubmissionRoutes(service));
 	router.use('/manage-local-plans', examinationSubmissionRoutes(service));
+	// Keep this after the submission routes so ownership and case-loading errors
+	// are covered too.
+	router.use(
+		[
+			'/manage-local-plans/:planReference/gateway-2/declaration',
+			'/manage-local-plans/:planReference/gateway-3-submission/declaration',
+			'/manage-local-plans/:planReference/gateway-3-resubmission/declaration',
+			'/manage-local-plans/:planReference/examination/declaration'
+		],
+		buildSubmissionFailureHandler(service)
+	);
 	router.use('/', createHomeRoutes());
 	router.use('/', createCookiesRoutes());
 	router.use('/error', createErrorRoutes(service));

@@ -1,0 +1,22 @@
+{% extends "views/layouts/main.njk" %}
+{% block pageHeading %}{% endblock %}
+{% block pageContent %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            <h1 class="govuk-heading-l" data-cy="submission-failure-heading">Sorry, there is a problem with the service</h1>
+            <p class="govuk-body" data-cy="submission-failure-copy">
+                Something went wrong and your submission wasn't completed. Your answers have been saved.
+            </p>
+            <p class="govuk-body" data-cy="submission-failure-return">
+                You can <a href="{{ planOverviewUrl }}" class="govuk-link" data-cy="submission-failure-return-link">return to your plan</a> and try again.
+            </p>
+            <p class="govuk-body" data-cy="submission-failure-contact">
+                Contact the Planning Inspectorate Customer Support if you have any questions:
+            </p>
+            <h2 class="govuk-heading-s">Phone:</h2>
+            <p class="govuk-body">
+                <a href="tel:03034445000" class="govuk-link" data-cy="submission-failure-phone">0303 444 5000</a>
+            </p>
+        </div>
+    </div>
+{% endblock %}
