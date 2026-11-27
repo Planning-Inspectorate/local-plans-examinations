@@ -1,0 +1,26 @@
+{% extends "views/layouts/main.njk" %}
+
+{% block pageTitle %}Remove QA inspector?{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ reference | replace('-', '/') }}</span>
+      <h1 class="govuk-heading-l" data-cy="remove-qa-inspector-heading">Remove QA inspector?</h1>
+      <p class="govuk-body" data-cy="remove-qa-inspector-copy">This will remove {{ qaInspectorName }} from this examination.</p>
+
+      <form method="post" action="{{ formAction }}">
+        {% if _csrf %}<input type="hidden" name="_csrf" value="{{ _csrf }}">{% endif %}
+        <input type="hidden" name="qaInspector" value="{{ qaInspectorValue }}">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Remove QA inspector",
+            classes: "govuk-button--warning",
+            attributes: { "data-cy": "confirm-remove-qa-inspector" }
+          }) }}
+          <a href="{{ cancelLink }}" class="govuk-link" data-cy="cancel-remove-qa-inspector">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

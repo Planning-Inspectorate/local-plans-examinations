@@ -449,18 +449,13 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.letterSentToMHCLGDate)
 				.addQuestion(questions.letterIssueDate),
 			new Section('QA', 'QA')
-				.addQuestion(questions.qaDate)
-				.addQuestion(questions.qaInspector1)
-				.addQuestion(questions.qaInspector2)
-				.addQuestion(questions.qaInspector3)
-				.addQuestion(questions.sentToPanelDate)
-				.addQuestion(questions.panelResponseSentToInspector),
+				.addQuestion(questions.qaDateExam)
+				.addQuestion(questions.sentToPanelDateExam)
+				.addQuestion(questions.panelResponseSentToInspectorExam),
 			new Section('Fact Check', 'fact-check')
-				.addQuestion(questions.factCheckDateReceivedFromInspector)
-				.addQuestion(questions.factCheckDueDate)
-				.addQuestion(questions.factCheckActualDate)
-				.addQuestion(questions.factCheckReceivedBackFromLPADate)
-				.addQuestion(questions.finalReportIssueDate),
+				.addQuestion(questions.factCheckDateReceivedFromInspectorExam)
+				.addQuestion(questions.factCheckDueDateExam)
+				.addQuestion(questions.factCheckReceivedBackFromLPADateExam),
 			new Section('Outcome', 'outcome')
 				.addQuestion(questions.isSoundNavigation)
 				.addQuestion(questions.examinationReport)
@@ -471,13 +466,7 @@ export function createExaminationJourney(req: Request, response: JourneyResponse
 				.addQuestion(questions.adoptionDateOutcome)
 				.addQuestion(questions.approvedForCILDateOutcome)
 				.endMultiQuestionCondition('report-uploaded'),
-			pauseSection,
-			new Section('Important dates for this plan', 'important-dates')
-				.addQuestion(questions.withdrawnDate)
-				.addQuestion(questions.isSound)
-				.addQuestion(questions.soundUnsoundDate)
-				.addQuestion(questions.adoptionDate)
-				.addQuestion(questions.approvedForCILDate)
+			pauseSection
 		],
 		journeyTemplate: 'views/layouts/forms-question.njk',
 		taskListTemplate: 'views/layouts/case-overview.njk',
@@ -758,6 +747,38 @@ export function createGateway3AssessorJourney(req: Request, response: JourneyRes
 	});
 }
 
+/**
+ * The add QA inspector journey for the examination tab's QA section. Answers are kept in
+ * the session and saved from the "Confirm QA inspector details" page (see qa-inspector.ts).
+ */
+export function createQaInspectorJourney(req: Request, response: JourneyResponse, questions: Record<string, any>) {
+	const examinationUrl = `${req.baseUrl}/examination`;
+	const qaInspectorUrl = `${examinationUrl}/${COMMON_CONSTS.QA_INSPECTOR_BASE_PATH}`;
+
+	const journey = new Journey({
+		journeyId: COMMON_CONSTS.QA_INSPECTOR_JOURNEY_ID,
+		sections: [
+			new Section('QA inspector', COMMON_CONSTS.QA_INSPECTOR_SECTION)
+				.addQuestion(questions.qaInspectorName)
+				.addQuestion(questions.qaInspectorAppointmentDate)
+		],
+		// after answering the questions, go to the "Confirm QA inspector details" page
+		taskListUrl: 'check',
+		journeyTemplate: 'views/layouts/forms-question.njk',
+		taskListTemplate: 'views/layouts/forms-check-your-answers.njk',
+		journeyTitle: 'QA inspector',
+		returnToListing: false,
+		makeBaseUrl: () => qaInspectorUrl,
+		initialBackLink: examinationUrl,
+		response
+	});
+
+	if (req.session) {
+		req.session.currentJourney = COMMON_CONSTS.QA_INSPECTOR_JOURNEY_ID;
+	}
+	return getBackLinksAndSetReference(journey, examinationUrl, req.params.reference);
+}
+
 const overviewQuestionNames = new Set<string>([
 	'planTitle',
 	'planType',
@@ -840,10 +861,16 @@ const examinationQuestionNames = new Set<string>([
 	'qaInspector3',
 	'sentToPanelDate',
 	'panelResponseSentToInspector',
+	'qaDateExam',
+	'sentToPanelDateExam',
+	'panelResponseSentToInspectorExam',
 	'factCheckDateReceivedFromInspector',
 	'factCheckDueDate',
 	'factCheckActualDate',
 	'factCheckReceivedBackFromLPADate',
+	'factCheckDateReceivedFromInspectorExam',
+	'factCheckDueDateExam',
+	'factCheckReceivedBackFromLPADateExam',
 	'finalReportIssueDate',
 	'withdrawnDate',
 	'isSound',
@@ -853,6 +880,8 @@ const examinationQuestionNames = new Set<string>([
 	'examinationReport',
 	'miqs'
 ]);
+
+const qaInspectorQuestionNames = new Set<string>(['qaInspectorName', 'qaInspectorAppointmentDate']);
 
 export const journeyQuestions = {
 	[COMMON_CONSTS.OVERVIEW_JOURNEY_ID]: overviewQuestionNames,
@@ -864,5 +893,6 @@ export const journeyQuestions = {
 	[COMMON_CONSTS.GATEWAY_3_REPORT_JOURNEY_ID]: gateway3QuestionNames,
 	[COMMON_CONSTS.EXAMINATION_JOURNEY_ID]: examinationQuestionNames,
 	[COMMON_CONSTS.EXAMINATION_HEARING_JOURNEY_ID]: examinationQuestionNames,
-	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames
+	[COMMON_CONSTS.EXAMINATION_PAUSE_JOURNEY_ID]: examinationQuestionNames,
+	[COMMON_CONSTS.QA_INSPECTOR_JOURNEY_ID]: qaInspectorQuestionNames
 };

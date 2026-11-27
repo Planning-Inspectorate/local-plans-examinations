@@ -7,6 +7,7 @@ import { consumeAlertsFromSession } from '../../../util/alert.ts';
 import { COMMON_CONSTS } from '../../../classes/common-consts.ts';
 import { fileUploaderCaseSessionKeyForField } from '../controller.ts';
 import { resolveExaminationWebsite } from '../../../util/examination-website.ts';
+import { buildQaInspectorTabLocals } from '../qa-inspector-helper.ts';
 
 export class ExaminationTabHandler extends OverviewPageLoadHandler {
 	public async handle(context: PageLoadContext): Promise<void> {
@@ -66,6 +67,9 @@ export class ExaminationTabHandler extends OverviewPageLoadHandler {
 			journeyResponse.answers[`planPauseEndDate-${i + 1}`] = sortedPauseData[i].planPauseEndDate;
 			journeyResponse.answers[`planPauseEndDetails-${i + 1}`] = sortedPauseData[i].planPauseEndDetails;
 		}
+		// the examination tab's QA section shows the QA inspector rows and the 'Add QA inspector' link
+		const qaInspectorLocals = await buildQaInspectorTabLocals(db, context.reference);
+		Object.assign(res.locals, qaInspectorLocals);
 		if ((!req.params.question || String(req.params.question) == 'examination-report-manage') && req.method === 'GET') {
 			await this.tryAddPauseStatusBanner(context, journey4Data);
 			consumeAlertsFromSession(req, res);

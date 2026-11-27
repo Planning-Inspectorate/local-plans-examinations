@@ -323,3 +323,136 @@ describe('remove-assessor.njk', () => {
 		);
 	});
 });
+
+describe('case-overview.njk QA inspector block', () => {
+	const qaInspectorLink = '/case/someCaseReference/examination/qa-inspector/qa-inspector/who-is-the-qa-inspector';
+	const qaInspectorRemoveLink = '/case/someCaseReference/examination/qa-inspector/remove/qa-1';
+	const qaInspectorRemoveLink2 = '/case/someCaseReference/examination/qa-inspector/remove/qa-2';
+
+	function renderQaInspectorOverview(context: Record<string, unknown>) {
+		return configureNunjucks().render('views/layouts/case-overview.njk', {
+			planTitle: 'somePlan',
+			reference: 'someCaseReference',
+			journeyResponse: { answers: { workshops: [], hearings: [] } },
+			summaryListData: {
+				sections: [{ heading: 'QA', list: { rows: [] } }]
+			},
+			...context
+		});
+	}
+
+	it('shows the Add QA inspector link on the QA section', () => {
+		const html = renderQaInspectorOverview({ qaInspectorLink, qaInspectors: [] });
+
+		assertStringOccursInHtmlExactlyOnce(
+			html,
+			`<a href="${qaInspectorLink}" class="govuk-link" data-cy="add-qa-inspector">Add QA inspector</a>`
+		);
+	});
+
+	it('shows the numbered QA inspector rows and their appointment dates with a Remove link', () => {
+		const html = renderQaInspectorOverview({
+			qaInspectorLink,
+			qaInspectors: [
+				{ number: 1, name: 'Jane Inspector', appointedDate: '24 November 2026', removeLink: qaInspectorRemoveLink }
+			]
+		});
+
+		assert.match(html, /QA inspector 1\s*<\/dt>/);
+		assert.match(html, /QA inspector 1 appointed\s*<\/dt>/);
+		assert.ok(html.includes('Jane Inspector'));
+		assert.ok(html.includes('24 November 2026'));
+		assert.ok(html.includes(`href="${qaInspectorRemoveLink}"`));
+		assert.ok(html.includes('data-cy="remove-qa-inspector-1"'));
+	});
+
+	it('numbers each QA inspector with their own Remove link', () => {
+		const html = renderQaInspectorOverview({
+			qaInspectorLink,
+			qaInspectors: [
+				{ number: 1, name: 'Jane Inspector', appointedDate: '24 November 2026', removeLink: qaInspectorRemoveLink },
+				{ number: 2, name: 'John Inspector', appointedDate: '25 November 2026', removeLink: qaInspectorRemoveLink2 }
+			]
+		});
+
+		assert.ok(html.includes('Jane Inspector'));
+		assert.ok(html.includes('John Inspector'));
+		assert.ok(html.includes('data-cy="remove-qa-inspector-2"'));
+	});
+
+	it('does not show the QA inspector block when the tab handler provides no data', () => {
+		const html = renderQaInspectorOverview({});
+
+		assert.equal(html.includes('Add QA inspector'), false);
+		assert.equal(html.includes('data-cy="remove-qa-inspector-1"'), false);
+	});
+
+	it('shows the Add QA inspector link between the QA title and the QA rows when no inspector exists', () => {
+		const html = renderQaInspectorOverview({
+			qaInspectorLink,
+			qaInspectors: [],
+			summaryListData: {
+				sections: [
+					{
+						heading: 'QA',
+						list: {
+							rows: [
+								{
+									key: { text: 'Report sent to QA panel' },
+									value: { text: 'Not provided' },
+									actions: { items: [{ text: 'Answer', href: '/some-answer-link' }] }
+								}
+							]
+						}
+					}
+				]
+			}
+		});
+
+		const titleIndex = html.indexOf('<h2 class="govuk-heading-l">QA</h2>');
+		const linkIndex = html.indexOf('data-cy="add-qa-inspector"');
+		const rowIndex = html.indexOf('Report sent to QA panel');
+		assert.notEqual(titleIndex, -1);
+		assert.notEqual(linkIndex, -1);
+		assert.notEqual(rowIndex, -1);
+		assert.ok(titleIndex < linkIndex && linkIndex < rowIndex, 'expected QA title, then Add link, then QA rows');
+	});
+
+	it('shows the QA inspector list, then the Add QA inspector link, before the QA rows when an inspector exists', () => {
+		const html = renderQaInspectorOverview({
+			qaInspectorLink,
+			qaInspectors: [
+				{ number: 1, name: 'Anisha Sharma', appointedDate: '12 November 2026', removeLink: qaInspectorRemoveLink }
+			],
+			summaryListData: {
+				sections: [
+					{
+						heading: 'QA',
+						list: {
+							rows: [
+								{
+									key: { text: 'Report sent to QA panel' },
+									value: { text: 'Not provided' },
+									actions: { items: [{ text: 'Answer', href: '/some-answer-link' }] }
+								}
+							]
+						}
+					}
+				]
+			}
+		});
+
+		const titleIndex = html.indexOf('<h2 class="govuk-heading-l">QA</h2>');
+		const inspectorIndex = html.indexOf('Anisha Sharma');
+		const linkIndex = html.indexOf('data-cy="add-qa-inspector"');
+		const rowIndex = html.indexOf('Report sent to QA panel');
+		assert.notEqual(titleIndex, -1);
+		assert.notEqual(inspectorIndex, -1);
+		assert.notEqual(linkIndex, -1);
+		assert.notEqual(rowIndex, -1);
+		assert.ok(
+			titleIndex < inspectorIndex && inspectorIndex < linkIndex && linkIndex < rowIndex,
+			'expected QA title, then inspector list, then Add link, then QA rows'
+		);
+	});
+});

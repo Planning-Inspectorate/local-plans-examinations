@@ -14,7 +14,8 @@ import {
 	createDeleteCaseJourney,
 	createTimetableJourney,
 	createGateway2AssessorJourney,
-	createGateway3AssessorJourney
+	createGateway3AssessorJourney,
+	createQaInspectorJourney
 } from './journey.ts';
 import { COMMON_CONSTS } from '../../classes/common-consts.ts';
 import { questions } from './questions.ts';
@@ -340,6 +341,97 @@ describe('createExaminationJourney', () => {
 
 			assert.equal(backLink, '/case/LP-TEST-001/examination');
 		});
+	});
+});
+
+describe('examination tab QA and Fact-check sections', () => {
+	function examinationSection(name: string) {
+		const journey = createExaminationJourneyForTest();
+		return journey.sections.find((section) => section.name === name);
+	}
+
+	it('shows the simplified QA section with the LPBO-478 row headings', () => {
+		const qaSection = examinationSection('QA');
+
+		assert.ok(qaSection);
+		assert.deepEqual(
+			qaSection.questions.map((question: { fieldName: string }) => question.fieldName),
+			['QADate', 'reportSentToPanelDate', 'panelResponseToInspectorDate']
+		);
+		assert.deepEqual(
+			qaSection.questions.map((question: { title: string }) => question.title),
+			['Report sent to QA inspector', 'Report sent to QA panel', 'QA response sent to Inspector']
+		);
+		assert.deepEqual(
+			qaSection.questions.map((question: { url: string }) => question.url),
+			['qa-date-exam', 'report-sent-to-panel-date-exam', 'panel-response-to-inspector-date-exam']
+		);
+	});
+
+	it('does not show the panel inspector rows on the examination tab', () => {
+		const qaSection = examinationSection('QA');
+
+		const questionNames = (qaSection?.questions ?? []).map((question: { fieldName: string }) => question.fieldName);
+		assert.equal(questionNames.includes('qaInspector1'), false);
+		assert.equal(questionNames.includes('qaInspector2'), false);
+		assert.equal(questionNames.includes('qaInspector3'), false);
+	});
+
+	it('shows the simplified Fact-check section with the LPBO-478 row headings', () => {
+		const factCheckSection = examinationSection('Fact Check');
+
+		assert.ok(factCheckSection);
+		assert.deepEqual(
+			factCheckSection.questions.map((question: { fieldName: string }) => question.fieldName),
+			['factCheckDateReceivedFromInspector', 'factCheckDueDate', 'factCheckReceivedBackFromLPADate']
+		);
+		assert.deepEqual(
+			factCheckSection.questions.map((question: { title: string }) => question.title),
+			['Report sent to QA for fact-check', 'LPA response due', 'LPA response received']
+		);
+	});
+
+	it('removes the Important dates for this plan section', () => {
+		const journey = createExaminationJourneyForTest();
+
+		assert.equal(
+			journey.sections.some((section: { heading: string }) => section.heading === 'Important dates for this plan'),
+			false
+		);
+	});
+
+	it('keeps the original QA row headings on the Timetable journey', () => {
+		const journey = createTimetableJourneyForTest();
+		const qaSection = journey.sections.find((section: { name: string }) => section.name === 'QA');
+
+		assert.ok(qaSection);
+		assert.deepEqual(
+			qaSection.questions.map((question: { title: string }) => question.title),
+			['Report sent to QA inspector', 'Sent to panel date', 'QA panel response sent to Inspector']
+		);
+	});
+});
+
+describe('createQaInspectorJourney', () => {
+	it('sets up the Who is the QA inspector? and appointment date questions', () => {
+		const journey = createQaInspectorJourney(
+			{
+				baseUrl: '/case/LP-TEST-001',
+				params: { reference: 'LP-TEST-001' },
+				query: {},
+				session: {}
+			} as unknown as Request,
+			new JourneyResponse(COMMON_CONSTS.QA_INSPECTOR_JOURNEY_ID, '', {}),
+			questions
+		);
+
+		const section = journey.sections.find((section: { name: string }) => section.name === 'QA inspector');
+		assert.ok(section);
+		assert.deepEqual(
+			section.questions.map((question: { url: string }) => question.url),
+			['who-is-the-qa-inspector', 'when-was-the-qa-inspector-appointed']
+		);
+		assert.equal(journey.taskListUrl, '/case/LP-TEST-001/examination/qa-inspector/check');
 	});
 });
 

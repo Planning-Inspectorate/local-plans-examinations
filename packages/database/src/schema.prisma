@@ -295,8 +295,20 @@ model ExaminationInfo {
   adoptionDate                         DateTime?            @db.DateTime2
   approvedForCILDate                   DateTime?            @db.DateTime2
   hearings                             ExaminationHearing[]
+  qaInspectors                         QaInspector[]
 
   @@index([status])
+}
+
+model QaInspector {
+  id                String          @id @default(uuid()) @db.UniqueIdentifier
+  examinationInfo   ExaminationInfo @relation(fields: [examinationInfoId], references: [id], onDelete: Cascade)
+  examinationInfoId String          @db.UniqueIdentifier
+  name              String          @db.NVarChar(1000)
+  appointmentDate   DateTime        @db.DateTime2
+  createdDate       DateTime        @default(now())
+
+  @@index([examinationInfoId])
 }
 
 model ExaminationHearing {

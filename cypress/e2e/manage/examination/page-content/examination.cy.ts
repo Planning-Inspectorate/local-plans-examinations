@@ -13,7 +13,6 @@ import {
 	examiningInspector1,
 	examiningInspectors,
 	examinationFactCheckDates,
-	examinationImportantDates,
 	examinationLetterDates,
 	examinationSubmissionDates,
 	factCheckDateReceivedFromInspector,
@@ -144,10 +143,6 @@ describe('Examination page content', () => {
 
 	it('displays the QA content for a case', { tags: ['smoke', 'regression'] }, () => {
 		examinationPage.verifySectionContent('QA', 'QA', QAExpectedAnswers);
-	});
-
-	it('displays the Examination Important Dates content for a case', { tags: ['smoke', 'regression'] }, () => {
-		examinationPage.verifySectionContent('Important dates for this plan', 'important-dates', examinationImportantDates);
 	});
 });
 
