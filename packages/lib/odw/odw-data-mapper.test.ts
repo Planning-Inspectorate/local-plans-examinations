@@ -15,6 +15,9 @@ class ODWDataMapperWrapper extends ODWDataMapper {
 	public mapPlanTypeToODWWrapper(value: string) {
 		return this.mapPlanTypeToODW(value);
 	}
+	public mapPlanBandsTypeToODWWrapper(value: string | number) {
+		return this.mapPlanBandsTypeToODW(value);
+	}
 	public mapExamOutcomeToODWWrapper(value: string) {
 		return this.mapExamOutcomeToODW(value);
 	}
@@ -55,7 +58,7 @@ const caseData = {
 	reference: 'someCaseReference',
 	planTitle: 'somePlanTitle',
 	planType: 'local-plan',
-	planBand: 1,
+	planBand: '1',
 	caseOfficer: 'someCaseOfficer', // This will be changed by LPBO-464
 	lpas: [{ lpaCode: 'a' }, { lpaCode: 'b' }, { lpaCode: 'c' }],
 	contacts: [
@@ -208,6 +211,27 @@ describe('test ODWDataMapper', () => {
 		it('does not convert other values', () => {
 			const result = dataMapper.mapPlanTypeToODWWrapper('other');
 			assert.strictEqual(result, 'other');
+		});
+	});
+	describe('test mapPlanBandsTypeToODW', () => {
+		const dataMapper = new ODWDataMapperWrapper({} as BaseService<PrismaClient>);
+		it('auto returns integer values', () => {
+			const result = dataMapper.mapPlanBandsTypeToODWWrapper(2);
+			assert.strictEqual(result, 2);
+		});
+		it('rejects non-string values', () => {
+			assert.rejects(async () => {
+				dataMapper.mapPlanBandsTypeToODWWrapper(2.0);
+			});
+		});
+		it('casts numeric strings to integers', () => {
+			const result = dataMapper.mapPlanBandsTypeToODWWrapper('2');
+			assert.strictEqual(result, 2);
+		});
+		it('rejects non-numeric strings', () => {
+			assert.rejects(async () => {
+				dataMapper.mapPlanBandsTypeToODWWrapper('bah');
+			});
 		});
 	});
 	describe('test mapExamOutcomeToODW', () => {

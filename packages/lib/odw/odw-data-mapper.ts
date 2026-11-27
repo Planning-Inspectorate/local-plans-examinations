@@ -71,6 +71,25 @@ export class ODWDataMapper {
 	}
 
 	/**
+	 * Convert the planBand column from a string to an integer
+	 * @param value The planBand value as a string
+	 * @returns The planBand value as an integer
+	 */
+	protected mapPlanBandsTypeToODW(value: string | number) {
+		if (Number.isInteger(value)) {
+			return value;
+		}
+		if (typeof value !== 'string') {
+			throw Error(`Expected provided planBand to either be an integer or a string during preprocessing`);
+		}
+		const parsed = Number.parseInt(value, 10);
+		if (Number.isNaN(parsed)) {
+			throw Error(`Attempted to convert planBand value '${value}' to an integer`);
+		}
+		return parsed;
+	}
+
+	/**
 	 * Map local plans outcome srings to ODW outcome strings
 	 * @param value The local plans outcome
 	 * @returns The ODW outcome
@@ -267,7 +286,7 @@ export class ODWDataMapper {
 			caseReference: caseData.reference,
 			planTitle: caseData.planTitle,
 			planType: this.validateField(caseData.planType, this.#VALID_PLAN_TYPES, this.mapPlanTypeToODW),
-			planBand: this.validateField(caseData.planBand, this.#VALID_PLAN_BANDS),
+			planBand: this.validateField(caseData.planBand, this.#VALID_PLAN_BANDS, this.mapPlanBandsTypeToODW),
 			caseOfficerId: [caseData.caseOfficer], // DISCREPANCY: todo LP schema to be fixed by LPBO-464
 			lpaId: caseData.lpas.map((lpa) => lpa.lpaCode),
 			lpaContact: caseData.contacts.map((contact) => this.formatContact(contact)),
