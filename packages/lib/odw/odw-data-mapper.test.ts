@@ -220,8 +220,8 @@ describe('test ODWDataMapper', () => {
 			assert.strictEqual(result, 2);
 		});
 		it('rejects non-string values', () => {
-			assert.rejects(async () => {
-				dataMapper.mapPlanBandsTypeToODWWrapper(2.0);
+			assert.throws(() => {
+				dataMapper.mapPlanBandsTypeToODWWrapper(2.1);
 			});
 		});
 		it('casts numeric strings to integers', () => {
@@ -229,7 +229,7 @@ describe('test ODWDataMapper', () => {
 			assert.strictEqual(result, 2);
 		});
 		it('rejects non-numeric strings', () => {
-			assert.rejects(async () => {
+			assert.throws(() => {
 				dataMapper.mapPlanBandsTypeToODWWrapper('bah');
 			});
 		});
