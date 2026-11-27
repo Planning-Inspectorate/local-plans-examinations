@@ -43,13 +43,15 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 			lastName: 'Smith',
 			email: 'jane@lpa.gov.uk',
 			phone: '01234567890',
-			lpaContact: 'lpa-1'
+			lpaContact: 'lpa-1',
+			displayOrder: 1
 		},
 		{
 			firstName: 'Bob',
 			lastName: 'Johnson',
 			email: 'bob@lpa.gov.uk',
-			lpaContact: 'lpa-2'
+			lpaContact: 'lpa-2',
+			displayOrder: 2
 		}
 	];
 	try {
@@ -78,7 +80,8 @@ export async function seedCy(options: SeedCyOptions | null = {}) {
 						lastName: contact.lastName,
 						email: contact.email,
 						phoneNumber: contact.phone || '',
-						lpaCode: contact.lpaContact
+						lpaCode: contact.lpaContact,
+						displayOrder: contact.displayOrder
 					}))
 				},
 				notes: {

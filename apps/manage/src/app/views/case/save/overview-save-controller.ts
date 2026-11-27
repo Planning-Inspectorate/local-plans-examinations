@@ -42,10 +42,25 @@ export class OverviewSaveController extends SaveController {
 				if (this.section === 'contacts' && this.action === 'edit') {
 					contactRecordChange = await tx.contact.update({ where: { id: this.currentItemId }, data: contactData });
 				} else {
+					const contactCount = await tx.contact.count({
+						where: {
+							cases: {
+								some: {
+									reference: this.caseReference
+								}
+							}
+						}
+					});
+					const newContactData = { ...contactData, displayOrder: contactCount + 1 };
+
 					contactRecordChange = await tx.contact.upsert({
 						where: { id: this.currentItemId },
-						create: { ...contactData, cases: { connect: { reference: this.caseReference } } },
-						update: contactData
+						create: {
+							id: this.currentItemId,
+							...newContactData,
+							cases: { connect: { reference: this.caseReference } }
+						},
+						update: newContactData
 					});
 				}
 				updated = true;
@@ -103,13 +118,14 @@ export class OverviewSaveController extends SaveController {
 
 	/** Builds the shared contact `data` payload used by both create and update. */
 	private buildContactData(formData: CaseOverviewInput, lpaName: string): Prisma.ContactCreateWithoutCasesInput {
-		const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact } = formData;
+		const { firstName = '', lastName = '', email = '', phone = '', lpaCode, lpaContact, displayOrder } = formData;
 		return {
 			firstName,
 			lastName,
 			email,
 			phoneNumber: phone,
-			lpa: { connectOrCreate: this.lpaConnectOrCreate(lpaCode || lpaContact || '', lpaName) }
+			lpa: { connectOrCreate: this.lpaConnectOrCreate(lpaCode || lpaContact || '', lpaName) },
+			displayOrder
 		};
 	}
 	/** Splits flat overview answers into the Case row's own fields and any related-table buckets. */

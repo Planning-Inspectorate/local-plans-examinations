@@ -13,6 +13,7 @@ export interface CaseOverviewInput extends SaveInput {
 	lastName?: string;
 	email?: string;
 	phone?: string;
+	displayOrder?: any;
 	examinationWebsite?: string;
 	// assessor for Gateway 2
 	assessorName?: string;

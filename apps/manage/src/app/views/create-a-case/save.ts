@@ -141,12 +141,13 @@ async function saveDataToDatabase(
 					}))
 				},
 				contacts: {
-					create: answers.contactDetails.map((contact) => ({
+					create: answers.contactDetails.map((contact, index) => ({
 						firstName: contact.firstName,
 						lastName: contact.lastName,
 						email: contact.email,
 						phoneNumber: contact.phone || '',
-						lpaCode: contact.lpaContact
+						lpaCode: contact.lpaContact,
+						displayOrder: index + 1
 					}))
 				},
 				caseHistories: {

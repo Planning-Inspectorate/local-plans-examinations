@@ -22,6 +22,7 @@ interface CustomManageListQuestionParameters extends QuestionParameters, ManageL
 type CustomManageListQuestionViewData = QuestionViewModel['question'] & {
 	hideRemoveButton?: boolean;
 	value?: unknown;
+	valueSummary?: unknown;
 };
 
 export default class CustomManageListQuestion extends ManageListQuestion {
@@ -52,13 +53,33 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 		super.addCustomDataToViewModel(viewModel);
 
 		const question = viewModel.question as CustomManageListQuestionViewData;
+
 		const answers = Array.isArray(question.value) ? question.value : [];
 
-		const hasMoreThanOneAnswer = answers.length > 1;
+		// Sort contacts by displayOrder (ascending)
+		const sortedAnswers = [...answers].sort((a, b) => Number(a.displayOrder) - Number(b.displayOrder));
+
+		// Update the question's underlying values
+		question.value = sortedAnswers;
+
+		// Reorder the formatted summary entries to match the contacts
+		if (Array.isArray(question.valueSummary)) {
+			const summaryById = new Map(question.valueSummary.map((item: any) => [item.id, item]));
+
+			question.valueSummary = sortedAnswers
+				.map((answer: any) => summaryById.get(answer.id))
+				.filter((item) => item !== undefined);
+		}
+
+		// Keep the top-level answer in the same order
+		(viewModel as any).answer = sortedAnswers;
+
+		const hasMoreThanOneAnswer = sortedAnswers.length > 1;
+
 		question.hideRemoveButton = !this.isAllowedEmpty && !hasMoreThanOneAnswer;
 		viewModel.confirmRemoveButtonText = this.confirmRemoveButtonText;
 		viewModel.emptyListText = this.emptyListText;
-		viewModel.hideAddButton = this.maximumAnswers !== null && answers.length >= this.maximumAnswers;
+		viewModel.hideAddButton = this.maximumAnswers !== null && sortedAnswers.length >= this.maximumAnswers;
 		viewModel.removalPrompt = this.removalPrompt;
 		viewModel.singularLowerCase = this.singularLowerCase;
 		viewModel.multipleLowerCase = this.multipleLowerCase;
@@ -68,6 +89,7 @@ export default class CustomManageListQuestion extends ManageListQuestion {
 	 * returns the formatted answers values to be used to build task list elements
 	 */
 	formatAnswerForSummary(sectionSegment: string, journey: any, answer: { id: string; [k: string]: string }) {
+		console.log('here2', answer);
 		let formattedAnswer = this.notStartedText;
 		if (answer && Array.isArray(answer) && answer.length > 0) {
 			if (this.#showAnswersInSummary) {

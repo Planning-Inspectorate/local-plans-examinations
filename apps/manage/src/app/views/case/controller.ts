@@ -112,7 +112,7 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 		const action = req.params.manageListAction as ManageListAction;
 		const currentItemId = getParam(req.params.manageListItemId);
 		const caseId = await resolveCaseIdFromReference(db, reference);
-		let existing;
+		let existing: any = null;
 
 		if (action === 'remove') {
 			await removeItem({ db, reference, section, currentItemId, service, req });
@@ -145,6 +145,48 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 						select: { assessorName: true }
 					})
 				)?.assessorName;
+				break;
+		}
+
+		switch (true) {
+			case req.url.includes('check-lpas'):
+				existing =
+					action === 'edit'
+						? (
+								await db.lPA.findUnique({
+									where: { lpaCode: currentItemId },
+									select: { lpaName: true }
+								})
+							)?.lpaName
+						: null;
+				break;
+			case req.url.includes('assessor-gateway-2'):
+				existing = (
+					await db.gateway2Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
+			case req.url.includes('assessor-gateway-3'):
+				existing = (
+					await db.gateway3Info.findUnique({
+						where: { caseId },
+						select: { assessorName: true }
+					})
+				)?.assessorName;
+				break;
+			case req.url.includes('contact-details'):
+				existing = await db.contact.findUnique({
+					where: { id: currentItemId },
+					select: {
+						firstName: true,
+						lastName: true,
+						email: true,
+						phoneNumber: true,
+						lpaCode: true
+					}
+				});
 				break;
 		}
 
@@ -300,6 +342,102 @@ export function updateCaseField(service: ManageService): SaveDataFn {
 					}
 					break;
 				}
+				case req.url.includes('contact-details'): {
+					const contactNum = await db.contact.findUnique({
+						where: { id: currentItemId },
+						select: { displayOrder: true }
+					});
+
+					const userReadableId = 'Contact ' + contactNum?.displayOrder;
+					if (action == 'edit' && existing) {
+						const contactMap = {
+							firstName: existing.firstName,
+							lastName: existing.lastName,
+							email: existing.email,
+							phone: existing.phoneNumber,
+							lpaContact: existing.lpaCode
+						};
+
+						const changedFields = Object.keys(contactMap).reduce(
+							(acc, key) => {
+								if (contactMap[key as keyof typeof contactMap] !== data.answers[key]) {
+									switch (key) {
+										case 'firstName':
+											acc[key] =
+												userReadableId +
+												' first name changed from ' +
+												contactMap[key] +
+												' to ' +
+												data.answers.firstName;
+											break;
+										case 'lastName':
+											acc[key] =
+												userReadableId + ' last name changed from ' + contactMap[key] + ' to ' + data.answers.lastName;
+											break;
+										case 'email':
+											acc[key] =
+												userReadableId + ' email changed from ' + contactMap[key] + ' to ' + data.answers.email;
+											break;
+										case 'phone':
+											acc[key] =
+												contactMap[key] != ''
+													? userReadableId + ' phone changed from ' + contactMap[key] + ' to ' + data.answers.phone
+													: userReadableId + ' phone added ' + data.answers.phone;
+											break;
+										case 'lpaContact':
+											acc[key] = contactMap[key]
+												? userReadableId +
+													' LPA contact changed from ' +
+													contactMap[key] +
+													' to ' +
+													data.answers.lpaContact
+												: userReadableId + ' phone added ' + data.answers.phone;
+											break;
+									}
+								}
+								return acc;
+							},
+							{} as Record<string, any>
+						);
+						await updateCaseHistory(
+							service,
+							req,
+							db,
+							changedFields,
+							data.answers,
+							reference,
+							currentUser,
+							changedFields
+						);
+					} else if (action == 'add') {
+						const lpaName = (
+							await db.lPA.findUnique({
+								where: { lpaCode: data.answers.lpaContact },
+								select: { lpaName: true }
+							})
+						)?.lpaName;
+						const caseHistoryOverwrite: Record<string, string> = {
+							firstName: userReadableId + ' first name ' + data.answers.firstName + ' added',
+							lastName: userReadableId + ' last name ' + data.answers.lastName + ' added',
+							email: userReadableId + ' email ' + data.answers.email + ' added',
+							lpaContact: userReadableId + ' LPA contact ' + lpaName + ' added'
+						};
+						if (data.answers.phone) {
+							caseHistoryOverwrite.phone = userReadableId + ' phone added ' + data.answers.phone;
+						}
+						await updateCaseHistory(
+							service,
+							req,
+							db,
+							caseHistoryOverwrite,
+							data.answers,
+							reference,
+							currentUser,
+							caseHistoryOverwrite
+						);
+					}
+					break;
+				}
 				default: {
 					await updateCaseHistory(service, req, db, oldValues, data.answers, reference, currentUser);
 					break;
@@ -350,7 +488,20 @@ async function removeItem({
 	const currentUser = account?.name ?? 'Unknown';
 
 	if (section === CONTACTS_SECTION) {
+		const contact = await db.contact.findUnique({
+			where: { id: currentItemId },
+			select: {
+				firstName: true,
+				lastName: true,
+				displayOrder: true
+			}
+		});
+		const existingContact = contact != undefined ? contact?.firstName + ' ' + contact?.lastName : 'Unknown';
+
 		await db.contact.delete({ where: { id: currentItemId } });
+		await updateCaseHistory(service, req, db, { contact: currentItemId }, { contact: null }, reference, currentUser, {
+			contact: 'Contact ' + contact?.displayOrder + ' ' + existingContact + ' removed'
+		});
 		return;
 	} else {
 		const lpa = await db.lPA.findUnique({
@@ -508,7 +659,8 @@ export function buildRemoveDocumentConfirmMiddleware(journeyId: string): AsyncRe
 export function addCaseNavigation(): AsyncRequestHandler {
 	return async (req, res, next) => {
 		const reference = getParam(req.params.reference);
-		res.locals.navigation = createNavigationParameters(req.url, reference);
+		const currentSection = typeof req.query.section === 'string' ? req.query.section : undefined;
+		res.locals.navigation = createNavigationParameters(req.url, reference, currentSection);
 		if (next) next();
 	};
 }
@@ -558,10 +710,12 @@ export async function updateCaseHistory(
 		data: {
 			caseHistories: {
 				create: await Promise.all(
-					Object.entries(previousValues).map(async ([key, oldValue]) => ({
-						event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key], overrideLabels[key]),
-						username: currentUser
-					}))
+					Object.entries(previousValues).map(async ([key, oldValue]) => {
+						return {
+							event: await formatCaseHistoryEvent(service, req, key, oldValue, newValues[key], overrideLabels[key]),
+							username: currentUser
+						};
+					})
 				)
 			}
 		}
