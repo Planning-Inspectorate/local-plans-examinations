@@ -22,7 +22,8 @@ export class MiqsSubmissionCheck extends SubmissionCheckWithDate {
 					uploadedFiles,
 					`/case/${caseReference}/download-case-document`,
 					`/case/${caseReference}/${journeyId}/${section}/${questions.miqs.url}`,
-					'returnTo=check'
+					'returnTo=check',
+					'MIQ'
 				)
 			],
 			caseReference: caseReference,

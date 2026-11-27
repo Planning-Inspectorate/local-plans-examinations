@@ -53,7 +53,9 @@ export class Gateway3SubmissionCheck extends SubmissionCheck {
 			...this.formatDocuments(
 				uploadedFiles,
 				`/case/${caseReference}/download-case-document`,
-				`/case/${caseReference}/${journeyId}/${section}/${questions[`gateway3Documents-${submissionId}`].url}`
+				`/case/${caseReference}/${journeyId}/${section}/${questions[`gateway3Documents-${submissionId}`].url}`,
+				undefined,
+				`Gateway 3 discussion document`
 			)
 		];
 		return {

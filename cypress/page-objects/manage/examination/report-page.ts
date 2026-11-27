@@ -50,7 +50,7 @@ class ExaminationReportCheckPage extends BasePage {
 
 	verifyDocuments(...fileNames: string[]) {
 		this.verifyLoaded();
-		fileNames.forEach((fileName, index) => this.verifySummaryRowContains(`Document ${index + 1}`, fileName));
+		fileNames.forEach((fileName, index) => this.verifySummaryRowContains(`examination report ${index + 1}`, fileName));
 	}
 
 	verifyAnswers(outcome: string, issuedDate: string, ...fileNames: string[]) {

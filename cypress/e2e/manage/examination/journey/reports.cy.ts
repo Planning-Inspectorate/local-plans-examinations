@@ -88,7 +88,7 @@ describe('Examination report journeys', () => {
 	it('keeps report answers when changing the CYA outcome, date and documents', { tags: ['regression'] }, () => {
 		openReport({ state: 'awaiting-confirmation' }).then(({ reference }) => checkPage.visitForCase(reference));
 		changeExaminationReportDetails(soundUnsound.value, soundUnsound.updatedValue, report.updatedDate);
-		checkPage.openChangeLinkFor('Document 1');
+		checkPage.openChangeLinkFor('examination report 1');
 		uploadPage.verifyFileUploaded(report.fileName);
 		uploadPage.uploadAndVerifyFile(report.supportingFileName);
 		uploadPage.removeFile(report.supportingFileName);

@@ -32,7 +32,9 @@ export class SignedSLASubmissionCheck extends SubmissionCheckWithDate {
 			...this.formatDocuments(
 				uploadedFiles,
 				`/case/${caseReference}/download-case-document`,
-				`/case/${caseReference}/${journeyId}/${section}/${questions.signedSla.url}`
+				`/case/${caseReference}/${journeyId}/${section}/${questions.signedSla.url}`,
+				undefined,
+				'Signed SLA document'
 			)
 		];
 		return {

@@ -41,11 +41,14 @@ class Gateway3DocumentsCheckPage extends BasePage {
 		this.verifySummaryRowContains('Outcome', outcome);
 
 		fileNames.forEach((fileName, index) => {
-			this.verifySummaryRowContains(`Document ${index + 1}`, fileName);
+			this.verifySummaryRowContains(`Gateway 3 discussion document ${index + 1}`, fileName);
 		});
 	}
 	verifyChangeLinks() {
-		this.verifySummaryRowActionHref('Document 1', gateway3ReportPath(gateway3DocumentsAnswer.path));
+		this.verifySummaryRowActionHref(
+			'Gateway 3 discussion document 1',
+			gateway3ReportPath(gateway3DocumentsAnswer.path)
+		);
 	}
 
 	issueDecision() {

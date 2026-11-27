@@ -30,7 +30,9 @@ export class Gateway2WorkshopDocumentsSubmissionCheck extends SubmissionCheckWit
 			...this.formatDocuments(
 				uploadedFiles,
 				`/case/${caseReference}/download-case-document`,
-				`/case/${caseReference}/${journeyId}/${section}/${questions.gateway2WorkshopDocuments.url}`
+				`/case/${caseReference}/${journeyId}/${section}/${questions.gateway2WorkshopDocuments.url}`,
+				undefined,
+				'Workshop documents'
 			)
 		];
 		return {

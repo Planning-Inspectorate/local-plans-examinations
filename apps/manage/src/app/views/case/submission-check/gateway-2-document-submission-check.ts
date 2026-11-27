@@ -51,7 +51,7 @@ export class Gateway2DocumentSubmissionCheck extends SubmissionCheck {
 					url: undefined
 				},
 				{
-					name: 'Documents',
+					name: `${questionTitle} documents`,
 					value: documents.length > 0 ? documents : 'Not provided',
 					url: `/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}/${encodeURIComponent(section)}/${encodeURIComponent(questionUrl)}`
 				}
