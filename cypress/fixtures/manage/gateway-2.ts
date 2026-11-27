@@ -43,7 +43,7 @@ export const gateway2DateAnswers = {
 		display: '1 September 2026'
 	},
 	reportPublishedDate: {
-		row: 'Report published by LPA date',
+		row: 'Report published',
 		heading: 'When was the report published by the LPA?',
 		section: 'report',
 		fieldName: 'reportPublishedByLPA',
@@ -73,10 +73,10 @@ export const gateway2AssessorAnswer = {
 } as const;
 
 export const gateway2Report = {
-	row: 'Issue Gateway 2 report',
-	heading: 'Upload Gateway 2 report',
+	row: 'Report issued',
+	heading: 'Manage Gateway 2 report documents',
 	fieldName: 'gateway2Report',
-	path: 'gateway-2-report',
+	path: 'gateway-2-report-manage',
 	caption: 'Issue report',
 	fileName: 'test-document.pdf',
 	updatedFileName: 'test-document.docx',

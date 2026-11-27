@@ -339,10 +339,19 @@ export function createGateway2Journey(req: Request, response: JourneyResponse, q
 		text: 'View'
 	};
 
-	const gateway2DocumntUrl = req.baseUrl + '/gateway-2/gateway-2/gateway2Documents';
+	const gateway2DocumntUrl = req.baseUrl + '/gateway-2/gateway2Documents';
+	const timetableUrl = req.baseUrl + '/timetable';
+
+	const gateway2ReportManageUrl = `${gateway2Url}/report/${questions.gateway2ReportManage.url}`;
+
 	const backUrl = COMMON_CONSTS.GATEWAY_2_DOCUMENT_QUESTIONS.includes(String(req.params.question))
 		? gateway2DocumntUrl
-		: gateway2Url;
+		: String(req.params.question) === String(questions.gateway2Report.url)
+			? gateway2ReportManageUrl
+			: String(req.query.returnTo) === 'timetable'
+				? timetableUrl
+				: gateway2Url;
+
 	const gateway2Section = new Section('Gateway 2', 'gateway-2')
 		.addQuestion(questions.gateway2ExpectedDate)
 		.addQuestion(questions.gateway2ActualDate)
@@ -602,6 +611,17 @@ export function createTimetableJourney(req: Request, response: JourneyResponse, 
 	const sortedPauses = sortByDateColumn(pauseData as { [key: string]: any }[], 'createdAt');
 	const latestPause = sortedPauses.at(-1);
 
+	const gateway2Url = req.baseUrl + `/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}`;
+
+	// Hide the G2 report management
+	questions.gateway2ReportManage.taskList = false;
+
+	//override action
+	questions.reportIssuedDate.actionLink = {
+		href: `${gateway2Url}/report/${questions.gateway2ReportManage.url}?returnTo=timetable`,
+		text: 'View'
+	};
+
 	const factCheckSection = new Section('Fact Check', 'fact-check')
 		.addQuestion(questions.factCheckDateReceivedFromInspector)
 		.addQuestion(questions.factCheckDueDate)
@@ -633,6 +653,7 @@ export function createTimetableJourney(req: Request, response: JourneyResponse, 
 				.addQuestion(questions.gateway2ActualDate)
 				.addQuestion(questions.gateway2WorkshopDates)
 				.addQuestion(questions.reportIssuedDate)
+				.addQuestion(questions.gateway2ReportManage)
 				.addQuestion(questions.reportPublishedDate),
 			new Section('Gateway 3', 'gateway-3')
 				.addQuestion(questions.timetableGateway3ExpectedDate)
