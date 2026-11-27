@@ -100,6 +100,7 @@ import { EXAMINATION_STATUS_ID } from '@pins/local-plans-database/src/seed/stati
 import { TimetableTabHandler } from './overview-data-handlers/timetable-tab-handler.ts';
 import { sendGw2WorkshopSetUpNotifyEmail } from '../../notify/notify-helper.ts';
 import { registerAssessorJourney } from './assessor.ts';
+import { registerQaInspectorJourney } from './qa-inspector.ts';
 
 type JourneyFactory = (req: Request, response: JourneyResponse, questions: Record<string, any>) => Journey;
 
@@ -564,8 +565,7 @@ export function caseRouter(service: ManageService): IRouter {
 	registerAssessorJourney(router, service, 'gateway-2');
 	registerAssessorJourney(router, service, 'gateway-3');
 
-	registerAssessorJourney(router, service, 'gateway-2');
-	registerAssessorJourney(router, service, 'gateway-3');
+	registerQaInspectorJourney(router, service);
 
 	for (const config of CASE_JOURNEYS) {
 		if (

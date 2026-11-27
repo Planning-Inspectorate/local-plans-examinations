@@ -156,7 +156,7 @@ export const letterIssueDate = {
 export const examinationLetterDates = [letterSentToMHCLGDate, letterIssueDate];
 
 export const factCheckDateReceivedFromInspector = {
-	row: 'Fact Check date received from Inspector',
+	row: 'Report sent to QA for fact-check',
 	heading: 'When did the Inspector issue the Fact Check?',
 	fieldName: 'factCheckDateReceivedFromInspector',
 	path: 'fact-check-date-received-from-inspector',
@@ -167,7 +167,7 @@ export const factCheckDateReceivedFromInspector = {
 };
 
 export const factCheckDueDate = {
-	row: 'Fact Check due date',
+	row: 'LPA response due',
 	heading: 'When is the Fact Check expected to be sent to the LPA?',
 	fieldName: 'factCheckDueDate',
 	path: 'fact-check-due-date',
@@ -189,7 +189,7 @@ export const factCheckActualDate = {
 };
 
 export const factCheckReceivedBackFromLpaDate = {
-	row: 'Fact Check received back from LPA',
+	row: 'LPA response received',
 	heading: 'When was the Fact Check returned?',
 	fieldName: 'factCheckReceivedBackFromLPADate',
 	path: 'fact-check-received-back-from-lpa-date',
@@ -214,24 +214,24 @@ export const QADateAnswers = {
 		row: 'Report sent to QA inspector',
 		heading: 'When was the report sent to the QA inspector?',
 		fieldName: 'QADate',
-		path: 'qa-date',
+		path: 'qa-date-exam',
 		input: { day: '4', month: '12', year: '2026' },
 		display: '4 December 2026'
 	},
 
 	sentToPanelDate: {
-		row: 'Sent to panel date',
+		row: 'Report sent to QA panel',
 		heading: 'When was the report sent to the panel?',
 		fieldName: 'reportSentToPanelDate',
-		path: 'report-sent-to-panel-date',
+		path: 'report-sent-to-panel-date-exam',
 		display: '5 December 2026'
 	},
 
 	QAPanelResponseDate: {
-		row: 'QA panel response sent to Inspector',
+		row: 'QA response sent to Inspector',
 		heading: 'When did the panel send its QA response to the Inspector?',
 		fieldName: 'panelResponseToInspectorDate',
-		path: 'panel-response-to-inspector-date',
+		path: 'panel-response-to-inspector-date-exam',
 		input: { day: '6', month: '12', year: '2026' },
 		display: '6 December 2026',
 		updatedInput: { day: '22', month: '12', year: '2026' },
@@ -271,14 +271,11 @@ export const QAInspectorsAnswers = {
 export const examinationFactCheckDates = [
 	factCheckDateReceivedFromInspector,
 	factCheckDueDate,
-	factCheckActualDate,
-	factCheckReceivedBackFromLpaDate,
-	finalReportIssueDate
+	factCheckReceivedBackFromLpaDate
 ];
 
 export const QAExpectedAnswers = [
-	...Object.values(QADateAnswers).map(({ row, display, path }) => ({ row, display, path })),
-	...Object.values(QAInspectorsAnswers).map(({ row, display, path }) => ({ row, display, path }))
+	...Object.values(QADateAnswers).map(({ row, display, path }) => ({ row, display, path }))
 ];
 
 export const withdrawnDate = {

@@ -130,6 +130,44 @@
 
                   {% if caseNote %}<h2 class="govuk-heading-s govuk-!-margin-bottom-2">Case Notes</h2>{{ caseNote | safe }}{% endif %}
 
+                  {% if qaInspectorLink and section.heading == 'QA' %}
+                    {% if qaInspectors and qaInspectors.length %}
+                      <section data-cy="qa-inspector-section">
+                        {% set qaInspectorRows = [] %}
+                        {% for qaInspector in qaInspectors %}
+                          {% set _ = qaInspectorRows.push({
+                            key: { text: 'QA inspector ' + qaInspector.number },
+                            value: { text: qaInspector.name },
+                            actions: {
+                              items: [{
+                                href: qaInspector.removeLink,
+                                text: 'Remove',
+                                visuallyHiddenText: 'QA inspector ' + qaInspector.number,
+                                attributes: { 'data-cy': 'remove-qa-inspector-' + qaInspector.number }
+                              }]
+                            }
+                          }) %}
+                          {% set _ = qaInspectorRows.push({
+                            key: { text: 'QA inspector ' + qaInspector.number + ' appointed' },
+                            value: { text: qaInspector.appointedDate }
+                          }) %}
+                        {% endfor %}
+                        {{ govukSummaryList({
+                              rows: qaInspectorRows,
+                              attributes: { 'data-cy': 'qa-inspectors-list' }
+                          })
+                        }}
+                        <p class="govuk-body">
+                          <a href="{{ qaInspectorLink }}" class="govuk-link" data-cy="add-qa-inspector">Add QA inspector</a>
+                        </p>
+                      </section>
+                    {% else %}
+                      <p class="govuk-body">
+                        <a href="{{ qaInspectorLink }}" class="govuk-link" data-cy="add-qa-inspector">Add QA inspector</a>
+                      </p>
+                    {% endif %}
+                  {% endif %}
+
                   {% if section.heading == 'Workshop'%}
                     {% if section.list.rows.length %}
                       {{ govukSummaryList({

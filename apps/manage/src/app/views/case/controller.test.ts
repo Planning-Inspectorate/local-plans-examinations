@@ -918,10 +918,12 @@ describe('updateCaseHistory', () => {
 
 		const entries = service.db.case.update.mock.calls[0].arguments[0].data.caseHistories.create;
 
-		assert.equal(entries[0].event, 'Fact Check date received from Inspector updated to 6 January 2026');
-		assert.equal(entries[1].event, 'Fact Check due date updated to 7 January 2026');
+		// the case history labels follow the row headings shown on the Examination tab (LPBO-478),
+		// which for the examination journey's QA/fact-check questions are the simplified titles
+		assert.equal(entries[0].event, 'Report sent to QA for fact-check updated to 6 January 2026');
+		assert.equal(entries[1].event, 'LPA response due updated to 7 January 2026');
 		assert.equal(entries[2].event, 'Fact Check actual date updated to 8 January 2026');
-		assert.equal(entries[3].event, 'Fact Check received back from LPA updated to 9 January 2026');
+		assert.equal(entries[3].event, 'LPA response received updated to 9 January 2026');
 		assert.equal(entries[4].event, 'Final report issue date updated to 10 January 2026');
 	});
 

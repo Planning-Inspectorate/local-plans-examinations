@@ -1716,6 +1716,24 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		},
 		validators: [new FileUploadRequiredValidator('miqs', 'Choose a file to upload')]
 	},
+	qaInspectorName: {
+		type: COMPONENT_TYPES.SINGLE_LINE_INPUT,
+		question: 'Who is the QA inspector?',
+		fieldName: 'qaInspectorName',
+		url: 'who-is-the-qa-inspector',
+		title: 'Who is the QA inspector?',
+		validators: [new RequiredValidator('Enter a QA inspector name')],
+		inputAttributes: { 'data-cy': 'qa-inspector-name' }
+	},
+	qaInspectorAppointmentDate: {
+		type: COMPONENT_TYPES.DATE,
+		question: 'When was the QA inspector appointed?',
+		fieldName: 'qaInspectorAppointmentDate',
+		url: 'when-was-the-qa-inspector-appointed',
+		title: 'When was the QA inspector appointed?',
+		validators: [new RequiredValidator('Enter a valid date'), new DateValidator(' a valid date')],
+		inputAttributes: { 'data-cy': 'qa-inspector-appointment-date' }
+	},
 	...examinationPauseQuestions,
 	...gateway3Questions,
 	...gw2QuestionsWithContinue
@@ -1742,6 +1760,37 @@ caseQuestions.timetableGateway3CompletionDate = {
 	url: 'timetable-gateway-3-completion-date'
 };
 
+// LPBO-478: the Examination tab's simplified QA and Fact-check sections use copy that
+// differs from the shared questions, which are also rendered by the Timetable journey
+// (title is the row heading shown on the tab). Clone with the Examination tab titles so
+// edits here do not affect other journeys.
+caseQuestions.qaDateExam = { ...caseQuestions.qaDate, title: 'Report sent to QA inspector', url: 'qa-date-exam' };
+caseQuestions.sentToPanelDateExam = {
+	...caseQuestions.sentToPanelDate,
+	title: 'Report sent to QA panel',
+	url: 'report-sent-to-panel-date-exam'
+};
+caseQuestions.panelResponseSentToInspectorExam = {
+	...caseQuestions.panelResponseSentToInspector,
+	title: 'QA response sent to Inspector',
+	url: 'panel-response-to-inspector-date-exam'
+};
+caseQuestions.factCheckDateReceivedFromInspectorExam = {
+	...caseQuestions.factCheckDateReceivedFromInspector,
+	title: 'Report sent to QA for fact-check',
+	url: 'fact-check-date-received-from-inspector-exam'
+};
+caseQuestions.factCheckDueDateExam = {
+	...caseQuestions.factCheckDueDate,
+	title: 'LPA response due',
+	url: 'fact-check-due-date-exam'
+};
+caseQuestions.factCheckReceivedBackFromLPADateExam = {
+	...caseQuestions.factCheckReceivedBackFromLPADate,
+	title: 'LPA response received',
+	url: 'fact-check-received-back-from-lpa-date-exam'
+};
+
 export const fileUploadQuestionProperties = Object.fromEntries(
 	Object.entries(caseQuestions).filter(([, v]) => v.type === CUSTOM_COMPONENTS.FILE_UPLOADER)
 ) as Record<string, FileUploaderQuestionProps>;
@@ -1752,6 +1801,18 @@ export const questions = createQuestions(
 	{},
 	{ continueButtonText: 'Save and continue' }
 );
+// LPBO-478: unanswered rows in the Examination tab's simplified QA/Fact-check sections show 'Not provided'
+// (these clones are only used by the examination journey, so the text override does not affect other journeys)
+for (const key of [
+	'qaDateExam',
+	'sentToPanelDateExam',
+	'panelResponseSentToInspectorExam',
+	'factCheckDateReceivedFromInspectorExam',
+	'factCheckDueDateExam',
+	'factCheckReceivedBackFromLPADateExam'
+]) {
+	questions[key].notStartedText = 'Not provided';
+}
 // Some questions require different submit button text
 for (const prefix of ['examinationPauseDetail', 'examinationRestartDetail']) {
 	const questionsStartingWithPrefix = Object.fromEntries(
