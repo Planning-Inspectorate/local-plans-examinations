@@ -78,4 +78,6 @@ It:
 
 Open `<run ID>/html/index.html` in the `performance-results` artifact for the full load period, including ramp-up. Raw results, logs, workload settings, case references and a pass/fail summary are saved alongside it.
 
+When a page returns an error summary, its text is included in the failed assertion in `raw.jtl` and the HTML report. Full response bodies, request headers and session cookies are not saved in the results.
+
 Each operation needs at least 20 samples on Test. The starting p95 limits are **2 seconds for reads and 3 seconds for saves**; these are provisional, not agreed service targets.
