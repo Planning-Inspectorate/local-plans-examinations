@@ -11,7 +11,9 @@ export class AssignedToMePage extends BasePage {
 
 	verifyLoaded() {
 		super.verifyLoaded();
-		this.pageHeading.invoke('text').should('match', /^Assigned to .+ \(\d+\)$/);
+		this.pageHeading.should((heading) => {
+			expect(heading.text().trim()).to.match(/^Assigned to .+\(\d+\)$/);
+		});
 	}
 
 	openCase(reference: string) {
