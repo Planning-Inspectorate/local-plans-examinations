@@ -704,6 +704,43 @@ describe('PortalService', () => {
 			assert.strictEqual(plans[0].submittedDates.G3, '1 October 2026');
 		});
 
+		it('maps gateway3SubmissionCount from the number of Gateway 3 submission rows', async () => {
+			const service = buildService([
+				buildCase({
+					gateway3Info: {
+						expectedDate: new Date('2026-08-01T12:00:00.000Z'),
+						actualDate: new Date('2026-07-20T12:00:00.000Z'),
+						frontOfficeStatus: GATEWAY_3_STATUS.UNDER_REVIEW,
+						submissions: [
+							{
+								decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED,
+								completionDate: new Date('2026-06-25T12:00:00.000Z'),
+								submittedDate: null
+							},
+							{
+								decision: null,
+								completionDate: null,
+								submittedDate: new Date('2026-07-20T12:00:00.000Z')
+							}
+						]
+					}
+				})
+			]);
+
+			const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plan.gateway3SubmissionCount, 2);
+			assert.strictEqual(plan.status, STATUS.UnderReview);
+		});
+
+		it('maps gateway3SubmissionCount to 0 when there is no Gateway 3 info', async () => {
+			const service = buildService([buildCase({ gateway3Info: null })]);
+
+			const [plan] = await PortalService.prototype.getPlans.call(service, 'user@example.com');
+
+			assert.strictEqual(plan.gateway3SubmissionCount, 0);
+		});
+
 		it('uses the latest Gateway 3 resubmission date instead of the original submission date', async () => {
 			const service = buildService([
 				buildCase({

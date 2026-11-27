@@ -21,10 +21,20 @@ export class Gateway3PreviousSubmissionPage extends Gateway3ResubmissionPage {
 		cy.visit(this.pathFor(planReference, submissionNumber));
 	}
 
-	verifyLoaded(submissionNumber?: string) {
+	verifyNoEditingControls() {
+		cy.getByData('add-documents').should('not.exist');
+		this.submitButton.should('not.exist');
+		this.saveAndComeBackLink.should('not.exist');
+	}
+
+	verifyLoaded(submissionNumber?: string, status = 'Resubmission required') {
 		this.verifyPath();
 		this.verifyHeading(submissionNumber ? `Gateway 3; submission ${submissionNumber}` : 'Gateway 3; submission');
-		this.verifyResubmissionTag();
+		if (status === 'Resubmission required') {
+			this.verifyResubmissionTag();
+		} else {
+			cy.getByData('status-tag').should('be.visible').and('have.text', status);
+		}
 	}
 
 	verifySubmissionCopy(date: string, time: string, submitter: string) {

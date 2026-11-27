@@ -13,10 +13,18 @@ import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DocumentUtil } from '@pins/local-plans-lib/util/documents.ts';
 import { sortGateway3Submissions, type Gateway3SubmissionSummary } from '#util/gateway-3-submission.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+type SubmissionRow = {
+	id?: string;
+	decision: string | null;
+	completionDate: Date | null;
+	submittedDate: Date | null;
+};
 
 type ResubmissionSession = Request['session'] &
 	FileUploaderSession & {
@@ -33,6 +41,7 @@ type ResubmissionRequest = Request & {
 // ---------------------------------------------------------------------------
 
 const RESUBMISSION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/resubmission.njk';
+const SUBMITTED_RESUBMISSION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/resubmission-submitted.njk';
 const PREVIOUS_SUBMISSION_VIEW_PATH = 'views/manage-local-plans/gateway-3-resubmission/previous-submission.njk';
 const UPLOAD_VIEW_PATH = 'forms/custom-components/file-uploader/index.njk';
 
@@ -168,6 +177,17 @@ function formatDisplayDate(date: Date | null | undefined) {
 	});
 }
 
+function formatShortDisplayDate(date: Date | null | undefined) {
+	if (!date) {
+		return undefined;
+	}
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric'
+	});
+}
+
 function formatDisplayTime(date: Date | null | undefined) {
 	if (!date) {
 		return undefined;
@@ -218,6 +238,85 @@ function getSubmissionNumber(req: Request): number {
 function getResubmissionDocumentSetFolderName(req: Request): string {
 	const submissionNumber = getSubmissionNumber(req);
 	return `gateway-3-document-${submissionNumber}`;
+}
+
+/** Sorted Gateway 3 submissions for the loaded case (placeholder row, if any, is last). */
+function getSubmissions(req: Request): SubmissionRow[] {
+	const request = req as ResubmissionRequest;
+	const gateway3Info = request.currentCase?.gateway3Info as Record<string, unknown> | undefined;
+	return (gateway3Info?.submissions ?? []) as SubmissionRow[];
+}
+
+function isSubmitted(submission: SubmissionRow | undefined): boolean {
+	return Boolean(submission?.submittedDate || submission?.completionDate);
+}
+
+function hasDecision(submission: SubmissionRow | undefined): boolean {
+	return Boolean(submission?.completionDate && submission.decision);
+}
+
+/**
+ * True while the LPA can still edit and submit a resubmission.
+ * The BO may pre-create an empty submission after issuing a resubmission decision.
+ * Allow access when the latest completed (or only) submission has the resubmission decision
+ * AND the LPA has not already submitted (submittedDate is still null).
+ */
+function isResubmissionOpen(submissions: SubmissionRow[]): boolean {
+	const latestSubmission = submissions.at(-1);
+	return (
+		latestSubmission?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED ||
+		(submissions.length > 1 &&
+			!latestSubmission?.completionDate &&
+			!latestSubmission?.submittedDate &&
+			!latestSubmission?.decision &&
+			submissions.at(-2)?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED)
+	);
+}
+
+/** True once a resubmission (submission 2+) has been sent: under review or complete. */
+function hasSubmittedResubmission(submissions: SubmissionRow[]): boolean {
+	return submissions.length > 1 && isSubmitted(submissions.at(-1)) && !isResubmissionOpen(submissions);
+}
+
+function isGateway3Complete(submissions: SubmissionRow[]): boolean {
+	const latest = submissions.at(-1);
+	return Boolean(latest?.completionDate && latest.decision === GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION);
+}
+
+function getGateway3StatusTag(submissions: SubmissionRow[]) {
+	if (isResubmissionOpen(submissions)) {
+		return StatusTag[STATUS.ResubmissionRequired];
+	}
+	if (isGateway3Complete(submissions)) {
+		return StatusTag[STATUS.Completed];
+	}
+	return StatusTag[STATUS.UnderReview];
+}
+
+/** All documents in the `g3-document-{N}` set (BO report and LPA uploads share this set). */
+function getGateway3SetDocuments(documents: CaseDocument[], submissionNumber: number): CaseDocument[] {
+	const setId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
+	return setId ? documents.filter((d) => d.documentSetId === setId) : [];
+}
+
+/**
+ * BO report for submission N: the active documents in set N.
+ * Only valid once submission N has a decision — before that the active
+ * documents in the set are the LPA's own uploads.
+ */
+function getReportDocuments(documents: CaseDocument[], submissionNumber: number): CaseDocument[] {
+	return getGateway3SetDocuments(documents, submissionNumber).filter((d) => !d.isDeleted);
+}
+
+/**
+ * LPA uploads for resubmission N (N >= 2). Saving the BO report into the set
+ * soft-deletes the LPA uploads, so once any soft-deleted documents exist they
+ * are the LPA files; until then every document in the set is an LPA upload.
+ */
+function getLpaResubmissionDocuments(documents: CaseDocument[], submissionNumber: number): CaseDocument[] {
+	const allDocs = getGateway3SetDocuments(documents, submissionNumber);
+	const softDeletedDocs = allDocs.filter((d) => d.isDeleted);
+	return softDeletedDocs.length > 0 ? softDeletedDocs : allDocs;
 }
 
 // ---------------------------------------------------------------------------
@@ -283,34 +382,125 @@ export function buildLoadResubmissionCase(service: PortalService): RequestHandle
 
 export function buildGuardResubmissionPage(): RequestHandler {
 	return (req, res, next) => {
-		const request = req as ResubmissionRequest;
-		const currentCase = request.currentCase as Record<string, unknown> | undefined;
-		const gateway3Info = currentCase?.gateway3Info as Record<string, unknown> | undefined;
-		const submissions = (gateway3Info?.submissions ?? []) as {
-			decision: string | null;
-			completionDate: Date | null;
-			submittedDate: Date | null;
-		}[];
-		const latestSubmission = submissions.at(-1);
-
-		// The BO may pre-create an empty submission after issuing a resubmission decision.
-		// Allow access when the latest completed (or only) submission has the resubmission decision
-		// AND the LPA has not already submitted (submittedDate is still null).
-		const hasResubmissionDecision =
-			latestSubmission?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED ||
-			(submissions.length > 1 &&
-				!latestSubmission?.completionDate &&
-				!latestSubmission?.submittedDate &&
-				!latestSubmission?.decision &&
-				submissions.at(-2)?.decision === GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED);
-
-		if (hasResubmissionDecision) {
+		if (isResubmissionOpen(getSubmissions(req))) {
 			return next();
 		}
 
 		const planReference = getRoutePlanReference(req);
 		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
 		return res.redirect(`/manage-local-plans/${encodedPlanReference}`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// Guard: previous submission detail pages are viewable whenever at least one
+// submission has been sent (resubmission required, under review or complete)
+// ---------------------------------------------------------------------------
+
+export function buildGuardSubmittedSubmission(): RequestHandler {
+	return (req, res, next) => {
+		const submissions = getSubmissions(req);
+		if (isResubmissionOpen(submissions) || submissions.some((sub) => isSubmitted(sub) || sub.decision)) {
+			return next();
+		}
+
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET landing: editable resubmission page while open, read-only view once
+// the resubmission has been sent (under review / complete)
+// ---------------------------------------------------------------------------
+
+export function buildResubmissionLanding(
+	resubmissionPage: RequestHandler,
+	submittedResubmissionPage: RequestHandler
+): RequestHandler {
+	return (req, res, next) => {
+		const submissions = getSubmissions(req);
+
+		if (isResubmissionOpen(submissions)) {
+			return resubmissionPage(req, res, next);
+		}
+
+		if (hasSubmittedResubmission(submissions)) {
+			return submittedResubmissionPage(req, res, next);
+		}
+
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		return res.redirect(`/manage-local-plans/${encodedPlanReference}`);
+	};
+}
+
+// ---------------------------------------------------------------------------
+// GET submitted resubmission page (Gateway 3 under review / complete)
+// ---------------------------------------------------------------------------
+
+export function buildGetSubmittedResubmissionPage(): RequestHandler {
+	return (req, res) => {
+		const request = req as ResubmissionRequest;
+		const planReference = getRoutePlanReference(req);
+		const encodedPlanReference = planReference ? encodeURIComponent(planReference) : '';
+		const baseUrl = `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission`;
+		const currentCase = request.currentCase as Record<string, unknown>;
+		const submissions = getSubmissions(req);
+		const documents = (currentCase?.documents ?? []) as CaseDocument[];
+
+		const currentSubmissionNumber = submissions.length;
+		const currentSubmission = submissions.at(-1);
+		const currentSubmittedDate = currentSubmission?.submittedDate ?? currentSubmission?.completionDate;
+
+		// Reports issued by the BO, newest first. Only submissions with a decision
+		// have a report — the current set holds the LPA uploads while under review.
+		const reports = submissions
+			.flatMap((submission, index) => {
+				const submissionNumber = index + 1;
+				if (!hasDecision(submission)) {
+					return [];
+				}
+				const reportDocs = getReportDocuments(documents, submissionNumber);
+				if (reportDocs.length === 0) {
+					return [];
+				}
+				return [
+					{
+						submissionNumber,
+						files: reportDocs.map((doc) => buildDocumentFileView(doc, encodedPlanReference)),
+						issuedDate: formatShortDisplayDate(reportDocs[0].latestDocumentVersion?.dateCreated)
+					}
+				];
+			})
+			.reverse();
+
+		// Every submission before the current one, newest first
+		const previousSubmissions = submissions
+			.slice(0, -1)
+			.map((submission, index) => ({
+				submissionNumber: index + 1,
+				submittedDate: formatShortDisplayDate(submission.submittedDate ?? submission.completionDate),
+				url: `${baseUrl}/submission/${index + 1}`
+			}))
+			.reverse();
+
+		const newDocuments = getLpaResubmissionDocuments(documents, currentSubmissionNumber).map((doc) =>
+			buildDocumentFileView(doc, encodedPlanReference)
+		);
+
+		return res.render(SUBMITTED_RESUBMISSION_VIEW_PATH, {
+			pageCaption: currentCase?.planTitle,
+			submissionNumber: currentSubmissionNumber,
+			statusTag: getGateway3StatusTag(submissions),
+			reports,
+			previousSubmissions,
+			currentSubmissionDate: formatDisplayDate(currentSubmittedDate),
+			submitter: currentCase?.email,
+			newDocuments,
+			backLinkUrl: `/manage-local-plans/${encodedPlanReference}`
+		});
 	};
 }
 
@@ -593,9 +783,11 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 		const submissionTime = formatDisplayTime(effectiveDate);
 
 		// The BO stores the report for submission N in G3_DOCUMENT_N (gateway-3-document-N in manage)
+		// Only once the submission has a decision — before that the active docs
+		// in the set are the LPA's own uploads, not a report.
 		const reportSubmissionNumber = submissionNumber;
-		const reportSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
-		const reportDocs = reportSetId ? documents.filter((d) => d.documentSetId === reportSetId && !d.isDeleted) : [];
+		const hasReport = hasDecision(submission as SubmissionRow);
+		const reportDocs = hasReport ? getReportDocuments(documents, submissionNumber) : [];
 		const reportDocuments = reportDocs.map((doc) => ({
 			fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
 			downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`,
@@ -634,25 +826,17 @@ export function buildGetPreviousSubmissionPage(): RequestHandler {
 			];
 		}
 
-		// For submission 2+: the LPA's uploads live in G3_DOCUMENT_N (separate
-		// from the report set). When the BO syncs its own report into this set
-		// the LPA docs get soft-deleted; if the BO hasn't synced we fall back
-		// to showing all (non-deleted) docs which are the LPA uploads.
-		let resubmissionDocs: { fileName: string; downloadUrl: string }[] = [];
-		if (!isInitialSubmission) {
-			const resubSetId = DOCUMENT_SET_ID[`G3_DOCUMENT_${submissionNumber}`];
-			const allResubDocs = resubSetId ? documents.filter((d) => d.documentSetId === resubSetId) : [];
-			const softDeletedDocs = allResubDocs.filter((d) => d.isDeleted);
-			const lpaDocs = softDeletedDocs.length > 0 ? softDeletedDocs : allResubDocs;
-			resubmissionDocs = lpaDocs.map((doc) => ({
-				fileName: doc.latestDocumentVersion?.originalFilename ?? doc.latestDocumentVersion?.fileName ?? doc.name,
-				downloadUrl: `/manage-local-plans/${encodedPlanReference}/gateway-3-resubmission/download-document/${doc.guid}`
-			}));
-		}
+		// For submission 2+: the LPA's uploads share G3_DOCUMENT_N with the BO report.
+		const resubmissionDocs = isInitialSubmission
+			? []
+			: getLpaResubmissionDocuments(documents, submissionNumber).map((doc) =>
+					buildDocumentFileView(doc, encodedPlanReference)
+				);
 
 		return res.render(PREVIOUS_SUBMISSION_VIEW_PATH, {
 			pageCaption: currentCase?.planTitle,
 			submissionNumber,
+			statusTag: getGateway3StatusTag(submissions as SubmissionRow[]),
 			reportSubmissionNumber,
 			isInitialSubmission,
 			reportDocuments,
@@ -751,6 +935,9 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 	const getDeclarationPage = buildGetDeclarationPage();
 	const postDeclarationPage = asyncHandler(buildPostDeclarationPage(service));
 	const getSubmissionCompletePage = buildGetSubmissionCompletePage();
+	const getSubmittedResubmissionPage = buildGetSubmittedResubmissionPage();
+	const getResubmissionLanding = buildResubmissionLanding(getResubmissionPage, getSubmittedResubmissionPage);
+	const guardSubmittedSubmission = buildGuardSubmittedSubmission();
 
 	const fileUploaderStorage = () => service.createFileStorage('gateway3-resubmission');
 
@@ -841,7 +1028,10 @@ export function buildGateway3ResubmissionMiddleware(service: PortalService) {
 	return {
 		loadCase,
 		guardResubmission,
+		guardSubmittedSubmission,
+		getResubmissionLanding,
 		getResubmissionPage,
+		getSubmittedResubmissionPage,
 		postResubmission,
 		getUploadPage,
 		postUploadPage,

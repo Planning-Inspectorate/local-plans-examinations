@@ -9,7 +9,8 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 	const {
 		loadCase,
 		guardResubmission,
-		getResubmissionPage,
+		guardSubmittedSubmission,
+		getResubmissionLanding,
 		postResubmission,
 		getUploadPage,
 		postUploadPage,
@@ -23,8 +24,7 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 		deleteDocument
 	} = buildGateway3ResubmissionMiddleware(service);
 
-	// Resubmission landing page
-	router.get('/:planReference/gateway-3-resubmission', loadCase, guardResubmission, getResubmissionPage);
+	router.get('/:planReference/gateway-3-resubmission', loadCase, getResubmissionLanding);
 
 	// Submit resubmission
 	router.post('/:planReference/gateway-3-resubmission', loadCase, guardResubmission, postResubmission);
@@ -40,7 +40,7 @@ export function gateway3ResubmissionRoutes(service: PortalService): IRouter {
 	router.get(
 		'/:planReference/gateway-3-resubmission/submission/:submissionNumber',
 		loadCase,
-		guardResubmission,
+		guardSubmittedSubmission,
 		getPreviousSubmissionPage
 	);
 

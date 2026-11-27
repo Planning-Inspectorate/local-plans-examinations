@@ -13,10 +13,14 @@ import {
 	buildGetSubmissionCompletePage,
 	buildLoadResubmissionCase,
 	buildGateway3ResubmissionMiddleware,
+	buildGuardSubmittedSubmission,
+	buildResubmissionLanding,
+	buildGetSubmittedResubmissionPage,
 	handleMulterFileSizeError
 } from './controller.ts';
 import { GATEWAY_3_DECISION_ID } from '@pins/local-plans-database/src/seed/static-data/ids/index.ts';
 import { DOCUMENT_SET_ID } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
+import { STATUS, StatusTag } from '../../../types.ts';
 
 function buildMockResponse() {
 	const calls: { method: string; args: unknown[] }[] = [];
@@ -729,7 +733,10 @@ describe('buildGateway3ResubmissionMiddleware', () => {
 
 		assert.ok(middleware.loadCase, 'loadCase');
 		assert.ok(middleware.guardResubmission, 'guardResubmission');
+		assert.ok(middleware.guardSubmittedSubmission, 'guardSubmittedSubmission');
+		assert.ok(middleware.getResubmissionLanding, 'getResubmissionLanding');
 		assert.ok(middleware.getResubmissionPage, 'getResubmissionPage');
+		assert.ok(middleware.getSubmittedResubmissionPage, 'getSubmittedResubmissionPage');
 		assert.ok(middleware.postResubmission, 'postResubmission');
 		assert.ok(middleware.getUploadPage, 'getUploadPage');
 		assert.ok(middleware.postUploadPage, 'postUploadPage');
@@ -1003,5 +1010,449 @@ describe('buildGetSubmissionCompletePage', () => {
 		const [view, data] = calls[0].args as [string, Record<string, unknown>];
 		assert.ok(view.includes('submission-complete.njk'));
 		assert.strictEqual(data.planOverviewUrl, '/manage-local-plans/PLAN-001');
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Gateway 3 under review / complete (after a resubmission)
+// ---------------------------------------------------------------------------
+
+type TestSubmission = {
+	submittedDate: Date | null;
+	completionDate: Date | null;
+	decision: string | null;
+};
+
+function buildTestDocument(
+	guid: string,
+	documentSetId: string,
+	fileName: string,
+	isDeleted: boolean,
+	dateCreated: Date
+) {
+	return {
+		guid,
+		name: `case-1/${documentSetId}/${guid}-${fileName}`,
+		documentSetId,
+		isDeleted,
+		latestDocumentVersion: { originalFilename: fileName, fileName, dateCreated }
+	};
+}
+
+/** Submissions 1 and 2 needed resubmission; submission 3 has been sent and is under review. */
+function buildUnderReviewSubmissions(): TestSubmission[] {
+	return [
+		{
+			submittedDate: new Date('2026-06-20T12:00:00Z'),
+			completionDate: new Date('2026-06-25T12:00:00Z'),
+			decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+		},
+		{
+			submittedDate: new Date('2026-07-01T12:00:00Z'),
+			completionDate: new Date('2026-07-13T12:00:00Z'),
+			decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+		},
+		{ submittedDate: new Date('2026-07-20T12:00:00Z'), completionDate: null, decision: null }
+	];
+}
+
+function buildUnderReviewDocuments() {
+	return [
+		buildTestDocument(
+			'report-1',
+			DOCUMENT_SET_ID.G3_DOCUMENT_1,
+			'report-1.pdf',
+			false,
+			new Date('2026-06-25T12:00:00Z')
+		),
+		// LPA uploads for submission 2, soft-deleted when the BO saved its report into the set
+		buildTestDocument('lpa-2a', DOCUMENT_SET_ID.G3_DOCUMENT_2, 'lpa-2a.pdf', true, new Date('2026-07-01T12:00:00Z')),
+		buildTestDocument('lpa-2b', DOCUMENT_SET_ID.G3_DOCUMENT_2, 'lpa-2b.pdf', true, new Date('2026-07-01T12:00:00Z')),
+		buildTestDocument(
+			'report-2',
+			DOCUMENT_SET_ID.G3_DOCUMENT_2,
+			'report-2.pdf',
+			false,
+			new Date('2026-07-13T12:00:00Z')
+		),
+		// LPA uploads for submission 3 (no BO report yet, so still active)
+		buildTestDocument(
+			'new-1',
+			DOCUMENT_SET_ID.G3_DOCUMENT_3,
+			'new-document-1.pdf',
+			false,
+			new Date('2026-07-20T12:00:00Z')
+		),
+		buildTestDocument(
+			'new-2',
+			DOCUMENT_SET_ID.G3_DOCUMENT_3,
+			'new-document-2.pdf',
+			false,
+			new Date('2026-07-20T12:00:00Z')
+		)
+	];
+}
+
+/** Same history, but the BO issued "proceed to examination" on submission 3. */
+function buildCompleteSubmissions(): TestSubmission[] {
+	const submissions = buildUnderReviewSubmissions();
+	submissions[2] = {
+		...submissions[2],
+		completionDate: new Date('2026-08-03T12:00:00Z'),
+		decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
+	};
+	return submissions;
+}
+
+function buildCompleteDocuments() {
+	return [
+		...buildUnderReviewDocuments().map((doc) =>
+			doc.documentSetId === DOCUMENT_SET_ID.G3_DOCUMENT_3 ? { ...doc, isDeleted: true } : doc
+		),
+		buildTestDocument(
+			'report-3',
+			DOCUMENT_SET_ID.G3_DOCUMENT_3,
+			'report-3.pdf',
+			false,
+			new Date('2026-08-03T12:00:00Z')
+		)
+	];
+}
+
+function buildResubmissionRequest(
+	submissions: unknown[],
+	documents: unknown[] = [],
+	params: Record<string, string> = {}
+) {
+	return {
+		params: { planReference: 'PLAN-001', ...params },
+		currentCase: {
+			planTitle: 'East Borough Local Plan',
+			email: 'lpa@example.com',
+			gateway3Info: { submissions },
+			documents
+		},
+		session: { fileUploader: {} }
+	} as unknown as Request;
+}
+
+describe('buildGuardSubmittedSubmission', () => {
+	function runGuard(submissions: unknown[]) {
+		const handler = buildGuardSubmittedSubmission();
+		const { res, calls } = buildMockResponse();
+		const next = mock.fn();
+		handler(buildResubmissionRequest(submissions), res, next as unknown as NextFunction);
+		return { calls, next };
+	}
+
+	it('calls next while the resubmission is open', () => {
+		const { next, calls } = runGuard([
+			{
+				submittedDate: null,
+				completionDate: new Date('2026-06-25T12:00:00Z'),
+				decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+			},
+			{ submittedDate: null, completionDate: null, decision: null }
+		]);
+		assert.strictEqual(next.mock.callCount(), 1);
+		assert.strictEqual(calls.length, 0);
+	});
+
+	it('calls next when the resubmission is under review', () => {
+		const { next } = runGuard(buildUnderReviewSubmissions());
+		assert.strictEqual(next.mock.callCount(), 1);
+	});
+
+	it('calls next when gateway 3 is complete', () => {
+		const { next } = runGuard(buildCompleteSubmissions());
+		assert.strictEqual(next.mock.callCount(), 1);
+	});
+
+	it('redirects to the plan page when there are no submissions', () => {
+		const { next, calls } = runGuard([]);
+		assert.strictEqual(next.mock.callCount(), 0);
+		assert.strictEqual(calls[0].method, 'redirect');
+		assert.strictEqual(calls[0].args[0], '/manage-local-plans/PLAN-001');
+	});
+
+	it('redirects to the plan page when the only submission has not been sent', () => {
+		const { next, calls } = runGuard([{ submittedDate: null, completionDate: null, decision: null }]);
+		assert.strictEqual(next.mock.callCount(), 0);
+		assert.strictEqual(calls[0].method, 'redirect');
+	});
+});
+
+describe('buildResubmissionLanding', () => {
+	function runLanding(submissions: unknown[]) {
+		const resubmissionPage = mock.fn();
+		const submittedResubmissionPage = mock.fn();
+		const handler = buildResubmissionLanding(
+			resubmissionPage as unknown as Parameters<typeof buildResubmissionLanding>[0],
+			submittedResubmissionPage as unknown as Parameters<typeof buildResubmissionLanding>[1]
+		);
+		const { res, calls } = buildMockResponse();
+		handler(buildResubmissionRequest(submissions), res, () => {});
+		return { resubmissionPage, submittedResubmissionPage, calls };
+	}
+
+	it('shows the editable resubmission page when the latest submission needs resubmission', () => {
+		const { resubmissionPage, submittedResubmissionPage } = runLanding([
+			{
+				submittedDate: null,
+				completionDate: new Date('2026-06-25T12:00:00Z'),
+				decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+			}
+		]);
+		assert.strictEqual(resubmissionPage.mock.callCount(), 1);
+		assert.strictEqual(submittedResubmissionPage.mock.callCount(), 0);
+	});
+
+	it('shows the editable resubmission page for the BO-created placeholder submission', () => {
+		const { resubmissionPage, submittedResubmissionPage } = runLanding([
+			{
+				submittedDate: null,
+				completionDate: new Date('2026-06-25T12:00:00Z'),
+				decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+			},
+			{ submittedDate: null, completionDate: null, decision: null }
+		]);
+		assert.strictEqual(resubmissionPage.mock.callCount(), 1);
+		assert.strictEqual(submittedResubmissionPage.mock.callCount(), 0);
+	});
+
+	it('shows the read-only page once the resubmission is under review', () => {
+		const { resubmissionPage, submittedResubmissionPage } = runLanding(buildUnderReviewSubmissions());
+		assert.strictEqual(resubmissionPage.mock.callCount(), 0);
+		assert.strictEqual(submittedResubmissionPage.mock.callCount(), 1);
+	});
+
+	it('shows the read-only page once gateway 3 is complete', () => {
+		const { resubmissionPage, submittedResubmissionPage } = runLanding(buildCompleteSubmissions());
+		assert.strictEqual(resubmissionPage.mock.callCount(), 0);
+		assert.strictEqual(submittedResubmissionPage.mock.callCount(), 1);
+	});
+
+	it('redirects to the plan page when only the initial submission exists', () => {
+		const { resubmissionPage, submittedResubmissionPage, calls } = runLanding([
+			{
+				submittedDate: null,
+				completionDate: new Date('2026-06-25T12:00:00Z'),
+				decision: GATEWAY_3_DECISION_ID.PROCEED_TO_EXAMINATION
+			}
+		]);
+		assert.strictEqual(resubmissionPage.mock.callCount(), 0);
+		assert.strictEqual(submittedResubmissionPage.mock.callCount(), 0);
+		assert.strictEqual(calls[0].method, 'redirect');
+		assert.strictEqual(calls[0].args[0], '/manage-local-plans/PLAN-001');
+	});
+
+	it('redirects to the plan page when there are no submissions', () => {
+		const { calls } = runLanding([]);
+		assert.strictEqual(calls[0].method, 'redirect');
+		assert.strictEqual(calls[0].args[0], '/manage-local-plans/PLAN-001');
+	});
+});
+
+describe('buildGetSubmittedResubmissionPage', () => {
+	type ReportView = {
+		submissionNumber: number;
+		issuedDate: string;
+		files: { fileName: string; downloadUrl: string }[];
+	};
+	type PreviousSubmissionView = { submissionNumber: number; submittedDate: string; url: string };
+
+	function renderSubmittedPage(submissions: unknown[], documents: unknown[], params: Record<string, string> = {}) {
+		const handler = buildGetSubmittedResubmissionPage();
+		const { res, calls } = buildMockResponse();
+		handler(buildResubmissionRequest(submissions, documents, params), res, () => {});
+		assert.strictEqual(calls[0].method, 'render');
+		return calls[0].args as [string, Record<string, unknown>];
+	}
+
+	it('renders the submitted resubmission view with heading, caption and under review tag', () => {
+		const [view, data] = renderSubmittedPage(buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+
+		assert.ok(view.endsWith('gateway-3-resubmission/resubmission-submitted.njk'));
+		assert.strictEqual(data.submissionNumber, 3);
+		assert.strictEqual(data.pageCaption, 'East Borough Local Plan');
+		assert.deepStrictEqual(data.statusTag, StatusTag[STATUS.UnderReview]);
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN-001');
+	});
+
+	it('lists BO reports newest first with a short issued date', () => {
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+		const reports = data.reports as ReportView[];
+
+		assert.deepStrictEqual(
+			reports.map((report) => report.submissionNumber),
+			[2, 1]
+		);
+		assert.strictEqual(reports[0].issuedDate, '13 Jul 2026');
+		assert.deepStrictEqual(reports[0].files, [
+			{
+				fileName: 'report-2.pdf',
+				downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/report-2'
+			}
+		]);
+		assert.strictEqual(reports[1].issuedDate, '25 Jun 2026');
+	});
+
+	it('does not treat the LPA uploads of the submission under review as a report', () => {
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+		const reports = data.reports as ReportView[];
+
+		assert.ok(!reports.some((report) => report.submissionNumber === 3));
+		const reportFileNames = reports.flatMap((report) => report.files.map((file) => file.fileName));
+		assert.ok(!reportFileNames.includes('new-document-1.pdf'));
+	});
+
+	it('omits a report row when a decided submission has no report documents', () => {
+		const documents = buildUnderReviewDocuments().filter((doc) => doc.guid !== 'report-1');
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), documents);
+
+		assert.deepStrictEqual(
+			(data.reports as ReportView[]).map((report) => report.submissionNumber),
+			[2]
+		);
+	});
+
+	it('passes every file when a report has more than one document', () => {
+		const documents = [
+			...buildUnderReviewDocuments(),
+			buildTestDocument(
+				'report-1b',
+				DOCUMENT_SET_ID.G3_DOCUMENT_1,
+				'report-1-annex.pdf',
+				false,
+				new Date('2026-06-25T12:00:00Z')
+			)
+		];
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), documents);
+		const submission1Report = (data.reports as ReportView[]).find((report) => report.submissionNumber === 1);
+
+		assert.deepStrictEqual(
+			submission1Report?.files.map((file) => file.fileName),
+			['report-1.pdf', 'report-1-annex.pdf']
+		);
+	});
+
+	it('lists previous submissions newest first with submitted dates and detail links', () => {
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+
+		assert.deepStrictEqual(data.previousSubmissions as PreviousSubmissionView[], [
+			{
+				submissionNumber: 2,
+				submittedDate: '1 Jul 2026',
+				url: '/manage-local-plans/PLAN-001/gateway-3-resubmission/submission/2'
+			},
+			{
+				submissionNumber: 1,
+				submittedDate: '20 Jun 2026',
+				url: '/manage-local-plans/PLAN-001/gateway-3-resubmission/submission/1'
+			}
+		]);
+	});
+
+	it('falls back to the completion date when a previous submission has no submitted date', () => {
+		const submissions = buildUnderReviewSubmissions();
+		submissions[0] = { ...submissions[0], submittedDate: null };
+		const [, data] = renderSubmittedPage(submissions, buildUnderReviewDocuments());
+		const previousSubmissions = data.previousSubmissions as PreviousSubmissionView[];
+
+		assert.strictEqual(previousSubmissions[1].submittedDate, '25 Jun 2026');
+	});
+
+	it('shows the latest submission date, submitter and its new or updated documents', () => {
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+
+		assert.strictEqual(data.currentSubmissionDate, '20 July 2026');
+		assert.strictEqual(data.submitter, 'lpa@example.com');
+		assert.deepStrictEqual(data.newDocuments, [
+			{
+				fileName: 'new-document-1.pdf',
+				downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/new-1'
+			},
+			{
+				fileName: 'new-document-2.pdf',
+				downloadUrl: '/manage-local-plans/PLAN-001/gateway-3-resubmission/download-document/new-2'
+			}
+		]);
+	});
+
+	it('renders the completed tag and every report once gateway 3 is complete', () => {
+		const [, data] = renderSubmittedPage(buildCompleteSubmissions(), buildCompleteDocuments());
+		const reports = data.reports as ReportView[];
+
+		assert.deepStrictEqual(data.statusTag, StatusTag[STATUS.Completed]);
+		assert.deepStrictEqual(
+			reports.map((report) => report.submissionNumber),
+			[3, 2, 1]
+		);
+		assert.strictEqual(reports[0].issuedDate, '3 Aug 2026');
+		assert.deepStrictEqual(
+			(data.previousSubmissions as PreviousSubmissionView[]).map((submission) => submission.submissionNumber),
+			[2, 1]
+		);
+	});
+
+	it('keeps showing the soft-deleted LPA uploads (not the BO report) as new documents once complete', () => {
+		const [, data] = renderSubmittedPage(buildCompleteSubmissions(), buildCompleteDocuments());
+
+		assert.deepStrictEqual(
+			(data.newDocuments as { fileName: string }[]).map((doc) => doc.fileName),
+			['new-document-1.pdf', 'new-document-2.pdf']
+		);
+	});
+
+	it('encodes the plan reference in links', () => {
+		const [, data] = renderSubmittedPage(buildUnderReviewSubmissions(), buildUnderReviewDocuments(), {
+			planReference: 'PLAN 001'
+		});
+		const previousSubmissions = data.previousSubmissions as PreviousSubmissionView[];
+
+		assert.strictEqual(data.backLinkUrl, '/manage-local-plans/PLAN%20001');
+		assert.ok(previousSubmissions[0].url.startsWith('/manage-local-plans/PLAN%20001/'));
+	});
+});
+
+describe('buildGetPreviousSubmissionPage - status and report rules', () => {
+	function renderPreviousPage(submissionNumber: string, submissions: unknown[], documents: unknown[] = []) {
+		const handler = buildGetPreviousSubmissionPage();
+		const { res, calls } = buildMockResponse();
+		handler(buildResubmissionRequest(submissions, documents, { submissionNumber }), res, () => {});
+		assert.strictEqual(calls[0].method, 'render');
+		return calls[0].args[1] as Record<string, unknown>;
+	}
+
+	it('passes the resubmission required tag while the resubmission is open', () => {
+		const data = renderPreviousPage('1', [
+			{
+				submittedDate: null,
+				completionDate: new Date('2026-06-25T12:00:00Z'),
+				decision: GATEWAY_3_DECISION_ID.RESUBMISSION_REQUIRED
+			},
+			{ submittedDate: null, completionDate: null, decision: null }
+		]);
+		assert.deepStrictEqual(data.statusTag, StatusTag[STATUS.ResubmissionRequired]);
+	});
+
+	it('passes the under review tag once the resubmission has been sent', () => {
+		const data = renderPreviousPage('1', buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+		assert.deepStrictEqual(data.statusTag, StatusTag[STATUS.UnderReview]);
+	});
+
+	it('passes the completed tag once gateway 3 is complete', () => {
+		const data = renderPreviousPage('2', buildCompleteSubmissions(), buildCompleteDocuments());
+		assert.deepStrictEqual(data.statusTag, StatusTag[STATUS.Completed]);
+	});
+
+	it('shows no report and lists the active LPA uploads for a submission still under review', () => {
+		const data = renderPreviousPage('3', buildUnderReviewSubmissions(), buildUnderReviewDocuments());
+
+		assert.deepStrictEqual(data.reportDocuments, []);
+		assert.deepStrictEqual(
+			(data.resubmissionDocuments as { fileName: string }[]).map((doc) => doc.fileName),
+			['new-document-1.pdf', 'new-document-2.pdf']
+		);
 	});
 });

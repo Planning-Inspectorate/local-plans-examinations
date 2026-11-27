@@ -235,6 +235,7 @@ function mapCaseToPlan(caseRecord: PortalCase): Plan | null {
 				}
 			: null,
 		gateway2ReportFiles: getGateway2ReportFiles(caseRecord),
+		gateway3SubmissionCount: caseRecord.gateway3Info?.submissions?.length ?? 0,
 		dates: {
 			G1: formatDisplayDate(gateway1Date) ?? 'Not set',
 			G2: formatDisplayDate(gateway2Date) ?? 'Not set',

@@ -622,6 +622,87 @@ describe('plan page', () => {
 		assert.ok(html.includes(expectedTag));
 	});
 
+	describe('Gateway 3 link after a resubmission', () => {
+		const gateway3Submission = '/manage-local-plans/PLAN-001/gateway-3-submission';
+		const gateway3Resubmission = '/manage-local-plans/PLAN-001/gateway-3-resubmission';
+		const dates = { G1: '7 May 2026', G2: '2 September 2026', G3: '1 October 2026', E: '1 November 2026' };
+
+		it('links to the resubmission page while a resubmission is under review', async () => {
+			const plan = {
+				refNum: 'PLAN-001',
+				stage: STAGE.Gateway3,
+				status: STATUS.UnderReview,
+				gateway3SubmissionCount: 2,
+				dates
+			};
+			const { data, html } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+			assert.strictEqual(data.hrefG3, gateway3Resubmission);
+			assert.strictEqual(data.currentApplicationLink, gateway3Resubmission);
+			assert.ok(html.includes(`href="${gateway3Resubmission}"`), 'expected Gateway 3 row to link to resubmission');
+		});
+
+		it('keeps linking to the initial submission page when there is only one submission', async () => {
+			const plan = {
+				refNum: 'PLAN-001',
+				stage: STAGE.Gateway3,
+				status: STATUS.UnderReview,
+				gateway3SubmissionCount: 1,
+				dates
+			};
+			const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+			assert.strictEqual(data.hrefG3, gateway3Submission);
+			assert.strictEqual(data.currentApplicationLink, gateway3Submission);
+		});
+
+		it('links to the resubmission page when resubmission is required', async () => {
+			const plan = {
+				refNum: 'PLAN-001',
+				stage: STAGE.Gateway3,
+				status: STATUS.ResubmissionRequired,
+				gateway3SubmissionCount: 2,
+				dates
+			};
+			const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+			assert.strictEqual(data.hrefG3, gateway3Resubmission);
+			assert.strictEqual(data.currentApplicationLink, gateway3Resubmission);
+		});
+
+		it('links completed Gateway 3 to the resubmission page in examination when it was resubmitted', async () => {
+			const plan = {
+				refNum: 'PLAN-001',
+				stage: STAGE.Examination,
+				status: STATUS.ReadyToStart,
+				examinationStatus: 'ready-to-start',
+				examinationStatusLabel: 'Ready to start',
+				gateway3SubmissionCount: 3,
+				dates
+			};
+			const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+			assert.strictEqual(data.tagG3, 'Completed');
+			assert.strictEqual(data.hrefG3, gateway3Resubmission);
+			assert.strictEqual(data.currentApplicationLink, '/manage-local-plans/PLAN-001/examination');
+		});
+
+		it('links completed Gateway 3 to the initial submission page in examination when it was not resubmitted', async () => {
+			const plan = {
+				refNum: 'PLAN-001',
+				stage: STAGE.Examination,
+				status: STATUS.ReadyToStart,
+				examinationStatus: 'ready-to-start',
+				examinationStatusLabel: 'Ready to start',
+				gateway3SubmissionCount: 1,
+				dates
+			};
+			const { data } = await renderPlan({ refNum: 'PLAN-001' }, plan);
+
+			assert.strictEqual(data.hrefG3, gateway3Submission);
+		});
+	});
+
 	describe('should render task tag correctly for case 2 (G1, G2 complete) if status != 0', () => {
 		const testCases = [
 			{ refNum: 'PLAN-002', status: STATUS.InProgress },
