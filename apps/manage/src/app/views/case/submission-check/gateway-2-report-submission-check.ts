@@ -30,6 +30,7 @@ export class Gateway2ReportSubmissionCheck extends SubmissionCheckWithDate {
 				uploadedFiles,
 				`/case/${caseReference}/download-case-document`,
 				`/case/${caseReference}/${journeyId}/${section}/${questions.gateway2Report.url}`,
+				undefined,
 				'Gateway 2 report'
 			)
 		];

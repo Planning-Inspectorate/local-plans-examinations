@@ -74,7 +74,7 @@ export abstract class SubmissionCheck {
 			const queryString = query ? `?${query}` : '';
 			const changeUrl = `${documentChangeBaseUrl}${queryString}`;
 			answersToReview.push({
-				name: ` ${label} ${documentCounter}`,
+				name: `${label ?? 'Document'} ${documentCounter}`,
 				value: fileUploadDownloadFormat(file, downloadUrl),
 				url: changeUrl
 			});

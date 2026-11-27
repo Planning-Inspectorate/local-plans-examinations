@@ -5,6 +5,7 @@ import { Gateway2DocumentSubmissionCheck } from './gateway-2-document-submission
 import { Gateway2WorkshopDocumentsSubmissionCheck } from './gateway-2-workshop-documents-submission-check.ts';
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
 import { ExaminationReportSubmissionCheck } from './examination-report-submission-check.ts';
+import { MiqsSubmissionCheck } from './miqs-submission-check.ts';
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { configureNunjucks } from '../../../nunjucks.ts';
@@ -117,7 +118,7 @@ describe('Gateway2DocumentSubmissionCheck', () => {
 		assert.deepEqual(data.answersToReview, [
 			{ name: 'Section', value: 'Covering letter', url: undefined },
 			{
-				name: 'Documents',
+				name: 'Covering letter documents',
 				value: 'Not provided',
 				url: '/case/PLAN-123456/gateway-2/documents/covering-letter'
 			}
@@ -176,12 +177,12 @@ describe('Test SignedSLASubmissionCheck', () => {
 						url: '/case/PLAN-12345/some-journey/some-section/sla-received-date'
 					},
 					{
-						name: 'Document 1',
+						name: 'Signed SLA document 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/signed-sla'
 					},
 					{
-						name: 'Document 2',
+						name: 'Signed SLA document 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/signed-sla'
 					}
@@ -228,12 +229,12 @@ describe('Test SignedSLASubmissionCheck', () => {
 						url: '/case/PLAN-12345/some-journey/some-section/sla-received-date'
 					},
 					{
-						name: 'Document 1',
+						name: 'Signed SLA document 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/signed-sla'
 					},
 					{
-						name: 'Document 2',
+						name: 'Signed SLA document 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/signed-sla'
 					}
@@ -280,12 +281,12 @@ describe('Test SignedSLASubmissionCheck', () => {
 						url: '/case/PLAN-12345/some-journey/some-section/sla-received-date'
 					},
 					{
-						name: 'Document 1',
+						name: 'Signed SLA document 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/signed-sla'
 					},
 					{
-						name: 'Document 2',
+						name: 'Signed SLA document 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/signed-sla'
 					}
@@ -324,7 +325,10 @@ describe('Test ExaminationReportSubmissionCheck', () => {
 			[
 				['Outcome', 'Sound with modifications'],
 				['Date', '1 January 2026'],
-				['Document 1', '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>']
+				[
+					'examination report 1',
+					'<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>'
+				]
 			]
 		);
 		assert.deepEqual(data.answersToReview[1], {
@@ -359,7 +363,10 @@ describe('Test ExaminationReportSubmissionCheck', () => {
 			[
 				['Outcome', 'Sound'],
 				['Date', '3 January 2026'],
-				['Document 1', '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>']
+				[
+					'examination report 1',
+					'<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>'
+				]
 			]
 		);
 		assert.equal(data.backLink, '/PLAN-12345/examination/outcome/examination-report?returnTo=check');
@@ -391,7 +398,10 @@ describe('Test ExaminationReportSubmissionCheck', () => {
 			[
 				['Outcome', 'Sound'],
 				['Date', today],
-				['Document 1', '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>']
+				[
+					'examination report 1',
+					'<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>'
+				]
 			]
 		);
 	});
@@ -415,7 +425,10 @@ describe('Test ExaminationReportSubmissionCheck', () => {
 			[
 				['Outcome', 'Sound'],
 				['Date', '1 January 2026'],
-				['Document 1', '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>']
+				[
+					'examination report 1',
+					'<a class="govuk-link" href="/case/PLAN-12345/download-case-document/someGuid">someFile.txt</a>'
+				]
 			]
 		);
 	});
@@ -460,12 +473,12 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 						url: undefined
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 2 report 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-report'
 					},
 					{
-						name: 'Document 2',
+						name: 'Gateway 2 report 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-report'
 					}
@@ -511,12 +524,12 @@ describe('Test Gateway2ReportSubmissionCheck', () => {
 						url: undefined
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 2 report 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-report'
 					},
 					{
-						name: 'Document 2',
+						name: 'Gateway 2 report 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-report'
 					}
@@ -572,12 +585,12 @@ describe('Test Gateway3SubmissionCheck', () => {
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-decision-1'
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 3 discussion document 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-document-1'
 					},
 					{
-						name: 'Document 2',
+						name: 'Gateway 3 discussion document 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-document-1'
 					}
@@ -630,12 +643,12 @@ describe('Test Gateway3SubmissionCheck', () => {
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-decision-1'
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 3 discussion document 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-document-1'
 					},
 					{
-						name: 'Document 2',
+						name: 'Gateway 3 discussion document 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-document-1'
 					}
@@ -688,12 +701,12 @@ describe('Test Gateway3SubmissionCheck', () => {
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-decision-1'
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 3 discussion document 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-document-1'
 					},
 					{
-						name: 'Document 2',
+						name: 'Gateway 3 discussion document 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-3-document-1'
 					}
@@ -797,12 +810,12 @@ describe('Test Gateway3SubmissionCheck', () => {
 							url: '/case/PLAN-12345/some-journey/some-section/gateway-3-decision'
 						},
 						{
-							name: 'Document 1',
+							name: 'Gateway 3 discussion document 1',
 							value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 							url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 						},
 						{
-							name: 'Document 2',
+							name: 'Gateway 3 discussion document 2',
 							value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 							url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 						}
@@ -853,12 +866,12 @@ describe('Test Gateway2WorkshopDocumentsSubmissionCheck', () => {
 						url: undefined
 					},
 					{
-						name: 'Document 1',
+						name: 'Workshop documents 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 					},
 					{
-						name: 'Document 2',
+						name: 'Workshop documents 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 					}
@@ -905,12 +918,12 @@ describe('Test Gateway2WorkshopDocumentsSubmissionCheck', () => {
 						url: undefined
 					},
 					{
-						name: 'Document 1',
+						name: 'Workshop documents 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 					},
 					{
-						name: 'Document 2',
+						name: 'Workshop documents 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 					}
@@ -960,12 +973,12 @@ describe('Test Gateway2DocumentSubmissionCheck', () => {
 						url: undefined
 					},
 					{
-						name: 'Document 1',
+						name: 'Workshop documents 1',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 					},
 					{
-						name: 'Document 2',
+						name: 'Workshop documents 2',
 						value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
 						url: '/case/PLAN-12345/some-journey/some-section/gateway-2-workshop-documents'
 					}
@@ -987,7 +1000,7 @@ describe('Test Gateway2DocumentSubmissionCheck', () => {
 			'/case/PLAN-12345/some-journey/some-section/my-question/check',
 			MockService as any,
 			[],
-			'Gateway 2 documents',
+			'Covering letter',
 			[]
 		);
 
@@ -1003,15 +1016,212 @@ describe('Test Gateway2DocumentSubmissionCheck', () => {
 			answersToReview: [
 				{
 					name: 'Section',
-					value: 'Gateway 2 documents',
+					value: 'Covering letter',
 					url: undefined
 				},
 				{
-					name: 'Documents',
+					name: 'Covering letter documents',
 					value: 'Not provided',
 					url: '/case/PLAN-12345/some-journey/some-section/my-question'
 				}
 			]
 		});
+	});
+});
+
+class TestableSubmissionCheck extends SubmissionCheck {
+	public async generateDataForPage(): Promise<SubmissionCheckData> {
+		throw new Error('Not implemented');
+	}
+
+	public callFormatDocuments(...args: Parameters<SubmissionCheck['formatDocuments']>) {
+		return this.formatDocuments(...args);
+	}
+}
+
+describe('SubmissionCheck.formatDocuments', () => {
+	const files = [
+		{ fileName: 'fileA.txt', metadata: { documentGuid: 'fileAGuid' } },
+		{ fileName: 'fileB.txt', metadata: { documentGuid: 'fileBGuid' } }
+	] as any[];
+
+	it('numbers each document using the given label', () => {
+		const result = new TestableSubmissionCheck().callFormatDocuments(
+			files,
+			'/download',
+			'/change',
+			undefined,
+			'Signed SLA document'
+		);
+		assert.deepEqual(
+			result.map((row) => row.name),
+			['Signed SLA document 1', 'Signed SLA document 2']
+		);
+	});
+
+	it('falls back to "Document" when no label is given', () => {
+		const result = new TestableSubmissionCheck().callFormatDocuments(files, '/download', '/change');
+		assert.deepEqual(
+			result.map((row) => row.name),
+			['Document 1', 'Document 2']
+		);
+	});
+
+	it('does not add leading or trailing whitespace to the label', () => {
+		const result = new TestableSubmissionCheck().callFormatDocuments(files, '/download', '/change', undefined, 'MIQ');
+		for (const row of result) {
+			assert.equal(row.name, row.name.trim());
+		}
+	});
+
+	it('appends the query string to the change url and links each file to its download url', () => {
+		const result = new TestableSubmissionCheck().callFormatDocuments(
+			files,
+			'/download',
+			'/change',
+			'returnTo=check',
+			'MIQ'
+		);
+		assert.deepEqual(result[0], {
+			name: 'MIQ 1',
+			value: '<a class="govuk-link" href="/download/fileAGuid">fileA.txt</a>',
+			url: '/change?returnTo=check'
+		});
+	});
+
+	it('returns no rows when there are no uploaded files', () => {
+		assert.deepEqual(
+			new TestableSubmissionCheck().callFormatDocuments([], '/download', '/change', undefined, 'MIQ'),
+			[]
+		);
+	});
+
+	it('throws when a file has no documentGuid', () => {
+		assert.throws(
+			() =>
+				new TestableSubmissionCheck().callFormatDocuments(
+					[{ fileName: 'noGuid.txt', path: 'some/path', metadata: {} }] as any[],
+					'/download',
+					'/change',
+					undefined,
+					'MIQ'
+				),
+			/documentGuid is missing for document with name noGuid.txt, path some\/path/
+		);
+	});
+});
+
+describe('Test MiqsSubmissionCheck', () => {
+	it('labels each uploaded document as an MIQ and returns to the check page on change', async () => {
+		const data = await new MiqsSubmissionCheck().generateDataForPage(
+			'123456',
+			'PLAN-12345',
+			'examination',
+			'some-section',
+			'miqs',
+			'/case/PLAN-12345/examination/some-section/miqs/check',
+			MockService as any,
+			[
+				{ fileName: 'fileA.txt', metadata: { documentGuid: 'fileAGuid' } },
+				{ fileName: 'fileB.txt', metadata: { documentGuid: 'fileBGuid' } }
+			] as any[]
+		);
+
+		assert.equal(data.titleHeading, 'Check MIQ documents and send notification');
+		assert.equal(data.backLink, '/case/PLAN-12345/examination/some-section/miqs');
+		assert.deepEqual(data.answersToReview, [
+			{
+				name: 'MIQ 1',
+				value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileAGuid">fileA.txt</a>',
+				url: '/case/PLAN-12345/examination/some-section/miqs?returnTo=check'
+			},
+			{
+				name: 'MIQ 2',
+				value: '<a class="govuk-link" href="/case/PLAN-12345/download-case-document/fileBGuid">fileB.txt</a>',
+				url: '/case/PLAN-12345/examination/some-section/miqs?returnTo=check'
+			}
+		]);
+	});
+});
+
+describe('Gateway2DocumentSubmissionCheck document labels', () => {
+	it('names the documents row after the question title and lists existing documents', async () => {
+		MockService.db.document.findMany.mock.mockImplementation(async () => [
+			{
+				guid: 'guid-1',
+				name: 'PLAN-12345/covering-letter/0b7b6f4e-1111-2222-3333-444455556666-letter.pdf'
+			}
+		]);
+
+		const data = await new Gateway2DocumentSubmissionCheck().generateDataForPage(
+			'case-id',
+			'PLAN-12345',
+			'gateway-2',
+			'documents',
+			'covering-letter',
+			'/case/PLAN-12345/gateway-2/documents/covering-letter/check',
+			MockService as never,
+			[],
+			'Covering letter'
+		);
+
+		assert.deepEqual(data.answersToReview[1], {
+			name: 'Covering letter documents',
+			value: [{ name: 'letter.pdf', url: '/case/PLAN-12345/download-case-document/guid-1' }],
+			url: '/case/PLAN-12345/gateway-2/documents/covering-letter'
+		});
+	});
+
+	it('throws when no question title is given', async () => {
+		await assert.rejects(
+			() =>
+				new Gateway2DocumentSubmissionCheck().generateDataForPage(
+					'case-id',
+					'PLAN-12345',
+					'gateway-2',
+					'documents',
+					'covering-letter',
+					'/case/PLAN-12345/gateway-2/documents/covering-letter/check',
+					MockService as never,
+					[]
+				),
+			/Could not find a title for Gateway 2 document 'covering-letter'/
+		);
+	});
+});
+
+describe('submit-documents-check-your-answers document list rendering', () => {
+	const baseViewData = {
+		caseReference: 'PLAN-123456',
+		config: { headerTitle: 'Manage', footerLinks: [] },
+		navigation: [],
+		layoutTemplate: 'views/layouts/main.njk'
+	};
+
+	it('renders a list of document links for any row whose value is an array', () => {
+		const html = configureNunjucks().render('views/layouts/submit-documents-check-your-answers.njk', {
+			...baseViewData,
+			answersToReview: [
+				{
+					name: 'Covering letter documents',
+					value: [
+						{ name: 'first.pdf', url: '/download/first' },
+						{ name: 'second.pdf', url: '/download/second' }
+					],
+					url: '/change'
+				}
+			]
+		});
+		assert.match(html, /Covering letter documents/);
+		assert.match(html, /<a class="govuk-link" href="\/download\/first">\s*first\.pdf\s*<\/a>/);
+		assert.match(html, /<a class="govuk-link" href="\/download\/second">\s*second\.pdf\s*<\/a>/);
+	});
+
+	it('renders string values as-is rather than iterating over their characters', () => {
+		const html = configureNunjucks().render('views/layouts/submit-documents-check-your-answers.njk', {
+			...baseViewData,
+			answersToReview: [{ name: 'Covering letter documents', value: 'Not provided', url: '/change' }]
+		});
+		assert.match(html, /<dd class="govuk-summary-list__value">\s*Not provided\s*<\/dd>/);
 	});
 });

@@ -32,11 +32,11 @@ class Gateway2ReportCheckPage extends BasePage {
 		this.verifyChangeLinks();
 
 		if (fileName) {
-			this.verifySummaryRowContains('Document 1', fileName);
+			this.verifySummaryRowContains('Gateway 2 report 1', fileName);
 		}
 	}
 	verifyChangeLinks() {
-		this.verifySummaryRowActionHref('Document 1', gateway2ReportPath(gateway2Report.path));
+		this.verifySummaryRowActionHref('Gateway 2 report 1', gateway2ReportPath(gateway2Report.path));
 	}
 
 	issueReport() {

@@ -29,11 +29,11 @@ export const GW2UpdateFileUploadedFromFO = (
 					.should('be.visible')
 					.click();
 
-				cy.contains('.govuk-summary-list__row', 'Documents')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter documents')
 					.contains('.govuk-summary-list__value a', fileName)
 					.should('be.visible');
 
-				cy.contains('.govuk-summary-list__row', 'Documents')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter documents')
 					.contains('.govuk-link', 'Change')
 					.should('be.visible')
 					.click();
@@ -55,7 +55,7 @@ export const GW2UpdateFileUploadedFromFO = (
 
 				cy.contains('.govuk-button', 'Continue').should('be.visible').click();
 
-				cy.contains('.govuk-summary-list__row', 'Documents')
+				cy.contains('.govuk-summary-list__row', 'Gateway 2 cover letter documents')
 					.contains('.govuk-summary-list__value a', updatedFileName)
 					.should('be.visible');
 

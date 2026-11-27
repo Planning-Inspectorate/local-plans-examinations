@@ -2379,7 +2379,7 @@ describe('buildCheckReportMiddleware', () => {
 						value: '1 January 2026'
 					},
 					{
-						name: 'Document 1',
+						name: 'Signed SLA document 1',
 						url: '/case/some-case-reference/some-journey-id/gateway-1/signed-sla',
 						value:
 							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
@@ -2441,7 +2441,7 @@ describe('buildCheckReportMiddleware', () => {
 						value: '1 January 2026'
 					},
 					{
-						name: 'Document 1',
+						name: 'Signed SLA document 1',
 						url: '/case/some-case-reference/some-journey-id/gateway-1/signed-sla',
 						value:
 							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
@@ -2502,7 +2502,7 @@ describe('buildCheckReportMiddleware', () => {
 						value: '1 January 2026'
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 2 report 1',
 						url: '/case/some-case-reference/some-journey-id/gateway-2/gateway-2-report',
 						value:
 							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'
@@ -2563,7 +2563,7 @@ describe('buildCheckReportMiddleware', () => {
 						value: '1 January 2026'
 					},
 					{
-						name: 'Document 1',
+						name: 'Gateway 2 report 1',
 						url: '/case/some-case-reference/some-journey-id/gateway-2/gateway-2-report',
 						value:
 							'<a class="govuk-link" href="/case/some-case-reference/download-case-document/someDocumentGuid">someFile.txt</a>'

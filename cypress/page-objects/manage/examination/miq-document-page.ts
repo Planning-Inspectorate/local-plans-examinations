@@ -29,7 +29,7 @@ class ExaminationMIQCheckPage extends BasePage {
 
 	verifyDocuments(...fileNames: string[]) {
 		this.verifyLoaded();
-		fileNames.forEach((fileName, index) => this.verifySummaryRowContains(`Document ${index + 1}`, fileName));
+		fileNames.forEach((fileName, index) => this.verifySummaryRowContains(`MIQ ${index + 1}`, fileName));
 	}
 
 	confirm() {

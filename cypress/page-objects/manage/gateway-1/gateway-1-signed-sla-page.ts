@@ -32,12 +32,12 @@ class Gateway1SignedSLACheckPage extends BasePage {
 		this.verifyChangeLinks();
 
 		if (fileName) {
-			this.verifySummaryRowContains('Document 1', fileName);
+			this.verifySummaryRowContains('Signed SLA document 1', fileName);
 		}
 	}
 
 	verifyChangeLinks() {
-		this.verifySummaryRowActionHref('Document 1', gateway1QuestionPath(signedSLA.path));
+		this.verifySummaryRowActionHref('Signed SLA document 1', gateway1QuestionPath(signedSLA.path));
 		this.verifySummaryRowActionHref('Date uploaded', gateway1QuestionPath('sla-received-date'));
 	}
 

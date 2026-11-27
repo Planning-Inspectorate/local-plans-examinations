@@ -20,7 +20,7 @@ class Gateway2WorkshopDocumentsCheckPage extends BasePage {
 		super.verifyLoaded();
 		this.verifyHeading('Check workshop documents and issue notification');
 		if (fileName) {
-			this.verifySummaryRowContains('Document 1', fileName);
+			this.verifySummaryRowContains('Workshop documents 1', fileName);
 		}
 	}
 
