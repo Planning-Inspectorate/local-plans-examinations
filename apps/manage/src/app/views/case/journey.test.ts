@@ -41,7 +41,11 @@ function createGateway1JourneyForTest() {
 
 function createGateway2JourneyForTest() {
 	return createGateway2Journey(
-		{ baseUrl: '/case/LP-TEST-001', params: { reference: 'LP-TEST-001' } as any } as Request,
+		{
+			baseUrl: '/case/LP-TEST-001',
+			params: { reference: 'LP-TEST-001' },
+			query: {}
+		} as any as Request,
 		new JourneyResponse(COMMON_CONSTS.GATEWAY_2_JOURNEY_ID, '', { workshops: [] }),
 		questions
 	);
@@ -151,7 +155,7 @@ describe('gateway1Journey', () => {
 });
 
 describe('gateway2Journey', () => {
-	it('links Gateway 2 question pages back to the Gateway 1 page', () => {
+	it('links Gateway 2 question pages back to the Gateway 2 page', () => {
 		const journey = createGateway2JourneyForTest();
 		const gateway2Questions = [
 			'gateway-2-expected-date',

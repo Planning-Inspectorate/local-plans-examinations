@@ -495,11 +495,17 @@ export function buildRemoveDocumentConfirmMiddleware(journeyId: string): AsyncRe
 			return res.status(404).render('views/errors/404.njk');
 		}
 		const journeyUrl = `/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`;
+		const manageQuestionUrl =
+			questionUrl === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION
+				? questions.gateway2ReportManage.url
+				: questionUrl === COMMON_CONSTS.EXAMINATION_REPORT_QUESTION
+					? COMMON_CONSTS.EXAMINATION_REPORT_MANAGE_QUESTION
+					: questionUrl;
 		res.render('views/layouts/remove-uploaded-document', {
 			caseReference,
 			fileName: file.fileName,
 			formAction: `${journeyUrl}/${encodeURIComponent(section)}/${encodeURIComponent(questionUrl)}/delete-document/${encodeURIComponent(fileId)}`,
-			backLink: `${journeyUrl}/${encodeURIComponent(section)}/${COMMON_CONSTS.EXAMINATION_REPORT_MANAGE_QUESTION}`
+			backLink: `${journeyUrl}/${encodeURIComponent(section)}/${encodeURIComponent(manageQuestionUrl)}`
 		});
 	};
 }
@@ -1313,9 +1319,17 @@ export function issueGateway3Document(service: ManageService): AsyncRequestHandl
 export function redirectToFileUploaderQuestion(req: Request) {
 	const planPath = req.params.planReference ? `/${req.params.planReference}` : '';
 	// Any questions that need to route to new subjourneys can be defined here
+	if (
+		req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION &&
+		req.params.fileId &&
+		req.body?.returnToManage === 'true'
+	) {
+		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${questions.gateway2ReportManage.url}`;
+	}
 	if (req.params.question === COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}
+
 	if (req.params.question === COMMON_CONSTS.SIGNED_SLA_QUESTION) {
 		return `${req.baseUrl}${planPath}/${COMMON_CONSTS.GATEWAY_1_JOURNEY_ID}/${req.params.section}/${req.params.question}`;
 	}

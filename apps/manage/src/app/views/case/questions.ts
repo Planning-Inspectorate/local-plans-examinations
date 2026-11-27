@@ -1352,7 +1352,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the report issued?',
 		fieldName: 'reportIssuedDate',
 		url: 'gateway-2-report-issued-date',
-		title: 'Report issued date',
+		title: 'Report issued',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-issued-date' }
 	},
@@ -1361,7 +1361,7 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 		question: 'When was the report published by the LPA?',
 		fieldName: 'reportPublishedByLPA',
 		url: 'gateway-2-report-published-date',
-		title: 'Report published by LPA date',
+		title: 'Report published',
 		validators: [new DateValidator(' a valid date')],
 		inputAttributes: { 'data-cy': 'gateway-2-report-published-date' }
 	},
@@ -1398,6 +1398,14 @@ const caseQuestions: Record<string, ManageQuestionConfig> = {
 			totalFileSizeTooLarge: 'Total file size is too large'
 		},
 		validators: [new FileUploadRequiredValidator('gateway2Report', 'Please upload your Gateway 2 report')]
+	},
+	gateway2ReportManage: {
+		type: CUSTOM_COMPONENTS.CUSTOM_FILE_MANAGER,
+		title: 'Manage Gateway 2 report documents',
+		question: 'Examination report',
+		fieldName: 'gateway2Report',
+		url: 'gateway-2-report-manage',
+		viewData: { uploadQuestionUrl: 'gateway-2-report' }
 	},
 	//gateway 3
 	gateway3ExpectedDate: {

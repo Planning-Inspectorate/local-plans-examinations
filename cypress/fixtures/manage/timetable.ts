@@ -60,7 +60,10 @@ export const seededTimetable = {
 type TimetableRow = { row: string; display: string | string[]; path?: string };
 
 const dateRows = (section: string, answers: Required<TimetableRow>[]) =>
-	answers.map((answer) => ({ ...answer, path: `timetable/${section}/${answer.path}` }));
+	answers.map((answer) => ({
+		...answer,
+		path: answer.path?.startsWith('gateway-2/') ? answer.path : `timetable/${section}/${answer.path}`
+	}));
 
 export const timetableSections: Record<string, TimetableRow[]> = {
 	Timetable: dateRows('timetable', [gateway1DateAnswers.noticeOfIntention]),
@@ -78,7 +81,11 @@ export const timetableSections: Record<string, TimetableRow[]> = {
 			path: 'gateway-2'
 		},
 		...dateRows('gateway-2', [
-			{ row: 'Report issued date', display: '1 September 2026', path: 'gateway-2-report-issued-date' },
+			{
+				row: 'Report issued',
+				display: '1 September 2026',
+				path: 'gateway-2/report/gateway-2-report-manage?returnTo=timetable'
+			},
 			gateway2DateAnswers.reportPublishedDate
 		])
 	],

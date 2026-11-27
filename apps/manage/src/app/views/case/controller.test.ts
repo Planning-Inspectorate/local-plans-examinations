@@ -2193,6 +2193,18 @@ describe('redirectToFileUploaderQuestion', () => {
 			);
 		}
 	});
+
+	it('returns to the Gateway 2 report manage page after confirming removal', () => {
+		const req = request({ returnToManage: 'true' });
+
+		req.params.section = 'report';
+		req.params.question = COMMON_CONSTS.GATEWAY_2_REPORT_QUESTION;
+
+		assert.equal(
+			redirectToFileUploaderQuestion(req),
+			`/case/${REFERENCE}/${COMMON_CONSTS.GATEWAY_2_JOURNEY_ID}/report/${questions.gateway2ReportManage.url}`
+		);
+	});
 });
 
 describe('redirectToChecks', () => {
