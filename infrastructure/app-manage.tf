@@ -79,6 +79,10 @@ module "app_manage" {
     GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID      = var.gov_notify.templates.gw3_assessor_updated_lpa
     GOV_NOTIFY_GW3_PASS_TEMPLATE_ID                      = var.gov_notify.templates.gw3_passed
     GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID     = var.gov_notify.templates.gw3_resubmission_required
+    GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID           = var.gov_notify.templates.appointedInspectorNotifyId
+    GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID       = var.gov_notify.templates.appointedInspectorLpaNotifyId
+    GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID     = var.gov_notify.templates.examinationOutcomeSoundId
+    GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID   = var.gov_notify.templates.examinationOutcomeUnsoundId
     LOCAL_PLANS_TEAM_EMAIL                               = "enquiries@planninginspectorate.gov.uk"
 
     # document storage

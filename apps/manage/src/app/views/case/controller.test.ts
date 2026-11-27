@@ -14,6 +14,7 @@ import {
 	issueGateway3Document,
 	issueGateway2WorkshopDocuments,
 	issueExaminationReport,
+	confirmExaminationInspectorAppointment,
 	issueMiqs,
 	fileUploaderCaseSessionKeyForField,
 	redirectToFileUploaderQuestion,
@@ -46,6 +47,7 @@ import {
 } from '@pins/local-plans-database/src/seed/static-data/ids/document-set.ts';
 import CustomDocumentsQuestion from '../layouts/custom-documents-viewer/question.ts';
 import { CUSTOM_COMPONENTS, CUSTOM_COMPONENT_CLASSES } from '../layouts/index.ts';
+import { resetGovNotifyConfig } from '../../config.ts';
 
 const REFERENCE = 'PLAN-123456';
 const JOURNEY_ID = 'edit-case-overview';
@@ -2327,6 +2329,82 @@ describe('issueExaminationReport', () => {
 	});
 });
 
+describe('confirmExaminationInspectorAppointment', () => {
+	const templateIds = {
+		appointedInspector: 'appointed-inspector-template',
+		appointedInspectorLpa: 'appointed-inspector-lpa-template'
+	};
+
+	it('sends the LPA and newly appointed inspector notifications only on confirmation', async () => {
+		process.env.GOV_NOTIFY_DISABLED = 'false';
+		process.env.PORTAL_URL = 'https://portal.example.com';
+		process.env.GOV_NOTIFY_API_KEY = 'test-key';
+		process.env.GOV_NOTIFY_WEBHOOK_TOKEN = 'test-token';
+		process.env.GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID = templateIds.appointedInspector;
+		process.env.GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID = templateIds.appointedInspectorLpa;
+		resetGovNotifyConfig();
+
+		try {
+			const service = createService();
+			const sendEmail = mock.fn(async () => ({}));
+			const examinationInfo = {
+				examiningInspector1: 'inspector-1',
+				examiningInspector2: 'inspector-2',
+				examiningInspector3: null
+			};
+			service.notifyClient = { sendEmail };
+			service.localPlansTeamEmail = 'team@example.com';
+			service.db.case.findUnique.mock.mockImplementation(async () => ({
+				id: CASE_ID,
+				examinationInfo,
+				lpas: [{ lpaName: 'Test Council' }],
+				planType: 'local-plan',
+				contacts: [{ email: 'lpa@example.com' }]
+			}));
+			service.db.examinationInfo.findUnique.mock.mockImplementation(async () => examinationInfo);
+			const entraClient = {
+				getUserName: mock.fn(async (id: string) => ({
+					givenName: id === 'inspector-1' ? 'Jane' : 'Alex',
+					surname: id === 'inspector-1' ? 'Smith' : 'Jones'
+				})),
+				getUserEmailFromId: mock.fn(async (id: string) => `${id}@example.com`)
+			};
+			service.getEntraClient.mock.mockImplementation(() => entraClient);
+			const req = {
+				params: { reference: REFERENCE },
+				session: {
+					pendingExaminationInspectorNotification: { inspectorIds: ['inspector-2', 'removed-inspector'] }
+				}
+			} as unknown as Request;
+			const redirect = mock.fn();
+			const res = { redirect } as unknown as Response;
+
+			await confirmExaminationInspectorAppointment(service, 'examination')(req, res, mock.fn());
+
+			assert.deepEqual(
+				sendEmail.mock.calls.map(({ arguments: args }) => args.slice(0, 2)),
+				[
+					[templateIds.appointedInspectorLpa, 'lpa@example.com'],
+					[templateIds.appointedInspector, 'inspector-2@example.com']
+				]
+			);
+			assert.equal((req.session as any).pendingExaminationInspectorNotification, undefined);
+			assert.equal(redirect.mock.calls[0].arguments[0], `/case/${REFERENCE}/examination`);
+
+			await confirmExaminationInspectorAppointment(service, 'examination')(req, res, mock.fn());
+			assert.equal(sendEmail.mock.callCount(), 2);
+		} finally {
+			process.env.GOV_NOTIFY_DISABLED = 'true';
+			delete process.env.PORTAL_URL;
+			delete process.env.GOV_NOTIFY_API_KEY;
+			delete process.env.GOV_NOTIFY_WEBHOOK_TOKEN;
+			delete process.env.GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID;
+			delete process.env.GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID;
+			resetGovNotifyConfig();
+		}
+	});
+});
+
 describe('buildCheckReportMiddleware', () => {
 	const service = createService();
 	const caseId = 'some-case-id';
@@ -2581,6 +2659,61 @@ describe('buildCheckReportMiddleware', () => {
 			}
 		];
 		assert.deepEqual(res.render.mock.calls[0].arguments, expected_call_args);
+	});
+	it('renders an examining inspector appointment confirmation page', async () => {
+		const res = { render: mock.fn(() => {}) };
+		const appointmentDate = new Date('2026-11-20T00:00:00.000Z');
+		service.db.examinationInfo.findUnique.mock.mockImplementation(async () => ({
+			examiningInspector1: 'inspector-1',
+			examiningInspector2: 'inspector-2',
+			examiningInspector3: null,
+			examiningInspectorAppointmentDate: appointmentDate
+		}));
+		service.getEntraClient.mock.mockImplementation(() => ({
+			getUserDisplayName: mock.fn(async (id: string) => (id === 'inspector-1' ? 'Jane Smith' : 'Alex Jones'))
+		}));
+		const req = {
+			session: {},
+			params: {
+				reference: caseReference,
+				question: questions.examiningInspectorAppointmentDate.url,
+				section: 'inspectors'
+			},
+			originalUrl: `/case/${caseReference}/${journeyId}/inspectors/${questions.examiningInspectorAppointmentDate.url}/check`
+		} as unknown as Request;
+
+		await buildCheckReportMiddleware(service, journeyId)(req, res as unknown as Response);
+
+		assert.deepEqual(res.render.mock.calls[0].arguments, [
+			'views/layouts/submit-documents-check-your-answers',
+			{
+				titleHeading: 'Confirm and send notification',
+				answersToReview: [
+					{
+						name: 'Examining Inspector 1',
+						value: 'Jane Smith',
+						url: `/case/${caseReference}/${journeyId}/inspectors/${questions.examiningInspector1.url}?returnTo=check`
+					},
+					{
+						name: 'Examining Inspector 2',
+						value: 'Alex Jones',
+						url: `/case/${caseReference}/${journeyId}/inspectors/${questions.examiningInspector2.url}?returnTo=check`
+					},
+					{
+						name: questions.examiningInspectorAppointmentDate.title,
+						value: '20 November 2026',
+						url: `/case/${caseReference}/${journeyId}/inspectors/${questions.examiningInspectorAppointmentDate.url}?returnTo=check`
+					}
+				],
+				caseReference,
+				journeyId,
+				section: 'inspectors',
+				question: questions.examiningInspectorAppointmentDate.url,
+				backLink: `/case/${caseReference}/${journeyId}/inspectors/${questions.examiningInspectorAppointmentDate.url}`,
+				submitButtonText: 'Confirm and send',
+				notificationTextLPA: 'A notification will be sent to the examining inspectors and the planning authority.'
+			}
+		]);
 	});
 	it('rejects when there is an unexpected question', async () => {
 		const res = {

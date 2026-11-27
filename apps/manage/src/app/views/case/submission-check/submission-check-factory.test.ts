@@ -5,12 +5,14 @@ import { Gateway2ReportSubmissionCheck } from './gateway-2-report-submission-che
 import { Gateway3SubmissionCheck } from './gateway-3-submission-check.ts';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { ExaminationInspectorSubmissionCheck } from './examination-inspector-submission-check.ts';
 
 describe('test getSubmissionCheckForQuestion', () => {
 	describe('can fetch SubmissionCheck objects for all questions', () => {
 		const testCases: Record<string, new () => SubmissionCheck> = {
 			'signed-sla': SignedSLASubmissionCheck,
 			'gateway-2-report': Gateway2ReportSubmissionCheck,
+			'examination-examining-inspector-appointment-date': ExaminationInspectorSubmissionCheck,
 			'gateway-3-document-1': Gateway3SubmissionCheck,
 			'gateway-3-document-2': Gateway3SubmissionCheck,
 			'gateway-3-document-3': Gateway3SubmissionCheck,

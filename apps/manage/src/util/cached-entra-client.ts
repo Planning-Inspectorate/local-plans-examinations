@@ -1,6 +1,6 @@
 import { Client } from '@microsoft/microsoft-graph-client';
 import { EntraClient } from './entra.ts';
-import type { GroupMember } from './entra.ts';
+import type { GroupMember, UserName } from './entra.ts';
 import type { MapCache } from '@planning-inspectorate/core/util';
 
 export type InitEntraClient = (session: AuthSession) => CachedEntraClient | null;
@@ -62,6 +62,10 @@ export class CachedEntraClient {
 		members = await this.#client.listAllGroupMembers(groupId);
 		this.#groupCache.set(groupId, members);
 		return members;
+	}
+
+	async getUserName(userId: string): Promise<UserName> {
+		return this.#client.getUserName(userId);
 	}
 
 	async getUserDisplayName(userId: string): Promise<string> {

@@ -49,6 +49,10 @@ export interface Config extends ConfigWithBlob {
 			gw3AssessorUpdatedLpa?: string;
 			gw3Pass?: string;
 			gw3ResubmissionRequired?: string;
+			appointedInspector?: string;
+			appointedInspectorLpa?: string;
+			examinationOutcomeSound?: string;
+			examinationOutcomeUnsound?: string;
 		};
 		localPlansTeamEmail: string;
 	};
@@ -74,6 +78,7 @@ export const ENVIRONMENT_NAME: ENVIRONMENT_NAMES = Object.freeze({
 let config: Config | undefined;
 
 export type GovNotifyConfig = Config['govNotify'];
+export type GovTemplateIdsKeys = keyof NonNullable<GovNotifyConfig>['templateIds'];
 
 let govNotifyConfig: GovNotifyConfig | undefined;
 
@@ -103,6 +108,10 @@ export function loadGovNotifyConfig(): GovNotifyConfig {
 		GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID,
 		GOV_NOTIFY_GW3_PASS_TEMPLATE_ID,
 		GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID,
+		GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID,
+		GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID,
 		LOCAL_PLANS_TEAM_EMAIL
 	} = process.env;
 
@@ -130,7 +139,11 @@ export function loadGovNotifyConfig(): GovNotifyConfig {
 			gw3AssessorUpdatedAssessor: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
 			gw3AssessorUpdatedLpa: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
 			gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
-			gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || ''
+			gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || '',
+			appointedInspector: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
+			appointedInspectorLpa: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
+			examinationOutcomeSound: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
+			examinationOutcomeUnsound: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
 		},
 		localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 	};
@@ -188,9 +201,13 @@ export function loadConfig(): Config {
 		BLOB_STORE_CONTAINER,
 		BLOB_STORE_CONNECTION_STRING,
 		BLOB_STORE_ACCOUNT_URL,
+		LOCAL_PLANS_TEAM_EMAIL,
+		GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID,
+		GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID,
+		GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID,
+		GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID,
 		CLARITY_ID,
-		GOOGLE_ANALYTICS_ID,
-		LOCAL_PLANS_TEAM_EMAIL
+		GOOGLE_ANALYTICS_ID
 	} = process.env;
 
 	const buildConfig = loadBuildConfig();
@@ -313,7 +330,11 @@ export function loadConfig(): Config {
 				gw3AssessorUpdatedAssessor: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_ASSESSOR_TEMPLATE_ID || '',
 				gw3AssessorUpdatedLpa: GOV_NOTIFY_GW3_ASSESSOR_UPDATED_LPA_TEMPLATE_ID || '',
 				gw3Pass: GOV_NOTIFY_GW3_PASS_TEMPLATE_ID || '',
-				gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || ''
+				gw3ResubmissionRequired: GOV_NOTIFY_GW3_RESUBMISSION_REQUIRED_TEMPLATE_ID || '',
+				appointedInspector: GOV_NOTIFY_APPOINTED_INSPECTOR_TEMPLATE_ID || '',
+				appointedInspectorLpa: GOV_NOTIFY_APPOINTED_INSPECTOR_LPA_TEMPLATE_ID || '',
+				examinationOutcomeSound: GOV_NOTIFY_EXAMINATION_OUTCOME_SOUND_TEMPLATE_ID || '',
+				examinationOutcomeUnsound: GOV_NOTIFY_EXAMINATION_OUTCOME_UNSOUND_TEMPLATE_ID || ''
 			},
 			localPlansTeamEmail: LOCAL_PLANS_TEAM_EMAIL || ''
 		},
@@ -370,4 +391,8 @@ export function loadEnvironmentConfig(): string {
 	}
 
 	return ENVIRONMENT;
+}
+
+export function resetGovNotifyConfig(): void {
+	govNotifyConfig = undefined;
 }

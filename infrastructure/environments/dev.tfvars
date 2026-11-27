@@ -81,6 +81,10 @@ gov_notify = {
     gw3_assessor_updated_lpa      = "f3c4fbb9-1e2f-48ec-ad2f-57e2fcdc73aa"
     gw3_passed                    = "e67dcb5a-d732-4426-b03f-a2f0de051b0f"
     gw3_resubmission_required     = "27883cad-a44d-454d-a009-3bb17c5ced2c"
+    appointedInspectorNotifyId    = "cfffa3ef-fa36-405d-a780-adb6356288f4"
+    appointedInspectorLpaNotifyId = "91e8801c-48bb-4eb9-bde4-4a093197673f"
+    examinationOutcomeSoundId     = "c12da5f9-be67-448d-929e-c87195c5a2ac"
+    examinationOutcomeUnsoundId   = "0c0752da-dcb6-47d9-a61d-6c55aa2b6dc8"
   }
 }
 

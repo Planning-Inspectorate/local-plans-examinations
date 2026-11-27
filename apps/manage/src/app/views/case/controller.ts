@@ -24,7 +24,11 @@ import { OverviewSaveController } from './save/overview-save-controller.ts';
 import { Gateway1SaveController } from './save/gateway-1-save-controller.ts';
 import { Gateway2SaveController } from './save/gateway-2-save-controller.ts';
 import { Gateway3SaveController, saveGateway3Submissions } from './save/gateway-3-save-controller.ts';
-import { ExaminationSaveController } from './save/examination-save-controller.ts';
+import {
+	ExaminationSaveController,
+	PENDING_EXAMINATION_INSPECTOR_NOTIFICATION,
+	type PendingExaminationInspectorNotification
+} from './save/examination-save-controller.ts';
 import { formatDateToString } from '../../util/date.ts';
 import type { FileUploaderControllerOptions } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
 import { resolveSessionKey } from '@pins/local-plans-lib/forms/custom-components/file-uploader/upload-controller.ts';
@@ -42,7 +46,8 @@ import {
 	sendWorkshopReportUploadedNotifyEmail,
 	sendGw3AssessorAppointedNotifyEmail,
 	sendGw3PassNotifyEmail,
-	sendGw3ResubmissionNeededNotifyEmail
+	sendGw3ResubmissionNeededNotifyEmail,
+	sendExaminationNotifyEmail
 } from '../../../app/notify/notify-helper.ts';
 import { resolveAssessorDisplayName } from './assessor-helper.ts';
 
@@ -457,7 +462,7 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 		const questionUrl = getParam(req.params.question);
 		const caseReference = getParam(req.params.reference);
 		const caseId = await resolveCaseIdFromReference(service.db, caseReference);
-		const questionConfig = fileUploadQuestionConfigs.find((question) => question.url == questionUrl);
+		const questionConfig = Object.values(questions).find((question) => question.url == questionUrl);
 		if (!questionConfig) {
 			throw new Error(`Could not find question config for question url '${questionUrl}'`);
 		}
@@ -470,9 +475,12 @@ export function buildCheckReportMiddleware(service: ManageService, journeyId: st
 			questionUrl,
 			req.originalUrl,
 			service,
-			req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]?.uploadedFiles ??
-				[],
-			questionConfig.title
+			questionConfig.fieldName
+				? (req.session.fileUploader?.[fileUploaderCaseSessionKeyForField(req, questionConfig.fieldName)]
+						?.uploadedFiles ?? [])
+				: [],
+			questionConfig.title,
+			req
 		);
 		res.render('views/layouts/submit-documents-check-your-answers', submissionCheckData);
 		return;
@@ -1052,6 +1060,57 @@ export function issueExaminationReport(service: ManageService, journeyId: string
 		// After first time exam doc upload, go back to examination tab
 		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 		return;
+	};
+}
+
+export function confirmExaminationInspectorAppointment(service: ManageService, journeyId: string): AsyncRequestHandler {
+	return async (req, res) => {
+		const caseReference = getParam(req.params.reference);
+		const session = req.session as typeof req.session & {
+			[PENDING_EXAMINATION_INSPECTOR_NOTIFICATION]?: PendingExaminationInspectorNotification;
+		};
+		const pending = session[PENDING_EXAMINATION_INSPECTOR_NOTIFICATION];
+		delete session[PENDING_EXAMINATION_INSPECTOR_NOTIFICATION];
+
+		if (!pending?.inspectorIds.length) {
+			pushAlertToSession(req, 'important', 'Examining inspector notification already sent');
+			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+			return;
+		}
+
+		const caseRecord = await service.db.case.findUnique({
+			where: { reference: caseReference },
+			select: {
+				examinationInfo: {
+					select: {
+						examiningInspector1: true,
+						examiningInspector2: true,
+						examiningInspector3: true
+					}
+				}
+			}
+		});
+		const currentInspectorIds = new Set(
+			EXAMINING_INSPECTOR_FIELDS.map((field) => caseRecord?.examinationInfo?.[field]).filter((id): id is string =>
+				Boolean(id)
+			)
+		);
+		const inspectorIds = pending.inspectorIds.filter((id) => currentInspectorIds.has(id));
+
+		if (!inspectorIds.length) {
+			pushAlertToSession(req, 'important', 'No newly appointed inspectors remain to notify');
+			res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
+			return;
+		}
+
+		await sendExaminationNotifyEmail(service, caseReference, 'appointedInspectorLpa', { request: req });
+		await sendExaminationNotifyEmail(service, caseReference, 'appointedInspector', {
+			request: req,
+			inspectorIds
+		});
+
+		pushAlertToSession(req, 'success', 'Examining inspector appointment confirmed and notification sent');
+		res.redirect(`/case/${encodeURIComponent(caseReference)}/${encodeURIComponent(journeyId)}`);
 	};
 }
 

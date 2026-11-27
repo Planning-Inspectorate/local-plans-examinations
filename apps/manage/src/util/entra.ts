@@ -12,6 +12,11 @@ export const ODATA = Object.freeze({
 	USER_TYPE: '#microsoft.graph.user'
 });
 
+export interface UserName {
+	givenName: string | null;
+	surname: string | null;
+}
+
 export interface GroupMember {
 	id: string;
 	displayName: string;
@@ -75,6 +80,11 @@ export class EntraClient {
 			}
 		}
 	}
+	async getUserName(userId: string): Promise<UserName> {
+		const user = await this.#client.api(`/users/${userId}`).select(['givenName', 'surname']).get();
+		return { givenName: user.givenName ?? null, surname: user.surname ?? null };
+	}
+
 	async getUserDisplayName(userId: string): Promise<string> {
 		const user: User = await this.#client.api(`/users/${userId}`).select(['id', 'displayName']).top(1).get();
 		return String(user.displayName);

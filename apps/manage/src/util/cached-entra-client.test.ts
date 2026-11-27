@@ -154,5 +154,21 @@ describe('cached-entra-client', () => {
 				'Expected EntraClient.getUserDisplayName to not be be called'
 			);
 		});
+
+		it('Fetches a user name from the EntraClient', async () => {
+			const entraClient = {
+				getUserName: mock.fn(async (_userId: string) => ({ givenName: 'Tom', surname: 'Paris' }))
+			};
+			const cachedEntraClient = new CachedEntraClient(
+				entraClient as unknown as EntraClient,
+				new MapCache(10),
+				new MapCache(10)
+			);
+
+			const userName = await cachedEntraClient.getUserName('1');
+
+			assert.deepStrictEqual(userName, { givenName: 'Tom', surname: 'Paris' });
+			assert.deepStrictEqual(entraClient.getUserName.mock.calls[0].arguments, ['1']);
+		});
 	});
 });

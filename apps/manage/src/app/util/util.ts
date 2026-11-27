@@ -1,6 +1,8 @@
 import { booleanToYesNoValue } from '@planning-inspectorate/dynamic-forms';
 import type { ManageService } from '#service';
 import { formatDateForDisplay, parseDateInput } from '@planning-inspectorate/dynamic-forms';
+import type { Request } from 'express';
+import type { AuthSession } from '#util/cached-entra-client.ts';
 
 export function formatValue(value: any) {
 	if (typeof value === 'boolean') {
@@ -35,4 +37,35 @@ export function formatDateAnswer(value: Date | 'string', format: string): string
 		return formatDateForDisplay(parseDateInput({ day, month, year }), { format: format });
 	}
 	return formatDateForDisplay(value as string, { format: format });
+}
+
+type InspectorName = { firstName?: string | null; lastName?: string | null };
+
+export async function getExaminingInspectorNames(
+	service: ManageService,
+	reference: string,
+	req: Request & { session: AuthSession }
+): Promise<InspectorName[]> {
+	const entraClient = service.getEntraClient(req.session);
+	if (!entraClient) return [];
+
+	const caseRecord = await service.db.case.findUnique({
+		where: { reference },
+		select: {
+			examinationInfo: {
+				select: { examiningInspector1: true, examiningInspector2: true, examiningInspector3: true }
+			}
+		}
+	});
+	const info = caseRecord?.examinationInfo;
+	const ids = [info?.examiningInspector1, info?.examiningInspector2, info?.examiningInspector3].filter(
+		(id): id is string => Boolean(id)
+	);
+
+	return Promise.all(
+		ids.map(async (id) => {
+			const { givenName, surname } = await entraClient.getUserName(id);
+			return { firstName: givenName, lastName: surname };
+		})
+	);
 }
